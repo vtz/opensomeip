@@ -29,6 +29,7 @@
 #include <atomic>
 #include <random>
 #include <iomanip>
+#include <cstring>
 
 #include <events/event_publisher.h>
 #include <events/event_types.h>

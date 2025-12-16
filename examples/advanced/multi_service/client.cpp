@@ -29,6 +29,7 @@
 #include <vector>
 #include <string>
 #include <iomanip>
+#include <cstring>
 
 #include <rpc/rpc_client.h>
 #include <rpc/rpc_types.h>

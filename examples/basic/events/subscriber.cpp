@@ -28,6 +28,7 @@
 #include <csignal>
 #include <atomic>
 #include <iomanip>
+#include <cstring>
 
 #include <events/event_subscriber.h>
 #include <events/event_types.h>
