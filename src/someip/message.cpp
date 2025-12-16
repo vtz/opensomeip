@@ -15,9 +15,13 @@
 #include "common/result.h"
 #include <cstring>
 #include <sstream>
-#include <arpa/inet.h>
 #include <iomanip>
 #include <iostream>
+#if defined(_WIN32)
+#include <winsock2.h>
+#else
+#include <arpa/inet.h>
+#endif
 
 namespace someip {
 
