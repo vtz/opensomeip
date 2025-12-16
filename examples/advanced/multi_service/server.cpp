@@ -33,6 +33,8 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <mutex>
+#include <cstring>
 
 #include <rpc/rpc_server.h>
 #include <rpc/rpc_types.h>
