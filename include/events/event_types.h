@@ -19,6 +19,7 @@
 #include <memory>
 #include <functional>
 #include <chrono>
+#include <string>
 
 namespace someip {
 namespace events {
