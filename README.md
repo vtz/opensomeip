@@ -253,7 +253,6 @@ pipeline {
 # Add Apache 2.0 license headers to all source files
 ./scripts/add_copyright_headers.sh
 ```
-```
 
 ## Architecture
 
