@@ -104,13 +104,15 @@ public:
 private:
     TpConfig config_;
     std::unordered_map<uint32_t, std::unique_ptr<TpReassemblyBuffer>> reassembly_buffers_;
+    mutable std::mutex config_mutex_;
     mutable std::mutex buffers_mutex_;
 
+    TpConfig get_config_copy() const;
     bool validate_segment(const TpSegment& segment) const;
     TpReassemblyBuffer* find_or_create_buffer(const TpSegment& segment);
     bool add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment);
     void cleanup_completed_buffers();
-    void cleanup_timed_out_buffers();
+    void cleanup_timed_out_buffers(const TpConfig& config);
 };
 
 } // namespace tp
