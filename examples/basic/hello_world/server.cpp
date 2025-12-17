@@ -26,6 +26,8 @@
 #include <chrono>
 #include <csignal>
 #include <atomic>
+#include <cstdlib>
+#include <string>
 
 #include <transport/udp_transport.h>
 #include <transport/endpoint.h>
@@ -48,8 +50,8 @@ void signal_handler(int signal) {
 
 class HelloServer : public ITransportListener {
 public:
-    HelloServer()
-        : transport_(std::make_shared<UdpTransport>(Endpoint("127.0.0.1", 30490))) {
+    HelloServer(const std::string& host, uint16_t port)
+        : transport_(std::make_shared<UdpTransport>(Endpoint(host, port))) {
         transport_->set_listener(this);
     }
 
@@ -131,11 +133,24 @@ int main() {
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
 
+    // Bind host/port can be overridden for container or cross-host testing
+    auto get_env = [](const char* key, const char* def_val) {
+        const char* val = std::getenv(key);
+        return (val && *val) ? std::string(val) : std::string(def_val);
+    };
+    std::string bind_host = get_env("HELLO_BIND_HOST", "0.0.0.0");
+    uint16_t bind_port = 30490;
+    try {
+        bind_port = static_cast<uint16_t>(std::stoi(get_env("HELLO_BIND_PORT", "30490")));
+    } catch (...) {
+        bind_port = 30490;
+    }
+
+    HelloServer server(bind_host, bind_port);
+
     std::cout << "=== SOME/IP Hello World Server ===" << std::endl;
     std::cout << "Press Ctrl+C to exit" << std::endl;
     std::cout << std::endl;
-
-    HelloServer server;
 
     if (!server.start()) {
         std::cerr << "Failed to start server" << std::endl;

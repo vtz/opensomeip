@@ -27,6 +27,8 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <cstdlib>
+#include <string>
 
 #include <transport/udp_transport.h>
 #include <transport/endpoint.h>
@@ -49,7 +51,7 @@ std::string server_response;
 class HelloClient : public ITransportListener {
 public:
     HelloClient()
-        : transport_(std::make_shared<UdpTransport>(Endpoint("127.0.0.1", 0))) {  // Client gets ephemeral port
+        : transport_(std::make_shared<UdpTransport>(Endpoint("0.0.0.0", 0))) {  // Client gets ephemeral port
         transport_->set_listener(this);
     }
 
@@ -71,7 +73,7 @@ public:
         transport_->stop();
     }
 
-    void send_hello(const std::string& message) {
+    void send_hello(const std::string& message, const std::string& host, uint16_t port) {
         // Create request message
         Message request(MessageId(HELLO_SERVICE_ID, SAY_HELLO_METHOD_ID),
                        RequestId(0x1234, 0x5678),  // Fixed client/session IDs for simplicity
@@ -81,8 +83,8 @@ public:
         // Set payload
         request.set_payload(std::vector<uint8_t>(message.begin(), message.end()));
 
-        // Server endpoint (same as server)
-        Endpoint server_endpoint("127.0.0.1", 30490);
+        // Server endpoint
+        Endpoint server_endpoint(host, port);
 
         std::cout << "Sending message: '" << message << "' to " << server_endpoint.to_string() << std::endl;
 
@@ -157,7 +159,20 @@ int main() {
     }
 
     // Send a hello message
-    client.send_hello("Hello from Client!");
+    // Allow overriding server host/port for cross-host testing
+    auto get_env = [](const char* key, const char* def_val) {
+        const char* val = std::getenv(key);
+        return (val && *val) ? std::string(val) : std::string(def_val);
+    };
+    std::string server_host = get_env("HELLO_SERVER_HOST", "127.0.0.1");
+    uint16_t server_port = 30490;
+    try {
+        server_port = static_cast<uint16_t>(std::stoi(get_env("HELLO_SERVER_PORT", "30490")));
+    } catch (...) {
+        server_port = 30490;
+    }
+
+    client.send_hello("Hello from Client!", server_host, server_port);
 
     // Wait for response
     client.wait_for_response();

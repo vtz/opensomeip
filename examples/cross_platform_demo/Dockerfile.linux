@@ -1,0 +1,33 @@
+FROM ubuntu:22.04 AS build
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    build-essential cmake ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+COPY . .
+
+# Ensure a clean build directory (in case host build artifacts were copied)
+RUN rm -rf /workspace/build && \
+    cmake -S . -B /workspace/build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_EXAMPLES=ON \
+    -DBUILD_TESTS=OFF && \
+    cmake --build /workspace/build --target hello_world_server -- -j"$(nproc)"
+
+FROM ubuntu:22.04
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /home/app
+COPY --from=build /workspace/build/bin/hello_world_server /home/app/hello_world_server
+
+ENV HELLO_BIND_HOST=0.0.0.0
+ENV HELLO_BIND_PORT=30490
+EXPOSE 30490/udp 30490/tcp
+
+USER 1000
+CMD ["./hello_world_server"]
+

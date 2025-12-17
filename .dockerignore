@@ -1,0 +1,21 @@
+# Exclude local build outputs and VCS/cache noise from Docker context
+build/
+cmake-build-*/
+out/
+dist/
+.git/
+.gitignore
+.gitmodules
+.DS_Store
+*.swp
+*.swo
+*.tmp
+*.log
+**/CMakeFiles/
+**/CMakeCache.txt
+**/Testing/
+**/.cache/
+**/.pytest_cache/
+**/__pycache__/
+**/*.pyc
+
