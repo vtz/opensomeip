@@ -8,11 +8,10 @@
       "extensions": [
         "ms-vscode.cpptools",
         "ms-vscode.cmake-tools",
-        "llvm-vs-code-extensions.vscode-clangd",
-        "twxs.cmake"
+        "llvm-vs-code-extensions.vscode-clangd"
       ]
     }
   },
 
-  "postCreateCommand": "set -e; if [ ! -d opensomeip ]; then git clone https://github.com/vtz/opensomeip.git; fi; cmake -S opensomeip -B opensomeip/build -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTS=OFF; cmake --build opensomeip/build -j"
+  "postCreateCommand": "set -e && sudo apt-get update && if [ ! -d opensomeip ]; then git clone https://github.com/vtz/opensomeip.git; fi && cd opensomeip && chmod +x ./scripts/setup_deps.sh ./scripts/install_dev_tools.sh && sudo ./scripts/setup_deps.sh && sudo ./scripts/install_dev_tools.sh --devcontainer && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON && cmake --build . -j"
 }
