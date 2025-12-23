@@ -147,6 +147,62 @@ bool UdpTransport::is_running() const {
     return running_;
 }
 
+Result UdpTransport::join_multicast_group(const std::string& multicast_address) {
+    std::scoped_lock lock(socket_mutex_);
+
+    if (socket_fd_ < 0) {
+        return Result::NOT_CONNECTED;
+    }
+
+    if (!is_multicast_address(multicast_address)) {
+        return Result::INVALID_ENDPOINT;
+    }
+
+    struct ip_mreq mreq;
+    mreq.imr_multiaddr.s_addr = inet_addr(multicast_address.c_str());
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+
+    if (setsockopt(socket_fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+        return Result::NETWORK_ERROR;
+    }
+
+    // Enable multicast loopback for local testing
+    int loop = 1;
+    if (setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop)) < 0) {
+        // Not critical, continue
+    }
+
+    // Set multicast TTL (default is 1, which is usually fine)
+    int ttl = 1;
+    if (setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0) {
+        // Not critical, continue
+    }
+
+    return Result::SUCCESS;
+}
+
+Result UdpTransport::leave_multicast_group(const std::string& multicast_address) {
+    std::scoped_lock lock(socket_mutex_);
+
+    if (socket_fd_ < 0) {
+        return Result::NOT_CONNECTED;
+    }
+
+    if (!is_multicast_address(multicast_address)) {
+        return Result::INVALID_ENDPOINT;
+    }
+
+    struct ip_mreq mreq;
+    mreq.imr_multiaddr.s_addr = inet_addr(multicast_address.c_str());
+    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+
+    if (setsockopt(socket_fd_, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+        return Result::NETWORK_ERROR;
+    }
+
+    return Result::SUCCESS;
+}
+
 Result UdpTransport::create_socket() {
     std::scoped_lock lock(socket_mutex_);
 

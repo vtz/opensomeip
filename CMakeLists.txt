@@ -26,6 +26,7 @@ include(FetchContent)
 option(SAFETY_LEVEL "Safety level (ASIL_A, ASIL_B, ASIL_C, ASIL_D)" "ASIL_B")
 option(BUILD_TESTS "Build test executables" ON)
 option(BUILD_EXAMPLES "Build example programs" ON)
+option(BUILD_VSOMEIP_INTEROP "Build vsomeip interoperability examples (requires vsomeip3 and Boost)" OFF)
 option(BUILD_TOOLS "Build development tools (reserved for future use)" OFF)
 option(COVERAGE "Enable code coverage reporting" OFF)
 

@@ -11,5 +11,10 @@ add_subdirectory(advanced/complex_types)
 add_subdirectory(advanced/large_messages)
 add_subdirectory(advanced/multi_service)
 
+# Interoperability Testing (requires vsomeip3 and Boost - off by default)
+if(BUILD_VSOMEIP_INTEROP)
+    add_subdirectory(vsomeip_interop)
+endif()
+
 # All examples have been migrated to hierarchical structure
 # Legacy examples removed - use basic/ and advanced/ subdirectories

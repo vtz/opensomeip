@@ -146,6 +146,10 @@ public:
     uint16_t get_port() const { return port_; }
     void set_port(uint16_t port) { port_ = port; }
 
+    // Helper methods
+    void set_ipv4_address_from_string(const std::string& ip_address);
+    std::string get_ipv4_address_string() const;
+
     std::vector<uint8_t> serialize() const override;
     bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
 

@@ -14,6 +14,8 @@
 #include "sd/sd_message.h"
 #include "serialization/serializer.h"
 #include <algorithm>
+#include <arpa/inet.h>
+#include <iostream>
 
 namespace someip {
 namespace sd {
@@ -155,15 +157,15 @@ bool EventGroupEntry::deserialize(const std::vector<uint8_t>& data, size_t& offs
 std::vector<uint8_t> SdOption::serialize() const {
     std::vector<uint8_t> data;
 
+    // Length (2 bytes)
+    data.push_back((length_ >> 8) & 0xFF);
+    data.push_back(length_ & 0xFF);
+
     // Type (1 byte)
     data.push_back(static_cast<uint8_t>(type_));
 
     // Reserved (1 byte)
     data.push_back(0);
-
-    // Length (2 bytes)
-    data.push_back((length_ >> 8) & 0xFF);
-    data.push_back(length_ & 0xFF);
 
     return data;
 }
@@ -173,11 +175,11 @@ bool SdOption::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
         return false;
     }
 
-    type_ = static_cast<OptionType>(data[offset++]);
-    offset++;  // Skip reserved byte
-
     length_ = (data[offset] << 8) | data[offset + 1];
     offset += 2;
+
+    type_ = static_cast<OptionType>(data[offset++]);
+    offset++;  // Skip reserved byte
 
     return true;
 }
@@ -186,7 +188,8 @@ bool SdOption::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
 std::vector<uint8_t> IPv4EndpointOption::serialize() const {
     std::vector<uint8_t> data = SdOption::serialize();
 
-    // IPv4 Address (4 bytes)
+    // IPv4 Address (4 bytes, network byte order)
+    // ipv4_address_ is already in network byte order
     data.push_back((ipv4_address_ >> 24) & 0xFF);
     data.push_back((ipv4_address_ >> 16) & 0xFF);
     data.push_back((ipv4_address_ >> 8) & 0xFF);
@@ -198,14 +201,15 @@ std::vector<uint8_t> IPv4EndpointOption::serialize() const {
     // Protocol (1 byte)
     data.push_back(protocol_);
 
-    // Port (2 bytes)
-    data.push_back((port_ >> 8) & 0xFF);
-    data.push_back(port_ & 0xFF);
+    // Port (2 bytes, network byte order)
+    uint16_t network_port = htons(port_);
+    data.push_back((network_port >> 8) & 0xFF);
+    data.push_back(network_port & 0xFF);
 
-    // Update length (9 bytes: 4 address + 1 reserved + 1 protocol + 2 port + 1 base reserved)
-    uint16_t length = 9;
-    data[2] = (length >> 8) & 0xFF;
-    data[3] = length & 0xFF;
+    // Update length (8 bytes of data after the option header)
+    uint16_t length = 8;
+    data[0] = (length >> 8) & 0xFF;
+    data[1] = length & 0xFF;
 
     return data;
 }
@@ -219,14 +223,41 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
         return false;
     }
 
+    // IPv4 Address (4 bytes, network byte order)
     ipv4_address_ = (data[offset] << 24) | (data[offset + 1] << 16) |
                    (data[offset + 2] << 8) | data[offset + 3];
-    offset += 5;  // Skip address + reserved
+    offset += 4;
+
+    // Skip reserved byte
+    offset++;
+
+    // Protocol (1 byte)
     protocol_ = data[offset++];
-    port_ = (data[offset] << 8) | data[offset + 1];
+
+    // Port (2 bytes, network byte order)
+    uint16_t network_port = (data[offset] << 8) | data[offset + 1];
+    port_ = ntohs(network_port);
     offset += 2;
 
     return true;
+}
+
+void IPv4EndpointOption::set_ipv4_address_from_string(const std::string& ip_address) {
+    struct in_addr addr;
+    if (inet_pton(AF_INET, ip_address.c_str(), &addr) == 1) {
+        // inet_pton gives us network byte order, store as-is
+        ipv4_address_ = addr.s_addr;
+    } else {
+        ipv4_address_ = 0;
+    }
+}
+
+std::string IPv4EndpointOption::get_ipv4_address_string() const {
+    char buffer[INET_ADDRSTRLEN];
+    struct in_addr addr;
+    addr.s_addr = ipv4_address_;  // Already in network byte order
+    inet_ntop(AF_INET, &addr, buffer, sizeof(buffer));
+    return buffer;
 }
 
 // IPv4MulticastOption implementation
@@ -342,56 +373,70 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
         return false;
     }
 
-    // Parse entries and options
-    size_t entries_options_length = length;
+    // Parse entries and options until we consume all data
+    size_t max_iterations = 100; // Prevent infinite loops
+    size_t iteration = 0;
 
-    while (entries_options_length > 0) {
-        if (offset + 1 > data.size()) {
-            return false; // Not enough data for entry header
-        }
+    while (offset < 8 + length && offset < data.size() && iteration < max_iterations) {
+        iteration++;
 
-        uint8_t entry_type = data[offset];
-        EntryType type = static_cast<EntryType>(entry_type);
+        uint8_t type_byte = data[offset];
 
-        // Determine entry type and create appropriate entry
-        std::unique_ptr<SdEntry> entry;
+        // Check if this is an entry (entries come first in SOME/IP SD)
+        EntryType entry_type = static_cast<EntryType>(type_byte);
+        uint8_t raw_entry_type = static_cast<uint8_t>(entry_type);
 
-        // Entry types 0x00-0x01 are service entries
-        // Entry types 0x06-0x07 are eventgroup entries
-        uint8_t raw_type = static_cast<uint8_t>(type);
-        
-        if (raw_type == 0x00 || raw_type == 0x01) {
-            // FIND_SERVICE or OFFER_SERVICE
-            entry = std::make_unique<ServiceEntry>();
-        } else if (raw_type == 0x06 || raw_type == 0x07) {
-            // SUBSCRIBE_EVENTGROUP or SUBSCRIBE_EVENTGROUP_ACK/NACK
-            entry = std::make_unique<EventGroupEntry>();
-        } else {
-            // Unknown entry type, skip it
-            offset++;
-            if (entries_options_length > 0) {
-                entries_options_length--;
+        if (raw_entry_type == 0x00 || raw_entry_type == 0x01 ||
+            raw_entry_type == 0x06 || raw_entry_type == 0x07) {
+
+            // This is an entry
+            std::unique_ptr<SdEntry> entry;
+
+            if (raw_entry_type == 0x00 || raw_entry_type == 0x01) {
+                entry = std::make_unique<ServiceEntry>();
+            } else if (raw_entry_type == 0x06 || raw_entry_type == 0x07) {
+                entry = std::make_unique<EventGroupEntry>();
             }
-            continue;
-        }
 
-        if (entry && entry->deserialize(data, offset)) {
+            if (!entry || !entry->deserialize(data, offset)) {
+                return false; // Failed to parse entry
+            }
+
             entries_.push_back(std::move(entry));
-            // Update remaining length based on current offset
-            if (offset >= 8) {
-                size_t parsed_length = offset - 8;  // Subtract header size
-                if (parsed_length <= length) {
-                    entries_options_length = length - parsed_length;
-                } else {
-                    entries_options_length = 0;
-                }
-            } else {
-                entries_options_length = 0;
-            }
+
         } else {
-            // Failed to parse entry, stop parsing
-            return false;
+            // This should be an option
+            OptionType option_type = static_cast<OptionType>(type_byte);
+            std::unique_ptr<SdOption> option;
+
+            if (option_type == OptionType::IPV4_ENDPOINT) {
+                option = std::make_unique<IPv4EndpointOption>();
+            } else if (option_type == OptionType::IPV4_MULTICAST) {
+                option = std::make_unique<IPv4MulticastOption>();
+            } else {
+                // Unknown option type - try to skip it
+                if (offset + 4 > data.size()) {
+                    return false;
+                }
+                uint16_t option_length = (data[offset] << 8) | data[offset + 1];
+                if (offset + 4 + option_length > data.size()) {
+                    return false;
+                }
+                offset += 4 + option_length;
+                continue;
+            }
+
+            if (!option || !option->deserialize(data, offset)) {
+                return false; // Failed to parse option
+            }
+
+            options_.push_back(std::move(option));
         }
+    }
+
+    // Check if we consumed all expected data
+    if (offset != 8 + length) {
+        return false; // Didn't consume all data or overran
     }
 
     return true;

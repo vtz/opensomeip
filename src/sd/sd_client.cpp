@@ -165,8 +165,15 @@ public:
 
         // Add IPv4 endpoint option (client's unicast address)
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
-        // TODO: Set actual endpoint information
+        endpoint_option->set_ipv4_address_from_string(config_.unicast_address);
+        endpoint_option->set_port(transport_->get_local_endpoint().get_port());
+        endpoint_option->set_protocol(0x11);  // UDP
         sd_message.add_option(std::move(endpoint_option));
+
+        // Set option index in entry
+        if (auto* entry = dynamic_cast<EventGroupEntry*>(sd_message.get_entries()[0].get())) {
+            entry->set_index1(0);  // Reference first option
+        }
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
@@ -241,13 +248,20 @@ private:
     };
 
     bool join_multicast_group() {
-        // TODO: Implement multicast group joining
-        // This would typically involve setting socket options
-        return true;
+        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
+        if (!udp_transport) {
+            return false;
+        }
+
+        // Use standard SOME/IP SD multicast address
+        return udp_transport->join_multicast_group("224.224.224.245") == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
-        // TODO: Implement multicast group leaving
+        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
+        if (udp_transport) {
+            udp_transport->leave_multicast_group("224.224.224.245");
+        }
     }
 
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
@@ -286,7 +300,7 @@ private:
                     if (entry->get_ttl() == 0) {
                         handle_service_stop_offer(*static_cast<const ServiceEntry*>(entry.get()));
                     } else {
-                        handle_service_offer(*static_cast<const ServiceEntry*>(entry.get()));
+                        handle_service_offer(*static_cast<const ServiceEntry*>(entry.get()), message);
                     }
                     break;
                 default:
@@ -296,7 +310,7 @@ private:
         }
     }
 
-    void handle_service_offer(const ServiceEntry& entry) {
+    void handle_service_offer(const ServiceEntry& entry, const SdMessage& message) {
         ServiceInstance instance;
         instance.service_id = entry.get_service_id();
         instance.instance_id = entry.get_instance_id();
@@ -304,7 +318,21 @@ private:
         instance.minor_version = 0;  // Not in basic offer
         instance.ttl_seconds = entry.get_ttl();
 
-        // TODO: Extract endpoint information from options
+        // Extract endpoint information from options
+        const auto& options = message.get_options();
+        uint8_t index1 = entry.get_index1();
+        uint8_t run1 = entry.get_index1() ? 1 : 0;  // Simple case: check if index1 is set
+
+        for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
+            const auto& option = options[index1 + i];
+            if (option->get_type() == OptionType::IPV4_ENDPOINT) {
+                auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
+                instance.ip_address = ep->get_ipv4_address_string();
+                instance.port = ep->get_port();
+                instance.protocol = ep->get_protocol();
+                break;  // Found the endpoint option
+            }
+        }
 
         // Update available services
         {

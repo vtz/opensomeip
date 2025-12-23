@@ -56,6 +56,10 @@ public:
     Result stop() override;
     bool is_running() const override;
 
+    // Multicast support
+    Result join_multicast_group(const std::string& multicast_address);
+    Result leave_multicast_group(const std::string& multicast_address);
+
 private:
     Endpoint local_endpoint_;
     int socket_fd_{-1};

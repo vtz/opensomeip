@@ -1,0 +1,19 @@
+# Minimal raw SOME/IP tools for protocol interop testing
+# No external dependencies - pure C
+
+FROM ubuntu:22.04 AS builder
+
+RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY raw_someip_server.c raw_someip_client.c ./
+RUN gcc -O2 -Wall -o raw_someip_server raw_someip_server.c && \
+    gcc -O2 -Wall -o raw_someip_client raw_someip_client.c
+
+FROM ubuntu:22.04
+
+COPY --from=builder /build/raw_someip_server /build/raw_someip_client /usr/local/bin/
+
+EXPOSE 30509/udp
+
+CMD ["raw_someip_server"]

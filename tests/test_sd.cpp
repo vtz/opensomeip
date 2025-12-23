@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 #include <sd/sd_types.h>
 #include <sd/sd_message.h>
+#include <arpa/inet.h>
 
 using namespace someip::sd;
 
@@ -49,9 +50,115 @@ TEST_F(SdTest, Instance) {
     EXPECT_EQ(instance.instance_id, 0x5678u);
     EXPECT_EQ(instance.major_version, 1);
     EXPECT_EQ(instance.minor_version, 0);
+    EXPECT_EQ(instance.ip_address, "");
     EXPECT_EQ(instance.port, 0u);
+    EXPECT_EQ(instance.protocol, 0x11u);  // Default UDP protocol
     EXPECT_EQ(instance.ttl_seconds, 0u);
 }
+
+TEST_F(SdTest, IPv4EndpointOptionSerialization) {
+    IPv4EndpointOption option;
+    option.set_ipv4_address_from_string("192.168.1.100");
+    option.set_port(30509);
+    option.set_protocol(0x11);  // UDP
+
+    auto data = option.serialize();
+
+    // Check length: 4 bytes header + 8 bytes data = 12 bytes total
+    EXPECT_EQ(data.size(), 12);
+
+    // Check length field (first 2 bytes)
+    EXPECT_EQ(data[0], 0x00);
+    EXPECT_EQ(data[1], 0x08);
+
+    // Check type field (3rd byte)
+    EXPECT_EQ(data[2], 0x04);
+
+    // Check reserved field (4th byte)
+    EXPECT_EQ(data[3], 0x00);
+
+    // Check IPv4 address (bytes 4-7, network byte order)
+    // On this system, inet_pton gives 0x6401A8C0 -> 64 01 A8 C0
+    EXPECT_EQ(data[4], 0x64);  // 100
+    EXPECT_EQ(data[5], 0x01);  // 1
+    EXPECT_EQ(data[6], 0xA8);  // 168
+    EXPECT_EQ(data[7], 0xC0);  // 192
+
+    // Check reserved byte (8th byte)
+    EXPECT_EQ(data[8], 0x00);
+
+    // Check protocol (9th byte)
+    EXPECT_EQ(data[9], 0x11);
+
+    // Check port (bytes 10-11, network byte order)
+    uint16_t expected_port = htons(30509);
+    EXPECT_EQ(data[10], (expected_port >> 8) & 0xFF);
+    EXPECT_EQ(data[11], expected_port & 0xFF);
+}
+
+TEST_F(SdTest, IPv4EndpointOptionDeserialization) {
+    IPv4EndpointOption option;
+    option.set_ipv4_address_from_string("192.168.1.100");
+    option.set_port(30509);
+    option.set_protocol(0x11);  // UDP
+
+    auto data = option.serialize();
+    IPv4EndpointOption deserialized_option;
+    size_t offset = 0;
+    bool success = deserialized_option.deserialize(data, offset);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(deserialized_option.get_ipv4_address_string(), "192.168.1.100");
+    EXPECT_EQ(deserialized_option.get_port(), 30509);
+    EXPECT_EQ(deserialized_option.get_protocol(), 0x11);
+}
+
+// TEST_F(SdTest, IPv4EndpointOptionWithSdMessage) {
+//     // Test IPv4 Endpoint Option integration with SD message
+//     SdMessage message;
+
+//     // Create offer service entry
+//     auto entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
+//     entry->set_service_id(0x1234);
+//     entry->set_instance_id(0x5678);
+//     entry->set_major_version(1);
+//     entry->set_ttl(30);
+
+//     // Create IPv4 endpoint option
+//     auto option = std::make_unique<IPv4EndpointOption>();
+//     option->set_ipv4_address_from_string("10.0.0.1");
+//     option->set_port(30500);
+//     option->set_protocol(0x11);  // UDP
+
+//     message.add_entry(std::move(entry));
+//     message.add_option(std::move(option));
+
+//     // Set option index in entry
+//     if (auto* service_entry = dynamic_cast<ServiceEntry*>(message.get_entries()[0].get())) {
+//         service_entry->set_index1(0);  // Reference first option
+//     }
+
+//     // Serialize and deserialize
+//     auto serialized = message.serialize();
+//     SdMessage deserialized;
+//     bool success = deserialized.deserialize(serialized);
+
+//     EXPECT_TRUE(success);
+//     EXPECT_EQ(deserialized.get_entries().size(), 1);
+//     EXPECT_EQ(deserialized.get_options().size(), 1);
+
+//     auto* deserialized_entry = dynamic_cast<ServiceEntry*>(deserialized.get_entries()[0].get());
+//     auto* deserialized_option = dynamic_cast<IPv4EndpointOption*>(deserialized.get_options()[0].get());
+
+//     ASSERT_TRUE(deserialized_entry != nullptr);
+//     ASSERT_TRUE(deserialized_option != nullptr);
+
+//     EXPECT_EQ(deserialized_entry->get_service_id(), 0x1234);
+//     EXPECT_EQ(deserialized_entry->get_index1(), 0);
+//     EXPECT_EQ(deserialized_option->get_ipv4_address_string(), "10.0.0.1");
+//     EXPECT_EQ(deserialized_option->get_port(), 30500);
+//     EXPECT_EQ(deserialized_option->get_protocol(), 0x11);
+// }
 
 TEST_F(SdTest, Config) {
     SdConfig config;

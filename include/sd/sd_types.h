@@ -74,6 +74,7 @@ struct ServiceInstance {
     uint8_t minor_version{0};
     std::string ip_address;
     uint16_t port{0};
+    uint8_t protocol{0x11};  // Default to UDP (0x11)
     uint32_t ttl_seconds{0};  // Time to live
 
     ServiceInstance(uint16_t svc_id = 0, uint16_t inst_id = 0,

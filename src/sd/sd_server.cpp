@@ -23,6 +23,7 @@
 #include <thread>
 #include <chrono>
 #include <algorithm>
+#include <arpa/inet.h>
 
 namespace someip {
 namespace sd {
@@ -173,12 +174,40 @@ public:
         SdMessage response_message;
         response_message.add_entry(std::move(response_entry));
 
-        // TODO: Add endpoint option for the service
+        // Add IPv4 multicast option (spec requires multicast option for ACK)
+        auto multicast_option = std::make_unique<IPv4MulticastOption>();
+        // Convert multicast address to network byte order
+        in_addr_t multicast_addr = inet_addr(config_.multicast_address.c_str());
+        multicast_option->set_ipv4_address(multicast_addr);
+        multicast_option->set_port(htons(config_.multicast_port));
+        response_message.add_option(std::move(multicast_option));
+
+        // Set option index in entry
+        if (auto* entry = dynamic_cast<EventGroupEntry*>(response_message.get_entries()[0].get())) {
+            entry->set_index1(0);  // Reference first option
+        }
 
         // Send unicast response to client
-        // TODO: Parse client_address and create endpoint
+        // Parse client_address (format: "ip:port" or just "ip")
+        size_t colon_pos = client_address.find(':');
+        std::string client_ip = client_address;
+        uint16_t client_port = config_.unicast_port;  // Default to our unicast port
 
-        return true;  // Simplified - assume success
+        if (colon_pos != std::string::npos) {
+            client_ip = client_address.substr(0, colon_pos);
+            client_port = static_cast<uint16_t>(std::stoi(client_address.substr(colon_pos + 1)));
+        }
+
+        transport::Endpoint client_endpoint(client_ip, client_port);
+
+        // Create SOME/IP message for SD
+        Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
+                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        someip_message.set_payload(response_message.serialize());
+
+        // Send the ACK message
+        Result result = transport_->send_message(someip_message, client_endpoint);
+        return result == Result::SUCCESS;
     }
 
     std::vector<ServiceInstance> get_offered_services() const {
@@ -210,12 +239,20 @@ private:
     };
 
     bool join_multicast_group() {
-        // TODO: Implement multicast group joining
-        return true;
+        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
+        if (!udp_transport) {
+            return false;
+        }
+
+        // Use standard SOME/IP SD multicast address
+        return udp_transport->join_multicast_group("224.224.224.245") == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
-        // TODO: Implement multicast group leaving
+        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
+        if (udp_transport) {
+            udp_transport->leave_multicast_group("224.224.224.245");
+        }
     }
 
     void start_offer_timer() {
@@ -286,8 +323,26 @@ private:
 
         // Add IPv4 endpoint option
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
-        // TODO: Parse and set actual endpoint information
+
+        // Parse unicast endpoint (format: "ip:port")
+        size_t colon_pos = service.unicast_endpoint.find(':');
+        if (colon_pos != std::string::npos) {
+            std::string ip_str = service.unicast_endpoint.substr(0, colon_pos);
+            std::string port_str = service.unicast_endpoint.substr(colon_pos + 1);
+
+            endpoint_option->set_ipv4_address_from_string(ip_str);
+            endpoint_option->set_port(static_cast<uint16_t>(std::stoi(port_str)));
+            // Use UDP as default protocol for SOME/IP SD
+            endpoint_option->set_protocol(0x11);  // UDP
+        }
+
         sd_message.add_option(std::move(endpoint_option));
+
+        // Set option index in the entry (first option, so index 0)
+        if (auto* entry = dynamic_cast<ServiceEntry*>(sd_message.get_entries()[0].get())) {
+            entry->set_index1(0);  // Reference first option
+            entry->set_index2(0);  // No second option
+        }
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
@@ -362,7 +417,7 @@ private:
                     break;
                 case EntryType::SUBSCRIBE_EVENTGROUP:
                     handle_eventgroup_subscription_request(
-                        *static_cast<const EventGroupEntry*>(entry.get()), sender);
+                        *static_cast<const EventGroupEntry*>(entry.get()), message, sender);
                     break;
                 default:
                     // Other entry types not handled by server
@@ -388,7 +443,27 @@ private:
     }
 
     void handle_eventgroup_subscription_request(const EventGroupEntry& subscription_entry,
+                                               const SdMessage& message,
                                                const transport::Endpoint& sender) {
+        // Extract client endpoint from options
+        std::string client_ip = sender.get_address();
+        uint16_t client_port = sender.get_port();
+        uint8_t client_protocol = 0x11;  // Default to UDP
+
+        // Check if entry references an endpoint option
+        uint8_t index1 = subscription_entry.get_index1();
+        const auto& options = message.get_options();
+
+        if (index1 < options.size()) {
+            const auto& option = options[index1];
+            if (option->get_type() == OptionType::IPV4_ENDPOINT) {
+                auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
+                client_ip = ep->get_ipv4_address_string();
+                client_port = ep->get_port();
+                client_protocol = ep->get_protocol();
+            }
+        }
+
         // TODO: Validate service and event group
         // For now, acknowledge all subscription requests
 
@@ -396,7 +471,7 @@ private:
             subscription_entry.get_service_id(),
             subscription_entry.get_instance_id(),
             subscription_entry.get_eventgroup_id(),
-            "",  // TODO: Extract client address from sender
+            client_ip + ":" + std::to_string(client_port),  // Pass full endpoint
             true  // Acknowledge
         );
     }
@@ -415,8 +490,26 @@ private:
 
         // Add IPv4 endpoint option
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
-        // TODO: Set actual endpoint information
+
+        // Parse unicast endpoint (format: "ip:port")
+        size_t colon_pos = service.unicast_endpoint.find(':');
+        if (colon_pos != std::string::npos) {
+            std::string ip_str = service.unicast_endpoint.substr(0, colon_pos);
+            std::string port_str = service.unicast_endpoint.substr(colon_pos + 1);
+
+            endpoint_option->set_ipv4_address_from_string(ip_str);
+            endpoint_option->set_port(static_cast<uint16_t>(std::stoi(port_str)));
+            // Use UDP as default protocol for SOME/IP SD
+            endpoint_option->set_protocol(0x11);  // UDP
+        }
+
         sd_message.add_option(std::move(endpoint_option));
+
+        // Set option index in the entry (first option, so index 0)
+        if (auto* entry = dynamic_cast<ServiceEntry*>(sd_message.get_entries()[0].get())) {
+            entry->set_index1(0);  // Reference first option
+            entry->set_index2(0);  // No second option
+        }
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
