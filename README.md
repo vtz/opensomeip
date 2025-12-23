@@ -44,6 +44,12 @@ This project provides a complete, standards-compliant C++ implementation of the 
 - Specification traceability is maintained in `TRACEABILITY_*` documents
 - Safety alignment work is ongoing; not certified
 
+## Version
+
+**Current Version**: 0.0.1
+
+This project uses [Semantic Versioning](https://semver.org/). See [VERSION.md](VERSION.md) for details on version management.
+
 ## Quick Start
 
 ### Prerequisites

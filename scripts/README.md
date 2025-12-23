@@ -29,6 +29,10 @@ This directory contains utility scripts for development, testing, and maintenanc
 - **`run_tests.py`**: Advanced test runner with multiple report formats
 - **`add_copyright_headers.sh`**: Apply MIT license headers to source files
 
+### Version Management
+- **`bump_version.sh`**: Bump project version following semantic versioning
+- **`bump_submodule.sh`**: Update git submodules to latest commits
+
 ### Python Testing
 - **`run_tests.py`**: Python test runner (in tests/python/)
 
@@ -53,6 +57,30 @@ This directory contains utility scripts for development, testing, and maintenanc
 
 # Clean rebuild with all checks
 ./scripts/run_tests.py --clean --rebuild --static-analysis --coverage --format-code
+```
+
+### Version Management
+```bash
+# Bump patch version (e.g., 1.2.3 -> 1.2.4)
+./scripts/bump_version.sh patch
+
+# Bump minor version (e.g., 1.2.3 -> 1.3.0)
+./scripts/bump_version.sh minor
+
+# Bump major version (e.g., 1.2.3 -> 2.0.0)
+./scripts/bump_version.sh major
+
+# Set specific version
+./scripts/bump_version.sh 2.1.0
+
+# Update all submodules to latest main
+./scripts/bump_submodule.sh
+
+# Update specific submodule to latest
+./scripts/bump_submodule.sh open-someip-spec
+
+# Update submodule to specific tag/commit
+./scripts/bump_submodule.sh open-someip-spec v1.2.3
 ```
 
 ### Maintenance
@@ -99,6 +127,20 @@ This directory contains utility scripts for development, testing, and maintenanc
 - **Batch Processing**: Handles all C++/Python files
 - **Smart Detection**: Skips files that already have headers
 - **Include Guards**: Adds proper C++ header guards
+
+### bump_version.sh
+**Purpose**: Semantic version management for the project
+- **Semantic Versioning**: Follows MAJOR.MINOR.PATCH format
+- **Multiple Bump Types**: patch, minor, major version increments
+- **Specific Versions**: Set any valid semantic version directly
+- **Validation**: Ensures version format compliance
+
+### bump_submodule.sh
+**Purpose**: Update git submodules to latest commits or specific targets
+- **Flexible Targeting**: Update to branches, tags, or commit hashes
+- **Batch Updates**: Update all submodules or specific ones
+- **Safe Operations**: Preserves working directory state
+- **Commit Guidance**: Suggests appropriate commit messages
 
 ## Development Workflow
 

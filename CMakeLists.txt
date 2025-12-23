@@ -12,7 +12,12 @@
 ################################################################################
 
 cmake_minimum_required(VERSION 3.20)
-project(someip-stack VERSION 1.0.0 LANGUAGES CXX)
+
+# Read version from VERSION file
+file(READ "${CMAKE_SOURCE_DIR}/VERSION" PROJECT_VERSION)
+string(STRIP "${PROJECT_VERSION}" PROJECT_VERSION)
+
+project(someip-stack VERSION ${PROJECT_VERSION} LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
