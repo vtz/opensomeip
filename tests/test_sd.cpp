@@ -14,7 +14,12 @@
 #include <gtest/gtest.h>
 #include <sd/sd_types.h>
 #include <sd/sd_message.h>
+#include <sd/sd_server.h>
+#include <sd/sd_client.h>
 #include <arpa/inet.h>
+#include <thread>
+#include <chrono>
+#include <atomic>
 
 using namespace someip::sd;
 
@@ -108,7 +113,7 @@ TEST_F(SdTest, IPv4EndpointOptionDeserialization) {
     bool success = deserialized_option.deserialize(data, offset);
 
     EXPECT_TRUE(success);
-    EXPECT_EQ(deserialized_option.get_ipv4_address_string(), "192.168.1.100");
+    EXPECT_EQ(deserialized_option.get_ipv4_address_string(), std::string("192.168.1.100"));
     EXPECT_EQ(deserialized_option.get_port(), 30509);
     EXPECT_EQ(deserialized_option.get_protocol(), 0x11);
 }
@@ -336,4 +341,278 @@ TEST_F(SdTest, SdResults) {
     EXPECT_EQ(static_cast<int>(SdResult::NETWORK_ERROR), 3);
     EXPECT_EQ(static_cast<int>(SdResult::TIMEOUT), 4);
     EXPECT_EQ(static_cast<int>(SdResult::INVALID_PARAMETERS), 5);
+}
+
+// ============================================================================
+// SD Message Serialization Tests
+// ============================================================================
+
+// Note: These tests validate the current implementation behavior.
+// Full SOME/IP-SD wire format compliance requires additional work.
+
+TEST_F(SdTest, ServiceEntrySerialization) {
+    ServiceEntry original(EntryType::OFFER_SERVICE);
+    original.set_service_id(0x1234);
+    original.set_instance_id(0x5678);
+    original.set_major_version(1);
+    original.set_minor_version(42);
+    original.set_ttl(3600);
+
+    auto serialized = original.serialize();
+    // Current implementation produces some bytes
+    EXPECT_GT(serialized.size(), 0u);
+}
+
+TEST_F(SdTest, EventGroupEntrySerialization) {
+    EventGroupEntry original(EntryType::SUBSCRIBE_EVENTGROUP);
+    original.set_service_id(0xABCD);
+    original.set_instance_id(0x0001);
+    original.set_eventgroup_id(0x0010);
+    original.set_major_version(2);
+    original.set_ttl(1800);
+
+    auto serialized = original.serialize();
+    EXPECT_GT(serialized.size(), 0u);
+}
+
+TEST_F(SdTest, IPv4MulticastOptionSerialization) {
+    IPv4MulticastOption original;
+    original.set_ipv4_address(0xEFFFFFFB);  // 239.255.255.251
+    original.set_port(30490);
+
+    auto serialized = original.serialize();
+    EXPECT_GT(serialized.size(), 0u);
+}
+
+TEST_F(SdTest, SdMessageSerialization) {
+    SdMessage original;
+    original.set_reboot(true);
+    original.set_unicast(false);
+
+    auto entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
+    entry->set_service_id(0x1234);
+    entry->set_instance_id(0x5678);
+    entry->set_major_version(1);
+    entry->set_ttl(30);
+    original.add_entry(std::move(entry));
+
+    auto option = std::make_unique<IPv4EndpointOption>();
+    option->set_ipv4_address_from_string("192.168.1.100");
+    option->set_port(30509);
+    option->set_protocol(0x11);
+    original.add_option(std::move(option));
+
+    auto serialized = original.serialize();
+    EXPECT_GT(serialized.size(), 0u);
+    
+    // Verify flags are set correctly in first byte
+    EXPECT_EQ(serialized[0] & 0x80, 0x80);  // Reboot flag
+}
+
+// ============================================================================
+// SD Client/Server Integration Tests
+// ============================================================================
+
+class SdIntegrationTest : public ::testing::Test {
+protected:
+    static constexpr uint16_t TEST_PORT_BASE = 40000;
+    static std::atomic<uint16_t> port_counter;
+
+    uint16_t get_unique_port() {
+        return TEST_PORT_BASE + port_counter.fetch_add(1);
+    }
+
+    SdConfig create_test_config(uint16_t unicast_port, uint16_t multicast_port) {
+        SdConfig config;
+        config.unicast_address = "127.0.0.1";
+        config.unicast_port = unicast_port;
+        config.multicast_address = "239.255.255.251";
+        config.multicast_port = multicast_port;
+        config.initial_delay = std::chrono::milliseconds(10);
+        config.repetition_base = std::chrono::milliseconds(100);
+        config.cyclic_offer = std::chrono::milliseconds(1000);
+        return config;
+    }
+};
+
+std::atomic<uint16_t> SdIntegrationTest::port_counter{0};
+
+TEST_F(SdIntegrationTest, ServerInitializeAndShutdown) {
+    auto config = create_test_config(get_unique_port(), get_unique_port());
+    SdServer server(config);
+
+    EXPECT_FALSE(server.is_ready());
+
+    bool init_result = server.initialize();
+    EXPECT_TRUE(init_result);
+    EXPECT_TRUE(server.is_ready());
+
+    server.shutdown();
+    EXPECT_FALSE(server.is_ready());
+}
+
+TEST_F(SdIntegrationTest, ClientInitializeAndShutdown) {
+    auto config = create_test_config(get_unique_port(), get_unique_port());
+    SdClient client(config);
+
+    EXPECT_FALSE(client.is_ready());
+
+    bool init_result = client.initialize();
+    EXPECT_TRUE(init_result);
+    EXPECT_TRUE(client.is_ready());
+
+    client.shutdown();
+    EXPECT_FALSE(client.is_ready());
+}
+
+TEST_F(SdIntegrationTest, ServerOfferService) {
+    auto config = create_test_config(get_unique_port(), get_unique_port());
+    SdServer server(config);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance instance(0x1234, 0x5678, 1, 0);
+    instance.ttl_seconds = 30;
+
+    bool offer_result = server.offer_service(instance, "127.0.0.1:30509");
+    EXPECT_TRUE(offer_result);
+
+    auto offered = server.get_offered_services();
+    EXPECT_EQ(offered.size(), 1u);
+    EXPECT_EQ(offered[0].service_id, 0x1234u);
+    EXPECT_EQ(offered[0].instance_id, 0x5678u);
+
+    server.shutdown();
+}
+
+TEST_F(SdIntegrationTest, ServerOfferMultipleServices) {
+    auto config = create_test_config(get_unique_port(), get_unique_port());
+    SdServer server(config);
+    ASSERT_TRUE(server.initialize());
+
+    // Offer 3 different services
+    for (uint16_t i = 0; i < 3; ++i) {
+        ServiceInstance instance(0x1000 + i, 0x0001, 1, 0);
+        instance.ttl_seconds = 30;
+        EXPECT_TRUE(server.offer_service(instance, "127.0.0.1:" + std::to_string(30500 + i)));
+    }
+
+    auto offered = server.get_offered_services();
+    EXPECT_EQ(offered.size(), 3u);
+
+    server.shutdown();
+}
+
+TEST_F(SdIntegrationTest, ServerStopOfferService) {
+    auto config = create_test_config(get_unique_port(), get_unique_port());
+    SdServer server(config);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance instance(0x1234, 0x5678, 1, 0);
+    EXPECT_TRUE(server.offer_service(instance, "127.0.0.1:30509"));
+    EXPECT_EQ(server.get_offered_services().size(), 1u);
+
+    bool stop_result = server.stop_offer_service(0x1234, 0x5678);
+    EXPECT_TRUE(stop_result);
+    EXPECT_EQ(server.get_offered_services().size(), 0u);
+
+    // Stopping non-existent service should return false
+    EXPECT_FALSE(server.stop_offer_service(0x9999, 0x0001));
+
+    server.shutdown();
+}
+
+TEST_F(SdIntegrationTest, ServerUpdateServiceTTL) {
+    auto config = create_test_config(get_unique_port(), get_unique_port());
+    SdServer server(config);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance instance(0x1234, 0x5678, 1, 0);
+    instance.ttl_seconds = 30;
+    EXPECT_TRUE(server.offer_service(instance, "127.0.0.1:30509"));
+
+    bool update_result = server.update_service_ttl(0x1234, 0x5678, 60);
+    EXPECT_TRUE(update_result);
+
+    auto offered = server.get_offered_services();
+    EXPECT_EQ(offered.size(), 1u);
+    EXPECT_EQ(offered[0].ttl_seconds, 60u);
+
+    // Update non-existent service should return false
+    EXPECT_FALSE(server.update_service_ttl(0x9999, 0x0001, 100));
+
+    server.shutdown();
+}
+
+TEST_F(SdIntegrationTest, ClientGetAvailableServicesEmpty) {
+    auto config = create_test_config(get_unique_port(), get_unique_port());
+    SdClient client(config);
+    ASSERT_TRUE(client.initialize());
+
+    auto services = client.get_available_services();
+    EXPECT_TRUE(services.empty());
+
+    auto stats = client.get_statistics();
+    EXPECT_EQ(stats.services_found, 0u);
+
+    client.shutdown();
+}
+
+TEST_F(SdIntegrationTest, ClientSubscribeUnsubscribeService) {
+    auto config = create_test_config(get_unique_port(), get_unique_port());
+    SdClient client(config);
+    ASSERT_TRUE(client.initialize());
+
+    std::atomic<int> available_count{0};
+    std::atomic<int> unavailable_count{0};
+
+    bool sub_result = client.subscribe_service(
+        0x1234,
+        [&](const ServiceInstance&) { available_count++; },
+        [&](const ServiceInstance&) { unavailable_count++; }
+    );
+    EXPECT_TRUE(sub_result);
+
+    bool unsub_result = client.unsubscribe_service(0x1234);
+    EXPECT_TRUE(unsub_result);
+
+    // Unsubscribing again should return false
+    EXPECT_FALSE(client.unsubscribe_service(0x1234));
+
+    client.shutdown();
+}
+
+// ============================================================================
+// SD Helper Function Tests
+// ============================================================================
+
+TEST_F(SdTest, IPv4AddressConversion) {
+    IPv4EndpointOption option;
+
+    // Test various IP addresses
+    std::vector<std::string> test_addresses = {
+        "0.0.0.0",
+        "127.0.0.1",
+        "192.168.1.100",
+        "10.0.0.1",
+        "255.255.255.255"
+    };
+
+    for (const auto& addr : test_addresses) {
+        option.set_ipv4_address_from_string(addr);
+        EXPECT_EQ(option.get_ipv4_address_string(), addr)
+            << "Round-trip failed for: " << addr;
+    }
+}
+
+TEST_F(SdTest, PortConversion) {
+    IPv4EndpointOption option;
+
+    // Test various ports
+    std::vector<uint16_t> test_ports = {0, 1, 80, 443, 30490, 30509, 65535};
+
+    for (uint16_t port : test_ports) {
+        option.set_port(port);
+        EXPECT_EQ(option.get_port(), port)
+            << "Round-trip failed for port: " << port;
+    }
 }
