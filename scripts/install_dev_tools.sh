@@ -51,7 +51,32 @@ set -e
 echo "🔧 SOME/IP Stack - Development Tools Installation"
 echo "================================================"
 
-# Detect OS
+# ------------------------------------------------------------------------------
+# Args / mode handling
+# ------------------------------------------------------------------------------
+DEVCONTAINER_MODE=0
+NON_INTERACTIVE=0
+
+for arg in "$@"; do
+  case "$arg" in
+    --devcontainer)
+      DEVCONTAINER_MODE=1
+      NON_INTERACTIVE=1
+      ;;
+    --yes|-y)
+      NON_INTERACTIVE=1
+      ;;
+  esac
+done
+
+# Also treat CI as non-interactive
+if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
+  NON_INTERACTIVE=1
+fi
+
+# ------------------------------------------------------------------------------
+# Detect OS / package manager
+# ------------------------------------------------------------------------------
 if [[ "$OSTYPE" == "darwin"* ]]; then
     OS="macos"
     PACKAGE_MANAGER="brew"
@@ -94,14 +119,15 @@ install_system_packages() {
             case $PACKAGE_MANAGER in
                 apt)
                     echo "🐧 Installing with apt (Ubuntu/Debian)..."
-                    sudo apt update
-                    sudo apt install -y clang-tidy clang-format cppcheck lcov
+                    sudo apt-get update
+                    # --no-install-recommends keeps the container slim
+                    sudo apt-get install -y --no-install-recommends clang-tidy clang-format cppcheck lcov python3-pip
                     echo "✅ System packages installed"
                     ;;
 
                 yum)
                     echo "🐧 Installing with yum (RHEL/CentOS)..."
-                    sudo yum install -y clang-tools-extra cppcheck lcov
+                    sudo yum install -y clang-tools-extra cppcheck lcov python3-pip
                     echo "✅ System packages installed"
                     ;;
 
@@ -110,6 +136,8 @@ install_system_packages() {
                     echo "   - clang-tidy, clang-format"
                     echo "   - cppcheck"
                     echo "   - lcov (optional)"
+                    echo "   - python3-pip"
+                    exit 1
                     ;;
             esac
             ;;
@@ -119,6 +147,8 @@ install_system_packages() {
             echo "   - LLVM/Clang tools (clang-tidy, clang-format)"
             echo "   - cppcheck"
             echo "   - lcov (optional for coverage)"
+            echo "   - python3-pip"
+            exit 1
             ;;
     esac
 }
@@ -132,18 +162,25 @@ install_python_packages() {
         exit 1
     fi
 
-    # Check if pip is available
-    if command -v pip3 &> /dev/null; then
-        PIP_CMD="pip3"
-    elif command -v pip &> /dev/null; then
-        PIP_CMD="pip"
+    # Prefer python -m pip to avoid pip/pip3 ambiguity
+    if python3 -m pip --version &> /dev/null; then
+        PIP_CMD="python3 -m pip"
     else
         echo "❌ pip not found. Install pip first."
         exit 1
     fi
 
-    echo "📦 Installing Python packages with $PIP_CMD..."
-    $PIP_CMD install --user gcovr pytest pytest-cov
+    echo "📦 Installing Python packages with: $PIP_CMD"
+
+    if [[ "$DEVCONTAINER_MODE" -eq 1 ]]; then
+        # Devcontainer: system-wide install requested
+        sudo $PIP_CMD install --upgrade pip
+        sudo $PIP_CMD install gcovr pytest pytest-cov
+    else
+        # Local developer default: user install (no sudo/pollution)
+        $PIP_CMD install --user --upgrade pip
+        $PIP_CMD install --user gcovr pytest pytest-cov
+    fi
 
     echo "✅ Python packages installed"
 }
@@ -155,11 +192,10 @@ verify_installations() {
 
     local all_good=true
 
-    # Check system tools
     echo "System tools:"
     for tool in clang-tidy clang-format cppcheck lcov; do
-        if command -v $tool &> /dev/null; then
-            echo "  ✅ $tool - $(which $tool)"
+        if command -v "$tool" &> /dev/null; then
+            echo "  ✅ $tool - $(which "$tool")"
         else
             echo "  ❌ $tool - not found"
             all_good=false
@@ -168,6 +204,7 @@ verify_installations() {
 
     echo ""
     echo "Python packages:"
+    # gcovr provides a module named "gcovr"; pytest provides "pytest"
     for package in gcovr pytest; do
         if python3 -c "import $package" 2>/dev/null; then
             echo "  ✅ $package - installed"
@@ -182,7 +219,6 @@ verify_installations() {
         echo "🎉 All development tools installed successfully!"
         echo ""
         echo "🚀 Test the enhanced development environment:"
-        echo "   cd /path/to/someip-stack"
         echo "   ./scripts/run_tests.py --clean --rebuild --static-analysis --coverage --format-code"
     else
         echo "⚠️  Some tools are missing. You can still use basic functionality."
@@ -190,7 +226,9 @@ verify_installations() {
     fi
 }
 
+# ------------------------------------------------------------------------------
 # Main installation process
+# ------------------------------------------------------------------------------
 echo "This script will install the following development tools:"
 echo "- clang-tidy (static analysis)"
 echo "- clang-format (code formatting)"
@@ -198,13 +236,18 @@ echo "- cppcheck (additional static analysis)"
 echo "- lcov (coverage reporting, optional)"
 echo "- gcovr (Python coverage reporting)"
 echo "- pytest (Python testing framework)"
+echo "- pytest-cov (Python coverage plugin)"
 echo ""
 
-read -p "Continue with installation? (y/N): " -n 1 -r
-echo ""
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "Installation cancelled."
-    exit 0
+if [[ "$NON_INTERACTIVE" -eq 1 ]]; then
+    echo "🤖 Non-interactive mode enabled (devcontainer/CI/--yes). Continuing..."
+else
+    read -p "Continue with installation? (y/N): " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Installation cancelled."
+        exit 0
+    fi
 fi
 
 echo ""
