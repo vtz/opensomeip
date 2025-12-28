@@ -1,0 +1,48 @@
+name: Docs - PlantUML
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'docs/**/*.puml'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'docs/**/*.puml'
+
+jobs:
+  build-doc:
+    name: Build-Doc
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PlantUML dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-jre graphviz wget curl
+
+      - name: Ensure PlantUML jar
+        run: |
+          mkdir -p tools
+          if [ ! -f tools/plantuml.jar ]; then
+            echo "Downloading PlantUML jar..."
+            curl -L -o tools/plantuml.jar https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar
+          else
+            echo "PlantUML jar already present"
+          fi
+
+      - name: Render PlantUML diagrams
+        run: |
+          chmod +x ./tools/plantuml/generate_diagrams.sh || true
+          ./tools/plantuml/generate_diagrams.sh
+
+        # Ignore PNG files to keep artifact size low
+      - name: Upload rendered SVG diagrams
+        uses: actions/upload-artifact@v4
+        with:
+          name: plantuml-svgs
+          path: docs/diagrams/svg/**/*.svg
+          if-no-files-found: error
