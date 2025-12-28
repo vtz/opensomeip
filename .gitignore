@@ -83,6 +83,9 @@ test_report.html
 # Tools and scripts output
 *.tar.gz
 *.zip
+plantuml.jar
+docs/diagrams/png/
+docs/diagrams/svg/
 
 # Backup files
 *.orig

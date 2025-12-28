@@ -114,7 +114,7 @@ note right of ECU4
 end note
 
 ' Ethernet Configuration
-note over Switch
+note top of Switch
     **Ethernet Network:**
     - 100Mbit/s - 1Gbit/s
     - VLAN segregation
