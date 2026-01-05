@@ -280,6 +280,9 @@ void UdpTransport::receive_loop() {
                     listener_->on_message_received(message, sender);
                 }
             }
+        } else if (result == Result::TIMEOUT) {
+            // No data available, sleep briefly to avoid busy-wait
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         } else if (result == Result::NETWORK_ERROR) {
             // Network error, notify listener
             if (listener_) {
