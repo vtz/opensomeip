@@ -133,7 +133,7 @@ cmake ..
 
 ```bash
 # Clone and enter directory
-cd some-ip
+cd opensomeip
 
 # Install basic build dependencies (required)
 ./scripts/setup_deps.sh
@@ -151,7 +151,8 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 
 # Run the demo
-./bin/simple_message_demo
+./bin/hello_world_server
+./bin/hello_world_client #run in another terminal
 ```
 
 Expected output shows complete SOME/IP message lifecycle:
@@ -167,7 +168,7 @@ Expected output shows complete SOME/IP message lifecycle:
 cd build
 ctest --output-on-failure
 
-# Or run specific tests
+# Or run specific tests (here are some examples)
 ctest -R SerializationTest  # Test serialization functionality
 ctest -R MessageTest        # Test message handling
 ctest -R SessionManagerTest # Test session management
@@ -180,6 +181,9 @@ ctest -R TcpTransportTest   # Test TCP transport binding
 
 #### Code Quality & Analysis
 ```bash
+# Change to build folder
+cd build
+
 # Format code automatically
 make format
 
@@ -187,7 +191,7 @@ make format
 make tidy          # clang-tidy checks
 
 # Generate coverage report (requires gcovr: pip install gcovr)
-./scripts/run_tests.py --coverage
+../scripts/run_tests.py --coverage
 ```
 
 #### Advanced Testing
@@ -493,8 +497,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Fork and clone the repository
-git clone https://github.com/your-username/someip-stack.git
-cd someip-stack
+git clone https://github.com/vtz/opensomeip.git
+cd opensomeip
 
 # Set up development environment
 ./scripts/setup_deps.sh
@@ -503,7 +507,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug
 make
 
 # Run tests and check code quality
-./scripts/run_tests.py --rebuild --static-analysis --coverage
+../scripts/run_tests.py --rebuild --static-analysis --coverage
 ```
 
 ## Development Status (protocol coverage tracked)

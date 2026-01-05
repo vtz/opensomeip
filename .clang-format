@@ -21,5 +21,4 @@ SpaceBeforeParens: ControlStatements
 PointerAlignment: Left
 DerivePointerAlignment: false
 ReferenceAlignment: Left
-DeriveReferenceAlignment: false
 ...
