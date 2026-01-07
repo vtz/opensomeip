@@ -257,17 +257,13 @@ Result UdpTransport::create_socket() {
         }
     }
 
-    // Set buffer sizes
+    // Set buffer sizes (non-critical - may fail in restricted environments like CI/containers)
     if (setsockopt(socket_fd_, SOL_SOCKET, SO_RCVBUF, &config_.receive_buffer_size, sizeof(config_.receive_buffer_size)) < 0) {
-        close(socket_fd_);
-        socket_fd_ = -1;
-        return Result::NETWORK_ERROR;
+        // Not critical - continue with default buffer size
     }
 
     if (setsockopt(socket_fd_, SOL_SOCKET, SO_SNDBUF, &config_.send_buffer_size, sizeof(config_.send_buffer_size)) < 0) {
-        close(socket_fd_);
-        socket_fd_ = -1;
-        return Result::NETWORK_ERROR;
+        // Not critical - continue with default buffer size
     }
 
     // Set blocking/non-blocking mode
