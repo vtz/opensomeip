@@ -1,0 +1,82 @@
+# Pre-commit checks for pull requests
+# Ensures all commits follow project conventions
+
+name: Pre-commit Checks
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  pre-commit:
+    name: Pre-commit Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for commit message validation
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pre-commit
+        run: pip install pre-commit
+
+      - name: Run pre-commit on all files
+        run: pre-commit run --all-files --show-diff-on-failure
+
+      - name: Validate commit messages
+        run: |
+          # Get the range of commits in this PR
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          echo "Checking commits from $BASE_SHA to $HEAD_SHA"
+
+          # Install conventional-pre-commit for validation
+          pip install conventional-pre-commit
+
+          # Check each commit message in the PR
+          FAILED=0
+          for COMMIT in $(git rev-list $BASE_SHA..$HEAD_SHA); do
+            MSG=$(git log --format=%B -n 1 $COMMIT)
+            echo "Checking commit $COMMIT:"
+            echo "$MSG"
+            echo "---"
+
+            # Validate using conventional-pre-commit pattern
+            if ! echo "$MSG" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .+"; then
+              echo "❌ Commit message does not follow Conventional Commits format"
+              echo "   Expected: <type>(<optional scope>): <description>"
+              echo "   Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+              FAILED=1
+            else
+              echo "✅ Valid commit message"
+            fi
+            echo ""
+          done
+
+          if [ $FAILED -eq 1 ]; then
+            echo ""
+            echo "============================================"
+            echo "❌ One or more commit messages are invalid!"
+            echo "============================================"
+            echo ""
+            echo "Please follow the Conventional Commits format:"
+            echo "  <type>(<optional scope>): <description>"
+            echo ""
+            echo "Examples:"
+            echo "  feat: add new UDP transport option"
+            echo "  fix(sd): resolve multicast join issue"
+            echo "  docs: update README with build instructions"
+            echo "  chore: update dependencies"
+            echo ""
+            exit 1
+          fi
+
+          echo "✅ All commit messages are valid!"
+
