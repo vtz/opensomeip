@@ -77,6 +77,7 @@ docs/_build/
 
 # Test output
 test_results.xml
+test_results.json
 test_report.json
 test_report.html
 

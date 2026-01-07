@@ -30,6 +30,10 @@ target_link_libraries(test_events someip-events gtest_main)
 add_executable(test_tcp_transport test_tcp_transport.cpp)
 target_link_libraries(test_tcp_transport someip-transport gtest_main)
 
+# UDP Transport tests
+add_executable(test_udp_transport test_udp_transport.cpp)
+target_link_libraries(test_udp_transport someip-transport gtest_main)
+
 # TP tests
 add_executable(test_tp test_tp.cpp)
 target_link_libraries(test_tp someip-tp gtest_main)
@@ -43,5 +47,6 @@ target_link_libraries(test_tp someip-tp gtest_main)
     add_test(NAME SdTest COMMAND test_sd)
     add_test(NAME EventsTest COMMAND test_events)
     add_test(NAME TcpTransportTest COMMAND test_tcp_transport)
+    add_test(NAME UdpTransportTest COMMAND test_udp_transport)
     add_test(NAME TpTest COMMAND test_tp)
 endif()

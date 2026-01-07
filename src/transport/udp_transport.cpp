@@ -24,8 +24,9 @@
 namespace someip {
 namespace transport {
 
-UdpTransport::UdpTransport(const Endpoint& local_endpoint)
+UdpTransport::UdpTransport(const Endpoint& local_endpoint, const UdpTransportConfig& config)
     : local_endpoint_(local_endpoint),
+      config_(config),
       running_(false) {
     if (!local_endpoint_.is_valid()) {
         throw std::invalid_argument("Invalid local endpoint");
@@ -51,6 +52,12 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
 
     if (data.size() > MAX_UDP_PAYLOAD) {
         return Result::BUFFER_OVERFLOW;
+    }
+
+    // Check against SOME/IP recommended max size (1400 bytes to avoid IP fragmentation)
+    if (config_.max_message_size > 0 && data.size() > config_.max_message_size) {
+        // Log warning but allow sending - use TP for large messages
+        // In production, this should trigger SOME/IP-TP segmentation
     }
 
     return send_data(data, endpoint);
@@ -172,10 +179,19 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
         // Not critical, continue
     }
 
-    // Set multicast TTL (default is 1, which is usually fine)
-    int ttl = 1;
+    // Set multicast TTL from config (per SOME/IP spec, default 1 = local network only)
+    int ttl = config_.multicast_ttl;
     if (setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0) {
         // Not critical, continue
+    }
+
+    // Set multicast interface if specified
+    if (!config_.multicast_interface.empty()) {
+        struct in_addr interface_addr;
+        interface_addr.s_addr = inet_addr(config_.multicast_interface.c_str());
+        if (setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_IF, &interface_addr, sizeof(interface_addr)) < 0) {
+            // Not critical, continue
+        }
     }
 
     return Result::SUCCESS;
@@ -212,19 +228,56 @@ Result UdpTransport::create_socket() {
     }
 
     // Set socket options
-    int reuse = 1;
-    if (setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+    if (config_.reuse_address) {
+        int reuse = 1;
+        if (setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+            close(socket_fd_);
+            socket_fd_ = -1;
+            return Result::NETWORK_ERROR;
+        }
+    }
+
+    // SO_REUSEPORT allows multiple processes to bind to the same port
+    // Required for multicast SD when multiple applications share port 30490
+#ifdef SO_REUSEPORT
+    if (config_.reuse_port) {
+        int reuse = 1;
+        if (setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) < 0) {
+            // Not critical - some systems don't support SO_REUSEPORT
+        }
+    }
+#endif
+
+    if (config_.enable_broadcast) {
+        int broadcast = 1;
+        if (setsockopt(socket_fd_, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0) {
+            close(socket_fd_);
+            socket_fd_ = -1;
+            return Result::NETWORK_ERROR;
+        }
+    }
+
+    // Set buffer sizes
+    if (setsockopt(socket_fd_, SOL_SOCKET, SO_RCVBUF, &config_.receive_buffer_size, sizeof(config_.receive_buffer_size)) < 0) {
         close(socket_fd_);
         socket_fd_ = -1;
         return Result::NETWORK_ERROR;
     }
 
-    // Set non-blocking mode
-    int flags = fcntl(socket_fd_, F_GETFL, 0);
-    if (flags < 0 || fcntl(socket_fd_, F_SETFL, flags | O_NONBLOCK) < 0) {
+    if (setsockopt(socket_fd_, SOL_SOCKET, SO_SNDBUF, &config_.send_buffer_size, sizeof(config_.send_buffer_size)) < 0) {
         close(socket_fd_);
         socket_fd_ = -1;
         return Result::NETWORK_ERROR;
+    }
+
+    // Set blocking/non-blocking mode
+    if (!config_.blocking) {
+        int flags = fcntl(socket_fd_, F_GETFL, 0);
+        if (flags < 0 || fcntl(socket_fd_, F_SETFL, flags | O_NONBLOCK) < 0) {
+            close(socket_fd_);
+            socket_fd_ = -1;
+            return Result::NETWORK_ERROR;
+        }
     }
 
     return Result::SUCCESS;
@@ -238,6 +291,12 @@ Result UdpTransport::bind_socket() {
         return Result::NETWORK_ERROR;
     }
 
+    // Get the actual port assigned by the OS (important for port 0)
+    socklen_t addr_len = sizeof(addr);
+    if (getsockname(socket_fd_, reinterpret_cast<sockaddr*>(&addr), &addr_len) == 0) {
+        local_endpoint_ = sockaddr_to_endpoint(addr);
+    }
+
     return Result::SUCCESS;
 }
 
@@ -248,7 +307,13 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
 
     struct ip_mreq mreq;
     mreq.imr_multiaddr.s_addr = inet_addr(endpoint.get_address().c_str());
-    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+
+    // Use configured interface or INADDR_ANY
+    if (!config_.multicast_interface.empty()) {
+        mreq.imr_interface.s_addr = inet_addr(config_.multicast_interface.c_str());
+    } else {
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    }
 
     if (setsockopt(socket_fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
         return Result::NETWORK_ERROR;
@@ -258,7 +323,7 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
 }
 
 void UdpTransport::receive_loop() {
-    std::vector<uint8_t> buffer(RECEIVE_BUFFER_SIZE);
+    std::vector<uint8_t> buffer(config_.receive_buffer_size);
 
     while (running_) {
         Endpoint sender;
@@ -280,14 +345,24 @@ void UdpTransport::receive_loop() {
                     listener_->on_message_received(message, sender);
                 }
             }
-        } else if (result == Result::NETWORK_ERROR) {
-            // Network error, notify listener
+        } else if (result == Result::NOT_CONNECTED) {
+            // Socket was closed, exit loop
+            break;
+        } else if (result == Result::TIMEOUT && !config_.blocking) {
+            // Timeout in non-blocking mode - just continue polling
+            // Small delay to prevent tight polling loop
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        } else {
+            // Network or other error, notify listener
             if (listener_) {
                 listener_->on_error(result);
             }
 
-            // Small delay to prevent tight error loop
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            if (!config_.blocking) {
+                // In non-blocking mode, add delay to prevent busy loops on errors
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+            // In blocking mode, we only get here on actual errors, no delay needed
         }
     }
 }
@@ -315,12 +390,6 @@ Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint&
 }
 
 Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender) {
-    std::scoped_lock lock(socket_mutex_);
-
-    if (socket_fd_ < 0) {
-        return Result::NOT_CONNECTED;
-    }
-
     sockaddr_in src_addr;
     socklen_t addr_len = sizeof(src_addr);
 
@@ -328,9 +397,16 @@ Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender) 
                                reinterpret_cast<sockaddr*>(&src_addr), &addr_len);
 
     if (received < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        // Socket was closed during shutdown
+        if (errno == EBADF || errno == EINTR) {
+            return Result::NOT_CONNECTED;
+        }
+
+        // In non-blocking mode, EAGAIN/EWOULDBLOCK means no data available
+        if (!config_.blocking && (errno == EAGAIN || errno == EWOULDBLOCK)) {
             return Result::TIMEOUT;
         }
+
         return Result::NETWORK_ERROR;
     }
 
