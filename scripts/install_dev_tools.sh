@@ -143,7 +143,12 @@ install_python_packages() {
     fi
 
     echo "📦 Installing Python packages with $PIP_CMD..."
-    $PIP_CMD install --user gcovr pytest pytest-cov
+    
+    if [ -n "$VIRTUAL_ENV" ]; then
+        $PIP_CMD install gcovr pytest pytest-cov
+    else
+        $PIP_CMD install --user gcovr pytest pytest-cov
+    fi
 
     echo "✅ Python packages installed"
 }
