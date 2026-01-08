@@ -79,4 +79,3 @@ jobs:
           fi
 
           echo "✅ All commit messages are valid!"
-

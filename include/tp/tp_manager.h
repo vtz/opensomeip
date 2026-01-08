@@ -189,4 +189,3 @@ private:
 } // namespace someip
 
 #endif // SOMEIP_TP_MANAGER_H
-

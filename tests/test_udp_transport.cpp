@@ -636,4 +636,3 @@ TEST_F(UdpTransportTest, MultipleMessagesRapidFire) {
     sender.stop();
     receiver.stop();
 }
-

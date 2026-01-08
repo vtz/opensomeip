@@ -13,8 +13,8 @@
 
 # SOME/IP Test Plan Implementation Status
 
-**Reference Document**: [SOMEIP_ACCEPTANCE_TEST_PLAN.md](./SOMEIP_ACCEPTANCE_TEST_PLAN.md)  
-**Last Updated**: 2025-12-14  
+**Reference Document**: [SOMEIP_ACCEPTANCE_TEST_PLAN.md](./SOMEIP_ACCEPTANCE_TEST_PLAN.md)
+**Last Updated**: 2025-12-14
 **Overall Progress**: 🟡 ~65% Complete
 
 ---
@@ -374,4 +374,3 @@ grep -c "TEST\|TEST_F" tests/test_*.cpp
 ---
 
 *This document tracks the implementation status of tests defined in [SOMEIP_ACCEPTANCE_TEST_PLAN.md](./SOMEIP_ACCEPTANCE_TEST_PLAN.md)*
-

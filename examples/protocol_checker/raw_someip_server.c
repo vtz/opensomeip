@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
         dump_hex("  RX", buffer, recv_len);
 
         if (recv_len < SOMEIP_HEADER_SIZE) {
-            printf("  ERROR: Message too short (need %d bytes, got %zd)\n\n", 
+            printf("  ERROR: Message too short (need %d bytes, got %zd)\n\n",
                    SOMEIP_HEADER_SIZE, recv_len);
             continue;
         }
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
         /* Parse SOME/IP header */
         uint16_t service_id = (buffer[0] << 8) | buffer[1];
         uint16_t method_id = (buffer[2] << 8) | buffer[3];
-        uint32_t length = (buffer[4] << 24) | (buffer[5] << 16) | 
+        uint32_t length = (buffer[4] << 24) | (buffer[5] << 16) |
                           (buffer[6] << 8) | buffer[7];
         uint16_t client_id = (buffer[8] << 8) | buffer[9];
         uint16_t session_id = (buffer[10] << 8) | buffer[11];
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
 
         printf("  SOME/IP Header:\n");
         printf("    Service: 0x%04x, Method: 0x%04x\n", service_id, method_id);
-        printf("    Length: %u, Client: 0x%04x, Session: 0x%04x\n", 
+        printf("    Length: %u, Client: 0x%04x, Session: 0x%04x\n",
                length, client_id, session_id);
         printf("    Protocol: %d, Interface: %d, Type: 0x%02x, RC: 0x%02x\n",
                protocol_ver, interface_ver, msg_type, return_code);
@@ -136,4 +136,3 @@ int main(int argc, char* argv[]) {
     close(sock);
     return 0;
 }
-

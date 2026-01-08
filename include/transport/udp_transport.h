@@ -39,7 +39,7 @@ struct UdpTransportConfig {
     bool enable_broadcast{false};           // Enable broadcast sending
     std::string multicast_interface{};      // Interface for multicast (empty = INADDR_ANY)
     int multicast_ttl{1};                   // Multicast TTL (1 = local network only)
-    
+
     // SOME/IP spec recommends max 1400 bytes to avoid IP fragmentation
     // Set to 0 to disable this check
     size_t max_message_size{1400};
