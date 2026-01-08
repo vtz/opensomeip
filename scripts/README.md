@@ -33,6 +33,9 @@ This directory contains utility scripts for development, testing, and maintenanc
 - **`bump_version.sh`**: Bump project version following semantic versioning
 - **`bump_submodule.sh`**: Update git submodules to latest commits
 
+### Testing & CI
+- **`test_in_docker.sh`**: Run tests in Docker container to simulate CI environment
+
 ### Python Testing
 - **`run_tests.py`**: Python test runner (in tests/python/)
 
@@ -57,6 +60,12 @@ This directory contains utility scripts for development, testing, and maintenanc
 
 # Clean rebuild with all checks
 ./scripts/run_tests.py --clean --rebuild --static-analysis --coverage --format-code
+
+# Test in Docker (simulate CI environment)
+./scripts/test_in_docker.sh                    # Run SD tests
+./scripts/test_in_docker.sh UdpTransportTest   # Run UDP transport tests
+./scripts/test_in_docker.sh --all-tests        # Run all tests
+./scripts/test_in_docker.sh --interactive      # Debug interactively (recommended for hanging tests)
 ```
 
 ### Version Management
@@ -141,6 +150,22 @@ This directory contains utility scripts for development, testing, and maintenanc
 - **Batch Updates**: Update all submodules or specific ones
 - **Safe Operations**: Preserves working directory state
 - **Commit Guidance**: Suggests appropriate commit messages
+
+### test_in_docker.sh
+**Purpose**: Run tests in Docker container to simulate CI environment
+- **CI Simulation**: Reproduce CI issues locally using Ubuntu container
+- **Hang Detection**: Helps identify hanging tests (when timeout command available)
+- **Flexible Testing**: Run specific test suites or all tests
+- **Interactive Mode**: Debug failing tests interactively
+- **Clean Environment**: Isolated testing environment matching CI
+
+### test_in_docker.sh
+**Purpose**: Run tests in Docker container to simulate CI environment
+- **CI Simulation**: Reproduce CI issues locally using Ubuntu container
+- **Hang Detection**: Helps identify hanging tests (when timeout command available)
+- **Flexible Testing**: Run specific test suites or all tests
+- **Interactive Mode**: Debug failing tests interactively
+- **Clean Environment**: Isolated testing environment matching CI
 
 ## Development Workflow
 
