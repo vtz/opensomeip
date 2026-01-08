@@ -1,0 +1,47 @@
+FROM ubuntu:22.04
+
+# Install build dependencies
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    ca-certificates \
+    git \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install test dependencies
+RUN pip3 install --no-cache-dir \
+    pytest \
+    pytest-cov \
+    coverage \
+    junit-xml
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy source code
+COPY . .
+
+# Clean and build the project with tests enabled
+RUN rm -rf build && \
+    mkdir -p build && \
+    cd build && \
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_TESTS=ON \
+        -DBUILD_EXAMPLES=OFF \
+        -DCOVERAGE=ON && \
+    make -j$(nproc)
+
+# Create a non-root user for running tests
+RUN useradd --create-home --shell /bin/bash testuser && \
+    chown -R testuser:testuser /workspace
+USER testuser
+
+# Set the working directory to the build directory
+WORKDIR /workspace/build
+
+# Default command to run SD tests (can be overridden)
+CMD ["ctest", "--output-on-failure", "-R", "SdTest"]
