@@ -23,4 +23,3 @@ docker run -d --name "${CONTAINER_NAME}" \
 
 echo "Container '${CONTAINER_NAME}' is running. Follow logs with:"
 echo "  docker logs -f ${CONTAINER_NAME}"
-

@@ -22,4 +22,3 @@ fi
 echo "Running hello_world_client against ${SERVER_HOST}:${PORT} ..."
 HELLO_SERVER_HOST="${SERVER_HOST}" HELLO_SERVER_PORT="${PORT}" \
   "${BUILD_DIR}/bin/hello_world_client" <<<"${MSG}"
-

@@ -106,4 +106,3 @@ On native Linux, Docker containers share the host network namespace (when using 
 ./examples/cross_platform_demo/stop_linux_server.sh
 docker image rm someip-linux-server:local
 ```
-

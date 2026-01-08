@@ -58,21 +58,21 @@ FILES_WITH_ISSUES=0
 # Find only .cpp source files
 while IFS= read -r file; do
     echo "Processing $file"
-    
+
     OUTPUT=$("$CLANG_TIDY_EXE" --config-file="$CONFIG_FILE" -p "$BUILD_DIR" $EXTRA_ARGS "$file" 2>&1)
-    
+
     # Count warnings and errors in this file
     FILE_WARNINGS=$(echo "$OUTPUT" | grep -c "warning:" || true)
     FILE_ERRORS=$(echo "$OUTPUT" | grep -c "error:" || true)
-    
+
     if [ "$FILE_WARNINGS" -gt 0 ] || [ "$FILE_ERRORS" -gt 0 ]; then
         FILES_WITH_ISSUES=$((FILES_WITH_ISSUES + 1))
         TOTAL_WARNINGS=$((TOTAL_WARNINGS + FILE_WARNINGS))
         TOTAL_ERRORS=$((TOTAL_ERRORS + FILE_ERRORS))
-        
+
         # Print to console
         echo "$OUTPUT" | grep -E "(warning:|error:|note:)"
-        
+
         # Save to report
         {
             echo "----------------------------------------------"

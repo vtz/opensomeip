@@ -616,4 +616,3 @@ See `TRACEABILITY_MATRIX.md` for full requirement mapping.
 ---
 
 *This test plan ensures comprehensive validation of the SOME/IP stack implementation against the Open SOME/IP Specification, following industry-standard V-Model methodology.*
-

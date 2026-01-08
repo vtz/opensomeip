@@ -17,22 +17,20 @@ def main():
 
     # Create UDP socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    
+
     # Set TTL for multicast
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-    
+
     # Enable loopback (so we can receive our own messages if listener is on same host)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 1)
-    
+
     message = b"SOMEIP-SD-TEST-" + str(int(time.time())).encode()
-    
+
     print(f"Sending: {message}")
     sock.sendto(message, (MCAST_GROUP, MCAST_PORT))
     print("Sent!")
-    
+
     sock.close()
 
 if __name__ == "__main__":
     main()
-
-

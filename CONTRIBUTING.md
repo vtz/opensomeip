@@ -20,6 +20,9 @@ Thank you for your interest in contributing to the SOME/IP Stack! This document 
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
+  - [Branch Naming](#branch-naming)
+  - [Commit Messages](#commit-messages)
+  - [Pre-commit Hooks Setup](#pre-commit-hooks-setup)
 - [Coding Standards](#coding-standards)
 - [Testing](#testing)
 - [Documentation](#documentation)
@@ -82,33 +85,67 @@ This project follows a code of conduct to ensure a welcoming environment for all
 
 ### Commit Messages
 
-Follow conventional commit format:
+We enforce [Conventional Commits](https://www.conventionalcommits.org/) format using pre-commit hooks and CI validation. **All commits in PRs must follow this format or the pipeline will fail.**
 
 ```
-type(scope): description
+<type>(<optional scope>): <description>
 
 [optional body]
 
 [optional footer]
 ```
 
-Types:
+**Types:**
 - `feat`: New features
 - `fix`: Bug fixes
-- `docs`: Documentation
-- `style`: Code style changes
-- `refactor`: Code refactoring
-- `test`: Testing
-- `chore`: Maintenance
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, no logic change)
+- `refactor`: Code refactoring (no feature/fix)
+- `perf`: Performance improvements
+- `test`: Adding or updating tests
+- `build`: Build system or dependencies
+- `ci`: CI/CD configuration
+- `chore`: Maintenance tasks
+- `revert`: Reverting previous commits
 
-Examples:
+**Examples:**
 ```
 feat(transport): add TCP transport binding
 
 fix(serialization): handle endianness correctly on ARM
 
 test(message): add comprehensive message validation tests
+
+docs: update README with build instructions
+
+chore: update dependencies
 ```
+
+### Pre-commit Hooks Setup
+
+We use [pre-commit](https://pre-commit.com/) to enforce code quality and commit message format locally:
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install hooks (one-time setup)
+pre-commit install
+pre-commit install --hook-type commit-msg
+
+# Run manually on all files
+pre-commit run --all-files
+```
+
+**What the hooks check:**
+- Trailing whitespace and end-of-file issues
+- Valid YAML and JSON files
+- No large files added (>500KB)
+- No merge conflicts or private keys
+- Consistent line endings (LF)
+- Commit message follows Conventional Commits format
+
+> **Note:** The CI pipeline will run these same checks on all PRs. Setting up pre-commit locally helps catch issues before pushing.
 
 ## Coding Standards
 
@@ -289,11 +326,13 @@ Result send_message(const Message& message, const Endpoint& destination);
 
 ### Before Submitting
 
-1. **Code Review**: Self-review your code
-2. **Tests**: Add/update tests for new functionality
-3. **Documentation**: Update relevant documentation
-4. **Linting**: Ensure code follows style guidelines
-5. **Testing**: All tests pass locally
+1. **Pre-commit Hooks**: Run `pre-commit run --all-files` to check for issues
+2. **Commit Messages**: Ensure all commits follow Conventional Commits format
+3. **Code Review**: Self-review your code
+4. **Tests**: Add/update tests for new functionality
+5. **Documentation**: Update relevant documentation
+6. **Linting**: Ensure code follows style guidelines
+7. **Testing**: All tests pass locally (`ctest --output-on-failure`)
 
 ### Pull Request Template
 
@@ -325,10 +364,16 @@ Any additional information or context
 
 ### Review Process
 
-1. **Automated Checks**: CI/CD runs tests and linting
+1. **Automated Checks**: CI/CD runs:
+   - Pre-commit hooks (code quality checks)
+   - Commit message validation (Conventional Commits format)
+   - Build verification (multiple compilers)
+   - Test suite execution
 2. **Peer Review**: At least one maintainer review
 3. **Approval**: Maintainers approve changes
 4. **Merge**: Squash merge with descriptive commit message
+
+> **Important:** PRs with invalid commit messages will fail CI and cannot be merged.
 
 ## Reporting Issues
 
