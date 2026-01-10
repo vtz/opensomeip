@@ -10,6 +10,7 @@ add_subdirectory(basic/method_calls)
 add_subdirectory(advanced/complex_types)
 add_subdirectory(advanced/large_messages)
 add_subdirectory(advanced/multi_service)
+add_subdirectory(advanced/udp_config)
 
 # Interoperability Testing (requires vsomeip3 and Boost - off by default)
 if(BUILD_VSOMEIP_INTEROP)

@@ -85,25 +85,25 @@ int main(int argc, char* argv[]) {
 
     /* Build SOME/IP REQUEST message */
     uint8_t request[SOMEIP_HEADER_SIZE];
-    
+
     /* Message ID: Service ID (16-bit) + Method ID (16-bit) */
     request[0] = (service_id >> 8) & 0xFF;
     request[1] = service_id & 0xFF;
     request[2] = (method_id >> 8) & 0xFF;
     request[3] = method_id & 0xFF;
-    
+
     /* Length: 8 (header remainder, no payload) */
     request[4] = 0x00;
     request[5] = 0x00;
     request[6] = 0x00;
     request[7] = 0x08;
-    
+
     /* Request ID: Client ID (16-bit) + Session ID (16-bit) */
     request[8] = 0x00;   /* Client ID high */
     request[9] = 0x01;   /* Client ID low */
     request[10] = 0x00;  /* Session ID high */
     request[11] = 0x01;  /* Session ID low */
-    
+
     /* Protocol version, interface version, message type, return code */
     request[12] = 0x01;  /* Protocol version */
     request[13] = 0x01;  /* Interface version */
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
         uint8_t return_code = response[15];
 
         printf("\nMessage Type: 0x%02x (%s)\n", msg_type,
-               msg_type == SOMEIP_MSG_RESPONSE ? "RESPONSE" : 
+               msg_type == SOMEIP_MSG_RESPONSE ? "RESPONSE" :
                msg_type == 0x81 ? "ERROR" : "OTHER");
         printf("Return Code:  0x%02x (%s)\n", return_code,
                return_code == 0x00 ? "E_OK" : "ERROR");
@@ -168,4 +168,3 @@ int main(int argc, char* argv[]) {
     close(sock);
     return 1;
 }
-

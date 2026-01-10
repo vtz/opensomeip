@@ -119,4 +119,3 @@ private:
 } // namespace someip
 
 #endif // SOMEIP_TP_REASSEMBLER_H
-

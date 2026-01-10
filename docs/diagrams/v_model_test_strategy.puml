@@ -64,9 +64,9 @@ rectangle "**5. Unit Testing**\n(Level 1)" as UT #FFEBEE {
         - test_endpoint.cpp
         - test_tp.cpp
         - test_sd.cpp
-        
+
         **Coverage Target:** ≥95%
-        **Requirements:** 
+        **Requirements:**
         - feat_req_someip_44-103
         - feat_req_someip_167-299
         - feat_req_someiptp_759-820
@@ -81,7 +81,7 @@ rectangle "**4. Component Testing**\n(Level 2)" as CT #FCE4EC {
         - TP segmentation/reassembly
         - RPC client/server
         - SD client/server
-        
+
         **Framework:** GTest + pytest
     end note
 }
@@ -93,7 +93,7 @@ rectangle "**3. Integration Testing**\n(Level 3)" as IT #F3E5F5 {
         - Service Discovery flow
         - Event publish/subscribe
         - TP with transport
-        
+
         **Location:**
         tests/integration/
         tests/test_integration.py
@@ -107,7 +107,7 @@ rectangle "**2. System Testing**\n(Level 4)" as ST #E8EAF6 {
         - Behavior conformance
         - Robustness testing
         - Performance testing
-        
+
         **Location:**
         tests/specification_test.py
         tests/conformance_test.py
@@ -122,8 +122,8 @@ rectangle "**1. Acceptance Testing**\n(Level 5)" as AT #E3F2FD {
         - Functional completeness
         - Quality attributes
         - Documentation
-        
-        **Validation:** 
+
+        **Validation:**
         Cross-stack testing
         Wireshark verification
     end note
@@ -165,4 +165,3 @@ endlegend
 footer Open SOME/IP Specification v2025 | Test Plan v1.0
 
 @enduml
-

@@ -122,9 +122,9 @@ docker network create someip-net
 
 # Run listener container
 docker run --rm -it --network someip-net --name listener python:3.11-slim \
-  python3 -c "..." 
+  python3 -c "..."
 
-# Run sender container  
+# Run sender container
 docker run --rm --network someip-net python:3.11-slim \
   python3 -c "..."
 ```
@@ -133,5 +133,3 @@ Note: Standard Docker bridge networks don't support multicast. You may need:
 - `--network host` (Linux only)
 - macvlan network
 - Or run both apps in same container
-
-

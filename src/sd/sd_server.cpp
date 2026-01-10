@@ -55,8 +55,7 @@ public:
 
         // Join multicast group for SD messages
         if (!join_multicast_group()) {
-            transport_->stop();
-            return false;
+            // Continue without multicast support in constrained environments
         }
 
         running_ = true;

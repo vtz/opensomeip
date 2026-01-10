@@ -30,4 +30,3 @@ EXPOSE 30490/udp 30490/tcp
 
 USER 1000
 CMD ["./hello_world_server"]
-

@@ -26,18 +26,44 @@ namespace someip {
 namespace transport {
 
 /**
+ * @brief UDP Transport Configuration
+ *
+ * Default values are aligned with SOME/IP specification recommendations.
+ */
+struct UdpTransportConfig {
+    bool blocking{true};                    // Use blocking I/O (recommended for efficiency)
+    size_t receive_buffer_size{65536};      // Receive buffer size
+    size_t send_buffer_size{65536};         // Send buffer size
+    bool reuse_address{true};               // Allow address reuse (SO_REUSEADDR)
+    bool reuse_port{false};                 // Allow port reuse (SO_REUSEPORT) - for multicast
+    bool enable_broadcast{false};           // Enable broadcast sending
+    std::string multicast_interface{};      // Interface for multicast (empty = INADDR_ANY)
+    int multicast_ttl{1};                   // Multicast TTL (1 = local network only)
+
+    // SOME/IP spec recommends max 1400 bytes to avoid IP fragmentation
+    // Set to 0 to disable this check
+    size_t max_message_size{1400};
+};
+
+/**
  * @brief UDP transport implementation
  *
  * This class provides UDP-based transport for SOME/IP messages.
  * It supports both unicast and multicast communication.
+ *
+ * The transport can operate in blocking or non-blocking mode:
+ * - Blocking mode (default): More efficient, eliminates busy loops
+ * - Non-blocking mode: Allows integration with event loops/polling
  */
 class UdpTransport : public ITransport {
 public:
     /**
      * @brief Constructor
      * @param local_endpoint Local endpoint to bind to
+     * @param config UDP transport configuration
      */
-    explicit UdpTransport(const Endpoint& local_endpoint);
+    explicit UdpTransport(const Endpoint& local_endpoint,
+                         const UdpTransportConfig& config = UdpTransportConfig());
 
     /**
      * @brief Destructor
@@ -62,6 +88,7 @@ public:
 
 private:
     Endpoint local_endpoint_;
+    UdpTransportConfig config_;
     int socket_fd_{-1};
     std::atomic<bool> running_;
     std::thread receive_thread_;
@@ -77,7 +104,6 @@ private:
 
     // Constants
     static constexpr size_t MAX_UDP_PAYLOAD = 65507; // Maximum UDP payload size
-    static constexpr size_t RECEIVE_BUFFER_SIZE = 8192;
 
     // Private methods
     Result create_socket();

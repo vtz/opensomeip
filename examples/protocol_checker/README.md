@@ -72,4 +72,3 @@ The server:
 - Not a conformance test suite
 
 For full interoperability testing with vsomeip, see `examples/vsomeip_interop/`.
-

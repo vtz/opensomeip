@@ -77,12 +77,16 @@ docs/_build/
 
 # Test output
 test_results.xml
+test_results.json
 test_report.json
 test_report.html
 
 # Tools and scripts output
 *.tar.gz
 *.zip
+plantuml.jar
+docs/diagrams/png/
+docs/diagrams/svg/
 
 # Backup files
 *.orig

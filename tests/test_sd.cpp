@@ -404,7 +404,7 @@ TEST_F(SdTest, SdMessageSerialization) {
 
     auto serialized = original.serialize();
     EXPECT_GT(serialized.size(), 0u);
-    
+
     // Verify flags are set correctly in first byte
     EXPECT_EQ(serialized[0] & 0x80, 0x80);  // Reboot flag
 }
