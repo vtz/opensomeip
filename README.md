@@ -448,8 +448,8 @@ target_link_libraries(your_target someip-common someip-transport)
 - Comprehensive documentation
 - PlantUML architecture diagrams
 
-### In Progress
-- End-to-End (E2E) protection - Core standard feature
+### Implemented
+- End-to-End (E2E) protection - Core standard feature with basic profile
 
 ### Planned
 - Advanced SD features (load balancing, IPv6 full support)
@@ -482,6 +482,14 @@ make test
 ./test_serialization
 ./test_message
 ```
+
+## E2E Protection Disclaimer
+
+**This implementation provides a generic E2E protection framework. The included 'basic' profile is a basic implementation for testing and development. For production use in AUTOSAR environments, implement AUTOSAR E2E profiles as external plugins.**
+
+**AUTOSAR E2E profiles (P01, P02, P04, P05, P06, P07, P11) are intentionally not included due to licensing restrictions.**
+
+The basic E2E profile implements fundamental protection mechanisms using publicly available standards (SAE-J1850 CRC, ITU-T X.25 CRC, and functional safety concepts) that can support ISO 26262 compliance when used appropriately in a complete safety architecture.
 
 ## Contributing
 
@@ -523,7 +531,7 @@ make
 - Documentation and traceability
 
 ### Pending
-- E2E protection and additional safety mechanisms for safety alignment
+- Advanced E2E profiles (AUTOSAR P01-P11) - requires external implementation due to licensing
 - Advanced SD features (load balancing, IPv6)
 - Performance optimizations
 

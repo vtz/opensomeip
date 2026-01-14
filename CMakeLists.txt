@@ -35,12 +35,16 @@ option(BUILD_VSOMEIP_INTEROP "Build vsomeip interoperability examples (requires 
 option(BUILD_TOOLS "Build development tools (reserved for future use)" OFF)
 option(COVERAGE "Enable code coverage reporting" OFF)
 
+# Set policy for FetchContent timestamp handling
+cmake_policy(SET CMP0135 NEW)
+
 # Fetch Google Test
 if(BUILD_TESTS)
     FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
         URL_HASH SHA256=1f357c27ca988c3f7c6b4bf68a9395005ac6761f034046e9dde0896e3aba00e4
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
 
     # Prevent overriding the parent project's compiler/linker on Windows
