@@ -38,6 +38,10 @@ target_link_libraries(test_udp_transport someip-transport gtest_main)
 add_executable(test_tp test_tp.cpp)
 target_link_libraries(test_tp someip-tp gtest_main)
 
+# E2E tests
+add_executable(test_e2e test_e2e.cpp)
+target_link_libraries(test_e2e someip-core gtest_main)
+
     # Register available tests
     add_test(NAME SerializationTest COMMAND test_serialization)
     add_test(NAME MessageTest COMMAND test_message)
@@ -49,4 +53,5 @@ target_link_libraries(test_tp someip-tp gtest_main)
     add_test(NAME TcpTransportTest COMMAND test_tcp_transport)
     add_test(NAME UdpTransportTest COMMAND test_udp_transport)
     add_test(NAME TpTest COMMAND test_tp)
+    add_test(NAME E2ETest COMMAND test_e2e)
 endif()

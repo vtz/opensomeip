@@ -34,6 +34,8 @@ std::string to_string(Result result) {
         {Result::INVALID_ARGUMENT, "INVALID_ARGUMENT"},
         {Result::PERMISSION_DENIED, "PERMISSION_DENIED"},
         {Result::INTERNAL_ERROR, "INTERNAL_ERROR"},
+        {Result::NOT_INITIALIZED, "NOT_INITIALIZED"},
+        {Result::INVALID_STATE, "INVALID_STATE"},
         {Result::UNKNOWN_ERROR, "UNKNOWN_ERROR"}
     };
 

@@ -133,7 +133,7 @@ cmake ..
 
 ```bash
 # Clone and enter directory
-cd some-ip
+cd opensomeip
 
 # Install basic build dependencies (required)
 ./scripts/setup_deps.sh
@@ -151,7 +151,8 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j$(nproc)
 
 # Run the demo
-./bin/simple_message_demo
+./bin/hello_world_server
+./bin/hello_world_client #run in another terminal
 ```
 
 Expected output shows complete SOME/IP message lifecycle:
@@ -167,7 +168,7 @@ Expected output shows complete SOME/IP message lifecycle:
 cd build
 ctest --output-on-failure
 
-# Or run specific tests
+# Or run specific tests (here are some examples)
 ctest -R SerializationTest  # Test serialization functionality
 ctest -R MessageTest        # Test message handling
 ctest -R SessionManagerTest # Test session management
@@ -180,6 +181,9 @@ ctest -R TcpTransportTest   # Test TCP transport binding
 
 #### Code Quality & Analysis
 ```bash
+# Change to build folder
+cd build
+
 # Format code automatically
 make format
 
@@ -187,7 +191,7 @@ make format
 make tidy          # clang-tidy checks
 
 # Generate coverage report (requires gcovr: pip install gcovr)
-./scripts/run_tests.py --coverage
+../scripts/run_tests.py --coverage
 ```
 
 #### Advanced Testing
@@ -444,8 +448,8 @@ target_link_libraries(your_target someip-common someip-transport)
 - Comprehensive documentation
 - PlantUML architecture diagrams
 
-### In Progress
-- End-to-End (E2E) protection - Core standard feature
+### Implemented
+- End-to-End (E2E) protection - Core standard feature with basic profile
 
 ### Planned
 - Advanced SD features (load balancing, IPv6 full support)
@@ -479,6 +483,14 @@ make test
 ./test_message
 ```
 
+## E2E Protection Disclaimer
+
+**This implementation provides a generic E2E protection framework. The included 'basic' profile is a basic implementation for testing and development. For production use in AUTOSAR environments, implement AUTOSAR E2E profiles as external plugins.**
+
+**AUTOSAR E2E profiles (P01, P02, P04, P05, P06, P07, P11) are intentionally not included due to licensing restrictions.**
+
+The basic E2E profile implements fundamental protection mechanisms using publicly available standards (SAE-J1850 CRC, ITU-T X.25 CRC, and functional safety concepts) that can support ISO 26262 compliance when used appropriately in a complete safety architecture.
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for detailed information on:
@@ -493,8 +505,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Fork and clone the repository
-git clone https://github.com/your-username/someip-stack.git
-cd someip-stack
+git clone https://github.com/vtz/opensomeip.git
+cd opensomeip
 
 # Set up development environment
 ./scripts/setup_deps.sh
@@ -503,7 +515,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug
 make
 
 # Run tests and check code quality
-./scripts/run_tests.py --rebuild --static-analysis --coverage
+../scripts/run_tests.py --rebuild --static-analysis --coverage
 ```
 
 ## Development Status (protocol coverage tracked)
@@ -519,7 +531,7 @@ make
 - Documentation and traceability
 
 ### Pending
-- E2E protection and additional safety mechanisms for safety alignment
+- Advanced E2E profiles (AUTOSAR P01-P11) - requires external implementation due to licensing
 - Advanced SD features (load balancing, IPv6)
 - Performance optimizations
 

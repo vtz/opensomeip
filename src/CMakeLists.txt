@@ -18,14 +18,43 @@ set(TRANSPORT_SOURCES
     transport/tcp_transport.cpp
 )
 
-# Create base library
-add_library(someip-core STATIC ${CORE_SOURCES})
+# E2E library sources (defined before core since core depends on E2E header)
+set(E2E_SOURCES
+    e2e/e2e_protection.cpp
+    e2e/e2e_header.cpp
+    e2e/e2e_crc.cpp
+    e2e/e2e_profile_registry.cpp
+    e2e/e2e_profiles/standard_profile.cpp
+)
+
+# Use OBJECT libraries to avoid circular dependency between core and E2E
+# Both are compiled separately but linked together
+
+# Core object library
+add_library(someip-core-obj OBJECT ${CORE_SOURCES})
+target_include_directories(someip-core-obj PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+# E2E object library
+add_library(someip-e2e-obj OBJECT ${E2E_SOURCES})
+target_include_directories(someip-e2e-obj PUBLIC ${CMAKE_SOURCE_DIR}/include)
+
+# Create combined core library that includes both core and E2E objects
+# This avoids circular dependency issues at link time
+add_library(someip-core STATIC
+    $<TARGET_OBJECTS:someip-core-obj>
+    $<TARGET_OBJECTS:someip-e2e-obj>
+)
 target_include_directories(someip-core PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(someip-core PUBLIC Threads::Threads)
+
+# Create E2E library as an alias to core (for backward compatibility)
+# All E2E functionality is now part of someip-core
+add_library(someip-e2e ALIAS someip-core)
 
 # Create serialization library (depends on core)
 add_library(someip-serialization STATIC ${SERIALIZATION_SOURCES})
 target_include_directories(someip-serialization PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(someip-serialization PRIVATE someip-core)
+target_link_libraries(someip-serialization PUBLIC someip-core)
 
 # RPC library sources
 set(RPC_SOURCES

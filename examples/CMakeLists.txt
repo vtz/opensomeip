@@ -12,6 +12,9 @@ add_subdirectory(advanced/large_messages)
 add_subdirectory(advanced/multi_service)
 add_subdirectory(advanced/udp_config)
 
+# E2E Protection Examples
+add_subdirectory(e2e_protection)
+
 # Interoperability Testing (requires vsomeip3 and Boost - off by default)
 if(BUILD_VSOMEIP_INTEROP)
     add_subdirectory(vsomeip_interop)

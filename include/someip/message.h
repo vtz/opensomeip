@@ -15,9 +15,11 @@
 #define SOMEIP_MESSAGE_H
 
 #include "someip/types.h"
+#include "e2e/e2e_header.h"
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <optional>
 
 namespace someip {
 
@@ -116,7 +118,10 @@ public:
     bool has_valid_payload() const;
 
     // Utility methods
-    size_t get_total_size() const { return HEADER_SIZE + payload_.size(); }
+    size_t get_total_size() const {
+        size_t e2e_size = e2e_header_.has_value() ? e2e_header_->get_header_size() : 0;
+        return HEADER_SIZE + e2e_size + payload_.size();
+    }
     static size_t get_header_size() { return HEADER_SIZE; }
     bool is_request() const { return someip::is_request(message_type_); }
     bool is_response() const { return someip::is_response(message_type_); }
@@ -126,6 +131,12 @@ public:
     // Timestamp for diagnostics
     std::chrono::steady_clock::time_point get_timestamp() const { return timestamp_; }
     void update_timestamp() { timestamp_ = std::chrono::steady_clock::now(); }
+
+    // E2E protection support
+    bool has_e2e_header() const { return e2e_header_.has_value(); }
+    void set_e2e_header(const e2e::E2EHeader& header);
+    std::optional<e2e::E2EHeader> get_e2e_header() const { return e2e_header_; }
+    void clear_e2e_header();
 
     // String representation for debugging
     std::string to_string() const;
@@ -142,6 +153,9 @@ private:
 
     // Payload
     std::vector<uint8_t> payload_;
+
+    // E2E protection header (optional)
+    std::optional<e2e::E2EHeader> e2e_header_;
 
     // Metadata
     std::chrono::steady_clock::time_point timestamp_;
