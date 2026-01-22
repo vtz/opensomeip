@@ -65,3 +65,35 @@ jobs:
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install Sphinx dependencies
+      run: |
+        pip install sphinx>=5.0 sphinx-needs>=0.6.0 sphinxcontrib-plantuml
+
+    - name: Extract code requirements
+      run: |
+        python scripts/extract_code_requirements.py \
+          --project-root ${{ github.workspace }} \
+          --output ${{ steps.strings.outputs.build-output-dir }}/code_references.json \
+          --src-dirs src include \
+          --test-dirs tests
+
+    - name: Validate requirements
+      run: |
+        python scripts/validate_requirements.py \
+          --project-root ${{ github.workspace }} \
+          --code-refs ${{ steps.strings.outputs.build-output-dir }}/code_references.json
+      continue-on-error: true
+
+    - name: Upload requirements artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: requirements-${{ matrix.c_compiler }}
+        path: |
+          ${{ steps.strings.outputs.build-output-dir }}/code_references.json
+        retention-days: 7

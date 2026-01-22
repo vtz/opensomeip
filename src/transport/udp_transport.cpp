@@ -24,6 +24,13 @@
 namespace someip {
 namespace transport {
 
+/**
+ * @brief UDP Transport constructor
+ * @implements REQ_TRANSPORT_001
+ * @implements REQ_TRANSPORT_005
+ * @satisfies feat_req_someip_800
+ * @satisfies feat_req_someip_801
+ */
 UdpTransport::UdpTransport(const Endpoint& local_endpoint, const UdpTransportConfig& config)
     : local_endpoint_(local_endpoint),
       config_(config),
@@ -38,6 +45,13 @@ UdpTransport::~UdpTransport() {
     stop();
 }
 
+/**
+ * @brief Send a SOME/IP message via UDP
+ * @implements REQ_TRANSPORT_001
+ * @implements REQ_TRANSPORT_004
+ * @satisfies feat_req_someip_800
+ * @satisfies feat_req_someip_804
+ */
 Result UdpTransport::send_message(const Message& message, const Endpoint& endpoint) {
     if (!is_running()) {
         return Result::NOT_CONNECTED;

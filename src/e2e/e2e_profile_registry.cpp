@@ -17,11 +17,20 @@
 namespace someip {
 namespace e2e {
 
+/**
+ * @brief Get singleton instance of the E2E profile registry
+ * @implements REQ_E2E_PLUGIN_002
+ */
 E2EProfileRegistry& E2EProfileRegistry::instance() {
     static E2EProfileRegistry registry;
     return registry;
 }
 
+/**
+ * @brief Register an E2E profile plugin
+ * @implements REQ_E2E_PLUGIN_002
+ * @implements REQ_E2E_PLUGIN_003
+ */
 bool E2EProfileRegistry::register_profile(E2EProfilePtr profile) {
     if (!profile) {
         return false;
@@ -50,6 +59,10 @@ bool E2EProfileRegistry::register_profile(E2EProfilePtr profile) {
     return true;
 }
 
+/**
+ * @brief Get an E2E profile by ID
+ * @implements REQ_E2E_PLUGIN_002
+ */
 E2EProfile* E2EProfileRegistry::get_profile(uint32_t profile_id) {
     std::lock_guard<std::mutex> lock(mutex_);
 

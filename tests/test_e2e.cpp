@@ -36,7 +36,13 @@ protected:
     }
 };
 
-// Test E2E header serialization/deserialization
+/**
+ * @test_case TC_E2E_001
+ * @tests REQ_E2E_PLUGIN_005
+ * @tests feat_req_someip_102
+ * @tests feat_req_someip_103
+ * @brief Test E2E header serialization/deserialization
+ */
 TEST_F(E2ETest, HeaderSerialization) {
     E2EHeader header(0x12345678, 0xABCDEF00, 0x1234, 0x5678);
 
@@ -52,7 +58,11 @@ TEST_F(E2ETest, HeaderSerialization) {
     EXPECT_EQ(deserialized.freshness_value, header.freshness_value);
 }
 
-// Test CRC calculation - SAE-J1850
+/**
+ * @test_case TC_E2E_002
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief Test CRC calculation - SAE-J1850
+ */
 TEST_F(E2ETest, CRC8SAEJ1850) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
     uint8_t crc = E2ECRC::calculate_crc8_sae_j1850(data);
@@ -66,7 +76,11 @@ TEST_F(E2ETest, CRC8SAEJ1850) {
     EXPECT_EQ(crc_empty, 0xFF);  // SAE-J1850 init value
 }
 
-// Test CRC calculation - ITU-T X.25
+/**
+ * @test_case TC_E2E_003
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief Test CRC calculation - ITU-T X.25
+ */
 TEST_F(E2ETest, CRC16ITUX25) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
     uint16_t crc = E2ECRC::calculate_crc16_itu_x25(data);

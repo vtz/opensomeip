@@ -38,12 +38,23 @@ PlantUML source files and generated diagrams:
 - Class diagrams
 - Component diagrams
 
+### `requirements/`
+Requirements documentation using Sphinx needs:
+- Implementation-specific requirements (E2E plugin, transport, architecture)
+- Traceability to Open SOME/IP Specification
+- Code and test traceability annotations
+- Automated traceability matrix generation
+
+See [requirements/README.md](requirements/README.md) for details.
+
 ## Key Documents
 
 - [Architecture Overview](architecture/overview.md)
 - [Safety Design](architecture/safety_design.md)
 - [Protocol Implementation](design/protocol_design.md)
 - [API Reference](design/api_reference.md)
+- [Requirements Management](requirements/README.md)
+- [Traceability Guide](requirements/TRACEABILITY_GUIDE.md)
 
 ## Documentation Standards
 

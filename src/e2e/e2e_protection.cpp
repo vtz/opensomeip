@@ -20,6 +20,13 @@
 namespace someip {
 namespace e2e {
 
+/**
+ * @brief Add E2E protection to a SOME/IP message
+ * @implements REQ_E2E_PLUGIN_001
+ * @implements REQ_E2E_PLUGIN_004
+ * @satisfies feat_req_someip_102
+ * @satisfies feat_req_someip_103
+ */
 Result E2EProtection::protect(Message& message, const E2EConfig& config) {
     // Get profile from registry
     E2EProfileRegistry& registry = E2EProfileRegistry::instance();
@@ -43,6 +50,13 @@ Result E2EProtection::protect(Message& message, const E2EConfig& config) {
     return profile->protect(message, config);
 }
 
+/**
+ * @brief Validate E2E protection of a SOME/IP message
+ * @implements REQ_E2E_PLUGIN_001
+ * @implements REQ_E2E_PLUGIN_004
+ * @satisfies feat_req_someip_102
+ * @satisfies feat_req_someip_103
+ */
 Result E2EProtection::validate(const Message& message, const E2EConfig& config) {
     // Get profile from registry
     E2EProfileRegistry& registry = E2EProfileRegistry::instance();
