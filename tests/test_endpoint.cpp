@@ -14,6 +14,11 @@
 #include <gtest/gtest.h>
 // #include "transport/endpoint.h"  // TODO: Include when transport is implemented
 
+/**
+ * @brief Endpoint unit tests
+ * @tests REQ_TRANSPORT_006
+ */
+
 // Placeholder test file for endpoint functionality
 // TODO: Implement when transport layer is complete
 

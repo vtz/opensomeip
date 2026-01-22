@@ -28,6 +28,14 @@
 namespace someip {
 namespace sd {
 
+/**
+ * @brief Service Discovery Server implementation
+ * @implements REQ_ARCH_001
+ * @implements REQ_ARCH_002
+ * @satisfies feat_req_someipsd_200
+ * @satisfies feat_req_someipsd_201
+ * @satisfies feat_req_someipsd_202
+ */
 class SdServerImpl : public transport::ITransportListener {
 public:
     SdServerImpl(const SdConfig& config)

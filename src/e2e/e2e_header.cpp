@@ -21,6 +21,12 @@
 namespace someip {
 namespace e2e {
 
+/**
+ * @brief Serialize E2E header to byte vector
+ * @implements REQ_E2E_PLUGIN_005
+ * @satisfies feat_req_someip_102
+ * @satisfies feat_req_someip_103
+ */
 std::vector<uint8_t> E2EHeader::serialize() const {
     std::vector<uint8_t> data;
     data.reserve(get_header_size());
@@ -45,6 +51,12 @@ std::vector<uint8_t> E2EHeader::serialize() const {
     return data;
 }
 
+/**
+ * @brief Deserialize E2E header from byte vector
+ * @implements REQ_E2E_PLUGIN_005
+ * @satisfies feat_req_someip_102
+ * @satisfies feat_req_someip_103
+ */
 bool E2EHeader::deserialize(const std::vector<uint8_t>& data, size_t offset) {
     const size_t header_size = get_header_size();
     if (data.size() < offset + header_size) {

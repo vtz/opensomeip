@@ -23,6 +23,14 @@
 
 using namespace someip::sd;
 
+/**
+ * @brief Service Discovery unit tests
+ * @tests REQ_ARCH_001
+ * @tests REQ_ARCH_002
+ * @tests feat_req_someipsd_100
+ * @tests feat_req_someipsd_200
+ * @tests feat_req_someipsd_300
+ */
 class SdTest : public ::testing::Test {
 protected:
     void SetUp() override {

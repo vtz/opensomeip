@@ -16,6 +16,17 @@
 
 namespace someip {
 namespace e2e {
+
+/**
+ * @brief E2E CRC calculation functions
+ * @implements REQ_E2E_PLUGIN_004
+ * @satisfies feat_req_someip_102
+ *
+ * Provides CRC calculation using publicly available standards:
+ * - SAE-J1850 (8-bit)
+ * - ITU-T X.25 (16-bit)
+ * - ISO 3309 / IEEE 802.3 (32-bit)
+ */
 namespace E2ECRC {
 
 // SAE-J1850 CRC-8 polynomial: 0x1D (x^8 + x^4 + x^3 + x^2 + 1)

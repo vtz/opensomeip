@@ -18,6 +18,14 @@
 namespace someip {
 namespace tp {
 
+/**
+ * @brief SOME/IP-TP Reassembler implementation
+ * @implements REQ_ARCH_001
+ * @implements REQ_ARCH_002
+ * @satisfies feat_req_someiptp_410
+ * @satisfies feat_req_someiptp_411
+ * @satisfies feat_req_someiptp_412
+ */
 TpReassembler::TpReassembler(const TpConfig& config)
     : config_(config) {
 }

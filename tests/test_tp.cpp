@@ -21,6 +21,14 @@
 using namespace someip;
 using namespace someip::tp;
 
+/**
+ * @brief SOME/IP-TP Transport Protocol unit tests
+ * @tests REQ_ARCH_001
+ * @tests REQ_ARCH_002
+ * @tests feat_req_someiptp_400
+ * @tests feat_req_someiptp_402
+ * @tests feat_req_someiptp_410
+ */
 class TpTest : public ::testing::Test {
 protected:
     void SetUp() override {

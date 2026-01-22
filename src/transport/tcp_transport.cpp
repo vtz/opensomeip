@@ -29,6 +29,14 @@
 namespace someip {
 namespace transport {
 
+/**
+ * @brief TCP Transport constructor
+ * @implements REQ_TRANSPORT_002
+ * @implements REQ_TRANSPORT_003
+ * @implements REQ_TRANSPORT_005
+ * @satisfies feat_req_someip_850
+ * @satisfies feat_req_someip_851
+ */
 TcpTransport::TcpTransport(const TcpTransportConfig& config)
     : config_(config) {
 }

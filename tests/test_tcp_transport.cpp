@@ -21,6 +21,15 @@
 using namespace someip;
 using namespace someip::transport;
 
+/**
+ * @brief TCP Transport unit tests
+ * @tests REQ_TRANSPORT_002
+ * @tests REQ_TRANSPORT_003
+ * @tests REQ_TRANSPORT_004
+ * @tests REQ_TRANSPORT_005
+ * @tests feat_req_someip_850
+ * @tests feat_req_someip_851
+ */
 class TcpTransportTest : public ::testing::Test {
 protected:
     void SetUp() override {

@@ -6,6 +6,16 @@ Tests end-to-end functionality across all stack components:
 - RPC communication
 - Event publish/subscribe
 - Transport Protocol segmentation
+
+@tests REQ_ARCH_001
+@tests REQ_ARCH_002
+@tests REQ_TRANSPORT_001
+@tests REQ_TRANSPORT_002
+@tests feat_req_someip_700
+@tests feat_req_someip_720
+@tests feat_req_someipsd_100
+@tests feat_req_someipsd_200
+@tests feat_req_someiptp_400
 """
 
 import pytest

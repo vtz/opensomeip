@@ -23,6 +23,15 @@
 using namespace someip;
 using namespace someip::transport;
 
+/**
+ * @brief UDP Transport unit tests
+ * @tests REQ_TRANSPORT_001
+ * @tests REQ_TRANSPORT_004
+ * @tests REQ_TRANSPORT_005
+ * @tests feat_req_someip_800
+ * @tests feat_req_someip_801
+ * @tests feat_req_someip_802
+ */
 class UdpTransportTest : public ::testing::Test {
 protected:
     void SetUp() override {

@@ -19,6 +19,13 @@
 namespace someip {
 namespace tp {
 
+/**
+ * @brief SOME/IP-TP Segmenter implementation
+ * @implements REQ_ARCH_001
+ * @satisfies feat_req_someiptp_402
+ * @satisfies feat_req_someiptp_403
+ * @satisfies feat_req_someiptp_404
+ */
 TpSegmenter::TpSegmenter(const TpConfig& config)
     : config_(config) {
 }

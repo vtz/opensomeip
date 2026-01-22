@@ -24,6 +24,14 @@
 namespace someip {
 namespace serialization {
 
+/**
+ * @brief SOME/IP Serializer implementation
+ * @implements REQ_ARCH_001
+ * @satisfies feat_req_someip_600
+ * @satisfies feat_req_someip_601
+ * @satisfies feat_req_someip_602
+ */
+
 // NOLINTNEXTLINE(modernize-use-equals-default,readability-redundant-member-init) - intentional pre-allocation
 Serializer::Serializer() {
     buffer_.reserve(1024);  // Pre-allocate reasonable size

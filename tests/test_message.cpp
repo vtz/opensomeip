@@ -17,6 +17,14 @@
 
 using namespace someip;
 
+/**
+ * @brief SOME/IP Message unit tests
+ * @tests REQ_ARCH_001
+ * @tests REQ_ARCH_003
+ * @tests feat_req_someip_538
+ * @tests feat_req_someip_539
+ * @tests feat_req_someip_540
+ */
 class MessageTest : public ::testing::Test {
 protected:
     void SetUp() override {

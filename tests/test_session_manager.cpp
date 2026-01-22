@@ -16,6 +16,11 @@
 
 using namespace someip;
 
+/**
+ * @brief Session Manager unit tests
+ * @tests REQ_ARCH_002
+ * @tests REQ_ARCH_003
+ */
 class SessionManagerTest : public ::testing::Test {
 protected:
     void SetUp() override {

@@ -20,6 +20,13 @@
 namespace someip {
 namespace sd {
 
+/**
+ * @brief Service Discovery message serialization
+ * @implements REQ_ARCH_001
+ * @satisfies feat_req_someipsd_300
+ * @satisfies feat_req_someipsd_301
+ */
+
 // SdEntry serialization/deserialization
 std::vector<uint8_t> SdEntry::serialize() const {
     std::vector<uint8_t> data;

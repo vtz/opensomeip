@@ -25,6 +25,13 @@
 namespace someip {
 namespace events {
 
+/**
+ * @brief Event Subscriber implementation
+ * @implements REQ_ARCH_001
+ * @implements REQ_ARCH_002
+ * @satisfies feat_req_someip_730
+ * @satisfies feat_req_someip_731
+ */
 class EventSubscriberImpl : public transport::ITransportListener {
 public:
     EventSubscriberImpl(uint16_t client_id)

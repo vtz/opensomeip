@@ -18,6 +18,16 @@
 
 using namespace someip::serialization;
 
+/**
+ * @brief SOME/IP Serialization unit tests
+ * @tests REQ_ARCH_001
+ * @tests feat_req_someip_600
+ * @tests feat_req_someip_601
+ * @tests feat_req_someip_602
+ * @tests feat_req_someip_610
+ * @tests feat_req_someip_611
+ */
+
 // Helper macro for deserialization result testing
 #define EXPECT_DESERIALIZE_SUCCESS(result_expr, expected_value) \
     do { \

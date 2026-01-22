@@ -20,6 +20,12 @@
 namespace someip {
 namespace tp {
 
+/**
+ * @brief SOME/IP-TP Manager implementation
+ * @implements REQ_ARCH_001
+ * @satisfies feat_req_someiptp_400
+ * @satisfies feat_req_someiptp_401
+ */
 TpManager::TpManager(const TpConfig& config)
     : config_(config),
       segmenter_(std::make_unique<TpSegmenter>(config)),

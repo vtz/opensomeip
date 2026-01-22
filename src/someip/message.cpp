@@ -26,6 +26,16 @@
 
 namespace someip {
 
+/**
+ * @brief SOME/IP Message implementation
+ * @implements REQ_ARCH_001
+ * @implements REQ_ARCH_003
+ * @satisfies feat_req_someip_538
+ * @satisfies feat_req_someip_539
+ * @satisfies feat_req_someip_540
+ * @satisfies feat_req_someip_541
+ */
+
 Message::Message()
     : length_(8),  // Length from client_id to end (no payload)
       protocol_version_(SOMEIP_PROTOCOL_VERSION),

@@ -34,6 +34,10 @@ namespace e2e {
 
 /**
  * @brief Basic E2E protection profile
+ * @implements REQ_E2E_PLUGIN_001
+ * @implements REQ_E2E_PLUGIN_004
+ * @satisfies feat_req_someip_102
+ * @satisfies feat_req_someip_103
  *
  * A simple reference implementation of E2E protection using publicly available standards.
  * This profile provides basic E2E protection mechanisms for testing and development.

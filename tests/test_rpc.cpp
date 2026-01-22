@@ -21,6 +21,13 @@
 
 using namespace someip::rpc;
 
+/**
+ * @brief RPC (Request/Response) unit tests
+ * @tests REQ_ARCH_001
+ * @tests REQ_ARCH_002
+ * @tests feat_req_someip_700
+ * @tests feat_req_someip_710
+ */
 class RpcTest : public ::testing::Test {
 protected:
     void SetUp() override {

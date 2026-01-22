@@ -7,6 +7,14 @@ Tests full stack E2E protection scenarios including:
 - Multiple concurrent protected messages
 - Network-level validation
 - Performance testing
+
+@tests REQ_E2E_PLUGIN_001
+@tests REQ_E2E_PLUGIN_002
+@tests REQ_E2E_PLUGIN_004
+@tests REQ_ARCH_001
+@tests REQ_ARCH_002
+@tests feat_req_someip_102
+@tests feat_req_someip_103
 """
 
 import sys
