@@ -18,8 +18,17 @@ Validate requirements completeness and traceability.
 This script checks:
 - All requirements have at least one code reference
 - All requirements have at least one test case
+- Implementation requirements (REQ_*) have spec requirement links (:satisfies:)
 - No orphaned code references (referencing non-existent requirements)
 - No orphaned test cases (testing non-existent requirements)
+
+Exit codes:
+- 0: All validations passed
+- 1: Errors found or strict mode violations
+- 2: No requirements found (configuration issue)
+
+Usage in CI/pre-commit:
+  python scripts/validate_requirements.py --strict
 """
 
 import argparse
@@ -37,24 +46,38 @@ def load_json(file_path: Path) -> dict:
         return json.load(f)
 
 
-def extract_requirements_from_rst(rst_dir: Path) -> Set[str]:
-    """Extract requirement IDs from RST files."""
+def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Set[str], Dict[str, List[str]]]:
+    """Extract requirement IDs and their satisfies relationships from RST files."""
     requirements = set()
-    
+    satisfies_map = {}  # req_id -> list of satisfied spec requirements
+
     for rst_file in rst_dir.rglob("*.rst"):
         content = rst_file.read_text(encoding='utf-8', errors='ignore')
-        
-        # Look for requirement directives with IDs
+
+        # Look for requirement directives with IDs and satisfies
         import re
-        pattern = re.compile(r':id:\s*(REQ_[A-Za-z0-9_]+)', re.IGNORECASE)
+        pattern = re.compile(
+            r'\.\.\s+requirement::.*?\n'
+            r'.*?:id:\s*(REQ_[A-Za-z0-9_]+).*?'
+            r'(?::satisfies:\s*([^\n]+))?',
+            re.DOTALL | re.IGNORECASE
+        )
+
         for match in pattern.finditer(content):
-            requirements.add(match.group(1).upper())
-    
-    return requirements
+            req_id = match.group(1).upper()
+            requirements.add(req_id)
+
+            satisfies_str = match.group(2) or ""
+            if satisfies_str:
+                satisfies = [s.strip() for s in satisfies_str.split(",") if s.strip()]
+                satisfies_map[req_id] = satisfies
+
+    return requirements, satisfies_map
 
 
 def validate_requirements(
     requirements: Set[str],
+    satisfies_map: Dict[str, List[str]],
     code_refs: dict,
     verbose: bool = False
 ) -> Tuple[List[str], List[str], List[str]]:
@@ -101,38 +124,57 @@ def validate_requirements(
                 elif req.startswith("feat_req_"):
                     test_tests.add(req.lower())
     
-    # Check each requirement
+    # Check each requirement for implementation and testing
+    orphaned_requirements = []
     for req_id in requirements:
         has_code = req_id in code_implements
         has_test = req_id in test_tests
-        
+
         if not has_code:
+            orphaned_requirements.append(req_id)
             warnings.append(f"Requirement {req_id} has no code implementation")
-        
+
         if not has_test:
             warnings.append(f"Requirement {req_id} has no test coverage")
-        
+
         if has_code and has_test:
             info.append(f"Requirement {req_id}: OK (implemented and tested)")
-    
+
+    # Check for missing spec links (implementation requirements must satisfy at least one spec requirement)
+    missing_spec_links = []
+    for req_id in requirements:
+        if req_id.startswith("REQ_"):  # Implementation requirement
+            satisfies = satisfies_map.get(req_id, [])
+            if not satisfies:
+                missing_spec_links.append(req_id)
+                errors.append(f"Implementation requirement {req_id} has no spec requirement links (missing :satisfies: field)")
+
     # Check for orphaned code references
     for ref in code_implements:
         if ref not in requirements:
             warnings.append(f"Code reference to non-existent requirement: {ref}")
-    
+
     # Check for orphaned test references
     for ref in test_tests:
         if ref.startswith("REQ_") and ref not in requirements:
             warnings.append(f"Test reference to non-existent requirement: {ref}")
+
+    # Summary with gap analysis
+    fully_traced = len(requirements) - len(orphaned_requirements)
+    spec_linked = len(requirements) - len(missing_spec_links)
     
-    # Summary
-    info.append(f"\nSummary:")
+    # Gap Analysis Summary
+    info.append(f"\nGap Analysis Summary:")
     info.append(f"  Total requirements: {len(requirements)}")
+    info.append(f"  Fully traced (code + tests): {fully_traced}/{len(requirements)} ({fully_traced/len(requirements)*100:.1f}%)")
+    info.append(f"  Spec-linked implementation reqs: {spec_linked}/{len([r for r in requirements if r.startswith('REQ_')])}")
     info.append(f"  Requirements with code: {len(requirements & code_implements)}")
     info.append(f"  Requirements with tests: {len(requirements & test_tests)}")
+    info.append(f"  Orphaned requirements (no code): {len(orphaned_requirements)}")
+    info.append(f"  Missing spec links: {len(missing_spec_links)}")
     info.append(f"  Code references: {len(code_implements)}")
     info.append(f"  Test references: {len(test_tests)}")
-    
+
     return errors, warnings, info
 
 
@@ -168,6 +210,11 @@ def main():
         action="store_true",
         help="Treat warnings as errors"
     )
+    parser.add_argument(
+        "--ci-mode",
+        action="store_true",
+        help="CI mode: exit with code 2 if no requirements found"
+    )
     
     args = parser.parse_args()
     
@@ -180,36 +227,40 @@ def main():
     
     # Load data
     code_refs = load_json(args.code_refs)
-    requirements = extract_requirements_from_rst(args.requirements_dir)
-    
+    requirements, satisfies_map = extract_requirements_from_rst(args.requirements_dir)
+
     if not requirements:
-        print("Warning: No requirements found in RST files")
-    
+        if args.ci_mode:
+            print("Error: No requirements found in RST files")
+            return 2
+        else:
+            print("Warning: No requirements found in RST files")
+
     # Validate
     errors, warnings, info = validate_requirements(
-        requirements, code_refs, args.verbose
+        requirements, satisfies_map, code_refs, args.verbose
     )
-    
+
     # Print results
     for msg in info:
         print(msg)
-    
+
     if warnings:
         print("\nWarnings:")
         for msg in warnings:
             print(f"  - {msg}")
-    
+
     if errors:
         print("\nErrors:")
         for msg in errors:
             print(f"  - {msg}")
-    
+
     # Exit code
     if errors:
         return 1
     if args.strict and warnings:
         return 1
-    
+
     print("\nValidation passed!")
     return 0
 

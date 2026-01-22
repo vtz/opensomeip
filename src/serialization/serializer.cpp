@@ -27,9 +27,28 @@ namespace serialization {
 /**
  * @brief SOME/IP Serializer implementation
  * @implements REQ_ARCH_001
+ * @implements REQ_SER_001, REQ_SER_002, REQ_SER_003, REQ_SER_004
+ * @implements REQ_SER_005, REQ_SER_006, REQ_SER_007, REQ_SER_008
+ * @implements REQ_SER_010, REQ_SER_011, REQ_SER_012, REQ_SER_013, REQ_SER_014, REQ_SER_015, REQ_SER_016, REQ_SER_017
+ * @implements REQ_SER_020, REQ_SER_021, REQ_SER_022, REQ_SER_023, REQ_SER_024
+ * @implements REQ_SER_030, REQ_SER_031, REQ_SER_032, REQ_SER_033, REQ_SER_034, REQ_SER_035
+ * @implements REQ_SER_040, REQ_SER_041, REQ_SER_042, REQ_SER_043, REQ_SER_044, REQ_SER_045, REQ_SER_046, REQ_SER_047
+ * @implements REQ_SER_050, REQ_SER_051, REQ_SER_052, REQ_SER_053, REQ_SER_054, REQ_SER_055, REQ_SER_056
+ * @implements REQ_SER_060, REQ_SER_061, REQ_SER_062, REQ_SER_063
+ * @implements REQ_SER_070, REQ_SER_071, REQ_SER_072, REQ_SER_073, REQ_SER_074, REQ_SER_075
+ * @implements REQ_SER_080, REQ_SER_081, REQ_SER_082
+ * @implements REQ_SER_001_E01, REQ_SER_002_E01, REQ_SER_003_E01, REQ_SER_004_E01
+ * @implements REQ_SER_005_E01, REQ_SER_006_E01, REQ_SER_007_E01, REQ_SER_008_E01
+ * @implements REQ_SER_020_E01, REQ_SER_022_E01
+ * @implements REQ_SER_030_E01, REQ_SER_031_E01, REQ_SER_032_E01, REQ_SER_033_E01
+ * @implements REQ_SER_040_E01, REQ_SER_043_E01, REQ_SER_046_E01, REQ_SER_047_E01, REQ_SER_047_E02
+ * @implements REQ_SER_050_E01, REQ_SER_050_E02, REQ_SER_053_E01, REQ_SER_055_E01
+ * @implements REQ_SER_060_E01, REQ_SER_060_E02
+ * @implements REQ_SER_070_E01, REQ_SER_070_E02
  * @satisfies feat_req_someip_600
  * @satisfies feat_req_someip_601
  * @satisfies feat_req_someip_602
+ * @satisfies feat_req_someip_231
  */
 
 // NOLINTNEXTLINE(modernize-use-equals-default,readability-redundant-member-init) - intentional pre-allocation
@@ -41,50 +60,99 @@ void Serializer::reset() {
     buffer_.clear();
 }
 
+/**
+ * @brief Serialize boolean value
+ * @implements REQ_SER_020
+ */
 void Serializer::serialize_bool(bool value) {
     buffer_.push_back(value ? 0x01 : 0x00);
 }
 
+/**
+ * @brief Serialize uint8 value (single byte, no endian conversion)
+ * @implements REQ_SER_001
+ */
 void Serializer::serialize_uint8(uint8_t value) {
     buffer_.push_back(value);
 }
 
+/**
+ * @brief Serialize uint16 value in Big Endian byte order
+ * @implements REQ_SER_002
+ */
 void Serializer::serialize_uint16(uint16_t value) {
     append_be_uint16(value);
 }
 
+/**
+ * @brief Serialize uint32 value in Big Endian byte order
+ * @implements REQ_SER_003
+ */
 void Serializer::serialize_uint32(uint32_t value) {
     append_be_uint32(value);
 }
 
+/**
+ * @brief Serialize uint64 value in Big Endian byte order
+ * @implements REQ_SER_004
+ */
 void Serializer::serialize_uint64(uint64_t value) {
     append_be_uint64(value);
 }
 
+/**
+ * @brief Serialize int8 value (single byte, two's complement)
+ * @implements REQ_SER_010
+ */
 void Serializer::serialize_int8(int8_t value) {
     buffer_.push_back(static_cast<uint8_t>(value));
 }
 
+/**
+ * @brief Serialize int16 value in Big Endian byte order
+ * @implements REQ_SER_011
+ */
 void Serializer::serialize_int16(int16_t value) {
     append_be_int16(value);
 }
 
+/**
+ * @brief Serialize int32 value in Big Endian byte order
+ * @implements REQ_SER_012
+ */
 void Serializer::serialize_int32(int32_t value) {
     append_be_int32(value);
 }
 
+/**
+ * @brief Serialize int64 value in Big Endian byte order
+ * @implements REQ_SER_013
+ */
 void Serializer::serialize_int64(int64_t value) {
     append_be_int64(value);
 }
 
+/**
+ * @brief Serialize float value using IEEE 754 in Big Endian
+ * @implements REQ_SER_030
+ */
 void Serializer::serialize_float(float value) {
     append_be_float(value);
 }
 
+/**
+ * @brief Serialize double value using IEEE 754 in Big Endian
+ * @implements REQ_SER_031
+ */
 void Serializer::serialize_double(double value) {
     append_be_double(value);
 }
 
+/**
+ * @brief Serialize string with length prefix and padding
+ * @implements REQ_SER_040, REQ_SER_041, REQ_SER_042
+ * @implements REQ_SER_050, REQ_SER_051
+ */
 void Serializer::serialize_string(const std::string& value) {
     // Serialize string length as uint32_t
     serialize_uint32(static_cast<uint32_t>(value.length()));
@@ -96,6 +164,10 @@ void Serializer::serialize_string(const std::string& value) {
     align_to(4);
 }
 
+/**
+ * @brief Align buffer to specified boundary by adding padding bytes
+ * @implements REQ_SER_050, REQ_SER_051, REQ_SER_052
+ */
 void Serializer::align_to(size_t alignment) {
     size_t current_size = buffer_.size();
     size_t padding_needed = (alignment - (current_size % alignment)) % alignment;
@@ -105,6 +177,10 @@ void Serializer::align_to(size_t alignment) {
     }
 }
 
+/**
+ * @brief Add explicit padding bytes to buffer
+ * @implements REQ_SER_052
+ */
 void Serializer::add_padding(size_t bytes) {
     for (size_t i = 0; i < bytes; ++i) {
         buffer_.push_back(0x00);
@@ -163,7 +239,17 @@ void Serializer::append_be_double(double value) {
     append_be_uint64(bits);
 }
 
-// Deserializer implementation
+/**
+ * @brief Deserializer implementation for SOME/IP payloads
+ * @implements REQ_SER_005, REQ_SER_006, REQ_SER_007, REQ_SER_008
+ * @implements REQ_SER_014, REQ_SER_015, REQ_SER_016, REQ_SER_017
+ * @implements REQ_SER_021, REQ_SER_022, REQ_SER_023, REQ_SER_024
+ * @implements REQ_SER_032, REQ_SER_033, REQ_SER_034, REQ_SER_035
+ * @implements REQ_SER_043, REQ_SER_044, REQ_SER_045, REQ_SER_046, REQ_SER_047
+ * @implements REQ_SER_053, REQ_SER_054, REQ_SER_055, REQ_SER_056
+ * @implements REQ_SER_061, REQ_SER_062, REQ_SER_063
+ * @implements REQ_SER_071, REQ_SER_072
+ */
 
 Deserializer::Deserializer(const std::vector<uint8_t>& data)
     : buffer_(data), position_(0) {
@@ -177,6 +263,11 @@ void Deserializer::reset() {
     position_ = 0;
 }
 
+/**
+ * @brief Deserialize boolean value
+ * @implements REQ_SER_021
+ * @implements REQ_SER_020_E01
+ */
 DeserializationResult<bool> Deserializer::deserialize_bool() {
     if (position_ + sizeof(uint8_t) > buffer_.size()) {
         return DeserializationResult<bool>::error(Result::MALFORMED_MESSAGE);
@@ -185,6 +276,11 @@ DeserializationResult<bool> Deserializer::deserialize_bool() {
     return DeserializationResult<bool>::success(value);
 }
 
+/**
+ * @brief Deserialize uint8 value
+ * @implements REQ_SER_005
+ * @implements REQ_SER_005_E01
+ */
 DeserializationResult<uint8_t> Deserializer::deserialize_uint8() {
     if (position_ + sizeof(uint8_t) > buffer_.size()) {
         return DeserializationResult<uint8_t>::error(Result::MALFORMED_MESSAGE);
@@ -193,6 +289,11 @@ DeserializationResult<uint8_t> Deserializer::deserialize_uint8() {
     return DeserializationResult<uint8_t>::success(value);
 }
 
+/**
+ * @brief Deserialize uint16 value from Big Endian
+ * @implements REQ_SER_006
+ * @implements REQ_SER_006_E01
+ */
 DeserializationResult<uint16_t> Deserializer::deserialize_uint16() {
     auto result = read_be_uint16();
     if (!result) {
@@ -201,6 +302,11 @@ DeserializationResult<uint16_t> Deserializer::deserialize_uint16() {
     return DeserializationResult<uint16_t>::success(*result);
 }
 
+/**
+ * @brief Deserialize uint32 value from Big Endian
+ * @implements REQ_SER_007
+ * @implements REQ_SER_007_E01
+ */
 DeserializationResult<uint32_t> Deserializer::deserialize_uint32() {
     auto result = read_be_uint32();
     if (!result) {
@@ -209,6 +315,11 @@ DeserializationResult<uint32_t> Deserializer::deserialize_uint32() {
     return DeserializationResult<uint32_t>::success(*result);
 }
 
+/**
+ * @brief Deserialize uint64 value from Big Endian
+ * @implements REQ_SER_008
+ * @implements REQ_SER_008_E01
+ */
 DeserializationResult<uint64_t> Deserializer::deserialize_uint64() {
     auto result = read_be_uint64();
     if (!result) {
@@ -249,6 +360,11 @@ DeserializationResult<int64_t> Deserializer::deserialize_int64() {
     return DeserializationResult<int64_t>::success(static_cast<int64_t>(*result));
 }
 
+/**
+ * @brief Deserialize float value from IEEE 754 Big Endian
+ * @implements REQ_SER_032
+ * @implements REQ_SER_032_E01
+ */
 DeserializationResult<float> Deserializer::deserialize_float() {
     auto result = read_be_float();
     if (!result) {
@@ -257,6 +373,11 @@ DeserializationResult<float> Deserializer::deserialize_float() {
     return DeserializationResult<float>::success(*result);
 }
 
+/**
+ * @brief Deserialize double value from IEEE 754 Big Endian
+ * @implements REQ_SER_033
+ * @implements REQ_SER_033_E01
+ */
 DeserializationResult<double> Deserializer::deserialize_double() {
     auto result = read_be_double();
     if (!result) {
@@ -265,6 +386,11 @@ DeserializationResult<double> Deserializer::deserialize_double() {
     return DeserializationResult<double>::success(*result);
 }
 
+/**
+ * @brief Deserialize string with length prefix
+ * @implements REQ_SER_043, REQ_SER_044, REQ_SER_045
+ * @implements REQ_SER_043_E01, REQ_SER_047_E01
+ */
 DeserializationResult<std::string> Deserializer::deserialize_string() {
     // Deserialize string length
     auto length_result = deserialize_uint32();

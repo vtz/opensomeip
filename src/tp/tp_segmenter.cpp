@@ -22,6 +22,11 @@ namespace tp {
 /**
  * @brief SOME/IP-TP Segmenter implementation
  * @implements REQ_ARCH_001
+ * @implements REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_004, REQ_TP_005, REQ_TP_006, REQ_TP_007, REQ_TP_008
+ * @implements REQ_TP_010, REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015, REQ_TP_016, REQ_TP_017
+ * @implements REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021, REQ_TP_022
+ * @implements REQ_TP_001_E01, REQ_TP_001_E02, REQ_TP_001_E03
+ * @implements REQ_TP_013_E01, REQ_TP_015_E01
  * @satisfies feat_req_someiptp_402
  * @satisfies feat_req_someiptp_403
  * @satisfies feat_req_someiptp_404

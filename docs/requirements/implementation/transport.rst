@@ -37,6 +37,7 @@ UDP Transport
    :satisfies: feat_req_someip_800, feat_req_someip_801, feat_req_someip_802
    :status: implemented
    :priority: high
+   :verification: Execution of UDP transport unit tests and successful message transmission/reception in integration tests.
 
    The implementation shall provide a UDP transport (``UdpTransport``)
    that supports:
@@ -61,6 +62,7 @@ TCP Transport
    :satisfies: feat_req_someip_850, feat_req_someip_851, feat_req_someip_852
    :status: implemented
    :priority: high
+   :verification: Execution of TCP transport unit tests and successful client-server communication in integration tests.
 
    The implementation shall provide a TCP transport (``TcpTransport``)
    that supports:
@@ -82,8 +84,10 @@ Connection Management
 
 .. requirement:: Connection Management
    :id: REQ_TRANSPORT_003
+   :satisfies: feat_req_someip_850, feat_req_someip_851
    :status: implemented
    :priority: medium
+   :verification: Code inspection of connection state tracking and execution of connection lifecycle tests.
 
    The TCP transport shall implement connection management:
 
@@ -103,8 +107,10 @@ Error Recovery
 
 .. requirement:: Transport Error Recovery
    :id: REQ_TRANSPORT_004
+   :satisfies: feat_req_someip_800, feat_req_someip_850
    :status: implemented
    :priority: medium
+   :verification: Execution of error handling tests and verification of proper error code propagation to application layer.
 
    The transport layer shall implement error recovery mechanisms:
 
@@ -124,8 +130,10 @@ Transport Interface
 
 .. requirement:: Abstract Transport Interface
    :id: REQ_TRANSPORT_005
+   :satisfies: feat_req_someip_800, feat_req_someip_850
    :status: implemented
    :priority: high
+   :verification: Code inspection of interface definition and successful compilation of transport-agnostic application code.
 
    The implementation shall provide an abstract transport interface
    (``ITransport``) that defines:
@@ -146,8 +154,10 @@ Endpoint Configuration
 
 .. requirement:: Endpoint Configuration
    :id: REQ_TRANSPORT_006
+   :satisfies: feat_req_someip_800, feat_req_someip_850
    :status: implemented
    :priority: medium
+   :verification: Code inspection of endpoint validation logic and successful parsing of valid/invalid endpoint configurations.
 
    The implementation shall provide endpoint configuration:
 

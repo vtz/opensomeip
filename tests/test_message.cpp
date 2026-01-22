@@ -21,9 +21,26 @@ using namespace someip;
  * @brief SOME/IP Message unit tests
  * @tests REQ_ARCH_001
  * @tests REQ_ARCH_003
+ * @tests REQ_MSG_001, REQ_MSG_002, REQ_MSG_003
+ * @tests REQ_MSG_010, REQ_MSG_011, REQ_MSG_012
+ * @tests REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
+ * @tests REQ_MSG_030, REQ_MSG_031, REQ_MSG_032, REQ_MSG_033
+ * @tests REQ_MSG_040, REQ_MSG_041, REQ_MSG_042
+ * @tests REQ_MSG_050, REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_054, REQ_MSG_055
+ * @tests REQ_MSG_056, REQ_MSG_057, REQ_MSG_058, REQ_MSG_059
+ * @tests REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP
+ * @tests REQ_MSG_063, REQ_MSG_064
+ * @tests REQ_MSG_070, REQ_MSG_071, REQ_MSG_072
+ * @tests REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078, REQ_MSG_079, REQ_MSG_080
+ * @tests REQ_MSG_090, REQ_MSG_091, REQ_MSG_092, REQ_MSG_093
+ * @tests REQ_MSG_100
  * @tests feat_req_someip_538
  * @tests feat_req_someip_539
  * @tests feat_req_someip_540
+ * @tests feat_req_someip_45
+ * @tests feat_req_someip_60
+ * @tests feat_req_someip_100
+ * @tests feat_req_someip_103
  */
 class MessageTest : public ::testing::Test {
 protected:
@@ -36,6 +53,13 @@ protected:
     }
 };
 
+/**
+ * @test_case TC_MSG_001
+ * @tests REQ_MSG_001, REQ_MSG_002, REQ_MSG_003
+ * @tests REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
+ * @tests REQ_MSG_050, REQ_MSG_070, REQ_MSG_071
+ * @brief Test default constructor initializes all fields correctly
+ */
 TEST_F(MessageTest, DefaultConstructor) {
     Message msg;
 
@@ -49,6 +73,13 @@ TEST_F(MessageTest, DefaultConstructor) {
     EXPECT_TRUE(msg.is_valid());
 }
 
+/**
+ * @test_case TC_MSG_002
+ * @tests REQ_MSG_001, REQ_MSG_002, REQ_MSG_003
+ * @tests REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
+ * @tests REQ_MSG_050, REQ_MSG_054, REQ_MSG_070, REQ_MSG_074
+ * @brief Test constructor with specific IDs and message type
+ */
 TEST_F(MessageTest, ConstructorWithIds) {
     MessageId msg_id(0x1234, 0x5678);
     RequestId req_id(0x9ABC, 0xDEF0);
@@ -64,6 +95,12 @@ TEST_F(MessageTest, ConstructorWithIds) {
     EXPECT_TRUE(msg.is_valid());
 }
 
+/**
+ * @test_case TC_MSG_003
+ * @tests REQ_MSG_002, REQ_MSG_003, REQ_MSG_010, REQ_MSG_011
+ * @tests REQ_MSG_021, REQ_MSG_022, REQ_MSG_053, REQ_MSG_075
+ * @brief Test setters and getters for all message fields
+ */
 TEST_F(MessageTest, SettersAndGetters) {
     Message msg;
 
@@ -88,6 +125,15 @@ TEST_F(MessageTest, SettersAndGetters) {
     EXPECT_TRUE(msg.is_valid());
 }
 
+/**
+ * @test_case TC_MSG_004
+ * @tests REQ_MSG_001, REQ_MSG_002, REQ_MSG_003
+ * @tests REQ_MSG_010, REQ_MSG_011, REQ_MSG_012
+ * @tests REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
+ * @tests REQ_MSG_030, REQ_MSG_031, REQ_MSG_040
+ * @tests REQ_MSG_050, REQ_MSG_070, REQ_MSG_090, REQ_MSG_091, REQ_MSG_092
+ * @brief Test serialization and deserialization round-trip
+ */
 TEST_F(MessageTest, SerializationRoundTrip) {
     // Create a message with payload
     MessageId msg_id(0x1234, 0x5678);
@@ -119,6 +165,14 @@ TEST_F(MessageTest, SerializationRoundTrip) {
     EXPECT_TRUE(deserialized.is_valid());
 }
 
+/**
+ * @test_case TC_MSG_005
+ * @tests REQ_MSG_031, REQ_MSG_032, REQ_MSG_033
+ * @tests REQ_MSG_042, REQ_MSG_063, REQ_MSG_064
+ * @tests REQ_MSG_032_E01, REQ_MSG_032_E02
+ * @tests REQ_MSG_100
+ * @brief Test header validation for protocol version, interface version, and message type
+ */
 TEST_F(MessageTest, Validation) {
     Message msg;
 
@@ -175,6 +229,11 @@ TEST_F(MessageTest, CopyAndMove) {
     EXPECT_FALSE(original.is_valid());
 }
 
+/**
+ * @test_case TC_MSG_006
+ * @tests REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_054
+ * @brief Test message type helper functions
+ */
 TEST_F(MessageTest, MessageTypeHelpers) {
     Message request_msg;
     request_msg.set_message_type(MessageType::REQUEST);

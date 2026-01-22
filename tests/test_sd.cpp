@@ -27,6 +27,18 @@ using namespace someip::sd;
  * @brief Service Discovery unit tests
  * @tests REQ_ARCH_001
  * @tests REQ_ARCH_002
+ * @tests REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
+ * @tests REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014
+ * @tests REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026
+ * @tests REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035
+ * @tests REQ_SD_040, REQ_SD_041, REQ_SD_042, REQ_SD_043, REQ_SD_044, REQ_SD_045, REQ_SD_046
+ * @tests REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054, REQ_SD_055, REQ_SD_056
+ * @tests REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065
+ * @tests REQ_SD_066, REQ_SD_067, REQ_SD_068, REQ_SD_069
+ * @tests REQ_SD_070, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_074, REQ_SD_075, REQ_SD_076, REQ_SD_077
+ * @tests REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084
+ * @tests REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094
+ * @tests REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103
  * @tests feat_req_someipsd_100
  * @tests feat_req_someipsd_200
  * @tests feat_req_someipsd_300
@@ -42,7 +54,11 @@ protected:
     }
 };
 
-// Test SD types
+/**
+ * @test_case TC_SD_001
+ * @tests REQ_SD_001, REQ_SD_002
+ * @brief Test SD entry type values
+ */
 TEST_F(SdTest, EntryTypes) {
     EXPECT_EQ(static_cast<uint8_t>(EntryType::FIND_SERVICE), 0x00);
     EXPECT_EQ(static_cast<uint8_t>(EntryType::OFFER_SERVICE), 0x01);
@@ -50,12 +66,22 @@ TEST_F(SdTest, EntryTypes) {
     EXPECT_EQ(static_cast<uint8_t>(EntryType::SUBSCRIBE_EVENTGROUP_ACK), 0x07);
 }
 
+/**
+ * @test_case TC_SD_002
+ * @tests REQ_SD_060, REQ_SD_061, REQ_SD_062
+ * @brief Test SD option type values
+ */
 TEST_F(SdTest, OptionTypes) {
     EXPECT_EQ(static_cast<uint8_t>(OptionType::IPV4_ENDPOINT), 0x04);
     EXPECT_EQ(static_cast<uint8_t>(OptionType::IPV4_MULTICAST), 0x14);
     EXPECT_EQ(static_cast<uint8_t>(OptionType::IPV4_SD_ENDPOINT), 0x24);
 }
 
+/**
+ * @test_case TC_SD_003
+ * @tests REQ_SD_010, REQ_SD_011, REQ_SD_012
+ * @brief Test service instance structure
+ */
 TEST_F(SdTest, Instance) {
     ServiceInstance instance(0x1234, 0x5678, 1, 0);
 
@@ -69,6 +95,11 @@ TEST_F(SdTest, Instance) {
     EXPECT_EQ(instance.ttl_seconds, 0u);
 }
 
+/**
+ * @test_case TC_SD_004
+ * @tests REQ_SD_060, REQ_SD_063, REQ_SD_064, REQ_SD_065
+ * @brief Test IPv4 endpoint option serialization
+ */
 TEST_F(SdTest, IPv4EndpointOptionSerialization) {
     IPv4EndpointOption option;
     option.set_ipv4_address_from_string("192.168.1.100");
@@ -109,6 +140,11 @@ TEST_F(SdTest, IPv4EndpointOptionSerialization) {
     EXPECT_EQ(data[11], expected_port & 0xFF);
 }
 
+/**
+ * @test_case TC_SD_005
+ * @tests REQ_SD_060, REQ_SD_063, REQ_SD_064, REQ_SD_065
+ * @brief Test IPv4 endpoint option deserialization
+ */
 TEST_F(SdTest, IPv4EndpointOptionDeserialization) {
     IPv4EndpointOption option;
     option.set_ipv4_address_from_string("192.168.1.100");
@@ -185,7 +221,11 @@ TEST_F(SdTest, Config) {
     EXPECT_EQ(config.cyclic_offer, std::chrono::milliseconds(30000));
 }
 
-// Test SD message structures
+/**
+ * @test_case TC_SD_006
+ * @tests REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023
+ * @brief Test service entry structure
+ */
 TEST_F(SdTest, ServiceEntry) {
     ServiceEntry entry(EntryType::OFFER_SERVICE);
 
@@ -201,6 +241,11 @@ TEST_F(SdTest, ServiceEntry) {
     EXPECT_EQ(entry.get_ttl(), 3600u);
 }
 
+/**
+ * @test_case TC_SD_007
+ * @tests REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054
+ * @brief Test event group entry structure
+ */
 TEST_F(SdTest, EventGroupEntry) {
     EventGroupEntry entry(EntryType::SUBSCRIBE_EVENTGROUP);
 
@@ -218,6 +263,11 @@ TEST_F(SdTest, EventGroupEntry) {
     EXPECT_EQ(entry.get_ttl(), 1800u);
 }
 
+/**
+ * @test_case TC_SD_008
+ * @tests REQ_SD_060, REQ_SD_063, REQ_SD_064
+ * @brief Test endpoint option structure
+ */
 TEST_F(SdTest, EndpointOption) {
     IPv4EndpointOption option;
 
@@ -231,6 +281,11 @@ TEST_F(SdTest, EndpointOption) {
     EXPECT_EQ(option.get_port(), 30500);
 }
 
+/**
+ * @test_case TC_SD_009
+ * @tests REQ_SD_066, REQ_SD_067, REQ_SD_068
+ * @brief Test multicast option structure
+ */
 TEST_F(SdTest, MulticastOption) {
     IPv4MulticastOption option;
 
@@ -242,6 +297,11 @@ TEST_F(SdTest, MulticastOption) {
     EXPECT_EQ(option.get_port(), 30490);
 }
 
+/**
+ * @test_case TC_SD_010
+ * @tests REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
+ * @brief Test SD message structure and flags
+ */
 TEST_F(SdTest, SdMessage) {
     SdMessage message;
 
@@ -473,6 +533,11 @@ TEST_F(SdIntegrationTest, ClientInitializeAndShutdown) {
     EXPECT_FALSE(client.is_ready());
 }
 
+/**
+ * @test_case TC_SD_INTEGRATION_001
+ * @tests REQ_SD_030, REQ_SD_031, REQ_SD_032
+ * @brief Test server service offering
+ */
 TEST_F(SdIntegrationTest, ServerOfferService) {
     auto config = create_test_config(get_unique_port(), get_unique_port());
     SdServer server(config);
@@ -510,6 +575,11 @@ TEST_F(SdIntegrationTest, ServerOfferMultipleServices) {
     server.shutdown();
 }
 
+/**
+ * @test_case TC_SD_INTEGRATION_002
+ * @tests REQ_SD_033, REQ_SD_034
+ * @brief Test server stop offering service
+ */
 TEST_F(SdIntegrationTest, ServerStopOfferService) {
     auto config = create_test_config(get_unique_port(), get_unique_port());
     SdServer server(config);
@@ -565,6 +635,11 @@ TEST_F(SdIntegrationTest, ClientGetAvailableServicesEmpty) {
     client.shutdown();
 }
 
+/**
+ * @test_case TC_SD_INTEGRATION_003
+ * @tests REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093
+ * @brief Test client subscribe and unsubscribe service
+ */
 TEST_F(SdIntegrationTest, ClientSubscribeUnsubscribeService) {
     auto config = create_test_config(get_unique_port(), get_unique_port());
     SdClient client(config);

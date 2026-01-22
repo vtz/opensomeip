@@ -32,6 +32,9 @@ namespace sd {
  * @brief Service Discovery Server implementation
  * @implements REQ_ARCH_001
  * @implements REQ_ARCH_002
+ * @implements REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084
+ * @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094
+ * @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103
  * @satisfies feat_req_someipsd_200
  * @satisfies feat_req_someipsd_201
  * @satisfies feat_req_someipsd_202

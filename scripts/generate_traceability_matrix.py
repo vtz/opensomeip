@@ -29,7 +29,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 
 @dataclass
@@ -61,36 +61,47 @@ class TestCase:
     tests: List[str] = field(default_factory=list)
 
 
-def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, Requirement]:
-    """Extract requirements from RST files."""
+def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Dict[str, Requirement], Dict[str, List[str]]]:
+    """Extract requirements and satisfies relationships from RST files."""
     requirements = {}
-    
+    satisfies_map = {}
+
     for rst_file in rst_dir.rglob("*.rst"):
         content = rst_file.read_text(encoding='utf-8', errors='ignore')
-        
-        # Pattern to match requirement directives
-        pattern = re.compile(
-            r'\.\.\s+requirement::\s*(.+?)\n'
-            r'\s+:id:\s*(REQ_[A-Za-z0-9_]+).*?'
-            r'(?::satisfies:\s*([^\n]+))?',
+
+        # Pattern to match requirement directives - first find the requirement block
+        req_pattern = re.compile(
+            r'\.\.\s+requirement::\s*(.+?)\n((?:\s+:[a-z_]+:.*?\n)+)',
             re.DOTALL | re.IGNORECASE
         )
         
-        for match in pattern.finditer(content):
+        for match in req_pattern.finditer(content):
             title = match.group(1).strip()
-            req_id = match.group(2).upper()
-            satisfies_str = match.group(3) or ""
+            attrs_block = match.group(2)
             
+            # Extract :id: field
+            id_match = re.search(r':id:\s*(REQ_[A-Za-z0-9_]+)', attrs_block, re.IGNORECASE)
+            if not id_match:
+                continue
+            req_id = id_match.group(1).upper()
+            
+            # Extract :satisfies: field
+            satisfies_match = re.search(r':satisfies:\s*([^\n]+)', attrs_block, re.IGNORECASE)
+            satisfies_str = satisfies_match.group(1) if satisfies_match else ""
+
             satisfies = [s.strip() for s in satisfies_str.split(",") if s.strip()]
-            
+
             requirements[req_id] = Requirement(
                 id=req_id,
                 title=title,
                 type="requirement",
                 satisfies=satisfies
             )
-    
-    return requirements
+
+            if satisfies:
+                satisfies_map[req_id] = satisfies
+
+    return requirements, satisfies_map
 
 
 def load_code_references(json_path: Path) -> tuple:
@@ -339,6 +350,185 @@ def generate_json(
         json.dump(data, f, indent=2)
 
 
+def classify_requirement(req_id: str) -> str:
+    """Classify a requirement by its category."""
+    if "_E0" in req_id or "_E1" in req_id:
+        return "error_handling"
+    if req_id.startswith("REQ_ARCH_"):
+        return "architectural"
+    if req_id.startswith("REQ_E2E_PLUGIN_"):
+        return "plugin"
+    if req_id.startswith("REQ_TRANSPORT_"):
+        return "transport"
+    if req_id.startswith("REQ_MSG_"):
+        return "message"
+    if req_id.startswith("REQ_SER_"):
+        return "serialization"
+    if req_id.startswith("REQ_SD_"):
+        return "service_discovery"
+    if req_id.startswith("REQ_TP_"):
+        return "transport_protocol"
+    return "other"
+
+
+def generate_gap_analysis(
+    requirements: Dict[str, Requirement],
+    satisfies_map: Dict[str, List[str]],
+    output_path: Path
+):
+    """Generate gap analysis report highlighting traceability gaps."""
+    from collections import defaultdict
+
+    gaps = {
+        "no_implementation": [],
+        "no_tests": [],
+        "missing_spec_links": [],
+        "missing_spec_links_required": [],  # Only reqs that should have spec links
+        "fully_traced": []
+    }
+    
+    # Categories by requirement type
+    by_category = defaultdict(lambda: {"total": 0, "implemented": 0, "tested": 0, "spec_linked": 0})
+
+    # Analyze each requirement
+    for req_id, req in requirements.items():
+        has_code = len(req.implemented_by) > 0
+        has_tests = len(req.tested_by) > 0
+        has_spec_links = len(satisfies_map.get(req_id, [])) > 0
+        category = classify_requirement(req_id)
+        
+        # Update category stats
+        by_category[category]["total"] += 1
+        if has_code:
+            by_category[category]["implemented"] += 1
+        if has_tests:
+            by_category[category]["tested"] += 1
+        if has_spec_links:
+            by_category[category]["spec_linked"] += 1
+
+        if has_code and has_tests:
+            gaps["fully_traced"].append(req_id)
+        else:
+            if not has_code:
+                gaps["no_implementation"].append(req_id)
+            if not has_tests:
+                gaps["no_tests"].append(req_id)
+
+        # Check spec links for implementation requirements
+        # Error handling, architectural, and plugin requirements may not need spec links
+        if req_id.startswith("REQ_") and not has_spec_links:
+            gaps["missing_spec_links"].append(req_id)
+            if category not in ("error_handling", "architectural", "plugin"):
+                gaps["missing_spec_links_required"].append(req_id)
+
+    # Generate category summary table
+    category_names = {
+        "error_handling": "Error Handling (derived)",
+        "architectural": "Architectural (derived)",
+        "plugin": "Plugin (derived)",
+        "transport": "Transport Layer",
+        "message": "Message Header",
+        "serialization": "Serialization",
+        "service_discovery": "Service Discovery",
+        "transport_protocol": "Transport Protocol",
+        "other": "Other"
+    }
+    
+    category_table = "| Category | Total | Implemented | Tested | Spec Linked |\n"
+    category_table += "|----------|-------|-------------|--------|-------------|\n"
+    for cat in sorted(by_category.keys()):
+        stats = by_category[cat]
+        name = category_names.get(cat, cat)
+        impl_pct = stats['implemented'] / stats['total'] * 100 if stats['total'] > 0 else 0
+        test_pct = stats['tested'] / stats['total'] * 100 if stats['total'] > 0 else 0
+        spec_pct = stats['spec_linked'] / stats['total'] * 100 if stats['total'] > 0 else 0
+        category_table += f"| {name} | {stats['total']} | {stats['implemented']} ({impl_pct:.0f}%) | {stats['tested']} ({test_pct:.0f}%) | {stats['spec_linked']} ({spec_pct:.0f}%) |\n"
+    
+    # Calculate derived vs spec-linked requirements
+    derived_categories = {"error_handling", "architectural", "plugin"}
+    derived_count = sum(by_category[cat]["total"] for cat in derived_categories if cat in by_category)
+    spec_derived_count = len(requirements) - derived_count
+
+    # Generate report
+    report = f"""# ASPICE Traceability Gap Analysis Report
+
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+
+## Summary
+
+- **Total Requirements**: {len(requirements)}
+- **Fully Traced (impl + tests)**: {len(gaps['fully_traced'])} ({len(gaps['fully_traced'])/len(requirements)*100:.1f}%)
+- **Missing Implementation**: {len(gaps['no_implementation'])}
+- **Missing Tests**: {len(gaps['no_tests'])}
+- **Missing Spec Links (all)**: {len(gaps['missing_spec_links'])}
+- **Missing Spec Links (required only)**: {len(gaps['missing_spec_links_required'])}
+
+### Requirement Categories
+
+{category_table}
+
+**Note**: Error handling, architectural, and plugin requirements are implementation-derived and
+may not require direct spec links.
+
+- **Spec-Derived Requirements**: {spec_derived_count}
+- **Implementation-Derived Requirements**: {derived_count}
+
+## Gaps Requiring Attention
+
+### Requirements Without Implementation
+{chr(10).join(f"- {req_id}" for req_id in gaps["no_implementation"]) or "None - All requirements have implementation"}
+
+### Requirements Without Test Coverage
+{chr(10).join(f"- {req_id}" for req_id in gaps["no_tests"]) or "None - All requirements have test coverage"}
+
+### Implementation Requirements Without Spec Links (Required)
+These requirements should have spec links but don't:
+
+{chr(10).join(f"- {req_id}" for req_id in gaps["missing_spec_links_required"]) or "None - All spec-derived requirements have spec links"}
+
+### Implementation-Derived Requirements Without Spec Links (Expected)
+These are derived requirements (error handling, architectural, plugin) that don't need spec links:
+
+{chr(10).join(f"- {req_id}" for req_id in gaps["missing_spec_links"] if classify_requirement(req_id) in derived_categories) or "None"}
+
+## ASPICE Compliance Assessment
+
+### SWE.1 (Software Requirements Analysis)
+- **Status**: {'✅ PASS' if len(gaps['missing_spec_links_required']) == 0 else '⚠️ PARTIAL - Some spec-derived requirements missing links'}
+- **Details**: Spec-derived requirements must satisfy at least one specification requirement
+- **Derived Requirements**: {derived_count} implementation-derived requirements do not require spec links
+
+### SWE.3 (Software Architectural Design)
+- **Status**: {'✅ PASS' if len(gaps['no_implementation']) == 0 else '❌ FAIL - Missing implementations'}
+- **Details**: All requirements must have corresponding code implementation
+
+### SWE.6 (Software Unit Verification)
+- **Status**: {'✅ PASS' if len(gaps['no_tests']) == 0 else '❌ FAIL - Missing test coverage'}
+- **Details**: All requirements must have corresponding test coverage
+
+### Overall Compliance Level
+- **Current Level**: {'CL2' if len(gaps['fully_traced']) == len(requirements) else 'CL1' if len(gaps['fully_traced']) >= len(requirements) * 0.8 else 'CL0'}
+- **Target for Production**: CL2 (100% traceability)
+- **Gap to Target**: {len(requirements) - len(gaps['fully_traced'])} requirements
+
+## Recommendations
+
+1. **Immediate Actions**:
+   - Address requirements without implementation or test coverage
+   - Add missing `:satisfies:` links to implementation requirements
+
+2. **Process Improvements**:
+   - Integrate `validate_requirements.py --strict` into CI pipeline
+   - Require traceability annotations in code review checklist
+
+3. **Documentation Updates**:
+   - Update requirement status fields based on actual implementation state
+   - Generate this report automatically in CI/CD pipeline
+"""
+
+    output_path.write_text(report)
+
+
 def generate_csv(
     requirements: Dict[str, Requirement],
     code_refs: Dict[str, CodeReference],
@@ -429,8 +619,8 @@ def main():
     # Load data
     if args.verbose:
         print(f"Loading requirements from: {args.requirements_dir}")
-    requirements = extract_requirements_from_rst(args.requirements_dir)
-    
+    requirements, satisfies_map = extract_requirements_from_rst(args.requirements_dir)
+
     if args.verbose:
         print(f"Loading code references from: {args.code_refs}")
     code_refs, test_cases = load_code_references(args.code_refs)
@@ -442,27 +632,37 @@ def main():
     html_path = args.output_dir / "matrix.html"
     json_path = args.output_dir / "matrix.json"
     csv_path = args.output_dir / "matrix.csv"
-    
+    gap_report_path = args.output_dir / "gap_analysis.md"
+
     if args.verbose:
         print(f"Generating HTML: {html_path}")
     generate_html(requirements, code_refs, test_cases, html_path)
-    
+
     if args.verbose:
         print(f"Generating JSON: {json_path}")
     generate_json(requirements, code_refs, test_cases, json_path)
-    
+
     if args.verbose:
         print(f"Generating CSV: {csv_path}")
     generate_csv(requirements, code_refs, test_cases, csv_path)
-    
+
+    if args.verbose:
+        print(f"Generating gap analysis: {gap_report_path}")
+    generate_gap_analysis(requirements, satisfies_map, gap_report_path)
+
     print(f"Traceability matrix generated:")
     print(f"  HTML: {html_path}")
     print(f"  JSON: {json_path}")
     print(f"  CSV: {csv_path}")
+    print(f"  Gap Analysis: {gap_report_path}")
     print(f"\nSummary:")
     print(f"  Requirements: {len(requirements)}")
     print(f"  Code References: {len(code_refs)}")
     print(f"  Test Cases: {len(test_cases)}")
+
+    # Quick gap summary
+    fully_traced = sum(1 for req in requirements.values() if req.implemented_by and req.tested_by)
+    print(f"  Fully Traced: {fully_traced}/{len(requirements)} ({fully_traced/len(requirements)*100:.1f}%)")
     
     return 0
 

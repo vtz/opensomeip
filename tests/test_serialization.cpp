@@ -21,11 +21,24 @@ using namespace someip::serialization;
 /**
  * @brief SOME/IP Serialization unit tests
  * @tests REQ_ARCH_001
+ * @tests REQ_SER_001, REQ_SER_002, REQ_SER_003, REQ_SER_004
+ * @tests REQ_SER_005, REQ_SER_006, REQ_SER_007, REQ_SER_008
+ * @tests REQ_SER_010, REQ_SER_011, REQ_SER_012, REQ_SER_013, REQ_SER_014, REQ_SER_015, REQ_SER_016, REQ_SER_017
+ * @tests REQ_SER_020, REQ_SER_021, REQ_SER_022, REQ_SER_023, REQ_SER_024
+ * @tests REQ_SER_030, REQ_SER_031, REQ_SER_032, REQ_SER_033, REQ_SER_034, REQ_SER_035
+ * @tests REQ_SER_040, REQ_SER_041, REQ_SER_042, REQ_SER_043, REQ_SER_044, REQ_SER_045, REQ_SER_046, REQ_SER_047
+ * @tests REQ_SER_050, REQ_SER_051, REQ_SER_052, REQ_SER_053, REQ_SER_054, REQ_SER_055, REQ_SER_056
+ * @tests REQ_SER_060, REQ_SER_061, REQ_SER_062, REQ_SER_063
+ * @tests REQ_SER_070, REQ_SER_071, REQ_SER_072, REQ_SER_073, REQ_SER_074, REQ_SER_075
+ * @tests REQ_SER_080, REQ_SER_081, REQ_SER_082
+ * @tests REQ_SER_001_E01, REQ_SER_005_E01, REQ_SER_006_E01, REQ_SER_007_E01, REQ_SER_008_E01
+ * @tests REQ_SER_032_E01, REQ_SER_033_E01
  * @tests feat_req_someip_600
  * @tests feat_req_someip_601
  * @tests feat_req_someip_602
  * @tests feat_req_someip_610
  * @tests feat_req_someip_611
+ * @tests feat_req_someip_231
  */
 
 // Helper macro for deserialization result testing
@@ -58,6 +71,11 @@ protected:
     }
 };
 
+/**
+ * @test_case TC_SER_001
+ * @tests REQ_SER_020, REQ_SER_021
+ * @brief Test boolean serialization and deserialization
+ */
 TEST_F(SerializationTest, SerializeDeserializeBool) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -79,6 +97,11 @@ TEST_F(SerializationTest, SerializeDeserializeBool) {
     EXPECT_FALSE(result_false.get_value());
 }
 
+/**
+ * @test_case TC_SER_002
+ * @tests REQ_SER_001, REQ_SER_005
+ * @brief Test uint8 serialization and deserialization
+ */
 TEST_F(SerializationTest, SerializeDeserializeUint8) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -95,6 +118,11 @@ TEST_F(SerializationTest, SerializeDeserializeUint8) {
     }
 }
 
+/**
+ * @test_case TC_SER_003
+ * @tests REQ_SER_002, REQ_SER_006
+ * @brief Test uint16 serialization and deserialization in Big Endian
+ */
 TEST_F(SerializationTest, SerializeDeserializeUint16) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -109,6 +137,11 @@ TEST_F(SerializationTest, SerializeDeserializeUint16) {
     }
 }
 
+/**
+ * @test_case TC_SER_004
+ * @tests REQ_SER_003, REQ_SER_007
+ * @brief Test uint32 serialization and deserialization in Big Endian
+ */
 TEST_F(SerializationTest, SerializeDeserializeUint32) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -123,6 +156,11 @@ TEST_F(SerializationTest, SerializeDeserializeUint32) {
     }
 }
 
+/**
+ * @test_case TC_SER_005
+ * @tests REQ_SER_040, REQ_SER_041, REQ_SER_042, REQ_SER_043, REQ_SER_044, REQ_SER_045
+ * @brief Test string serialization with length prefix and padding
+ */
 TEST_F(SerializationTest, SerializeDeserializeString) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -137,6 +175,11 @@ TEST_F(SerializationTest, SerializeDeserializeString) {
     }
 }
 
+/**
+ * @test_case TC_SER_006
+ * @tests REQ_SER_060, REQ_SER_061, REQ_SER_062, REQ_SER_063
+ * @brief Test array serialization with length prefix
+ */
 TEST_F(SerializationTest, SerializeDeserializeArray) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -186,9 +229,11 @@ TEST_F(SerializationTest, ComplexSerialization) {
     EXPECT_DESERIALIZE_SUCCESS(deserializer.deserialize_uint16(), 0xABCD);
 }
 
-// =============================================================================
-// UT-SER-005: uint64 Serialization (feat_req_someip_623)
-// =============================================================================
+/**
+ * @test_case TC_SER_007
+ * @tests REQ_SER_004, REQ_SER_008
+ * @brief Test uint64 serialization and deserialization in Big Endian
+ */
 TEST_F(SerializationTest, SerializeDeserializeUint64) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -220,9 +265,11 @@ TEST_F(SerializationTest, SerializeDeserializeUint64) {
     }
 }
 
-// =============================================================================
-// UT-SER-006: Signed Integer Serialization (feat_req_someip_172)
-// =============================================================================
+/**
+ * @test_case TC_SER_008
+ * @tests REQ_SER_010, REQ_SER_014
+ * @brief Test int8 serialization (two's complement)
+ */
 TEST_F(SerializationTest, SerializeDeserializeInt8) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -245,6 +292,11 @@ TEST_F(SerializationTest, SerializeDeserializeInt8) {
     }
 }
 
+/**
+ * @test_case TC_SER_009
+ * @tests REQ_SER_011, REQ_SER_015
+ * @brief Test int16 serialization in Big Endian (two's complement)
+ */
 TEST_F(SerializationTest, SerializeDeserializeInt16) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -268,6 +320,11 @@ TEST_F(SerializationTest, SerializeDeserializeInt16) {
     }
 }
 
+/**
+ * @test_case TC_SER_010
+ * @tests REQ_SER_012, REQ_SER_016
+ * @brief Test int32 serialization in Big Endian (two's complement)
+ */
 TEST_F(SerializationTest, SerializeDeserializeInt32) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -291,6 +348,11 @@ TEST_F(SerializationTest, SerializeDeserializeInt32) {
     }
 }
 
+/**
+ * @test_case TC_SER_011
+ * @tests REQ_SER_013, REQ_SER_017
+ * @brief Test int64 serialization in Big Endian (two's complement)
+ */
 TEST_F(SerializationTest, SerializeDeserializeInt64) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -314,9 +376,11 @@ TEST_F(SerializationTest, SerializeDeserializeInt64) {
     }
 }
 
-// =============================================================================
-// UT-SER-007: float32 IEEE 754 Serialization (feat_req_someip_172)
-// =============================================================================
+/**
+ * @test_case TC_SER_012
+ * @tests REQ_SER_030, REQ_SER_032
+ * @brief Test float serialization using IEEE 754 in Big Endian
+ */
 TEST_F(SerializationTest, SerializeDeserializeFloat) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -349,6 +413,11 @@ TEST_F(SerializationTest, SerializeDeserializeFloat) {
     }
 }
 
+/**
+ * @test_case TC_SER_013
+ * @tests REQ_SER_030, REQ_SER_032, REQ_SER_034, REQ_SER_035
+ * @brief Test float special values (infinity, NaN) serialization
+ */
 TEST_F(SerializationTest, SerializeDeserializeFloatSpecialValues) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -384,9 +453,11 @@ TEST_F(SerializationTest, SerializeDeserializeFloatSpecialValues) {
     EXPECT_TRUE(std::isnan(nan_result.get_value()));
 }
 
-// =============================================================================
-// UT-SER-008: float64 (double) IEEE 754 Serialization (feat_req_someip_172)
-// =============================================================================
+/**
+ * @test_case TC_SER_014
+ * @tests REQ_SER_031, REQ_SER_033
+ * @brief Test double serialization using IEEE 754 in Big Endian
+ */
 TEST_F(SerializationTest, SerializeDeserializeDouble) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -626,9 +697,11 @@ TEST_F(SerializationTest, VerifyBigEndianNegativeInt16) {
     EXPECT_EQ(buffer[1], 0xFF);
 }
 
-// =============================================================================
-// UT-SER-018: Alignment Tests (feat_req_someip_711)
-// =============================================================================
+/**
+ * @test_case TC_SER_020
+ * @tests REQ_SER_050, REQ_SER_051, REQ_SER_052
+ * @brief Test 4-byte alignment with padding
+ */
 TEST_F(SerializationTest, AlignTo4Bytes) {
     Serializer serializer;
 
@@ -647,6 +720,11 @@ TEST_F(SerializationTest, AlignTo4Bytes) {
     EXPECT_EQ(buffer[3], 0x00);  // Padding
 }
 
+/**
+ * @test_case TC_SER_021
+ * @tests REQ_SER_050, REQ_SER_051, REQ_SER_052
+ * @brief Test 8-byte alignment with padding
+ */
 TEST_F(SerializationTest, AlignTo8Bytes) {
     Serializer serializer;
 
@@ -861,9 +939,12 @@ TEST_F(SerializationTest, MoveBuffer) {
     EXPECT_DESERIALIZE_SUCCESS(deserializer.deserialize_uint32(), 0xABCDEF01u);
 }
 
-// =============================================================================
-// Deserialization Error Handling Test - Safety-Critical Feature
-// =============================================================================
+/**
+ * @test_case TC_SER_030
+ * @tests REQ_SER_005_E01, REQ_SER_006_E01, REQ_SER_007_E01, REQ_SER_008_E01
+ * @tests REQ_SER_070, REQ_SER_071, REQ_SER_072
+ * @brief Test deserialization error handling for buffer underflow
+ */
 TEST_F(SerializationTest, DeserializationErrorHandling) {
     // Test that errors can be distinguished from valid data
     Serializer serializer;

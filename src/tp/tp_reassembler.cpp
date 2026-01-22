@@ -22,6 +22,9 @@ namespace tp {
  * @brief SOME/IP-TP Reassembler implementation
  * @implements REQ_ARCH_001
  * @implements REQ_ARCH_002
+ * @implements REQ_TP_030, REQ_TP_031, REQ_TP_032, REQ_TP_033, REQ_TP_034, REQ_TP_035
+ * @implements REQ_TP_036, REQ_TP_037, REQ_TP_038, REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043
+ * @implements REQ_TP_030_E01, REQ_TP_030_E02, REQ_TP_039_E01
  * @satisfies feat_req_someiptp_410
  * @satisfies feat_req_someiptp_411
  * @satisfies feat_req_someiptp_412

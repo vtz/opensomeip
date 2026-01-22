@@ -23,6 +23,9 @@ namespace tp {
 /**
  * @brief SOME/IP-TP Manager implementation
  * @implements REQ_ARCH_001
+ * @implements REQ_TP_050, REQ_TP_051, REQ_TP_052, REQ_TP_053, REQ_TP_054, REQ_TP_055, REQ_TP_056, REQ_TP_057
+ * @implements REQ_TP_060, REQ_TP_061, REQ_TP_062, REQ_TP_063
+ * @implements REQ_TP_050_E01, REQ_TP_050_E02
  * @satisfies feat_req_someiptp_400
  * @satisfies feat_req_someiptp_401
  */

@@ -39,6 +39,7 @@ Plugin Interface
    :satisfies: feat_req_someip_102, feat_req_someip_103
    :status: implemented
    :priority: high
+   :verification: Code inspection of abstract interface definition and successful compilation of external profile implementations.
 
    The implementation shall provide an abstract plugin interface (``E2EProfile``)
    that allows external E2E protection profiles to be integrated.
@@ -62,6 +63,7 @@ Profile Registry
    :id: REQ_E2E_PLUGIN_002
    :status: implemented
    :priority: high
+   :verification: Execution of registry unit tests demonstrating profile registration, lookup, and singleton behavior.
 
    The implementation shall provide a registry (``E2EProfileRegistry``)
    for managing E2E protection profiles.
@@ -86,6 +88,7 @@ Plugin Registration API
    :id: REQ_E2E_PLUGIN_003
    :status: implemented
    :priority: high
+   :verification: Execution of registration API tests demonstrating ownership transfer, duplicate prevention, and successful plugin loading.
 
    The implementation shall provide an API for registering E2E profiles
    at runtime.
@@ -110,6 +113,7 @@ Standard Profile
    :satisfies: feat_req_someip_102, feat_req_someip_103
    :status: implemented
    :priority: high
+   :verification: Execution of E2E protection tests demonstrating CRC calculation, counter validation, and data integrity protection.
 
    The implementation shall provide a standard E2E profile using
    publicly available standards:
@@ -134,6 +138,7 @@ E2E Header Format
    :satisfies: feat_req_someip_102, feat_req_someip_103
    :status: implemented
    :priority: high
+   :verification: Code inspection of header structure and execution of message serialization tests with E2E headers.
 
    The E2E header shall be inserted after the Return Code field in the
    SOME/IP header, with its position determined by the configured offset

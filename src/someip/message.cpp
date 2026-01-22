@@ -30,12 +30,36 @@ namespace someip {
  * @brief SOME/IP Message implementation
  * @implements REQ_ARCH_001
  * @implements REQ_ARCH_003
+ * @implements REQ_MSG_001, REQ_MSG_002, REQ_MSG_003
+ * @implements REQ_MSG_010, REQ_MSG_011, REQ_MSG_012
+ * @implements REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
+ * @implements REQ_MSG_030, REQ_MSG_031
+ * @implements REQ_MSG_040, REQ_MSG_041
+ * @implements REQ_MSG_050, REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_054, REQ_MSG_055
+ * @implements REQ_MSG_056, REQ_MSG_057, REQ_MSG_058, REQ_MSG_059
+ * @implements REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP
+ * @implements REQ_MSG_070, REQ_MSG_072, REQ_MSG_073, REQ_MSG_074, REQ_MSG_075
+ * @implements REQ_MSG_076, REQ_MSG_077, REQ_MSG_078, REQ_MSG_079, REQ_MSG_080
+ * @implements REQ_MSG_090, REQ_MSG_091, REQ_MSG_092, REQ_MSG_093
+ * @implements REQ_MSG_100
  * @satisfies feat_req_someip_538
  * @satisfies feat_req_someip_539
  * @satisfies feat_req_someip_540
  * @satisfies feat_req_someip_541
+ * @satisfies feat_req_someip_45
+ * @satisfies feat_req_someip_60
+ * @satisfies feat_req_someip_67
+ * @satisfies feat_req_someip_83
+ * @satisfies feat_req_someip_100
+ * @satisfies feat_req_someip_101
+ * @satisfies feat_req_someip_103
+ * @satisfies feat_req_someip_278
  */
 
+/**
+ * @brief Default constructor - initializes message with default values
+ * @implements REQ_MSG_071
+ */
 Message::Message()
     : length_(8),  // Length from client_id to end (no payload)
       protocol_version_(SOMEIP_PROTOCOL_VERSION),
@@ -127,6 +151,15 @@ Message& Message::operator=(Message&& other) noexcept {
     return *this;
 }
 
+/**
+ * @brief Serialize message to byte vector
+ * @implements REQ_MSG_001, REQ_MSG_002, REQ_MSG_003
+ * @implements REQ_MSG_010, REQ_MSG_011
+ * @implements REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
+ * @implements REQ_MSG_030, REQ_MSG_040, REQ_MSG_050, REQ_MSG_070
+ * @implements REQ_MSG_090, REQ_MSG_091
+ * @satisfies feat_req_someip_45
+ */
 std::vector<uint8_t> Message::serialize() const {
     std::vector<uint8_t> data;
     data.reserve(get_total_size());
@@ -161,6 +194,18 @@ std::vector<uint8_t> Message::serialize() const {
     return data;
 }
 
+/**
+ * @brief Deserialize message from byte vector
+ * @implements REQ_MSG_001, REQ_MSG_002, REQ_MSG_003
+ * @implements REQ_MSG_010, REQ_MSG_011, REQ_MSG_012, REQ_MSG_014, REQ_MSG_015
+ * @implements REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
+ * @implements REQ_MSG_030, REQ_MSG_031, REQ_MSG_032
+ * @implements REQ_MSG_040, REQ_MSG_050, REQ_MSG_070
+ * @implements REQ_MSG_090, REQ_MSG_092
+ * @implements REQ_MSG_100, REQ_MSG_100_E02, REQ_MSG_100_E03
+ * @implements REQ_MSG_012_E01, REQ_MSG_014_E01, REQ_MSG_014_E02
+ * @satisfies feat_req_someip_45, feat_req_someip_60, feat_req_someip_67
+ */
 bool Message::deserialize(const std::vector<uint8_t>& data) {
     if (data.size() < MIN_MESSAGE_SIZE) {
         return false;
@@ -293,10 +338,22 @@ bool Message::deserialize(const std::vector<uint8_t>& data) {
     return is_valid();
 }
 
+/**
+ * @brief Check if message is valid
+ * @implements REQ_MSG_100
+ */
 bool Message::is_valid() const {
     return has_valid_header() && has_valid_payload();
 }
 
+/**
+ * @brief Validate message header fields
+ * @implements REQ_MSG_031, REQ_MSG_032, REQ_MSG_033
+ * @implements REQ_MSG_032_E01, REQ_MSG_032_E02
+ * @implements REQ_MSG_063, REQ_MSG_064, REQ_MSG_063_E01, REQ_MSG_063_E02
+ * @implements REQ_MSG_072, REQ_MSG_072_E01
+ * @satisfies feat_req_someip_100, feat_req_someip_103, feat_req_someip_278
+ */
 bool Message::has_valid_header() const {
     // Check protocol version
     if (protocol_version_ != SOMEIP_PROTOCOL_VERSION) {
@@ -368,11 +425,21 @@ bool Message::has_valid_header() const {
     return true;
 }
 
+/**
+ * @brief Validate message payload
+ * @implements REQ_MSG_013
+ * @satisfies feat_req_someiptp_760
+ */
 bool Message::has_valid_payload() const {
     // Check payload size limits
     return payload_.size() <= MAX_TCP_PAYLOAD_SIZE;
 }
 
+/**
+ * @brief Update length field based on payload and E2E header size
+ * @implements REQ_MSG_011
+ * @satisfies feat_req_someip_67
+ */
 void Message::update_length() {
     // SOME/IP length field contains length from client_id to end of message
     // client_id(2) + session_id(2) + protocol_version(1) + interface_version(1) +

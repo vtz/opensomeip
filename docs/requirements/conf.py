@@ -105,13 +105,29 @@ needs_extra_links = [
     },
 ]
 
-# Import needs from open-someip-spec
-# Path is relative to the build directory
-needs_import_path = Path(__file__).parent.parent.parent / "open-someip-spec" / "build" / "needs.json"
-if needs_import_path.exists():
-    needs_import = [str(needs_import_path)]
+# Import needs from open-someip-spec submodule
+# This provides automatic traceability to the SOME/IP specification requirements
+spec_submodule_path = Path(__file__).parent.parent.parent / "open-someip-spec"
+spec_needs_path = spec_submodule_path / "build" / "needs.json"
+
+needs_import = []
+
+# Check if spec submodule is available and has requirements
+if spec_submodule_path.exists() and spec_submodule_path.is_dir():
+    # Check if .git file exists (indicates submodule is initialized)
+    git_file = spec_submodule_path / ".git"
+    if git_file.exists():
+        if spec_needs_path.exists():
+            needs_import = [str(spec_needs_path)]
+            print(f"Info: Importing spec requirements from {spec_needs_path}")
+        else:
+            print(f"Warning: Spec requirements not found at {spec_needs_path}")
+            print("         Run 'cd open-someip-spec && make requirements' to generate them")
+    else:
+        print("Warning: open-someip-spec submodule not initialized")
+        print("         Run 'git submodule update --init --recursive' to initialize")
 else:
-    needs_import = []
+    print("Info: open-someip-spec submodule not present - spec traceability disabled")
 
 # Remove default values from exported JSON
 needs_json_remove_defaults = True

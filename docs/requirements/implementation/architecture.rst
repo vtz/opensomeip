@@ -37,6 +37,7 @@ Modularity
    :id: REQ_ARCH_001
    :status: implemented
    :priority: high
+   :verification: Inspection of CMakeLists.txt, src/CMakeLists.txt, and component dependency graph. Each layer must be independently testable and replaceable.
 
    The implementation shall follow a modular layered architecture:
 
@@ -64,6 +65,7 @@ Thread Safety
    :id: REQ_ARCH_002
    :status: implemented
    :priority: high
+   :verification: Code review of synchronization mechanisms, thread-safety annotations in API documentation, and execution of multi-threaded tests.
 
    The implementation shall be thread-safe:
 
@@ -85,6 +87,7 @@ Memory Management
    :id: REQ_ARCH_003
    :status: implemented
    :priority: high
+   :verification: Static analysis with clang-tidy, valgrind memory leak detection, and code inspection for RAII patterns and smart pointer usage.
 
    The implementation shall use safe memory management:
 
@@ -106,6 +109,7 @@ Error Handling
    :id: REQ_ARCH_004
    :status: implemented
    :priority: high
+   :verification: Code inspection for consistent use of Result enum, exception-free core code, and comprehensive input validation in all public APIs.
 
    The implementation shall use consistent error handling:
 
@@ -127,6 +131,7 @@ Coding Standards
    :id: REQ_ARCH_005
    :status: implemented
    :priority: medium
+   :verification: Execution of clang-format check, clang-tidy analysis, and code review against CODING_GUIDELINES.md.
 
    The implementation shall follow coding standards:
 
@@ -148,6 +153,7 @@ Build System
    :id: REQ_ARCH_006
    :status: implemented
    :priority: medium
+   :verification: Successful build with CMake 3.20+ on multiple platforms and compilers (GCC, Clang, MSVC).
 
    The implementation shall use CMake for build configuration:
 
@@ -168,6 +174,7 @@ Testing Infrastructure
    :id: REQ_ARCH_007
    :status: implemented
    :priority: high
+   :verification: Successful execution of all test suites with minimum coverage thresholds, and verification of test-to-requirement traceability.
 
    The implementation shall include comprehensive testing:
 

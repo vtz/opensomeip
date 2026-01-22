@@ -52,6 +52,10 @@ Contents
    implementation/e2e_plugin
    implementation/transport
    implementation/architecture
+   implementation/message_header
+   implementation/serialization
+   implementation/service_discovery
+   implementation/transport_protocol
 
 Indices and tables
 ==================
