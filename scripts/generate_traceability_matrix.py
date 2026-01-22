@@ -371,10 +371,100 @@ def classify_requirement(req_id: str) -> str:
     return "other"
 
 
+def get_priority(req_id: str, category: str) -> str:
+    """
+    Get priority classification for a requirement.
+    
+    Priority levels:
+    - critical: Core protocol functionality (message header, basic serialization)
+    - high: Important features (transport, SD basics)
+    - medium: Extended features (complex types, advanced SD)
+    - low: Error handling, optional features
+    """
+    # Error handling is generally lower priority
+    if category == "error_handling":
+        return "low"
+    
+    # Architectural requirements are high priority
+    if category == "architectural":
+        return "high"
+    
+    # Core message header requirements are critical
+    if category == "message":
+        # Basic header fields are critical
+        num_part = req_id.replace("REQ_MSG_", "").split("_")[0]
+        try:
+            num = int(num_part)
+            if num <= 20:  # Basic header structure
+                return "critical"
+            elif num <= 50:  # Extended fields
+                return "high"
+            else:  # Advanced features
+                return "medium"
+        except ValueError:
+            return "medium"
+    
+    # Basic serialization is critical
+    if category == "serialization":
+        num_part = req_id.replace("REQ_SER_", "").split("_")[0]
+        try:
+            num = int(num_part)
+            if num <= 20:  # Basic types
+                return "critical"
+            elif num <= 40:  # Arrays and strings
+                return "high"
+            else:  # Complex types
+                return "medium"
+        except ValueError:
+            return "medium"
+    
+    # Transport protocol has high priority
+    if category == "transport_protocol":
+        num_part = req_id.replace("REQ_TP_", "").split("_")[0]
+        try:
+            num = int(num_part)
+            if num <= 20:  # Segmentation
+                return "high"
+            elif num <= 50:  # Reassembly
+                return "medium"
+            else:  # Statistics, monitoring
+                return "low"
+        except ValueError:
+            return "medium"
+    
+    # Service Discovery has medium priority
+    if category == "service_discovery":
+        return "medium"
+    
+    # Plugin mechanisms have high priority
+    if category == "plugin":
+        return "high"
+    
+    return "medium"
+
+
+def classify_test_type(test_path: str) -> str:
+    """Classify test type based on file path."""
+    if "/integration/" in test_path:
+        return "integration"
+    if "/system/" in test_path:
+        return "system"
+    if test_path.endswith(".py"):
+        # Python tests are often integration/system tests
+        if "integration" in test_path.lower():
+            return "integration"
+        if "system" in test_path.lower():
+            return "system"
+        return "integration"
+    # C++ tests are typically unit tests
+    return "unit"
+
+
 def generate_gap_analysis(
     requirements: Dict[str, Requirement],
     satisfies_map: Dict[str, List[str]],
-    output_path: Path
+    output_path: Path,
+    test_cases: Dict[str, TestCase] = None
 ):
     """Generate gap analysis report highlighting traceability gaps."""
     from collections import defaultdict
@@ -389,6 +479,16 @@ def generate_gap_analysis(
     
     # Categories by requirement type
     by_category = defaultdict(lambda: {"total": 0, "implemented": 0, "tested": 0, "spec_linked": 0})
+    
+    # Priority tracking
+    by_priority = defaultdict(lambda: {"total": 0, "implemented": 0, "tested": 0, "missing": []})
+    
+    # Test type tracking
+    test_type_counts = {"unit": 0, "integration": 0, "system": 0}
+    if test_cases:
+        for tc_id, tc in test_cases.items():
+            test_type = classify_test_type(tc.location)
+            test_type_counts[test_type] += 1
 
     # Analyze each requirement
     for req_id, req in requirements.items():
@@ -396,6 +496,7 @@ def generate_gap_analysis(
         has_tests = len(req.tested_by) > 0
         has_spec_links = len(satisfies_map.get(req_id, [])) > 0
         category = classify_requirement(req_id)
+        priority = get_priority(req_id, category)
         
         # Update category stats
         by_category[category]["total"] += 1
@@ -405,6 +506,15 @@ def generate_gap_analysis(
             by_category[category]["tested"] += 1
         if has_spec_links:
             by_category[category]["spec_linked"] += 1
+        
+        # Update priority stats
+        by_priority[priority]["total"] += 1
+        if has_code:
+            by_priority[priority]["implemented"] += 1
+        if has_tests:
+            by_priority[priority]["tested"] += 1
+        if not has_code or not has_tests:
+            by_priority[priority]["missing"].append(req_id)
 
         if has_code and has_tests:
             gaps["fully_traced"].append(req_id)
@@ -472,6 +582,23 @@ may not require direct spec links.
 
 - **Spec-Derived Requirements**: {spec_derived_count}
 - **Implementation-Derived Requirements**: {derived_count}
+
+### Priority Breakdown
+
+| Priority | Total | Implemented | Tested | Coverage |
+|----------|-------|-------------|--------|----------|
+| Critical | {by_priority['critical']['total']} | {by_priority['critical']['implemented']} | {by_priority['critical']['tested']} | {by_priority['critical']['implemented']/by_priority['critical']['total']*100 if by_priority['critical']['total'] > 0 else 0:.0f}% |
+| High | {by_priority['high']['total']} | {by_priority['high']['implemented']} | {by_priority['high']['tested']} | {by_priority['high']['implemented']/by_priority['high']['total']*100 if by_priority['high']['total'] > 0 else 0:.0f}% |
+| Medium | {by_priority['medium']['total']} | {by_priority['medium']['implemented']} | {by_priority['medium']['tested']} | {by_priority['medium']['implemented']/by_priority['medium']['total']*100 if by_priority['medium']['total'] > 0 else 0:.0f}% |
+| Low | {by_priority['low']['total']} | {by_priority['low']['implemented']} | {by_priority['low']['tested']} | {by_priority['low']['implemented']/by_priority['low']['total']*100 if by_priority['low']['total'] > 0 else 0:.0f}% |
+
+### Test Coverage Breakdown
+
+| Test Type | Count |
+|-----------|-------|
+| Unit Tests | {test_type_counts.get('unit', 0)} |
+| Integration Tests | {test_type_counts.get('integration', 0)} |
+| System Tests | {test_type_counts.get('system', 0)} |
 
 ## Gaps Requiring Attention
 
@@ -648,7 +775,7 @@ def main():
 
     if args.verbose:
         print(f"Generating gap analysis: {gap_report_path}")
-    generate_gap_analysis(requirements, satisfies_map, gap_report_path)
+    generate_gap_analysis(requirements, satisfies_map, gap_report_path, test_cases)
 
     print(f"Traceability matrix generated:")
     print(f"  HTML: {html_path}")

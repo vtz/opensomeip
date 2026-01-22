@@ -36,7 +36,7 @@ Unsigned Integer Types
 .. requirement:: Serialize uint8 Type
    :id: REQ_SER_001
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify uint8 value is serialized as a single byte.
@@ -51,7 +51,7 @@ Unsigned Integer Types
 .. requirement:: Serialize uint16 Type
    :id: REQ_SER_002
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify uint16 value is serialized in Big Endian (2 bytes).
@@ -66,7 +66,7 @@ Unsigned Integer Types
 .. requirement:: Serialize uint32 Type
    :id: REQ_SER_003
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify uint32 value is serialized in Big Endian (4 bytes).
@@ -81,7 +81,7 @@ Unsigned Integer Types
 .. requirement:: Serialize uint64 Type
    :id: REQ_SER_004
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify uint64 value is serialized in Big Endian (8 bytes).
@@ -96,7 +96,7 @@ Unsigned Integer Types
 .. requirement:: Deserialize uint8 Type
    :id: REQ_SER_005
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify uint8 value is deserialized from a single byte.
@@ -111,7 +111,7 @@ Unsigned Integer Types
 .. requirement:: Deserialize uint16 Type
    :id: REQ_SER_006
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify uint16 value is deserialized from Big Endian (2 bytes).
@@ -126,7 +126,7 @@ Unsigned Integer Types
 .. requirement:: Deserialize uint32 Type
    :id: REQ_SER_007
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify uint32 value is deserialized from Big Endian (4 bytes).
@@ -141,7 +141,7 @@ Unsigned Integer Types
 .. requirement:: Deserialize uint64 Type
    :id: REQ_SER_008
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify uint64 value is deserialized from Big Endian (8 bytes).
@@ -159,7 +159,7 @@ Signed Integer Types
 .. requirement:: Serialize int8 Type
    :id: REQ_SER_010
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify int8 value is serialized as a single byte (two's complement).
@@ -174,7 +174,7 @@ Signed Integer Types
 .. requirement:: Serialize int16 Type
    :id: REQ_SER_011
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify int16 value is serialized in Big Endian (2 bytes, two's complement).
@@ -189,7 +189,7 @@ Signed Integer Types
 .. requirement:: Serialize int32 Type
    :id: REQ_SER_012
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify int32 value is serialized in Big Endian (4 bytes, two's complement).
@@ -204,7 +204,7 @@ Signed Integer Types
 .. requirement:: Serialize int64 Type
    :id: REQ_SER_013
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify int64 value is serialized in Big Endian (8 bytes, two's complement).
@@ -219,7 +219,7 @@ Signed Integer Types
 .. requirement:: Deserialize int8 Type
    :id: REQ_SER_014
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify int8 value is deserialized from a single byte (two's complement).
@@ -234,7 +234,7 @@ Signed Integer Types
 .. requirement:: Deserialize int16 Type
    :id: REQ_SER_015
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify int16 value is deserialized from Big Endian (2 bytes).
@@ -249,7 +249,7 @@ Signed Integer Types
 .. requirement:: Deserialize int32 Type
    :id: REQ_SER_016
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify int32 value is deserialized from Big Endian (4 bytes).
@@ -264,7 +264,7 @@ Signed Integer Types
 .. requirement:: Deserialize int64 Type
    :id: REQ_SER_017
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify int64 value is deserialized from Big Endian (8 bytes).
@@ -281,7 +281,7 @@ Primitive Type Error Handling
 
 .. requirement:: Error - uint8 Buffer Overflow on Serialize
    :id: REQ_SER_001_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when buffer has < 1 byte remaining.
@@ -297,7 +297,7 @@ Primitive Type Error Handling
 
 .. requirement:: Error - uint16 Buffer Overflow on Serialize
    :id: REQ_SER_002_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when buffer has < 2 bytes remaining.
@@ -313,7 +313,7 @@ Primitive Type Error Handling
 
 .. requirement:: Error - uint32 Buffer Overflow on Serialize
    :id: REQ_SER_003_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when buffer has < 4 bytes remaining.
@@ -329,7 +329,7 @@ Primitive Type Error Handling
 
 .. requirement:: Error - uint64 Buffer Overflow on Serialize
    :id: REQ_SER_004_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when buffer has < 8 bytes remaining.
@@ -345,7 +345,7 @@ Primitive Type Error Handling
 
 .. requirement:: Error - uint8 Insufficient Data on Deserialize
    :id: REQ_SER_005_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when buffer has < 1 byte remaining.
@@ -361,7 +361,7 @@ Primitive Type Error Handling
 
 .. requirement:: Error - uint16 Insufficient Data on Deserialize
    :id: REQ_SER_006_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when buffer has < 2 bytes remaining.
@@ -377,7 +377,7 @@ Primitive Type Error Handling
 
 .. requirement:: Error - uint32 Insufficient Data on Deserialize
    :id: REQ_SER_007_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when buffer has < 4 bytes remaining.
@@ -393,7 +393,7 @@ Primitive Type Error Handling
 
 .. requirement:: Error - uint64 Insufficient Data on Deserialize
    :id: REQ_SER_008_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when buffer has < 8 bytes remaining.
@@ -413,7 +413,7 @@ Boolean Type Serialization
 .. requirement:: Serialize Boolean True
    :id: REQ_SER_020
    :satisfies: feat_req_someip_244
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify true is serialized as 0x01.
@@ -427,7 +427,7 @@ Boolean Type Serialization
 .. requirement:: Serialize Boolean False
    :id: REQ_SER_021
    :satisfies: feat_req_someip_244
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify false is serialized as 0x00.
@@ -441,7 +441,7 @@ Boolean Type Serialization
 .. requirement:: Deserialize Boolean False
    :id: REQ_SER_022
    :satisfies: feat_req_someip_244
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify 0x00 is deserialized as false.
@@ -455,7 +455,7 @@ Boolean Type Serialization
 .. requirement:: Deserialize Boolean True from 0x01
    :id: REQ_SER_023
    :satisfies: feat_req_someip_244
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify 0x01 is deserialized as true.
@@ -469,7 +469,7 @@ Boolean Type Serialization
 .. requirement:: Deserialize Boolean True from Non-Zero Values
    :id: REQ_SER_024
    :satisfies: feat_req_someip_244
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify 0x02-0xFF are deserialized as true.
@@ -483,7 +483,7 @@ Boolean Type Serialization
 
 .. requirement:: Error - Boolean Buffer Overflow on Serialize
    :id: REQ_SER_020_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when buffer has < 1 byte remaining.
@@ -499,7 +499,7 @@ Boolean Type Serialization
 
 .. requirement:: Error - Boolean Insufficient Data on Deserialize
    :id: REQ_SER_022_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when buffer is empty.
@@ -519,7 +519,7 @@ Floating Point Serialization
 .. requirement:: Serialize float32 Type
    :id: REQ_SER_030
    :satisfies: feat_req_someip_247
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify float32 is serialized as IEEE 754 single precision in Big Endian.
@@ -534,7 +534,7 @@ Floating Point Serialization
 .. requirement:: Serialize float64 Type
    :id: REQ_SER_031
    :satisfies: feat_req_someip_247
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify float64 is serialized as IEEE 754 double precision in Big Endian.
@@ -549,7 +549,7 @@ Floating Point Serialization
 .. requirement:: Deserialize float32 Type
    :id: REQ_SER_032
    :satisfies: feat_req_someip_247
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify float32 is deserialized from IEEE 754 single precision in Big Endian.
@@ -564,7 +564,7 @@ Floating Point Serialization
 .. requirement:: Deserialize float64 Type
    :id: REQ_SER_033
    :satisfies: feat_req_someip_247
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify float64 is deserialized from IEEE 754 double precision in Big Endian.
@@ -579,7 +579,7 @@ Floating Point Serialization
 .. requirement:: Preserve float32 Special Values
    :id: REQ_SER_034
    :satisfies: feat_req_someip_247
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify NaN, Inf, and -Inf are preserved through serialization round-trip.
@@ -595,7 +595,7 @@ Floating Point Serialization
 .. requirement:: Preserve float64 Special Values
    :id: REQ_SER_035
    :satisfies: feat_req_someip_247
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify NaN, Inf, and -Inf are preserved through serialization round-trip.
@@ -610,7 +610,7 @@ Floating Point Serialization
 
 .. requirement:: Error - float32 Buffer Overflow on Serialize
    :id: REQ_SER_030_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when buffer has < 4 bytes remaining.
@@ -626,7 +626,7 @@ Floating Point Serialization
 
 .. requirement:: Error - float64 Buffer Overflow on Serialize
    :id: REQ_SER_031_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when buffer has < 8 bytes remaining.
@@ -642,7 +642,7 @@ Floating Point Serialization
 
 .. requirement:: Error - float32 Insufficient Data on Deserialize
    :id: REQ_SER_032_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when buffer has < 4 bytes remaining.
@@ -658,7 +658,7 @@ Floating Point Serialization
 
 .. requirement:: Error - float64 Insufficient Data on Deserialize
    :id: REQ_SER_033_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when buffer has < 8 bytes remaining.
@@ -681,7 +681,7 @@ Fixed Length Arrays
 .. requirement:: Serialize Fixed-Length Array
    :id: REQ_SER_040
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify fixed-length array is serialized as N * element_size bytes.
@@ -696,7 +696,7 @@ Fixed Length Arrays
 .. requirement:: Calculate Fixed-Length Array Size
    :id: REQ_SER_041
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify array size = N * element_size.
@@ -711,7 +711,7 @@ Fixed Length Arrays
 .. requirement:: Deserialize Fixed-Length Array
    :id: REQ_SER_042
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify fixed-length array is deserialized from N * element_size bytes.
@@ -729,7 +729,7 @@ Dynamic Length Arrays
 .. requirement:: Serialize Dynamic Array Length Field
    :id: REQ_SER_043
    :satisfies: feat_req_someip_258
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify dynamic array length field is serialized in Big Endian.
@@ -744,7 +744,7 @@ Dynamic Length Arrays
 .. requirement:: Dynamic Array Length Field Precedes Data
    :id: REQ_SER_044
    :satisfies: feat_req_someip_258
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify length field precedes array data.
@@ -759,7 +759,7 @@ Dynamic Length Arrays
 .. requirement:: Serialize Empty Dynamic Array
    :id: REQ_SER_045
    :satisfies: feat_req_someip_258
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify empty array serializes with length 0.
@@ -774,7 +774,7 @@ Dynamic Length Arrays
 .. requirement:: Deserialize Dynamic Array Length
    :id: REQ_SER_046
    :satisfies: feat_req_someip_258
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify length field is read first during deserialization.
@@ -789,7 +789,7 @@ Dynamic Length Arrays
 .. requirement:: Deserialize Dynamic Array Elements
    :id: REQ_SER_047
    :satisfies: feat_req_someip_258
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify array elements are deserialized based on length field.
@@ -806,7 +806,7 @@ Array Error Handling
 
 .. requirement:: Error - Array Exceeds Buffer on Serialize
    :id: REQ_SER_040_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when array exceeds buffer capacity.
@@ -822,7 +822,7 @@ Array Error Handling
 
 .. requirement:: Error - Array Length Field Overflow
    :id: REQ_SER_043_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when array element count exceeds 4-byte length capacity.
@@ -838,7 +838,7 @@ Array Error Handling
 
 .. requirement:: Error - Insufficient Data for Array Length
    :id: REQ_SER_046_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when < 4 bytes for length field.
@@ -854,7 +854,7 @@ Array Error Handling
 
 .. requirement:: Error - Insufficient Data for Array Elements
    :id: REQ_SER_047_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when buffer is too small for declared array size.
@@ -870,7 +870,7 @@ Array Error Handling
 
 .. requirement:: Error - Array Element Count Mismatch
    :id: REQ_SER_047_E02
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify error when length is not a multiple of element size.
@@ -890,7 +890,7 @@ String Serialization
 .. requirement:: Serialize String UTF-8 Encoding
    :id: REQ_SER_050
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify strings are encoded as UTF-8.
@@ -904,7 +904,7 @@ String Serialization
 .. requirement:: Serialize String Length Field
    :id: REQ_SER_051
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify string length field includes BOM and terminator.
@@ -920,7 +920,7 @@ String Serialization
 .. requirement:: Serialize String BOM
    :id: REQ_SER_052
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify UTF-8 BOM (0xEFBBBF) is at string start.
@@ -935,7 +935,7 @@ String Serialization
 .. requirement:: Serialize String Null Terminator
    :id: REQ_SER_053
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify null terminator (0x00) is at string end.
@@ -950,7 +950,7 @@ String Serialization
 .. requirement:: Serialize Empty String
    :id: REQ_SER_054
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify empty string serializes with BOM and terminator only.
@@ -965,7 +965,7 @@ String Serialization
 .. requirement:: Deserialize String Length
    :id: REQ_SER_055
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify string length is read correctly.
@@ -980,7 +980,7 @@ String Serialization
 .. requirement:: Deserialize String Content
    :id: REQ_SER_056
    :satisfies: feat_req_someip_256
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify string content is extracted without BOM and terminator.
@@ -997,7 +997,7 @@ String Error Handling
 
 .. requirement:: Error - String Missing Null Terminator
    :id: REQ_SER_053_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when string lacks null terminator.
@@ -1013,7 +1013,7 @@ String Error Handling
 
 .. requirement:: Error - String Invalid UTF-8 Sequence
    :id: REQ_SER_050_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify error or warning for invalid UTF-8 sequences.
@@ -1029,7 +1029,7 @@ String Error Handling
 
 .. requirement:: Error - String Buffer Overflow on Serialize
    :id: REQ_SER_050_E02
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when string exceeds buffer capacity.
@@ -1045,7 +1045,7 @@ String Error Handling
 
 .. requirement:: Error - String Insufficient Data on Deserialize
    :id: REQ_SER_055_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify deserialization fails when buffer is smaller than declared length.
@@ -1065,7 +1065,7 @@ Struct Serialization
 .. requirement:: Serialize Struct Members Sequentially
    :id: REQ_SER_060
    :satisfies: feat_req_someip_264
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify struct members are serialized in order without gaps.
@@ -1080,7 +1080,7 @@ Struct Serialization
 .. requirement:: No Implicit Padding in Structs
    :id: REQ_SER_061
    :satisfies: feat_req_someip_264
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify no implicit padding bytes between struct members.
@@ -1095,7 +1095,7 @@ Struct Serialization
 .. requirement:: Explicit Alignment Configuration
    :id: REQ_SER_062
    :satisfies: feat_req_someip_264
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify alignment padding when explicitly configured.
@@ -1110,7 +1110,7 @@ Struct Serialization
 .. requirement:: Deserialize Struct Members Sequentially
    :id: REQ_SER_063
    :satisfies: feat_req_someip_264
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify struct members are deserialized in order.
@@ -1127,7 +1127,7 @@ Struct Error Handling
 
 .. requirement:: Error - Incomplete Struct Data
    :id: REQ_SER_060_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when buffer ends before all struct members are read.
@@ -1143,7 +1143,7 @@ Struct Error Handling
 
 .. requirement:: Error - Struct Buffer Overflow on Serialize
    :id: REQ_SER_060_E02
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify serialization fails when struct exceeds buffer capacity.
@@ -1163,7 +1163,7 @@ Buffer Management
 .. requirement:: Pre-Check Buffer Capacity
    :id: REQ_SER_070
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify buffer capacity is checked before serialization.
@@ -1178,7 +1178,7 @@ Buffer Management
 .. requirement:: Return Error on Buffer Overflow
    :id: REQ_SER_071
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error code is returned on buffer overflow.
@@ -1195,7 +1195,7 @@ Buffer Management
 .. requirement:: No Partial Writes on Overflow
    :id: REQ_SER_072
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify no data is written when overflow would occur.
@@ -1211,7 +1211,7 @@ Buffer Management
 
 .. requirement:: Error - Null Buffer Pointer
    :id: REQ_SER_070_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify null buffer pointer is rejected safely.
@@ -1227,7 +1227,7 @@ Buffer Management
 
 .. requirement:: Error - Zero Capacity Buffer
    :id: REQ_SER_070_E02
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify zero-capacity buffer is handled correctly.
@@ -1244,7 +1244,7 @@ Buffer Management
 .. requirement:: Track Buffer Position
    :id: REQ_SER_073
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify buffer position is tracked correctly during serialization.
@@ -1259,7 +1259,7 @@ Buffer Management
 .. requirement:: Get Remaining Buffer Capacity
    :id: REQ_SER_074
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify remaining capacity is calculated correctly.
@@ -1274,7 +1274,7 @@ Buffer Management
 .. requirement:: Reset Buffer Position
    :id: REQ_SER_075
    :satisfies: feat_req_someip_231
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify buffer position can be reset to beginning.
@@ -1292,7 +1292,7 @@ Alignment Support
 .. requirement:: Align to Boundary
    :id: REQ_SER_080
    :satisfies: feat_req_someip_264
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify alignment padding is added correctly.
@@ -1307,7 +1307,7 @@ Alignment Support
 .. requirement:: Alignment Padding Value
    :id: REQ_SER_081
    :satisfies: feat_req_someip_264
-   :status: draft
+   :status: implemented
    :priority: low
    :category: happy_path
    :verification: Unit test: Verify padding bytes are set to zero.
@@ -1322,7 +1322,7 @@ Alignment Support
 .. requirement:: Skip Padding on Deserialize
    :id: REQ_SER_082
    :satisfies: feat_req_someip_264
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify padding bytes are skipped during deserialization.

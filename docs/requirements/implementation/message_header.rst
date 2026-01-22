@@ -37,7 +37,7 @@ Message ID Parsing
 .. requirement:: Parse Message ID Field
    :id: REQ_MSG_001
    :satisfies: feat_req_someip_45
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message ID is correctly parsed from bytes 0-3 in Big Endian format.
@@ -53,7 +53,7 @@ Message ID Parsing
 .. requirement:: Extract Service ID from Message ID
    :id: REQ_MSG_002
    :satisfies: feat_req_someip_538, feat_req_someip_539
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Service ID is extracted from upper 16 bits of Message ID.
@@ -68,7 +68,7 @@ Message ID Parsing
 .. requirement:: Extract Method ID from Message ID
    :id: REQ_MSG_003
    :satisfies: feat_req_someip_550, feat_req_someip_551
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Method ID is extracted from lower 16 bits of Message ID.
@@ -83,7 +83,7 @@ Message ID Parsing
 .. requirement:: Validate Reserved Service ID 0x0000
    :id: REQ_MSG_004
    :satisfies: feat_req_someip_627
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify messages with Service ID 0x0000 are rejected for normal messages.
@@ -100,7 +100,7 @@ Message ID Parsing
 .. requirement:: Recognize SD Service ID 0xFFFF
    :id: REQ_MSG_005
    :satisfies: feat_req_someip_627
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify messages with Service ID 0xFFFF are identified as SD messages.
@@ -115,7 +115,7 @@ Message ID Parsing
 .. requirement:: Accept Method IDs for Methods
    :id: REQ_MSG_006
    :satisfies: feat_req_someip_550, feat_req_someip_553
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Method IDs 0x0000-0x7FFF are accepted as method identifiers.
@@ -130,7 +130,7 @@ Message ID Parsing
 .. requirement:: Accept Method IDs for Events
    :id: REQ_MSG_007
    :satisfies: feat_req_someip_555, feat_req_someip_556
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Method IDs 0x8000-0xFFFE are accepted as event identifiers.
@@ -145,7 +145,7 @@ Message ID Parsing
 .. requirement:: Validate Reserved Method ID 0xFFFF
    :id: REQ_MSG_008
    :satisfies: feat_req_someip_558
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify messages with Method ID 0xFFFF are rejected for normal processing.
@@ -162,7 +162,7 @@ Message ID Parsing
 .. requirement:: Error - Invalid Service ID Range
    :id: REQ_MSG_004_E01
    :satisfies: feat_req_someip_627
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error code E_UNKNOWN_SERVICE is returned for invalid Service ID.
@@ -178,7 +178,7 @@ Message ID Parsing
 
 .. requirement:: Error - Log Invalid Service ID
    :id: REQ_MSG_004_E02
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify log message contains the invalid Service ID value.
@@ -198,7 +198,7 @@ Length Field Parsing
 .. requirement:: Parse Length Field
    :id: REQ_MSG_010
    :satisfies: feat_req_someip_60
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Length field is correctly parsed from bytes 4-7 in Big Endian format.
@@ -214,7 +214,7 @@ Length Field Parsing
 .. requirement:: Validate Length Field Calculation
    :id: REQ_MSG_011
    :satisfies: feat_req_someip_67
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Length equals total message size minus 8 bytes.
@@ -230,7 +230,7 @@ Length Field Parsing
 .. requirement:: Minimum Length Value
    :id: REQ_MSG_012
    :satisfies: feat_req_someip_67
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify minimum Length value of 8 is accepted (header only, no payload).
@@ -246,7 +246,7 @@ Length Field Parsing
 .. requirement:: Maximum Length for UDP Transport
    :id: REQ_MSG_013
    :satisfies: feat_req_someiptp_760
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify UDP messages with payload > 1400 bytes are flagged for TP.
@@ -261,7 +261,7 @@ Length Field Parsing
 .. requirement:: Error - Buffer Size Less Than Length
    :id: REQ_MSG_014
    :satisfies: feat_req_someip_67
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify messages where buffer size < Length + 8 are rejected.
@@ -278,7 +278,7 @@ Length Field Parsing
 .. requirement:: Error - Length Less Than Minimum
    :id: REQ_MSG_015
    :satisfies: feat_req_someip_67
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify messages with Length < 8 are rejected.
@@ -294,7 +294,7 @@ Length Field Parsing
 
 .. requirement:: Error - Return Malformed Message Code
    :id: REQ_MSG_012_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify E_MALFORMED_MESSAGE is returned for invalid Length.
@@ -310,7 +310,7 @@ Length Field Parsing
 
 .. requirement:: Error - Log Invalid Length Value
    :id: REQ_MSG_012_E02
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify log message contains the actual Length value received.
@@ -326,7 +326,7 @@ Length Field Parsing
 
 .. requirement:: Error - Truncated Message Detection
    :id: REQ_MSG_014_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify truncated messages are detected and rejected.
@@ -342,7 +342,7 @@ Length Field Parsing
 
 .. requirement:: Error - Buffer Overflow Protection
    :id: REQ_MSG_014_E02
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify no buffer overread occurs with malicious Length values.
@@ -362,7 +362,7 @@ Request ID Parsing
 .. requirement:: Parse Request ID Field
    :id: REQ_MSG_020
    :satisfies: feat_req_someip_83
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Request ID is correctly parsed from bytes 8-11 in Big Endian format.
@@ -378,7 +378,7 @@ Request ID Parsing
 .. requirement:: Extract Client ID from Request ID
    :id: REQ_MSG_021
    :satisfies: feat_req_someip_84, feat_req_someip_86
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Client ID is extracted from upper 16 bits of Request ID.
@@ -393,7 +393,7 @@ Request ID Parsing
 .. requirement:: Extract Session ID from Request ID
    :id: REQ_MSG_022
    :satisfies: feat_req_someip_92, feat_req_someip_94
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Session ID is extracted from lower 16 bits of Request ID.
@@ -408,7 +408,7 @@ Request ID Parsing
 .. requirement:: Session ID Zero - Disabled Session Handling
    :id: REQ_MSG_023
    :satisfies: feat_req_someip_96
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify Session ID 0x0000 indicates session handling is disabled.
@@ -423,7 +423,7 @@ Request ID Parsing
 .. requirement:: Session ID Wrap-Around Handling
    :id: REQ_MSG_024
    :satisfies: feat_req_someip_98
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Session ID wraps from 0xFFFF to 0x0001, skipping 0x0000.
@@ -438,7 +438,7 @@ Request ID Parsing
 .. requirement:: Client ID Zero - Reserved for SD
    :id: REQ_MSG_025
    :satisfies: feat_req_someip_90
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify Client ID 0x0000 is accepted only for SD messages.
@@ -452,7 +452,7 @@ Request ID Parsing
 
 .. requirement:: Error - Duplicate Session ID Detection
    :id: REQ_MSG_024_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify duplicate Session IDs are detected for active sessions.
@@ -468,7 +468,7 @@ Request ID Parsing
 
 .. requirement:: Error - Session ID Sequence Validation
    :id: REQ_MSG_024_E02
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify out-of-sequence Session IDs are detected.
@@ -488,7 +488,7 @@ Protocol Version Parsing
 .. requirement:: Parse Protocol Version Field
    :id: REQ_MSG_030
    :satisfies: feat_req_someip_100
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Protocol Version is correctly parsed from byte 12.
@@ -503,7 +503,7 @@ Protocol Version Parsing
 .. requirement:: Validate Protocol Version Value
    :id: REQ_MSG_031
    :satisfies: feat_req_someip_100
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Protocol Version 0x01 is accepted.
@@ -518,7 +518,7 @@ Protocol Version Parsing
 .. requirement:: Error - Reject Invalid Protocol Version
    :id: REQ_MSG_032
    :satisfies: feat_req_someip_100
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify messages with Protocol Version != 0x01 are rejected.
@@ -535,7 +535,7 @@ Protocol Version Parsing
 .. requirement:: Error - Return Wrong Protocol Version Code
    :id: REQ_MSG_033
    :satisfies: feat_req_someip_100
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify E_WRONG_PROTOCOL_VERSION is returned for version mismatch.
@@ -551,7 +551,7 @@ Protocol Version Parsing
 
 .. requirement:: Error - Log Unknown Protocol Version
    :id: REQ_MSG_032_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify log message contains the received Protocol Version value.
@@ -567,7 +567,7 @@ Protocol Version Parsing
 
 .. requirement:: Error - Discard Message on Protocol Mismatch
    :id: REQ_MSG_032_E02
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify message is completely discarded after protocol version rejection.
@@ -587,7 +587,7 @@ Interface Version Parsing
 .. requirement:: Parse Interface Version Field
    :id: REQ_MSG_040
    :satisfies: feat_req_someip_101
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Interface Version is correctly parsed from byte 13.
@@ -602,7 +602,7 @@ Interface Version Parsing
 .. requirement:: Pass Interface Version to Application
    :id: REQ_MSG_041
    :satisfies: feat_req_someip_101
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Interface Version is passed to application layer for validation.
@@ -617,7 +617,7 @@ Interface Version Parsing
 .. requirement:: Error - Interface Version Mismatch Handling
    :id: REQ_MSG_042
    :satisfies: feat_req_someip_96
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify E_WRONG_INTERFACE_VERSION is returned when application rejects version.
@@ -633,7 +633,7 @@ Interface Version Parsing
 
 .. requirement:: Error - Log Interface Version Mismatch
    :id: REQ_MSG_042_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify log message contains expected and received Interface Versions.
@@ -653,7 +653,7 @@ Message Type Parsing
 .. requirement:: Parse Message Type Field
    :id: REQ_MSG_050
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message Type is correctly parsed from byte 14.
@@ -668,7 +668,7 @@ Message Type Parsing
 .. requirement:: Accept REQUEST Message Type
    :id: REQ_MSG_051
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message Type 0x00 (REQUEST) is accepted.
@@ -683,7 +683,7 @@ Message Type Parsing
 .. requirement:: Accept REQUEST_NO_RETURN Message Type
    :id: REQ_MSG_052
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message Type 0x01 (REQUEST_NO_RETURN) is accepted.
@@ -698,7 +698,7 @@ Message Type Parsing
 .. requirement:: Accept NOTIFICATION Message Type
    :id: REQ_MSG_053
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message Type 0x02 (NOTIFICATION) is accepted.
@@ -713,7 +713,7 @@ Message Type Parsing
 .. requirement:: Accept RESPONSE Message Type
    :id: REQ_MSG_054
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message Type 0x80 (RESPONSE) is accepted.
@@ -728,7 +728,7 @@ Message Type Parsing
 .. requirement:: Accept ERROR Message Type
    :id: REQ_MSG_055
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message Type 0x81 (ERROR) is accepted.
@@ -743,7 +743,7 @@ Message Type Parsing
 .. requirement:: Detect TP Flag in Message Type
    :id: REQ_MSG_056
    :satisfies: feat_req_someiptp_765
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify TP flag (bit 5) is detected in Message Type.
@@ -758,7 +758,7 @@ Message Type Parsing
 .. requirement:: Accept REQUEST_ACK Message Type
    :id: REQ_MSG_057
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify Message Type 0x40 (REQUEST_ACK) is accepted.
@@ -773,7 +773,7 @@ Message Type Parsing
 .. requirement:: Accept RESPONSE_ACK Message Type
    :id: REQ_MSG_058
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify Message Type 0xC0 (RESPONSE_ACK) is accepted.
@@ -788,7 +788,7 @@ Message Type Parsing
 .. requirement:: Accept ERROR_ACK Message Type
    :id: REQ_MSG_059
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify Message Type 0xC1 (ERROR_ACK) is accepted.
@@ -803,7 +803,7 @@ Message Type Parsing
 .. requirement:: Accept TP_REQUEST Message Type
    :id: REQ_MSG_060_TP
    :satisfies: feat_req_someiptp_765
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message Type 0x20 (TP_REQUEST) is accepted.
@@ -818,7 +818,7 @@ Message Type Parsing
 .. requirement:: Accept TP_REQUEST_NO_RETURN Message Type
    :id: REQ_MSG_061_TP
    :satisfies: feat_req_someiptp_765
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message Type 0x21 (TP_REQUEST_NO_RETURN) is accepted.
@@ -833,7 +833,7 @@ Message Type Parsing
 .. requirement:: Accept TP_NOTIFICATION Message Type
    :id: REQ_MSG_062_TP
    :satisfies: feat_req_someiptp_765
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message Type 0x22 (TP_NOTIFICATION) is accepted.
@@ -848,7 +848,7 @@ Message Type Parsing
 .. requirement:: Error - Reject Unknown Message Type
    :id: REQ_MSG_063
    :satisfies: feat_req_someip_103
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify unknown Message Type values are rejected.
@@ -865,7 +865,7 @@ Message Type Parsing
 .. requirement:: Error - Return Wrong Message Type Code
    :id: REQ_MSG_064
    :satisfies: feat_req_someip_100
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify E_WRONG_MESSAGE_TYPE is returned for unknown types.
@@ -881,7 +881,7 @@ Message Type Parsing
 
 .. requirement:: Error - Log Unknown Message Type
    :id: REQ_MSG_063_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify log message contains the unknown Message Type value.
@@ -897,7 +897,7 @@ Message Type Parsing
 
 .. requirement:: Error - Reserved Message Type Bits Validation
    :id: REQ_MSG_063_E02
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify reserved bit combinations in Message Type are rejected.
@@ -917,7 +917,7 @@ Return Code Parsing
 .. requirement:: Parse Return Code Field
    :id: REQ_MSG_070
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Code is correctly parsed from byte 15.
@@ -932,7 +932,7 @@ Return Code Parsing
 .. requirement:: Validate Return Code Zero for Requests
    :id: REQ_MSG_071
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify REQUEST messages have Return Code 0x00.
@@ -947,7 +947,7 @@ Return Code Parsing
 .. requirement:: Accept Standard Return Codes
    :id: REQ_MSG_072
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Codes 0x00-0x5F are accepted.
@@ -962,7 +962,7 @@ Return Code Parsing
 .. requirement:: Accept E_OK Return Code
    :id: REQ_MSG_073
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Code 0x00 (E_OK) is accepted for success.
@@ -977,7 +977,7 @@ Return Code Parsing
 .. requirement:: Accept E_NOT_OK Return Code
    :id: REQ_MSG_074
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Code 0x01 (E_NOT_OK) is accepted.
@@ -992,7 +992,7 @@ Return Code Parsing
 .. requirement:: Accept E_UNKNOWN_SERVICE Return Code
    :id: REQ_MSG_075
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Code 0x02 (E_UNKNOWN_SERVICE) is accepted.
@@ -1007,7 +1007,7 @@ Return Code Parsing
 .. requirement:: Accept E_UNKNOWN_METHOD Return Code
    :id: REQ_MSG_076
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Code 0x03 (E_UNKNOWN_METHOD) is accepted.
@@ -1022,7 +1022,7 @@ Return Code Parsing
 .. requirement:: Accept E_NOT_READY Return Code
    :id: REQ_MSG_077
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Code 0x04 (E_NOT_READY) is accepted.
@@ -1037,7 +1037,7 @@ Return Code Parsing
 .. requirement:: Accept E_NOT_REACHABLE Return Code
    :id: REQ_MSG_078
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Code 0x05 (E_NOT_REACHABLE) is accepted.
@@ -1052,7 +1052,7 @@ Return Code Parsing
 .. requirement:: Accept E_TIMEOUT Return Code
    :id: REQ_MSG_079
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Code 0x06 (E_TIMEOUT) is accepted.
@@ -1067,7 +1067,7 @@ Return Code Parsing
 .. requirement:: Accept E_MALFORMED_MESSAGE Return Code
    :id: REQ_MSG_080
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Return Code 0x09 (E_MALFORMED_MESSAGE) is accepted.
@@ -1082,7 +1082,7 @@ Return Code Parsing
 .. requirement:: Error - Non-Zero Return Code in Request
    :id: REQ_MSG_071_E01
    :satisfies: feat_req_someip_278
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify REQUEST messages with Return Code != 0x00 are rejected.
@@ -1098,7 +1098,7 @@ Return Code Parsing
 
 .. requirement:: Error - Unknown Return Code Handling
    :id: REQ_MSG_072_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify unknown Return Codes are logged but accepted.
@@ -1114,7 +1114,7 @@ Return Code Parsing
 
 .. requirement:: Error - Log Invalid Return Code in Request
    :id: REQ_MSG_071_E02
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify log message for non-zero Return Code in REQUEST.
@@ -1134,7 +1134,7 @@ Endianness Requirements
 .. requirement:: Big Endian Header Fields
    :id: REQ_MSG_090
    :satisfies: feat_req_someip_45
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify all multi-byte header fields use Big Endian byte order.
@@ -1149,7 +1149,7 @@ Endianness Requirements
 .. requirement:: Host to Network Byte Order on Serialize
    :id: REQ_MSG_091
    :satisfies: feat_req_someip_45
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify conversion from host to Big Endian on serialization.
@@ -1164,7 +1164,7 @@ Endianness Requirements
 .. requirement:: Network to Host Byte Order on Deserialize
    :id: REQ_MSG_092
    :satisfies: feat_req_someip_45
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify conversion from Big Endian to host on deserialization.
@@ -1179,7 +1179,7 @@ Endianness Requirements
 .. requirement:: Single Byte Fields No Conversion
    :id: REQ_MSG_093
    :satisfies: feat_req_someip_45
-   :status: draft
+   :status: implemented
    :priority: low
    :category: happy_path
    :verification: Unit test: Verify single-byte fields are not byte-swapped.
@@ -1197,7 +1197,7 @@ Header Validation Composite Requirements
 .. requirement:: Complete Header Validation
    :id: REQ_MSG_100
    :satisfies: feat_req_someip_45
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Integration test: Verify complete header validation sequence.
@@ -1216,7 +1216,7 @@ Header Validation Composite Requirements
 
 .. requirement:: Error - Null Buffer Pointer
    :id: REQ_MSG_100_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify null buffer pointer is rejected safely.
@@ -1232,7 +1232,7 @@ Header Validation Composite Requirements
 
 .. requirement:: Error - Buffer Too Small for Header
    :id: REQ_MSG_100_E02
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify buffers < 16 bytes are rejected.
@@ -1248,7 +1248,7 @@ Header Validation Composite Requirements
 
 .. requirement:: Error - Empty Buffer Handling
    :id: REQ_MSG_100_E03
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify empty buffers (size 0) are rejected safely.

@@ -90,10 +90,37 @@ jobs:
           --code-refs ${{ steps.strings.outputs.build-output-dir }}/code_references.json
       continue-on-error: true
 
+    - name: Check requirements coverage
+      run: |
+        # Generate traceability matrix with gap analysis
+        mkdir -p ${{ steps.strings.outputs.build-output-dir }}/docs/traceability
+        python scripts/generate_traceability_matrix.py \
+          --project-root ${{ github.workspace }} \
+          --code-refs ${{ steps.strings.outputs.build-output-dir }}/code_references.json \
+          --output-dir ${{ steps.strings.outputs.build-output-dir }}/docs/traceability
+
+        # Verify implementation status
+        python scripts/verify_implementation_status.py \
+          --project-root ${{ github.workspace }} \
+          --code-refs ${{ steps.strings.outputs.build-output-dir }}/code_references.json \
+          --output ${{ steps.strings.outputs.build-output-dir }}/docs/implementation_verification.md
+
+        # Check spec requirement mappings
+        python scripts/check_spec_requirements.py \
+          --project-root ${{ github.workspace }} \
+          --output ${{ steps.strings.outputs.build-output-dir }}/docs/spec_mapping_report.md
+
+        # Generate implementation report
+        python scripts/generate_implementation_report.py \
+          --project-root ${{ github.workspace }} \
+          --output ${{ steps.strings.outputs.build-output-dir }}/docs/implementation_report.md
+      continue-on-error: true
+
     - name: Upload requirements artifacts
       uses: actions/upload-artifact@v4
       with:
         name: requirements-${{ matrix.c_compiler }}
         path: |
           ${{ steps.strings.outputs.build-output-dir }}/code_references.json
+          ${{ steps.strings.outputs.build-output-dir }}/docs/
         retention-days: 7

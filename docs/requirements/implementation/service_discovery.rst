@@ -38,7 +38,7 @@ Header Requirements
 .. requirement:: SD Service ID
    :id: REQ_SD_001
    :satisfies: feat_req_someipsd_141
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify SD messages use Service ID 0xFFFF.
@@ -52,7 +52,7 @@ Header Requirements
 .. requirement:: SD Method ID
    :id: REQ_SD_002
    :satisfies: feat_req_someipsd_142
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify SD messages use Method ID 0x8100.
@@ -66,7 +66,7 @@ Header Requirements
 .. requirement:: SD Client ID
    :id: REQ_SD_003
    :satisfies: feat_req_someipsd_144
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify SD messages use Client ID 0x0000.
@@ -80,7 +80,7 @@ Header Requirements
 .. requirement:: SD Protocol Version
    :id: REQ_SD_004
    :satisfies: feat_req_someipsd_147
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify SD messages use Protocol Version 0x01.
@@ -94,7 +94,7 @@ Header Requirements
 .. requirement:: SD Interface Version
    :id: REQ_SD_005
    :satisfies: feat_req_someipsd_148
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify SD messages use Interface Version 0x01.
@@ -108,7 +108,7 @@ Header Requirements
 .. requirement:: SD Message Type
    :id: REQ_SD_006
    :satisfies: feat_req_someipsd_205
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify SD messages use Message Type 0x02 (NOTIFICATION).
@@ -123,7 +123,7 @@ Header Requirements
 .. requirement:: SD Return Code
    :id: REQ_SD_007
    :satisfies: feat_req_someipsd_208
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify SD messages use Return Code 0x00 (E_OK).
@@ -140,7 +140,7 @@ SD Flags Parsing
 .. requirement:: Parse SD Flags Byte
    :id: REQ_SD_010
    :satisfies: feat_req_someipsd_209
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify SD Flags byte is correctly parsed from byte 0 of SD payload.
@@ -155,7 +155,7 @@ SD Flags Parsing
 .. requirement:: Extract Reboot Flag
    :id: REQ_SD_011
    :satisfies: feat_req_someipsd_213
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Reboot flag is extracted from bit 7 of Flags byte.
@@ -170,7 +170,7 @@ SD Flags Parsing
 .. requirement:: Extract Unicast Flag
    :id: REQ_SD_012
    :satisfies: feat_req_someipsd_213
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Unicast flag is extracted from bit 6 of Flags byte.
@@ -185,7 +185,7 @@ SD Flags Parsing
 .. requirement:: Validate Reserved Flags
    :id: REQ_SD_013
    :satisfies: feat_req_someipsd_213
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify reserved flag bits 5-0 are zero on transmit.
@@ -200,7 +200,7 @@ SD Flags Parsing
 .. requirement:: Ignore Reserved Flags on Receive
    :id: REQ_SD_014
    :satisfies: feat_req_someipsd_148
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify reserved flag bits are ignored during parsing.
@@ -214,7 +214,7 @@ SD Flags Parsing
 
 .. requirement:: Error - Invalid SD Header
    :id: REQ_SD_001_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify messages not matching SD header requirements are rejected.
@@ -230,7 +230,7 @@ SD Flags Parsing
 
 .. requirement:: Error - Malformed SD Flags
    :id: REQ_SD_010_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when SD payload is too short for Flags byte.
@@ -253,7 +253,7 @@ Entries Array
 .. requirement:: Parse Entries Length Field
    :id: REQ_SD_020
    :satisfies: feat_req_someipsd_575
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Entries Length field is parsed from bytes 4-7 of SD payload.
@@ -268,7 +268,7 @@ Entries Array
 .. requirement:: Parse Entry Type
    :id: REQ_SD_021
    :satisfies: feat_req_someipsd_625
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Entry Type is correctly parsed from first byte of entry.
@@ -283,7 +283,7 @@ Entries Array
 .. requirement:: Entry Size Calculation
    :id: REQ_SD_022
    :satisfies: feat_req_someipsd_625
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify entry size is 16 bytes for service entries.
@@ -298,7 +298,7 @@ Entries Array
 .. requirement:: Parse Type 0 Find Service Entry
    :id: REQ_SD_023
    :satisfies: feat_req_someipsd_626
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Type 0 (Find Service) entries are correctly parsed.
@@ -313,7 +313,7 @@ Entries Array
 .. requirement:: Parse Type 1 Offer Service Entry
    :id: REQ_SD_024
    :satisfies: feat_req_someipsd_626
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Type 1 (Offer Service) entries are correctly parsed.
@@ -328,7 +328,7 @@ Entries Array
 .. requirement:: Parse Type 6 Subscribe Eventgroup Entry
    :id: REQ_SD_025
    :satisfies: feat_req_someipsd_629
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Type 6 (Subscribe Eventgroup) entries are correctly parsed.
@@ -343,7 +343,7 @@ Entries Array
 .. requirement:: Parse Type 7 Subscribe Eventgroup Ack Entry
    :id: REQ_SD_026
    :satisfies: feat_req_someipsd_630
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Type 7 (Subscribe Eventgroup Ack) entries are correctly parsed.
@@ -361,7 +361,7 @@ Entry Fields
 .. requirement:: Parse Service ID in Entry
    :id: REQ_SD_030
    :satisfies: feat_req_someipsd_625
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Service ID is parsed from bytes 4-5 of entry.
@@ -376,7 +376,7 @@ Entry Fields
 .. requirement:: Parse Instance ID in Entry
    :id: REQ_SD_031
    :satisfies: feat_req_someipsd_625
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Instance ID is parsed from bytes 6-7 of entry.
@@ -391,7 +391,7 @@ Entry Fields
 .. requirement:: Instance ID Wildcard
    :id: REQ_SD_032
    :satisfies: feat_req_someipsd_734
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Instance ID 0xFFFF matches all instances.
@@ -406,7 +406,7 @@ Entry Fields
 .. requirement:: Parse Major Version and TTL
    :id: REQ_SD_033
    :satisfies: feat_req_someipsd_625
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Major Version (1 byte) and TTL (3 bytes) are parsed correctly.
@@ -421,7 +421,7 @@ Entry Fields
 .. requirement:: Parse Minor Version
    :id: REQ_SD_034
    :satisfies: feat_req_someipsd_625
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Minor Version is parsed from bytes 12-15 of Offer entry.
@@ -436,7 +436,7 @@ Entry Fields
 .. requirement:: Parse Eventgroup ID
    :id: REQ_SD_035
    :satisfies: feat_req_someipsd_629
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Eventgroup ID is parsed from bytes 14-15 of subscription entry.
@@ -453,7 +453,7 @@ Entry Error Handling
 
 .. requirement:: Error - Unknown Entry Type
    :id: REQ_SD_021_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify unknown entry types are skipped with warning.
@@ -469,7 +469,7 @@ Entry Error Handling
 
 .. requirement:: Error - Truncated Entry
    :id: REQ_SD_022_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when entry extends beyond Entries Length.
@@ -485,7 +485,7 @@ Entry Error Handling
 
 .. requirement:: Error - Invalid Entries Length
    :id: REQ_SD_020_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when Entries Length exceeds remaining payload.
@@ -501,7 +501,7 @@ Entry Error Handling
 
 .. requirement:: Error - Entries Length Not Multiple of Entry Size
    :id: REQ_SD_020_E02
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify warning when Entries Length is not a multiple of entry size.
@@ -521,7 +521,7 @@ TTL Processing
 .. requirement:: Store Service Offer TTL
    :id: REQ_SD_040
    :satisfies: feat_req_someipsd_748
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify TTL is stored for each received service offer.
@@ -536,7 +536,7 @@ TTL Processing
 .. requirement:: Decrement TTL Periodically
    :id: REQ_SD_041
    :satisfies: feat_req_someipsd_748
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify TTL is decremented every second.
@@ -551,7 +551,7 @@ TTL Processing
 .. requirement:: Remove Service on TTL Expiry
    :id: REQ_SD_042
    :satisfies: feat_req_someipsd_748
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify service is removed from available list when TTL reaches 0.
@@ -566,7 +566,7 @@ TTL Processing
 .. requirement:: Infinite TTL Value
    :id: REQ_SD_043
    :satisfies: feat_req_someipsd_748
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify TTL 0xFFFFFF (16777215) indicates infinite lifetime.
@@ -581,7 +581,7 @@ TTL Processing
 .. requirement:: Stop Offer TTL Zero
    :id: REQ_SD_044
    :satisfies: feat_req_someipsd_748
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify TTL 0 causes immediate service removal.
@@ -596,7 +596,7 @@ TTL Processing
 .. requirement:: Reset TTL on New Offer
    :id: REQ_SD_045
    :satisfies: feat_req_someipsd_748
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify new offer resets TTL for existing service entry.
@@ -611,7 +611,7 @@ TTL Processing
 .. requirement:: Notify Application on Service Availability Change
    :id: REQ_SD_046
    :satisfies: feat_req_someipsd_14
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify callback is invoked when service becomes available/unavailable.
@@ -628,7 +628,7 @@ TTL Error Handling
 
 .. requirement:: Error - TTL Underflow Protection
    :id: REQ_SD_041_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify TTL decrement handles underflow correctly.
@@ -644,7 +644,7 @@ TTL Error Handling
 
 .. requirement:: Error - Service List Full
    :id: REQ_SD_040_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify error when maximum service entries is reached.
@@ -664,7 +664,7 @@ Reboot Detection
 .. requirement:: Track Session ID per Endpoint
    :id: REQ_SD_050
    :satisfies: feat_req_someipsd_795
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Session ID is stored per remote endpoint.
@@ -679,7 +679,7 @@ Reboot Detection
 .. requirement:: Compare Session ID for Reboot Detection
    :id: REQ_SD_051
    :satisfies: feat_req_someipsd_795
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify new Session ID is compared against stored value.
@@ -694,7 +694,7 @@ Reboot Detection
 .. requirement:: Detect Reboot on Session ID Regression
    :id: REQ_SD_052
    :satisfies: feat_req_someipsd_795
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify reboot is detected when new Session ID < stored (accounting for wrap).
@@ -709,7 +709,7 @@ Reboot Detection
 .. requirement:: Detect Reboot on Reboot Flag
    :id: REQ_SD_053
    :satisfies: feat_req_someipsd_795
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify reboot is detected when Reboot flag is set.
@@ -724,7 +724,7 @@ Reboot Detection
 .. requirement:: Trigger Reboot Detection Event
    :id: REQ_SD_054
    :satisfies: feat_req_someipsd_795
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify reboot detection event is triggered.
@@ -739,7 +739,7 @@ Reboot Detection
 .. requirement:: Clear Cached Services on Reboot
    :id: REQ_SD_055
    :satisfies: feat_req_someipsd_795
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify all cached services from rebooted endpoint are cleared.
@@ -754,7 +754,7 @@ Reboot Detection
 .. requirement:: Update Stored Session ID
    :id: REQ_SD_056
    :satisfies: feat_req_someipsd_795
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify stored Session ID is updated after processing.
@@ -771,7 +771,7 @@ Reboot Detection Error Handling
 
 .. requirement:: Error - Session ID Wrap-Around Handling
    :id: REQ_SD_052_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify wrap-around from 0xFFFF to 0x0001 is not detected as reboot.
@@ -787,7 +787,7 @@ Reboot Detection Error Handling
 
 .. requirement:: Error - First Session ID Storage
    :id: REQ_SD_050_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify first Session ID from new endpoint is stored without reboot detection.
@@ -810,7 +810,7 @@ Options Array
 .. requirement:: Parse Options Length Field
    :id: REQ_SD_060
    :satisfies: feat_req_someipsd_1096
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Options Length field is parsed from after Entries Array.
@@ -825,7 +825,7 @@ Options Array
 .. requirement:: Parse Option Type
    :id: REQ_SD_061
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Option Type is correctly parsed from first byte of option.
@@ -840,7 +840,7 @@ Options Array
 .. requirement:: Parse Option Length
    :id: REQ_SD_062
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Option Length is parsed from bytes 0-1 of option.
@@ -858,7 +858,7 @@ IPv4 Endpoint Option
 .. requirement:: Parse IPv4 Endpoint Option Type
    :id: REQ_SD_063
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Option Type 0x04 is parsed as IPv4 Endpoint.
@@ -873,7 +873,7 @@ IPv4 Endpoint Option
 .. requirement:: Extract IPv4 Address
    :id: REQ_SD_064
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify IPv4 address is extracted from bytes 4-7 of option.
@@ -888,7 +888,7 @@ IPv4 Endpoint Option
 .. requirement:: Extract IPv4 Port Number
    :id: REQ_SD_065
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify port number is extracted from bytes 9-10 of IPv4 option.
@@ -903,7 +903,7 @@ IPv4 Endpoint Option
 .. requirement:: Extract IPv4 Protocol
    :id: REQ_SD_066
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify protocol is extracted from byte 8 of IPv4 option.
@@ -921,7 +921,7 @@ IPv6 Endpoint Option
 .. requirement:: Parse IPv6 Endpoint Option Type
    :id: REQ_SD_067
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Option Type 0x06 is parsed as IPv6 Endpoint.
@@ -936,7 +936,7 @@ IPv6 Endpoint Option
 .. requirement:: Extract IPv6 Address
    :id: REQ_SD_068
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify IPv6 address is extracted from bytes 4-19 of option.
@@ -951,7 +951,7 @@ IPv6 Endpoint Option
 .. requirement:: Extract IPv6 Port Number
    :id: REQ_SD_069
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify port number is extracted from bytes 21-22 of IPv6 option.
@@ -966,7 +966,7 @@ IPv6 Endpoint Option
 .. requirement:: Extract IPv6 Protocol
    :id: REQ_SD_070
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify protocol is extracted from byte 20 of IPv6 option.
@@ -984,7 +984,7 @@ Configuration Option
 .. requirement:: Parse Configuration Option Type
    :id: REQ_SD_071
    :satisfies: feat_req_someipsd_1163
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify Option Type 0x01 is parsed as Configuration option.
@@ -999,7 +999,7 @@ Configuration Option
 .. requirement:: Parse Configuration String
    :id: REQ_SD_072
    :satisfies: feat_req_someipsd_1163
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify configuration string is extracted from Configuration option.
@@ -1017,7 +1017,7 @@ Multicast Endpoint Options
 .. requirement:: Parse IPv4 Multicast Option Type
    :id: REQ_SD_073
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Option Type 0x14 is parsed as IPv4 Multicast.
@@ -1032,7 +1032,7 @@ Multicast Endpoint Options
 .. requirement:: Parse IPv6 Multicast Option Type
    :id: REQ_SD_074
    :satisfies: feat_req_someipsd_1112
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Option Type 0x16 is parsed as IPv6 Multicast.
@@ -1050,7 +1050,7 @@ Option Index References
 .. requirement:: Parse First Option Index
    :id: REQ_SD_075
    :satisfies: feat_req_someipsd_625
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify First Option Index is parsed from entry.
@@ -1065,7 +1065,7 @@ Option Index References
 .. requirement:: Parse Second Option Index
    :id: REQ_SD_076
    :satisfies: feat_req_someipsd_625
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Second Option Index is parsed from entry.
@@ -1080,7 +1080,7 @@ Option Index References
 .. requirement:: Parse Option Counts
    :id: REQ_SD_077
    :satisfies: feat_req_someipsd_625
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify option counts are parsed from byte 3 of entry.
@@ -1097,7 +1097,7 @@ Options Error Handling
 
 .. requirement:: Error - Invalid Option Type
    :id: REQ_SD_061_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify unknown option types are skipped with warning.
@@ -1113,7 +1113,7 @@ Options Error Handling
 
 .. requirement:: Error - Truncated Option
    :id: REQ_SD_062_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when option extends beyond Options Length.
@@ -1129,7 +1129,7 @@ Options Error Handling
 
 .. requirement:: Error - Invalid Options Length
    :id: REQ_SD_060_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when Options Length exceeds remaining payload.
@@ -1145,7 +1145,7 @@ Options Error Handling
 
 .. requirement:: Error - Invalid IP Address
    :id: REQ_SD_064_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify warning for invalid IP addresses (0.0.0.0, broadcast).
@@ -1161,7 +1161,7 @@ Options Error Handling
 
 .. requirement:: Error - Option Index Out of Range
    :id: REQ_SD_075_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when option index exceeds available options.
@@ -1181,7 +1181,7 @@ Service State Machine
 .. requirement:: Service Find State
    :id: REQ_SD_080
    :satisfies: feat_req_someipsd_632
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify service enters Find state on client request.
@@ -1196,7 +1196,7 @@ Service State Machine
 .. requirement:: Send Find Service Message
    :id: REQ_SD_081
    :satisfies: feat_req_someipsd_632
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Find Service message is sent in Find state.
@@ -1211,7 +1211,7 @@ Service State Machine
 .. requirement:: Service Available State
    :id: REQ_SD_082
    :satisfies: feat_req_someipsd_632
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify service enters Available state on offer received.
@@ -1226,7 +1226,7 @@ Service State Machine
 .. requirement:: Offer Service Generation
    :id: REQ_SD_083
    :satisfies: feat_req_someipsd_633
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Offer Service message is generated when service goes up.
@@ -1241,7 +1241,7 @@ Service State Machine
 .. requirement:: Stop Offer Generation
    :id: REQ_SD_084
    :satisfies: feat_req_someipsd_634
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Stop Offer message is generated when service goes down.
@@ -1259,7 +1259,7 @@ Subscription Management
 .. requirement:: Subscribe Eventgroup Request
    :id: REQ_SD_090
    :satisfies: feat_req_someipsd_629
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Subscribe Eventgroup entry is generated on subscription request.
@@ -1274,7 +1274,7 @@ Subscription Management
 .. requirement:: Subscribe Eventgroup Acknowledgment
    :id: REQ_SD_091
    :satisfies: feat_req_someipsd_630
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Subscribe Eventgroup Ack entry is generated on subscription acceptance.
@@ -1289,7 +1289,7 @@ Subscription Management
 .. requirement:: Subscribe Eventgroup Negative Acknowledgment
    :id: REQ_SD_092
    :satisfies: feat_req_someipsd_630
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Subscribe Eventgroup Nack entry is generated on subscription rejection.
@@ -1304,7 +1304,7 @@ Subscription Management
 .. requirement:: Subscription Renewal
    :id: REQ_SD_093
    :satisfies: feat_req_someipsd_748
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify subscription is renewed before TTL expiry.
@@ -1319,7 +1319,7 @@ Subscription Management
 .. requirement:: Stop Subscribe Generation
    :id: REQ_SD_094
    :satisfies: feat_req_someipsd_629
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Stop Subscribe entry is generated on unsubscribe request.
@@ -1337,7 +1337,7 @@ Timing and Repetition
 .. requirement:: Initial Offer Delay
    :id: REQ_SD_100
    :satisfies: feat_req_someipsd_425
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify initial delay before first offer.
@@ -1352,7 +1352,7 @@ Timing and Repetition
 .. requirement:: Offer Repetition
    :id: REQ_SD_101
    :satisfies: feat_req_someipsd_425
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify offer is repeated with increasing intervals.
@@ -1367,7 +1367,7 @@ Timing and Repetition
 .. requirement:: Cyclic Offer
    :id: REQ_SD_102
    :satisfies: feat_req_someipsd_425
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify cyclic offer at configured interval.
@@ -1382,7 +1382,7 @@ Timing and Repetition
 .. requirement:: Find Repetition
    :id: REQ_SD_103
    :satisfies: feat_req_someipsd_632
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify find is repeated until service is found or timeout.

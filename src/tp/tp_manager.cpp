@@ -52,6 +52,11 @@ bool TpManager::needs_segmentation(const Message& message) const {
     return data.size() > config_.max_segment_size;
 }
 
+/**
+ * @brief Segment a message for TP transmission
+ * @implements REQ_TP_050, REQ_TP_051
+ * @implements REQ_TP_050_E01
+ */
 TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_id) {
     std::scoped_lock lock(transfers_mutex_);
 
@@ -84,6 +89,10 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
     return TpResult::SUCCESS;
 }
 
+/**
+ * @brief Get next segment to send
+ * @implements REQ_TP_052, REQ_TP_053, REQ_TP_054
+ */
 TpResult TpManager::get_next_segment(uint32_t transfer_id, TpSegment& segment) {
     std::scoped_lock lock(transfers_mutex_);
 
@@ -109,6 +118,11 @@ TpResult TpManager::get_next_segment(uint32_t transfer_id, TpSegment& segment) {
     return TpResult::SUCCESS;
 }
 
+/**
+ * @brief Handle a received TP segment
+ * @implements REQ_TP_055, REQ_TP_056, REQ_TP_057
+ * @implements REQ_TP_050_E02
+ */
 bool TpManager::handle_received_segment(const TpSegment& segment, std::vector<uint8_t>& complete_message) {
     // Update statistics
     statistics_.segments_received++;
@@ -206,6 +220,10 @@ void TpManager::process_timeouts() {
     cleanup_completed_transfers();
 }
 
+/**
+ * @brief Get TP statistics
+ * @implements REQ_TP_060, REQ_TP_061, REQ_TP_062, REQ_TP_063
+ */
 TpStatistics TpManager::get_statistics() const {
     return statistics_;
 }

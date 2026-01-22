@@ -37,7 +37,7 @@ Segment Calculation
 .. requirement:: Calculate Segment Count
    :id: REQ_TP_001
    :satisfies: feat_req_someiptp_760
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify segment count = ceil(payload_size / max_segment_size).
@@ -52,7 +52,7 @@ Segment Calculation
 .. requirement:: Maximum Segment Payload Size
    :id: REQ_TP_002
    :satisfies: feat_req_someiptp_773
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify maximum segment payload is 1392 bytes.
@@ -67,7 +67,7 @@ Segment Calculation
 .. requirement:: Segment Alignment
    :id: REQ_TP_003
    :satisfies: feat_req_someiptp_772
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify all segments except last are multiples of 16 bytes.
@@ -82,7 +82,7 @@ Segment Calculation
 .. requirement:: Last Segment Size
    :id: REQ_TP_004
    :satisfies: feat_req_someiptp_772
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify last segment can be any size up to maximum.
@@ -97,7 +97,7 @@ Segment Calculation
 .. requirement:: Preserve Original Message Fields
    :id: REQ_TP_005
    :satisfies: feat_req_someiptp_762
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Message ID, Request ID are preserved in all segments.
@@ -112,7 +112,7 @@ Segment Calculation
 .. requirement:: Same Session ID for All Segments
    :id: REQ_TP_006
    :satisfies: feat_req_someiptp_763
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify all segments have the same Session ID.
@@ -127,7 +127,7 @@ Segment Calculation
 .. requirement:: Set TP Flag in Message Type
    :id: REQ_TP_007
    :satisfies: feat_req_someiptp_765
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify TP flag (bit 5, 0x20) is set in Message Type.
@@ -142,7 +142,7 @@ Segment Calculation
 .. requirement:: Preserve Base Message Type
    :id: REQ_TP_008
    :satisfies: feat_req_someiptp_765
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify original message type is preserved with TP flag added.
@@ -159,7 +159,7 @@ Segmentation Error Handling
 
 .. requirement:: Error - Message Too Large
    :id: REQ_TP_001_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when message exceeds maximum TP message size.
@@ -175,7 +175,7 @@ Segmentation Error Handling
 
 .. requirement:: Error - Segment Creation Failure
    :id: REQ_TP_001_E02
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when segment buffer allocation fails.
@@ -191,7 +191,7 @@ Segmentation Error Handling
 
 .. requirement:: Error - Empty Message Segmentation
    :id: REQ_TP_001_E03
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify handling of empty payload segmentation request.
@@ -214,7 +214,7 @@ Header Structure
 .. requirement:: TP Header Position
    :id: REQ_TP_010
    :satisfies: feat_req_someiptp_766
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify TP header is placed after SOME/IP header (at byte 16).
@@ -229,7 +229,7 @@ Header Structure
 .. requirement:: TP Header Size
    :id: REQ_TP_011
    :satisfies: feat_req_someiptp_766
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify TP header is exactly 4 bytes.
@@ -246,7 +246,7 @@ Offset Field
 .. requirement:: Offset Field Position
    :id: REQ_TP_012
    :satisfies: feat_req_someiptp_766
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Offset field occupies bits 31-4 of TP header.
@@ -261,7 +261,7 @@ Offset Field
 .. requirement:: Offset Value Calculation
    :id: REQ_TP_013
    :satisfies: feat_req_someiptp_767, feat_req_someiptp_768
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Offset value = byte_offset / 16.
@@ -276,7 +276,7 @@ Offset Field
 .. requirement:: First Segment Offset
    :id: REQ_TP_014
    :satisfies: feat_req_someiptp_767
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify first segment has Offset = 0.
@@ -290,7 +290,7 @@ Offset Field
 .. requirement:: Offset 16-Byte Alignment
    :id: REQ_TP_015
    :satisfies: feat_req_someiptp_768
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Offset values are always multiples of 16 bytes.
@@ -308,7 +308,7 @@ Reserved Flags
 .. requirement:: Reserved Flags Position
    :id: REQ_TP_016
    :satisfies: feat_req_someiptp_769
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify Reserved flags occupy bits 3-1 of TP header.
@@ -323,7 +323,7 @@ Reserved Flags
 .. requirement:: Reserved Flags Value on Send
    :id: REQ_TP_017
    :satisfies: feat_req_someiptp_769
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify Reserved flags are set to 0 on transmission.
@@ -338,7 +338,7 @@ Reserved Flags
 .. requirement:: Reserved Flags Ignored on Receive
    :id: REQ_TP_018
    :satisfies: feat_req_someiptp_769
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify Reserved flags are ignored during parsing.
@@ -356,7 +356,7 @@ More Segments Flag
 .. requirement:: More Segments Flag Position
    :id: REQ_TP_019
    :satisfies: feat_req_someiptp_770
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify More Segments flag is at bit 0 of TP header.
@@ -371,7 +371,7 @@ More Segments Flag
 .. requirement:: More Segments Flag Set for Non-Last
    :id: REQ_TP_020
    :satisfies: feat_req_someiptp_770
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify More Segments = 1 for all segments except last.
@@ -386,7 +386,7 @@ More Segments Flag
 .. requirement:: More Segments Flag Clear for Last
    :id: REQ_TP_021
    :satisfies: feat_req_someiptp_770
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify More Segments = 0 for last segment.
@@ -404,7 +404,7 @@ Length Field in Segments
 .. requirement:: Segment Length Field
    :id: REQ_TP_022
    :satisfies: feat_req_someiptp_771
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify Length field = 8 + 4 + segment_payload_size.
@@ -422,7 +422,7 @@ TP Header Error Handling
 
 .. requirement:: Error - Invalid Offset Value
    :id: REQ_TP_013_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when Offset exceeds maximum supported value.
@@ -438,7 +438,7 @@ TP Header Error Handling
 
 .. requirement:: Error - Offset Not Aligned on Receive
    :id: REQ_TP_015_E01
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify warning when received Offset is not 16-byte aligned.
@@ -461,7 +461,7 @@ Buffer Management
 .. requirement:: Allocate Reassembly Buffer
    :id: REQ_TP_030
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify reassembly buffer is allocated on first segment.
@@ -476,7 +476,7 @@ Buffer Management
 .. requirement:: Buffer Identification
    :id: REQ_TP_031
    :satisfies: feat_req_someiptp_781, feat_req_someiptp_794
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify buffer is identified by source, Message ID, and Session ID.
@@ -491,7 +491,7 @@ Buffer Management
 .. requirement:: Buffer Size Estimation
    :id: REQ_TP_032
    :satisfies: feat_req_someiptp_787
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify initial buffer size is estimated from first segment.
@@ -506,7 +506,7 @@ Buffer Management
 .. requirement:: Buffer Resize on Final Segment
    :id: REQ_TP_033
    :satisfies: feat_req_someiptp_770
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify buffer is resized when final segment determines total size.
@@ -524,7 +524,7 @@ Segment Storage
 .. requirement:: Store Segment by Offset
    :id: REQ_TP_034
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify segment payload is stored at correct buffer offset.
@@ -539,7 +539,7 @@ Segment Storage
 .. requirement:: Track Received Segments
    :id: REQ_TP_035
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify received segments are tracked to detect gaps.
@@ -554,7 +554,7 @@ Segment Storage
 .. requirement:: Detect Duplicate Segments
    :id: REQ_TP_036
    :satisfies: feat_req_someiptp_780
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify duplicate segments are detected and handled.
@@ -569,7 +569,7 @@ Segment Storage
 .. requirement:: Detect Overlapping Segments
    :id: REQ_TP_037
    :satisfies: feat_req_someiptp_780
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify overlapping segments are detected.
@@ -586,7 +586,7 @@ Segment Storage
 .. requirement:: Handle Out-of-Order Segments
    :id: REQ_TP_038
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify out-of-order segments are correctly placed.
@@ -604,7 +604,7 @@ Completion Detection
 .. requirement:: Complete on Last Segment with No Gaps
    :id: REQ_TP_039
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify reassembly completes when last segment received and no gaps.
@@ -619,7 +619,7 @@ Completion Detection
 .. requirement:: Delayed Completion for Out-of-Order Last
    :id: REQ_TP_040
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify reassembly waits for gaps when last segment arrives first.
@@ -634,7 +634,7 @@ Completion Detection
 .. requirement:: Deliver Reassembled Message
    :id: REQ_TP_041
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify complete message is delivered to application.
@@ -649,7 +649,7 @@ Completion Detection
 .. requirement:: Release Buffer After Delivery
    :id: REQ_TP_042
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify reassembly buffer is released after message delivery.
@@ -666,7 +666,7 @@ Reassembly Error Handling
 
 .. requirement:: Error - Missing Segments at Completion
    :id: REQ_TP_039_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when gaps remain after last segment.
@@ -682,7 +682,7 @@ Reassembly Error Handling
 
 .. requirement:: Error - Buffer Overflow on Large Message
    :id: REQ_TP_030_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error when reassembly buffer exceeds maximum size.
@@ -699,7 +699,7 @@ Reassembly Error Handling
 .. requirement:: Error - Total Length Inconsistency
    :id: REQ_TP_043
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify buffer is discarded if total length changes.
@@ -715,7 +715,7 @@ Reassembly Error Handling
 
 .. requirement:: Error - Maximum Concurrent Transfers
    :id: REQ_TP_030_E02
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify error when maximum concurrent reassemblies exceeded.
@@ -738,7 +738,7 @@ Timer Management
 .. requirement:: Start Reassembly Timer
    :id: REQ_TP_050
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify reassembly timer starts on first segment.
@@ -753,7 +753,7 @@ Timer Management
 .. requirement:: Configurable Timeout Value
    :id: REQ_TP_051
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify timeout value is configurable (default 5000ms).
@@ -768,7 +768,7 @@ Timer Management
 .. requirement:: Timer Reset on Segment (Optional)
    :id: REQ_TP_052
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify timer can be optionally reset on each segment.
@@ -783,7 +783,7 @@ Timer Management
 .. requirement:: Timer Expiry Detection
    :id: REQ_TP_053
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
    :verification: Unit test: Verify timer expiry is detected promptly.
@@ -801,7 +801,7 @@ Timeout Actions
 .. requirement:: Discard Buffer on Timeout
    :id: REQ_TP_054
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify all segments are discarded on timeout.
@@ -818,7 +818,7 @@ Timeout Actions
 .. requirement:: Release Buffer Resources on Timeout
    :id: REQ_TP_055
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify buffer memory is released on timeout.
@@ -835,7 +835,7 @@ Timeout Actions
 .. requirement:: Report Timeout Error
    :id: REQ_TP_056
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify timeout error is reported to application.
@@ -852,7 +852,7 @@ Timeout Actions
 .. requirement:: Log Timeout Details
    :id: REQ_TP_057
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: error_path
    :verification: Unit test: Verify log message contains Message ID and segments received.
@@ -871,7 +871,7 @@ Timer Error Handling
 
 .. requirement:: Error - Timer Creation Failure
    :id: REQ_TP_050_E01
-   :status: draft
+   :status: implemented
    :priority: high
    :category: error_path
    :verification: Unit test: Verify error handling when timer creation fails.
@@ -887,7 +887,7 @@ Timer Error Handling
 
 .. requirement:: Error - Timer Already Active
    :id: REQ_TP_050_E02
-   :status: draft
+   :status: implemented
    :priority: low
    :category: error_path
    :verification: Unit test: Verify duplicate timer creation is prevented.
@@ -907,7 +907,7 @@ Statistics and Monitoring
 .. requirement:: Track Segmentation Statistics
    :id: REQ_TP_060
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify segmentation statistics are tracked.
@@ -922,7 +922,7 @@ Statistics and Monitoring
 .. requirement:: Track Reassembly Statistics
    :id: REQ_TP_061
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify reassembly statistics are tracked.
@@ -937,7 +937,7 @@ Statistics and Monitoring
 .. requirement:: Track Error Statistics
    :id: REQ_TP_062
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Verify error statistics are tracked.
@@ -952,7 +952,7 @@ Statistics and Monitoring
 .. requirement:: Query Active Reassemblies
    :id: REQ_TP_063
    :satisfies: feat_req_someiptp_774
-   :status: draft
+   :status: implemented
    :priority: low
    :category: happy_path
    :verification: Unit test: Verify active reassembly count can be queried.

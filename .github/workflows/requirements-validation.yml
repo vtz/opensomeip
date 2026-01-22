@@ -42,14 +42,61 @@ jobs:
             --src-dirs src include \
             --test-dirs tests
 
-      - name: Validate requirements
-        id: validate
+      - name: Validate requirements (warning mode)
+        id: validate_warnings
         run: |
           mkdir -p build
           python scripts/validate_requirements.py \
             --project-root . \
             --code-refs build/code_references.json \
             2>&1 | tee build/validation_report.txt
+        continue-on-error: true
+
+      - name: Validate requirements (strict mode)
+        id: validate_strict
+        run: |
+          python scripts/validate_requirements.py \
+            --project-root . \
+            --code-refs build/code_references.json \
+            --strict \
+            2>&1 | tee build/validation_strict.txt
+        continue-on-error: true
+
+      - name: Check spec requirement mappings
+        id: check_spec
+        run: |
+          python scripts/check_spec_requirements.py \
+            --project-root . \
+            --output build/spec_mapping_report.md \
+            2>&1 | tee build/spec_mapping.txt
+        continue-on-error: true
+
+      - name: Verify implementation status
+        id: verify_impl
+        run: |
+          python scripts/verify_implementation_status.py \
+            --project-root . \
+            --code-refs build/code_references.json \
+            --output build/implementation_verification.md \
+            2>&1 | tee build/implementation_status.txt
+        continue-on-error: true
+
+      - name: Generate traceability matrix
+        run: |
+          mkdir -p build/docs/traceability
+          python scripts/generate_traceability_matrix.py \
+            --project-root . \
+            --code-refs build/code_references.json \
+            --output-dir build/docs/traceability \
+            2>&1 | tee build/traceability.txt
+        continue-on-error: true
+
+      - name: Generate implementation report
+        run: |
+          python scripts/generate_implementation_report.py \
+            --project-root . \
+            --output build/docs/implementation_report.md \
+            2>&1 | tee build/implementation_report.txt
         continue-on-error: true
 
       - name: Generate requirement diff
@@ -127,5 +174,16 @@ jobs:
           path: |
             build/code_references.json
             build/validation_report.txt
+            build/validation_strict.txt
+            build/spec_mapping_report.md
+            build/implementation_verification.md
             build/requirement_diff.md
+            build/docs/traceability/
+            build/docs/implementation_report.md
           retention-days: 7
+
+      - name: Check for critical failures
+        if: steps.validate_strict.outcome == 'failure'
+        run: |
+          echo "::warning::Requirements validation failed in strict mode"
+          echo "See validation_strict.txt for details"
