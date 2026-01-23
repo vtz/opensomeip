@@ -33,13 +33,13 @@ from typing import Dict, Set
 def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
     """Extract requirements from RST files."""
     requirements = {}
-    
+
     if not rst_dir.exists():
         return requirements
-    
+
     for rst_file in rst_dir.rglob("*.rst"):
         content = rst_file.read_text(encoding='utf-8', errors='ignore')
-        
+
         # Pattern to match requirement directives
         pattern = re.compile(
             r'\.\.\s+requirement::\s*(.+?)\n'
@@ -47,26 +47,26 @@ def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
             r'(?=\.\.\s+\w+::|$)',
             re.DOTALL
         )
-        
+
         for match in pattern.finditer(content):
             title = match.group(1).strip()
             body = match.group(2)
-            
+
             # Extract ID
             id_match = re.search(r':id:\s*(REQ_[A-Za-z0-9_]+)', body, re.IGNORECASE)
             if not id_match:
                 continue
-            
+
             req_id = id_match.group(1).upper()
-            
+
             # Extract satisfies
             satisfies_match = re.search(r':satisfies:\s*([^\n]+)', body)
             satisfies = satisfies_match.group(1).strip() if satisfies_match else ""
-            
+
             # Extract status
             status_match = re.search(r':status:\s*([^\n]+)', body)
             status = status_match.group(1).strip() if status_match else ""
-            
+
             requirements[req_id] = {
                 "id": req_id,
                 "title": title,
@@ -74,7 +74,7 @@ def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
                 "status": status,
                 "file": str(rst_file.relative_to(rst_dir))
             }
-    
+
     return requirements
 
 
@@ -83,23 +83,23 @@ def generate_diff_report(
     baseline: Dict[str, dict]
 ) -> str:
     """Generate markdown diff report."""
-    
+
     current_ids = set(current.keys())
     baseline_ids = set(baseline.keys())
-    
+
     added = current_ids - baseline_ids
     removed = baseline_ids - current_ids
     common = current_ids & baseline_ids
-    
+
     modified = set()
     for req_id in common:
         if current[req_id] != baseline[req_id]:
             modified.add(req_id)
-    
+
     unchanged = common - modified
-    
+
     lines = []
-    
+
     # Summary
     lines.append("### Requirements Change Summary\n")
     lines.append(f"- **Added**: {len(added)}")
@@ -108,7 +108,7 @@ def generate_diff_report(
     lines.append(f"- **Unchanged**: {len(unchanged)}")
     lines.append(f"- **Total**: {len(current_ids)}")
     lines.append("")
-    
+
     # Added requirements
     if added:
         lines.append("### Added Requirements\n")
@@ -118,7 +118,7 @@ def generate_diff_report(
             if req.get('satisfies'):
                 lines.append(f"  - Satisfies: {req['satisfies']}")
         lines.append("")
-    
+
     # Removed requirements
     if removed:
         lines.append("### Removed Requirements\n")
@@ -126,7 +126,7 @@ def generate_diff_report(
             req = baseline[req_id]
             lines.append(f"- **{req_id}**: {req['title']}")
         lines.append("")
-    
+
     # Modified requirements
     if modified:
         lines.append("### Modified Requirements\n")
@@ -134,21 +134,21 @@ def generate_diff_report(
             old = baseline[req_id]
             new = current[req_id]
             lines.append(f"- **{req_id}**:")
-            
+
             if old.get('title') != new.get('title'):
                 lines.append(f"  - Title: `{old.get('title')}` → `{new.get('title')}`")
-            
+
             if old.get('satisfies') != new.get('satisfies'):
                 lines.append(f"  - Satisfies: `{old.get('satisfies')}` → `{new.get('satisfies')}`")
-            
+
             if old.get('status') != new.get('status'):
                 lines.append(f"  - Status: `{old.get('status')}` → `{new.get('status')}`")
         lines.append("")
-    
+
     # If no changes
     if not added and not removed and not modified:
         lines.append("*No requirement changes detected.*")
-    
+
     return "\n".join(lines)
 
 
@@ -174,16 +174,16 @@ def main():
         default=None,
         help="Output file (default: stdout)"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Default current path
     if args.current is None:
         args.current = Path.cwd() / "docs" / "requirements"
-    
+
     # Load current requirements
     current = extract_requirements_from_rst(args.current)
-    
+
     # Load baseline (empty if not provided)
     baseline = {}
     if args.baseline and args.baseline.exists():
@@ -192,16 +192,16 @@ def main():
                 baseline = json.load(f)
         else:
             baseline = extract_requirements_from_rst(args.baseline)
-    
+
     # Generate report
     report = generate_diff_report(current, baseline)
-    
+
     # Output
     if args.output:
         args.output.write_text(report)
     else:
         print(report)
-    
+
     return 0
 
 

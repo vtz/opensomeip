@@ -74,17 +74,17 @@ def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Dict[str, Requirement]
             r'\.\.\s+requirement::\s*(.+?)\n((?:\s+:[a-z_]+:.*?\n)+)',
             re.DOTALL | re.IGNORECASE
         )
-        
+
         for match in req_pattern.finditer(content):
             title = match.group(1).strip()
             attrs_block = match.group(2)
-            
+
             # Extract :id: field
             id_match = re.search(r':id:\s*(REQ_[A-Za-z0-9_]+)', attrs_block, re.IGNORECASE)
             if not id_match:
                 continue
             req_id = id_match.group(1).upper()
-            
+
             # Extract :satisfies: field
             satisfies_match = re.search(r':satisfies:\s*([^\n]+)', attrs_block, re.IGNORECASE)
             satisfies_str = satisfies_match.group(1) if satisfies_match else ""
@@ -108,39 +108,39 @@ def load_code_references(json_path: Path) -> tuple:
     """Load code references and test cases from JSON."""
     code_refs = {}
     test_cases = {}
-    
+
     if not json_path.exists():
         return code_refs, test_cases
-    
+
     with open(json_path, 'r') as f:
         data = json.load(f)
-    
+
     needs = data.get("versions", {}).get("current", {}).get("needs", {})
-    
+
     for need_id, need in needs.items():
         need_type = need.get("type", "")
-        
+
         if need_type == "code_ref":
             implements = [s.strip() for s in need.get("implements", "").split(",") if s.strip()]
             satisfies = [s.strip() for s in need.get("satisfies", "").split(",") if s.strip()]
-            
+
             code_refs[need_id] = CodeReference(
                 id=need_id,
                 location=need.get("code_location", ""),
                 implements=[i.upper() for i in implements],
                 satisfies=satisfies
             )
-        
+
         elif need_type == "test_case":
             tests = [s.strip() for s in need.get("tests", "").split(",") if s.strip()]
-            
+
             test_cases[need_id] = TestCase(
                 id=need_id,
                 name=need.get("title", ""),
                 location=need.get("code_location", ""),
                 tests=tests
             )
-    
+
     return code_refs, test_cases
 
 
@@ -150,20 +150,20 @@ def build_traceability(
     test_cases: Dict[str, TestCase]
 ) -> Dict[str, Requirement]:
     """Build full traceability links."""
-    
+
     # Link code references to requirements
     for ref_id, ref in code_refs.items():
         for req_id in ref.implements:
             if req_id in requirements:
                 requirements[req_id].implemented_by.append(ref_id)
-    
+
     # Link test cases to requirements
     for tc_id, tc in test_cases.items():
         for req_ref in tc.tests:
             req_id = req_ref.upper() if req_ref.startswith("REQ_") else req_ref
             if req_id in requirements:
                 requirements[req_id].tested_by.append(tc_id)
-    
+
     return requirements
 
 
@@ -174,7 +174,7 @@ def generate_html(
     output_path: Path
 ):
     """Generate HTML traceability matrix."""
-    
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -199,7 +199,7 @@ def generate_html(
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
     <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
-    
+
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
@@ -208,7 +208,7 @@ def generate_html(
             <li>Test Cases: {len(test_cases)}</li>
         </ul>
     </div>
-    
+
     <h2>Requirements Traceability</h2>
     <table>
         <tr>
@@ -220,24 +220,24 @@ def generate_html(
             <th>Status</th>
         </tr>
 """
-    
+
     for req_id in sorted(requirements.keys()):
         req = requirements[req_id]
-        
+
         satisfies = ", ".join(req.satisfies) if req.satisfies else "-"
         implemented = ", ".join(req.implemented_by) if req.implemented_by else "-"
         tested = ", ".join(req.tested_by) if req.tested_by else "-"
-        
+
         has_impl = len(req.implemented_by) > 0
         has_tests = len(req.tested_by) > 0
-        
+
         if has_impl and has_tests:
             status = '<span class="status-ok">✓ Complete</span>'
         elif has_impl or has_tests:
             status = '<span class="status-warning">⚠ Partial</span>'
         else:
             status = '<span class="status-error">✗ Missing</span>'
-        
+
         html += f"""        <tr>
             <td>{req_id}</td>
             <td>{req.title}</td>
@@ -247,9 +247,9 @@ def generate_html(
             <td>{status}</td>
         </tr>
 """
-    
+
     html += """    </table>
-    
+
     <h2>Code References</h2>
     <table>
         <tr>
@@ -259,12 +259,12 @@ def generate_html(
             <th>Satisfies (Spec)</th>
         </tr>
 """
-    
+
     for ref_id in sorted(code_refs.keys()):
         ref = code_refs[ref_id]
         implements = ", ".join(ref.implements) if ref.implements else "-"
         satisfies = ", ".join(ref.satisfies) if ref.satisfies else "-"
-        
+
         html += f"""        <tr>
             <td>{ref_id}</td>
             <td class="code-ref">{ref.location}</td>
@@ -272,9 +272,9 @@ def generate_html(
             <td>{satisfies}</td>
         </tr>
 """
-    
+
     html += """    </table>
-    
+
     <h2>Test Cases</h2>
     <table>
         <tr>
@@ -284,11 +284,11 @@ def generate_html(
             <th>Tests</th>
         </tr>
 """
-    
+
     for tc_id in sorted(test_cases.keys()):
         tc = test_cases[tc_id]
         tests = ", ".join(tc.tests) if tc.tests else "-"
-        
+
         html += f"""        <tr>
             <td>{tc_id}</td>
             <td>{tc.name}</td>
@@ -296,12 +296,12 @@ def generate_html(
             <td>{tests}</td>
         </tr>
 """
-    
+
     html += """    </table>
 </body>
 </html>
 """
-    
+
     output_path.write_text(html)
 
 
@@ -312,7 +312,7 @@ def generate_json(
     output_path: Path
 ):
     """Generate JSON traceability data."""
-    
+
     data = {
         "generated": datetime.now().isoformat(),
         "requirements": {
@@ -345,7 +345,7 @@ def generate_json(
             for tc_id, tc in test_cases.items()
         }
     }
-    
+
     with open(output_path, 'w') as f:
         json.dump(data, f, indent=2)
 
@@ -374,7 +374,7 @@ def classify_requirement(req_id: str) -> str:
 def get_priority(req_id: str, category: str) -> str:
     """
     Get priority classification for a requirement.
-    
+
     Priority levels:
     - critical: Core protocol functionality (message header, basic serialization)
     - high: Important features (transport, SD basics)
@@ -384,11 +384,11 @@ def get_priority(req_id: str, category: str) -> str:
     # Error handling is generally lower priority
     if category == "error_handling":
         return "low"
-    
+
     # Architectural requirements are high priority
     if category == "architectural":
         return "high"
-    
+
     # Core message header requirements are critical
     if category == "message":
         # Basic header fields are critical
@@ -403,7 +403,7 @@ def get_priority(req_id: str, category: str) -> str:
                 return "medium"
         except ValueError:
             return "medium"
-    
+
     # Basic serialization is critical
     if category == "serialization":
         num_part = req_id.replace("REQ_SER_", "").split("_")[0]
@@ -417,7 +417,7 @@ def get_priority(req_id: str, category: str) -> str:
                 return "medium"
         except ValueError:
             return "medium"
-    
+
     # Transport protocol has high priority
     if category == "transport_protocol":
         num_part = req_id.replace("REQ_TP_", "").split("_")[0]
@@ -431,15 +431,15 @@ def get_priority(req_id: str, category: str) -> str:
                 return "low"
         except ValueError:
             return "medium"
-    
+
     # Service Discovery has medium priority
     if category == "service_discovery":
         return "medium"
-    
+
     # Plugin mechanisms have high priority
     if category == "plugin":
         return "high"
-    
+
     return "medium"
 
 
@@ -476,13 +476,13 @@ def generate_gap_analysis(
         "missing_spec_links_required": [],  # Only reqs that should have spec links
         "fully_traced": []
     }
-    
+
     # Categories by requirement type
     by_category = defaultdict(lambda: {"total": 0, "implemented": 0, "tested": 0, "spec_linked": 0})
-    
+
     # Priority tracking
     by_priority = defaultdict(lambda: {"total": 0, "implemented": 0, "tested": 0, "missing": []})
-    
+
     # Test type tracking
     test_type_counts = {"unit": 0, "integration": 0, "system": 0}
     if test_cases:
@@ -497,7 +497,7 @@ def generate_gap_analysis(
         has_spec_links = len(satisfies_map.get(req_id, [])) > 0
         category = classify_requirement(req_id)
         priority = get_priority(req_id, category)
-        
+
         # Update category stats
         by_category[category]["total"] += 1
         if has_code:
@@ -506,7 +506,7 @@ def generate_gap_analysis(
             by_category[category]["tested"] += 1
         if has_spec_links:
             by_category[category]["spec_linked"] += 1
-        
+
         # Update priority stats
         by_priority[priority]["total"] += 1
         if has_code:
@@ -543,7 +543,7 @@ def generate_gap_analysis(
         "transport_protocol": "Transport Protocol",
         "other": "Other"
     }
-    
+
     category_table = "| Category | Total | Implemented | Tested | Spec Linked |\n"
     category_table += "|----------|-------|-------------|--------|-------------|\n"
     for cat in sorted(by_category.keys()):
@@ -553,7 +553,7 @@ def generate_gap_analysis(
         test_pct = stats['tested'] / stats['total'] * 100 if stats['total'] > 0 else 0
         spec_pct = stats['spec_linked'] / stats['total'] * 100 if stats['total'] > 0 else 0
         category_table += f"| {name} | {stats['total']} | {stats['implemented']} ({impl_pct:.0f}%) | {stats['tested']} ({test_pct:.0f}%) | {stats['spec_linked']} ({spec_pct:.0f}%) |\n"
-    
+
     # Calculate derived vs spec-linked requirements
     derived_categories = {"error_handling", "architectural", "plugin"}
     derived_count = sum(by_category[cat]["total"] for cat in derived_categories if cat in by_category)
@@ -663,10 +663,10 @@ def generate_csv(
     output_path: Path
 ):
     """Generate CSV traceability matrix."""
-    
+
     with open(output_path, 'w', newline='') as f:
         writer = csv.writer(f)
-        
+
         # Header
         writer.writerow([
             "Requirement ID",
@@ -678,7 +678,7 @@ def generate_csv(
             "Has Implementation",
             "Has Tests"
         ])
-        
+
         # Data
         for req_id in sorted(requirements.keys()):
             req = requirements[req_id]
@@ -727,22 +727,22 @@ def main():
         action="store_true",
         help="Verbose output"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Default paths
     if args.code_refs is None:
         args.code_refs = args.project_root / "build" / "code_references.json"
-    
+
     if args.requirements_dir is None:
         args.requirements_dir = args.project_root / "docs" / "requirements"
-    
+
     if args.output_dir is None:
         args.output_dir = args.project_root / "build" / "docs" / "traceability"
-    
+
     # Ensure output directory exists
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Load data
     if args.verbose:
         print(f"Loading requirements from: {args.requirements_dir}")
@@ -751,10 +751,10 @@ def main():
     if args.verbose:
         print(f"Loading code references from: {args.code_refs}")
     code_refs, test_cases = load_code_references(args.code_refs)
-    
+
     # Build traceability
     requirements = build_traceability(requirements, code_refs, test_cases)
-    
+
     # Generate outputs
     html_path = args.output_dir / "matrix.html"
     json_path = args.output_dir / "matrix.json"
@@ -790,7 +790,7 @@ def main():
     # Quick gap summary
     fully_traced = sum(1 for req in requirements.values() if req.implemented_by and req.tested_by)
     print(f"  Fully Traced: {fully_traced}/{len(requirements)} ({fully_traced/len(requirements)*100:.1f}%)")
-    
+
     return 0
 
 

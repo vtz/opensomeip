@@ -110,47 +110,47 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            
+
             let diffReport = '';
             try {
               diffReport = fs.readFileSync('build/requirement_diff.md', 'utf8');
             } catch (e) {
               diffReport = '*No requirement changes detected.*';
             }
-            
+
             let validationReport = '';
             try {
               validationReport = fs.readFileSync('build/validation_report.txt', 'utf8');
             } catch (e) {
               validationReport = '*Validation report not available.*';
             }
-            
+
             const body = `## Requirements Validation Report
-            
+
             ${diffReport}
-            
+
             <details>
             <summary>Validation Details</summary>
-            
+
             \`\`\`
             ${validationReport}
             \`\`\`
-            
+
             </details>
             `;
-            
+
             // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
             });
-            
-            const botComment = comments.find(comment => 
-              comment.user.type === 'Bot' && 
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
               comment.body.includes('Requirements Validation Report')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,

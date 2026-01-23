@@ -83,38 +83,38 @@ def validate_requirements(
 ) -> Tuple[List[str], List[str], List[str]]:
     """
     Validate requirements traceability.
-    
+
     Returns:
         Tuple of (errors, warnings, info)
     """
     errors = []
     warnings = []
     info = []
-    
+
     # Get code references and test cases from JSON
     needs = code_refs.get("versions", {}).get("current", {}).get("needs", {})
-    
+
     code_implements = set()
     code_satisfies = set()
     test_tests = set()
-    
+
     for need_id, need in needs.items():
         need_type = need.get("type", "")
-        
+
         if need_type == "code_ref":
             implements = need.get("implements", "")
             satisfies = need.get("satisfies", "")
-            
+
             for req in implements.split(","):
                 req = req.strip().upper()
                 if req:
                     code_implements.add(req)
-            
+
             for req in satisfies.split(","):
                 req = req.strip().lower()
                 if req:
                     code_satisfies.add(req)
-        
+
         elif need_type == "test_case":
             tests = need.get("tests", "")
             for req in tests.split(","):
@@ -123,7 +123,7 @@ def validate_requirements(
                     test_tests.add(req.upper())
                 elif req.startswith("feat_req_"):
                     test_tests.add(req.lower())
-    
+
     # Check each requirement for implementation and testing
     orphaned_requirements = []
     for req_id in requirements:
@@ -162,7 +162,7 @@ def validate_requirements(
     # Summary with gap analysis
     fully_traced = len(requirements) - len(orphaned_requirements)
     spec_linked = len(requirements) - len(missing_spec_links)
-    
+
     # Gap Analysis Summary
     info.append(f"\nGap Analysis Summary:")
     info.append(f"  Total requirements: {len(requirements)}")
@@ -215,16 +215,16 @@ def main():
         action="store_true",
         help="CI mode: exit with code 2 if no requirements found"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Default paths
     if args.code_refs is None:
         args.code_refs = args.project_root / "build" / "code_references.json"
-    
+
     if args.requirements_dir is None:
         args.requirements_dir = args.project_root / "docs" / "requirements"
-    
+
     # Load data
     code_refs = load_json(args.code_refs)
     requirements, satisfies_map = extract_requirements_from_rst(args.requirements_dir)

@@ -45,7 +45,7 @@ class E2EIntegrationTest(SomeIpTestFramework):
     def test_e2e_protection_flow(self):
         """
         Test basic E2E protection flow.
-        
+
         @test_case TC_E2E_INT_001
         @tests REQ_E2E_PLUGIN_001
         @tests REQ_E2E_PLUGIN_004
@@ -58,7 +58,7 @@ class E2EIntegrationTest(SomeIpTestFramework):
     def test_multiple_protected_messages(self):
         """
         Test multiple messages with E2E protection.
-        
+
         @test_case TC_E2E_INT_002
         @tests REQ_E2E_PLUGIN_004
         @tests feat_req_someip_102
@@ -70,7 +70,7 @@ class E2EIntegrationTest(SomeIpTestFramework):
     def test_counter_rollover(self):
         """
         Test counter rollover scenario.
-        
+
         @test_case TC_E2E_INT_003
         @tests REQ_E2E_PLUGIN_004
         """
@@ -80,7 +80,7 @@ class E2EIntegrationTest(SomeIpTestFramework):
     def test_freshness_timeout(self):
         """
         Test freshness timeout handling.
-        
+
         @test_case TC_E2E_INT_004
         @tests REQ_E2E_PLUGIN_004
         """
@@ -90,7 +90,7 @@ class E2EIntegrationTest(SomeIpTestFramework):
     def test_error_propagation(self):
         """
         Test that E2E errors are properly propagated.
-        
+
         @test_case TC_E2E_INT_005
         @tests REQ_E2E_PLUGIN_001
         @tests REQ_ARCH_004
@@ -101,7 +101,7 @@ class E2EIntegrationTest(SomeIpTestFramework):
     def test_plugin_registration(self):
         """
         Test E2E profile plugin registration.
-        
+
         @test_case TC_E2E_INT_006
         @tests REQ_E2E_PLUGIN_002
         @tests REQ_E2E_PLUGIN_003

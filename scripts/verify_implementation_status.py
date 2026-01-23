@@ -136,38 +136,38 @@ REQUIREMENT_PATTERNS: Dict[str, RequirementPattern] = {
 def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
     """Extract requirements from RST files."""
     requirements = {}
-    
+
     for rst_file in rst_dir.rglob("*.rst"):
         content = rst_file.read_text(encoding='utf-8', errors='ignore')
-        
+
         # Pattern to match requirement directives
         pattern = re.compile(
             r'\.\.\s+requirement::\s*(.+?)\n((?:\s+:[a-z_]+:.*?\n)+)',
             re.DOTALL | re.IGNORECASE
         )
-        
+
         for match in pattern.finditer(content):
             title = match.group(1).strip()
             attrs_block = match.group(2)
-            
+
             # Extract ID
             id_match = re.search(r':id:\s*(REQ_[A-Za-z0-9_]+)', attrs_block, re.IGNORECASE)
             if not id_match:
                 continue
-            
+
             req_id = id_match.group(1).upper()
-            
+
             # Extract description (content after the attribute block)
             desc_start = match.end()
             desc_end = content.find("\n.. ", desc_start)
             if desc_end == -1:
                 desc_end = len(content)
             description = content[desc_start:desc_end].strip()[:500]
-            
+
             # Extract code location hint
             code_loc_match = re.search(r'\*\*Code Location\*\*:\s*``([^`]+)``', description)
             code_location = code_loc_match.group(1) if code_loc_match else ""
-            
+
             requirements[req_id] = {
                 "id": req_id,
                 "title": title,
@@ -175,22 +175,22 @@ def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
                 "code_location": code_location,
                 "file": str(rst_file)
             }
-    
+
     return requirements
 
 
 def load_code_references(json_path: Path) -> Set[str]:
     """Load implemented requirements from code references JSON."""
     implemented = set()
-    
+
     if not json_path.exists():
         return implemented
-    
+
     with open(json_path, 'r') as f:
         data = json.load(f)
-    
+
     needs = data.get("versions", {}).get("current", {}).get("needs", {})
-    
+
     for need_id, need in needs.items():
         if need.get("type") == "code_ref":
             implements = need.get("implements", "")
@@ -198,7 +198,7 @@ def load_code_references(json_path: Path) -> Set[str]:
                 req = req.strip().upper()
                 if req.startswith("REQ_"):
                     implemented.add(req)
-    
+
     return implemented
 
 
@@ -209,13 +209,13 @@ def search_file_for_patterns(
 ) -> List[ImplementationMatch]:
     """Search a file for requirement implementation patterns."""
     matches = []
-    
+
     try:
         content = file_path.read_text(encoding='utf-8', errors='ignore')
         lines = content.split('\n')
     except Exception:
         return matches
-    
+
     # Search for regex patterns
     for pattern in patterns:
         try:
@@ -231,7 +231,7 @@ def search_file_for_patterns(
                     ))
         except re.error:
             continue
-    
+
     # Search for specific values
     for value in values:
         for i, line in enumerate(lines, 1):
@@ -243,7 +243,7 @@ def search_file_for_patterns(
                     matched_text=line.strip()[:100],
                     confidence="low"
                 ))
-    
+
     return matches
 
 
@@ -254,20 +254,20 @@ def search_for_implementation(
 ) -> List[ImplementationMatch]:
     """Search for implementation of a requirement."""
     matches = []
-    
+
     # Get pattern if available
     pattern = REQUIREMENT_PATTERNS.get(req_id)
-    
+
     # Build search patterns from requirement info
     search_patterns = []
     search_values = []
     target_files = []
-    
+
     if pattern:
         search_patterns = pattern.patterns
         search_values = pattern.values
         target_files = pattern.files
-    
+
     # Add patterns from requirement title/description
     title = requirement.get("title", "")
     if title:
@@ -278,17 +278,17 @@ def search_for_implementation(
             re.escape(snake_case),
             re.escape(camel_case),
         ])
-    
+
     # Add code location hint
     code_location = requirement.get("code_location", "")
     if code_location:
         target_files.append(Path(code_location).name)
-    
+
     # Search in source directories
     for src_dir in src_dirs:
         if not src_dir.exists():
             continue
-        
+
         # If we have target files, search only those
         if target_files:
             for target in target_files:
@@ -305,7 +305,7 @@ def search_for_implementation(
                     file_path, search_patterns, search_values
                 )
                 matches.extend(file_matches)
-    
+
     # Remove duplicates
     seen = set()
     unique_matches = []
@@ -314,7 +314,7 @@ def search_for_implementation(
         if key not in seen:
             seen.add(key)
             unique_matches.append(m)
-    
+
     return unique_matches
 
 
@@ -326,7 +326,7 @@ def analyze_requirements(
 ) -> Tuple[Dict[str, List[ImplementationMatch]], List[str], List[str]]:
     """
     Analyze all requirements for implementation status.
-    
+
     Returns:
         - Dict mapping req_id to found matches
         - List of requirements with code but missing annotations
@@ -335,22 +335,22 @@ def analyze_requirements(
     matches_by_req = {}
     missing_annotations = []
     truly_missing = []
-    
+
     for req_id, req in requirements.items():
         if req_id in annotated:
             # Already annotated, skip pattern matching
             if verbose:
                 print(f"  {req_id}: Already annotated ✓")
             continue
-        
+
         # Search for implementation
         matches = search_for_implementation(req_id, req, src_dirs)
-        
+
         if matches:
             # Found potential implementation
             high_confidence = any(m.confidence == "high" for m in matches)
             medium_confidence = any(m.confidence == "medium" for m in matches)
-            
+
             if high_confidence or medium_confidence:
                 missing_annotations.append(req_id)
                 matches_by_req[req_id] = matches
@@ -367,7 +367,7 @@ def analyze_requirements(
             truly_missing.append(req_id)
             if verbose:
                 print(f"  {req_id}: No implementation found ❌")
-    
+
     return matches_by_req, missing_annotations, truly_missing
 
 
@@ -380,7 +380,7 @@ def generate_report(
     output_path: Optional[Path]
 ) -> str:
     """Generate verification report."""
-    
+
     lines = []
     lines.append("# Implementation Verification Report\n")
     lines.append("## Summary\n")
@@ -389,13 +389,13 @@ def generate_report(
     lines.append(f"- **Missing Annotations (code exists)**: {len(missing_annotations)}")
     lines.append(f"- **Truly Missing (no code found)**: {len(truly_missing)}")
     lines.append("")
-    
+
     # Calculate effective implementation rate
     implemented = len(annotated) + len(missing_annotations)
     rate = implemented / len(requirements) * 100 if requirements else 0
     lines.append(f"- **Effective Implementation Rate**: {implemented}/{len(requirements)} ({rate:.1f}%)")
     lines.append("")
-    
+
     # Missing annotations - need annotation fixes
     if missing_annotations:
         lines.append("## Requirements with Code but Missing Annotations\n")
@@ -403,7 +403,7 @@ def generate_report(
         for req_id in sorted(missing_annotations):
             req = requirements.get(req_id, {})
             lines.append(f"### {req_id}: {req.get('title', 'Unknown')}\n")
-            
+
             matches = matches_by_req.get(req_id, [])
             if matches:
                 lines.append("**Potential implementation locations:**\n")
@@ -411,12 +411,12 @@ def generate_report(
                     lines.append(f"- `{m.file_path}:{m.line_number}` ({m.match_type})")
                     lines.append(f"  - `{m.matched_text[:80]}...`")
             lines.append("")
-    
+
     # Truly missing - need implementation
     if truly_missing:
         lines.append("## Requirements Truly Missing Implementation\n")
         lines.append("These requirements have no detected implementation.\n")
-        
+
         # Group by category
         by_category = {}
         for req_id in truly_missing:
@@ -434,11 +434,11 @@ def generate_report(
                 cat = "Error Handling"
             else:
                 cat = "Other"
-            
+
             if cat not in by_category:
                 by_category[cat] = []
             by_category[cat].append(req_id)
-        
+
         for cat, reqs in sorted(by_category.items()):
             lines.append(f"### {cat} ({len(reqs)} missing)\n")
             for req_id in sorted(reqs):
@@ -449,25 +449,25 @@ def generate_report(
                 else:
                     lines.append(f"- **{req_id}**: {req.get('title', 'Unknown')}")
             lines.append("")
-    
+
     # Recommendations
     lines.append("## Recommendations\n")
     lines.append("### Immediate Actions (Quick Wins)\n")
     if missing_annotations:
         lines.append(f"1. Add `@implements` annotations to {len(missing_annotations)} requirements")
         lines.append("   - These appear to be implemented but need traceability annotations")
-    
+
     lines.append("\n### Implementation Required\n")
     if truly_missing:
         lines.append(f"2. Implement {len(truly_missing)} missing requirements")
         for cat, reqs in sorted(by_category.items()):
             lines.append(f"   - {cat}: {len(reqs)} requirements")
-    
+
     report = "\n".join(lines)
-    
+
     if output_path:
         output_path.write_text(report)
-    
+
     return report
 
 
@@ -521,45 +521,45 @@ def main():
         action="store_true",
         help="Verbose output"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Set default paths
     if args.requirements_dir is None:
         args.requirements_dir = args.project_root / "docs" / "requirements"
-    
+
     if args.code_refs is None:
         args.code_refs = args.project_root / "build" / "code_references.json"
-    
+
     # Convert src dirs to absolute paths
     src_dirs = [args.project_root / d for d in args.src_dirs]
-    
+
     print("Implementation Verification")
     print("=" * 40)
-    
+
     # Extract requirements
     print(f"Loading requirements from: {args.requirements_dir}")
     requirements = extract_requirements_from_rst(args.requirements_dir)
     print(f"  Found {len(requirements)} requirements")
-    
+
     # Load annotated requirements
     print(f"Loading code references from: {args.code_refs}")
     annotated = load_code_references(args.code_refs)
     print(f"  Found {len(annotated)} annotated requirements")
-    
+
     # Analyze requirements
     print("\nAnalyzing requirements...")
     matches, missing_annotations, truly_missing = analyze_requirements(
         requirements, annotated, src_dirs, args.verbose
     )
-    
+
     # Generate report
     report = generate_report(
         requirements, annotated, matches,
         missing_annotations, truly_missing,
         args.output
     )
-    
+
     # Print summary
     print("\n" + "=" * 40)
     print("Summary:")
@@ -567,22 +567,22 @@ def main():
     print(f"  Annotated: {len(annotated)}")
     print(f"  Missing annotations: {len(missing_annotations)}")
     print(f"  Truly missing: {len(truly_missing)}")
-    
+
     # Calculate coverage
     implemented = len(annotated) + len(missing_annotations)
     coverage = implemented / len(requirements) * 100 if requirements else 0
     print(f"  Effective coverage: {coverage:.1f}%")
-    
+
     if args.output:
         print(f"\nReport written to: {args.output}")
-    
+
     # Check thresholds
     exit_code = 0
-    
+
     if args.min_coverage > 0 and coverage < args.min_coverage:
         print(f"\n❌ Coverage {coverage:.1f}% is below minimum {args.min_coverage}%")
         exit_code = 1
-    
+
     if args.fail_on_critical_gaps:
         # Check for critical missing requirements (non-error handling, non-derived)
         critical_missing = [
@@ -592,7 +592,7 @@ def main():
         if critical_missing:
             print(f"\n❌ {len(critical_missing)} critical requirements are missing")
             exit_code = 1
-    
+
     return exit_code
 
 
