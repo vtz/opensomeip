@@ -58,7 +58,7 @@ namespace someip {
 
 /**
  * @brief Default constructor - initializes message with default values
- * @implements REQ_MSG_071
+ * @implements REQ_MSG_071, REQ_MSG_071_E01, REQ_MSG_071_E02
  */
 Message::Message()
     : length_(8),  // Length from client_id to end (no payload)
@@ -340,7 +340,7 @@ bool Message::deserialize(const std::vector<uint8_t>& data) {
 
 /**
  * @brief Check if message is valid
- * @implements REQ_MSG_100
+ * @implements REQ_MSG_100, REQ_MSG_100_E01
  */
 bool Message::is_valid() const {
     return has_valid_header() && has_valid_payload();
@@ -441,6 +441,39 @@ bool Message::has_valid_request_id() const {
 }
 
 /**
+ * @brief Validate message type according to SOME/IP specification
+ * @implements REQ_MSG_042, REQ_MSG_042_E01
+ * @implements REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_054, REQ_MSG_055
+ * @implements REQ_MSG_057, REQ_MSG_058, REQ_MSG_059
+ */
+bool Message::has_valid_message_type() const {
+    switch (message_type_) {
+        case MessageType::REQUEST:           // REQ_MSG_051
+        case MessageType::REQUEST_NO_RETURN: // REQ_MSG_052
+        case MessageType::NOTIFICATION:      // REQ_MSG_053
+        case MessageType::RESPONSE:          // REQ_MSG_054
+        case MessageType::ERROR:             // REQ_MSG_055
+        case MessageType::REQUEST_ACK:       // REQ_MSG_057
+        case MessageType::RESPONSE_ACK:      // REQ_MSG_058
+        case MessageType::ERROR_ACK:         // REQ_MSG_059
+        case MessageType::TP_REQUEST:        // TP variants also valid
+        case MessageType::TP_REQUEST_NO_RETURN:
+        case MessageType::TP_NOTIFICATION:
+            return true;
+        default:
+            return false;
+    }
+}
+
+/**
+ * @brief Check if message has TP flag set
+ * @implements REQ_MSG_056
+ */
+bool Message::has_tp_flag() const {
+    return someip::uses_tp(message_type_);
+}
+
+/**
  * @brief Validate message header fields
  * @implements REQ_MSG_031, REQ_MSG_032, REQ_MSG_033
  * @implements REQ_MSG_032_E01, REQ_MSG_032_E02
@@ -461,6 +494,11 @@ bool Message::has_valid_header() const {
 
     // Check length field (REQ_MSG_012-015)
     if (!has_valid_length()) {
+        return false;
+    }
+
+    // Check message type (REQ_MSG_051-059)
+    if (!has_valid_message_type()) {
         return false;
     }
 
@@ -488,24 +526,6 @@ bool Message::has_valid_header() const {
     uint32_t expected_length = 8 + e2e_size + payload_.size();
     if (length_ != expected_length) {
         return false;
-    }
-
-    // Check message type validity
-    switch (message_type_) {
-        case MessageType::REQUEST:
-        case MessageType::REQUEST_NO_RETURN:
-        case MessageType::NOTIFICATION:
-        case MessageType::REQUEST_ACK:
-        case MessageType::RESPONSE:
-        case MessageType::ERROR:
-        case MessageType::RESPONSE_ACK:
-        case MessageType::ERROR_ACK:
-        case MessageType::TP_REQUEST:
-        case MessageType::TP_REQUEST_NO_RETURN:
-        case MessageType::TP_NOTIFICATION:
-            break;
-        default:
-            return false;
     }
 
     // Check return code validity

@@ -39,6 +39,10 @@ using namespace someip::sd;
  * @tests REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084
  * @tests REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094
  * @tests REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103
+ * @tests REQ_SD_001_E01, REQ_SD_010_E01, REQ_SD_020_E01, REQ_SD_020_E02
+ * @tests REQ_SD_021_E01, REQ_SD_022_E01, REQ_SD_040_E01, REQ_SD_041_E01
+ * @tests REQ_SD_050_E01, REQ_SD_052_E01, REQ_SD_060_E01, REQ_SD_061_E01
+ * @tests REQ_SD_062_E01, REQ_SD_064_E01, REQ_SD_075_E01
  * @tests feat_req_someipsd_100
  * @tests feat_req_someipsd_200
  * @tests feat_req_someipsd_300

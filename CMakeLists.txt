@@ -11,6 +11,13 @@
 # SPDX-License-Identifier: Apache-2.0
 ################################################################################
 
+################################################################################
+# Build System Configuration
+# @implements REQ_ARCH_005, REQ_ARCH_006, REQ_ARCH_007
+# @brief CMake build configuration for SOME/IP stack with cross-platform support,
+#        code quality tools integration, and safety-critical build options
+################################################################################
+
 cmake_minimum_required(VERSION 3.20)
 
 # Read version from VERSION file

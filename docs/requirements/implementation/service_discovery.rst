@@ -1412,4 +1412,3 @@ Test Files
 ----------
 
 * ``tests/test_sd.cpp`` - SD unit tests
-* ``tests/integration/test_sd_integration.py`` - SD integration tests
