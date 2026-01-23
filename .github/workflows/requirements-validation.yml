@@ -16,6 +16,11 @@ on:
       - 'scripts/validate_requirements.py'
       - 'scripts/generate_requirement_diff.py'
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   validate:
     runs-on: ubuntu-latest
