@@ -297,6 +297,11 @@ TEST_F(SerializationTest, SerializeDeserializeInt8) {
  * @tests REQ_SER_011, REQ_SER_015
  * @brief Test int16 serialization in Big Endian (two's complement)
  */
+/**
+ * @test_case TC_SER_015
+ * @tests REQ_SER_015
+ * @brief Test int16 serialization in Big Endian (two's complement)
+ */
 TEST_F(SerializationTest, SerializeDeserializeInt16) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -321,8 +326,8 @@ TEST_F(SerializationTest, SerializeDeserializeInt16) {
 }
 
 /**
- * @test_case TC_SER_010
- * @tests REQ_SER_012, REQ_SER_016
+ * @test_case TC_SER_016
+ * @tests REQ_SER_016
  * @brief Test int32 serialization in Big Endian (two's complement)
  */
 TEST_F(SerializationTest, SerializeDeserializeInt32) {
@@ -349,8 +354,8 @@ TEST_F(SerializationTest, SerializeDeserializeInt32) {
 }
 
 /**
- * @test_case TC_SER_011
- * @tests REQ_SER_013, REQ_SER_017
+ * @test_case TC_SER_017
+ * @tests REQ_SER_017
  * @brief Test int64 serialization in Big Endian (two's complement)
  */
 TEST_F(SerializationTest, SerializeDeserializeInt64) {

@@ -347,6 +347,104 @@ bool Message::is_valid() const {
 }
 
 /**
+ * @brief Validate Service ID according to SOME/IP specification
+ * @implements REQ_MSG_004, REQ_MSG_005
+ * @implements REQ_MSG_004_E01, REQ_MSG_004_E02
+ */
+bool Message::has_valid_service_id() const {
+    uint16_t service_id = get_service_id();
+
+    // REQ_MSG_004: Reserved Service ID 0x0000 is invalid
+    if (service_id == 0x0000) {
+        return false;
+    }
+
+    // REQ_MSG_005: SD Service ID 0xFFFF is valid but special
+    // We accept it here, but it may have special handling elsewhere
+    return true;
+}
+
+/**
+ * @brief Validate Method ID according to SOME/IP specification
+ * @implements REQ_MSG_006, REQ_MSG_007, REQ_MSG_008
+ */
+bool Message::has_valid_method_id() const {
+    uint16_t method_id = get_method_id();
+
+    // REQ_MSG_008: Reserved Method ID 0xFFFF is invalid
+    if (method_id == 0xFFFF) {
+        return false;
+    }
+
+    // REQ_MSG_006: Method IDs for methods (0x0001-0x7FFF) are valid
+    // REQ_MSG_007: Method IDs for events (0x8001-0x8FFF) are valid
+    // All other values in the valid range are accepted
+    return method_id != 0x0000;  // 0x0000 is reserved but not specifically mentioned
+}
+
+/**
+ * @brief Validate Message ID components
+ * @implements REQ_MSG_002, REQ_MSG_003
+ */
+bool Message::has_valid_message_id() const {
+    return has_valid_service_id() && has_valid_method_id();
+}
+
+/**
+ * @brief Validate length field
+ * @implements REQ_MSG_012, REQ_MSG_015
+ * @implements REQ_MSG_012_E02
+ */
+bool Message::has_valid_length() const {
+    // REQ_MSG_012: Minimum length value
+    if (length_ < 8) {
+        return false;
+    }
+
+    // REQ_MSG_015: Length must be at least minimum header size
+    // Additional validation happens in has_valid_header()
+
+    return true;
+}
+
+/**
+ * @brief Validate Client ID
+ * @implements REQ_MSG_025
+ */
+bool Message::has_valid_client_id() const {
+    uint16_t client_id = get_client_id();
+
+    // REQ_MSG_025: Client ID 0 is reserved for SD
+    // This is valid but should be noted for special handling
+    return client_id != 0 || message_type_ == MessageType::NOTIFICATION;  // SD uses client_id 0
+}
+
+/**
+ * @brief Validate Session ID
+ * @implements REQ_MSG_023, REQ_MSG_024
+ * @implements REQ_MSG_024_E01, REQ_MSG_024_E02
+ */
+bool Message::has_valid_session_id() const {
+    uint16_t session_id = get_session_id();
+
+    // REQ_MSG_023: Session ID 0 is disabled session handling
+    // This is valid but indicates no session management
+
+    // REQ_MSG_024: Session ID wrap-around handling
+    // Session IDs are 16-bit and can wrap around, this is normal
+
+    return true;  // All session IDs are technically valid
+}
+
+/**
+ * @brief Validate Request ID components
+ * @implements REQ_MSG_021, REQ_MSG_022
+ */
+bool Message::has_valid_request_id() const {
+    return has_valid_client_id() && has_valid_session_id();
+}
+
+/**
  * @brief Validate message header fields
  * @implements REQ_MSG_031, REQ_MSG_032, REQ_MSG_033
  * @implements REQ_MSG_032_E01, REQ_MSG_032_E02
@@ -355,6 +453,21 @@ bool Message::is_valid() const {
  * @satisfies feat_req_someip_100, feat_req_someip_103, feat_req_someip_278
  */
 bool Message::has_valid_header() const {
+    // Check Message ID components (REQ_MSG_002-008)
+    if (!has_valid_message_id()) {
+        return false;
+    }
+
+    // Check Request ID components (REQ_MSG_021-025)
+    if (!has_valid_request_id()) {
+        return false;
+    }
+
+    // Check length field (REQ_MSG_012-015)
+    if (!has_valid_length()) {
+        return false;
+    }
+
     // Check protocol version
     if (protocol_version_ != SOMEIP_PROTOCOL_VERSION) {
         return false;

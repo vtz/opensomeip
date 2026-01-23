@@ -195,6 +195,112 @@ TEST_F(MessageTest, Validation) {
     EXPECT_FALSE(msg.has_valid_header());
 }
 
+/**
+ * @test_case TC_MSG_002
+ * @tests REQ_MSG_002
+ * @brief Test Service ID validation
+ */
+TEST_F(MessageTest, ServiceIdValidation) {
+    Message msg;
+
+    // Valid service ID
+    msg.set_service_id(0x1234);
+    EXPECT_TRUE(msg.has_valid_service_id());
+
+    // Reserved service ID 0x0000 (invalid)
+    msg.set_service_id(0x0000);
+    EXPECT_FALSE(msg.has_valid_service_id());
+
+    // SD service ID 0xFFFF (valid)
+    msg.set_service_id(0xFFFF);
+    EXPECT_TRUE(msg.has_valid_service_id());
+}
+
+/**
+ * @test_case TC_MSG_003
+ * @tests REQ_MSG_003
+ * @brief Test Method ID validation
+ */
+TEST_F(MessageTest, MethodIdValidation) {
+    Message msg;
+
+    // Valid method ID
+    msg.set_method_id(0x1234);
+    EXPECT_TRUE(msg.has_valid_method_id());
+
+    // Reserved method ID 0xFFFF (invalid)
+    msg.set_method_id(0xFFFF);
+    EXPECT_FALSE(msg.has_valid_method_id());
+
+    // Valid event ID
+    msg.set_method_id(0x8123);  // Event ID range
+    EXPECT_TRUE(msg.has_valid_method_id());
+}
+
+/**
+ * @test_case TC_MSG_004
+ * @tests REQ_MSG_004, REQ_MSG_004_E01, REQ_MSG_004_E02
+ * @brief Test complete Message ID validation
+ */
+TEST_F(MessageTest, MessageIdValidation) {
+    Message msg;
+
+    // Valid Message ID
+    msg.set_service_id(0x1234);
+    msg.set_method_id(0x5678);
+    EXPECT_TRUE(msg.has_valid_message_id());
+
+    // Invalid Service ID
+    msg.set_service_id(0x0000);
+    EXPECT_FALSE(msg.has_valid_message_id());
+    msg.set_service_id(0x1234);
+
+    // Invalid Method ID
+    msg.set_method_id(0xFFFF);
+    EXPECT_FALSE(msg.has_valid_message_id());
+}
+
+/**
+ * @test_case TC_MSG_012
+ * @tests REQ_MSG_012, REQ_MSG_015
+ * @tests REQ_MSG_012_E02
+ * @brief Test length field validation
+ */
+TEST_F(MessageTest, LengthValidation) {
+    Message msg;
+
+    // Valid length
+    msg.set_length(16);  // Minimum valid length
+    EXPECT_TRUE(msg.has_valid_length());
+
+    // Invalid length (too small)
+    msg.set_length(7);
+    EXPECT_FALSE(msg.has_valid_length());
+}
+
+/**
+ * @test_case TC_MSG_021
+ * @tests REQ_MSG_021, REQ_MSG_022
+ * @brief Test Request ID component extraction
+ */
+TEST_F(MessageTest, RequestIdValidation) {
+    Message msg;
+
+    // Valid Request ID
+    msg.set_client_id(0x1234);
+    msg.set_session_id(0x5678);
+    EXPECT_TRUE(msg.has_valid_request_id());
+
+    // Client ID 0 (valid for SD)
+    msg.set_client_id(0);
+    msg.set_message_type(MessageType::NOTIFICATION);
+    EXPECT_TRUE(msg.has_valid_client_id());
+
+    // Session ID 0 (valid, indicates no session management)
+    msg.set_session_id(0);
+    EXPECT_TRUE(msg.has_valid_session_id());
+}
+
 TEST_F(MessageTest, StringRepresentation) {
     MessageId msg_id(0x1234, 0x5678);
     RequestId req_id(0x9ABC, 0xDEF0);

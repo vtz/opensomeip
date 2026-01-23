@@ -52,7 +52,7 @@ enum class TpMessageType : uint8_t {
  * @brief TP segmentation configuration
  */
 struct TpConfig {
-    uint32_t max_segment_size{1400};        // Maximum segment payload size (bytes)
+    uint32_t max_segment_size{1392};        // Maximum segment payload size (bytes) - 87*16 for alignment
     uint32_t max_message_size{1000000};     // Maximum total message size (1MB default)
     uint8_t max_retries{3};                 // Maximum retransmission attempts
     std::chrono::milliseconds retry_timeout{500};      // Timeout between retries
