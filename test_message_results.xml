@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="22" failures="2" disabled="0" errors="0" time="0." timestamp="2026-01-22T23:30:06.083" name="AllTests">
+  <testsuite name="MessageTest" tests="22" failures="2" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-01-22T23:30:06.084">
+    <testcase name="DefaultConstructor" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="63" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest">
+      <failure message="/Users/vzein/Projects/some-ip/tests/test_message.cpp:73&#x0A;Value of: msg.is_valid()&#x0A;  Actual: false&#x0A;Expected: true&#x0A;" type=""><![CDATA[/Users/vzein/Projects/some-ip/tests/test_message.cpp:73
+Value of: msg.is_valid()
+  Actual: false
+Expected: true
+]]></failure>
+    </testcase>
+    <testcase name="ConstructorWithIds" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="83" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="SettersAndGetters" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="104" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="SerializationRoundTrip" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="137" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="Validation" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="176" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest">
+      <failure message="/Users/vzein/Projects/some-ip/tests/test_message.cpp:180&#x0A;Value of: msg.is_valid()&#x0A;  Actual: false&#x0A;Expected: true&#x0A;" type=""><![CDATA[/Users/vzein/Projects/some-ip/tests/test_message.cpp:180
+Value of: msg.is_valid()
+  Actual: false
+Expected: true
+]]></failure>
+      <failure message="/Users/vzein/Projects/some-ip/tests/test_message.cpp:181&#x0A;Value of: msg.has_valid_header()&#x0A;  Actual: false&#x0A;Expected: true&#x0A;" type=""><![CDATA[/Users/vzein/Projects/some-ip/tests/test_message.cpp:181
+Value of: msg.has_valid_header()
+  Actual: false
+Expected: true
+]]></failure>
+    </testcase>
+    <testcase name="ServiceIdValidation" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="203" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="MethodIdValidation" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="224" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="MessageIdValidation" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="245" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="LengthValidation" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="269" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="RequestIdValidation" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="286" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="RequestMessageType" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="309" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="RequestNoReturnMessageType" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="320" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="NotificationMessageType" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="331" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="ResponseMessageType" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="342" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="ErrorMessageType" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="353" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="TpFlagDetection" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="364" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="RequestAckMessageType" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="387" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="ResponseAckMessageType" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="398" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="ErrorAckMessageType" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="409" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="StringRepresentation" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="415" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="CopyAndMove" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="428" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+    <testcase name="MessageTypeHelpers" file="/Users/vzein/Projects/some-ip/tests/test_message.cpp" line="454" status="run" result="completed" time="0." timestamp="2026-01-22T23:30:06.084" classname="MessageTest" />
+  </testsuite>
+</testsuites>

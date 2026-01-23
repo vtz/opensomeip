@@ -181,6 +181,23 @@ private:
 };
 
 /**
+ * @brief Configuration option for SD messages
+ */
+class ConfigurationOption : public SdOption {
+public:
+    ConfigurationOption() : SdOption(OptionType::CONFIGURATION) {}
+
+    const std::string& get_configuration_string() const { return config_string_; }
+    void set_configuration_string(const std::string& config) { config_string_ = config; }
+
+    std::vector<uint8_t> serialize() const override;
+    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+
+private:
+    std::string config_string_;
+};
+
+/**
  * @brief SOME/IP SD Message
  */
 class SdMessage {

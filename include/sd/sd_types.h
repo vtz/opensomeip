@@ -53,6 +53,11 @@ enum class OptionType : uint8_t {
 };
 
 /**
+ * @brief Configuration option for SD messages
+ */
+class ConfigurationOption;
+
+/**
  * @brief Service discovery result codes
  */
 enum class SdResult : uint8_t {
