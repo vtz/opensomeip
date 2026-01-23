@@ -113,6 +113,7 @@ private:
     bool add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment);
     void cleanup_completed_buffers();
     void cleanup_timed_out_buffers(const TpConfig& config);
+    bool parse_tp_header(const std::vector<uint8_t>& payload, uint16_t& offset, bool& more_segments);
 };
 
 } // namespace tp

@@ -100,6 +100,10 @@ public:
         transport_->stop();
     }
 
+    /**
+     * @brief Offer a service using SD
+     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
+     */
     bool offer_service(const ServiceInstance& instance,
                       const std::string& unicast_endpoint,
                       const std::string& multicast_endpoint) {
@@ -211,7 +215,7 @@ public:
         transport::Endpoint client_endpoint(client_ip, client_port);
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
                               MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(response_message.serialize());
 
@@ -320,6 +324,10 @@ private:
         }
     }
 
+    /**
+     * @brief Send service offer SD message
+     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
+     */
     void send_service_offer(const OfferedService& service) {
         // Create offer service entry
         auto offer_entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
@@ -355,7 +363,7 @@ private:
         }
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
                               MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
@@ -379,7 +387,7 @@ private:
         sd_message.add_entry(std::move(stop_entry));
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
                               MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
@@ -486,6 +494,10 @@ private:
         );
     }
 
+    /**
+     * @brief Send service offer to specific client
+     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
+     */
     void send_service_offer_to_client(const OfferedService& service, const transport::Endpoint& client) {
         // Create unicast offer message (similar to multicast but unicast)
         auto offer_entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
@@ -522,7 +534,7 @@ private:
         }
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
                               MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 

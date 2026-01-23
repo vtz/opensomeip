@@ -92,6 +92,10 @@ public:
         transport_->stop();
     }
 
+    /**
+     * @brief Find a service using SD
+     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
+     */
     bool find_service(uint16_t service_id, FindServiceCallback callback,
                      std::chrono::milliseconds timeout) {
 
@@ -111,7 +115,7 @@ public:
         sd_message.add_entry(std::move(find_entry));
 
         // Create SOME/IP message for SD (service ID 0xFFFF)
-        Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
                               MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
@@ -135,6 +139,10 @@ public:
         return true;
     }
 
+    /**
+     * @brief Subscribe to service availability notifications
+     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
+     */
     bool subscribe_service(uint16_t service_id,
                           ServiceAvailableCallback available_callback,
                           ServiceUnavailableCallback unavailable_callback) {
@@ -157,6 +165,10 @@ public:
         return service_subscriptions_.erase(service_id) > 0;
     }
 
+    /**
+     * @brief Subscribe to eventgroup
+     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
+     */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
         if (!running_) {
             return false;
@@ -187,7 +199,7 @@ public:
         }
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
                               MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
@@ -214,7 +226,7 @@ public:
         sd_message.add_entry(std::move(unsubscribe_entry));
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, 0x0000), RequestId(0x0000, 0x0000),
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
                               MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 

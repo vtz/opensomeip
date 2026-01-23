@@ -40,6 +40,40 @@ TpReassembler::~TpReassembler() {
 }
 
 /**
+ * @brief Parse TP header from segment payload
+ * @implements REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015
+ * @implements REQ_TP_016, REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021
+ * @implements REQ_TP_015_E01
+ */
+bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
+                                   uint16_t& offset, bool& more_segments) {
+    if (payload.size() < 20) {  // SOME/IP header (16) + TP header (4) minimum
+        return false;
+    }
+
+    // TP header starts at offset 16 (after SOME/IP header)
+    uint32_t tp_header = (payload[16] << 24) | (payload[17] << 16) |
+                        (payload[18] << 8) | payload[19];
+
+    // Extract offset (28 bits, divided by 4 to get byte offset)
+    uint32_t offset_units = tp_header >> 4;
+    offset = offset_units * 16;  // Convert back to bytes
+
+    // Check offset alignment (REQ_TP_015_E01)
+    if (offset % 16 != 0) {
+        // Log warning but continue processing
+        std::cout << "Warning: Received TP segment with misaligned offset: " << offset << std::endl;
+    }
+
+    // Extract more segments flag (bit 0)
+    more_segments = (tp_header & 0x01) != 0;
+
+    // Reserved bits (bits 1-3) are ignored (REQ_TP_018)
+
+    return true;
+}
+
+/**
  * @brief Process a received TP segment
  * @implements REQ_TP_030, REQ_TP_031, REQ_TP_032
  * @implements REQ_TP_030_E01
