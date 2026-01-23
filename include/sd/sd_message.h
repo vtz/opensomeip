@@ -15,6 +15,7 @@
 #define SOMEIP_SD_MESSAGE_H
 
 #include "sd_types.h"
+#include <string>
 #include <vector>
 #include <memory>
 

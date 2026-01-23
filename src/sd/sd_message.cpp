@@ -249,6 +249,16 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
                    (data[offset + 2] << 8) | data[offset + 3];
     offset += 4;
 
+    // Validate IP address (REQ_SD_064_E01)
+    if (ipv4_address_ == 0 || ipv4_address_ == 0xFFFFFFFF) {
+        std::cout << "Warning: Invalid IP address in endpoint option: "
+                  << ((ipv4_address_ >> 24) & 0xFF) << "."
+                  << ((ipv4_address_ >> 16) & 0xFF) << "."
+                  << ((ipv4_address_ >> 8) & 0xFF) << "."
+                  << (ipv4_address_ & 0xFF) << std::endl;
+        // Continue processing despite invalid address
+    }
+
     // Skip reserved byte
     offset++;
 
@@ -318,14 +328,23 @@ bool IPv4MulticastOption::deserialize(const std::vector<uint8_t>& data, size_t& 
     ipv4_address_ = (data[offset] << 24) | (data[offset + 1] << 16) |
                    (data[offset + 2] << 8) | data[offset + 3];
     offset += 5;  // Skip address + reserved
+
+    // Validate IP address (REQ_SD_064_E01)
+    if (ipv4_address_ == 0 || ipv4_address_ == 0xFFFFFFFF) {
+        std::cout << "Warning: Invalid IP address in multicast option: "
+                  << ((ipv4_address_ >> 24) & 0xFF) << "."
+                  << ((ipv4_address_ >> 16) & 0xFF) << "."
+                  << ((ipv4_address_ >> 8) & 0xFF) << "."
+                  << (ipv4_address_ & 0xFF) << std::endl;
+        // Continue processing despite invalid address
+    }
     port_ = (data[offset] << 8) | data[offset + 1];
     offset += 2;
 
     return true;
 }
 
-// ConfigurationOption implementation temporarily disabled
-/*
+// ConfigurationOption implementation
 std::vector<uint8_t> ConfigurationOption::serialize() const {
     std::vector<uint8_t> data;
 
@@ -365,7 +384,6 @@ bool ConfigurationOption::deserialize(const std::vector<uint8_t>& data, size_t& 
 
     return true;
 }
-*/
 
 // SdMessage implementation
 void SdMessage::add_entry(std::unique_ptr<SdEntry> entry) {
@@ -478,21 +496,12 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
 
             entries_.push_back(std::move(entry));
         } else {
-            // Unknown entry type - skip with warning (REQ_SD_021_E01)
-            std::cout << "Warning: Unknown SD entry type 0x" << std::hex << (int)raw_entry_type
-                      << ", skipping entry" << std::endl;
-            // Skip the entry (16 bytes)
-            if (offset + 16 > data.size()) {
-                return false; // Malformed data
-            }
-            offset += 16;
-        } else {
             // This should be an option
             OptionType option_type = static_cast<OptionType>(type_byte);
             std::unique_ptr<SdOption> option;
 
-            // if (option_type == OptionType::CONFIGURATION) {
-            //     option = std::make_unique<ConfigurationOption>();
+            if (option_type == OptionType::CONFIGURATION) {
+                option = std::make_unique<ConfigurationOption>();
             } else if (option_type == OptionType::IPV4_ENDPOINT) {
                 option = std::make_unique<IPv4EndpointOption>();
             } else if (option_type == OptionType::IPV4_MULTICAST) {

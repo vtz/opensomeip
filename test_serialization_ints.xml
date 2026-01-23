@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="4" failures="0" disabled="0" errors="0" time="0." timestamp="2026-01-23T09:00:36.479" name="AllTests">
+  <testsuite name="SerializationTest" tests="4" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-01-23T09:00:36.479">
+    <testcase name="SerializeDeserializeInt16" file="/Users/vzein/Projects/some-ip/tests/test_serialization.cpp" line="305" status="run" result="completed" time="0." timestamp="2026-01-23T09:00:36.479" classname="SerializationTest" />
+    <testcase name="SerializeDeserializeInt32" file="/Users/vzein/Projects/some-ip/tests/test_serialization.cpp" line="333" status="run" result="completed" time="0." timestamp="2026-01-23T09:00:36.479" classname="SerializationTest" />
+    <testcase name="SerializeDeserializeInt64" file="/Users/vzein/Projects/some-ip/tests/test_serialization.cpp" line="361" status="run" result="completed" time="0." timestamp="2026-01-23T09:00:36.479" classname="SerializationTest" />
+    <testcase name="VerifyBigEndianNegativeInt16" file="/Users/vzein/Projects/some-ip/tests/test_serialization.cpp" line="693" status="run" result="completed" time="0." timestamp="2026-01-23T09:00:36.479" classname="SerializationTest" />
+  </testsuite>
+</testsuites>

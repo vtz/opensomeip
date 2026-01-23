@@ -121,6 +121,14 @@ public:
             return false;  // Already offered
         }
 
+        // Check service list limit (REQ_SD_040_E01)
+        if (offered_services_.size() >= config_.max_services) {
+            // Evict oldest service (LRU policy)
+            if (!offered_services_.empty()) {
+                offered_services_.erase(offered_services_.begin());
+            }
+        }
+
         OfferedService offered;
         offered.instance = instance;
         offered.unicast_endpoint = unicast_endpoint;

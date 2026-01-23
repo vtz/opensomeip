@@ -53,11 +53,6 @@ enum class OptionType : uint8_t {
 };
 
 /**
- * @brief Configuration option for SD messages
- */
-class ConfigurationOption;
-
-/**
  * @brief Service discovery result codes
  */
 enum class SdResult : uint8_t {
@@ -115,6 +110,7 @@ struct SdConfig {
     uint8_t repetition_multiplier{2};                   // Exponential backoff multiplier
     std::chrono::milliseconds cyclic_offer{30000};     // Cyclic offer interval (30s)
     std::chrono::milliseconds ttl{3600000};           // Default TTL (1 hour)
+    size_t max_services{100};                          // Maximum number of services to track
 };
 
 /**
