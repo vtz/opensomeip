@@ -1,0 +1,93 @@
+/*
+ * Copyright (c) 2025 Vinicius Tadeu Zein
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* Custom CSS for OpenSOMEIP Requirements Documentation */
+
+/* Needs styling */
+.need {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #f9f9f9;
+}
+
+.need-requirement {
+    border-left: 4px solid #BFD8D2;
+}
+
+.need-spec_req {
+    border-left: 4px solid #FEDCD2;
+}
+
+.need-test_case {
+    border-left: 4px solid #DCB239;
+}
+
+.need-code_ref {
+    border-left: 4px solid #DF744A;
+}
+
+/* Need title styling */
+.need-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+/* Need metadata styling */
+.need-meta {
+    font-size: 0.9em;
+    color: #666;
+}
+
+/* Links styling */
+.need-links {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+/* Traceability matrix styling */
+.needs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.needs-table th,
+.needs-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.needs-table th {
+    background-color: #f2f2f2;
+}
+
+.needs-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Status indicators */
+.status-implemented {
+    color: #28a745;
+}
+
+.status-pending {
+    color: #ffc107;
+}
+
+.status-not-implemented {
+    color: #dc3545;
+}

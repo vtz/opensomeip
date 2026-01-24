@@ -18,6 +18,17 @@
 namespace someip {
 namespace tp {
 
+/**
+ * @brief SOME/IP-TP Reassembler implementation
+ * @implements REQ_ARCH_001
+ * @implements REQ_ARCH_002
+ * @implements REQ_TP_030, REQ_TP_031, REQ_TP_032, REQ_TP_033, REQ_TP_034, REQ_TP_035
+ * @implements REQ_TP_036, REQ_TP_037, REQ_TP_038, REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043
+ * @implements REQ_TP_030_E01, REQ_TP_030_E02, REQ_TP_039_E01
+ * @satisfies feat_req_someiptp_410
+ * @satisfies feat_req_someiptp_411
+ * @satisfies feat_req_someiptp_412
+ */
 TpReassembler::TpReassembler(const TpConfig& config)
     : config_(config) {
 }
@@ -28,6 +39,11 @@ TpReassembler::~TpReassembler() {
     reassembly_buffers_.clear();
 }
 
+/**
+ * @brief Process a received TP segment
+ * @implements REQ_TP_030, REQ_TP_031, REQ_TP_032
+ * @implements REQ_TP_030_E01
+ */
 bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_t>& complete_message) {
     if (!validate_segment(segment)) {
         return false;
@@ -53,6 +69,11 @@ bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_
     return true;  // Segment processed but reassembly not complete
 }
 
+/**
+ * @brief Validate a TP segment
+ * @implements REQ_TP_033, REQ_TP_034, REQ_TP_035
+ * @implements REQ_TP_030_E02
+ */
 bool TpReassembler::validate_segment(const TpSegment& segment) const {
     const auto config = get_config_copy();
 
@@ -74,6 +95,10 @@ bool TpReassembler::validate_segment(const TpSegment& segment) const {
     return true;
 }
 
+/**
+ * @brief Find or create reassembly buffer
+ * @implements REQ_TP_036, REQ_TP_037, REQ_TP_038
+ */
 TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segment) {
     auto it = reassembly_buffers_.find(segment.header.sequence_number);
 
@@ -94,6 +119,11 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
     return it->second.get();
 }
 
+/**
+ * @brief Add segment to reassembly buffer
+ * @implements REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043
+ * @implements REQ_TP_039_E01
+ */
 bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment) {
     // Check if this segment was already received
     if (buffer.is_segment_received(segment.header.segment_offset, segment.header.segment_length)) {

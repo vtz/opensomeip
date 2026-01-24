@@ -29,6 +29,14 @@
 namespace someip {
 namespace rpc {
 
+/**
+ * @brief RPC Client implementation
+ * @implements REQ_ARCH_001
+ * @implements REQ_ARCH_002
+ * @satisfies feat_req_someip_700
+ * @satisfies feat_req_someip_701
+ * @satisfies feat_req_someip_702
+ */
 class RpcClientImpl : public transport::ITransportListener {
 public:
     RpcClientImpl(uint16_t client_id)

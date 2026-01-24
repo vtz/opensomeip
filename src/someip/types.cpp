@@ -16,6 +16,13 @@
 
 namespace someip {
 
+/**
+ * @brief SOME/IP type conversions
+ * @implements REQ_ARCH_001
+ * @satisfies feat_req_someip_542
+ * @satisfies feat_req_someip_543
+ */
+
 std::string to_string(MessageType type) {
     static const std::unordered_map<MessageType, std::string> type_strings = {
         {MessageType::REQUEST, "REQUEST"},

@@ -3,6 +3,12 @@ Integration Tests for Echo Server/Client
 
 Tests the complete message flow from client to server and back,
 including serialization, transport, and deserialization.
+
+@tests REQ_TRANSPORT_001
+@tests REQ_TRANSPORT_004
+@tests REQ_ARCH_001
+@tests feat_req_someip_538
+@tests feat_req_someip_800
 """
 
 import pytest

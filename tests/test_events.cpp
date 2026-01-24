@@ -16,6 +16,12 @@
 
 using namespace someip::events;
 
+/**
+ * @brief Events and Subscriptions unit tests
+ * @tests REQ_ARCH_001
+ * @tests feat_req_someip_720
+ * @tests feat_req_someip_730
+ */
 class EventsTest : public ::testing::Test {
 protected:
     void SetUp() override {

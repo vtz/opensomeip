@@ -28,6 +28,13 @@
 namespace someip {
 namespace events {
 
+/**
+ * @brief Event Publisher implementation
+ * @implements REQ_ARCH_001
+ * @implements REQ_ARCH_002
+ * @satisfies feat_req_someip_720
+ * @satisfies feat_req_someip_721
+ */
 class EventPublisherImpl : public transport::ITransportListener {
 public:
     EventPublisherImpl(uint16_t service_id, uint16_t instance_id)

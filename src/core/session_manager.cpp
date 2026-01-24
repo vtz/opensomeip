@@ -15,8 +15,20 @@
 
 namespace someip {
 
+/**
+ * @brief Session Manager implementation
+ * @implements REQ_ARCH_002
+ * @implements REQ_ARCH_003
+ *
+ * Thread-safe session management using mutex protection.
+ */
+
 SessionManager::SessionManager() = default;
 
+/**
+ * @brief Create a new session
+ * @implements REQ_ARCH_002
+ */
 uint16_t SessionManager::create_session(uint16_t client_id) {
     std::scoped_lock lock(sessions_mutex_);
 

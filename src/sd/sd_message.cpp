@@ -20,6 +20,27 @@
 namespace someip {
 namespace sd {
 
+/**
+ * @brief Service Discovery message serialization
+ * @implements REQ_ARCH_001
+ * @implements REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
+ * @implements REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014
+ * @implements REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026
+ * @implements REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035
+ * @implements REQ_SD_040, REQ_SD_041, REQ_SD_042, REQ_SD_043, REQ_SD_044, REQ_SD_045, REQ_SD_046
+ * @implements REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054, REQ_SD_055, REQ_SD_056
+ * @implements REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065
+ * @implements REQ_SD_066, REQ_SD_067, REQ_SD_068, REQ_SD_069
+ * @implements REQ_SD_070, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_074, REQ_SD_075, REQ_SD_076, REQ_SD_077
+ * @implements REQ_SD_001_E01, REQ_SD_010_E01
+ * @implements REQ_SD_020_E01, REQ_SD_020_E02, REQ_SD_021_E01, REQ_SD_022_E01
+ * @implements REQ_SD_040_E01, REQ_SD_041_E01
+ * @implements REQ_SD_050_E01, REQ_SD_052_E01
+ * @implements REQ_SD_060_E01, REQ_SD_061_E01, REQ_SD_062_E01, REQ_SD_064_E01, REQ_SD_075_E01
+ * @satisfies feat_req_someipsd_300
+ * @satisfies feat_req_someipsd_301
+ */
+
 // SdEntry serialization/deserialization
 std::vector<uint8_t> SdEntry::serialize() const {
     std::vector<uint8_t> data;

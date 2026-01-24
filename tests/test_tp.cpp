@@ -21,6 +21,25 @@
 using namespace someip;
 using namespace someip::tp;
 
+/**
+ * @brief SOME/IP-TP Transport Protocol unit tests
+ * @tests REQ_ARCH_001
+ * @tests REQ_ARCH_002
+ * @tests REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_004, REQ_TP_005, REQ_TP_006, REQ_TP_007, REQ_TP_008
+ * @tests REQ_TP_010, REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015, REQ_TP_016, REQ_TP_017
+ * @tests REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021, REQ_TP_022
+ * @tests REQ_TP_030, REQ_TP_031, REQ_TP_032, REQ_TP_033, REQ_TP_034, REQ_TP_035
+ * @tests REQ_TP_036, REQ_TP_037, REQ_TP_038, REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043
+ * @tests REQ_TP_050, REQ_TP_051, REQ_TP_052, REQ_TP_053, REQ_TP_054, REQ_TP_055, REQ_TP_056, REQ_TP_057
+ * @tests REQ_TP_060, REQ_TP_061, REQ_TP_062, REQ_TP_063
+ * @tests REQ_TP_001_E01, REQ_TP_001_E02, REQ_TP_001_E03
+ * @tests REQ_TP_013_E01, REQ_TP_015_E01
+ * @tests REQ_TP_030_E01, REQ_TP_030_E02, REQ_TP_039_E01
+ * @tests REQ_TP_050_E01, REQ_TP_050_E02
+ * @tests feat_req_someiptp_400
+ * @tests feat_req_someiptp_402
+ * @tests feat_req_someiptp_410
+ */
 class TpTest : public ::testing::Test {
 protected:
     void SetUp() override {
@@ -32,6 +51,11 @@ protected:
     TpConfig config;
 };
 
+/**
+ * @test_case TC_TP_001
+ * @tests REQ_TP_001, REQ_TP_010, REQ_TP_050
+ * @brief Test single segment message handling
+ */
 TEST_F(TpTest, SingleSegmentMessage) {
     TpManager tp_manager(config);
     ASSERT_TRUE(tp_manager.initialize());
@@ -63,6 +87,11 @@ TEST_F(TpTest, SingleSegmentMessage) {
     tp_manager.shutdown();
 }
 
+/**
+ * @test_case TC_TP_002
+ * @tests REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_010, REQ_TP_011, REQ_TP_012, REQ_TP_013
+ * @brief Test multi-segment message segmentation
+ */
 TEST_F(TpTest, MultiSegmentMessage) {
     TpManager tp_manager(config);
     ASSERT_TRUE(tp_manager.initialize());

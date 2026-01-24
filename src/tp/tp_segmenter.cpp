@@ -19,12 +19,29 @@
 namespace someip {
 namespace tp {
 
+/**
+ * @brief SOME/IP-TP Segmenter implementation
+ * @implements REQ_ARCH_001
+ * @implements REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_004, REQ_TP_005, REQ_TP_006, REQ_TP_007, REQ_TP_008
+ * @implements REQ_TP_010, REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015, REQ_TP_016, REQ_TP_017
+ * @implements REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021, REQ_TP_022
+ * @implements REQ_TP_001_E01, REQ_TP_001_E02, REQ_TP_001_E03
+ * @implements REQ_TP_013_E01, REQ_TP_015_E01
+ * @satisfies feat_req_someiptp_402
+ * @satisfies feat_req_someiptp_403
+ * @satisfies feat_req_someiptp_404
+ */
 TpSegmenter::TpSegmenter(const TpConfig& config)
     : config_(config) {
 }
 
 TpSegmenter::~TpSegmenter() = default;
 
+/**
+ * @brief Segment a message into TP segments
+ * @implements REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_004
+ * @implements REQ_TP_001_E01
+ */
 TpResult TpSegmenter::segment_message(const Message& message, std::vector<TpSegment>& segments) {
     // Get the message payload (without headers - TP handles payload only)
     const std::vector<uint8_t>& payload = message.get_payload();
@@ -54,6 +71,14 @@ TpResult TpSegmenter::segment_message(const Message& message, std::vector<TpSegm
     return create_multi_segments(message, payload, segments);
 }
 
+/**
+ * @brief Create multiple TP segments from a large message
+ * @implements REQ_TP_005, REQ_TP_006, REQ_TP_007, REQ_TP_008
+ * @implements REQ_TP_010, REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014
+ * @implements REQ_TP_015, REQ_TP_016, REQ_TP_017, REQ_TP_018
+ * @implements REQ_TP_019, REQ_TP_020, REQ_TP_021, REQ_TP_022
+ * @implements REQ_TP_001_E02, REQ_TP_001_E03, REQ_TP_013_E01, REQ_TP_015_E01
+ */
 TpResult TpSegmenter::create_multi_segments(const Message& message,
                                           const std::vector<uint8_t>& payload,
                                           std::vector<TpSegment>& segments) {

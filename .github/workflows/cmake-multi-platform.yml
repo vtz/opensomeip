@@ -65,3 +65,62 @@ jobs:
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install Sphinx dependencies
+      run: |
+        pip install sphinx>=5.0 sphinx-needs>=0.6.0 sphinxcontrib-plantuml
+
+    - name: Extract code requirements
+      run: |
+        python scripts/extract_code_requirements.py \
+          --project-root ${{ github.workspace }} \
+          --output ${{ steps.strings.outputs.build-output-dir }}/code_references.json \
+          --src-dirs src include \
+          --test-dirs tests
+
+    - name: Validate requirements
+      run: |
+        python scripts/validate_requirements.py \
+          --project-root ${{ github.workspace }} \
+          --code-refs ${{ steps.strings.outputs.build-output-dir }}/code_references.json
+      continue-on-error: true
+
+    - name: Check requirements coverage
+      run: |
+        # Generate traceability matrix with gap analysis
+        mkdir -p ${{ steps.strings.outputs.build-output-dir }}/docs/traceability
+        python scripts/generate_traceability_matrix.py \
+          --project-root ${{ github.workspace }} \
+          --code-refs ${{ steps.strings.outputs.build-output-dir }}/code_references.json \
+          --output-dir ${{ steps.strings.outputs.build-output-dir }}/docs/traceability
+
+        # Verify implementation status
+        python scripts/verify_implementation_status.py \
+          --project-root ${{ github.workspace }} \
+          --code-refs ${{ steps.strings.outputs.build-output-dir }}/code_references.json \
+          --output ${{ steps.strings.outputs.build-output-dir }}/docs/implementation_verification.md
+
+        # Check spec requirement mappings
+        python scripts/check_spec_requirements.py \
+          --project-root ${{ github.workspace }} \
+          --output ${{ steps.strings.outputs.build-output-dir }}/docs/spec_mapping_report.md
+
+        # Generate implementation report
+        python scripts/generate_implementation_report.py \
+          --project-root ${{ github.workspace }} \
+          --output ${{ steps.strings.outputs.build-output-dir }}/docs/implementation_report.md
+      continue-on-error: true
+
+    - name: Upload requirements artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: requirements-${{ matrix.c_compiler }}
+        path: |
+          ${{ steps.strings.outputs.build-output-dir }}/code_references.json
+          ${{ steps.strings.outputs.build-output-dir }}/docs/
+        retention-days: 7
