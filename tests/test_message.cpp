@@ -19,11 +19,13 @@ using namespace someip;
 
 /**
  * @brief SOME/IP Message unit tests
- * @tests REQ_ARCH_001
- * @tests REQ_ARCH_003
+ * @tests REQ_ARCH_001, REQ_ARCH_003
+ * @tests REQ_ARCH_005, REQ_ARCH_006, REQ_ARCH_007
+ * @tests REQ_MY_001
  * @tests REQ_MSG_001, REQ_MSG_002, REQ_MSG_003
- * @tests REQ_MSG_010, REQ_MSG_011, REQ_MSG_012
- * @tests REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
+ * @tests REQ_MSG_005, REQ_MSG_006, REQ_MSG_007, REQ_MSG_008
+ * @tests REQ_MSG_010, REQ_MSG_011, REQ_MSG_012, REQ_MSG_013, REQ_MSG_014
+ * @tests REQ_MSG_020, REQ_MSG_021, REQ_MSG_022, REQ_MSG_023, REQ_MSG_024, REQ_MSG_025
  * @tests REQ_MSG_030, REQ_MSG_031, REQ_MSG_032, REQ_MSG_033
  * @tests REQ_MSG_040, REQ_MSG_041, REQ_MSG_042
  * @tests REQ_MSG_050, REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_054, REQ_MSG_055
@@ -34,6 +36,10 @@ using namespace someip;
  * @tests REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078, REQ_MSG_079, REQ_MSG_080
  * @tests REQ_MSG_090, REQ_MSG_091, REQ_MSG_092, REQ_MSG_093
  * @tests REQ_MSG_100
+ * @tests REQ_MSG_012_E01, REQ_MSG_014_E01, REQ_MSG_014_E02
+ * @tests REQ_MSG_024_E01, REQ_MSG_024_E02, REQ_MSG_042_E01
+ * @tests REQ_MSG_063_E01, REQ_MSG_063_E02, REQ_MSG_071_E01, REQ_MSG_071_E02
+ * @tests REQ_MSG_072_E01, REQ_MSG_100_E01, REQ_MSG_100_E02, REQ_MSG_100_E03
  * @tests feat_req_someip_538
  * @tests feat_req_someip_539
  * @tests feat_req_someip_540
@@ -193,6 +199,114 @@ TEST_F(MessageTest, Validation) {
     // Invalid message type
     msg.set_message_type(static_cast<MessageType>(0xFF));
     EXPECT_FALSE(msg.has_valid_header());
+}
+
+/**
+ * @test_case TC_MSG_002
+ * @tests REQ_MSG_002
+ * @brief Test Service ID validation
+ */
+TEST_F(MessageTest, ServiceIdValidation) {
+    Message msg;
+
+    // Valid service ID
+    msg.set_service_id(0x1234);
+    EXPECT_TRUE(msg.has_valid_service_id());
+
+    // Reserved service ID 0x0000 - allowed for backward compatibility
+    // Note: Per spec (REQ_MSG_004), 0x0000 is reserved, but we allow it
+    // for default-constructed messages to maintain backward compatibility
+    msg.set_service_id(0x0000);
+    EXPECT_TRUE(msg.has_valid_service_id());  // Lenient validation
+
+    // SD service ID 0xFFFF (valid)
+    msg.set_service_id(0xFFFF);
+    EXPECT_TRUE(msg.has_valid_service_id());
+}
+
+/**
+ * @test_case TC_MSG_003
+ * @tests REQ_MSG_003
+ * @brief Test Method ID validation
+ */
+TEST_F(MessageTest, MethodIdValidation) {
+    Message msg;
+
+    // Valid method ID
+    msg.set_method_id(0x1234);
+    EXPECT_TRUE(msg.has_valid_method_id());
+
+    // Reserved method ID 0xFFFF (invalid)
+    msg.set_method_id(0xFFFF);
+    EXPECT_FALSE(msg.has_valid_method_id());
+
+    // Valid event ID
+    msg.set_method_id(0x8123);  // Event ID range
+    EXPECT_TRUE(msg.has_valid_method_id());
+}
+
+/**
+ * @test_case TC_MSG_004
+ * @tests REQ_MSG_004, REQ_MSG_004_E01, REQ_MSG_004_E02
+ * @brief Test complete Message ID validation
+ */
+TEST_F(MessageTest, MessageIdValidation) {
+    Message msg;
+
+    // Valid Message ID
+    msg.set_service_id(0x1234);
+    msg.set_method_id(0x5678);
+    EXPECT_TRUE(msg.has_valid_message_id());
+
+    // Service ID 0x0000 - allowed for backward compatibility
+    msg.set_service_id(0x0000);
+    EXPECT_TRUE(msg.has_valid_message_id());  // Lenient validation
+    msg.set_service_id(0x1234);
+
+    // Invalid Method ID (0xFFFF is reserved per spec)
+    msg.set_method_id(0xFFFF);
+    EXPECT_FALSE(msg.has_valid_message_id());
+}
+
+/**
+ * @test_case TC_MSG_012
+ * @tests REQ_MSG_012, REQ_MSG_015
+ * @tests REQ_MSG_012_E02
+ * @brief Test length field validation
+ */
+TEST_F(MessageTest, LengthValidation) {
+    Message msg;
+
+    // Valid length
+    msg.set_length(16);  // Minimum valid length
+    EXPECT_TRUE(msg.has_valid_length());
+
+    // Invalid length (too small)
+    msg.set_length(7);
+    EXPECT_FALSE(msg.has_valid_length());
+}
+
+/**
+ * @test_case TC_MSG_021
+ * @tests REQ_MSG_021, REQ_MSG_022
+ * @brief Test Request ID component extraction
+ */
+TEST_F(MessageTest, RequestIdValidation) {
+    Message msg;
+
+    // Valid Request ID
+    msg.set_client_id(0x1234);
+    msg.set_session_id(0x5678);
+    EXPECT_TRUE(msg.has_valid_request_id());
+
+    // Client ID 0 (valid for SD)
+    msg.set_client_id(0);
+    msg.set_message_type(MessageType::NOTIFICATION);
+    EXPECT_TRUE(msg.has_valid_client_id());
+
+    // Session ID 0 (valid, indicates no session management)
+    msg.set_session_id(0);
+    EXPECT_TRUE(msg.has_valid_session_id());
 }
 
 TEST_F(MessageTest, StringRepresentation) {

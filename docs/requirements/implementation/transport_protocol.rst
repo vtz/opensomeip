@@ -982,4 +982,3 @@ Test Files
 ----------
 
 * ``tests/test_tp.cpp`` - TP unit tests
-* ``tests/integration/test_tp_integration.py`` - TP integration tests

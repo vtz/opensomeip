@@ -117,6 +117,17 @@ public:
     bool has_valid_header() const;
     bool has_valid_payload() const;
 
+    // Component validation methods
+    bool has_valid_message_id() const;
+    bool has_valid_service_id() const;
+    bool has_valid_method_id() const;
+    bool has_valid_request_id() const;
+    bool has_valid_client_id() const;
+    bool has_valid_session_id() const;
+    bool has_valid_length() const;
+    bool has_valid_message_type() const;
+    bool has_tp_flag() const;
+
     // Utility methods
     size_t get_total_size() const {
         size_t e2e_size = e2e_header_.has_value() ? e2e_header_->get_header_size() : 0;

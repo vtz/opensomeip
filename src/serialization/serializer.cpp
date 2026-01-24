@@ -336,6 +336,10 @@ DeserializationResult<int8_t> Deserializer::deserialize_int8() {
     return DeserializationResult<int8_t>::success(static_cast<int8_t>(result.get_value()));
 }
 
+/**
+ * @brief Deserialize int16 value from Big Endian
+ * @implements REQ_SER_015
+ */
 DeserializationResult<int16_t> Deserializer::deserialize_int16() {
     auto result = read_be_uint16();
     if (!result) {
@@ -344,6 +348,10 @@ DeserializationResult<int16_t> Deserializer::deserialize_int16() {
     return DeserializationResult<int16_t>::success(static_cast<int16_t>(*result));
 }
 
+/**
+ * @brief Deserialize int32 value from Big Endian
+ * @implements REQ_SER_016
+ */
 DeserializationResult<int32_t> Deserializer::deserialize_int32() {
     auto result = read_be_uint32();
     if (!result) {
@@ -352,6 +360,10 @@ DeserializationResult<int32_t> Deserializer::deserialize_int32() {
     return DeserializationResult<int32_t>::success(static_cast<int32_t>(*result));
 }
 
+/**
+ * @brief Deserialize int64 value from Big Endian
+ * @implements REQ_SER_017
+ */
 DeserializationResult<int64_t> Deserializer::deserialize_int64() {
     auto result = read_be_uint64();
     if (!result) {

@@ -249,6 +249,16 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
                    (data[offset + 2] << 8) | data[offset + 3];
     offset += 4;
 
+    // Validate IP address (REQ_SD_064_E01)
+    if (ipv4_address_ == 0 || ipv4_address_ == 0xFFFFFFFF) {
+        std::cout << "Warning: Invalid IP address in endpoint option: "
+                  << ((ipv4_address_ >> 24) & 0xFF) << "."
+                  << ((ipv4_address_ >> 16) & 0xFF) << "."
+                  << ((ipv4_address_ >> 8) & 0xFF) << "."
+                  << (ipv4_address_ & 0xFF) << std::endl;
+        // Continue processing despite invalid address
+    }
+
     // Skip reserved byte
     offset++;
 
@@ -318,8 +328,59 @@ bool IPv4MulticastOption::deserialize(const std::vector<uint8_t>& data, size_t& 
     ipv4_address_ = (data[offset] << 24) | (data[offset + 1] << 16) |
                    (data[offset + 2] << 8) | data[offset + 3];
     offset += 5;  // Skip address + reserved
+
+    // Validate IP address (REQ_SD_064_E01)
+    if (ipv4_address_ == 0 || ipv4_address_ == 0xFFFFFFFF) {
+        std::cout << "Warning: Invalid IP address in multicast option: "
+                  << ((ipv4_address_ >> 24) & 0xFF) << "."
+                  << ((ipv4_address_ >> 16) & 0xFF) << "."
+                  << ((ipv4_address_ >> 8) & 0xFF) << "."
+                  << (ipv4_address_ & 0xFF) << std::endl;
+        // Continue processing despite invalid address
+    }
     port_ = (data[offset] << 8) | data[offset + 1];
     offset += 2;
+
+    return true;
+}
+
+// ConfigurationOption implementation
+std::vector<uint8_t> ConfigurationOption::serialize() const {
+    std::vector<uint8_t> data;
+
+    // Type (1 byte)
+    data.push_back(static_cast<uint8_t>(OptionType::CONFIGURATION));
+
+    // Reserved (1 byte)
+    data.push_back(0);
+
+    // Length (2 bytes) - will be filled later
+    data.push_back(0);
+    data.push_back(0);
+
+    // Configuration string
+    data.insert(data.end(), config_string_.begin(), config_string_.end());
+
+    // Update length
+    uint16_t length = static_cast<uint16_t>(config_string_.size());
+    data[2] = (length >> 8) & 0xFF;
+    data[3] = length & 0xFF;
+
+    return data;
+}
+
+bool ConfigurationOption::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
+    if (!SdOption::deserialize(data, offset)) {
+        return false;
+    }
+
+    if (offset + length_ > data.size()) {
+        return false;
+    }
+
+    // Extract configuration string
+    config_string_.assign(data.begin() + offset, data.begin() + offset + length_);
+    offset += length_;
 
     return true;
 }
@@ -337,8 +398,9 @@ std::vector<uint8_t> SdMessage::serialize() const {
     std::vector<uint8_t> data;
 
     // SOME/IP SD Header (8 bytes)
-    // Flags (1 byte)
-    data.push_back(flags_);
+    // Flags (1 byte) - ensure reserved bits 5-0 are zero (REQ_SD_013)
+    uint8_t flags_to_send = flags_ & 0xC0;  // Keep only bits 7 and 6
+    data.push_back(flags_to_send);
 
     // Reserved (3 bytes) - we use 4 bytes total for reserved_
     data.push_back((reserved_ >> 16) & 0xFF);
@@ -386,12 +448,21 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     reserved_ = (data[offset] << 16) | (data[offset + 1] << 8) | data[offset + 2];
     offset += 3;
 
+    // Note: Reserved bits 5-0 in flags are ignored (REQ_SD_014)
+
     uint32_t length = (data[offset] << 24) | (data[offset + 1] << 16) |
                      (data[offset + 2] << 8) | data[offset + 3];
     offset += 4;
 
     if (offset + length > data.size()) {
         return false;
+    }
+
+    // Check if entries length is a multiple of entry size (16 bytes) (REQ_SD_020_E02)
+    if (length % 16 != 0) {
+        std::cout << "Warning: SD entries length " << length
+                  << " is not a multiple of entry size (16 bytes)" << std::endl;
+        // Continue processing but log warning
     }
 
     // Parse entries and options until we consume all data
@@ -424,18 +495,21 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
             }
 
             entries_.push_back(std::move(entry));
-
         } else {
             // This should be an option
             OptionType option_type = static_cast<OptionType>(type_byte);
             std::unique_ptr<SdOption> option;
 
-            if (option_type == OptionType::IPV4_ENDPOINT) {
+            if (option_type == OptionType::CONFIGURATION) {
+                option = std::make_unique<ConfigurationOption>();
+            } else if (option_type == OptionType::IPV4_ENDPOINT) {
                 option = std::make_unique<IPv4EndpointOption>();
             } else if (option_type == OptionType::IPV4_MULTICAST) {
                 option = std::make_unique<IPv4MulticastOption>();
             } else {
-                // Unknown option type - try to skip it
+                // Unknown option type - skip with warning (REQ_SD_061_E01)
+                std::cout << "Warning: Unknown SD option type 0x" << std::hex << (int)type_byte
+                          << ", skipping option" << std::endl;
                 if (offset + 4 > data.size()) {
                     return false;
                 }

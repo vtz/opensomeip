@@ -90,7 +90,7 @@ jobs:
           --code-refs ${{ steps.strings.outputs.build-output-dir }}/code_references.json
       continue-on-error: true
 
-    - name: Check requirements coverage
+    - name: Generate traceability reports
       run: |
         # Generate traceability matrix with gap analysis
         mkdir -p ${{ steps.strings.outputs.build-output-dir }}/docs/traceability
@@ -114,13 +114,41 @@ jobs:
         python scripts/generate_implementation_report.py \
           --project-root ${{ github.workspace }} \
           --output ${{ steps.strings.outputs.build-output-dir }}/docs/implementation_report.md
-      continue-on-error: true
+
+    - name: Check ASPICE traceability compliance
+      run: |
+        GAP_ANALYSIS="${{ steps.strings.outputs.build-output-dir }}/docs/traceability/gap_analysis.md"
+
+        if [ -f "$GAP_ANALYSIS" ]; then
+          echo "=== Gap Analysis Summary ==="
+          grep -A 10 "^## Summary" "$GAP_ANALYSIS" || true
+          echo ""
+
+          # Check SWE.3 (Implementation)
+          if grep -q "SWE.3.*FAIL" "$GAP_ANALYSIS"; then
+            echo "::error::SWE.3 FAILED - Requirements missing implementation"
+            cat "$GAP_ANALYSIS" | grep -A 5 "Requirements Without Implementation"
+            exit 1
+          fi
+
+          # Check SWE.6 (Test Coverage)
+          if grep -q "SWE.6.*FAIL" "$GAP_ANALYSIS"; then
+            echo "::error::SWE.6 FAILED - Requirements missing test coverage"
+            cat "$GAP_ANALYSIS" | grep -A 10 "Requirements Without Test Coverage"
+            exit 1
+          fi
+
+          echo "::notice::ASPICE traceability compliance: PASS"
+        else
+          echo "::warning::Gap analysis not generated"
+        fi
 
     - name: Upload requirements artifacts
       uses: actions/upload-artifact@v4
+      if: always()
       with:
         name: requirements-${{ matrix.c_compiler }}
         path: |
           ${{ steps.strings.outputs.build-output-dir }}/code_references.json
           ${{ steps.strings.outputs.build-output-dir }}/docs/
-        retention-days: 7
+        retention-days: 14

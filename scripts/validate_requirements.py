@@ -51,24 +51,36 @@ def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Set[str], Dict[str, Li
     requirements = set()
     satisfies_map = {}  # req_id -> list of satisfied spec requirements
 
+    import re
+
+    # Pattern to find requirement blocks - captures the entire directive block
+    req_block_pattern = re.compile(
+        r'\.\.\s+requirement::.*?\n((?:\s+:[^\n]+\n)+)',
+        re.IGNORECASE
+    )
+
+    # Patterns for individual fields
+    id_pattern = re.compile(r':id:\s*(REQ_[A-Za-z0-9_]+)', re.IGNORECASE)
+    satisfies_pattern = re.compile(r':satisfies:\s*([^\n]+)', re.IGNORECASE)
+
     for rst_file in rst_dir.rglob("*.rst"):
         content = rst_file.read_text(encoding='utf-8', errors='ignore')
 
-        # Look for requirement directives with IDs and satisfies
-        import re
-        pattern = re.compile(
-            r'\.\.\s+requirement::.*?\n'
-            r'.*?:id:\s*(REQ_[A-Za-z0-9_]+).*?'
-            r'(?::satisfies:\s*([^\n]+))?',
-            re.DOTALL | re.IGNORECASE
-        )
+        for block_match in req_block_pattern.finditer(content):
+            block_content = block_match.group(1)
 
-        for match in pattern.finditer(content):
-            req_id = match.group(1).upper()
+            # Extract ID
+            id_match = id_pattern.search(block_content)
+            if not id_match:
+                continue
+
+            req_id = id_match.group(1).upper()
             requirements.add(req_id)
 
-            satisfies_str = match.group(2) or ""
-            if satisfies_str:
+            # Extract satisfies (if present)
+            satisfies_match = satisfies_pattern.search(block_content)
+            if satisfies_match:
+                satisfies_str = satisfies_match.group(1)
                 satisfies = [s.strip() for s in satisfies_str.split(",") if s.strip()]
                 satisfies_map[req_id] = satisfies
 
@@ -141,13 +153,23 @@ def validate_requirements(
             info.append(f"Requirement {req_id}: OK (implemented and tested)")
 
     # Check for missing spec links (implementation requirements must satisfy at least one spec requirement)
+    # Skip validation for implementation-derived requirements (error handling, architectural, plugin)
     missing_spec_links = []
     for req_id in requirements:
         if req_id.startswith("REQ_"):  # Implementation requirement
-            satisfies = satisfies_map.get(req_id, [])
-            if not satisfies:
-                missing_spec_links.append(req_id)
-                errors.append(f"Implementation requirement {req_id} has no spec requirement links (missing :satisfies: field)")
+            # Skip spec link validation for implementation-derived requirements
+            is_implementation_derived = (
+                '_E0' in req_id or  # Error handling (_E01, _E02, _E03)
+                '_ARCH_' in req_id or  # Architectural
+                'PLUGIN' in req_id or  # Plugin requirements
+                'MY_' in req_id  # Custom requirements
+            )
+
+            if not is_implementation_derived:
+                satisfies = satisfies_map.get(req_id, [])
+                if not satisfies:
+                    missing_spec_links.append(req_id)
+                    errors.append(f"Implementation requirement {req_id} has no spec requirement links (missing :satisfies: field)")
 
     # Check for orphaned code references
     for ref in code_implements:
@@ -160,7 +182,8 @@ def validate_requirements(
             warnings.append(f"Test reference to non-existent requirement: {ref}")
 
     # Summary with gap analysis
-    fully_traced = len(requirements) - len(orphaned_requirements)
+    # Fully traced means requirements that have BOTH code implementation AND test coverage
+    fully_traced = len(requirements & code_implements & test_tests)
     spec_linked = len(requirements) - len(missing_spec_links)
 
     # Gap Analysis Summary

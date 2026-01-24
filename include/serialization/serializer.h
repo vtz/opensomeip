@@ -205,6 +205,10 @@ public:
     template<typename T>
     DeserializationResult<std::vector<T>> deserialize_array(size_t length);
 
+    // Dynamic array deserialization with length validation
+    template<typename T>
+    DeserializationResult<std::vector<T>> deserialize_dynamic_array();
+
     // Status and navigation
     bool is_valid() const { return position_ <= buffer_.size(); }
     size_t get_position() const { return position_; }
@@ -315,6 +319,28 @@ DeserializationResult<std::vector<T>> Deserializer::deserialize_array(size_t len
     }
 
     return DeserializationResult<std::vector<T>>::success(std::move(result));
+}
+
+template<typename T>
+DeserializationResult<std::vector<T>> Deserializer::deserialize_dynamic_array() {
+    // Read length prefix (in bytes)
+    auto length_result = deserialize_uint32();
+    if (length_result.is_error()) {
+        return DeserializationResult<std::vector<T>>::error(length_result.get_error());
+    }
+
+    uint32_t byte_length = length_result.get_value();
+
+    // Validate that byte length is multiple of element size (REQ_SER_082_E01)
+    size_t element_size = sizeof(T);
+    if (byte_length % element_size != 0) {
+        return DeserializationResult<std::vector<T>>::error(Result::MALFORMED_MESSAGE);
+    }
+
+    size_t element_count = byte_length / element_size;
+
+    // Deserialize array elements
+    return deserialize_array<T>(element_count);
 }
 
 } // namespace serialization

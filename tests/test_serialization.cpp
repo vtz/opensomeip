@@ -31,8 +31,13 @@ using namespace someip::serialization;
  * @tests REQ_SER_060, REQ_SER_061, REQ_SER_062, REQ_SER_063
  * @tests REQ_SER_070, REQ_SER_071, REQ_SER_072, REQ_SER_073, REQ_SER_074, REQ_SER_075
  * @tests REQ_SER_080, REQ_SER_081, REQ_SER_082
- * @tests REQ_SER_001_E01, REQ_SER_005_E01, REQ_SER_006_E01, REQ_SER_007_E01, REQ_SER_008_E01
- * @tests REQ_SER_032_E01, REQ_SER_033_E01
+ * @tests REQ_SER_001_E01, REQ_SER_002_E01, REQ_SER_003_E01, REQ_SER_004_E01
+ * @tests REQ_SER_005_E01, REQ_SER_006_E01, REQ_SER_007_E01, REQ_SER_008_E01
+ * @tests REQ_SER_020_E01, REQ_SER_022_E01, REQ_SER_030_E01, REQ_SER_031_E01
+ * @tests REQ_SER_032_E01, REQ_SER_033_E01, REQ_SER_040_E01, REQ_SER_043_E01
+ * @tests REQ_SER_046_E01, REQ_SER_047_E01, REQ_SER_047_E02
+ * @tests REQ_SER_050_E01, REQ_SER_050_E02, REQ_SER_053_E01, REQ_SER_055_E01
+ * @tests REQ_SER_060_E01, REQ_SER_060_E02, REQ_SER_070_E01, REQ_SER_070_E02
  * @tests feat_req_someip_600
  * @tests feat_req_someip_601
  * @tests feat_req_someip_602
@@ -297,6 +302,11 @@ TEST_F(SerializationTest, SerializeDeserializeInt8) {
  * @tests REQ_SER_011, REQ_SER_015
  * @brief Test int16 serialization in Big Endian (two's complement)
  */
+/**
+ * @test_case TC_SER_015
+ * @tests REQ_SER_015
+ * @brief Test int16 serialization in Big Endian (two's complement)
+ */
 TEST_F(SerializationTest, SerializeDeserializeInt16) {
     Serializer serializer;
     Deserializer deserializer({});
@@ -321,8 +331,8 @@ TEST_F(SerializationTest, SerializeDeserializeInt16) {
 }
 
 /**
- * @test_case TC_SER_010
- * @tests REQ_SER_012, REQ_SER_016
+ * @test_case TC_SER_016
+ * @tests REQ_SER_016
  * @brief Test int32 serialization in Big Endian (two's complement)
  */
 TEST_F(SerializationTest, SerializeDeserializeInt32) {
@@ -349,8 +359,8 @@ TEST_F(SerializationTest, SerializeDeserializeInt32) {
 }
 
 /**
- * @test_case TC_SER_011
- * @tests REQ_SER_013, REQ_SER_017
+ * @test_case TC_SER_017
+ * @tests REQ_SER_017
  * @brief Test int64 serialization in Big Endian (two's complement)
  */
 TEST_F(SerializationTest, SerializeDeserializeInt64) {

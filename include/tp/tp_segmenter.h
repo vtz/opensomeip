@@ -16,6 +16,7 @@
 
 #include "tp_types.h"
 #include <someip/message.h>
+#include <someip/types.h>
 
 namespace someip {
 namespace tp {
@@ -77,6 +78,9 @@ private:
     TpResult create_multi_segments(const Message& message,
                                  const std::vector<uint8_t>& payload,
                                  std::vector<TpSegment>& segments);
+
+    void serialize_tp_header(std::vector<uint8_t>& payload, uint16_t offset, bool more_segments);
+    MessageType add_tp_flag(MessageType type) const;
 };
 
 } // namespace tp

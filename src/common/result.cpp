@@ -5,7 +5,7 @@ namespace someip {
 
 /**
  * @brief Convert Result enum to string representation
- * @implements REQ_ARCH_004
+ * @implements REQ_ARCH_004, REQ_MY_001
  *
  * Provides consistent error handling with descriptive error codes.
  */

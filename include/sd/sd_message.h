@@ -15,6 +15,7 @@
 #define SOMEIP_SD_MESSAGE_H
 
 #include "sd_types.h"
+#include <string>
 #include <vector>
 #include <memory>
 
@@ -178,6 +179,23 @@ public:
 private:
     uint32_t ipv4_address_{0}; // IPv4 address in network byte order
     uint16_t port_{0};         // Port in network byte order
+};
+
+/**
+ * @brief Configuration option for SD messages
+ */
+class ConfigurationOption : public SdOption {
+public:
+    ConfigurationOption() : SdOption(OptionType::CONFIGURATION) {}
+
+    const std::string& get_configuration_string() const { return config_string_; }
+    void set_configuration_string(const std::string& config) { config_string_ = config; }
+
+    std::vector<uint8_t> serialize() const override;
+    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+
+private:
+    std::string config_string_;
 };
 
 /**

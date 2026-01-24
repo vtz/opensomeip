@@ -274,3 +274,144 @@ TEST_F(TpTest, StatisticsTracking) {
 
     tp_manager.shutdown();
 }
+
+/**
+ * @test_case TC_TP_002
+ * @tests REQ_TP_002
+ * @brief Test maximum segment payload size is 1392 bytes
+ */
+TEST_F(TpTest, MaximumSegmentSize) {
+    TpConfig test_config;
+    // Verify the max segment size is set to 1392 bytes (87 * 16)
+    EXPECT_EQ(test_config.max_segment_size, 1392u);
+
+    // Test that messages larger than 1392 bytes get segmented
+    TpSegmenter segmenter(test_config);
+
+    Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                   MessageType::REQUEST, ReturnCode::E_OK);
+    std::vector<uint8_t> large_payload(1393, 0xAA); // Just over 1392 bytes
+    message.set_payload(large_payload);
+
+    std::vector<TpSegment> segments;
+    TpResult result = segmenter.segment_message(message, segments);
+    EXPECT_EQ(result, TpResult::SUCCESS);
+    EXPECT_GT(segments.size(), 1u);
+}
+
+/**
+ * @test_case TC_TP_003
+ * @tests REQ_TP_003
+ * @brief Test segment alignment requirements (multiples of 16 bytes)
+ */
+TEST_F(TpTest, SegmentAlignment) {
+    TpSegmenter segmenter(config);
+
+    Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                   MessageType::REQUEST, ReturnCode::E_OK);
+    std::vector<uint8_t> large_payload(2000, 0xBB); // Large payload
+    message.set_payload(large_payload);
+
+    std::vector<TpSegment> segments;
+    TpResult result = segmenter.segment_message(message, segments);
+    ASSERT_EQ(result, TpResult::SUCCESS);
+    ASSERT_GT(segments.size(), 1u);
+
+    // Check alignment of all segments except the last
+    for (size_t i = 0; i < segments.size() - 1; ++i) {
+        // Payload size should be multiple of 16 (excluding header for first segment)
+        if (i == 0) {
+            // First segment: payload_size - 16 (header) should be multiple of 16
+            size_t data_size = segments[i].payload.size() - 16;
+            EXPECT_EQ(data_size % 16, 0u) << "First segment data not 16-byte aligned";
+        } else {
+            // Other segments: entire payload should be multiple of 16
+            EXPECT_EQ(segments[i].payload.size() % 16, 0u) << "Segment " << i << " not 16-byte aligned";
+        }
+    }
+}
+
+/**
+ * @test_case TC_TP_006
+ * @tests REQ_TP_006
+ * @brief Test all segments have the same TP sequence number
+ */
+TEST_F(TpTest, SameSessionId) {
+    TpSegmenter segmenter(config);
+
+    Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                   MessageType::REQUEST, ReturnCode::E_OK);
+    std::vector<uint8_t> large_payload(1500, 0xCC);
+    message.set_payload(large_payload);
+
+    std::vector<TpSegment> segments;
+    TpResult result = segmenter.segment_message(message, segments);
+    ASSERT_EQ(result, TpResult::SUCCESS);
+    ASSERT_GT(segments.size(), 1u);
+
+    // All segments should have the same TP sequence number
+    uint8_t expected_sequence = segments[0].header.sequence_number;
+    for (const auto& segment : segments) {
+        EXPECT_EQ(segment.header.sequence_number, expected_sequence);
+    }
+}
+
+/**
+ * @test_case TC_TP_007
+ * @tests REQ_TP_007
+ * @brief Test TP flag is set in Message Type for segmented messages
+ */
+TEST_F(TpTest, TpFlagInMessageType) {
+    TpSegmenter segmenter(config);
+
+    Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                   MessageType::REQUEST, ReturnCode::E_OK);
+    std::vector<uint8_t> large_payload(1500, 0xDD);
+    message.set_payload(large_payload);
+
+    std::vector<TpSegment> segments;
+    TpResult result = segmenter.segment_message(message, segments);
+    ASSERT_EQ(result, TpResult::SUCCESS);
+    ASSERT_GT(segments.size(), 1u);
+
+    // Check that TP flag (0x20) is set in the message type for the first segment
+    const auto& first_segment = segments[0];
+    if (first_segment.payload.size() >= 16) {  // Has SOME/IP header
+        // Message type is at offset 14 in SOME/IP header
+        uint8_t message_type = first_segment.payload[14];
+        EXPECT_NE(message_type & 0x20, 0u) << "TP flag not set in message type";
+    }
+}
+
+/**
+ * @test_case TC_TP_008
+ * @tests REQ_TP_008
+ * @brief Test original message type is preserved with TP flag added
+ */
+TEST_F(TpTest, PreserveMessageTypeWithTpFlag) {
+    TpSegmenter segmenter(config);
+
+    Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                   MessageType::REQUEST_NO_RETURN, ReturnCode::E_OK);
+    std::vector<uint8_t> large_payload(1500, 0xEE);
+    message.set_payload(large_payload);
+
+    std::vector<TpSegment> segments;
+    TpResult result = segmenter.segment_message(message, segments);
+    ASSERT_EQ(result, TpResult::SUCCESS);
+    ASSERT_GT(segments.size(), 1u);
+
+    // Original message type should be REQUEST_NO_RETURN (0x01)
+    // With TP flag it should become TP_REQUEST_NO_RETURN (0x21)
+    MessageType expected_tp_type = static_cast<MessageType>(
+        static_cast<uint8_t>(MessageType::REQUEST_NO_RETURN) | 0x20);
+
+    // Only the first segment contains the SOME/IP header
+    const auto& first_segment = segments[0];
+    if (first_segment.payload.size() >= 16) {  // Has SOME/IP header
+        // Message type is at offset 14 in SOME/IP header
+        uint8_t message_type = first_segment.payload[14];
+        EXPECT_EQ(static_cast<MessageType>(message_type), expected_tp_type)
+            << "Message type not preserved with TP flag";
+    }
+}
