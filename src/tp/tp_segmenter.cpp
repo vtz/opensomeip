@@ -160,9 +160,16 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         std::vector<uint8_t> segment_data;
         segment_data.reserve(4 + payload_size);  // TP header + payload
 
-        // Add TP header (REQ_TP_011-021)
+        // Add TP header first (REQ_TP_011-021)
         bool more_segments = (payload_offset + payload_size) < total_length;
-        serialize_tp_header(segment_data, payload_offset, more_segments);
+        // Build TP header bytes directly (no SOME/IP header for subsequent segments)
+        uint32_t offset_units = payload_offset / 16;
+        uint32_t tp_header = (offset_units << 4) | (more_segments ? 0x01 : 0x00);
+        segment_data.push_back((tp_header >> 24) & 0xFF);
+        segment_data.push_back((tp_header >> 16) & 0xFF);
+        segment_data.push_back((tp_header >> 8) & 0xFF);
+        segment_data.push_back(tp_header & 0xFF);
+        // Add payload data
         segment_data.insert(segment_data.end(), payload.begin() + payload_offset,
                            payload.begin() + payload_offset + payload_size);
 

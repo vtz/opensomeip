@@ -194,26 +194,26 @@ jobs:
           # Parse gap analysis to check for missing implementation or tests
           if [ -f "build/docs/traceability/gap_analysis.md" ]; then
             MISSING_IMPL=$(grep -c "^- REQ_" build/docs/traceability/gap_analysis.md | head -1 || echo "0")
-            
+
             # Check if SWE.3 or SWE.6 failed
             if grep -q "SWE.3.*FAIL" build/docs/traceability/gap_analysis.md; then
               echo "::error::SWE.3 FAILED - Missing implementation for requirements"
               echo "See build/docs/traceability/gap_analysis.md for details"
               exit 1
             fi
-            
+
             if grep -q "SWE.6.*FAIL" build/docs/traceability/gap_analysis.md; then
               echo "::error::SWE.6 FAILED - Missing test coverage for requirements"
               echo "See build/docs/traceability/gap_analysis.md for details"
               exit 1
             fi
-            
+
             echo "::notice::ASPICE traceability validation passed"
           else
             echo "::warning::Gap analysis not generated - skipping traceability check"
           fi
-          
-          # Also fail if strict validation failed  
+
+          # Also fail if strict validation failed
           if [ "${{ steps.validate_strict.outcome }}" == "failure" ]; then
             echo "::error::Requirements validation failed in strict mode"
             echo "See validation_strict.txt for details"

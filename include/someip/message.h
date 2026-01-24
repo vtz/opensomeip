@@ -125,6 +125,8 @@ public:
     bool has_valid_client_id() const;
     bool has_valid_session_id() const;
     bool has_valid_length() const;
+    bool has_valid_message_type() const;
+    bool has_tp_flag() const;
 
     // Utility methods
     size_t get_total_size() const {

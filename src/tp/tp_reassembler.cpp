@@ -13,6 +13,7 @@
 
 #include "tp/tp_reassembler.h"
 #include <algorithm>
+#include <iostream>
 #include <mutex>
 
 namespace someip {
@@ -111,7 +112,7 @@ bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_
 bool TpReassembler::validate_segment(const TpSegment& segment) const {
     const auto config = get_config_copy();
 
-    // Validate segment header
+    // Validate segment header: segment_length should match payload size
     if (segment.header.segment_length != segment.payload.size()) {
         return false;
     }
@@ -121,8 +122,21 @@ bool TpReassembler::validate_segment(const TpSegment& segment) const {
         return false;
     }
 
-    // Validate offset
-    if (segment.header.segment_offset + segment.header.segment_length > segment.header.message_length) {
+    // Calculate the actual payload bytes (excluding headers)
+    // First segment has SOME/IP header (16 bytes) + TP header (4 bytes)
+    // Subsequent segments only have TP header (4 bytes)
+    uint16_t header_overhead = 0;
+    if (segment.header.message_type == TpMessageType::FIRST_SEGMENT) {
+        header_overhead = 16 + 4;  // SOME/IP header + TP header
+    } else if (segment.header.message_type != TpMessageType::SINGLE_MESSAGE) {
+        header_overhead = 4;  // TP header only
+    }
+
+    // Validate offset: the actual payload portion should fit within message bounds
+    uint16_t actual_payload_bytes = segment.header.segment_length > header_overhead
+                                    ? segment.header.segment_length - header_overhead
+                                    : 0;
+    if (segment.header.segment_offset + actual_payload_bytes > segment.header.message_length) {
         return false;
     }
 
@@ -159,13 +173,27 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
  * @implements REQ_TP_039_E01
  */
 bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment) {
+    // Calculate actual payload bytes (excluding headers)
+    size_t header_overhead = 0;
+    if (segment.header.message_type == TpMessageType::FIRST_SEGMENT) {
+        header_overhead = 16 + 4;  // SOME/IP header + TP header
+    } else if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
+        header_overhead = 16;  // SOME/IP header only
+    } else {
+        header_overhead = 4;  // TP header only for consecutive/last segments
+    }
+
+    size_t actual_payload_bytes = segment.payload.size() > header_overhead
+                                  ? segment.payload.size() - header_overhead
+                                  : 0;
+
     // Check if this segment was already received
-    if (buffer.is_segment_received(segment.header.segment_offset, segment.header.segment_length)) {
+    if (buffer.is_segment_received(segment.header.segment_offset, actual_payload_bytes)) {
         return true;  // Duplicate segment, ignore
     }
 
-    // Check bounds
-    if (segment.header.segment_offset + segment.header.segment_length > buffer.total_length) {
+    // Check bounds using actual payload bytes
+    if (segment.header.segment_offset + actual_payload_bytes > buffer.total_length) {
         return false;  // Segment exceeds message bounds
     }
 
@@ -173,11 +201,13 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
 
     // Handle different segment types
     if (segment.header.message_type == TpMessageType::FIRST_SEGMENT) {
-        // First segment contains SOME/IP header + payload data
-        const size_t header_size = 16;  // SOME/IP header size
-        if (segment.payload.size() > header_size) {
-            bytes_received = segment.payload.size() - header_size;
-            std::copy(segment.payload.begin() + header_size,
+        // First segment: SOME/IP header (16) + TP header (4) + data
+        const size_t someip_header_size = 16;
+        const size_t tp_header_size = 4;
+        const size_t total_header_size = someip_header_size + tp_header_size;
+        if (segment.payload.size() > total_header_size) {
+            bytes_received = segment.payload.size() - total_header_size;
+            std::copy(segment.payload.begin() + total_header_size,
                      segment.payload.end(),
                      buffer.received_data.begin() + segment.header.segment_offset);
         }
@@ -191,10 +221,13 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
                      buffer.received_data.begin());
         }
     } else {
-        // Consecutive/last segments contain only payload data
-        bytes_received = segment.payload.size();
-        std::copy(segment.payload.begin(), segment.payload.end(),
-                 buffer.received_data.begin() + segment.header.segment_offset);
+        // Consecutive/last segments: TP header (4) + payload data
+        const size_t tp_header_size = 4;
+        if (segment.payload.size() > tp_header_size) {
+            bytes_received = segment.payload.size() - tp_header_size;
+            std::copy(segment.payload.begin() + tp_header_size, segment.payload.end(),
+                     buffer.received_data.begin() + segment.header.segment_offset);
+        }
     }
 
     // Mark the received bytes

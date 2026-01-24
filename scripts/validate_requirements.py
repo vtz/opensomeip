@@ -52,31 +52,31 @@ def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Set[str], Dict[str, Li
     satisfies_map = {}  # req_id -> list of satisfied spec requirements
 
     import re
-    
+
     # Pattern to find requirement blocks - captures the entire directive block
     req_block_pattern = re.compile(
         r'\.\.\s+requirement::.*?\n((?:\s+:[^\n]+\n)+)',
         re.IGNORECASE
     )
-    
+
     # Patterns for individual fields
     id_pattern = re.compile(r':id:\s*(REQ_[A-Za-z0-9_]+)', re.IGNORECASE)
     satisfies_pattern = re.compile(r':satisfies:\s*([^\n]+)', re.IGNORECASE)
-    
+
     for rst_file in rst_dir.rglob("*.rst"):
         content = rst_file.read_text(encoding='utf-8', errors='ignore')
 
         for block_match in req_block_pattern.finditer(content):
             block_content = block_match.group(1)
-            
+
             # Extract ID
             id_match = id_pattern.search(block_content)
             if not id_match:
                 continue
-            
+
             req_id = id_match.group(1).upper()
             requirements.add(req_id)
-            
+
             # Extract satisfies (if present)
             satisfies_match = satisfies_pattern.search(block_content)
             if satisfies_match:
