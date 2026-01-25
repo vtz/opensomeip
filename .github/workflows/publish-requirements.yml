@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install sphinx>=5.0 sphinx-needs>=0.6.0 sphinxcontrib-plantuml
+          pip install sphinx>=7.0 sphinx-needs>=5.0.0 sphinxcontrib-plantuml
           pip install -r open-someip-spec/requirements.txt
 
       - name: Build open-someip-spec

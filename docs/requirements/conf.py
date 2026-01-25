@@ -71,11 +71,10 @@ needs_types = [
 ]
 
 # Extra options for needs
-# Note: 'status' is a core field in sphinx-needs and should not be listed here
+# Note: 'status' is a core field in sphinx-needs and should not be listed here.
+# Link types (satisfies, implements, tested_by) are defined in needs_extra_links
+# and automatically create their own options, so they must not be duplicated here.
 needs_extra_options = [
-    "satisfies",
-    "implements",
-    "tested_by",
     "code_location",
     "priority",
 ]
