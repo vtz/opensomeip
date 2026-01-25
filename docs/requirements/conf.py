@@ -71,13 +71,13 @@ needs_types = [
 ]
 
 # Extra options for needs
+# Note: 'status' is a core field in sphinx-needs and should not be listed here
 needs_extra_options = [
     "satisfies",
     "implements",
     "tested_by",
     "code_location",
     "priority",
-    "status",
 ]
 
 # Extra links for traceability
