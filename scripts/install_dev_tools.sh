@@ -145,6 +145,9 @@ install_python_packages() {
     echo "📦 Installing Python packages with $PIP_CMD..."
     $PIP_CMD install --user gcovr pytest pytest-cov
 
+    echo "📦 Installing documentation packages..."
+    $PIP_CMD install --user sphinx sphinx-needs sphinxcontrib-plantuml
+
     echo "✅ Python packages installed"
 }
 
@@ -198,6 +201,8 @@ echo "- cppcheck (additional static analysis)"
 echo "- lcov (coverage reporting, optional)"
 echo "- gcovr (Python coverage reporting)"
 echo "- pytest (Python testing framework)"
+echo "- sphinx (documentation generator)"
+echo "- sphinx-needs (requirements management)"
 echo ""
 
 read -p "Continue with installation? (y/N): " -n 1 -r
