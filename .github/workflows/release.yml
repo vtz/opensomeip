@@ -1,0 +1,61 @@
+# Create GitHub Release when a version tag is pushed
+#
+# This workflow automatically creates a GitHub Release with release notes
+# extracted from CHANGELOG.md when a version tag (v*) is pushed.
+
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          # Extract the section for this version from CHANGELOG.md
+          # Looks for ## [version] and extracts until the next ## [
+          VERSION="${{ steps.version.outputs.VERSION }}"
+
+          # Use awk to extract the relevant section
+          NOTES=$(awk -v ver="$VERSION" '
+            /^## \[/ {
+              if (found) exit
+              if ($0 ~ "\\[" ver "\\]") found=1
+              next
+            }
+            found { print }
+          ' CHANGELOG.md)
+
+          # If no notes found, use a default message
+          if [ -z "$NOTES" ]; then
+            NOTES="Release v$VERSION - see CHANGELOG.md for details."
+          fi
+
+          # Write to file for multiline support
+          echo "$NOTES" > release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ steps.version.outputs.VERSION }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.VERSION, '-') }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
