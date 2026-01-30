@@ -11,17 +11,19 @@
   SPDX-License-Identifier: Apache-2.0
 -->
 
-# SOME/IP Stack
+# OpenSOME/IP - Open Source SOME/IP Protocol Stack
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B17)
 [![CMake](https://img.shields.io/badge/CMake-3.20+-blue.svg)](https://cmake.org/)
 
-An implementation of the Scalable service-Oriented MiddlewarE over IP (SOME/IP) protocol for automotive and embedded systems. Safety alignment work is ongoing; no safety certification is claimed.
+**OpenSOME/IP** (`opensomeip`) is a modern, open-source C++17 implementation of the Scalable service-Oriented MiddlewarE over IP (SOME/IP) protocol for automotive and embedded systems.
+
+> **Keywords**: SOME/IP, AUTOSAR, automotive middleware, service-oriented architecture, SOA, embedded systems, vehicle communication, ECU, CAN replacement, Ethernet automotive, in-vehicle networking, IVN
 
 ## Overview
 
-This project provides a complete, standards-compliant C++ implementation of the SOME/IP protocol stack for automotive systems:
+OpenSOME/IP provides a complete, standards-compliant C++ implementation of the SOME/IP protocol stack for automotive and embedded systems. This open-source alternative enables service-oriented communication over Ethernet, supporting AUTOSAR-compatible vehicle networks and IoT applications.
 
 ### Core Features
 - **Message Format & Serialization**: Complete SOME/IP message handling with big-endian serialization
@@ -31,13 +33,13 @@ This project provides a complete, standards-compliant C++ implementation of the 
 - **RPC & Events**: Request/response and publish/subscribe communication patterns
 - **Safety-Oriented Design**: Patterns for error handling and validation (not certified)
 
-### Open Source Features
-- **Apache 2.0 Licensed**: Permissive open source license
-- **Comprehensive Testing**: 62+ unit tests with coverage reporting
-- **Static Analysis**: clang-tidy and cppcheck integration
-- **Code Quality**: Automated formatting and style checking
-- **Documentation**: Complete API docs and traceability matrices
-- **CI/CD Ready**: CMake-based build system with testing integration
+### Why Choose OpenSOME/IP?
+- **Truly Open Source**: Apache 2.0 licensed - use freely in commercial and personal projects
+- **Modern C++17**: Clean, maintainable codebase with no legacy dependencies
+- **Production Ready**: 62+ unit tests with coverage reporting and CI/CD integration
+- **Well Documented**: Complete API documentation, examples, and traceability matrices
+- **Active Development**: Regular updates and community-driven improvements
+- **Easy Integration**: CMake-based build system works with any C++ project
 
 ### Standards & Coverage (in progress)
 - Protocol coverage is tracked against the Open SOME/IP Specification (see traceability docs)
@@ -132,7 +134,8 @@ cmake ..
 ### Build and Run Demo
 
 ```bash
-# Clone and enter directory
+# Clone the OpenSOME/IP repository
+git clone https://github.com/vtz/opensomeip.git
 cd opensomeip
 
 # Install basic build dependencies (required)
@@ -266,7 +269,7 @@ pipeline {
 
 ## Architecture
 
-The implementation follows a modular, layered architecture with clear separation of concerns:
+OpenSOME/IP follows a modular, layered architecture with clear separation of concerns, making it easy to extend and integrate:
 
 ### Core Layer (`someip-common`)
 - Message structures and serialization
@@ -504,7 +507,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ### Quick Start for Contributors
 
 ```bash
-# Fork and clone the repository
+# Fork and clone the OpenSOME/IP repository
 git clone https://github.com/vtz/opensomeip.git
 cd opensomeip
 
@@ -537,10 +540,11 @@ make
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+OpenSOME/IP is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Support & Community
 
+- **Repository**: [github.com/vtz/opensomeip](https://github.com/vtz/opensomeip)
 - **Documentation**: Comprehensive guides in `docs/` directory
 - **Examples**: Working code samples in `examples/` directory
 - **Issues**: Bug reports and feature requests on GitHub
@@ -551,7 +555,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 1. Check the [examples](examples/) directory for usage patterns
 2. Review the [documentation](docs/) for detailed guides
 3. Run the test suite: `./scripts/run_tests.py --help`
-4. Search existing [issues](https://github.com/your-org/someip-stack/issues)
+4. Search existing [issues](https://github.com/vtz/opensomeip/issues)
 
 ## Standards & Compliance (status)
 
@@ -562,4 +566,4 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ---
 
-*Built with ❤️ for automotive and embedded systems. Safety certification is not claimed.*
+*OpenSOME/IP - Built with ❤️ for automotive and embedded systems. Safety certification is not claimed.*
