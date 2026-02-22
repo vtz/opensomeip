@@ -201,7 +201,7 @@ apenas para validacao IPv4/IPv6. Parsing manual e mais eficiente em todas as pla
 
 ### Estado ao final da fase
 
-- Build host: pass (mesmos 7/11 testes passam; 4 falhas pre-existentes em testes de rede)
+- Build host: pass (11/11 testes passam)
 - Zero usos de `std::thread`/`std::mutex`/`std::condition_variable` fora de `platform/thread.h`
 
 ---
