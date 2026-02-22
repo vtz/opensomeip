@@ -87,7 +87,7 @@ Result TcpTransport::send_message(const Message& message, const Endpoint& endpoi
 }
 
 MessagePtr TcpTransport::receive_message() {
-    std::scoped_lock lock(queue_mutex_);
+    platform::ScopedLock lock(queue_mutex_);
     if (message_queue_.empty()) {
         return nullptr;
     }
@@ -138,10 +138,10 @@ Result TcpTransport::start() {
     running_ = true;
 
     // Start receive thread
-    receive_thread_ = std::thread(&TcpTransport::receive_loop, this);
+    receive_thread_ = platform::Thread(&TcpTransport::receive_loop, this);
 
     // Start connection monitor thread
-    connection_thread_ = std::thread(&TcpTransport::connection_monitor_loop, this);
+    connection_thread_ = platform::Thread(&TcpTransport::connection_monitor_loop, this);
 
     return Result::SUCCESS;
 }
@@ -362,7 +362,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
 }
 
 void TcpTransport::disconnect_internal() {
-    std::scoped_lock lock(connection_mutex_);
+    platform::ScopedLock lock(connection_mutex_);
 
     if (connection_.socket_fd != -1) {
         connection_.state = TcpConnectionState::DISCONNECTING;
@@ -392,7 +392,7 @@ void TcpTransport::receive_loop() {
                 // Check connection limit before accepting
                 if (active_connections_.load() >= config_.max_connections) {
                     // Too many connections, wait a bit before checking again
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    platform::this_thread::sleep_for(std::chrono::milliseconds(100));
                     continue;
                 }
 
@@ -418,7 +418,7 @@ void TcpTransport::receive_loop() {
         }
 
         if (!is_connected()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            platform::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
@@ -429,7 +429,7 @@ void TcpTransport::receive_loop() {
             // Try to parse messages from buffer
             MessagePtr message;
             if (parse_message_from_buffer(buffer, message)) {
-                std::scoped_lock lock(queue_mutex_);
+                platform::ScopedLock lock(queue_mutex_);
                 message_queue_.push({message, connection_.remote_endpoint});
                 connection_.update_activity();
 
@@ -448,7 +448,7 @@ void TcpTransport::receive_loop() {
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        platform::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
@@ -465,7 +465,7 @@ void TcpTransport::connection_monitor_loop() {
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::seconds(30));
+        platform::this_thread::sleep_for(std::chrono::seconds(30));
     }
 }
 

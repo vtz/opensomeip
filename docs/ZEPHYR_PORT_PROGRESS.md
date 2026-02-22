@@ -175,12 +175,34 @@ apenas para validacao IPv4/IPv6. Parsing manual e mais eficiente em todas as pla
   - `platform::this_thread::sleep_for()` portavel (k_msleep no embedded)
   - `platform::ScopedLock` compativel com ambos
 - Criado `src/platform/zephyr_thread.cpp` (stub, implementacao e inline no header)
+- Substituido `std::thread`/`std::mutex`/`std::condition_variable` em **19 arquivos**:
+  - 6 headers: `udp_transport.h`, `tcp_transport.h`, `session_manager.h`,
+    `e2e_profile_registry.h`, `tp_reassembler.h`, `tp_manager.h`
+  - 13 sources: `udp_transport.cpp`, `tcp_transport.cpp`, `session_manager.cpp`,
+    `sd_server.cpp`, `sd_client.cpp`, `rpc_client.cpp`, `rpc_server.cpp`,
+    `event_publisher.cpp`, `event_subscriber.cpp`, `e2e_profile_registry.cpp`,
+    `standard_profile.cpp`, `tp_reassembler.cpp`, `tp_manager.cpp`
+- Substituido `std::scoped_lock` -> `platform::ScopedLock` em todos os fontes
+- Substituido `std::lock_guard<std::mutex>` -> `platform::ScopedLock` em e2e/sd
+- Substituido `std::this_thread::sleep_for` -> `platform::this_thread::sleep_for`
+- Substituido `std::future`/`std::promise` em `rpc_client.cpp` por `std::atomic` +
+  `platform::Mutex` + polling com `platform::this_thread::sleep_for`
+- Removidos todos os `#include <mutex>`, `#include <thread>`, `#include <condition_variable>`,
+  `#include <future>` dos fontes (incluidos transitivamente via `platform/thread.h`)
 
 ### Decisoes tomadas
 
-- Threading abstraction definida mas **nao aplicada** nos fontes existentes nesta fase.
-  Nos fontes de host/native_sim, `std::thread` continua funcionando. A substituicao
-  para `platform::Thread` sera feita quando o build ARM falhar por falta de pthreads.
+- `std::atomic` mantido (funciona em todas as plataformas, nao precisa de abstracao)
+- `std::future`/`std::promise` eliminados completamente (dependencia do libstdc++
+  que nao esta disponivel em todos os targets embedded). Substituido por polling com
+  sleep de 1ms, aceitavel para RPC sync calls com latencia de rede muito maior.
+- `platform::ConditionVariable` nao precisa de `wait()` no codebase atual (CVs sao
+  usadas apenas para `notify_one()`), simplificando a API embedded.
+
+### Estado ao final da fase
+
+- Build host: pass (mesmos 7/11 testes passam; 4 falhas pre-existentes em testes de rede)
+- Zero usos de `std::thread`/`std::mutex`/`std::condition_variable` fora de `platform/thread.h`
 
 ---
 

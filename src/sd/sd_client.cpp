@@ -18,9 +18,7 @@
 #include "transport/transport.h"
 #include "someip/message.h"
 #include <unordered_map>
-#include <mutex>
 #include <atomic>
-#include <thread>
 #include <chrono>
 #include <algorithm>
 
@@ -82,7 +80,7 @@ public:
 
         // Clear all subscriptions and callbacks
         {
-            std::scoped_lock lock(subscriptions_mutex_);
+            platform::ScopedLock lock(subscriptions_mutex_);
             service_subscriptions_.clear();
         }
 
@@ -128,7 +126,7 @@ public:
         // Store callback for responses
         uint32_t request_id = next_request_id_++;
         {
-            std::scoped_lock lock(pending_finds_mutex_);
+            platform::ScopedLock lock(pending_finds_mutex_);
             pending_finds_[request_id] = {
                 service_id, std::move(callback),
                 std::chrono::steady_clock::now(),
@@ -147,7 +145,7 @@ public:
                           ServiceAvailableCallback available_callback,
                           ServiceUnavailableCallback unavailable_callback) {
 
-        std::scoped_lock lock(subscriptions_mutex_);
+        platform::ScopedLock lock(subscriptions_mutex_);
 
         // Check if already subscribed
         bool already_exists = service_subscriptions_.count(service_id) > 0;
@@ -161,7 +159,7 @@ public:
     }
 
     bool unsubscribe_service(uint16_t service_id) {
-        std::scoped_lock lock(subscriptions_mutex_);
+        platform::ScopedLock lock(subscriptions_mutex_);
         return service_subscriptions_.erase(service_id) > 0;
     }
 
@@ -236,7 +234,7 @@ public:
     }
 
     std::vector<ServiceInstance> get_available_services(uint16_t service_id) const {
-        std::scoped_lock lock(available_services_mutex_);
+        platform::ScopedLock lock(available_services_mutex_);
         std::vector<ServiceInstance> result;
 
         for (const auto& service : available_services_) {
@@ -359,7 +357,7 @@ private:
 
         // Update available services
         {
-            std::scoped_lock lock(available_services_mutex_);
+            platform::ScopedLock lock(available_services_mutex_);
             auto it = std::find_if(available_services_.begin(), available_services_.end(),
                 [&](const ServiceInstance& svc) {
                     return svc.service_id == instance.service_id &&
@@ -374,7 +372,7 @@ private:
         }
 
         // Notify subscribers
-        std::scoped_lock lock(subscriptions_mutex_);
+        platform::ScopedLock lock(subscriptions_mutex_);
         auto sub_it = service_subscriptions_.find(instance.service_id);
         if (sub_it != service_subscriptions_.end() && sub_it->second.available_callback) {
             sub_it->second.available_callback(instance);
@@ -382,7 +380,7 @@ private:
 
         // Check for pending finds
         {
-            std::scoped_lock lock(pending_finds_mutex_);
+            platform::ScopedLock lock(pending_finds_mutex_);
             for (auto it = pending_finds_.begin(); it != pending_finds_.end(); ) {
                 if (it->second.service_id == instance.service_id) {
                     if (it->second.callback) {
@@ -404,7 +402,7 @@ private:
 
         // Remove from available services
         {
-            std::scoped_lock lock(available_services_mutex_);
+            platform::ScopedLock lock(available_services_mutex_);
             auto it = std::remove_if(available_services_.begin(), available_services_.end(),
                 [&](const ServiceInstance& svc) {
                     return svc.service_id == instance.service_id &&
@@ -414,7 +412,7 @@ private:
         }
 
         // Notify subscribers
-        std::scoped_lock lock(subscriptions_mutex_);
+        platform::ScopedLock lock(subscriptions_mutex_);
         auto sub_it = service_subscriptions_.find(instance.service_id);
         if (sub_it != service_subscriptions_.end() && sub_it->second.unavailable_callback) {
             sub_it->second.unavailable_callback(instance);
@@ -425,13 +423,13 @@ private:
     std::shared_ptr<transport::UdpTransport> transport_;
 
     std::unordered_map<uint16_t, ServiceSubscription> service_subscriptions_;
-    mutable std::mutex subscriptions_mutex_;
+    mutable platform::Mutex subscriptions_mutex_;
 
     std::vector<ServiceInstance> available_services_;
-    mutable std::mutex available_services_mutex_;
+    mutable platform::Mutex available_services_mutex_;
 
     std::unordered_map<uint32_t, PendingFind> pending_finds_;
-    mutable std::mutex pending_finds_mutex_;
+    mutable platform::Mutex pending_finds_mutex_;
 
     std::atomic<uint32_t> next_request_id_;
     std::atomic<bool> running_;

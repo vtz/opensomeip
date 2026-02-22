@@ -14,7 +14,6 @@
 #include "tp/tp_reassembler.h"
 #include <algorithm>
 #include <iostream>
-#include <mutex>
 
 namespace someip {
 namespace tp {
@@ -36,7 +35,7 @@ TpReassembler::TpReassembler(const TpConfig& config)
 
 // NOLINTNEXTLINE(modernize-use-equals-default) - intentional cleanup with lock
 TpReassembler::~TpReassembler() {
-    std::scoped_lock lock(buffers_mutex_);
+    platform::ScopedLock lock(buffers_mutex_);
     reassembly_buffers_.clear();
 }
 
@@ -84,7 +83,7 @@ bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_
         return false;
     }
 
-    std::scoped_lock lock(buffers_mutex_);
+    platform::ScopedLock lock(buffers_mutex_);
 
     TpReassemblyBuffer* buffer = find_or_create_buffer(segment);
     if (!buffer) {
@@ -240,14 +239,14 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
 }
 
 bool TpReassembler::is_reassembling(uint32_t message_id) const {
-    std::scoped_lock lock(buffers_mutex_);
+    platform::ScopedLock lock(buffers_mutex_);
     return reassembly_buffers_.find(message_id) != reassembly_buffers_.end();
 }
 
 bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& received_bytes, uint32_t& total_bytes) const {
     const auto config = get_config_copy();
 
-    std::scoped_lock lock(buffers_mutex_);
+    platform::ScopedLock lock(buffers_mutex_);
     auto it = reassembly_buffers_.find(message_id);
 
     if (it == reassembly_buffers_.end()) {
@@ -274,25 +273,25 @@ bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& recei
 }
 
 void TpReassembler::cancel_reassembly(uint32_t message_id) {
-    std::scoped_lock lock(buffers_mutex_);
+    platform::ScopedLock lock(buffers_mutex_);
     reassembly_buffers_.erase(message_id);
 }
 
 void TpReassembler::process_timeouts() {
     const auto config = get_config_copy();
 
-    std::scoped_lock lock(buffers_mutex_);
+    platform::ScopedLock lock(buffers_mutex_);
     cleanup_timed_out_buffers(config);
     cleanup_completed_buffers();
 }
 
 size_t TpReassembler::get_active_reassemblies() const {
-    std::scoped_lock lock(buffers_mutex_);
+    platform::ScopedLock lock(buffers_mutex_);
     return reassembly_buffers_.size();
 }
 
 void TpReassembler::update_config(const TpConfig& config) {
-    std::scoped_lock lock(config_mutex_);
+    platform::ScopedLock lock(config_mutex_);
     config_ = config;
 }
 
@@ -316,7 +315,7 @@ void TpReassembler::cleanup_timed_out_buffers(const TpConfig& config) {
 }
 
 TpConfig TpReassembler::get_config_copy() const {
-    std::scoped_lock lock(config_mutex_);
+    platform::ScopedLock lock(config_mutex_);
     return config_;
 }
 

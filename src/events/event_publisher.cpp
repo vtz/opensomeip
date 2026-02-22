@@ -19,9 +19,7 @@
 #include "someip/message.h"
 #include <unordered_map>
 #include <unordered_set>
-#include <mutex>
 #include <atomic>
-#include <thread>
 #include <chrono>
 #include <algorithm>
 
@@ -74,17 +72,17 @@ public:
         stop_publish_timer();
 
         // Clear all subscriptions and events
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
         subscriptions_.clear();
 
-        std::scoped_lock events_lock(events_mutex_);
+        platform::ScopedLock events_lock(events_mutex_);
         registered_events_.clear();
 
         transport_->stop();
     }
 
     bool register_event(const EventConfig& config) {
-        std::scoped_lock events_lock(events_mutex_);
+        platform::ScopedLock events_lock(events_mutex_);
 
         // Check if already registered
         bool already_exists = registered_events_.count(config.event_id) > 0;
@@ -95,12 +93,12 @@ public:
     }
 
     bool unregister_event(uint16_t event_id) {
-        std::scoped_lock events_lock(events_mutex_);
+        platform::ScopedLock events_lock(events_mutex_);
         return registered_events_.erase(event_id) > 0;
     }
 
     bool update_event_config(uint16_t event_id, const EventConfig& config) {
-        std::scoped_lock events_lock(events_mutex_);
+        platform::ScopedLock events_lock(events_mutex_);
 
         auto it = registered_events_.find(event_id);
         if (it == registered_events_.end()) {
@@ -116,7 +114,7 @@ public:
             return false;
         }
 
-        std::scoped_lock events_lock(events_mutex_);
+        platform::ScopedLock events_lock(events_mutex_);
         auto event_it = registered_events_.find(event_id);
         if (event_it == registered_events_.end()) {
             return false;
@@ -128,7 +126,7 @@ public:
         notification.session_id = next_session_id_++;
 
         // Send to all subscribed clients for this event's eventgroup
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
         auto eventgroup_id = event_it->second.eventgroup_id;
 
         auto sub_it = subscriptions_.find(eventgroup_id);
@@ -149,7 +147,7 @@ public:
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const std::vector<EventFilter>& filters) {
 
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
 
         // Create client info (simplified - using localhost for demo)
         ClientInfo client_info;
@@ -173,7 +171,7 @@ public:
     }
 
     bool handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id) {
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
 
         auto sub_it = subscriptions_.find(eventgroup_id);
         if (sub_it == subscriptions_.end()) {
@@ -191,7 +189,7 @@ public:
     }
 
     std::vector<uint16_t> get_registered_events() const {
-        std::scoped_lock events_lock(events_mutex_);
+        platform::ScopedLock events_lock(events_mutex_);
         std::vector<uint16_t> events;
 
         for (const auto& pair : registered_events_) {
@@ -202,7 +200,7 @@ public:
     }
 
     std::vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const {
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
 
         auto it = subscriptions_.find(eventgroup_id);
         if (it == subscriptions_.end()) {
@@ -238,9 +236,9 @@ private:
             return;
         }
 
-        publish_timer_thread_ = std::thread([this]() {
+        publish_timer_thread_ = platform::Thread([this]() {
             while (running_) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));  // 100ms check
+                platform::this_thread::sleep_for(std::chrono::milliseconds(100));  // 100ms check
 
                 if (!running_) {
                     break;
@@ -258,7 +256,7 @@ private:
     }
 
     void publish_cyclic_events() {
-        std::scoped_lock events_lock(events_mutex_);
+        platform::ScopedLock events_lock(events_mutex_);
         auto now = std::chrono::steady_clock::now();
 
         for (auto& event_pair : registered_events_) {
@@ -302,7 +300,7 @@ private:
 
     void on_connection_lost(const transport::Endpoint& endpoint) override {
         // Handle client disconnection
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
 
         for (auto& sub_pair : subscriptions_) {
             auto& clients = sub_pair.second;
@@ -327,13 +325,13 @@ private:
     std::shared_ptr<transport::UdpTransport> transport_;
 
     std::unordered_map<uint16_t, EventConfig> registered_events_;
-    mutable std::mutex events_mutex_;
+    mutable platform::Mutex events_mutex_;
 
     std::unordered_map<uint16_t, std::vector<ClientInfo>> subscriptions_;
-    mutable std::mutex subscriptions_mutex_;
+    mutable platform::Mutex subscriptions_mutex_;
 
     std::unordered_map<uint16_t, std::chrono::steady_clock::time_point> last_publish_times_;
-    std::thread publish_timer_thread_;
+    platform::Thread publish_timer_thread_;
     std::atomic<uint16_t> next_session_id_;
     std::atomic<bool> running_;
 };

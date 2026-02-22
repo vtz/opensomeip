@@ -19,12 +19,8 @@
 #include "someip/message.h"
 #include "core/session_manager.h"
 #include <unordered_map>
-#include <mutex>
 #include <atomic>
-#include <thread>
 #include <chrono>
-#include <future>
-#include <condition_variable>
 
 namespace someip {
 namespace rpc {
@@ -75,7 +71,7 @@ public:
 
         // Cancel all pending calls
         {
-            std::scoped_lock lock(pending_calls_mutex_);
+            platform::ScopedLock lock(pending_calls_mutex_);
             for (auto& pair : pending_calls_) {
                 if (pair.second.callback) {
                     RpcResponse response(pair.second.service_id, pair.second.method_id,
@@ -93,31 +89,33 @@ public:
                                    const std::vector<uint8_t>& parameters,
                                    const RpcTimeout& timeout) {
 
-        // Create promise/future for synchronization
-        std::promise<RpcResponse> promise;
-        auto future = promise.get_future();
+        platform::Mutex sync_mtx;
+        std::shared_ptr<RpcResponse> sync_resp;
+        std::atomic<bool> response_ready{false};
 
-        // Make async call with callback that sets the promise
         auto handle = call_method_async(service_id, method_id, parameters,
-            [&promise](const RpcResponse& response) {
-                promise.set_value(response);
+            [&sync_mtx, &sync_resp, &response_ready](const RpcResponse& response) {
+                platform::ScopedLock lk(sync_mtx);
+                sync_resp = std::make_shared<RpcResponse>(response);
+                response_ready.store(true);
             }, timeout);
 
         if (handle == 0) {
             return {RpcResult::INTERNAL_ERROR, {}, std::chrono::milliseconds(0)};
         }
 
-        // Wait for response with timeout
-        auto status = future.wait_for(std::chrono::milliseconds(timeout.response_timeout));
-        if (status != std::future_status::ready) {
-            cancel_call(handle);
-            return {RpcResult::TIMEOUT, {}, timeout.response_timeout};
+        auto deadline = std::chrono::steady_clock::now()
+                       + std::chrono::milliseconds(timeout.response_timeout);
+        while (!response_ready.load()) {
+            if (std::chrono::steady_clock::now() >= deadline) {
+                cancel_call(handle);
+                return {RpcResult::TIMEOUT, {}, timeout.response_timeout};
+            }
+            platform::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
-        auto response = future.get();
-        auto response_time = std::chrono::milliseconds(0); // TODO: Track actual response time
-
-        return {response.result, response.return_values, response_time};
+        platform::ScopedLock lk(sync_mtx);
+        return {sync_resp->result, sync_resp->return_values, std::chrono::milliseconds(0)};
     }
 
     RpcCallHandle call_method_async(uint16_t service_id, MethodId method_id,
@@ -147,7 +145,7 @@ public:
 
         RpcCallHandle handle;
         {
-            std::scoped_lock lock(pending_calls_mutex_);
+            platform::ScopedLock lock(pending_calls_mutex_);
             handle = next_call_handle_++;
             pending_calls_[handle] = std::move(call_info);
         }
@@ -155,7 +153,7 @@ public:
         // Send request
         transport::Endpoint server_endpoint("127.0.0.1", 30490); // TODO: Make configurable
         if (transport_->send_message(request, server_endpoint) != Result::SUCCESS) {
-            std::scoped_lock lock(pending_calls_mutex_);
+            platform::ScopedLock lock(pending_calls_mutex_);
             pending_calls_.erase(handle);
             return 0;
         }
@@ -164,7 +162,7 @@ public:
     }
 
     bool cancel_call(RpcCallHandle handle) {
-        std::scoped_lock lock(pending_calls_mutex_);
+        platform::ScopedLock lock(pending_calls_mutex_);
         auto it = pending_calls_.find(handle);
         if (it == pending_calls_.end()) {
             return false;
@@ -206,7 +204,7 @@ private:
             return;
         }
 
-        std::scoped_lock lock(pending_calls_mutex_);
+        platform::ScopedLock lock(pending_calls_mutex_);
 
         // Find matching pending call by session ID
         for (auto it = pending_calls_.begin(); it != pending_calls_.end(); ++it) {
@@ -249,7 +247,7 @@ private:
     std::shared_ptr<transport::UdpTransport> transport_;
 
     std::unordered_map<RpcCallHandle, PendingCall> pending_calls_;
-    mutable std::mutex pending_calls_mutex_;
+    mutable platform::Mutex pending_calls_mutex_;
     std::atomic<RpcCallHandle> next_call_handle_;
     std::atomic<bool> running_;
 };

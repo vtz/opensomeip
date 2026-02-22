@@ -18,7 +18,6 @@
 #include "transport/transport.h"
 #include "someip/message.h"
 #include <unordered_map>
-#include <mutex>
 #include <atomic>
 #include <algorithm>
 
@@ -68,7 +67,7 @@ public:
         running_ = false;
 
         // Clear all subscriptions and callbacks
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
         subscriptions_.clear();
 
         transport_->stop();
@@ -94,7 +93,7 @@ public:
         sub_info.filters = filters;
 
         // Store subscription
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
         subscriptions_[key] = sub_info;
 
@@ -127,7 +126,7 @@ public:
             return false;
         }
 
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
@@ -166,7 +165,7 @@ public:
         }
 
         // Store callback for field response
-        std::scoped_lock field_lock(field_requests_mutex_);
+        platform::ScopedLock field_lock(field_requests_mutex_);
         std::string key = make_field_key(service_id, instance_id, event_id);
         field_requests_[key] = callback;
 
@@ -189,7 +188,7 @@ public:
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                          const std::vector<EventFilter>& filters) {
 
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
@@ -202,7 +201,7 @@ public:
     }
 
     std::vector<EventSubscription> get_active_subscriptions() const {
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
         std::vector<EventSubscription> result;
 
         for (const auto& pair : subscriptions_) {
@@ -215,7 +214,7 @@ public:
     SubscriptionState get_subscription_status(uint16_t service_id, uint16_t instance_id,
                                             uint16_t eventgroup_id) const {
 
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
@@ -258,7 +257,7 @@ private:
         }
 
         // Check if this is for one of our subscriptions
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
 
         uint16_t service_id = message->get_service_id();
         uint16_t event_id = message->get_method_id();  // Event ID is in method ID field for notifications
@@ -287,7 +286,7 @@ private:
         }
 
         // Check if this is a field response
-        std::scoped_lock field_lock(field_requests_mutex_);
+        platform::ScopedLock field_lock(field_requests_mutex_);
         std::string field_key = make_field_key(service_id, 0, event_id);  // Simplified
 
         auto field_it = field_requests_.find(field_key);
@@ -305,7 +304,7 @@ private:
 
     void on_connection_lost(const transport::Endpoint& endpoint) override {
         // Handle service disconnection
-        std::scoped_lock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock subs_lock(subscriptions_mutex_);
 
         for (auto& sub_pair : subscriptions_) {
             auto& sub_info = sub_pair.second;
@@ -328,10 +327,10 @@ private:
     std::shared_ptr<transport::UdpTransport> transport_;
 
     std::unordered_map<std::string, SubscriptionInfo> subscriptions_;
-    mutable std::mutex subscriptions_mutex_;
+    mutable platform::Mutex subscriptions_mutex_;
 
     std::unordered_map<std::string, EventNotificationCallback> field_requests_;
-    mutable std::mutex field_requests_mutex_;
+    mutable platform::Mutex field_requests_mutex_;
 
     std::atomic<bool> running_;
 };

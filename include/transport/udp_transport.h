@@ -16,11 +16,9 @@
 
 #include "transport/transport.h"
 #include "platform/net.h"
-#include <thread>
+#include "platform/thread.h"
 #include <atomic>
-#include <mutex>
 #include <queue>
-#include <condition_variable>
 
 namespace someip {
 namespace transport {
@@ -91,16 +89,14 @@ private:
     UdpTransportConfig config_;
     int socket_fd_{-1};
     std::atomic<bool> running_;
-    std::thread receive_thread_;
+    platform::Thread receive_thread_;
     ITransportListener* listener_{nullptr};
 
-    // Thread-safe message queue
     std::queue<MessagePtr> receive_queue_;
-    std::mutex queue_mutex_;
-    std::condition_variable queue_cv_;
+    platform::Mutex queue_mutex_;
+    platform::ConditionVariable queue_cv_;
 
-    // Socket management
-    std::mutex socket_mutex_;
+    platform::Mutex socket_mutex_;
 
     // Constants
     static constexpr size_t MAX_UDP_PAYLOAD = 65507; // Maximum UDP payload size

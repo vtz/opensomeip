@@ -73,7 +73,7 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
 }
 
 MessagePtr UdpTransport::receive_message() {
-    std::scoped_lock lock(queue_mutex_);
+    platform::ScopedLock lock(queue_mutex_);
     if (receive_queue_.empty()) {
         return nullptr;
     }
@@ -132,7 +132,7 @@ Result UdpTransport::start() {
     }
 
     running_ = true;
-    receive_thread_ = std::thread(&UdpTransport::receive_loop, this);
+    receive_thread_ = platform::Thread(&UdpTransport::receive_loop, this);
 
     return Result::SUCCESS;
 }
@@ -165,7 +165,7 @@ bool UdpTransport::is_running() const {
 }
 
 Result UdpTransport::join_multicast_group(const std::string& multicast_address) {
-    std::scoped_lock lock(socket_mutex_);
+    platform::ScopedLock lock(socket_mutex_);
 
     if (socket_fd_ < 0) {
         return Result::NOT_CONNECTED;
@@ -210,7 +210,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
 }
 
 Result UdpTransport::leave_multicast_group(const std::string& multicast_address) {
-    std::scoped_lock lock(socket_mutex_);
+    platform::ScopedLock lock(socket_mutex_);
 
     if (socket_fd_ < 0) {
         return Result::NOT_CONNECTED;
@@ -232,7 +232,7 @@ Result UdpTransport::leave_multicast_group(const std::string& multicast_address)
 }
 
 Result UdpTransport::create_socket() {
-    std::scoped_lock lock(socket_mutex_);
+    platform::ScopedLock lock(socket_mutex_);
 
     socket_fd_ = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_fd_ < 0) {
@@ -291,7 +291,7 @@ Result UdpTransport::create_socket() {
 }
 
 Result UdpTransport::bind_socket() {
-    std::scoped_lock lock(socket_mutex_);
+    platform::ScopedLock lock(socket_mutex_);
 
     sockaddr_in addr = create_sockaddr(local_endpoint_);
     if (bind(socket_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
@@ -342,7 +342,7 @@ void UdpTransport::receive_loop() {
             if (message->deserialize(buffer)) {  // Deserialize from the received buffer
                 // Add to queue
                 {
-                    std::scoped_lock lock(queue_mutex_);
+                    platform::ScopedLock lock(queue_mutex_);
                     receive_queue_.push(message);
                 }
                 queue_cv_.notify_one();
@@ -358,7 +358,7 @@ void UdpTransport::receive_loop() {
         } else if (result == Result::TIMEOUT && !config_.blocking) {
             // Timeout in non-blocking mode - just continue polling
             // Small delay to prevent tight polling loop
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            platform::this_thread::sleep_for(std::chrono::milliseconds(10));
         } else {
             // Network or other error, notify listener
             if (listener_) {
@@ -367,7 +367,7 @@ void UdpTransport::receive_loop() {
 
             if (!config_.blocking) {
                 // In non-blocking mode, add delay to prevent busy loops on errors
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                platform::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
             // In blocking mode, we only get here on actual errors, no delay needed
         }
@@ -375,7 +375,7 @@ void UdpTransport::receive_loop() {
 }
 
 Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint& endpoint) {
-    std::scoped_lock lock(socket_mutex_);
+    platform::ScopedLock lock(socket_mutex_);
 
     if (socket_fd_ < 0) {
         return Result::NOT_CONNECTED;

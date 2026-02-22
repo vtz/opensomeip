@@ -15,11 +15,9 @@
 #define SOMEIP_TRANSPORT_TCP_TRANSPORT_H
 
 #include "transport/transport.h"
+#include "platform/thread.h"
 #include <atomic>
-#include <thread>
-#include <mutex>
 #include <queue>
-#include <condition_variable>
 
 namespace someip {
 namespace transport {
@@ -188,21 +186,17 @@ private:
     TcpConnection connection_;
     ITransportListener* listener_{nullptr};
 
-    // Threading
     std::atomic<bool> running_{false};
-    std::thread receive_thread_;
-    std::thread connection_thread_;
+    platform::Thread receive_thread_;
+    platform::Thread connection_thread_;
 
-    // Connection management
     std::atomic<size_t> active_connections_{0};
 
-    // Message queue
     std::queue<std::pair<MessagePtr, Endpoint>> message_queue_;
-    std::mutex queue_mutex_;
-    std::condition_variable queue_cv_;
+    platform::Mutex queue_mutex_;
+    platform::ConditionVariable queue_cv_;
 
-    // Connection management
-    std::mutex connection_mutex_;
+    platform::Mutex connection_mutex_;
     bool server_mode_{false};
     int listen_socket_fd_{-1};
 

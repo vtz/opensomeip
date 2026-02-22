@@ -21,7 +21,6 @@
 #include "platform/byteorder.h"
 #include <chrono>
 #include <unordered_map>
-#include <mutex>
 #include <cstdint>
 #include <memory>
 
@@ -100,7 +99,7 @@ public:
         // Update counter (per data ID)
         uint32_t counter = 0;
         if (config.enable_counter) {
-            std::lock_guard<std::mutex> lock(counter_mutex_);
+            platform::ScopedLock lock(counter_mutex_);
             uint32_t& last_counter = counters_[config.data_id];
             last_counter++;
             if (last_counter > config.max_counter_value) {
@@ -112,7 +111,7 @@ public:
         // Update freshness value (per data ID)
         uint16_t freshness = 0;
         if (config.enable_freshness) {
-            std::lock_guard<std::mutex> lock(freshness_mutex_);
+            platform::ScopedLock lock(freshness_mutex_);
             auto now = std::chrono::steady_clock::now();
             auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now.time_since_epoch()).count();
@@ -193,7 +192,7 @@ public:
 
         // Validate counter (sequence check, per data ID)
         if (config.enable_counter) {
-            std::lock_guard<std::mutex> lock(counter_mutex_);
+            platform::ScopedLock lock(counter_mutex_);
             uint32_t& last_counter = counters_[config.data_id];
 
             // Counter validation logic:
@@ -290,8 +289,8 @@ public:
     }
 
 private:
-    mutable std::mutex counter_mutex_;
-    mutable std::mutex freshness_mutex_;
+    mutable platform::Mutex counter_mutex_;
+    mutable platform::Mutex freshness_mutex_;
     std::unordered_map<uint16_t, uint32_t> counters_;  // Per data ID
     std::unordered_map<uint16_t, uint16_t> freshness_values_;  // Per data ID
 };

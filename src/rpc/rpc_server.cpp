@@ -19,7 +19,6 @@
 #include "someip/message.h"
 #include "common/result.h"
 #include <unordered_map>
-#include <mutex>
 #include <atomic>
 
 namespace someip {
@@ -68,14 +67,14 @@ public:
         running_ = false;
 
         // Clear all method handlers
-        std::scoped_lock lock(methods_mutex_);
+        platform::ScopedLock lock(methods_mutex_);
         method_handlers_.clear();
 
         transport_->stop();
     }
 
     bool register_method(MethodId method_id, MethodHandler handler) {
-        std::scoped_lock lock(methods_mutex_);
+        platform::ScopedLock lock(methods_mutex_);
 
         // Check if already registered
         bool already_exists = method_handlers_.count(method_id) > 0;
@@ -86,17 +85,17 @@ public:
     }
 
     bool unregister_method(MethodId method_id) {
-        std::scoped_lock lock(methods_mutex_);
+        platform::ScopedLock lock(methods_mutex_);
         return method_handlers_.erase(method_id) > 0;
     }
 
     bool is_method_registered(MethodId method_id) const {
-        std::scoped_lock lock(methods_mutex_);
+        platform::ScopedLock lock(methods_mutex_);
         return method_handlers_.find(method_id) != method_handlers_.end();
     }
 
     std::vector<MethodId> get_registered_methods() const {
-        std::scoped_lock lock(methods_mutex_);
+        platform::ScopedLock lock(methods_mutex_);
         std::vector<MethodId> methods;
         methods.reserve(method_handlers_.size());
         for (const auto& pair : method_handlers_) {
@@ -124,7 +123,7 @@ private:
         // Find method handler
         MethodHandler handler;
         {
-            std::scoped_lock lock(methods_mutex_);
+            platform::ScopedLock lock(methods_mutex_);
             auto it = method_handlers_.find(message->get_method_id());
             if (it == method_handlers_.end()) {
                 // Method not found - send error response
@@ -204,7 +203,7 @@ private:
     std::shared_ptr<transport::UdpTransport> transport_;
 
     std::unordered_map<MethodId, MethodHandler> method_handlers_;
-    mutable std::mutex methods_mutex_;
+    mutable platform::Mutex methods_mutex_;
 
     std::atomic<bool> running_;
 };

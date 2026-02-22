@@ -18,7 +18,7 @@
 #include "../someip/message.h"
 #include <memory>
 #include <unordered_map>
-#include <mutex>
+#include "platform/thread.h"
 
 namespace someip {
 namespace tp {
@@ -172,7 +172,7 @@ private:
     std::unique_ptr<TpReassembler> reassembler_;
 
     std::unordered_map<uint32_t, TpTransfer> active_transfers_;
-    mutable std::mutex transfers_mutex_;
+    mutable platform::Mutex transfers_mutex_;
 
     TpCompletionCallback completion_callback_;
     TpProgressCallback progress_callback_;

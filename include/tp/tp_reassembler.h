@@ -17,7 +17,7 @@
 #include "tp_types.h"
 #include <unordered_map>
 #include <memory>
-#include <mutex>
+#include "platform/thread.h"
 
 namespace someip {
 namespace tp {
@@ -104,8 +104,8 @@ public:
 private:
     TpConfig config_;
     std::unordered_map<uint32_t, std::unique_ptr<TpReassemblyBuffer>> reassembly_buffers_;
-    mutable std::mutex config_mutex_;
-    mutable std::mutex buffers_mutex_;
+    mutable platform::Mutex config_mutex_;
+    mutable platform::Mutex buffers_mutex_;
 
     TpConfig get_config_copy() const;
     bool validate_segment(const TpSegment& segment) const;

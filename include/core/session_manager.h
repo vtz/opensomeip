@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
-#include <mutex>
+#include "platform/thread.h"
 #include <chrono>
 
 namespace someip {
@@ -131,7 +131,7 @@ public:
 
 private:
     std::unordered_map<uint16_t, std::shared_ptr<Session>> sessions_;
-    mutable std::mutex sessions_mutex_;
+    mutable platform::Mutex sessions_mutex_;
     uint16_t next_session_id_{1};
 
     // Prevent copying

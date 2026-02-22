@@ -18,7 +18,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
-#include <mutex>
+#include "platform/thread.h"
 
 namespace someip {
 namespace e2e {
@@ -84,7 +84,7 @@ private:
     E2EProfileRegistry(const E2EProfileRegistry&) = delete;
     E2EProfileRegistry& operator=(const E2EProfileRegistry&) = delete;
 
-    mutable std::mutex mutex_;
+    mutable platform::Mutex mutex_;
     std::unordered_map<uint32_t, E2EProfilePtr> profiles_by_id_;
     std::unordered_map<std::string, E2EProfile*> profiles_by_name_;
 };
