@@ -26,29 +26,33 @@
 OpenSOME/IP provides a complete, standards-compliant C++ implementation of the SOME/IP protocol stack for automotive and embedded systems. This open-source alternative enables service-oriented communication over Ethernet, supporting AUTOSAR-compatible vehicle networks and IoT applications.
 
 ### Core Features
+
 - **Message Format & Serialization**: Complete SOME/IP message handling with big-endian serialization
-- **Service Discovery (SD)**: Full multicast-based service discovery with offer/find/subscribe
+- **Service Discovery (SD)**: Full multicast-based service discovery with offer/find/subscribe and IPv4 options
 - **Transport Protocol (TP)**: Large message segmentation and reassembly over UDP
-- **Transport Bindings**: UDP and TCP socket implementations with connection management
+- **Transport Bindings**: UDP (configurable blocking/non-blocking, buffer sizes) and TCP socket implementations with connection management
 - **RPC & Events**: Request/response and publish/subscribe communication patterns
+- **End-to-End (E2E) Protection**: CRC-based message integrity with profile registry and standard profile
 - **Safety-Oriented Design**: Patterns for error handling and validation (not certified)
 
 ### Why Choose OpenSOME/IP?
+
 - **Truly Open Source**: Apache 2.0 licensed - use freely in commercial and personal projects
 - **Modern C++17**: Clean, maintainable codebase with no legacy dependencies
-- **Production Ready**: 62+ unit tests with coverage reporting and CI/CD integration
+- **Production Ready**: 169 C++ unit tests + 80+ Python tests with coverage reporting and CI/CD integration
 - **Well Documented**: Complete API documentation, examples, and traceability matrices
 - **Active Development**: Regular updates and community-driven improvements
 - **Easy Integration**: CMake-based build system works with any C++ project
 
 ### Standards & Coverage (in progress)
+
 - Protocol coverage is tracked against the Open SOME/IP Specification (see traceability docs)
 - Specification traceability is maintained in `TRACEABILITY_*` documents
 - Safety alignment work is ongoing; not certified
 
 ## Version
 
-**Current Version**: 0.0.1
+**Current Version**: 0.0.2
 
 This project uses [Semantic Versioning](https://semver.org/). See [VERSION.md](VERSION.md) for details on version management.
 
@@ -56,9 +60,9 @@ This project uses [Semantic Versioning](https://semver.org/). See [VERSION.md](V
 
 ### Prerequisites
 
-- C++17 compatible compiler (GCC 9+, Clang 10+, MSVC 2019+)
+- C++17-compatible compiler (GCC 9+, Clang 10+)
 - CMake 3.20+
-- POSIX-compatible system (Linux, macOS) or Windows with MSVC
+- POSIX-compatible system (Linux, macOS)
 
 ### Optional Development Tools
 
@@ -68,24 +72,23 @@ For enhanced development experience and quality checks:
 # Code quality and formatting (choose based on your OS)
 # macOS with Homebrew:
 brew install llvm cppcheck
-pip install gcovr pytest pytest-cov
+pip install gcovr pytest pytest-cov pre-commit
 
 # Ubuntu/Debian:
 sudo apt install clang-tidy clang-format cppcheck lcov
-pip install gcovr pytest pytest-cov
-
-# Windows with vcpkg:
-vcpkg install llvm cppcheck
-pip install gcovr pytest pytest-cov
+pip install gcovr pytest pytest-cov pre-commit
 ```
 
 These tools enable:
 - **Static analysis**: clang-tidy, cppcheck
-- **Code formatting**: clang-format
+- **Code formatting**: clang-format (enforced via pre-commit hooks)
 - **Coverage reports**: gcovr, lcov
 - **Python testing**: pytest
+- **Pre-commit hooks**: automated code quality checks before each commit
+- **Docker**: containerized testing via `Dockerfile.test`
 
 ### Dependencies
+
 - **Standard Library**: C++17 standard library
 - **POSIX Threads**: For threading support (included in most systems)
 - **Network Libraries**: Standard socket libraries
@@ -103,6 +106,7 @@ These tools enable:
 ### Common Build Issues
 
 #### Google Test Download Fails
+
 ```bash
 # If network access is blocked, disable tests
 cmake .. -DBUILD_TESTS=OFF
@@ -113,6 +117,7 @@ cmake ..
 ```
 
 #### Compiler Issues
+
 ```bash
 # Check C++17 support
 clang++ --version
@@ -124,6 +129,7 @@ cmake ..
 ```
 
 #### CMake Cache Issues
+
 ```bash
 # Clean everything and start fresh
 rm -rf build/
@@ -183,6 +189,7 @@ ctest -R TcpTransportTest   # Test TCP transport binding
 ### Development Tools
 
 #### Code Quality & Analysis
+
 ```bash
 # Change to build folder
 cd build
@@ -198,6 +205,7 @@ make tidy          # clang-tidy checks
 ```
 
 #### Advanced Testing
+
 ```bash
 # IMPORTANT: Run all commands from the project root directory
 
@@ -262,6 +270,7 @@ pipeline {
 ```
 
 #### Adding Copyright Headers
+
 ```bash
 # Add Apache 2.0 license headers to all source files
 ./scripts/add_copyright_headers.sh
@@ -271,21 +280,47 @@ pipeline {
 
 OpenSOME/IP follows a modular, layered architecture with clear separation of concerns, making it easy to extend and integrate:
 
-### Core Layer (`someip-common`)
-- Message structures and serialization
+### Core Layer (`someip-core`)
+
+- Message structures and types
 - Session management
 - Error handling and result codes
+- E2E protection (CRC, header, profile registry)
 
 ### Serialization Layer (`someip-serialization`)
+
 - SOME/IP data type serialization/deserialization
 - Big-endian byte order handling
 - Array and complex type support
 
 ### Transport Layer (`someip-transport`)
-- UDP socket management with multicast support
+
+- UDP socket management with configurable blocking/non-blocking modes
 - TCP socket management with connection handling
 - Transport protocol abstraction (ITransport interface)
 - Message framing over TCP streams
+
+### Service Discovery Layer (`someip-sd`)
+
+- SOME/IP-SD message handling
+- SD client and server with multicast support
+- IPv4 options and service entry management
+
+### Transport Protocol Layer (`someip-tp`)
+
+- Large message segmentation
+- Reassembly with thread-safe configuration
+- TP manager for coordinating segmented transfers
+
+### RPC Layer (`someip-rpc`)
+
+- Request/response client and server
+- Method call handling over transport
+
+### Events Layer (`someip-events`)
+
+- Event publisher and subscriber
+- Publish/subscribe communication patterns
 
 ## Safety Considerations (work in progress)
 
@@ -296,64 +331,87 @@ OpenSOME/IP follows a modular, layered architecture with clear separation of con
 ## Project Structure
 
 ```
-├── CMakeLists.txt           # Main CMake configuration
-├── LICENSE                  # Apache 2.0 license
-├── README.md               # This file
-├── .clang-format          # Code formatting configuration
-├── .clang-tidy            # Static analysis configuration
-├── .gitignore             # Git ignore patterns
+├── CMakeLists.txt                # Main CMake configuration
+├── CHANGELOG.md                  # Version history (Keep a Changelog)
+├── CONTRIBUTING.md               # Contribution guidelines
+├── Dockerfile.test               # Docker testing environment
+├── LICENSE                       # Apache 2.0 license
+├── Makefile                      # Convenience build targets
+├── README.md                     # This file
+├── VERSION                       # Semantic version string
+├── VERSION.md                    # Version management docs
+├── .clang-format                 # Code formatting configuration
+├── .clang-tidy                   # Static analysis configuration
+├── .pre-commit-config.yaml       # Pre-commit hook configuration
 ├──
-├── docs/                  # Documentation
-│   ├── BUILD.md           # Build instructions
-│   ├── INTEGRATION_GUIDE.md # Integration guide
-│   ├── GATEWAY_REQUIREMENTS.md # Gateway requirements
-│   ├── CODING_GUIDELINES.md    # Coding standards
-│   ├── SETUP_GIT_SUBMODULE.md  # Submodule setup
-│   ├── architecture/      # System architecture docs
-│   ├── design/           # Detailed design specifications
-│   └── diagrams/         # PlantUML diagrams
+├── docs/                         # Documentation
+│   ├── BUILD.md                  # Build instructions
+│   ├── CODING_GUIDELINES.md      # Coding standards
+│   ├── E2E_IMPLEMENTATION_REVIEW.md
+│   ├── GATEWAY_REQUIREMENTS.md   # Gateway requirements
+│   ├── INTEGRATION_GUIDE.md      # Integration guide
+│   ├── SETUP_GIT_SUBMODULE.md    # Submodule setup
+│   ├── SOMEIP_ACCEPTANCE_TEST_PLAN.md
+│   ├── TEST_PLAN_STATUS.md
+│   ├── TEST_REPORTING.md
+│   ├── architecture/             # System architecture docs
+│   ├── diagrams/                 # PlantUML diagrams
+│   └── requirements/             # Sphinx-Needs requirements docs
 ├──
-├── include/               # Public headers (API)
-│   ├── common/           # Common utilities and types
-│   ├── someip/           # Core SOME/IP protocol
-│   ├── serialization/    # Data serialization
-│   ├── transport/        # Transport layer
-│   ├── sd/              # Service Discovery
-│   ├── tp/              # Transport Protocol
-│   ├── events/          # Event system
-│   └── rpc/             # RPC functionality
+├── include/                      # Public headers (API)
+│   ├── common/                   # Common utilities and types
+│   ├── core/                     # Core session management
+│   ├── e2e/                      # E2E protection headers
+│   ├── events/                   # Event system
+│   ├── rpc/                      # RPC functionality
+│   ├── sd/                       # Service Discovery
+│   ├── serialization/            # Data serialization
+│   ├── someip/                   # Core SOME/IP protocol
+│   ├── tp/                       # Transport Protocol
+│   └── transport/                # Transport layer
 ├──
-├── src/                  # Implementation
-│   ├── common/          # Common implementations
-│   ├── someip/          # Core protocol
-│   ├── serialization/   # Serialization
-│   ├── transport/       # Transport layer
-│   ├── sd/             # Service Discovery
-│   ├── tp/             # Transport Protocol
-│   ├── events/         # Event system
-│   └── rpc/            # RPC functionality
+├── src/                          # Implementation
+│   ├── common/                   # Common implementations
+│   ├── core/                     # Session manager
+│   ├── e2e/                      # E2E protection, CRC, profiles
+│   ├── events/                   # Event publisher/subscriber
+│   ├── rpc/                      # RPC client/server
+│   ├── sd/                       # SD message, client, server
+│   ├── serialization/            # Serializer
+│   ├── someip/                   # Message and types
+│   ├── tp/                       # TP segmenter, reassembler, manager
+│   └── transport/                # UDP/TCP transport, endpoint
 ├──
-├── tests/               # Test suite
-│   ├── CMakeLists.txt   # Test build configuration
-│   ├── test_*.cpp       # Unit tests
-│   ├── python/          # Python integration tests
-│   ├── COMPREHENSIVE_TESTING_GUIDE.md
-│   └── README.md
+├── tests/                        # Test suite
+│   ├── CMakeLists.txt            # Test build configuration
+│   ├── test_*.cpp                # C++ unit tests (12 files, 169 tests)
+│   ├── integration/              # Python integration tests
+│   ├── system/                   # System-level tests
+│   └── python/                   # Python test framework
 ├──
-├── examples/            # Usage examples
-│   ├── CMakeLists.txt   # Example build config
-│   ├── echo_*           # Basic UDP examples
-│   ├── tcp_*           # TCP transport examples
-│   ├── sd_*            # Service discovery examples
-│   ├── tp_example      # Transport protocol example
-│   └── event_*         # Event system examples
+├── examples/                     # Usage examples
+│   ├── basic/                    # Hello world, method calls, events
+│   ├── advanced/                 # Complex types, large messages, multi-service, UDP config
+│   ├── e2e_protection/           # E2E protection examples
+│   ├── cross_platform_demo/      # macOS client / Linux Docker server
+│   ├── infra_test/               # Multicast listener/sender tools
+│   └── protocol_checker/         # Raw SOME/IP client/server (C)
 ├──
-├── scripts/             # Development scripts
-│   ├── run_tests.py     # Advanced test runner
-│   ├── add_copyright_headers.sh # License header tool
-│   ├── clean_build.sh   # Clean build script
-│   ├── setup_deps.sh    # Dependency setup
-│   └── verify_build.sh  # Build verification
+├── scripts/                      # Development scripts
+│   ├── run_tests.py              # Advanced test runner
+│   ├── bump_version.sh           # Semantic version bumping
+│   ├── bump_submodule.sh         # Submodule version management
+│   ├── setup_deps.sh             # Dependency setup
+│   ├── install_dev_tools.sh      # Dev tools installer
+│   ├── clean_build.sh            # Clean build script
+│   ├── verify_build.sh           # Build verification
+│   ├── add_copyright_headers.sh  # License header tool
+│   ├── extract_code_requirements.py
+│   ├── generate_traceability_matrix.py
+│   └── validate_requirements.py
+├──
+├── open-someip-spec/             # SOME/IP specification (git submodule)
+├── tools/                        # PlantUML and development tools
 ├──
 ├── TRACEABILITY_MATRIX.md        # Requirements traceability
 ├── TEST_TRACEABILITY_MATRIX.md   # Test traceability
@@ -363,6 +421,7 @@ OpenSOME/IP follows a modular, layered architecture with clear separation of con
 ## Examples
 
 ### Core Message Demo
+
 Demonstrates message creation, serialization, and session management:
 
 ```cpp
@@ -386,6 +445,7 @@ auto data = msg.serialize();
 ```
 
 ### Error Handling
+
 ```cpp
 Message response(msg_id, request_id, MessageType::ERROR, ReturnCode::E_UNKNOWN_METHOD);
 if (!msg.is_valid()) {
@@ -438,23 +498,29 @@ target_link_libraries(your_target someip-common someip-transport)
 ## Development Status
 
 ### Completed
+
 - Core message structures and validation
 - SOME/IP data serialization/deserialization
 - Session management and request correlation
-- UDP and TCP transport bindings
-- Service Discovery (SOME/IP-SD) with multicast support
+- UDP and TCP transport bindings (configurable blocking/non-blocking modes)
+- Service Discovery (SOME/IP-SD) with multicast and IPv4 options
 - Transport Protocol (SOME/IP-TP) for large messages
 - RPC request/response handling
 - Event system (publish/subscribe)
-- Basic error handling and result codes
+- End-to-End (E2E) protection with CRC, profile registry, and standard profile
+- Error handling, result codes, and input validation
 - Thread-safe operations
+- Pre-commit hooks (clang-format, clang-tidy)
+- Docker testing environment
+- Sphinx-Needs requirements management and traceability
+- PlantUML architecture diagrams with CI validation
+- Semantic versioning system with management scripts
+- Cross-platform demo (macOS client / Linux Docker server)
 - Comprehensive documentation
-- PlantUML architecture diagrams
-
-### Implemented
-- End-to-End (E2E) protection - Core standard feature with basic profile
 
 ### Planned
+
+- Advanced E2E profiles (AUTOSAR P01, P02, P04, P05, P06, P07, P11) - requires external implementation due to licensing
 - Advanced SD features (load balancing, IPv6 full support)
 - Configuration management
 - Code generation tools
@@ -462,7 +528,8 @@ target_link_libraries(your_target someip-common someip-transport)
 
 ## Testing
 
-### Current Test Coverage
+### Current Test Coverage (169 C++ unit tests + 80+ Python tests)
+
 - Message serialization/deserialization
 - Message creation and validation
 - Session management
@@ -471,19 +538,22 @@ target_link_libraries(your_target someip-common someip-transport)
 - Transport Protocol (TP) segmentation
 - RPC request/response handling
 - Event system functionality
-- Error handling
-- Input validation
-- Integration testing
-- Performance benchmarking
+- End-to-End (E2E) protection
+- Error handling and input validation
+- Integration testing (Python)
+- System testing and conformance testing (Python)
 
 ### Test Execution
-```bash
-# Build and run tests manually
-make test
 
-# Or run individual test files
-./test_serialization
-./test_message
+```bash
+# Build and run all tests
+cd build
+ctest --output-on-failure
+
+# Or run individual test binaries
+./bin/test_serialization
+./bin/test_message
+./bin/test_e2e
 ```
 
 ## E2E Protection Disclaimer
@@ -520,23 +590,6 @@ make
 # Run tests and check code quality
 ../scripts/run_tests.py --rebuild --static-analysis --coverage
 ```
-
-## Development Status (protocol coverage tracked)
-
-### Completed
-- Core SOME/IP message format and serialization
-- Service Discovery with multicast support
-- Transport Protocol for large messages
-- UDP/TCP transport bindings
-- Event system and RPC functionality
-- Comprehensive test suite (see `ctest`)
-- Initial safety-oriented design patterns
-- Documentation and traceability
-
-### Pending
-- Advanced E2E profiles (AUTOSAR P01-P11) - requires external implementation due to licensing
-- Advanced SD features (load balancing, IPv6)
-- Performance optimizations
 
 ## License
 
