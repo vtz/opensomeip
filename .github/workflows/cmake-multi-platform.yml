@@ -5,8 +5,24 @@ name: CMake on multiple platforms
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'open-someip-spec/**'
+      - 'LICENSE'
+      - 'CONTRIBUTING.md'
+      - 'CHANGELOG.md'
+      - '.cursor/**'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'open-someip-spec/**'
+      - 'LICENSE'
+      - 'CONTRIBUTING.md'
+      - 'CHANGELOG.md'
+      - '.cursor/**'
 
 jobs:
   build:
