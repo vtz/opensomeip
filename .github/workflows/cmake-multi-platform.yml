@@ -9,7 +9,10 @@ on:
       - '**/*.md'
       - 'docs/**'
       - '!docs/requirements/**'
+      - 'open-someip-spec/**'
       - 'LICENSE'
+      - 'CONTRIBUTING.md'
+      - 'CHANGELOG.md'
       - '.cursor/**'
   pull_request:
     branches: [ "main" ]
@@ -17,7 +20,10 @@ on:
       - '**/*.md'
       - 'docs/**'
       - '!docs/requirements/**'
+      - 'open-someip-spec/**'
       - 'LICENSE'
+      - 'CONTRIBUTING.md'
+      - 'CHANGELOG.md'
       - '.cursor/**'
 
 jobs:
