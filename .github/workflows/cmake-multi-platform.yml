@@ -8,20 +8,16 @@ on:
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
-      - 'open-someip-spec/**'
+      - '!docs/requirements/**'
       - 'LICENSE'
-      - 'CONTRIBUTING.md'
-      - 'CHANGELOG.md'
       - '.cursor/**'
   pull_request:
     branches: [ "main" ]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
-      - 'open-someip-spec/**'
+      - '!docs/requirements/**'
       - 'LICENSE'
-      - 'CONTRIBUTING.md'
-      - 'CHANGELOG.md'
       - '.cursor/**'
 
 jobs:
