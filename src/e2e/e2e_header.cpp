@@ -12,11 +12,7 @@
  ********************************************************************************/
 
 #include "e2e/e2e_header.h"
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
+#include "platform/byteorder.h"
 
 namespace someip {
 namespace e2e {
@@ -32,19 +28,19 @@ std::vector<uint8_t> E2EHeader::serialize() const {
     data.reserve(get_header_size());
 
     // Serialize in big-endian format (network byte order)
-    uint32_t crc_be = htonl(crc);
+    uint32_t crc_be = someip_htonl(crc);
     data.insert(data.end(), reinterpret_cast<const uint8_t*>(&crc_be),
                 reinterpret_cast<const uint8_t*>(&crc_be) + sizeof(uint32_t));
 
-    uint32_t counter_be = htonl(counter);
+    uint32_t counter_be = someip_htonl(counter);
     data.insert(data.end(), reinterpret_cast<const uint8_t*>(&counter_be),
                 reinterpret_cast<const uint8_t*>(&counter_be) + sizeof(uint32_t));
 
-    uint16_t data_id_be = htons(data_id);
+    uint16_t data_id_be = someip_htons(data_id);
     data.insert(data.end(), reinterpret_cast<const uint8_t*>(&data_id_be),
                 reinterpret_cast<const uint8_t*>(&data_id_be) + sizeof(uint16_t));
 
-    uint16_t freshness_be = htons(freshness_value);
+    uint16_t freshness_be = someip_htons(freshness_value);
     data.insert(data.end(), reinterpret_cast<const uint8_t*>(&freshness_be),
                 reinterpret_cast<const uint8_t*>(&freshness_be) + sizeof(uint16_t));
 
@@ -65,19 +61,19 @@ bool E2EHeader::deserialize(const std::vector<uint8_t>& data, size_t offset) {
 
     // Deserialize from big-endian format
     uint32_t crc_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    crc = ntohl(crc_be);
+    crc = someip_ntohl(crc_be);
     offset += sizeof(uint32_t);
 
     uint32_t counter_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    counter = ntohl(counter_be);
+    counter = someip_ntohl(counter_be);
     offset += sizeof(uint32_t);
 
     uint16_t data_id_be = *reinterpret_cast<const uint16_t*>(&data[offset]);
-    data_id = ntohs(data_id_be);
+    data_id = someip_ntohs(data_id_be);
     offset += sizeof(uint16_t);
 
     uint16_t freshness_be = *reinterpret_cast<const uint16_t*>(&data[offset]);
-    freshness_value = ntohs(freshness_be);
+    freshness_value = someip_ntohs(freshness_be);
 
     return true;
 }

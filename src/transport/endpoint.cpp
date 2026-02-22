@@ -12,9 +12,10 @@
  ********************************************************************************/
 
 #include "transport/endpoint.h"
-#include <regex>
 #include <sstream>
 #include <functional>
+#include <cstdlib>
+#include <cstring>
 
 namespace someip {
 namespace transport {
@@ -134,35 +135,97 @@ size_t Endpoint::Hash::operator()(const Endpoint& endpoint) const {
 }
 
 bool Endpoint::is_valid_ipv4(const std::string& address) const {
-    // Basic IPv4 validation regex
-    std::regex ipv4_pattern(R"(^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$)");
-    std::smatch match;
-
-    if (!std::regex_match(address, match, ipv4_pattern)) {
+    if (address.empty() || address.size() > 15) {
         return false;
     }
 
-    // Check that each octet is in range 0-255
-    for (size_t i = 1; i <= 4; ++i) {
-        int octet = std::stoi(match[i].str());
-        if (octet < 0 || octet > 255) {
+    int octets = 0;
+    size_t pos = 0;
+
+    while (pos < address.size() && octets < 4) {
+        if (!std::isdigit(static_cast<unsigned char>(address[pos]))) {
+            return false;
+        }
+
+        size_t start = pos;
+        while (pos < address.size() && std::isdigit(static_cast<unsigned char>(address[pos]))) {
+            ++pos;
+        }
+
+        size_t digit_len = pos - start;
+        if (digit_len == 0 || digit_len > 3) {
+            return false;
+        }
+
+        int val = std::atoi(address.substr(start, digit_len).c_str());
+        if (val < 0 || val > 255) {
+            return false;
+        }
+
+        // Reject leading zeros (e.g., "01.02.03.04")
+        if (digit_len > 1 && address[start] == '0') {
+            return false;
+        }
+
+        ++octets;
+
+        if (octets < 4) {
+            if (pos >= address.size() || address[pos] != '.') {
+                return false;
+            }
+            ++pos;
+        }
+    }
+
+    return octets == 4 && pos == address.size();
+}
+
+bool Endpoint::is_valid_ipv6(const std::string& address) const {
+    if (address.empty() || address.size() > 39) {
+        return false;
+    }
+
+    // Quick character validation
+    for (char c : address) {
+        if (!std::isxdigit(static_cast<unsigned char>(c)) && c != ':') {
             return false;
         }
     }
 
-    return true;
-}
-
-bool Endpoint::is_valid_ipv6(const std::string& address) const {
-    // Basic IPv6 validation (simplified)
-    if (address.empty() || address.length() > 39) {
+    // Handle "::" (zero-compression) -- may appear at most once
+    size_t double_colon = address.find("::");
+    bool has_double_colon = (double_colon != std::string::npos);
+    if (has_double_colon && address.find("::", double_colon + 2) != std::string::npos) {
         return false;
     }
 
-    // Check for valid IPv6 characters and structure
-    std::regex ipv6_pattern(R"(^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}$|^([0-9a-fA-F]{1,4}:){1,7}:$|^::$)");
+    // Count groups by splitting on ':'
+    int groups = 0;
+    size_t pos = 0;
+    while (pos <= address.size()) {
+        size_t next = address.find(':', pos);
+        if (next == std::string::npos) {
+            next = address.size();
+        }
+        size_t len = next - pos;
 
-    return std::regex_match(address, ipv6_pattern);
+        if (len > 0) {
+            if (len > 4) {
+                return false;
+            }
+            ++groups;
+        }
+
+        if (next == address.size()) {
+            break;
+        }
+        pos = next + 1;
+    }
+
+    if (has_double_colon) {
+        return groups <= 7;
+    }
+    return groups == 8;
 }
 
 bool Endpoint::is_multicast_ipv4(const std::string& address) const {

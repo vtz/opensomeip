@@ -1,0 +1,40 @@
+################################################################################
+# Renode simulation script for NXP S32K388 + SOME/IP stack
+#
+# Usage:
+#   renode zephyr/renode/s32k388_someip.resc
+#
+# Copyright (c) 2025 Vinicius Tadeu Zein
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+
+using sysbus
+
+# Load the NXP S32K388 platform definition from Renode's built-in library
+mach create "s32k388"
+machine LoadPlatformDescription @platforms/cpus/nxp-s32k388.repl
+
+# Configure GMAC Ethernet with a virtual network interface
+emulation CreateSwitch "switch0"
+connector Connect sysbus.gmac switch0
+
+# Configure the host TAP interface (for communicating with the simulated MCU)
+emulation CreateTap "tap0" "tap0"
+connector Connect host.tap switch0
+
+# Set the path to the Zephyr ELF firmware
+# This variable should be set before running the script:
+#   $firmware = @build/zephyr/zephyr.elf
+# Or override via command line:
+#   renode -e '$firmware=@path/to/zephyr.elf; i @s32k388_someip.resc'
+macro reset
+"""
+    sysbus LoadELF $firmware
+"""
+runMacro $reset
+
+# Configure UART console output
+showAnalyzer sysbus.lpuart0
+
+echo "S32K388 SOME/IP simulation ready."
+echo "Use 'start' to begin simulation."

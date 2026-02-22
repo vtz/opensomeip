@@ -22,8 +22,8 @@
 #include <atomic>
 #include <thread>
 #include <chrono>
+#include "platform/byteorder.h"
 #include <algorithm>
-#include <arpa/inet.h>
 
 namespace someip {
 namespace sd {
@@ -201,7 +201,7 @@ public:
         // Convert multicast address to network byte order
         in_addr_t multicast_addr = inet_addr(config_.multicast_address.c_str());
         multicast_option->set_ipv4_address(multicast_addr);
-        multicast_option->set_port(htons(config_.multicast_port));
+        multicast_option->set_port(someip_htons(config_.multicast_port));
         response_message.add_option(std::move(multicast_option));
 
         // Set option index in entry

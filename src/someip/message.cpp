@@ -18,11 +18,7 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
+#include "platform/byteorder.h"
 
 namespace someip {
 
@@ -165,15 +161,15 @@ std::vector<uint8_t> Message::serialize() const {
     data.reserve(get_total_size());
 
     // Serialize header in big-endian format (network byte order)
-    uint32_t message_id_be = htonl(message_id_.to_uint32());
+    uint32_t message_id_be = someip_htonl(message_id_.to_uint32());
     data.insert(data.end(), reinterpret_cast<const uint8_t*>(&message_id_be),
                 reinterpret_cast<const uint8_t*>(&message_id_be) + sizeof(uint32_t));
 
-    uint32_t length_be = htonl(length_);
+    uint32_t length_be = someip_htonl(length_);
     data.insert(data.end(), reinterpret_cast<const uint8_t*>(&length_be),
                 reinterpret_cast<const uint8_t*>(&length_be) + sizeof(uint32_t));
 
-    uint32_t request_id_be = htonl(request_id_.to_uint32());
+    uint32_t request_id_be = someip_htonl(request_id_.to_uint32());
     data.insert(data.end(), reinterpret_cast<const uint8_t*>(&request_id_be),
                 reinterpret_cast<const uint8_t*>(&request_id_be) + sizeof(uint32_t));
 
@@ -218,21 +214,21 @@ bool Message::deserialize(const std::vector<uint8_t>& data) {
         return false;
     }
     uint32_t message_id_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    message_id_ = MessageId::from_uint32(ntohl(message_id_be));
+    message_id_ = MessageId::from_uint32(someip_ntohl(message_id_be));
     offset += sizeof(uint32_t);
 
     if (offset + sizeof(uint32_t) > data.size()) {
         return false;
     }
     uint32_t length_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    length_ = ntohl(length_be);
+    length_ = someip_ntohl(length_be);
     offset += sizeof(uint32_t);
 
     if (offset + sizeof(uint32_t) > data.size()) {
         return false;
     }
     uint32_t request_id_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    request_id_ = RequestId::from_uint32(ntohl(request_id_be));
+    request_id_ = RequestId::from_uint32(someip_ntohl(request_id_be));
     offset += sizeof(uint32_t);
 
     if (offset + sizeof(uint8_t) > data.size()) {

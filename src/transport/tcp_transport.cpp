@@ -12,14 +12,8 @@
  ********************************************************************************/
 
 #include "transport/tcp_transport.h"
+#include "platform/net.h"
 #include "common/result.h"
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <arpa/inet.h>
 #include <cstring>
 #include <iostream>
 #include <algorithm>
@@ -164,7 +158,7 @@ Result TcpTransport::stop() {
 
     // Close listen socket if in server mode
     if (server_mode_ && listen_socket_fd_ != -1) {
-        close(listen_socket_fd_);
+        someip_close_socket(listen_socket_fd_);
         listen_socket_fd_ = -1;
     }
 
@@ -210,14 +204,11 @@ int TcpTransport::accept_connection() {
     sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
 
-    // For server mode, make the accept blocking temporarily
-    int flags = fcntl(listen_socket_fd_, F_GETFL, 0);
-    fcntl(listen_socket_fd_, F_SETFL, flags & ~O_NONBLOCK);
+    someip_set_blocking(listen_socket_fd_);
 
     int client_fd = accept(listen_socket_fd_, (sockaddr*)&client_addr, &client_len);
 
-    // Restore non-blocking mode
-    fcntl(listen_socket_fd_, F_SETFL, flags);
+    someip_set_nonblocking(listen_socket_fd_);
 
     if (client_fd < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
@@ -263,26 +254,21 @@ Result TcpTransport::bind_socket() {
 }
 
 Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
-    int flags = fcntl(socket_fd, F_GETFL, 0);
-    if (flags < 0) {
-        return Result::NETWORK_ERROR;
-    }
-
     if (blocking) {
-        flags &= ~O_NONBLOCK;  // Clear non-blocking flag
+        if (someip_set_blocking(socket_fd) < 0) {
+            return Result::NETWORK_ERROR;
+        }
     } else {
-        flags |= O_NONBLOCK;   // Set non-blocking flag
+        if (someip_set_nonblocking(socket_fd) < 0) {
+            return Result::NETWORK_ERROR;
+        }
     }
 
-    if (fcntl(socket_fd, F_SETFL, flags) < 0) {
-        return Result::NETWORK_ERROR;
-    }
-
-    // TCP keep-alive
+    // TCP keep-alive (not available on all Zephyr targets)
+#if !defined(__ZEPHYR__) || defined(CONFIG_NATIVE_APPLICATION)
     if (config_.keep_alive) {
         int keep_alive = 1;
 #ifdef __APPLE__
-        // macOS uses different socket option levels and names
         setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPALIVE, &keep_alive, sizeof(keep_alive));
         int keep_alive_interval = static_cast<int>(config_.keep_alive_interval.count() / 1000);
         setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPINTVL, &keep_alive_interval, sizeof(keep_alive_interval));
@@ -294,6 +280,7 @@ Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
         setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, &keep_alive, sizeof(keep_alive));
 #endif
     }
+#endif
 
     // Send/receive timeouts
     struct timeval send_timeout = {
@@ -381,7 +368,7 @@ void TcpTransport::disconnect_internal() {
         connection_.state = TcpConnectionState::DISCONNECTING;
 
         shutdown(connection_.socket_fd, SHUT_RDWR);
-        close(connection_.socket_fd);
+        someip_close_socket(connection_.socket_fd);
         connection_.socket_fd = -1;
 
         connection_.state = TcpConnectionState::DISCONNECTED;
@@ -424,7 +411,7 @@ void TcpTransport::receive_loop() {
                         }
                     } else {
                         // Already have a connection, close this one
-                        close(client_fd);
+                        someip_close_socket(client_fd);
                     }
                 }
             }

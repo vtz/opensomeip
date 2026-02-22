@@ -16,7 +16,7 @@
 #include <sd/sd_message.h>
 #include <sd/sd_server.h>
 #include <sd/sd_client.h>
-#include <arpa/inet.h>
+#include <platform/byteorder.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -139,7 +139,7 @@ TEST_F(SdTest, IPv4EndpointOptionSerialization) {
     EXPECT_EQ(data[9], 0x11);
 
     // Check port (bytes 10-11, network byte order)
-    uint16_t expected_port = htons(30509);
+    uint16_t expected_port = someip_htons(30509);
     EXPECT_EQ(data[10], (expected_port >> 8) & 0xFF);
     EXPECT_EQ(data[11], expected_port & 0xFF);
 }

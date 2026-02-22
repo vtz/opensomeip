@@ -1,0 +1,70 @@
+/*
+ * Device tree for NXP S32K388 Renode simulation target.
+ *
+ * Minimal description: single Cortex-M7 core, 512KB SRAM, 8MB flash,
+ * GMAC Ethernet, LPUART console.  Addresses match the Renode platform
+ * file `nxp-s32k388.repl`.
+ *
+ * Copyright (c) 2025 Vinicius Tadeu Zein
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+#include <arm/armv7-m.dtsi>
+
+/ {
+    model = "NXP S32K388 (Renode)";
+    compatible = "nxp,s32k388";
+
+    #address-cells = <1>;
+    #size-cells = <1>;
+
+    chosen {
+        zephyr,console = &lpuart0;
+        zephyr,shell-uart = &lpuart0;
+        zephyr,sram = &sram0;
+        zephyr,flash = &flash0;
+    };
+
+    cpus {
+        #address-cells = <1>;
+        #size-cells = <0>;
+
+        cpu0: cpu@0 {
+            device_type = "cpu";
+            compatible = "arm,cortex-m7";
+            reg = <0>;
+            clock-frequency = <160000000>;
+        };
+    };
+
+    sram0: memory@20400000 {
+        compatible = "mmio-sram";
+        reg = <0x20400000 0x80000>; /* 512KB */
+    };
+
+    flash0: flash@400000 {
+        compatible = "soc-nv-flash";
+        reg = <0x400000 0x800000>; /* 8MB */
+    };
+
+    soc {
+        #address-cells = <1>;
+        #size-cells = <1>;
+        compatible = "simple-bus";
+        ranges;
+
+        lpuart0: serial@40328000 {
+            compatible = "nxp,kinetis-lpuart";
+            reg = <0x40328000 0x1000>;
+            status = "okay";
+            current-speed = <115200>;
+        };
+
+        gmac0: ethernet@40480000 {
+            compatible = "snps,dwceth";
+            reg = <0x40480000 0x2000>;
+            status = "okay";
+        };
+    };
+};

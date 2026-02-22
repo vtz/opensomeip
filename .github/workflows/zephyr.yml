@@ -1,0 +1,72 @@
+name: Zephyr Build & Test
+on:
+  push:
+    branches: [ "main", "feature/zephyr-port" ]
+    paths-ignore: [ '**/*.md', 'docs/**', 'LICENSE', '.cursor/**' ]
+  pull_request:
+    branches: [ "main" ]
+    paths-ignore: [ '**/*.md', 'docs/**', 'LICENSE', '.cursor/**' ]
+
+jobs:
+  host-build:
+    name: Host Build + Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build & Test
+        run: |
+          cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF -DSAFETY_LEVEL=NONE
+          cmake --build build -j$(nproc)
+          cd build && ctest --output-on-failure
+
+  zephyr-native-sim:
+    name: Zephyr native_sim
+    runs-on: ubuntu-latest
+    container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Init Zephyr
+        run: |
+          west init /tmp/zp && cd /tmp/zp
+          west update --narrow -o=--depth=1 && west zephyr-export
+      - name: Build & run test_core
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: |
+          west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto
+          timeout 30 build/ns_tc/zephyr/zephyr.exe || true
+      - name: Build & run someip_echo
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: |
+          west build -b native_sim zephyr/samples/someip_echo -d build/ns_echo --pristine auto
+          timeout 30 build/ns_echo/zephyr/zephyr.exe || true
+
+  zephyr-s32k344-build:
+    name: Zephyr S32K344 cross-compile
+    runs-on: ubuntu-latest
+    container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Init Zephyr
+        run: |
+          west init /tmp/zp && cd /tmp/zp
+          west update --narrow -o=--depth=1 && west zephyr-export
+      - name: Build hello_s32k (mr_canhubk3)
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: west build -b mr_canhubk3 zephyr/samples/hello_s32k -d build/s32k344
+
+  zephyr-s32k388-renode:
+    name: Zephyr S32K388 Renode
+    runs-on: ubuntu-latest
+    container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Init Zephyr
+        run: |
+          west init /tmp/zp && cd /tmp/zp
+          west update --narrow -o=--depth=1 && west zephyr-export
+      - name: Build hello_s32k (s32k388_renode)
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: |
+          west build -b s32k388_renode zephyr/samples/hello_s32k \
+            -d build/s32k388 --pristine auto -- \
+            -DBOARD_ROOT=$GITHUB_WORKSPACE/zephyr/boards

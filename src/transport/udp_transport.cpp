@@ -13,11 +13,6 @@
 
 #include "transport/udp_transport.h"
 #include "common/result.h"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <cstring>
 #include <iostream>
 
@@ -131,7 +126,7 @@ Result UdpTransport::start() {
 
     result = bind_socket();
     if (result != Result::SUCCESS) {
-        close(socket_fd_);
+        someip_close_socket(socket_fd_);
         socket_fd_ = -1;
         return result;
     }
@@ -152,9 +147,8 @@ Result UdpTransport::stop() {
 
     // Close socket to wake up receive thread
     if (socket_fd_ >= 0) {
-        // Shutdown first to wake up any blocking calls
         shutdown(socket_fd_, SHUT_RDWR);
-        close(socket_fd_);
+        someip_close_socket(socket_fd_);
         socket_fd_ = -1;
     }
 
@@ -249,7 +243,7 @@ Result UdpTransport::create_socket() {
     if (config_.reuse_address) {
         int reuse = 1;
         if (setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
-            close(socket_fd_);
+            someip_close_socket(socket_fd_);
             socket_fd_ = -1;
             return Result::NETWORK_ERROR;
         }
@@ -269,7 +263,7 @@ Result UdpTransport::create_socket() {
     if (config_.enable_broadcast) {
         int broadcast = 1;
         if (setsockopt(socket_fd_, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0) {
-            close(socket_fd_);
+            someip_close_socket(socket_fd_);
             socket_fd_ = -1;
             return Result::NETWORK_ERROR;
         }
@@ -286,9 +280,8 @@ Result UdpTransport::create_socket() {
 
     // Set blocking/non-blocking mode
     if (!config_.blocking) {
-        int flags = fcntl(socket_fd_, F_GETFL, 0);
-        if (flags < 0 || fcntl(socket_fd_, F_SETFL, flags | O_NONBLOCK) < 0) {
-            close(socket_fd_);
+        if (someip_set_nonblocking(socket_fd_) < 0) {
+            someip_close_socket(socket_fd_);
             socket_fd_ = -1;
             return Result::NETWORK_ERROR;
         }

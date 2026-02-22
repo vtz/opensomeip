@@ -15,12 +15,12 @@
 #define SOMEIP_TRANSPORT_UDP_TRANSPORT_H
 
 #include "transport/transport.h"
+#include "platform/net.h"
 #include <thread>
 #include <atomic>
 #include <mutex>
 #include <queue>
 #include <condition_variable>
-#include <netinet/in.h>
 
 namespace someip {
 namespace transport {

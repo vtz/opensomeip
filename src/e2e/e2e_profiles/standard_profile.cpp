@@ -18,11 +18,7 @@
 #include "e2e/e2e_profile_registry.h"
 #include "someip/message.h"
 #include "common/result.h"
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#endif
+#include "platform/byteorder.h"
 #include <chrono>
 #include <unordered_map>
 #include <mutex>
@@ -70,7 +66,7 @@ public:
             crc_data.reserve(16 + msg.get_payload().size());
 
             // Serialize header fields manually (without E2E header)
-            uint32_t message_id_be = htonl(msg.get_message_id().to_uint32());
+            uint32_t message_id_be = someip_htonl(msg.get_message_id().to_uint32());
             crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&message_id_be),
                           reinterpret_cast<const uint8_t*>(&message_id_be) + sizeof(uint32_t));
 
@@ -81,11 +77,11 @@ public:
             // For now, calculate what the length will be:
             size_t e2e_size = E2EHeader::get_header_size();
             uint32_t length = 8 + e2e_size + static_cast<uint32_t>(msg.get_payload().size());
-            uint32_t length_be = htonl(length);
+            uint32_t length_be = someip_htonl(length);
             crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&length_be),
                           reinterpret_cast<const uint8_t*>(&length_be) + sizeof(uint32_t));
 
-            uint32_t request_id_be = htonl(msg.get_request_id().to_uint32());
+            uint32_t request_id_be = someip_htonl(msg.get_request_id().to_uint32());
             crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&request_id_be),
                           reinterpret_cast<const uint8_t*>(&request_id_be) + sizeof(uint32_t));
 
@@ -156,16 +152,16 @@ public:
             crc_data.reserve(16 + msg.get_payload().size());
 
             // Serialize header fields manually
-            uint32_t message_id_be = htonl(msg.get_message_id().to_uint32());
+            uint32_t message_id_be = someip_htonl(msg.get_message_id().to_uint32());
             crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&message_id_be),
                           reinterpret_cast<const uint8_t*>(&message_id_be) + sizeof(uint32_t));
 
             // Use actual length from message (includes E2E header)
-            uint32_t length_be = htonl(msg.get_length());
+            uint32_t length_be = someip_htonl(msg.get_length());
             crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&length_be),
                           reinterpret_cast<const uint8_t*>(&length_be) + sizeof(uint32_t));
 
-            uint32_t request_id_be = htonl(msg.get_request_id().to_uint32());
+            uint32_t request_id_be = someip_htonl(msg.get_request_id().to_uint32());
             crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&request_id_be),
                           reinterpret_cast<const uint8_t*>(&request_id_be) + sizeof(uint32_t));
 

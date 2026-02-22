@@ -1,0 +1,6 @@
+board:
+  name: s32k388_renode
+  vendor: nxp
+  socs:
+    - name: s32k388
+  full_name: NXP S32K388 (Renode simulation)

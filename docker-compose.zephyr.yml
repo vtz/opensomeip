@@ -1,0 +1,28 @@
+################################################################################
+# Copyright (c) 2025 Vinicius Tadeu Zein
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+
+# Docker Compose for Zephyr development environment.
+#
+# Usage:
+#   docker-compose -f docker-compose.zephyr.yml build
+#   docker-compose -f docker-compose.zephyr.yml run zephyr-dev bash
+#   docker-compose -f docker-compose.zephyr.yml run zephyr-dev ./scripts/zephyr_build.sh native_sim
+
+services:
+  zephyr-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.zephyr
+    volumes:
+      - .:/workspace/someip
+    working_dir: /workspace/someip
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    network_mode: host
+    stdin_open: true
+    tty: true

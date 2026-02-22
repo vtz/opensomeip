@@ -14,12 +14,7 @@
 #include "serialization/serializer.h"
 #include <cstring>
 #include <algorithm>
-#if defined(_WIN32)
-#include <winsock2.h>
-#else
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#endif
+#include "platform/byteorder.h"
 
 namespace someip {
 namespace serialization {
@@ -188,13 +183,13 @@ void Serializer::add_padding(size_t bytes) {
 }
 
 void Serializer::append_be_uint16(uint16_t value) {
-    uint16_t be_value = htons(value);
+    uint16_t be_value = someip_htons(value);
     const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint16_t));
 }
 
 void Serializer::append_be_uint32(uint32_t value) {
-    uint32_t be_value = htonl(value);
+    uint32_t be_value = someip_htonl(value);
     const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint32_t));
 }
@@ -450,7 +445,7 @@ std::optional<uint16_t> Deserializer::read_be_uint16() {
     uint16_t value;
     std::memcpy(&value, &buffer_[position_], sizeof(uint16_t));
     position_ += sizeof(uint16_t);
-    return ntohs(value);
+    return someip_ntohs(value);
 }
 
 std::optional<uint32_t> Deserializer::read_be_uint32() {
@@ -461,7 +456,7 @@ std::optional<uint32_t> Deserializer::read_be_uint32() {
     uint32_t value;
     std::memcpy(&value, &buffer_[position_], sizeof(uint32_t));
     position_ += sizeof(uint32_t);
-    return ntohl(value);
+    return someip_ntohl(value);
 }
 
 std::optional<uint64_t> Deserializer::read_be_uint64() {

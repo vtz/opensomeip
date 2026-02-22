@@ -13,8 +13,8 @@
 
 #include "sd/sd_message.h"
 #include "serialization/serializer.h"
+#include "platform/byteorder.h"
 #include <algorithm>
-#include <arpa/inet.h>
 #include <iostream>
 
 namespace someip {
@@ -223,7 +223,7 @@ std::vector<uint8_t> IPv4EndpointOption::serialize() const {
     data.push_back(protocol_);
 
     // Port (2 bytes, network byte order)
-    uint16_t network_port = htons(port_);
+    uint16_t network_port = someip_htons(port_);
     data.push_back((network_port >> 8) & 0xFF);
     data.push_back(network_port & 0xFF);
 
@@ -267,7 +267,7 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
 
     // Port (2 bytes, network byte order)
     uint16_t network_port = (data[offset] << 8) | data[offset + 1];
-    port_ = ntohs(network_port);
+    port_ = someip_ntohs(network_port);
     offset += 2;
 
     return true;

@@ -1,0 +1,4 @@
+name: someip-stack
+build:
+  cmake: zephyr
+  kconfig: zephyr/Kconfig
