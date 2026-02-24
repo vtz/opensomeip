@@ -9,10 +9,6 @@ on:
       - '**/*.md'
       - 'docs/**'
       - '!docs/requirements/**'
-<<<<<<< HEAD
-      - 'open-someip-spec/**'
-=======
->>>>>>> c1c588d (ci: skip build and tests on documentation-only changes)
       - 'LICENSE'
       - '.cursor/**'
   pull_request:
@@ -21,10 +17,6 @@ on:
       - '**/*.md'
       - 'docs/**'
       - '!docs/requirements/**'
-<<<<<<< HEAD
-      - 'open-someip-spec/**'
-=======
->>>>>>> c1c588d (ci: skip build and tests on documentation-only changes)
       - 'LICENSE'
       - '.cursor/**'
 
