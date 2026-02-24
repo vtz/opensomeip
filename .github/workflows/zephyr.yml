@@ -23,8 +23,15 @@ jobs:
     name: Zephyr native_sim
     runs-on: ubuntu-latest
     container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
     steps:
       - uses: actions/checkout@v4
+      - name: Install Zephyr SDK
+        run: |
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
+          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
+          /opt/zephyr-sdk-0.17.0/setup.sh -c
       - name: Init Zephyr
         run: |
           pip install jsonschema
@@ -45,8 +52,17 @@ jobs:
     name: Zephyr S32K344 cross-compile
     runs-on: ubuntu-latest
     container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
     steps:
       - uses: actions/checkout@v4
+      - name: Install Zephyr SDK
+        run: |
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
+          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
+          tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
+          /opt/zephyr-sdk-0.17.0/setup.sh -c
       - name: Init Zephyr
         run: |
           pip install jsonschema
@@ -60,8 +76,17 @@ jobs:
     name: Zephyr S32K388 Renode
     runs-on: ubuntu-latest
     container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
     steps:
       - uses: actions/checkout@v4
+      - name: Install Zephyr SDK
+        run: |
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
+          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
+          tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
+          /opt/zephyr-sdk-0.17.0/setup.sh -c
       - name: Init Zephyr
         run: |
           pip install jsonschema
