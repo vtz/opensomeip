@@ -1,0 +1,68 @@
+################################################################################
+# Copyright (c) 2025 Vinicius Tadeu Zein
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+
+# Unified dev environment: host builds (cmake + ctest) and Zephyr (west + SDK).
+#
+# Usage:
+#   docker-compose -f docker-compose.dev.yml build
+#   docker-compose -f docker-compose.dev.yml run --rm dev bash
+#
+# Inside the container:
+#   Host build:   cmake -B build -DBUILD_TESTS=ON && cmake --build build && cd build && ctest
+#   Zephyr build: west build -b native_sim/native/64 zephyr/tests/test_core ...
+
+FROM ubuntu:22.04
+
+ARG ZEPHYR_SDK_VERSION=0.17.0
+ARG CMAKE_VERSION=3.28.6
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential git wget xz-utils ca-certificates \
+    ninja-build gperf ccache device-tree-compiler \
+    python3 python3-pip python3-venv python3-setuptools python3-wheel \
+    file libsdl2-dev libmagic1 \
+    iproute2 net-tools iputils-ping \
+    && rm -rf /var/lib/apt/lists/*
+
+# CMake 3.28+ (Ubuntu 22.04 ships 3.22 which is too old for CMP0135)
+RUN HOSTARCH=$(uname -m) && \
+    wget -q https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-${HOSTARCH}.tar.gz \
+    && tar xzf cmake-${CMAKE_VERSION}-linux-${HOSTARCH}.tar.gz -C /opt/ \
+    && rm cmake-${CMAKE_VERSION}-linux-${HOSTARCH}.tar.gz \
+    && ln -sf /opt/cmake-${CMAKE_VERSION}-linux-${HOSTARCH}/bin/* /usr/local/bin/
+
+# Python: host test deps + Zephyr build deps
+RUN pip3 install --no-cache-dir \
+    west pyelftools pyyaml pykwalify packaging canopen jsonschema \
+    pytest pytest-cov coverage junit-xml
+
+# Zephyr SDK (minimal + host tools + ARM cross-compiler)
+RUN HOSTARCH=$(uname -m) && \
+    case "$HOSTARCH" in \
+        aarch64) SDKARCH=linux-aarch64 ;; \
+        *)       SDKARCH=linux-x86_64  ;; \
+    esac && \
+    wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}_${SDKARCH}_minimal.tar.xz \
+    && tar xf zephyr-sdk-${ZEPHYR_SDK_VERSION}_${SDKARCH}_minimal.tar.xz -C /opt/ \
+    && rm zephyr-sdk-${ZEPHYR_SDK_VERSION}_${SDKARCH}_minimal.tar.xz \
+    && cd /opt/zephyr-sdk-${ZEPHYR_SDK_VERSION} \
+    && ./setup.sh -h -t arm-zephyr-eabi
+
+ENV ZEPHYR_SDK_INSTALL_DIR=/opt/zephyr-sdk-${ZEPHYR_SDK_VERSION}
+ENV ZEPHYR_TOOLCHAIN_VARIANT=zephyr
+
+WORKDIR /workspace
+
+RUN west init /workspace/zephyrproject && \
+    cd /workspace/zephyrproject && \
+    west update --narrow -o=--depth=1 && \
+    west zephyr-export
+
+ENV ZEPHYR_BASE=/workspace/zephyrproject/zephyr
+
+WORKDIR /workspace/someip

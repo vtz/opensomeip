@@ -4,6 +4,7 @@
 # Basic Examples
 add_subdirectory(basic/hello_world)
 add_subdirectory(basic/method_calls)
+add_subdirectory(basic/sd_demo)
 # add_subdirectory(basic/events)  # Temporarily disabled due to API compatibility issues
 
 # Advanced Examples

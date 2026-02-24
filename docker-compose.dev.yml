@@ -1,0 +1,18 @@
+################################################################################
+# Copyright (c) 2025 Vinicius Tadeu Zein
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/workspace/someip
+    working_dir: /workspace/someip
+    cap_add:
+      - NET_ADMIN
+    stdin_open: true
+    tty: true
