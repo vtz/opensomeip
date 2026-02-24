@@ -27,6 +27,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Init Zephyr
         run: |
+          pip install jsonschema
           west init /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
       - name: Build & run test_core
@@ -48,6 +49,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Init Zephyr
         run: |
+          pip install jsonschema
           west init /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
       - name: Build hello_s32k (mr_canhubk3)
@@ -62,6 +64,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Init Zephyr
         run: |
+          pip install jsonschema
           west init /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
       - name: Build hello_s32k (s32k388_renode)
