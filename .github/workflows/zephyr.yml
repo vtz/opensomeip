@@ -47,6 +47,9 @@ jobs:
         run: |
           west build -b native_sim zephyr/samples/someip_echo -d build/ns_echo --pristine auto
           timeout 30 build/ns_echo/zephyr/zephyr.exe || true
+      - name: Build someip_sd_client
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: west build -b native_sim zephyr/samples/someip_sd_client -d build/ns_sd --pristine auto
 
   zephyr-s32k344-build:
     name: Zephyr S32K344 cross-compile

@@ -203,9 +203,8 @@ public:
         response_message.add_option(std::move(multicast_option));
 
         // Set option index in entry
-        if (auto* entry = dynamic_cast<EventGroupEntry*>(response_message.get_entries()[0].get())) {
-            entry->set_index1(0);  // Reference first option
-        }
+        auto* entry = static_cast<EventGroupEntry*>(response_message.get_entries()[0].get());
+        entry->set_index1(0);  // Reference first option
 
         // Send unicast response to client
         // Parse client_address (format: "ip:port" or just "ip")
@@ -363,10 +362,9 @@ private:
         sd_message.add_option(std::move(endpoint_option));
 
         // Set option index in the entry (first option, so index 0)
-        if (auto* entry = dynamic_cast<ServiceEntry*>(sd_message.get_entries()[0].get())) {
-            entry->set_index1(0);  // Reference first option
-            entry->set_index2(0);  // No second option
-        }
+        auto* offer_entry_ptr = static_cast<ServiceEntry*>(sd_message.get_entries()[0].get());
+        offer_entry_ptr->set_index1(0);  // Reference first option
+        offer_entry_ptr->set_index2(0);  // No second option
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
@@ -534,10 +532,9 @@ private:
         sd_message.add_option(std::move(endpoint_option));
 
         // Set option index in the entry (first option, so index 0)
-        if (auto* entry = dynamic_cast<ServiceEntry*>(sd_message.get_entries()[0].get())) {
-            entry->set_index1(0);  // Reference first option
-            entry->set_index2(0);  // No second option
-        }
+        auto* offer_entry_ptr = static_cast<ServiceEntry*>(sd_message.get_entries()[0].get());
+        offer_entry_ptr->set_index1(0);  // Reference first option
+        offer_entry_ptr->set_index2(0);  // No second option
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),

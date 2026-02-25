@@ -192,9 +192,8 @@ public:
         sd_message.add_option(std::move(endpoint_option));
 
         // Set option index in entry
-        if (auto* entry = dynamic_cast<EventGroupEntry*>(sd_message.get_entries()[0].get())) {
-            entry->set_index1(0);  // Reference first option
-        }
+        auto* sub_entry = static_cast<EventGroupEntry*>(sd_message.get_entries()[0].get());
+        sub_entry->set_index1(0);  // Reference first option
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),

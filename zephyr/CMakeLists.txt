@@ -23,6 +23,7 @@ zephyr_library_sources(
     ${SOMEIP_SRC}/someip/message.cpp
     ${SOMEIP_SRC}/core/session_manager.cpp
     ${SOMEIP_SRC}/serialization/serializer.cpp
+    ${SOMEIP_SRC}/transport/endpoint.cpp
 )
 zephyr_library_compile_options(-std=c++17)
 
@@ -47,12 +48,6 @@ if(CONFIG_SOMEIP_TP)
 endif()
 
 # ---- Transport ----
-if(CONFIG_SOMEIP_TRANSPORT_UDP OR CONFIG_SOMEIP_TRANSPORT_TCP)
-    zephyr_library_sources(
-        ${SOMEIP_SRC}/transport/endpoint.cpp
-    )
-endif()
-
 if(CONFIG_SOMEIP_TRANSPORT_UDP)
     zephyr_library_sources(
         ${SOMEIP_SRC}/transport/udp_transport.cpp
