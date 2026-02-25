@@ -226,8 +226,11 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
             }
             ++groups;
         } else {
-            if (has_double_colon && pos == double_colon) {
+            // Allow a single "::" compression sequence (two adjacent colons).
+            if (has_double_colon && !compression_used && pos == double_colon) {
                 compression_used = true;
+            } else if (has_double_colon && compression_used && pos == double_colon + 1) {
+                // Second ':' from the same "::" token; valid, nothing to count.
             } else if (pos > 0 && next < address.size()) {
                 return false;
             }
@@ -240,7 +243,8 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
     }
 
     if (has_double_colon) {
-        return groups >= 1 && groups <= 7;
+        // "::" can compress one or more 16-bit groups, including all 8 groups.
+        return groups <= 7;
     }
     return groups == 8;
 }

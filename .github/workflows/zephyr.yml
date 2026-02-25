@@ -41,17 +41,24 @@ jobs:
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
           west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto
+          # test_core is a real test binary and must fail CI on non-zero exit.
           timeout 30 build/ns_tc/zephyr/zephyr.exe
       - name: Build & run test_transport
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
           west build -b native_sim zephyr/tests/test_transport -d build/ns_tp --pristine auto
+          # test_transport is a real test binary and must fail CI on non-zero exit.
           timeout 30 build/ns_tp/zephyr/zephyr.exe
       - name: Build & run someip_echo
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
           west build -b native_sim zephyr/samples/someip_echo -d build/ns_echo --pristine auto
-          timeout 30 build/ns_echo/zephyr/zephyr.exe
+          # someip_echo is a sample that may run continuously.
+          # Accept timeout exit code 124, but fail on any other non-zero code.
+          timeout 30 build/ns_echo/zephyr/zephyr.exe; rc=$?
+          if [ "$rc" -ne 0 ] && [ "$rc" -ne 124 ]; then
+            exit "$rc"
+          fi
       - name: Build someip_sd_client
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: west build -b native_sim zephyr/samples/someip_sd_client -d build/ns_sd --pristine auto
