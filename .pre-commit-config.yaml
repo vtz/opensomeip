@@ -31,6 +31,7 @@ repos:
       - id: conventional-pre-commit
         stages: [commit-msg]
         args:
+          - --allow-merge-commits
           - feat
           - fix
           - docs
