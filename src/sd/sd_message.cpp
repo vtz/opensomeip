@@ -14,6 +14,7 @@
 #include "sd/sd_message.h"
 #include "serialization/serializer.h"
 #include "platform/byteorder.h"
+#include "platform/net.h"
 #include <algorithm>
 #include <iostream>
 
