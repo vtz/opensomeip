@@ -14,6 +14,7 @@
 #ifndef SOMEIP_TP_TYPES_H
 #define SOMEIP_TP_TYPES_H
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 #include <memory>

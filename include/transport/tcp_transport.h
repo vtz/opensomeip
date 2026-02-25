@@ -16,6 +16,7 @@
 
 #include "transport/transport.h"
 #include "platform/thread.h"
+#include <cstddef>
 #include <atomic>
 #include <queue>
 

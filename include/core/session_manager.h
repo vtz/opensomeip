@@ -14,6 +14,7 @@
 #ifndef SOMEIP_CORE_SESSION_MANAGER_H
 #define SOMEIP_CORE_SESSION_MANAGER_H
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>

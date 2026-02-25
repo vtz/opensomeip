@@ -14,6 +14,7 @@
 #ifndef E2E_HEADER_H
 #define E2E_HEADER_H
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 #include <optional>

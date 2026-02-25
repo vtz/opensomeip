@@ -35,7 +35,7 @@ run_test() {
     printf "\n[%d] Building %s for %s...\n" "$TOTAL" "$app_name" "$board"
 
     if west build -b "$board" "$app_dir" -d "$build_dir" --pristine auto -- \
-        -DBOARD_ROOT="$ZEPHYR_DIR/boards" 2>&1; then
+        -DBOARD_ROOT="$ZEPHYR_DIR" 2>&1; then
         echo "  Build: OK"
     else
         echo "  Build: FAILED"

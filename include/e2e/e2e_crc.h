@@ -14,6 +14,7 @@
 #ifndef E2E_CRC_H
 #define E2E_CRC_H
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 

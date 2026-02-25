@@ -15,6 +15,7 @@
 #define SOMEIP_TP_REASSEMBLER_H
 
 #include "tp_types.h"
+#include <cstddef>
 #include <unordered_map>
 #include <memory>
 #include "platform/thread.h"
