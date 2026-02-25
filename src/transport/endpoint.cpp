@@ -16,6 +16,7 @@
 #include <functional>
 #include <cstdlib>
 #include <cstring>
+#include <cctype>
 
 namespace someip {
 namespace transport {
@@ -185,23 +186,33 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
         return false;
     }
 
-    // Quick character validation
     for (char c : address) {
         if (!std::isxdigit(static_cast<unsigned char>(c)) && c != ':') {
             return false;
         }
     }
 
-    // Handle "::" (zero-compression) -- may appear at most once
     size_t double_colon = address.find("::");
     bool has_double_colon = (double_colon != std::string::npos);
     if (has_double_colon && address.find("::", double_colon + 2) != std::string::npos) {
         return false;
     }
 
-    // Count groups by splitting on ':'
+    if (!has_double_colon) {
+        if (address.front() == ':' || address.back() == ':') {
+            return false;
+        }
+    }
+
+    // Reject ":::" by checking for three consecutive colons
+    if (address.find(":::") != std::string::npos) {
+        return false;
+    }
+
     int groups = 0;
     size_t pos = 0;
+    bool compression_used = false;
+
     while (pos <= address.size()) {
         size_t next = address.find(':', pos);
         if (next == std::string::npos) {
@@ -214,6 +225,12 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
                 return false;
             }
             ++groups;
+        } else {
+            if (has_double_colon && pos == double_colon) {
+                compression_used = true;
+            } else if (pos > 0 && next < address.size()) {
+                return false;
+            }
         }
 
         if (next == address.size()) {
@@ -223,7 +240,7 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
     }
 
     if (has_double_colon) {
-        return groups <= 7;
+        return groups >= 1 && groups <= 7;
     }
     return groups == 8;
 }

@@ -40,16 +40,20 @@ int main() {
     printf("  serialized: %zu bytes\n", serialized.size());
 
     Message decoded;
-    if (decoded.deserialize(serialized)) {
-        printf("  deserialized OK: service=0x%04X method=0x%04X\n",
-               decoded.get_service_id(), decoded.get_method_id());
-
-        bool match = (decoded.get_service_id() == msg.get_service_id()) &&
-                     (decoded.get_method_id() == msg.get_method_id()) &&
-                     (decoded.get_payload() == msg.get_payload());
-        printf("  round-trip: %s\n", match ? "PASS" : "FAIL");
-    } else {
+    if (!decoded.deserialize(serialized)) {
         printf("  deserialized FAILED\n");
+        return 1;
+    }
+
+    printf("  deserialized OK: service=0x%04X method=0x%04X\n",
+           decoded.get_service_id(), decoded.get_method_id());
+
+    bool match = (decoded.get_service_id() == msg.get_service_id()) &&
+                 (decoded.get_method_id() == msg.get_method_id()) &&
+                 (decoded.get_payload() == msg.get_payload());
+    printf("  round-trip: %s\n", match ? "PASS" : "FAIL");
+    if (!match) {
+        return 1;
     }
 
     Endpoint ep("192.168.1.100", 30490);
@@ -57,6 +61,9 @@ int main() {
            ep.to_string().c_str(),
            ep.is_valid() ? "yes" : "no",
            ep.is_ipv4() ? "yes" : "no");
+    if (!ep.is_valid()) {
+        return 1;
+    }
 
     printf("=== SOME/IP Echo Demo complete ===\n");
     return 0;

@@ -6,7 +6,7 @@
 
 menuconfig SOMEIP
 	bool "SOME/IP Protocol Stack"
-	default y
+	default n
 	depends on CPP
 	help
 	  Enable the SOME/IP protocol stack for automotive Ethernet communication.
@@ -37,12 +37,14 @@ config SOMEIP_SD
 config SOMEIP_RPC
 	bool "Remote Procedure Call"
 	default y
+	depends on SOMEIP_TRANSPORT_UDP || SOMEIP_TRANSPORT_TCP
 	help
 	  Enable SOME/IP RPC client and server.
 
 config SOMEIP_EVENTS
 	bool "Event handling"
 	default y
+	depends on SOMEIP_TRANSPORT_UDP || SOMEIP_TRANSPORT_TCP
 	help
 	  Enable SOME/IP event publisher and subscriber.
 
@@ -55,24 +57,28 @@ config SOMEIP_E2E
 config SOMEIP_TP
 	bool "Transport Protocol (segmentation)"
 	default y
+	depends on SOMEIP_TRANSPORT_UDP || SOMEIP_TRANSPORT_TCP
 	help
 	  Enable SOME/IP-TP message segmentation and reassembly.
 
 config SOMEIP_THREAD_STACK_SIZE
 	int "Thread stack size (bytes)"
 	default 4096
+	range 512 65536
 	help
 	  Stack size for SOME/IP worker threads on embedded targets.
 
 config SOMEIP_MESSAGE_POOL_SIZE
 	int "Pre-allocated message pool size"
 	default 16
+	range 1 1024
 	help
 	  Number of pre-allocated Message objects for embedded targets.
 
 config SOMEIP_MAX_PAYLOAD_SIZE
 	int "Maximum payload size (bytes)"
 	default 1400
+	range 1 65535
 	help
 	  Maximum SOME/IP payload size. Set to 1400 to avoid IP fragmentation
 	  on standard Ethernet. Larger values require SOME/IP-TP.
@@ -80,12 +86,14 @@ config SOMEIP_MAX_PAYLOAD_SIZE
 config SOMEIP_MAX_SUBSCRIPTIONS
 	int "Maximum event subscriptions"
 	default 8
+	range 1 255
 	help
 	  Maximum number of concurrent event subscriptions.
 
 config SOMEIP_MAX_PENDING_CALLS
 	int "Maximum pending RPC calls"
 	default 8
+	range 1 255
 	help
 	  Maximum number of pending RPC calls waiting for response.
 

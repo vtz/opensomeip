@@ -209,25 +209,27 @@ bool Message::deserialize(const std::vector<uint8_t>& data) {
 
     size_t offset = 0;
 
-    // Deserialize header from big-endian format
     if (offset + sizeof(uint32_t) > data.size()) {
         return false;
     }
-    uint32_t message_id_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
+    uint32_t message_id_be;
+    std::memcpy(&message_id_be, &data[offset], sizeof(uint32_t));
     message_id_ = MessageId::from_uint32(someip_ntohl(message_id_be));
     offset += sizeof(uint32_t);
 
     if (offset + sizeof(uint32_t) > data.size()) {
         return false;
     }
-    uint32_t length_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
+    uint32_t length_be;
+    std::memcpy(&length_be, &data[offset], sizeof(uint32_t));
     length_ = someip_ntohl(length_be);
     offset += sizeof(uint32_t);
 
     if (offset + sizeof(uint32_t) > data.size()) {
         return false;
     }
-    uint32_t request_id_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
+    uint32_t request_id_be;
+    std::memcpy(&request_id_be, &data[offset], sizeof(uint32_t));
     request_id_ = RequestId::from_uint32(someip_ntohl(request_id_be));
     offset += sizeof(uint32_t);
 

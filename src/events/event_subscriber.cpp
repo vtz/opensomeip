@@ -13,6 +13,7 @@
 
 #include "events/event_subscriber.h"
 #include "events/event_types.h"
+#include "platform/thread.h"
 #include "transport/udp_transport.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"

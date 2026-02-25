@@ -275,11 +275,11 @@ private:
     }
 
     void start_offer_timer() {
-        if (offer_timer_thread_.joinable()) {
+        if (offer_timer_thread_ && offer_timer_thread_->joinable()) {
             return;
         }
 
-        offer_timer_thread_ = platform::Thread([this]() {
+        offer_timer_thread_ = std::make_unique<platform::Thread>([this]() {
             while (running_) {
                 platform::this_thread::sleep_for(next_offer_delay_);
 
@@ -301,8 +301,8 @@ private:
     }
 
     void stop_offer_timer() {
-        if (offer_timer_thread_.joinable()) {
-            offer_timer_thread_.join();
+        if (offer_timer_thread_ && offer_timer_thread_->joinable()) {
+            offer_timer_thread_->join();
         }
     }
 
@@ -554,7 +554,7 @@ private:
     std::vector<OfferedService> offered_services_;
     mutable platform::Mutex offered_services_mutex_;
 
-    platform::Thread offer_timer_thread_;
+    std::unique_ptr<platform::Thread> offer_timer_thread_;
     std::chrono::milliseconds next_offer_delay_;
     std::atomic<bool> running_;
 };

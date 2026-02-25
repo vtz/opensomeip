@@ -1,156 +1,156 @@
 # SOME/IP Stack -- Zephyr RTOS Port Progress
 
-## Resumo do Projeto
+## Project Summary
 
 - **Branch**: `feature/zephyr-port`
 - **Targets**: native_sim, mr_canhubk3 (S32K344), s32k388_renode (S32K388)
-- **Status geral**: Implementacao completa -- aguardando validacao em Docker/Zephyr
+- **Overall status**: Implementation complete -- awaiting validation in Docker/Zephyr
 
-## Decisoes Arquiteturais
+## Architectural Decisions
 
-### 1. Codebase unico vs fork
+### 1. Single codebase vs fork
 
-**Decisao**: Manter um unico codebase. Nao criar fork "opensomeip_lite".
+**Decision**: Keep a single codebase. Do not create an "opensomeip_lite" fork.
 
-**Justificativa**: As diferencas entre host e Zephyr se concentram em 4 headers de
-abstracao de plataforma (`include/platform/`). O codigo de protocolo (~95% da codebase)
-e identico em todas as plataformas. Um fork duplicaria toda a manutencao.
+**Rationale**: The differences between host and Zephyr are concentrated in 4 platform
+abstraction headers (`include/platform/`). The protocol code (~95% of the codebase)
+is identical across all platforms. A fork would duplicate all maintenance effort.
 
 ### 2. STL containers
 
-**Decisao**: Manter `std::vector`, `std::string`, `std::shared_ptr`.
+**Decision**: Keep `std::vector`, `std::string`, `std::shared_ptr`.
 
-**Justificativa**: Funcionam no Zephyr com `CONFIG_STD_CPP17` e `CONFIG_REQUIRES_FULL_LIBCPP`.
-Heap controlado via `CONFIG_HEAP_MEM_POOL_SIZE`.
+**Rationale**: They work on Zephyr with `CONFIG_STD_CPP17` and `CONFIG_REQUIRES_FULL_LIBCPP`.
+Heap is controlled via `CONFIG_HEAP_MEM_POOL_SIZE`.
 
-> **Nota (Zephyr 4.3.x)**: `CONFIG_NEWLIB_LIBC` foi substituido por
-> `CONFIG_REQUIRES_FULL_LIBCPP=y`. Na `native_sim`, `NEWLIB_LIBC` conflita com
-> `EXTERNAL_LIBC` (Kconfig warnings sao fatais em 4.3.x).
+> **Note (Zephyr 4.3.x)**: `CONFIG_NEWLIB_LIBC` has been replaced by
+> `CONFIG_REQUIRES_FULL_LIBCPP=y`. On `native_sim`, `NEWLIB_LIBC` conflicts with
+> `EXTERNAL_LIBC` (Kconfig warnings are fatal in 4.3.x).
 
-**Alternativas descartadas**: iceoryx_hoofs (nao suporta Zephyr), containers proprios
-(prematuro).
+**Discarded alternatives**: iceoryx_hoofs (does not support Zephyr), custom containers
+(premature).
 
 ### 3. std::regex
 
-**Decisao**: Removido. Substituido por parsing manual em `endpoint.cpp`.
+**Decision**: Removed. Replaced by manual parsing in `endpoint.cpp`.
 
-**Justificativa**: Unica dependencia STL incompativel com RTOS (>100KB RAM). Usado
-apenas para validacao IPv4/IPv6. Parsing manual e mais eficiente em todas as plataformas.
+**Rationale**: The only STL dependency incompatible with RTOS (>100KB RAM). Used
+only for IPv4/IPv6 validation. Manual parsing is more efficient on all platforms.
 
-### 4. Abstracao de plataforma
+### 4. Platform abstraction
 
-**Decisao**: 4 headers minimos em `include/platform/`.
+**Decision**: 4 minimal headers in `include/platform/`.
 
-- `byteorder.h` -- htons/ntohs portavel (someip_htons, etc.)
-- `net.h` -- sockets portavel (POSIX vs Zephyr BSD sockets)
-- `thread.h` -- threading portavel (std::thread vs k_thread)
-- `memory.h` -- pool allocator para Message objects
-
----
-
-## Fase 0: Setup do Ambiente
-
-### Status: done
-
-### Decisoes tomadas
-
-- Docker baseado em `ghcr.io/zephyrproject-rtos/ci:v0.27.4`
-- Renode 1.15.3 pre-instalado no container
-- Branch `feature/zephyr-port` criado a partir de `ci/skip-tests-on-docs-only`
-
-### O que foi feito
-
-- Criado `Dockerfile.zephyr` com Zephyr SDK + ARM toolchain + Renode
-- Criado `docker-compose.zephyr.yml` com volume mount e NET_ADMIN
-- Criado `zephyr/samples/net_test/` -- UDP echo para native_sim
-- Criado `zephyr/samples/hello_s32k/` -- hello world para mr_canhubk3
-- Criado `scripts/zephyr_build.sh` -- helper de build
-- Criado `docs/ZEPHYR_PORT_PROGRESS.md` (este arquivo)
-
-### Estado ao final da fase
-
-- Build host: pass (11/11 testes)
-- native_sim: infraestrutura criada (requer Docker para executar)
-- mr_canhubk3: infraestrutura criada (requer Docker para executar)
+- `byteorder.h` -- portable htons/ntohs (someip_htons, etc.)
+- `net.h` -- portable sockets (POSIX vs Zephyr BSD sockets)
+- `thread.h` -- portable threading (std::thread vs k_thread)
+- `memory.h` -- pool allocator for Message objects
 
 ---
 
-## Fase 1: Integracao como Modulo Zephyr
+## Phase 0: Environment Setup
 
 ### Status: done
 
-### O que foi feito
+### Decisions made
 
-- Criado `zephyr/module.yml` -- registro do modulo
-- Criado `zephyr/CMakeLists.txt` -- build condicional via Kconfig
-- Criado `zephyr/Kconfig` -- 12 opcoes de configuracao
-- Criado `zephyr/prj.conf` -- config base (C++17, POSIX, networking)
-- Criado `zephyr/boards/native_sim.conf` -- heap 256KB, pool 32
-- Criado `zephyr/boards/mr_canhubk3.conf` -- heap 64KB, pool 8, sem TCP/E2E
-- Criado `include/platform/byteorder.h` -- someip_htons/ntohs/htonl/ntohl
+- Docker based on `ghcr.io/zephyrproject-rtos/ci:v0.27.4`
+- Renode 1.15.3 pre-installed in the container
+- Branch `feature/zephyr-port` created from `ci/skip-tests-on-docs-only`
 
-### Decisoes tomadas
+### What was done
 
-- Kconfig entries para cada modulo (SD, RPC, Events, E2E, TP) permitem desabilitar
-  features em targets com pouca RAM
-- `byteorder.h` usa macros (`someip_htons`) em vez de inline functions para zero
-  overhead em todas as plataformas
+- Created `Dockerfile.zephyr` with Zephyr SDK + ARM toolchain + Renode
+- Created `docker-compose.zephyr.yml` with volume mount and NET_ADMIN
+- Created `zephyr/samples/net_test/` -- UDP echo for native_sim
+- Created `zephyr/samples/hello_s32k/` -- hello world for mr_canhubk3
+- Created `scripts/zephyr_build.sh` -- build helper
+- Created `docs/ZEPHYR_PORT_PROGRESS.md` (this file)
+
+### State at end of phase
+
+- Host build: pass (11/11 tests)
+- native_sim: infrastructure created (requires Docker to run)
+- mr_canhubk3: infrastructure created (requires Docker to run)
 
 ---
 
-## Fase 2: Remover std::regex
+## Phase 1: Zephyr Module Integration
 
 ### Status: done
 
-### O que foi feito
+### What was done
 
-- `src/transport/endpoint.cpp`: `is_valid_ipv4()` reescrito com parsing manual
-  (split por '.', validar octetos 0-255, rejeitar leading zeros)
-- `src/transport/endpoint.cpp`: `is_valid_ipv6()` reescrito com validacao manual
-  (contagem de grupos, validacao de caracteres hex, suporte a '::')
-- Removido `#include <regex>` de `endpoint.cpp`
+- Created `zephyr/module.yml` -- module registration
+- Created `zephyr/CMakeLists.txt` -- conditional build via Kconfig
+- Created `zephyr/Kconfig` -- 12 configuration options
+- Created `zephyr/prj.conf` -- base config (C++17, POSIX, networking)
+- Created `zephyr/boards/native_sim.conf` -- heap 256KB, pool 32
+- Created `zephyr/boards/mr_canhubk3.conf` -- heap 64KB, pool 8, no TCP/E2E
+- Created `include/platform/byteorder.h` -- someip_htons/ntohs/htonl/ntohl
 
-### Erros encontrados e resolucoes
+### Decisions made
 
-- Nenhum. Todos os 11 testes do host passaram apos a mudanca.
-
-### Estado ao final da fase
-
-- Build host: pass (11/11 testes, incluindo EndpointTest)
+- Kconfig entries for each module (SD, RPC, Events, E2E, TP) allow disabling
+  features on targets with limited RAM
+- `byteorder.h` uses macros (`someip_htons`) instead of inline functions for zero
+  overhead on all platforms
 
 ---
 
-## Fase 3: Camada de Abstracao de Sockets
+## Phase 2: Remove std::regex
 
 ### Status: done
 
-### O que foi feito
+### What was done
 
-- Criado `include/platform/net.h` -- inclui headers de rede conforme plataforma
+- `src/transport/endpoint.cpp`: `is_valid_ipv4()` rewritten with manual parsing
+  (split by '.', validate octets 0-255, reject leading zeros)
+- `src/transport/endpoint.cpp`: `is_valid_ipv6()` rewritten with manual validation
+  (group counting, hex character validation, '::' support)
+- Removed `#include <regex>` from `endpoint.cpp`
+
+### Errors found and resolutions
+
+- None. All 11 host tests passed after the change.
+
+### State at end of phase
+
+- Host build: pass (11/11 tests, including EndpointTest)
+
+---
+
+## Phase 3: Socket Abstraction Layer
+
+### Status: done
+
+### What was done
+
+- Created `include/platform/net.h` -- includes network headers per platform
   (__ZEPHYR__, _WIN32, POSIX)
-- Definidos helpers: `someip_close_socket()`, `someip_set_nonblocking()`,
+- Defined helpers: `someip_close_socket()`, `someip_set_nonblocking()`,
   `someip_set_blocking()`
-- `include/transport/udp_transport.h`: substituido `#include <netinet/in.h>` por
+- `include/transport/udp_transport.h`: replaced `#include <netinet/in.h>` with
   `#include "platform/net.h"`
-- `src/transport/udp_transport.cpp`: removidos includes POSIX diretos, substituidos
-  `close()` por `someip_close_socket()`, `fcntl()` por `someip_set_nonblocking()`
-- `src/transport/tcp_transport.cpp`: mesmas substituicoes
-- `src/someip/message.cpp`: substituido bloco `#ifdef _WIN32` por
-  `#include "platform/byteorder.h"`, todas as chamadas `htonl/ntohl` por `someip_*`
-- `src/serialization/serializer.cpp`: idem
-- `src/sd/sd_message.cpp`: idem
-- `src/sd/sd_server.cpp`: idem
-- `src/e2e/e2e_header.cpp`: idem
-- `src/e2e/e2e_profiles/standard_profile.cpp`: idem
-- `tests/test_sd.cpp`: idem
+- `src/transport/udp_transport.cpp`: removed direct POSIX includes, replaced
+  `close()` with `someip_close_socket()`, `fcntl()` with `someip_set_nonblocking()`
+- `src/transport/tcp_transport.cpp`: same replacements
+- `src/someip/message.cpp`: replaced `#ifdef _WIN32` block with
+  `#include "platform/byteorder.h"`, all `htonl/ntohl` calls with `someip_*`
+- `src/serialization/serializer.cpp`: same
+- `src/sd/sd_message.cpp`: same
+- `src/sd/sd_server.cpp`: same
+- `src/e2e/e2e_header.cpp`: same
+- `src/e2e/e2e_profiles/standard_profile.cpp`: same
+- `tests/test_sd.cpp`: same
 
-### Compatibilidade Zephyr 4.3.x (atualizado)
+### Zephyr 4.3.x Compatibility (updated)
 
-`CONFIG_NET_SOCKETS_POSIX_NAMES` foi removido no Zephyr 4.3.x. Esse Kconfig mapeava
-nomes POSIX (`socket`, `bind`, `close`, `fcntl`, etc.) para as funcoes `zsock_*` do
-Zephyr. Sem ele, `<zephyr/net/socket.h>` expoe apenas funcoes com prefixo `zsock_`.
+`CONFIG_NET_SOCKETS_POSIX_NAMES` was removed in Zephyr 4.3.x. This Kconfig mapped
+POSIX names (`socket`, `bind`, `close`, `fcntl`, etc.) to Zephyr's `zsock_*` functions.
+Without it, `<zephyr/net/socket.h>` only exposes functions with the `zsock_` prefix.
 
-**Solucao**: `platform/net.h` define macros que replicam o comportamento do antigo
+**Solution**: `platform/net.h` defines macros that replicate the behavior of the old
 `CONFIG_NET_SOCKETS_POSIX_NAMES`:
 
 ```c
@@ -158,189 +158,189 @@ Zephyr. Sem ele, `<zephyr/net/socket.h>` expoe apenas funcoes com prefixo `zsock
 #define bind(...)       zsock_bind(__VA_ARGS__)
 #define close(...)      zsock_close(__VA_ARGS__)
 #define setsockopt(...) zsock_setsockopt(__VA_ARGS__)
-// ... (todas as funcoes de socket)
+// ... (all socket functions)
 ```
 
-Alem disso:
-- `inet_addr()` implementado via `zsock_inet_pton` (nao existe `zsock_inet_addr`)
-- `in_addr_t` definido como `uint32_t`
-- `INADDR_NONE` definido como `0xffffffff`
-- Constantes `F_GETFL`, `F_SETFL`, `O_NONBLOCK`, `SHUT_RDWR` mapeadas para `ZSOCK_*`
-- `fd_set`, `timeval`, `FD_ZERO/SET/CLR/ISSET` mapeados para `zsock_*`/`ZSOCK_*`
+Additionally:
+- `inet_addr()` implemented via `zsock_inet_pton` (`zsock_inet_addr` does not exist)
+- `in_addr_t` defined as `uint32_t`
+- `INADDR_NONE` defined as `0xffffffff`
+- Constants `F_GETFL`, `F_SETFL`, `O_NONBLOCK`, `SHUT_RDWR` mapped to `ZSOCK_*`
+- `fd_set`, `timeval`, `FD_ZERO/SET/CLR/ISSET` mapped to `zsock_*`/`ZSOCK_*`
 
-Tambem corrigido:
-- `udp_transport.cpp`: `throw std::invalid_argument` guardado com
-  `__cpp_exceptions || __EXCEPTIONS` (Zephyr usa `-fno-exceptions` por padrao)
-- `tcp_transport.cpp`: `try/catch` removido (blocos `catch` estavam vazios)
-- Adicionado `#include <cstddef>` em 6 headers para declaracao explicita de `size_t`
-- Substituido `dynamic_cast` por `static_cast` em `sd_server.cpp` e `sd_client.cpp`
-  (Zephyr usa `-fno-rtti`)
-- Substituido `CONFIG_NATIVE_APPLICATION` por `CONFIG_ARCH_POSIX` em 7 arquivos
-  (deprecated no Zephyr 4.x)
+Also fixed:
+- `udp_transport.cpp`: `throw std::invalid_argument` guarded with
+  `__cpp_exceptions || __EXCEPTIONS` (Zephyr uses `-fno-exceptions` by default)
+- `tcp_transport.cpp`: `try/catch` removed (empty `catch` blocks)
+- Added `#include <cstddef>` in 6 headers for explicit `size_t` declaration
+- Replaced `dynamic_cast` with `static_cast` in `sd_server.cpp` and `sd_client.cpp`
+  (Zephyr uses `-fno-rtti`)
+- Replaced `CONFIG_NATIVE_APPLICATION` with `CONFIG_ARCH_POSIX` in 7 files
+  (deprecated in Zephyr 4.x)
 
-### Arquivos modificados (11 .cpp + 1 .h)
+### Modified files (11 .cpp + 1 .h)
 
-| Arquivo | Mudanca |
-|---------|---------|
+| File | Change |
+|------|--------|
 | `include/transport/udp_transport.h` | `netinet/in.h` -> `platform/net.h` |
 | `src/transport/udp_transport.cpp` | POSIX includes -> `platform/net.h`, close -> someip_close_socket |
 | `src/transport/tcp_transport.cpp` | POSIX includes -> `platform/net.h`, close/fcntl -> helpers |
 | `src/someip/message.cpp` | `arpa/inet.h` -> `platform/byteorder.h`, htonl -> someip_htonl |
-| `src/serialization/serializer.cpp` | idem |
-| `src/sd/sd_message.cpp` | idem |
-| `src/sd/sd_server.cpp` | idem |
-| `src/e2e/e2e_header.cpp` | idem |
-| `src/e2e/e2e_profiles/standard_profile.cpp` | idem |
+| `src/serialization/serializer.cpp` | same |
+| `src/sd/sd_message.cpp` | same |
+| `src/sd/sd_server.cpp` | same |
+| `src/e2e/e2e_header.cpp` | same |
+| `src/e2e/e2e_profiles/standard_profile.cpp` | same |
 | `tests/test_sd.cpp` | `arpa/inet.h` -> `platform/byteorder.h` |
 
-### Estado ao final da fase
+### State at end of phase
 
-- Build host: pass (11/11 testes)
-- Zero includes diretos de `arpa/inet.h`, `netinet/*.h`, `sys/socket.h`, `unistd.h`,
-  `fcntl.h` nos fontes (apenas dentro de `platform/*.h` com guards)
+- Host build: pass (11/11 tests)
+- Zero direct includes of `arpa/inet.h`, `netinet/*.h`, `sys/socket.h`, `unistd.h`,
+  `fcntl.h` in sources (only inside `platform/*.h` with guards)
 
 ---
 
-## Fase 4: Threading Portavel
+## Phase 4: Portable Threading
 
 ### Status: done
 
-### O que foi feito
+### What was done
 
-- Criado `include/platform/thread.h`:
-  - Host/native_sim: aliases para std::thread, std::mutex, std::condition_variable
-  - Embedded Zephyr: wrappers k_thread, k_mutex, k_condvar com API compativel
-  - `platform::this_thread::sleep_for()` portavel (k_msleep no embedded)
-  - `platform::ScopedLock` compativel com ambos
-- Criado `src/platform/zephyr_thread.cpp` (stub, implementacao e inline no header)
-- Substituido `std::thread`/`std::mutex`/`std::condition_variable` em **19 arquivos**:
+- Created `include/platform/thread.h`:
+  - Host/native_sim: aliases for std::thread, std::mutex, std::condition_variable
+  - Embedded Zephyr: wrappers for k_thread, k_mutex, k_condvar with compatible API
+  - `platform::this_thread::sleep_for()` portable (k_msleep on embedded)
+  - `platform::ScopedLock` compatible with both
+- Created `src/platform/zephyr_thread.cpp` (stub, implementation is inline in header)
+- Replaced `std::thread`/`std::mutex`/`std::condition_variable` in **19 files**:
   - 6 headers: `udp_transport.h`, `tcp_transport.h`, `session_manager.h`,
     `e2e_profile_registry.h`, `tp_reassembler.h`, `tp_manager.h`
   - 13 sources: `udp_transport.cpp`, `tcp_transport.cpp`, `session_manager.cpp`,
     `sd_server.cpp`, `sd_client.cpp`, `rpc_client.cpp`, `rpc_server.cpp`,
     `event_publisher.cpp`, `event_subscriber.cpp`, `e2e_profile_registry.cpp`,
     `standard_profile.cpp`, `tp_reassembler.cpp`, `tp_manager.cpp`
-- Substituido `std::scoped_lock` -> `platform::ScopedLock` em todos os fontes
-- Substituido `std::lock_guard<std::mutex>` -> `platform::ScopedLock` em e2e/sd
-- Substituido `std::this_thread::sleep_for` -> `platform::this_thread::sleep_for`
-- Substituido `std::future`/`std::promise` em `rpc_client.cpp` por `std::atomic` +
-  `platform::Mutex` + polling com `platform::this_thread::sleep_for`
-- Removidos todos os `#include <mutex>`, `#include <thread>`, `#include <condition_variable>`,
-  `#include <future>` dos fontes (incluidos transitivamente via `platform/thread.h`)
+- Replaced `std::scoped_lock` -> `platform::ScopedLock` in all sources
+- Replaced `std::lock_guard<std::mutex>` -> `platform::ScopedLock` in e2e/sd
+- Replaced `std::this_thread::sleep_for` -> `platform::this_thread::sleep_for`
+- Replaced `std::future`/`std::promise` in `rpc_client.cpp` with `std::atomic` +
+  `platform::Mutex` + polling with `platform::this_thread::sleep_for`
+- Removed all `#include <mutex>`, `#include <thread>`, `#include <condition_variable>`,
+  `#include <future>` from sources (included transitively via `platform/thread.h`)
 
-### Decisoes tomadas
+### Decisions made
 
-- `std::atomic` mantido (funciona em todas as plataformas, nao precisa de abstracao)
-- `std::future`/`std::promise` eliminados completamente (dependencia do libstdc++
-  que nao esta disponivel em todos os targets embedded). Substituido por polling com
-  sleep de 1ms, aceitavel para RPC sync calls com latencia de rede muito maior.
-- `platform::ConditionVariable` nao precisa de `wait()` no codebase atual (CVs sao
-  usadas apenas para `notify_one()`), simplificando a API embedded.
+- `std::atomic` kept (works on all platforms, no abstraction needed)
+- `std::future`/`std::promise` eliminated entirely (libstdc++ dependency
+  not available on all embedded targets). Replaced with polling with
+  1ms sleep, acceptable for RPC sync calls with much higher network latency.
+- `platform::ConditionVariable` does not need `wait()` in the current codebase (CVs are
+  used only for `notify_one()`), simplifying the embedded API.
 
-### Estado ao final da fase
+### State at end of phase
 
-- Build host: pass (11/11 testes passam)
-- Zero usos de `std::thread`/`std::mutex`/`std::condition_variable` fora de `platform/thread.h`
+- Host build: pass (11/11 tests pass)
+- Zero uses of `std::thread`/`std::mutex`/`std::condition_variable` outside `platform/thread.h`
 
 ---
 
-## Fase 5: Gestao de Memoria para Embedded
+## Phase 5: Embedded Memory Management
 
 ### Status: done
 
-### O que foi feito
+### What was done
 
-- Criado `include/platform/memory.h`:
+- Created `include/platform/memory.h`:
   - Host: `allocate_message()` -> `std::make_shared<Message>()`
-  - Embedded: pool via `k_mem_slab` com `CONFIG_SOMEIP_MESSAGE_POOL_SIZE` slots
-- Criado `src/platform/zephyr_memory.cpp`:
-  - Buffer estatico dimensionado por Kconfig
-  - Custom deleter no shared_ptr para devolver ao slab
-- Kconfig entries adicionadas em `zephyr/Kconfig`:
+  - Embedded: pool via `k_mem_slab` with `CONFIG_SOMEIP_MESSAGE_POOL_SIZE` slots
+- Created `src/platform/zephyr_memory.cpp`:
+  - Static buffer sized by Kconfig
+  - Custom deleter in shared_ptr to return to slab
+- Kconfig entries added in `zephyr/Kconfig`:
   - `SOMEIP_MESSAGE_POOL_SIZE`, `SOMEIP_MAX_PAYLOAD_SIZE`
   - `SOMEIP_MAX_SUBSCRIPTIONS`, `SOMEIP_MAX_PENDING_CALLS`
   - `SOMEIP_THREAD_STACK_SIZE`
 
 ---
 
-## Fase 6: Board Definition S32K388 + Renode
+## Phase 6: S32K388 Board Definition + Renode
 
 ### Status: done
 
-### O que foi feito
+### What was done
 
-- Criado `zephyr/boards/s32k388_renode/`:
+- Created `zephyr/boards/s32k388_renode/`:
   - `board.yml` -- metadata
   - `s32k388_renode.dts` -- Cortex-M7, 512KB SRAM, 8MB flash, GMAC, LPUART
-  - `s32k388_renode_defconfig` -- configuracao base
+  - `s32k388_renode_defconfig` -- base configuration
   - `s32k388_renode.conf` -- SOME/IP config (heap 128KB, pool 16)
-- Criado `zephyr/renode/s32k388_someip.resc` -- script Renode com GMAC + TAP
-- Criado `scripts/run_renode_test.sh` -- build + execucao no Renode
+- Created `zephyr/renode/s32k388_someip.resc` -- Renode script with GMAC + TAP
+- Created `scripts/run_renode_test.sh` -- build + execution on Renode
 
 ---
 
-## Fase 7: Porte dos Modulos de Alto Nivel
+## Phase 7: High-Level Module Porting
 
 ### Status: done
 
-### O que foi feito
+### What was done
 
-- `zephyr/CMakeLists.txt` ja inclui SD, RPC, Events condicionalmente via Kconfig
-- Todos os fontes SD/RPC/Events ja usam `platform/net.h` transitivamente
+- `zephyr/CMakeLists.txt` already includes SD, RPC, Events conditionally via Kconfig
+- All SD/RPC/Events sources already use `platform/net.h` transitively
   (via `transport/udp_transport.h`)
-- Nenhuma modificacao adicional necessaria nos fontes
+- No additional source modifications needed
 
 ---
 
-## Fase 8: Testes e Demonstracao
+## Phase 8: Tests and Demonstration
 
 ### Status: done
 
-### O que foi feito
+### What was done
 
-- Criado `zephyr/samples/someip_echo/` -- demo SOME/IP (serialize, deserialize, endpoint)
-- Criado `zephyr/tests/test_core/` -- testes de Message, Endpoint, SessionManager, Serializer
-- Criado `zephyr/tests/test_transport/` -- teste UDP loopback
-- Criado `scripts/run_zephyr_tests.sh` -- orquestra build + execucao para cada target
+- Created `zephyr/samples/someip_echo/` -- SOME/IP demo (serialize, deserialize, endpoint)
+- Created `zephyr/tests/test_core/` -- tests for Message, Endpoint, SessionManager, Serializer
+- Created `zephyr/tests/test_transport/` -- UDP loopback test
+- Created `scripts/run_zephyr_tests.sh` -- orchestrates build + execution for each target
 
 ---
 
-## Fase 9: CI e Pull Request
+## Phase 9: CI and Pull Request
 
 ### Status: done
 
-### O que foi feito
+### What was done
 
-- Criado `.github/workflows/zephyr.yml` com 3 jobs:
+- Created `.github/workflows/zephyr.yml` with 3 jobs:
   1. `host-build` -- cmake build + ctest (ubuntu-latest)
   2. `zephyr-native-sim` -- build + runtime (container zephyrproject-rtos/ci)
   3. `zephyr-s32k344-build` -- cross-compile mr_canhubk3 (container)
 
-> **Nota**: Job `zephyr-s32k388-renode` removido -- SoC `s32k388` nao esta disponivel
-> na arvore upstream do Zephyr. Board customizado pode ser reintroduzido quando o
-> suporte ao SoC estiver disponivel.
+> **Note**: Job `zephyr-s32k388-renode` removed -- SoC `s32k388` is not available
+> in the Zephyr upstream tree. The custom board can be reintroduced when
+> SoC support becomes available.
 
-### Builds do native_sim (CI)
+### native_sim Builds (CI)
 
-| Build | Comando | Tipo |
+| Build | Command | Type |
 |-------|---------|------|
 | test_core | `west build -b native_sim zephyr/tests/test_core` | Build + run |
 | test_transport | `west build -b native_sim zephyr/tests/test_transport` | Build + run |
 | someip_echo | `west build -b native_sim zephyr/samples/someip_echo` | Build + run |
 | someip_sd_client | `west build -b native_sim zephyr/samples/someip_sd_client` | Build only |
 
-### Correcoes para Zephyr 4.3.x (container `ci:v0.27.4`)
+### Fixes for Zephyr 4.3.x (container `ci:v0.27.4`)
 
-- Instalacao explicita do Zephyr SDK v0.17.0 (`setup.sh -c` para registrar CMake packages)
-- `ZEPHYR_EXTRA_MODULES` definido ANTES de `find_package(Zephyr)` em todos os
-  CMakeLists.txt de testes/samples
-- `CONFIG_NEWLIB_LIBC=y` removido (conflita com `EXTERNAL_LIBC` no `native_sim`)
-- `CONFIG_REQUIRES_FULL_LIBCPP=y` adicionado (garante headers C++ completos)
-- `CONFIG_NET_SOCKETS_POSIX_NAMES=y` removido (undefined no Zephyr 4.3.x)
-- Macros POSIX-to-zsock adicionadas em `platform/net.h`
-- `pip install jsonschema` adicionado ao step de init
+- Explicit Zephyr SDK v0.17.0 installation (`setup.sh -c` to register CMake packages)
+- `ZEPHYR_EXTRA_MODULES` defined BEFORE `find_package(Zephyr)` in all
+  test/sample CMakeLists.txt files
+- `CONFIG_NEWLIB_LIBC=y` removed (conflicts with `EXTERNAL_LIBC` on `native_sim`)
+- `CONFIG_REQUIRES_FULL_LIBCPP=y` added (ensures complete C++ headers)
+- `CONFIG_NET_SOCKETS_POSIX_NAMES=y` removed (undefined in Zephyr 4.3.x)
+- POSIX-to-zsock macros added in `platform/net.h`
+- `pip install jsonschema` added to the init step
 
-### Estado ao final da fase
+### State at end of phase
 
-- Build host: pass (11/11 testes)
-- CI workflow: pronto para validacao no push/PR
+- Host build: pass (11/11 tests)
+- CI workflow: ready for validation on push/PR

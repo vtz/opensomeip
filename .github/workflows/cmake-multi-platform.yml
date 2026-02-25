@@ -4,7 +4,7 @@ name: CMake on multiple platforms
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'
@@ -12,7 +12,7 @@ on:
       - 'LICENSE'
       - '.cursor/**'
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
     paths-ignore:
       - '**/*.md'
       - 'docs/**'

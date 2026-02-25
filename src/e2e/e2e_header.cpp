@@ -13,6 +13,7 @@
 
 #include "e2e/e2e_header.h"
 #include "platform/byteorder.h"
+#include <cstring>
 
 namespace someip {
 namespace e2e {
@@ -59,20 +60,23 @@ bool E2EHeader::deserialize(const std::vector<uint8_t>& data, size_t offset) {
         return false;
     }
 
-    // Deserialize from big-endian format
-    uint32_t crc_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
+    uint32_t crc_be;
+    std::memcpy(&crc_be, &data[offset], sizeof(uint32_t));
     crc = someip_ntohl(crc_be);
     offset += sizeof(uint32_t);
 
-    uint32_t counter_be = *reinterpret_cast<const uint32_t*>(&data[offset]);
+    uint32_t counter_be;
+    std::memcpy(&counter_be, &data[offset], sizeof(uint32_t));
     counter = someip_ntohl(counter_be);
     offset += sizeof(uint32_t);
 
-    uint16_t data_id_be = *reinterpret_cast<const uint16_t*>(&data[offset]);
+    uint16_t data_id_be;
+    std::memcpy(&data_id_be, &data[offset], sizeof(uint16_t));
     data_id = someip_ntohs(data_id_be);
     offset += sizeof(uint16_t);
 
-    uint16_t freshness_be = *reinterpret_cast<const uint16_t*>(&data[offset]);
+    uint16_t freshness_be;
+    std::memcpy(&freshness_be, &data[offset], sizeof(uint16_t));
     freshness_value = someip_ntohs(freshness_be);
 
     return true;

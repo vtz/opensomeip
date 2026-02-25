@@ -107,15 +107,25 @@ public:
         auto deadline = std::chrono::steady_clock::now()
                        + std::chrono::milliseconds(timeout.response_timeout);
         while (!response_ready.load()) {
-            if (std::chrono::steady_clock::now() >= deadline) {
+            auto now = std::chrono::steady_clock::now();
+            if (now >= deadline) {
                 cancel_call(handle);
                 return {RpcResult::TIMEOUT, {}, timeout.response_timeout};
             }
-            platform::this_thread::sleep_for(std::chrono::milliseconds(1));
+            auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
+            auto sleep_time = std::min(remaining, std::chrono::milliseconds(1));
+            platform::this_thread::sleep_for(sleep_time);
         }
 
-        platform::ScopedLock lk(sync_mtx);
-        return {sync_resp->result, sync_resp->return_values, std::chrono::milliseconds(0)};
+        {
+            platform::ScopedLock lk(sync_mtx);
+            auto now = std::chrono::steady_clock::now();
+            if (now > deadline) {
+                cancel_call(handle);
+                return {RpcResult::TIMEOUT, {}, timeout.response_timeout};
+            }
+            return {sync_resp->result, sync_resp->return_values, std::chrono::milliseconds(0)};
+        }
     }
 
     RpcCallHandle call_method_async(uint16_t service_id, MethodId method_id,

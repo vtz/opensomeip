@@ -89,7 +89,7 @@ private:
     UdpTransportConfig config_;
     int socket_fd_{-1};
     std::atomic<bool> running_;
-    platform::Thread receive_thread_;
+    std::unique_ptr<platform::Thread> receive_thread_;
     ITransportListener* listener_{nullptr};
 
     std::queue<MessagePtr> receive_queue_;

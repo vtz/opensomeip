@@ -138,10 +138,10 @@ Result TcpTransport::start() {
     running_ = true;
 
     // Start receive thread
-    receive_thread_ = platform::Thread(&TcpTransport::receive_loop, this);
+    receive_thread_ = std::make_unique<platform::Thread>(&TcpTransport::receive_loop, this);
 
     // Start connection monitor thread
-    connection_thread_ = platform::Thread(&TcpTransport::connection_monitor_loop, this);
+    connection_thread_ = std::make_unique<platform::Thread>(&TcpTransport::connection_monitor_loop, this);
 
     return Result::SUCCESS;
 }
@@ -163,11 +163,11 @@ Result TcpTransport::stop() {
     }
 
     // Wait for threads to finish
-    if (receive_thread_.joinable()) {
-        receive_thread_.join();
+    if (receive_thread_ && receive_thread_->joinable()) {
+        receive_thread_->join();
     }
-    if (connection_thread_.joinable()) {
-        connection_thread_.join();
+    if (connection_thread_ && connection_thread_->joinable()) {
+        connection_thread_->join();
     }
 
     return Result::SUCCESS;
@@ -204,11 +204,18 @@ int TcpTransport::accept_connection() {
     sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
 
-    someip_set_blocking(listen_socket_fd_);
+    if (someip_set_blocking(listen_socket_fd_) < 0) {
+        return -1;
+    }
 
     int client_fd = accept(listen_socket_fd_, (sockaddr*)&client_addr, &client_len);
 
-    someip_set_nonblocking(listen_socket_fd_);
+    if (someip_set_nonblocking(listen_socket_fd_) < 0) {
+        if (client_fd >= 0) {
+            someip_close_socket(client_fd);
+        }
+        return -1;
+    }
 
     if (client_fd < 0) {
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
@@ -217,7 +224,6 @@ int TcpTransport::accept_connection() {
         return -1;
     }
 
-    // Set socket options for client connection (blocking for simplicity)
     setup_socket_options(client_fd, true);
 
     return client_fd;

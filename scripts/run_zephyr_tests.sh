@@ -50,8 +50,13 @@ run_test() {
 
     if [ "$board" = "native_sim" ]; then
         printf "  Running...\n"
-        timeout 30 "$build_dir/zephyr/zephyr.exe" 2>&1 || true
-        PASSED=$((PASSED + 1))
+        if timeout 30 "$build_dir/zephyr/zephyr.exe" 2>&1; then
+            PASSED=$((PASSED + 1))
+        else
+            echo "  Runtime: FAILED (exit code $?)"
+            FAILED=$((FAILED + 1))
+            return
+        fi
     else
         echo "  (runtime test requires Renode or hardware)"
         PASSED=$((PASSED + 1))

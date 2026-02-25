@@ -71,12 +71,14 @@ public:
         running_ = false;
         stop_publish_timer();
 
-        // Clear all subscriptions and events
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
-        subscriptions_.clear();
-
-        platform::ScopedLock events_lock(events_mutex_);
-        registered_events_.clear();
+        {
+            platform::ScopedLock events_lock(events_mutex_);
+            registered_events_.clear();
+        }
+        {
+            platform::ScopedLock subs_lock(subscriptions_mutex_);
+            subscriptions_.clear();
+        }
 
         transport_->stop();
     }
@@ -114,26 +116,33 @@ public:
             return false;
         }
 
-        platform::ScopedLock events_lock(events_mutex_);
-        auto event_it = registered_events_.find(event_id);
-        if (event_it == registered_events_.end()) {
-            return false;
+        uint16_t eventgroup_id;
+        {
+            platform::ScopedLock events_lock(events_mutex_);
+            auto event_it = registered_events_.find(event_id);
+            if (event_it == registered_events_.end()) {
+                return false;
+            }
+            eventgroup_id = event_it->second.eventgroup_id;
         }
 
-        // Create event notification
         EventNotification notification(service_id_, instance_id_, event_id);
         notification.event_data = data;
         notification.session_id = next_session_id_++;
 
-        // Send to all subscribed clients for this event's eventgroup
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
-        auto eventgroup_id = event_it->second.eventgroup_id;
-
-        auto sub_it = subscriptions_.find(eventgroup_id);
-        if (sub_it != subscriptions_.end()) {
-            for (const auto& client_info : sub_it->second) {
-                send_event_notification(notification, client_info.endpoint);
+        std::vector<transport::Endpoint> targets;
+        {
+            platform::ScopedLock subs_lock(subscriptions_mutex_);
+            auto sub_it = subscriptions_.find(eventgroup_id);
+            if (sub_it != subscriptions_.end()) {
+                for (const auto& client_info : sub_it->second) {
+                    targets.push_back(client_info.endpoint);
+                }
             }
+        }
+
+        for (const auto& ep : targets) {
+            send_event_notification(notification, ep);
         }
 
         return true;
@@ -232,11 +241,11 @@ private:
     };
 
     void start_publish_timer() {
-        if (publish_timer_thread_.joinable()) {
+        if (publish_timer_thread_ && publish_timer_thread_->joinable()) {
             return;
         }
 
-        publish_timer_thread_ = platform::Thread([this]() {
+        publish_timer_thread_ = std::make_unique<platform::Thread>([this]() {
             while (running_) {
                 platform::this_thread::sleep_for(std::chrono::milliseconds(100));  // 100ms check
 
@@ -250,31 +259,36 @@ private:
     }
 
     void stop_publish_timer() {
-        if (publish_timer_thread_.joinable()) {
-            publish_timer_thread_.join();
+        if (publish_timer_thread_ && publish_timer_thread_->joinable()) {
+            publish_timer_thread_->join();
         }
     }
 
     void publish_cyclic_events() {
-        platform::ScopedLock events_lock(events_mutex_);
-        auto now = std::chrono::steady_clock::now();
+        std::vector<uint16_t> events_to_publish;
+        {
+            platform::ScopedLock events_lock(events_mutex_);
+            auto now = std::chrono::steady_clock::now();
 
-        for (auto& event_pair : registered_events_) {
-            const auto& config = event_pair.second;
+            for (auto& event_pair : registered_events_) {
+                const auto& config = event_pair.second;
 
-            if (config.notification_type == NotificationType::PERIODIC &&
-                config.cycle_time.count() > 0) {
+                if (config.notification_type == NotificationType::PERIODIC &&
+                    config.cycle_time.count() > 0) {
 
-                // Check if it's time to publish
-                auto time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    now - last_publish_times_[config.event_id]);
+                    auto time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        now - last_publish_times_[config.event_id]);
 
-                if (time_since_last >= config.cycle_time) {
-                    // Publish with empty data (or default data)
-                    publish_event(config.event_id, {});
-                    last_publish_times_[config.event_id] = now;
+                    if (time_since_last >= config.cycle_time) {
+                        events_to_publish.push_back(config.event_id);
+                        last_publish_times_[config.event_id] = now;
+                    }
                 }
             }
+        }
+
+        for (uint16_t eid : events_to_publish) {
+            publish_event(eid, {});
         }
     }
 
@@ -331,7 +345,7 @@ private:
     mutable platform::Mutex subscriptions_mutex_;
 
     std::unordered_map<uint16_t, std::chrono::steady_clock::time_point> last_publish_times_;
-    platform::Thread publish_timer_thread_;
+    std::unique_ptr<platform::Thread> publish_timer_thread_;
     std::atomic<uint16_t> next_session_id_;
     std::atomic<bool> running_;
 };

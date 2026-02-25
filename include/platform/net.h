@@ -119,7 +119,16 @@ static inline uint32_t someip_zephyr_inet_addr(const char *cp) {
 #endif
 
 /* Portable non-blocking mode */
-#if !defined(_WIN32)
+#if defined(_WIN32)
+static inline int someip_set_nonblocking(int fd) {
+    u_long mode = 1;
+    return (ioctlsocket(fd, FIONBIO, &mode) == 0) ? 0 : -1;
+}
+static inline int someip_set_blocking(int fd) {
+    u_long mode = 0;
+    return (ioctlsocket(fd, FIONBIO, &mode) == 0) ? 0 : -1;
+}
+#else
 static inline int someip_set_nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags < 0) return -1;

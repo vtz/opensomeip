@@ -134,7 +134,7 @@ Result UdpTransport::start() {
     }
 
     running_ = true;
-    receive_thread_ = platform::Thread(&UdpTransport::receive_loop, this);
+    receive_thread_ = std::make_unique<platform::Thread>(&UdpTransport::receive_loop, this);
 
     return Result::SUCCESS;
 }
@@ -155,8 +155,8 @@ Result UdpTransport::stop() {
     }
 
     // Wait for receive thread to finish
-    if (receive_thread_.joinable()) {
-        receive_thread_.join();
+    if (receive_thread_ && receive_thread_->joinable()) {
+        receive_thread_->join();
     }
 
     return Result::SUCCESS;

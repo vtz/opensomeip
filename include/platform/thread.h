@@ -28,6 +28,7 @@
 /* ------------------------------------------------------------------ */
 #include <zephyr/kernel.h>
 #include <functional>
+#include <chrono>
 #include <cstring>
 
 #ifndef CONFIG_SOMEIP_THREAD_STACK_SIZE
@@ -42,7 +43,11 @@ public:
     Mutex()  { k_mutex_init(&m_); }
     ~Mutex() = default;
 
-    void lock()   { k_mutex_lock(&m_, K_FOREVER); }
+    void lock()   {
+        int rc = k_mutex_lock(&m_, K_FOREVER);
+        __ASSERT(rc == 0, "k_mutex_lock failed: %d", rc);
+        (void)rc;
+    }
     void unlock() { k_mutex_unlock(&m_); }
     bool try_lock() { return k_mutex_lock(&m_, K_NO_WAIT) == 0; }
 
@@ -85,18 +90,28 @@ public:
 
     template <typename Fn, typename... Args>
     explicit Thread(Fn&& fn, Args&&... args) {
-        entry_ = [f = std::forward<Fn>(fn),
-                   a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
-            std::apply(std::move(f), std::move(a));
-        };
-        k_thread_create(&thread_, stack_, sizeof(stack_),
-                        trampoline, this, nullptr, nullptr,
+        ctx_ = new std::function<void()>(
+            [f = std::forward<Fn>(fn),
+             a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
+                std::apply(std::move(f), std::move(a));
+            });
+        k_thread_create(&thread_, stack_,
+                        K_THREAD_STACK_SIZEOF(stack_),
+                        trampoline, ctx_, nullptr, nullptr,
                         K_PRIO_PREEMPT(7), 0, K_NO_WAIT);
+        started_ = true;
     }
 
-    ~Thread() = default;
+    ~Thread() {
+        if (joinable()) {
+            k_thread_abort(&thread_);
+            delete ctx_;
+            ctx_ = nullptr;
+            started_ = false;
+        }
+    }
 
-    bool joinable() const { return joined_ == false && entry_ != nullptr; }
+    bool joinable() const { return started_ && !joined_; }
 
     void join() {
         if (joinable()) {
@@ -105,39 +120,21 @@ public:
         }
     }
 
-    Thread(Thread&& o) noexcept
-        : entry_(std::move(o.entry_)), joined_(o.joined_) {
-        std::memcpy(&thread_, &o.thread_, sizeof(thread_));
-        std::memcpy(stack_, o.stack_, sizeof(stack_));
-        o.entry_ = nullptr;
-        o.joined_ = true;
-    }
-
-    Thread& operator=(Thread&& o) noexcept {
-        if (this != &o) {
-            if (joinable()) join();
-            entry_ = std::move(o.entry_);
-            joined_ = o.joined_;
-            std::memcpy(&thread_, &o.thread_, sizeof(thread_));
-            std::memcpy(stack_, o.stack_, sizeof(stack_));
-            o.entry_ = nullptr;
-            o.joined_ = true;
-        }
-        return *this;
-    }
-
+    Thread(Thread&&) = delete;
+    Thread& operator=(Thread&&) = delete;
     Thread(const Thread&) = delete;
     Thread& operator=(const Thread&) = delete;
 
 private:
     static void trampoline(void* p1, void*, void*) {
-        auto* self = static_cast<Thread*>(p1);
-        if (self->entry_) self->entry_();
+        auto* fn = static_cast<std::function<void()>*>(p1);
+        if (fn && *fn) (*fn)();
     }
 
     k_thread thread_{};
     K_THREAD_STACK_MEMBER(stack_, CONFIG_SOMEIP_THREAD_STACK_SIZE);
-    std::function<void()> entry_;
+    std::function<void()>* ctx_{nullptr};
+    bool started_{false};
     bool joined_{false};
 };
 
@@ -185,8 +182,13 @@ namespace this_thread {
 #if defined(__ZEPHYR__) && !defined(CONFIG_ARCH_POSIX)
     template <typename Rep, typename Period>
     void sleep_for(const std::chrono::duration<Rep, Period>& d) {
-        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
-        k_msleep(static_cast<int32_t>(ms));
+        int64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
+        if (ms <= 0) return;
+        while (ms > 0) {
+            int32_t chunk = (ms > INT32_MAX) ? INT32_MAX : static_cast<int32_t>(ms);
+            k_msleep(chunk);
+            ms -= chunk;
+        }
     }
 #else
     using std::this_thread::sleep_for;

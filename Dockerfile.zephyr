@@ -59,5 +59,11 @@ ENV ZEPHYR_BASE=/workspace/zephyrproject/zephyr
 ENV ZEPHYR_TOOLCHAIN_VARIANT=zephyr
 ENV ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-${ZEPHYR_SDK_VERSION}
 
+# Create non-root user for runtime
+RUN groupadd -r zephyrci && useradd -r -g zephyrci -m -d /home/zephyrci zephyrci \
+    && chown -R zephyrci:zephyrci /workspace /opt/renode
+
+USER zephyrci
+
 # Project source will be mounted at /workspace/someip
 WORKDIR /workspace/someip

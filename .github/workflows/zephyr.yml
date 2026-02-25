@@ -1,11 +1,11 @@
 name: Zephyr Build & Test
 on:
   push:
-    branches: [ "main", "feature/zephyr-port" ]
-    paths-ignore: [ '**/*.md', 'docs/**', 'LICENSE', '.cursor/**' ]
+    branches: ["main","feature/zephyr-port"]
+    paths-ignore: ['**/*.md','docs/**','LICENSE','.cursor/**']
   pull_request:
-    branches: [ "main" ]
-    paths-ignore: [ '**/*.md', 'docs/**', 'LICENSE', '.cursor/**' ]
+    branches: ["main"]
+    paths-ignore: ['**/*.md','docs/**','LICENSE','.cursor/**']
 
 jobs:
   host-build:
@@ -41,17 +41,17 @@ jobs:
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
           west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto
-          timeout 30 build/ns_tc/zephyr/zephyr.exe || true
+          timeout 30 build/ns_tc/zephyr/zephyr.exe
       - name: Build & run test_transport
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
           west build -b native_sim zephyr/tests/test_transport -d build/ns_tp --pristine auto
-          timeout 30 build/ns_tp/zephyr/zephyr.exe || true
+          timeout 30 build/ns_tp/zephyr/zephyr.exe
       - name: Build & run someip_echo
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
           west build -b native_sim zephyr/samples/someip_echo -d build/ns_echo --pristine auto
-          timeout 30 build/ns_echo/zephyr/zephyr.exe || true
+          timeout 30 build/ns_echo/zephyr/zephyr.exe
       - name: Build someip_sd_client
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: west build -b native_sim zephyr/samples/someip_sd_client -d build/ns_sd --pristine auto

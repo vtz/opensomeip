@@ -22,15 +22,25 @@ static char message_pool_buffer[CONFIG_SOMEIP_MESSAGE_POOL_SIZE * sizeof(someip:
     __aligned(8);
 static struct k_mem_slab message_slab;
 static bool slab_initialized = false;
+static struct k_mutex slab_init_mutex;
 
 static void ensure_slab_init() {
+    if (slab_initialized) return;
+    k_mutex_lock(&slab_init_mutex, K_FOREVER);
     if (!slab_initialized) {
         k_mem_slab_init(&message_slab, message_pool_buffer,
                         sizeof(someip::Message),
                         CONFIG_SOMEIP_MESSAGE_POOL_SIZE);
         slab_initialized = true;
     }
+    k_mutex_unlock(&slab_init_mutex);
 }
+
+static int slab_init_mutex_setup(void) {
+    k_mutex_init(&slab_init_mutex);
+    return 0;
+}
+SYS_INIT(slab_init_mutex_setup, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 
 namespace someip {
 namespace platform {

@@ -188,8 +188,8 @@ private:
     ITransportListener* listener_{nullptr};
 
     std::atomic<bool> running_{false};
-    platform::Thread receive_thread_;
-    platform::Thread connection_thread_;
+    std::unique_ptr<platform::Thread> receive_thread_;
+    std::unique_ptr<platform::Thread> connection_thread_;
 
     std::atomic<size_t> active_connections_{0};
 

@@ -51,6 +51,7 @@ static void test_udp_loopback() {
     UdpTransport server(server_ep, config);
     auto result = server.start();
     CHECK(result == Result::SUCCESS, "server_start");
+    if (result != Result::SUCCESS) return;
 
     auto bound_ep = server.get_local_endpoint();
     printf("  Server bound to port %d\n", bound_ep.get_port());
@@ -65,13 +66,17 @@ static void test_udp_loopback() {
     UdpTransport client(client_ep, config);
     result = client.start();
     CHECK(result == Result::SUCCESS, "client_start");
+    if (result != Result::SUCCESS) return;
 
     result = client.send_message(msg, bound_ep);
     CHECK(result == Result::SUCCESS, "send_message");
 
-    platform::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    auto received = server.receive_message();
+    MessagePtr received = nullptr;
+    for (int attempt = 0; attempt < 50; ++attempt) {
+        platform::this_thread::sleep_for(std::chrono::milliseconds(10));
+        received = server.receive_message();
+        if (received) break;
+    }
     CHECK(received != nullptr, "receive_message");
 
     if (received) {
