@@ -86,7 +86,7 @@ if(CONFIG_SOMEIP_EVENTS)
 endif()
 
 # ---- Platform abstractions (Zephyr-specific implementations) ----
-if(NOT CONFIG_NATIVE_APPLICATION)
+if(NOT CONFIG_ARCH_POSIX)
     # Embedded targets only (S32K344, S32K388, etc.)
     zephyr_library_sources_ifdef(CONFIG_SOMEIP
         ${SOMEIP_SRC}/platform/zephyr_thread.cpp

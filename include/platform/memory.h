@@ -28,7 +28,7 @@
 namespace someip {
 namespace platform {
 
-#if defined(__ZEPHYR__) && !defined(CONFIG_NATIVE_APPLICATION)
+#if defined(__ZEPHYR__) && !defined(CONFIG_ARCH_POSIX)
 
 MessagePtr allocate_message();
 void release_message(Message* msg);

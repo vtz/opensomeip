@@ -22,7 +22,7 @@
  * provides thin wrappers around k_thread / k_mutex / k_condvar.
  */
 
-#if defined(__ZEPHYR__) && !defined(CONFIG_NATIVE_APPLICATION)
+#if defined(__ZEPHYR__) && !defined(CONFIG_ARCH_POSIX)
 /* ------------------------------------------------------------------ */
 /* Zephyr embedded: k_thread / k_mutex / k_condvar wrappers          */
 /* ------------------------------------------------------------------ */
@@ -182,7 +182,7 @@ using ScopedLock = std::scoped_lock<std::mutex>;
 namespace someip {
 namespace platform {
 namespace this_thread {
-#if defined(__ZEPHYR__) && !defined(CONFIG_NATIVE_APPLICATION)
+#if defined(__ZEPHYR__) && !defined(CONFIG_ARCH_POSIX)
     template <typename Rep, typename Period>
     void sleep_for(const std::chrono::duration<Rep, Period>& d) {
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();

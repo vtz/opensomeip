@@ -10,7 +10,7 @@
  * this file exists for potential future non-inline methods.
  */
 
-#if defined(__ZEPHYR__) && !defined(CONFIG_NATIVE_APPLICATION)
+#if defined(__ZEPHYR__) && !defined(CONFIG_ARCH_POSIX)
 
 #include "platform/thread.h"
 

@@ -265,7 +265,7 @@ Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
     }
 
     // TCP keep-alive (not available on all Zephyr targets)
-#if !defined(__ZEPHYR__) || defined(CONFIG_NATIVE_APPLICATION)
+#if !defined(__ZEPHYR__) || defined(CONFIG_ARCH_POSIX)
     if (config_.keep_alive) {
         int keep_alive = 1;
 #ifdef __APPLE__

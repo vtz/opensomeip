@@ -9,7 +9,7 @@
  * Compiled only for embedded Zephyr targets (not native_sim).
  */
 
-#if defined(__ZEPHYR__) && !defined(CONFIG_NATIVE_APPLICATION)
+#if defined(__ZEPHYR__) && !defined(CONFIG_ARCH_POSIX)
 
 #include "platform/memory.h"
 #include <zephyr/kernel.h>

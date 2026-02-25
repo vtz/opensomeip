@@ -100,20 +100,20 @@ static void test_serializer() {
     using namespace someip::serialization;
 
     Serializer ser;
-    ser.write_uint8(0x42);
-    ser.write_uint16(0x1234);
-    ser.write_uint32(0xDEADBEEF);
+    ser.serialize_uint8(0x42);
+    ser.serialize_uint16(0x1234);
+    ser.serialize_uint32(0xDEADBEEF);
 
-    auto data = ser.get_data();
+    auto data = ser.get_buffer();
     CHECK(data.size() == 7, "serialized_size");
 
     Deserializer deser(data);
-    auto v8 = deser.read_uint8();
-    auto v16 = deser.read_uint16();
-    auto v32 = deser.read_uint32();
-    CHECK(v8.has_value() && *v8 == 0x42, "deser_uint8");
-    CHECK(v16.has_value() && *v16 == 0x1234, "deser_uint16");
-    CHECK(v32.has_value() && *v32 == 0xDEADBEEF, "deser_uint32");
+    auto v8 = deser.deserialize_uint8();
+    auto v16 = deser.deserialize_uint16();
+    auto v32 = deser.deserialize_uint32();
+    CHECK(v8.is_success() && v8.get_value() == 0x42, "deser_uint8");
+    CHECK(v16.is_success() && v16.get_value() == 0x1234, "deser_uint16");
+    CHECK(v32.is_success() && v32.get_value() == 0xDEADBEEF, "deser_uint32");
 }
 
 int main() {

@@ -59,7 +59,7 @@
 
 /* fcntl-based non-blocking mode is not available on Zephyr embedded targets.
  * For Zephyr, use zsock_fcntl or the socket option approach instead. */
-#if defined(__ZEPHYR__) && !defined(CONFIG_NATIVE_APPLICATION)
+#if defined(__ZEPHYR__) && !defined(CONFIG_ARCH_POSIX)
 #include <zephyr/net/socket.h>
 static inline int someip_set_nonblocking(int fd) {
     /* Zephyr BSD sockets support fcntl via zsock_fcntl when
