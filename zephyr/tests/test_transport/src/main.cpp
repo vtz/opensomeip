@@ -14,7 +14,6 @@
 
 #include <cstdio>
 #include <cstring>
-#include <thread>
 #include <chrono>
 #include <atomic>
 
@@ -23,6 +22,7 @@
 #include "common/result.h"
 #include "transport/endpoint.h"
 #include "transport/udp_transport.h"
+#include "platform/thread.h"
 
 using namespace someip;
 using namespace someip::transport;
@@ -69,7 +69,7 @@ static void test_udp_loopback() {
     result = client.send_message(msg, bound_ep);
     CHECK(result == Result::SUCCESS, "send_message");
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    platform::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     auto received = server.receive_message();
     CHECK(received != nullptr, "receive_message");

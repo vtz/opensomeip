@@ -31,7 +31,9 @@ UdpTransport::UdpTransport(const Endpoint& local_endpoint, const UdpTransportCon
       config_(config),
       running_(false) {
     if (!local_endpoint_.is_valid()) {
+#if defined(__cpp_exceptions) || defined(__EXCEPTIONS)
         throw std::invalid_argument("Invalid local endpoint");
+#endif
     }
 }
 
@@ -147,7 +149,7 @@ Result UdpTransport::stop() {
 
     // Close socket to wake up receive thread
     if (socket_fd_ >= 0) {
-        shutdown(socket_fd_, SHUT_RDWR);
+        someip_shutdown_socket(socket_fd_);
         someip_close_socket(socket_fd_);
         socket_fd_ = -1;
     }

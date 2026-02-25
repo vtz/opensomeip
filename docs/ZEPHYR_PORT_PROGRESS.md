@@ -20,8 +20,12 @@ e identico em todas as plataformas. Um fork duplicaria toda a manutencao.
 
 **Decisao**: Manter `std::vector`, `std::string`, `std::shared_ptr`.
 
-**Justificativa**: Funcionam no Zephyr com `CONFIG_STD_CPP17` e `CONFIG_NEWLIB_LIBC`.
+**Justificativa**: Funcionam no Zephyr com `CONFIG_STD_CPP17` e `CONFIG_REQUIRES_FULL_LIBCPP`.
 Heap controlado via `CONFIG_HEAP_MEM_POOL_SIZE`.
+
+> **Nota (Zephyr 4.3.x)**: `CONFIG_NEWLIB_LIBC` foi substituido por
+> `CONFIG_REQUIRES_FULL_LIBCPP=y`. Na `native_sim`, `NEWLIB_LIBC` conflita com
+> `EXTERNAL_LIBC` (Kconfig warnings sao fatais em 4.3.x).
 
 **Alternativas descartadas**: iceoryx_hoofs (nao suporta Zephyr), containers proprios
 (prematuro).
@@ -139,6 +143,40 @@ apenas para validacao IPv4/IPv6. Parsing manual e mais eficiente em todas as pla
 - `src/e2e/e2e_header.cpp`: idem
 - `src/e2e/e2e_profiles/standard_profile.cpp`: idem
 - `tests/test_sd.cpp`: idem
+
+### Compatibilidade Zephyr 4.3.x (atualizado)
+
+`CONFIG_NET_SOCKETS_POSIX_NAMES` foi removido no Zephyr 4.3.x. Esse Kconfig mapeava
+nomes POSIX (`socket`, `bind`, `close`, `fcntl`, etc.) para as funcoes `zsock_*` do
+Zephyr. Sem ele, `<zephyr/net/socket.h>` expoe apenas funcoes com prefixo `zsock_`.
+
+**Solucao**: `platform/net.h` define macros que replicam o comportamento do antigo
+`CONFIG_NET_SOCKETS_POSIX_NAMES`:
+
+```c
+#define socket(...)     zsock_socket(__VA_ARGS__)
+#define bind(...)       zsock_bind(__VA_ARGS__)
+#define close(...)      zsock_close(__VA_ARGS__)
+#define setsockopt(...) zsock_setsockopt(__VA_ARGS__)
+// ... (todas as funcoes de socket)
+```
+
+Alem disso:
+- `inet_addr()` implementado via `zsock_inet_pton` (nao existe `zsock_inet_addr`)
+- `in_addr_t` definido como `uint32_t`
+- `INADDR_NONE` definido como `0xffffffff`
+- Constantes `F_GETFL`, `F_SETFL`, `O_NONBLOCK`, `SHUT_RDWR` mapeadas para `ZSOCK_*`
+- `fd_set`, `timeval`, `FD_ZERO/SET/CLR/ISSET` mapeados para `zsock_*`/`ZSOCK_*`
+
+Tambem corrigido:
+- `udp_transport.cpp`: `throw std::invalid_argument` guardado com
+  `__cpp_exceptions || __EXCEPTIONS` (Zephyr usa `-fno-exceptions` por padrao)
+- `tcp_transport.cpp`: `try/catch` removido (blocos `catch` estavam vazios)
+- Adicionado `#include <cstddef>` em 6 headers para declaracao explicita de `size_t`
+- Substituido `dynamic_cast` por `static_cast` em `sd_server.cpp` e `sd_client.cpp`
+  (Zephyr usa `-fno-rtti`)
+- Substituido `CONFIG_NATIVE_APPLICATION` por `CONFIG_ARCH_POSIX` em 7 arquivos
+  (deprecated no Zephyr 4.x)
 
 ### Arquivos modificados (11 .cpp + 1 .h)
 
@@ -273,11 +311,34 @@ apenas para validacao IPv4/IPv6. Parsing manual e mais eficiente em todas as pla
 
 ### O que foi feito
 
-- Criado `.github/workflows/zephyr.yml` com 4 jobs:
+- Criado `.github/workflows/zephyr.yml` com 3 jobs:
   1. `host-build` -- cmake build + ctest (ubuntu-latest)
   2. `zephyr-native-sim` -- build + runtime (container zephyrproject-rtos/ci)
   3. `zephyr-s32k344-build` -- cross-compile mr_canhubk3 (container)
-  4. `zephyr-s32k388-renode` -- build s32k388_renode (container)
+
+> **Nota**: Job `zephyr-s32k388-renode` removido -- SoC `s32k388` nao esta disponivel
+> na arvore upstream do Zephyr. Board customizado pode ser reintroduzido quando o
+> suporte ao SoC estiver disponivel.
+
+### Builds do native_sim (CI)
+
+| Build | Comando | Tipo |
+|-------|---------|------|
+| test_core | `west build -b native_sim zephyr/tests/test_core` | Build + run |
+| test_transport | `west build -b native_sim zephyr/tests/test_transport` | Build + run |
+| someip_echo | `west build -b native_sim zephyr/samples/someip_echo` | Build + run |
+| someip_sd_client | `west build -b native_sim zephyr/samples/someip_sd_client` | Build only |
+
+### Correcoes para Zephyr 4.3.x (container `ci:v0.27.4`)
+
+- Instalacao explicita do Zephyr SDK v0.17.0 (`setup.sh -c` para registrar CMake packages)
+- `ZEPHYR_EXTRA_MODULES` definido ANTES de `find_package(Zephyr)` em todos os
+  CMakeLists.txt de testes/samples
+- `CONFIG_NEWLIB_LIBC=y` removido (conflita com `EXTERNAL_LIBC` no `native_sim`)
+- `CONFIG_REQUIRES_FULL_LIBCPP=y` adicionado (garante headers C++ completos)
+- `CONFIG_NET_SOCKETS_POSIX_NAMES=y` removido (undefined no Zephyr 4.3.x)
+- Macros POSIX-to-zsock adicionadas em `platform/net.h`
+- `pip install jsonschema` adicionado ao step de init
 
 ### Estado ao final da fase
 

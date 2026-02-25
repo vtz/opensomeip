@@ -24,6 +24,7 @@ zephyr_library_sources(
     ${SOMEIP_SRC}/core/session_manager.cpp
     ${SOMEIP_SRC}/serialization/serializer.cpp
     ${SOMEIP_SRC}/transport/endpoint.cpp
+    ${SOMEIP_SRC}/e2e/e2e_header.cpp
 )
 zephyr_library_compile_options(-std=c++17)
 
@@ -31,7 +32,6 @@ zephyr_library_compile_options(-std=c++17)
 if(CONFIG_SOMEIP_E2E)
     zephyr_library_sources(
         ${SOMEIP_SRC}/e2e/e2e_protection.cpp
-        ${SOMEIP_SRC}/e2e/e2e_header.cpp
         ${SOMEIP_SRC}/e2e/e2e_crc.cpp
         ${SOMEIP_SRC}/e2e/e2e_profile_registry.cpp
         ${SOMEIP_SRC}/e2e/e2e_profiles/standard_profile.cpp

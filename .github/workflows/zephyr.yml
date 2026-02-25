@@ -42,6 +42,11 @@ jobs:
         run: |
           west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto
           timeout 30 build/ns_tc/zephyr/zephyr.exe || true
+      - name: Build & run test_transport
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: |
+          west build -b native_sim zephyr/tests/test_transport -d build/ns_tp --pristine auto
+          timeout 30 build/ns_tp/zephyr/zephyr.exe || true
       - name: Build & run someip_echo
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |

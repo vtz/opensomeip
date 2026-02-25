@@ -308,7 +308,11 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
     connection_.state = TcpConnectionState::CONNECTING;
     connection_.remote_endpoint = endpoint;
 
+#if defined(__ZEPHYR__)
+    int connect_result = zsock_connect(connection_.socket_fd, (sockaddr*)&addr, sizeof(addr));
+#else
     int connect_result = ::connect(connection_.socket_fd, (sockaddr*)&addr, sizeof(addr));
+#endif
 
     if (connect_result == 0) {
         // Connected immediately
@@ -367,7 +371,7 @@ void TcpTransport::disconnect_internal() {
     if (connection_.socket_fd != -1) {
         connection_.state = TcpConnectionState::DISCONNECTING;
 
-        shutdown(connection_.socket_fd, SHUT_RDWR);
+        someip_shutdown_socket(connection_.socket_fd);
         someip_close_socket(connection_.socket_fd);
         connection_.socket_fd = -1;
 
@@ -572,15 +576,9 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
     buffer.erase(buffer.begin(), buffer.begin() + total_message_size);
 
     // Parse message
-    try {
-        message = std::make_shared<Message>();
-        if (message->deserialize(message_data)) {
-            return true;
-        }
-    } catch (const std::exception& e) {
-        // Message parsing exception
-    } catch (...) {
-        // Unknown message parsing exception
+    message = std::make_shared<Message>();
+    if (message && message->deserialize(message_data)) {
+        return true;
     }
 
     return false;
