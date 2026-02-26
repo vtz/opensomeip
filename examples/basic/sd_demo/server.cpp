@@ -17,7 +17,6 @@
 #include <thread>
 #include <chrono>
 #include <csignal>
-#include <atomic>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -37,9 +36,9 @@ static constexpr uint16_t INSTANCE_ID  = 0x0001;
 static constexpr uint16_t METHOD_HELLO = 0x0001;
 static constexpr uint16_t SERVICE_PORT = 30500;
 
-static std::atomic<bool> running{true};
+static volatile std::sig_atomic_t running = 1;
 
-static void signal_handler(int) { running = false; }
+static void signal_handler(int) { running = 0; }
 
 static std::string env(const char* key, const char* fallback) {
     const char* v = std::getenv(key);
@@ -121,7 +120,7 @@ int main() {
     std::cout << "[sd] Multicast on " << sd_multicast << ":30490" << std::endl;
     std::cout << "Press Ctrl+C to stop." << std::endl;
 
-    while (running) {
+    while (running != 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
