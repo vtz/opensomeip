@@ -47,7 +47,8 @@ static void test_udp_loopback() {
     // Bind to INADDR_ANY to avoid interface-specific bind failures on native_sim.
     Endpoint server_ep("0.0.0.0", 0);
     UdpTransportConfig config;
-    config.blocking = true;
+    // Non-blocking mode avoids native_sim shutdown hangs in receive_loop.
+    config.blocking = false;
 
     UdpTransport server(server_ep, config);
     auto result = server.start();
