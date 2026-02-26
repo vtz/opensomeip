@@ -44,7 +44,8 @@ static int tests_failed = 0;
 static void test_udp_loopback() {
     printf("\n--- UDP Loopback Test ---\n");
 
-    Endpoint server_ep("127.0.0.1", 0);
+    // Bind to INADDR_ANY to avoid interface-specific bind failures on native_sim.
+    Endpoint server_ep("0.0.0.0", 0);
     UdpTransportConfig config;
     config.blocking = true;
 
@@ -54,6 +55,7 @@ static void test_udp_loopback() {
     if (result != Result::SUCCESS) return;
 
     auto bound_ep = server.get_local_endpoint();
+    Endpoint server_target("127.0.0.1", bound_ep.get_port());
     printf("  Server bound to port %d\n", bound_ep.get_port());
 
     Message msg(MessageId(0xABCD, 0x0001),
@@ -62,13 +64,13 @@ static void test_udp_loopback() {
                 ReturnCode::E_OK);
     msg.set_payload({0x01, 0x02, 0x03});
 
-    Endpoint client_ep("127.0.0.1", 0);
+    Endpoint client_ep("0.0.0.0", 0);
     UdpTransport client(client_ep, config);
     result = client.start();
     CHECK(result == Result::SUCCESS, "client_start");
     if (result != Result::SUCCESS) return;
 
-    result = client.send_message(msg, bound_ep);
+    result = client.send_message(msg, server_target);
     CHECK(result == Result::SUCCESS, "send_message");
 
     MessagePtr received = nullptr;
