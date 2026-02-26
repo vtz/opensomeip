@@ -43,7 +43,11 @@ jobs:
           west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto
           # test_core is a real test binary. native_sim may keep running after main()
           # and hit timeout=124 even when tests already passed, so validate output.
-          timeout 30 build/ns_tc/zephyr/zephyr.exe > /tmp/test_core.log 2>&1; rc=$?
+          if timeout 30 build/ns_tc/zephyr/zephyr.exe > /tmp/test_core.log 2>&1; then
+            rc=0
+          else
+            rc=$?
+          fi
           cat /tmp/test_core.log
           if [ "$rc" -eq 124 ]; then
             grep -Eq "=== Results: [0-9]+ passed, 0 failed ===" /tmp/test_core.log || exit 1
@@ -55,7 +59,11 @@ jobs:
         run: |
           west build -b native_sim zephyr/tests/test_transport -d build/ns_tp --pristine auto
           # test_transport follows the same timeout handling as test_core.
-          timeout 30 build/ns_tp/zephyr/zephyr.exe > /tmp/test_transport.log 2>&1; rc=$?
+          if timeout 30 build/ns_tp/zephyr/zephyr.exe > /tmp/test_transport.log 2>&1; then
+            rc=0
+          else
+            rc=$?
+          fi
           cat /tmp/test_transport.log
           if [ "$rc" -eq 124 ]; then
             grep -Eq "=== Results: [0-9]+ passed, 0 failed ===" /tmp/test_transport.log || exit 1
@@ -68,7 +76,11 @@ jobs:
           west build -b native_sim zephyr/samples/someip_echo -d build/ns_echo --pristine auto
           # someip_echo is a sample that may run continuously.
           # Accept timeout exit code 124, but fail on any other non-zero code.
-          timeout 30 build/ns_echo/zephyr/zephyr.exe; rc=$?
+          if timeout 30 build/ns_echo/zephyr/zephyr.exe; then
+            rc=0
+          else
+            rc=$?
+          fi
           if [ "$rc" -ne 0 ] && [ "$rc" -ne 124 ]; then
             exit "$rc"
           fi
