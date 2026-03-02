@@ -27,6 +27,16 @@ jobs:
       ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
     steps:
       - uses: actions/checkout@v4
+      - name: Install Python 3.12
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq software-properties-common > /dev/null
+          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
+          apt-get update -qq
+          apt-get install -y -qq python3.12 python3.12-venv python3.12-dev > /dev/null
+          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
+          python3 -m ensurepip 2>/dev/null || true
+          python3 -m pip install --upgrade pip
       - name: Install Zephyr SDK
         run: |
           wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
@@ -34,7 +44,7 @@ jobs:
           /opt/zephyr-sdk-0.17.0/setup.sh -c
       - name: Init Zephyr
         run: |
-          pip install jsonschema
+          python3 -m pip install jsonschema west
           west init /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
       - name: Build & run test_core
@@ -96,6 +106,16 @@ jobs:
       ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
     steps:
       - uses: actions/checkout@v4
+      - name: Install Python 3.12
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq software-properties-common > /dev/null
+          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
+          apt-get update -qq
+          apt-get install -y -qq python3.12 python3.12-venv python3.12-dev > /dev/null
+          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
+          python3 -m ensurepip 2>/dev/null || true
+          python3 -m pip install --upgrade pip
       - name: Install Zephyr SDK
         run: |
           wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
@@ -105,7 +125,7 @@ jobs:
           /opt/zephyr-sdk-0.17.0/setup.sh -c
       - name: Init Zephyr
         run: |
-          pip install jsonschema
+          python3 -m pip install jsonschema west
           west init /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
       - name: Build hello_s32k (mr_canhubk3)
