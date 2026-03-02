@@ -47,6 +47,7 @@ jobs:
           python3.12 -m pip install jsonschema west
           west init /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
+          python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
       - name: Build & run test_core
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
@@ -128,6 +129,7 @@ jobs:
           python3.12 -m pip install jsonschema west
           west init /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
+          python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
       - name: Build hello_s32k (mr_canhubk3)
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: west build -b mr_canhubk3 zephyr/samples/hello_s32k -d build/s32k344
