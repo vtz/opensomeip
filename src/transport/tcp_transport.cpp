@@ -13,6 +13,7 @@
 
 #include "transport/tcp_transport.h"
 #include "platform/net.h"
+#include "platform/memory.h"
 #include "common/result.h"
 #include <cstring>
 #include <iostream>
@@ -270,8 +271,8 @@ Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
         }
     }
 
-    // TCP keep-alive (not available on all Zephyr targets)
-#if !defined(__ZEPHYR__) || defined(CONFIG_ARCH_POSIX)
+    // TCP keep-alive (not available on embedded Zephyr or lwIP targets)
+#if (!defined(__ZEPHYR__) || defined(CONFIG_ARCH_POSIX)) && !defined(SOMEIP_NET_LWIP)
     if (config_.keep_alive) {
         int keep_alive = 1;
 #ifdef __APPLE__
@@ -280,10 +281,10 @@ Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
         setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPINTVL, &keep_alive_interval, sizeof(keep_alive_interval));
         setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPCNT, &keep_alive, sizeof(keep_alive));
 #else
-        setsockopt(socket_fd, SOL_TCP, TCP_KEEPIDLE, &keep_alive, sizeof(keep_alive));
+        setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPIDLE, &keep_alive, sizeof(keep_alive));
         int keep_alive_interval = static_cast<int>(config_.keep_alive_interval.count() / 1000);
-        setsockopt(socket_fd, SOL_TCP, TCP_KEEPINTVL, &keep_alive_interval, sizeof(keep_alive_interval));
-        setsockopt(socket_fd, SOL_TCP, TCP_KEEPCNT, &keep_alive, sizeof(keep_alive));
+        setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPINTVL, &keep_alive_interval, sizeof(keep_alive_interval));
+        setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPCNT, &keep_alive, sizeof(keep_alive));
 #endif
     }
 #endif
@@ -582,7 +583,7 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
     buffer.erase(buffer.begin(), buffer.begin() + total_message_size);
 
     // Parse message
-    message = std::make_shared<Message>();
+    message = platform::allocate_message();
     if (message && message->deserialize(message_data)) {
         return true;
     }

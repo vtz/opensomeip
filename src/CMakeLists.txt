@@ -27,28 +27,76 @@ set(E2E_SOURCES
     e2e/e2e_profiles/standard_profile.cpp
 )
 
+# --- Platform backend selection via include path ---
+# Threading / memory backend
+if(SOMEIP_USE_FREERTOS)
+    set(SOMEIP_THREADING_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/freertos)
+elseif(SOMEIP_USE_THREADX)
+    set(SOMEIP_THREADING_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/threadx)
+elseif(WIN32)
+    set(SOMEIP_THREADING_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/win32)
+else()
+    set(SOMEIP_THREADING_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/posix)
+endif()
+
+# Networking backend
+if(SOMEIP_USE_LWIP)
+    set(SOMEIP_NET_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/lwip)
+elseif(WIN32)
+    set(SOMEIP_NET_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/win32)
+else()
+    set(SOMEIP_NET_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/posix)
+endif()
+
 # Use OBJECT libraries to avoid circular dependency between core and E2E
 # Both are compiled separately but linked together
 
 # Core object library
 add_library(someip-core-obj OBJECT ${CORE_SOURCES})
-target_include_directories(someip-core-obj PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(someip-core-obj PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${SOMEIP_THREADING_IMPL_DIR}
+    ${SOMEIP_NET_IMPL_DIR}
+)
 
 # E2E object library
 add_library(someip-e2e-obj OBJECT ${E2E_SOURCES})
-target_include_directories(someip-e2e-obj PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(someip-e2e-obj PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${SOMEIP_THREADING_IMPL_DIR}
+    ${SOMEIP_NET_IMPL_DIR}
+)
 
 # Create combined core library that includes both core and E2E objects
-# This avoids circular dependency issues at link time
 add_library(someip-core STATIC
     $<TARGET_OBJECTS:someip-core-obj>
     $<TARGET_OBJECTS:someip-e2e-obj>
 )
-target_include_directories(someip-core PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(someip-core PUBLIC Threads::Threads)
+target_include_directories(someip-core PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${SOMEIP_THREADING_IMPL_DIR}
+    ${SOMEIP_NET_IMPL_DIR}
+)
+
+# Threading library: only link pthreads on non-RTOS builds
+if(NOT SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_THREADX)
+    find_package(Threads REQUIRED)
+    target_link_libraries(someip-core PUBLIC Threads::Threads)
+endif()
+
+# FreeRTOS platform sources
+if(SOMEIP_USE_FREERTOS)
+    target_sources(someip-core PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/freertos/memory.cpp)
+endif()
+
+# ThreadX platform sources
+if(SOMEIP_USE_THREADX)
+    target_sources(someip-core PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/threadx/memory.cpp)
+endif()
 
 # Create E2E library as an alias to core (for backward compatibility)
-# All E2E functionality is now part of someip-core
 add_library(someip-e2e ALIAS someip-core)
 
 # Create serialization library (depends on core)
@@ -84,8 +132,16 @@ set(TP_SOURCES
 
 # Create transport library (depends on core + threading)
 add_library(someip-transport STATIC ${TRANSPORT_SOURCES})
-target_include_directories(someip-transport PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_link_libraries(someip-transport PRIVATE someip-core PRIVATE Threads::Threads)
+target_include_directories(someip-transport PUBLIC
+    ${CMAKE_SOURCE_DIR}/include
+    ${SOMEIP_THREADING_IMPL_DIR}
+    ${SOMEIP_NET_IMPL_DIR}
+)
+if(NOT SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_THREADX)
+    target_link_libraries(someip-transport PRIVATE someip-core PRIVATE Threads::Threads)
+else()
+    target_link_libraries(someip-transport PRIVATE someip-core)
+endif()
 
 # Create RPC library (depends on core, transport, serialization)
 add_library(someip-rpc STATIC ${RPC_SOURCES})
@@ -109,9 +165,6 @@ target_link_libraries(someip-tp PRIVATE someip-core PRIVATE someip-transport)
 
 # Create convenience aliases for backward compatibility
 add_library(someip-common ALIAS someip-core)
-
-# Find threading library properly
-find_package(Threads REQUIRED)
 
 # Set library properties (only on real targets, not aliases)
 set_target_properties(someip-core someip-serialization someip-transport PROPERTIES

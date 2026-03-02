@@ -12,6 +12,7 @@
  ********************************************************************************/
 
 #include "transport/udp_transport.h"
+#include "platform/memory.h"
 #include "common/result.h"
 #include <cstring>
 #include <iostream>
@@ -340,7 +341,7 @@ void UdpTransport::receive_loop() {
 
         if (result == Result::SUCCESS) {
             // Try to deserialize message
-            MessagePtr message = std::make_shared<Message>();
+            MessagePtr message = platform::allocate_message();
             if (message->deserialize(buffer)) {  // Deserialize from the received buffer
                 // Add to queue
                 {

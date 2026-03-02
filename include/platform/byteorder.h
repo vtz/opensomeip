@@ -17,32 +17,11 @@
 /**
  * @brief Portable byte-order conversion macros.
  *
- * Wraps the platform-specific host-to-network and network-to-host
- * conversion functions so that the rest of the codebase never includes
- * <arpa/inet.h> or <winsock2.h> directly.
+ * The backend's byteorder_impl.h defines someip_htons, someip_ntohs,
+ * someip_htonl, someip_ntohl. The build system sets -I to the correct
+ * backend directory.
  */
 
-#if defined(__ZEPHYR__)
-#include <zephyr/sys/byteorder.h>
-#define someip_htons(x) sys_cpu_to_be16(x)
-#define someip_ntohs(x) sys_be16_to_cpu(x)
-#define someip_htonl(x) sys_cpu_to_be32(x)
-#define someip_ntohl(x) sys_be32_to_cpu(x)
-
-#elif defined(_WIN32)
-#include <winsock2.h>
-#define someip_htons htons
-#define someip_ntohs ntohs
-#define someip_htonl htonl
-#define someip_ntohl ntohl
-
-#else
-#include <arpa/inet.h>
-#define someip_htons htons
-#define someip_ntohs ntohs
-#define someip_htonl htonl
-#define someip_ntohl ntohl
-
-#endif
+#include "byteorder_impl.h"
 
 #endif // SOMEIP_PLATFORM_BYTEORDER_H

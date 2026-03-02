@@ -14,6 +14,11 @@ set(SOMEIP_INC  ${SOMEIP_ROOT}/include)
 set(SOMEIP_SRC  ${SOMEIP_ROOT}/src)
 
 zephyr_include_directories(${SOMEIP_INC})
+if(CONFIG_ARCH_POSIX)
+    zephyr_include_directories(${SOMEIP_INC}/platform/posix)
+else()
+    zephyr_include_directories(${SOMEIP_INC}/platform/zephyr)
+endif()
 
 # ---- Core (always built) ----
 zephyr_library_named(someip_core)
@@ -87,10 +92,9 @@ endif()
 
 # ---- Platform abstractions (Zephyr-specific implementations) ----
 if(NOT CONFIG_ARCH_POSIX)
-    # Embedded targets only (S32K344, S32K388, etc.)
     zephyr_library_sources_ifdef(CONFIG_SOMEIP
-        ${SOMEIP_SRC}/platform/zephyr_thread.cpp
-        ${SOMEIP_SRC}/platform/zephyr_memory.cpp
+        ${SOMEIP_SRC}/platform/zephyr/thread.cpp
+        ${SOMEIP_SRC}/platform/zephyr/memory.cpp
     )
 endif()
 

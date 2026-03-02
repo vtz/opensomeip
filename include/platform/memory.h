@@ -17,31 +17,14 @@
 /**
  * @brief Portable memory management for Message objects.
  *
- * On host / native_sim, Message objects are allocated via std::make_shared.
- * On embedded Zephyr targets, a static pool (k_mem_slab) can be used to
- * avoid heap fragmentation for the most frequently allocated type.
+ * The backend's memory_impl.h provides allocate_message() and
+ * optionally release_message(). The build system sets -I to the
+ * correct backend directory.
  */
 
 #include "someip/message.h"
 #include <memory>
 
-namespace someip {
-namespace platform {
-
-#if defined(__ZEPHYR__) && !defined(CONFIG_ARCH_POSIX)
-
-MessagePtr allocate_message();
-void release_message(Message* msg);
-
-#else
-
-inline MessagePtr allocate_message() {
-    return std::make_shared<Message>();
-}
-
-#endif
-
-} // namespace platform
-} // namespace someip
+#include "memory_impl.h"
 
 #endif // SOMEIP_PLATFORM_MEMORY_H

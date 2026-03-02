@@ -144,8 +144,31 @@ ninja
 ```
 
 ### Embedded Systems
+
+#### FreeRTOS + lwIP
 ```bash
-# Generic embedded build
+cmake .. -DSOMEIP_USE_FREERTOS=ON -DSOMEIP_USE_LWIP=ON \
+         -DCMAKE_TOOLCHAIN_FILE=path/to/arm-none-eabi.cmake
+make
+```
+See [FREERTOS_PORT.md](FREERTOS_PORT.md) for required FreeRTOS/lwIP configuration.
+
+#### ThreadX + lwIP
+```bash
+cmake .. -DSOMEIP_USE_THREADX=ON -DSOMEIP_USE_LWIP=ON \
+         -DCMAKE_TOOLCHAIN_FILE=path/to/arm-none-eabi.cmake
+make
+```
+See [THREADX_PORT.md](THREADX_PORT.md) for required ThreadX/lwIP configuration.
+
+#### Zephyr
+```bash
+west build -b <board> zephyr/samples/someip_echo
+```
+See [ZEPHYR_PORT.md](ZEPHYR_PORT.md) for Zephyr board support and Kconfig options.
+
+#### Generic Embedded (custom platform)
+```bash
 cmake .. -DCMAKE_SYSTEM_NAME=Generic \
          -DCMAKE_C_COMPILER=arm-none-eabi-gcc \
          -DCMAKE_CXX_COMPILER=arm-none-eabi-g++
@@ -166,6 +189,10 @@ make
 | `ENABLE_SAFETY_CHECKS` | ON | Enable additional safety checks |
 | `ENABLE_STATIC_ANALYSIS` | OFF | Enable static analysis |
 | `ENABLE_COVERAGE` | OFF | Enable code coverage |
+| `SOMEIP_USE_FREERTOS` | OFF | Use FreeRTOS threading backend (see [FREERTOS_PORT.md](FREERTOS_PORT.md)) |
+| `SOMEIP_USE_THREADX` | OFF | Use ThreadX threading backend (see [THREADX_PORT.md](THREADX_PORT.md)) |
+| `SOMEIP_USE_LWIP` | OFF | Use lwIP networking backend |
+| `SOMEIP_THREADX_LINUX_TESTS` | OFF | Fetch ThreadX linux port and build runtime tests |
 
 ### Safety Options
 

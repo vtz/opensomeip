@@ -37,11 +37,41 @@ package "Safety Layer" as Safety {
     component [Diagnostic Interface] as Diag
 }
 
-package "Infrastructure" as Infra {
-    component [Configuration Manager] as Config
-    component [Logging System] as Logger
-    component [Memory Manager] as MemMgr
-    component [Thread Manager] as ThreadMgr
+package "Platform Abstraction Layer" as PAL {
+    component [thread.h] as ThreadH
+    component [memory.h] as MemoryH
+    component [net.h] as NetH
+    component [byteorder.h] as ByteorderH
+
+    note right of PAL
+        Public headers contain only
+        common code + #include "*_impl.h".
+        CMake selects the backend via
+        include-path (-I) at build time.
+    end note
+}
+
+package "Platform Backends" as Backends {
+    package "POSIX" as POSIX_BE {
+        component [std::thread\nstd::mutex] as POSIX_Thread
+        component [POSIX sockets] as POSIX_Net
+        component [std::make_shared] as POSIX_Mem
+    }
+    package "Zephyr" as Zephyr_BE {
+        component [k_thread\nk_mutex\nk_condvar] as Zephyr_Thread
+        component [zsock_ API] as Zephyr_Net
+        component [k_mem_slab] as Zephyr_Mem
+    }
+    package "FreeRTOS + lwIP" as FreeRTOS_BE {
+        component [xTaskCreate\nxSemaphore] as FreeRTOS_Thread
+        component [lwip sockets] as FreeRTOS_Net
+        component [Static pool] as FreeRTOS_Mem
+    }
+    package "ThreadX + lwIP" as ThreadX_BE {
+        component [tx_thread\nTX_MUTEX] as ThreadX_Thread
+        component [lwip sockets] as ThreadX_Net
+        component [TX_BLOCK_POOL] as ThreadX_Mem
+    }
 }
 
 ' Application to Protocol
@@ -68,31 +98,40 @@ Protocol --> FaultMon : Fault Detection
 Transport --> FaultMon : Transport Faults
 Core --> RecoveryMgr : Error Recovery
 
-' All layers to Infrastructure
-App --> Config : Configuration
-Protocol --> Logger : Protocol Logging
-Transport --> MemMgr : Memory Management
-Core --> ThreadMgr : Thread Safety
+' Transport and Core to PAL
+Transport --> ThreadH : platform::Thread\nplatform::Mutex
+Transport --> NetH : Sockets
+Transport --> MemoryH : allocate_message()
+Core --> ThreadH : platform::Mutex
+Core --> ByteorderH : someip_htons()
+
+' PAL to Backends (one backend active at build time)
+ThreadH ..> POSIX_Thread
+ThreadH ..> Zephyr_Thread
+ThreadH ..> FreeRTOS_Thread
+ThreadH ..> ThreadX_Thread
+NetH ..> POSIX_Net
+NetH ..> Zephyr_Net
+NetH ..> FreeRTOS_Net
+NetH ..> ThreadX_Net
+MemoryH ..> POSIX_Mem
+MemoryH ..> Zephyr_Mem
+MemoryH ..> FreeRTOS_Mem
+MemoryH ..> ThreadX_Mem
 
 ' Safety to Infrastructure
-SafetyMgr --> Logger : Safety Events
-RecoveryMgr --> Config : Recovery Config
-Diag --> Logger : Diagnostic Data
-
-note right of Safety
-    ASIL-B Safety Features:
-    - Fault containment
-    - Error recovery
-    - Diagnostic monitoring
-    - Safe state management
-end note
+SafetyMgr --> ThreadH : Thread Safety
 
 note right of Transport
-    Transport Bindings:
-    - UDP (default)
-    - TCP (optional)
-    - Multicast for SD
-    - Connection pooling
+    Transport uses only
+    platform:: types -- never
+    std::thread or raw sockets.
+end note
+
+note right of Backends
+    Only one backend is active
+    per build. Selection is via
+    CMake include-path, not #ifdef.
 end note
 
 @enduml

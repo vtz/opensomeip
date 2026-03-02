@@ -78,6 +78,62 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
 
+    - name: Build FreeRTOS+lwIP (compile check with stubs)
+      if: matrix.c_compiler == 'gcc'
+      run: |
+        cmake -B build_freertos \
+          -DSOMEIP_USE_FREERTOS=ON \
+          -DSOMEIP_USE_LWIP=ON \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_EXAMPLES=OFF \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+          -DCMAKE_CXX_FLAGS="-I${{ github.workspace }}/tests/stubs/freertos -I${{ github.workspace }}/tests/stubs/lwip" \
+          -S ${{ github.workspace }}
+        cmake --build build_freertos --config ${{ matrix.build_type }}
+
+    - name: Build ThreadX+lwIP (compile check with stubs)
+      if: matrix.c_compiler == 'gcc'
+      run: |
+        cmake -B build_threadx \
+          -DSOMEIP_USE_THREADX=ON \
+          -DSOMEIP_USE_LWIP=ON \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_EXAMPLES=OFF \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+          -DCMAKE_CXX_FLAGS="-I${{ github.workspace }}/tests/stubs/threadx -I${{ github.workspace }}/tests/stubs/lwip" \
+          -S ${{ github.workspace }}
+        cmake --build build_threadx --config ${{ matrix.build_type }}
+
+    - name: FreeRTOS POSIX port runtime tests
+      if: matrix.c_compiler == 'gcc'
+      run: |
+        cmake -B build_freertos_rt \
+          -DSOMEIP_FREERTOS_LINUX_TESTS=ON \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_EXAMPLES=OFF \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -S ${{ github.workspace }}
+        cmake --build build_freertos_rt --config ${{ matrix.build_type }}
+        cd build_freertos_rt && ctest --output-on-failure --timeout 30
+
+    - name: ThreadX linux port runtime tests
+      if: matrix.c_compiler == 'gcc'
+      run: |
+        cmake -B build_threadx_rt \
+          -DSOMEIP_THREADX_LINUX_TESTS=ON \
+          -DBUILD_TESTS=OFF \
+          -DBUILD_EXAMPLES=OFF \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -S ${{ github.workspace }}
+        cmake --build build_threadx_rt --config ${{ matrix.build_type }}
+        cd build_threadx_rt && ctest --output-on-failure --timeout 30
+
     - name: Set up Python
       uses: actions/setup-python@v5
       with:

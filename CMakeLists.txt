@@ -43,8 +43,19 @@ option(BUILD_VSOMEIP_INTEROP "Build vsomeip interoperability examples (requires 
 option(BUILD_TOOLS "Build development tools (reserved for future use)" OFF)
 option(COVERAGE "Enable code coverage reporting" OFF)
 
-# Set policy for FetchContent timestamp handling
-cmake_policy(SET CMP0135 NEW)
+# Platform backend selection
+option(SOMEIP_USE_FREERTOS "Use FreeRTOS for threading primitives" OFF)
+option(SOMEIP_USE_THREADX  "Use ThreadX for threading primitives" OFF)
+option(SOMEIP_USE_LWIP     "Use lwIP for network sockets" OFF)
+
+# RTOS linux/POSIX port runtime tests (Linux only)
+option(SOMEIP_FREERTOS_LINUX_TESTS "Build and run FreeRTOS runtime tests using FreeRTOS POSIX port" OFF)
+option(SOMEIP_THREADX_LINUX_TESTS "Build and run ThreadX runtime tests using Eclipse ThreadX linux port" OFF)
+
+# Set policy for FetchContent timestamp handling (CMake 3.24+)
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
 
 # Fetch Google Test
 if(BUILD_TESTS)
@@ -88,6 +99,25 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Include directories
 include_directories(include)
+
+# Platform backend include directories (selects which *_impl.h files are found)
+if(SOMEIP_USE_FREERTOS)
+    include_directories(include/platform/freertos)
+elseif(SOMEIP_USE_THREADX)
+    include_directories(include/platform/threadx)
+elseif(WIN32)
+    include_directories(include/platform/win32)
+else()
+    include_directories(include/platform/posix)
+endif()
+
+if(SOMEIP_USE_LWIP)
+    include_directories(include/platform/lwip)
+elseif(WIN32)
+    # win32 net/byteorder already included above
+else()
+    # posix net/byteorder already included above
+endif()
 
 # Export compile commands for clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -157,7 +187,53 @@ endif()
 # Subdirectories
 add_subdirectory(src)
 
-if(BUILD_TESTS)
+# FreeRTOS POSIX port: fetch FreeRTOS-Kernel, link it, and build runtime tests
+if(SOMEIP_FREERTOS_LINUX_TESTS AND NOT WIN32)
+    enable_language(C)
+    set(SOMEIP_USE_FREERTOS ON CACHE BOOL "" FORCE)
+
+    set(FREERTOS_PORT "GCC_POSIX" CACHE STRING "" FORCE)
+    set(FREERTOS_HEAP "4" CACHE STRING "" FORCE)
+
+    add_library(freertos_config INTERFACE)
+    target_include_directories(freertos_config SYSTEM INTERFACE
+        ${CMAKE_SOURCE_DIR}/tests/freertos
+    )
+
+    FetchContent_Declare(freertos_kernel
+        GIT_REPOSITORY https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+        GIT_TAG        V11.1.0
+        GIT_SHALLOW    TRUE
+    )
+    FetchContent_MakeAvailable(freertos_kernel)
+
+    target_link_libraries(someip-core PUBLIC freertos_kernel)
+
+    enable_testing()
+    add_subdirectory(tests/freertos)
+endif()
+
+# ThreadX linux port: fetch Eclipse ThreadX, link it, and build runtime tests
+if(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
+    set(SOMEIP_USE_THREADX ON CACHE BOOL "" FORCE)
+
+    set(THREADX_ARCH "linux" CACHE STRING "" FORCE)
+    set(THREADX_TOOLCHAIN "gnu" CACHE STRING "" FORCE)
+
+    FetchContent_Declare(threadx
+        GIT_REPOSITORY https://github.com/eclipse-threadx/threadx.git
+        GIT_TAG        v6.4.1_rel
+        GIT_SHALLOW    TRUE
+    )
+    FetchContent_MakeAvailable(threadx)
+
+    target_link_libraries(someip-core PUBLIC threadx)
+
+    enable_testing()
+    add_subdirectory(tests/threadx)
+endif()
+
+if(BUILD_TESTS AND NOT SOMEIP_FREERTOS_LINUX_TESTS AND NOT SOMEIP_THREADX_LINUX_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()

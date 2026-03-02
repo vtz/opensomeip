@@ -2,152 +2,187 @@
 
 title SOME/IP Core Classes
 
-class Message {
-    +MessageId messageId
-    +uint32_t length
-    +RequestId requestId
-    +uint8_t protocolVersion
-    +uint8_t interfaceVersion
-    +MessageType messageType
-    +ReturnCode returnCode
-    +std::vector<uint8_t> payload
+namespace someip.platform {
+    class Mutex {
+        +lock(): void
+        +unlock(): void
+        +try_lock(): bool
+    }
 
-    +serialize(): std::vector<uint8_t>
-    +deserialize(data: std::vector<uint8_t>): bool
-    +getServiceId(): uint16_t
-    +getMethodId(): uint16_t
-    +isRequest(): bool
-    +isResponse(): bool
+    class ScopedLock {
+        -m_: Mutex&
+        +ScopedLock(m: Mutex&)
+        +~ScopedLock()
+    }
+
+    ScopedLock --> Mutex : locks
+
+    note as AllocNote
+        platform::allocate_message()
+        returns MessagePtr (shared_ptr).
+
+        Backend implementations:
+        - POSIX: std::make_shared<Message>()
+        - Zephyr: k_mem_slab pool
+        - FreeRTOS: static pool + bitmap
+        - ThreadX: TX_BLOCK_POOL
+    end note
 }
 
-class MessageId {
-    +uint16_t serviceId
-    +uint16_t methodId
+namespace someip {
 
-    +MessageId(serviceId: uint16_t, methodId: uint16_t)
-    +getServiceId(): uint16_t
-    +getMethodId(): uint16_t
-    +toUint32(): uint32_t
+    class Message {
+        +messageId: MessageId
+        +length: uint32_t
+        +requestId: RequestId
+        +protocolVersion: uint8_t
+        +interfaceVersion: uint8_t
+        +messageType: MessageType
+        +returnCode: ReturnCode
+        +payload: std::vector<uint8_t>
+
+        +serialize(): std::vector<uint8_t>
+        +deserialize(data: std::vector<uint8_t>): bool
+        +getServiceId(): uint16_t
+        +getMethodId(): uint16_t
+        +isRequest(): bool
+        +isResponse(): bool
+    }
+
+    note right of Message
+        Allocated via
+        platform::allocate_message()
+        — never std::make_shared
+        directly.
+    end note
+
+    class MessageId {
+        +serviceId: uint16_t
+        +methodId: uint16_t
+
+        +MessageId(serviceId: uint16_t, methodId: uint16_t)
+        +getServiceId(): uint16_t
+        +getMethodId(): uint16_t
+        +toUint32(): uint32_t
+    }
+
+    class RequestId {
+        +clientId: uint16_t
+        +sessionId: uint16_t
+
+        +RequestId(clientId: uint16_t, sessionId: uint16_t)
+        +getClientId(): uint16_t
+        +getSessionId(): uint16_t
+        +toUint32(): uint32_t
+    }
+
+    enum MessageType {
+        REQUEST = 0x00
+        REQUEST_NO_RETURN = 0x01
+        NOTIFICATION = 0x02
+        REQUEST_ACK = 0x40
+        RESPONSE = 0x80
+        ERROR = 0x81
+        RESPONSE_ACK = 0xC0
+        ERROR_ACK = 0xC1
+        TP_REQUEST = 0x20
+        TP_REQUEST_NO_RETURN = 0x21
+        TP_NOTIFICATION = 0x22
+    }
+
+    enum ReturnCode {
+        E_OK = 0x00
+        E_NOT_OK = 0x01
+        E_UNKNOWN_SERVICE = 0x02
+        E_UNKNOWN_METHOD = 0x03
+        E_NOT_READY = 0x04
+        E_NOT_REACHABLE = 0x05
+        E_TIMEOUT = 0x06
+        E_WRONG_PROTOCOL_VERSION = 0x07
+        E_WRONG_INTERFACE_VERSION = 0x08
+        E_MALFORMED_MESSAGE = 0x09
+        E_WRONG_MESSAGE_TYPE = 0x0A
+    }
+
+    class Serializer {
+        -buffer: std::vector<uint8_t>
+        -position: size_t
+
+        +Serializer()
+        +serializeBool(value: bool): void
+        +serializeUint8(value: uint8_t): void
+        +serializeUint16(value: uint16_t): void
+        +serializeUint32(value: uint32_t): void
+        +serializeUint64(value: uint64_t): void
+        +serializeFloat(value: float): void
+        +serializeDouble(value: double): void
+        +serializeString(value: std::string): void
+        +serializeArray<T>(value: std::vector<T>): void
+        +getBuffer(): std::vector<uint8_t>
+    }
+
+    class Deserializer {
+        -buffer: std::vector<uint8_t>
+        -position: size_t
+
+        +Deserializer(data: std::vector<uint8_t>)
+        +deserializeBool(): bool
+        +deserializeUint8(): uint8_t
+        +deserializeUint16(): uint16_t
+        +deserializeUint32(): uint32_t
+        +deserializeUint64(): uint64_t
+        +deserializeFloat(): float
+        +deserializeDouble(): double
+        +deserializeString(): std::string
+        +deserializeArray<T>(): std::vector<T>
+        +getPosition(): size_t
+    }
+
+    class SessionManager {
+        -sessions_: std::unordered_map<uint16_t, shared_ptr<Session>>
+        -sessions_mutex_: platform::Mutex
+        -next_session_id_: uint16_t
+
+        +create_session(clientId: uint16_t): uint16_t
+        +get_session(sessionId: uint16_t): shared_ptr<Session>
+        +remove_session(sessionId: uint16_t): void
+        +validate_session(sessionId: uint16_t): bool
+        +update_session_activity(sessionId: uint16_t): void
+        +cleanup_expired_sessions(timeout: seconds): size_t
+        +get_next_session_id(): uint16_t
+        +get_active_session_count(): size_t
+    }
+
+    class Session {
+        +session_id: uint16_t
+        +client_id: uint16_t
+        +last_activity: time_point
+        +state: SessionState
+
+        +update_activity(): void
+        +is_expired(timeout: seconds): bool
+    }
+
+    enum SessionState {
+        ACTIVE
+        INACTIVE
+        EXPIRED
+        ERROR
+    }
+
+    ' Relationships
+    Message *-- MessageId : contains
+    Message *-- RequestId : contains
+    Message *-- MessageType : uses
+    Message *-- ReturnCode : uses
+
+    SessionManager *-- Session : manages
+    Session *-- SessionState : has
 }
 
-class RequestId {
-    +uint16_t clientId
-    +uint16_t sessionId
-
-    +RequestId(clientId: uint16_t, sessionId: uint16_t)
-    +getClientId(): uint16_t
-    +getSessionId(): uint16_t
-    +toUint32(): uint32_t
-}
-
-enum MessageType {
-    REQUEST = 0x00
-    REQUEST_NO_RETURN = 0x01
-    NOTIFICATION = 0x02
-    REQUEST_ACK = 0x40
-    RESPONSE = 0x80
-    ERROR = 0x81
-    RESPONSE_ACK = 0xC0
-    ERROR_ACK = 0xC1
-    TP_REQUEST = 0x20
-    TP_REQUEST_NO_RETURN = 0x21
-    TP_NOTIFICATION = 0x22
-}
-
-enum ReturnCode {
-    E_OK = 0x00
-    E_NOT_OK = 0x01
-    E_UNKNOWN_SERVICE = 0x02
-    E_UNKNOWN_METHOD = 0x03
-    E_NOT_READY = 0x04
-    E_NOT_REACHABLE = 0x05
-    E_TIMEOUT = 0x06
-    E_WRONG_PROTOCOL_VERSION = 0x07
-    E_WRONG_INTERFACE_VERSION = 0x08
-    E_MALFORMED_MESSAGE = 0x09
-    E_WRONG_MESSAGE_TYPE = 0x0A
-}
-
-class Serializer {
-    -std::vector<uint8_t> buffer
-    -size_t position
-
-    +Serializer()
-    +serializeBool(value: bool): void
-    +serializeUint8(value: uint8_t): void
-    +serializeUint16(value: uint16_t): void
-    +serializeUint32(value: uint32_t): void
-    +serializeUint64(value: uint64_t): void
-    +serializeInt8(value: int8_t): void
-    +serializeInt16(value: int16_t): void
-    +serializeInt32(value: int32_t): void
-    +serializeInt64(value: int64_t): void
-    +serializeFloat(value: float): void
-    +serializeDouble(value: double): void
-    +serializeString(value: std::string): void
-    +serializeArray<T>(value: std::vector<T>): void
-    +getBuffer(): std::vector<uint8_t>
-}
-
-class Deserializer {
-    -std::vector<uint8_t> buffer
-    -size_t position
-
-    +Deserializer(data: std::vector<uint8_t>)
-    +deserializeBool(): bool
-    +deserializeUint8(): uint8_t
-    +deserializeUint16(): uint16_t
-    +deserializeUint32(): uint32_t
-    +deserializeUint64(): uint64_t
-    +deserializeInt8(): int8_t
-    +deserializeInt16(): int16_t
-    +deserializeInt32(): int32_t
-    +deserializeInt64(): int64_t
-    +deserializeFloat(): float
-    +deserializeDouble(): double
-    +deserializeString(): std::string
-    +deserializeArray<T>(): std::vector<T>
-    +getPosition(): size_t
-}
-
-class SessionManager {
-    -std::unordered_map<uint16_t, Session> sessions
-    -std::mutex sessionMutex
-    -uint16_t nextSessionId
-
-    +createSession(clientId: uint16_t): uint16_t
-    +getSession(sessionId: uint16_t): Session*
-    +removeSession(sessionId: uint16_t): void
-    +validateSession(sessionId: uint16_t): bool
-    +getNextSessionId(): uint16_t
-}
-
-class Session {
-    +uint16_t sessionId
-    +uint16_t clientId
-    +std::chrono::steady_clock::time_point lastActivity
-    +SessionState state
-
-    +updateActivity(): void
-    +isExpired(timeout: std::chrono::seconds): bool
-    +getState(): SessionState
-    +setState(state: SessionState): void
-}
-
-enum SessionState {
-    ACTIVE
-    INACTIVE
-    EXPIRED
-    ERROR
-}
-
-' Relationships
-Message *-- MessageId : contains
-Message *-- RequestId : contains
-Message *-- MessageType : uses
-Message *-- ReturnCode : uses
-
-SessionManager *-- Session : manages
-Session *-- SessionState : has
+' PAL usage
+someip.SessionManager --> someip.platform.Mutex : sessions_mutex_
+someip.Serializer ..> someip.Message : serializes
+someip.Deserializer ..> someip.Message : deserializes
 
 @enduml
