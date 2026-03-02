@@ -1,0 +1,52 @@
+name: ThreadX Build & Test
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.cursor/**'
+  pull_request:
+    branches: ["main"]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.cursor/**'
+
+jobs:
+  stub-compile-check:
+    name: ThreadX+lwIP stub compile check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build with ThreadX+lwIP stubs
+        run: |
+          cmake -B build_threadx \
+            -DSOMEIP_USE_THREADX=ON \
+            -DSOMEIP_USE_LWIP=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_CXX_FLAGS="-I${{ github.workspace }}/tests/stubs/threadx -I${{ github.workspace }}/tests/stubs/lwip" \
+            -S ${{ github.workspace }}
+          cmake --build build_threadx
+
+  runtime-tests:
+    name: ThreadX Linux port runtime tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & run ThreadX Linux port tests
+        run: |
+          cmake -B build_threadx_rt \
+            -DSOMEIP_THREADX_LINUX_TESTS=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -S ${{ github.workspace }}
+          cmake --build build_threadx_rt --config Release
+          cd build_threadx_rt && ctest --output-on-failure --timeout 30

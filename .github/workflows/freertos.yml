@@ -1,0 +1,52 @@
+name: FreeRTOS Build & Test
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.cursor/**'
+  pull_request:
+    branches: ["main"]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.cursor/**'
+
+jobs:
+  stub-compile-check:
+    name: FreeRTOS+lwIP stub compile check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build with FreeRTOS+lwIP stubs
+        run: |
+          cmake -B build_freertos \
+            -DSOMEIP_USE_FREERTOS=ON \
+            -DSOMEIP_USE_LWIP=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_CXX_FLAGS="-I${{ github.workspace }}/tests/stubs/freertos -I${{ github.workspace }}/tests/stubs/lwip" \
+            -S ${{ github.workspace }}
+          cmake --build build_freertos
+
+  runtime-tests:
+    name: FreeRTOS POSIX port runtime tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & run FreeRTOS POSIX port tests
+        run: |
+          cmake -B build_freertos_rt \
+            -DSOMEIP_FREERTOS_LINUX_TESTS=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_BUILD_TYPE=Release \
+            -S ${{ github.workspace }}
+          cmake --build build_freertos_rt --config Release
+          cd build_freertos_rt && ctest --output-on-failure --timeout 30

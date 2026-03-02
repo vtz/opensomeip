@@ -5,8 +5,8 @@
 name: Requirements Validation
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: ["main"]
     paths:
       - 'docs/requirements/**'
       - 'src/**'
@@ -15,6 +15,24 @@ on:
       - 'scripts/extract_code_requirements.py'
       - 'scripts/validate_requirements.py'
       - 'scripts/generate_requirement_diff.py'
+      - 'scripts/generate_traceability_matrix.py'
+      - 'scripts/verify_implementation_status.py'
+      - 'scripts/check_spec_requirements.py'
+      - 'scripts/generate_implementation_report.py'
+  pull_request:
+    branches: ["main"]
+    paths:
+      - 'docs/requirements/**'
+      - 'src/**'
+      - 'include/**'
+      - 'tests/**'
+      - 'scripts/extract_code_requirements.py'
+      - 'scripts/validate_requirements.py'
+      - 'scripts/generate_requirement_diff.py'
+      - 'scripts/generate_traceability_matrix.py'
+      - 'scripts/verify_implementation_status.py'
+      - 'scripts/check_spec_requirements.py'
+      - 'scripts/generate_implementation_report.py'
 
 permissions:
   contents: read
@@ -106,12 +124,14 @@ jobs:
         continue-on-error: true
 
       - name: Generate requirement diff
+        if: github.event_name == 'pull_request'
         run: |
           python scripts/generate_requirement_diff.py \
             --current docs/requirements \
             > build/requirement_diff.md
 
       - name: Create PR comment
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
