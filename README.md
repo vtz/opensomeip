@@ -34,6 +34,7 @@ OpenSOME/IP provides a complete, standards-compliant C++ implementation of the S
 - **RPC & Events**: Request/response and publish/subscribe communication patterns
 - **End-to-End (E2E) Protection**: CRC-based message integrity with profile registry and standard profile
 - **Safety-Oriented Design**: Patterns for error handling and validation (not certified)
+- **Multi-Platform**: Runs on POSIX/Linux, macOS, [Zephyr RTOS](docs/ZEPHYR_PORT.md), [FreeRTOS](docs/FREERTOS_PORT.md), and [Eclipse ThreadX](docs/THREADX_PORT.md)
 
 ### Why Choose OpenSOME/IP?
 
@@ -63,6 +64,11 @@ This project uses [Semantic Versioning](https://semver.org/). See [VERSION.md](V
 - C++17-compatible compiler (GCC 9+, Clang 10+)
 - CMake 3.20+
 - POSIX-compatible system (Linux, macOS)
+
+**Embedded / RTOS targets**: See the dedicated port guides:
+- [Zephyr RTOS port](docs/ZEPHYR_PORT.md) – runs on `native_sim` and ARM targets
+- [FreeRTOS port](docs/FREERTOS_PORT.md) – uses the FreeRTOS POSIX layer for Linux integration tests
+- [Eclipse ThreadX port](docs/THREADX_PORT.md) – uses the ThreadX Linux port for integration tests
 
 ### Optional Development Tools
 
@@ -516,6 +522,9 @@ target_link_libraries(your_target someip-common someip-transport)
 - PlantUML architecture diagrams with CI validation
 - Semantic versioning system with management scripts
 - Cross-platform demo (macOS client / Linux Docker server)
+- Zephyr RTOS port with native_sim CI (see [ZEPHYR_PORT.md](docs/ZEPHYR_PORT.md))
+- FreeRTOS Linux port with runtime integration tests (see [FREERTOS_PORT.md](docs/FREERTOS_PORT.md))
+- Eclipse ThreadX Linux port with runtime integration tests (see [THREADX_PORT.md](docs/THREADX_PORT.md))
 - Comprehensive documentation
 
 ### Planned
