@@ -188,15 +188,19 @@ static void test_thread_entry(ULONG) {
 }
 
 extern "C" void tx_application_define(void*) {
-    tx_thread_create(&test_thread,
-                     const_cast<CHAR*>("test_main"),
-                     test_thread_entry,
-                     0,
-                     test_stack,
-                     sizeof(test_stack),
-                     1, 1,
-                     TX_NO_TIME_SLICE,
-                     TX_AUTO_START);
+    UINT rc = tx_thread_create(&test_thread,
+                               const_cast<CHAR*>("test_main"),
+                               test_thread_entry,
+                               0,
+                               test_stack,
+                               sizeof(test_stack),
+                               1, 1,
+                               TX_NO_TIME_SLICE,
+                               TX_AUTO_START);
+    if (rc != TX_SUCCESS) {
+        std::fprintf(stderr, "tx_thread_create failed: %u\n", rc);
+        std::exit(1);
+    }
 }
 
 int main() {
