@@ -42,7 +42,11 @@ target_link_libraries(test_tp someip-tp gtest_main)
 add_executable(test_e2e test_e2e.cpp)
 target_link_libraries(test_e2e someip-core gtest_main)
 
+    add_executable(test_platform_threading test_platform_threading.cpp)
+    target_link_libraries(test_platform_threading gtest_main)
+
     # Register available tests
+    add_test(NAME PlatformThreadingTest COMMAND test_platform_threading)
     add_test(NAME SerializationTest COMMAND test_serialization)
     add_test(NAME MessageTest COMMAND test_message)
     add_test(NAME SessionManagerTest COMMAND test_session_manager)

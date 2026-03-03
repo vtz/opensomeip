@@ -28,7 +28,8 @@ public:
         std::unique_lock<std::mutex> lk(m, std::adopt_lock);
         ReleaseOnExit guard(lk);
         cv_.wait(lk);
-        guard.dismiss();
+        lk.release();    // transfer ownership back to caller without unlocking
+        guard.dismiss(); // guard's destructor must not call release() again
     }
 
     template <typename Pred>
@@ -36,7 +37,8 @@ public:
         std::unique_lock<std::mutex> lk(m, std::adopt_lock);
         ReleaseOnExit guard(lk);
         cv_.wait(lk, pred);
-        guard.dismiss();
+        lk.release();    // transfer ownership back to caller without unlocking
+        guard.dismiss(); // guard's destructor must not call release() again
     }
 
     ConditionVariable() = default;
@@ -44,10 +46,13 @@ public:
     ConditionVariable& operator=(const ConditionVariable&) = delete;
 
 private:
-    // Calls lk.release() in its destructor unless dismiss() has been called.
-    // This guarantees release() runs even when cv_.wait() or the predicate
-    // throws, preventing the unique_lock destructor from unlocking the
-    // caller-owned mutex.
+    // On the normal path, wait() calls lk.release() then guard.dismiss():
+    //   lk.release() hands mutex ownership back to the caller without unlocking;
+    //   dismiss() prevents the destructor from calling release() a second time.
+    // On the exception path (cv_.wait or predicate throws), dismiss() is never
+    //   reached so the destructor calls lk.release(), which also hands ownership
+    //   back to the caller — preventing unique_lock's destructor from unlocking
+    //   the caller-owned mutex.
     struct ReleaseOnExit {
         explicit ReleaseOnExit(std::unique_lock<std::mutex>& lk) : lk_(lk) {}
         ~ReleaseOnExit() { if (!dismissed_) lk_.release(); }
