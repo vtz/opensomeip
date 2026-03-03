@@ -36,8 +36,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
 
 jobs:
   validate:
@@ -130,8 +128,72 @@ jobs:
             --current docs/requirements \
             > build/requirement_diff.md
 
+      - name: Upload validation artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: requirements-validation
+          path: |
+            build/code_references.json
+            build/validation_report.txt
+            build/validation_strict.txt
+            build/spec_mapping_report.md
+            build/implementation_verification.md
+            build/requirement_diff.md
+            build/docs/traceability/
+            build/docs/implementation_report.md
+          retention-days: 14
+
+      - name: Check for traceability gaps
+        run: |
+          # Parse gap analysis to check for missing implementation or tests
+          if [ -f "build/docs/traceability/gap_analysis.md" ]; then
+            MISSING_IMPL=$(grep -c "^- REQ_" build/docs/traceability/gap_analysis.md | head -1 || echo "0")
+
+            # Check if SWE.3 or SWE.6 failed
+            if grep -q "SWE.3.*FAIL" build/docs/traceability/gap_analysis.md; then
+              echo "::error::SWE.3 FAILED - Missing implementation for requirements"
+              echo "See build/docs/traceability/gap_analysis.md for details"
+              exit 1
+            fi
+
+            if grep -q "SWE.6.*FAIL" build/docs/traceability/gap_analysis.md; then
+              echo "::error::SWE.6 FAILED - Missing test coverage for requirements"
+              echo "See build/docs/traceability/gap_analysis.md for details"
+              exit 1
+            fi
+
+            echo "::notice::ASPICE traceability validation passed"
+          else
+            echo "::warning::Gap analysis not generated - skipping traceability check"
+          fi
+
+          # Also fail if strict validation failed
+          if [ "${{ steps.validate_strict.outcome }}" == "failure" ]; then
+            echo "::error::Requirements validation failed in strict mode"
+            echo "See validation_strict.txt for details"
+            exit 1
+          fi
+
+  post-pr-comment:
+    if: github.event_name == 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download validation artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: requirements-validation
+          path: build
+
       - name: Create PR comment
-        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
@@ -192,50 +254,3 @@ jobs:
                 body: body
               });
             }
-
-      - name: Upload validation artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: requirements-validation
-          path: |
-            build/code_references.json
-            build/validation_report.txt
-            build/validation_strict.txt
-            build/spec_mapping_report.md
-            build/implementation_verification.md
-            build/requirement_diff.md
-            build/docs/traceability/
-            build/docs/implementation_report.md
-          retention-days: 14
-
-      - name: Check for traceability gaps
-        run: |
-          # Parse gap analysis to check for missing implementation or tests
-          if [ -f "build/docs/traceability/gap_analysis.md" ]; then
-            MISSING_IMPL=$(grep -c "^- REQ_" build/docs/traceability/gap_analysis.md | head -1 || echo "0")
-
-            # Check if SWE.3 or SWE.6 failed
-            if grep -q "SWE.3.*FAIL" build/docs/traceability/gap_analysis.md; then
-              echo "::error::SWE.3 FAILED - Missing implementation for requirements"
-              echo "See build/docs/traceability/gap_analysis.md for details"
-              exit 1
-            fi
-
-            if grep -q "SWE.6.*FAIL" build/docs/traceability/gap_analysis.md; then
-              echo "::error::SWE.6 FAILED - Missing test coverage for requirements"
-              echo "See build/docs/traceability/gap_analysis.md for details"
-              exit 1
-            fi
-
-            echo "::notice::ASPICE traceability validation passed"
-          else
-            echo "::warning::Gap analysis not generated - skipping traceability check"
-          fi
-
-          # Also fail if strict validation failed
-          if [ "${{ steps.validate_strict.outcome }}" == "failure" ]; then
-            echo "::error::Requirements validation failed in strict mode"
-            echo "See validation_strict.txt for details"
-            exit 1
-          fi
