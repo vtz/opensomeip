@@ -192,6 +192,7 @@ make
 | `SOMEIP_USE_FREERTOS` | OFF | Use FreeRTOS threading backend (see [FREERTOS_PORT.md](FREERTOS_PORT.md)) |
 | `SOMEIP_USE_THREADX` | OFF | Use ThreadX threading backend (see [THREADX_PORT.md](THREADX_PORT.md)) |
 | `SOMEIP_USE_LWIP` | OFF | Use lwIP networking backend |
+| `SOMEIP_FREERTOS_LINUX_TESTS` | OFF | Fetch FreeRTOS POSIX port and build runtime tests |
 | `SOMEIP_THREADX_LINUX_TESTS` | OFF | Fetch ThreadX linux port and build runtime tests |
 
 ### Safety Options
