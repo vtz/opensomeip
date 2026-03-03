@@ -17,7 +17,32 @@ namespace platform {
 
 using Thread = std::thread;
 using Mutex = std::mutex;
-using ConditionVariable = std::condition_variable;
+
+class ConditionVariable {
+public:
+    void notify_one() { cv_.notify_one(); }
+    void notify_all() { cv_.notify_all(); }
+
+    void wait(Mutex& m) {
+        std::unique_lock<std::mutex> lk(m, std::adopt_lock);
+        cv_.wait(lk);
+        lk.release();
+    }
+
+    template <typename Pred>
+    void wait(Mutex& m, Pred pred) {
+        std::unique_lock<std::mutex> lk(m, std::adopt_lock);
+        cv_.wait(lk, pred);
+        lk.release();
+    }
+
+    ConditionVariable() = default;
+    ConditionVariable(const ConditionVariable&) = delete;
+    ConditionVariable& operator=(const ConditionVariable&) = delete;
+
+private:
+    std::condition_variable cv_;
+};
 
 namespace this_thread {
 using std::this_thread::sleep_for;
