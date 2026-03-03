@@ -52,6 +52,16 @@ option(SOMEIP_USE_LWIP     "Use lwIP for network sockets" OFF)
 option(SOMEIP_FREERTOS_LINUX_TESTS "Build and run FreeRTOS runtime tests using FreeRTOS POSIX port" OFF)
 option(SOMEIP_THREADX_LINUX_TESTS "Build and run ThreadX runtime tests using Eclipse ThreadX linux port" OFF)
 
+# Derive backend from runtime test mode before include-path/backend selection.
+if(SOMEIP_FREERTOS_LINUX_TESTS AND SOMEIP_THREADX_LINUX_TESTS)
+    message(FATAL_ERROR "SOMEIP_FREERTOS_LINUX_TESTS and SOMEIP_THREADX_LINUX_TESTS are mutually exclusive")
+endif()
+if(SOMEIP_FREERTOS_LINUX_TESTS AND NOT WIN32)
+    set(SOMEIP_USE_FREERTOS ON CACHE BOOL "" FORCE)
+elseif(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
+    set(SOMEIP_USE_THREADX ON CACHE BOOL "" FORCE)
+endif()
+
 # Set policy for FetchContent timestamp handling (CMake 3.24+)
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
@@ -190,7 +200,6 @@ add_subdirectory(src)
 # FreeRTOS POSIX port: fetch FreeRTOS-Kernel, link it, and build runtime tests
 if(SOMEIP_FREERTOS_LINUX_TESTS AND NOT WIN32)
     enable_language(C)
-    set(SOMEIP_USE_FREERTOS ON CACHE BOOL "" FORCE)
 
     set(FREERTOS_PORT "GCC_POSIX" CACHE STRING "" FORCE)
     set(FREERTOS_HEAP "4" CACHE STRING "" FORCE)
@@ -215,7 +224,6 @@ endif()
 
 # ThreadX linux port: fetch Eclipse ThreadX, link it, and build runtime tests
 if(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
-    set(SOMEIP_USE_THREADX ON CACHE BOOL "" FORCE)
 
     set(THREADX_ARCH "linux" CACHE STRING "" FORCE)
     set(THREADX_TOOLCHAIN "gnu" CACHE STRING "" FORCE)
