@@ -49,4 +49,4 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -S ${{ github.workspace }}
           cmake --build build_freertos_rt --config Release
-          cd build_freertos_rt && ctest --output-on-failure --timeout 30
+          cd build_freertos_rt && ctest --output-on-failure --timeout 30 --no-tests=error
