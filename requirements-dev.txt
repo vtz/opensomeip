@@ -1,0 +1,11 @@
+west==1.5.0
+pyelftools==0.32
+pyyaml==6.0.3
+pykwalify==1.8.0
+packaging==26.0
+canopen==2.4.1
+jsonschema==4.26.0
+pytest==9.0.2
+pytest-cov==7.0.0
+coverage==7.13.4
+junit-xml==1.9

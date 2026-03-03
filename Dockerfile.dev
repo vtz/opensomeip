@@ -37,9 +37,8 @@ RUN HOSTARCH=$(uname -m) && \
     && ln -sf /opt/cmake-${CMAKE_VERSION}-linux-${HOSTARCH}/bin/* /usr/local/bin/
 
 # Python: host test deps + Zephyr build deps
-RUN pip3 install --no-cache-dir \
-    west pyelftools pyyaml pykwalify packaging canopen jsonschema \
-    pytest pytest-cov coverage junit-xml
+COPY requirements-dev.txt /tmp/requirements-dev.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements-dev.txt
 
 # Zephyr SDK (minimal + host tools + ARM cross-compiler)
 RUN HOSTARCH=$(uname -m) && \
