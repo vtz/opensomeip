@@ -70,11 +70,16 @@ TEST(ConditionVariableTest, CallerRetainsMutexOwnershipAfterWait) {
     // Mutex must still be locked by us here. A second thread must NOT be
     // able to acquire it at this point.
     std::atomic<bool> other_locked{false};
-    std::thread probe([&]() { other_locked = m.try_lock(); });
+    std::thread probe([&]() {
+        if (m.try_lock()) {
+            other_locked = true;
+            m.unlock(); // probe always cleans up its own acquisition
+        }
+    });
     probe.join();
     EXPECT_FALSE(other_locked) << "mutex must still be held by the caller after wait() returns";
 
-    m.unlock();
+    if (!other_locked) m.unlock(); // only unlock if the main thread still owns it
     notifier.join();
 }
 
@@ -100,11 +105,16 @@ TEST(ConditionVariableTest, CallerRetainsMutexOwnershipAfterWaitWithPredicate) {
 
     // Mutex must still be locked by us here.
     std::atomic<bool> other_locked{false};
-    std::thread probe([&]() { other_locked = m.try_lock(); });
+    std::thread probe([&]() {
+        if (m.try_lock()) {
+            other_locked = true;
+            m.unlock(); // probe always cleans up its own acquisition
+        }
+    });
     probe.join();
     EXPECT_FALSE(other_locked) << "mutex must still be held by the caller after wait(pred) returns";
 
-    m.unlock();
+    if (!other_locked) m.unlock(); // only unlock if the main thread still owns it
     producer.join();
 }
 
@@ -143,11 +153,16 @@ TEST(ConditionVariableTest, PredicateExceptionPreservesMutexOwnership) {
 
     // After the exception the mutex must still be owned by the caller.
     std::atomic<bool> other_locked{false};
-    std::thread probe([&]() { other_locked = m.try_lock(); });
+    std::thread probe([&]() {
+        if (m.try_lock()) {
+            other_locked = true;
+            m.unlock(); // probe always cleans up its own acquisition
+        }
+    });
     probe.join();
     EXPECT_FALSE(other_locked) << "mutex must still be held by caller after predicate throws";
 
-    m.unlock();
+    if (!other_locked) m.unlock(); // only unlock if the main thread still owns it
     notifier.join();
 }
 
