@@ -81,6 +81,13 @@ if(SOMEIP_FREERTOS_LINUX_TESTS AND NOT WIN32)
         GIT_SHALLOW    TRUE
     )
     FetchContent_MakeAvailable(freertos_kernel)
+
+    # Expose FreeRTOS kernel headers globally so thread_impl.h (<FreeRTOS.h>)
+    # resolves when src/ object targets are compiled.
+    include_directories(
+        ${freertos_kernel_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/tests/freertos  # FreeRTOSConfig.h
+    )
 endif()
 
 if(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
@@ -93,6 +100,13 @@ if(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
         GIT_SHALLOW    TRUE
     )
     FetchContent_MakeAvailable(threadx)
+
+    # Expose ThreadX kernel headers globally so thread_impl.h (<tx_api.h>)
+    # resolves when src/ object targets are compiled.
+    include_directories(
+        ${threadx_SOURCE_DIR}/common/inc
+        ${threadx_SOURCE_DIR}/ports/${THREADX_ARCH}/${THREADX_TOOLCHAIN}/inc
+    )
 endif()
 
 # Set policy for FetchContent timestamp handling (CMake 3.24+)
