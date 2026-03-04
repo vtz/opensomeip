@@ -62,6 +62,39 @@ elseif(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
     set(SOMEIP_USE_THREADX ON CACHE BOOL "" FORCE)
 endif()
 
+# Fetch RTOS kernels early — before add_subdirectory(src) — so their headers
+# are on the include path when the backend thread_impl.h is compiled into src/.
+if(SOMEIP_FREERTOS_LINUX_TESTS AND NOT WIN32)
+    enable_language(C)
+
+    set(FREERTOS_PORT "GCC_POSIX" CACHE STRING "" FORCE)
+    set(FREERTOS_HEAP "4" CACHE STRING "" FORCE)
+
+    add_library(freertos_config INTERFACE)
+    target_include_directories(freertos_config SYSTEM INTERFACE
+        ${CMAKE_SOURCE_DIR}/tests/freertos
+    )
+
+    FetchContent_Declare(freertos_kernel
+        GIT_REPOSITORY https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+        GIT_TAG        V11.1.0
+        GIT_SHALLOW    TRUE
+    )
+    FetchContent_MakeAvailable(freertos_kernel)
+endif()
+
+if(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
+    set(THREADX_ARCH "linux" CACHE STRING "" FORCE)
+    set(THREADX_TOOLCHAIN "gnu" CACHE STRING "" FORCE)
+
+    FetchContent_Declare(threadx
+        GIT_REPOSITORY https://github.com/eclipse-threadx/threadx.git
+        GIT_TAG        v6.4.1_rel
+        GIT_SHALLOW    TRUE
+    )
+    FetchContent_MakeAvailable(threadx)
+endif()
+
 # Set policy for FetchContent timestamp handling (CMake 3.24+)
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
@@ -197,46 +230,20 @@ endif()
 # Subdirectories
 add_subdirectory(src)
 
-# FreeRTOS POSIX port: fetch FreeRTOS-Kernel, link it, and build runtime tests
+# FreeRTOS POSIX port: link fetched kernel and build runtime tests.
+# (kernel is fetched early, before add_subdirectory(src), so FreeRTOS.h is
+#  available when the freertos thread_impl.h is compiled into src/)
 if(SOMEIP_FREERTOS_LINUX_TESTS AND NOT WIN32)
-    enable_language(C)
-
-    set(FREERTOS_PORT "GCC_POSIX" CACHE STRING "" FORCE)
-    set(FREERTOS_HEAP "4" CACHE STRING "" FORCE)
-
-    add_library(freertos_config INTERFACE)
-    target_include_directories(freertos_config SYSTEM INTERFACE
-        ${CMAKE_SOURCE_DIR}/tests/freertos
-    )
-
-    FetchContent_Declare(freertos_kernel
-        GIT_REPOSITORY https://github.com/FreeRTOS/FreeRTOS-Kernel.git
-        GIT_TAG        V11.1.0
-        GIT_SHALLOW    TRUE
-    )
-    FetchContent_MakeAvailable(freertos_kernel)
-
     target_link_libraries(someip-core PUBLIC freertos_kernel)
-
     enable_testing()
     add_subdirectory(tests/freertos)
 endif()
 
-# ThreadX linux port: fetch Eclipse ThreadX, link it, and build runtime tests
+# ThreadX linux port: link fetched kernel and build runtime tests.
+# (kernel is fetched early, before add_subdirectory(src), so tx_api.h is
+#  available when the threadx thread_impl.h is compiled into src/)
 if(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
-
-    set(THREADX_ARCH "linux" CACHE STRING "" FORCE)
-    set(THREADX_TOOLCHAIN "gnu" CACHE STRING "" FORCE)
-
-    FetchContent_Declare(threadx
-        GIT_REPOSITORY https://github.com/eclipse-threadx/threadx.git
-        GIT_TAG        v6.4.1_rel
-        GIT_SHALLOW    TRUE
-    )
-    FetchContent_MakeAvailable(threadx)
-
     target_link_libraries(someip-core PUBLIC threadx)
-
     enable_testing()
     add_subdirectory(tests/threadx)
 endif()
