@@ -136,13 +136,19 @@ public:
         // ThreadX Linux port), which is too narrow to hold a pointer on
         // 64-bit hosts.  Pass an integer slot index into a global registry
         // instead of casting this directly to ULONG.
-        const ULONG slot = alloc_slot(this);
+        slot_ = alloc_slot(this);
+        if (slot_ == kInvalidSlot) {
+            delete ctx_;
+            ctx_ = nullptr;
+            tx_event_flags_delete(&join_ev_);
+            return;
+        }
 
         UINT rc = tx_thread_create(
             &tcb_,
             const_cast<CHAR*>("someip"),
             trampoline,
-            slot,
+            slot_,
             stack_,
             sizeof(stack_),
             SOMEIP_THREADX_THREAD_PRIORITY,
@@ -151,7 +157,7 @@ public:
             TX_AUTO_START);
 
         if (rc != TX_SUCCESS) {
-            free_slot(slot);
+            release_slot_if_owner();
             delete ctx_;
             ctx_ = nullptr;
             tx_event_flags_delete(&join_ev_);
@@ -163,6 +169,11 @@ public:
     ~Thread() {
         if (joinable()) {
             tx_thread_terminate(&tcb_);
+            // The trampoline may have been scheduled but not yet run when
+            // tx_thread_terminate killed it.  Clear the registry slot so it
+            // is not leaked; use CAS so we do not double-free if the
+            // trampoline already claimed and cleared the slot.
+            release_slot_if_owner();
             tx_thread_delete(&tcb_);
             delete ctx_;
             ctx_ = nullptr;
@@ -177,6 +188,9 @@ public:
         if (!joinable()) return;
         ULONG actual = 0;
         tx_event_flags_get(&join_ev_, 0x1, TX_OR_CLEAR, &actual, TX_WAIT_FOREVER);
+        // trampoline has completed and already released the slot via CAS;
+        // release_slot_if_owner() here is a no-op but keeps ownership clear.
+        release_slot_if_owner();
         joined_ = true;
         tx_thread_delete(&tcb_);
         delete ctx_;
@@ -192,9 +206,11 @@ public:
 private:
     // Global registry: passes Thread* to the trampoline via an integer slot
     // index, sidestepping ULONG being too narrow for pointers on 64-bit hosts.
-    static constexpr ULONG kMaxSlots = 64;
+    static constexpr ULONG kMaxSlots   = 64;
+    static constexpr ULONG kInvalidSlot = kMaxSlots; // sentinel: no slot held
     inline static std::atomic<Thread*> s_registry[kMaxSlots] = {};
 
+    // Returns kInvalidSlot if no slot is available (instead of aborting).
     static ULONG alloc_slot(Thread* t) {
         for (ULONG i = 0; i < kMaxSlots; ++i) {
             Thread* expected = nullptr;
@@ -205,26 +221,46 @@ private:
                 return i;
             }
         }
-        std::abort(); // unreachable with normal SOME/IP thread counts
+        return kInvalidSlot;
     }
 
-    static void free_slot(ULONG slot) {
-        s_registry[slot].store(nullptr, std::memory_order_release);
+    // CAS-based release: clears s_registry[slot_] only if it still points to
+    // this Thread, then marks slot_ as invalid.  Safe to call from destructor,
+    // join(), or trampoline() without risk of double-free or use-after-free.
+    void release_slot_if_owner() {
+        if (slot_ == kInvalidSlot) return;
+        Thread* expected = this;
+        s_registry[slot_].compare_exchange_strong(
+            expected, nullptr,
+            std::memory_order_acq_rel,
+            std::memory_order_relaxed);
+        slot_ = kInvalidSlot;
     }
 
     static void trampoline(ULONG slot) {
         Thread* self = s_registry[slot].load(std::memory_order_acquire);
-        free_slot(slot); // release slot before executing so it can be reused
-        if (self->ctx_ && *(self->ctx_)) {
+        // CAS-release the slot: the destructor may have beaten us here if the
+        // thread was terminated before the trampoline ran.  In that case self
+        // is already gone; bail out to avoid a use-after-free.
+        Thread* expected = self;
+        if (!s_registry[slot].compare_exchange_strong(
+                expected, nullptr,
+                std::memory_order_acq_rel,
+                std::memory_order_relaxed)) {
+            return; // destructor already owns/destroyed the Thread object
+        }
+        if (self) self->slot_ = kInvalidSlot;
+        if (self && self->ctx_ && *(self->ctx_)) {
             (*(self->ctx_))();
         }
-        tx_event_flags_set(&self->join_ev_, 0x1, TX_OR);
+        if (self) tx_event_flags_set(&self->join_ev_, 0x1, TX_OR);
     }
 
     TX_THREAD tcb_{};
     TX_EVENT_FLAGS_GROUP join_ev_{};
     UCHAR stack_[SOMEIP_THREADX_THREAD_STACK_SIZE]{};
     std::function<void()>* ctx_{nullptr};
+    ULONG slot_{kInvalidSlot};
     bool started_{false};
     bool joined_{false};
 };
