@@ -83,9 +83,10 @@ if(SOMEIP_FREERTOS_LINUX_TESTS AND NOT WIN32)
     FetchContent_MakeAvailable(freertos_kernel)
 
     # Expose FreeRTOS kernel headers globally so thread_impl.h (<FreeRTOS.h>)
-    # resolves when src/ object targets are compiled.
+    # and the port-specific portmacro.h resolve when src/ is compiled.
     include_directories(
         ${freertos_kernel_SOURCE_DIR}/include
+        ${freertos_kernel_SOURCE_DIR}/portable/ThirdParty/GCC/Posix
         ${CMAKE_SOURCE_DIR}/tests/freertos  # FreeRTOSConfig.h
     )
 endif()

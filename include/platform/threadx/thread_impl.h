@@ -32,6 +32,8 @@
 
 #include <tx_api.h>
 
+#include <atomic>
+#include <cstdlib>
 #include <functional>
 #include <chrono>
 #include <cstdint>
@@ -130,11 +132,17 @@ public:
                 std::apply(std::move(f), std::move(a));
             });
 
+        // tx_thread_create's entry_input is ULONG (unsigned int on the
+        // ThreadX Linux port), which is too narrow to hold a pointer on
+        // 64-bit hosts.  Pass an integer slot index into a global registry
+        // instead of casting this directly to ULONG.
+        const ULONG slot = alloc_slot(this);
+
         UINT rc = tx_thread_create(
             &tcb_,
             const_cast<CHAR*>("someip"),
             trampoline,
-            reinterpret_cast<ULONG>(this),
+            slot,
             stack_,
             sizeof(stack_),
             SOMEIP_THREADX_THREAD_PRIORITY,
@@ -143,6 +151,7 @@ public:
             TX_AUTO_START);
 
         if (rc != TX_SUCCESS) {
+            free_slot(slot);
             delete ctx_;
             ctx_ = nullptr;
             tx_event_flags_delete(&join_ev_);
@@ -181,8 +190,31 @@ public:
     Thread& operator=(const Thread&) = delete;
 
 private:
-    static void trampoline(ULONG param) {
-        auto* self = reinterpret_cast<Thread*>(param);
+    // Global registry: passes Thread* to the trampoline via an integer slot
+    // index, sidestepping ULONG being too narrow for pointers on 64-bit hosts.
+    static constexpr ULONG kMaxSlots = 64;
+    inline static std::atomic<Thread*> s_registry[kMaxSlots] = {};
+
+    static ULONG alloc_slot(Thread* t) {
+        for (ULONG i = 0; i < kMaxSlots; ++i) {
+            Thread* expected = nullptr;
+            if (s_registry[i].compare_exchange_strong(
+                    expected, t,
+                    std::memory_order_acq_rel,
+                    std::memory_order_relaxed)) {
+                return i;
+            }
+        }
+        std::abort(); // unreachable with normal SOME/IP thread counts
+    }
+
+    static void free_slot(ULONG slot) {
+        s_registry[slot].store(nullptr, std::memory_order_release);
+    }
+
+    static void trampoline(ULONG slot) {
+        Thread* self = s_registry[slot].load(std::memory_order_acquire);
+        free_slot(slot); // release slot before executing so it can be reused
         if (self->ctx_ && *(self->ctx_)) {
             (*(self->ctx_))();
         }
