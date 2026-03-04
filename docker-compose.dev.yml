@@ -12,8 +12,5 @@ services:
     volumes:
       - .:/workspace/someip
     working_dir: /workspace/someip
-    network_mode: host
-    cap_add:
-      - NET_ADMIN
     stdin_open: true
     tty: true
