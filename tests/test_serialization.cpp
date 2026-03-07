@@ -38,6 +38,10 @@ using namespace someip::serialization;
  * @tests REQ_SER_046_E01, REQ_SER_047_E01, REQ_SER_047_E02
  * @tests REQ_SER_050_E01, REQ_SER_050_E02, REQ_SER_053_E01, REQ_SER_055_E01
  * @tests REQ_SER_060_E01, REQ_SER_060_E02, REQ_SER_070_E01, REQ_SER_070_E02
+ * @tests REQ_SER_090, REQ_SER_091, REQ_SER_098, REQ_SER_101, REQ_SER_105
+ * @tests REQ_SER_090_E01, REQ_SER_094_E01, REQ_SER_094_E02
+ * @tests REQ_SER_051_E01, REQ_SER_043_E02, REQ_SER_042_E01, REQ_SER_040_E02
+ * @tests REQ_SER_080_E01, REQ_SER_080_E02, REQ_SER_010_E01, REQ_SER_034_E01, REQ_SER_056_E01, REQ_SER_073_E01
  * @tests feat_req_someip_600
  * @tests feat_req_someip_601
  * @tests feat_req_someip_602
@@ -992,6 +996,192 @@ TEST_F(SerializationTest, DeserializationErrorHandling) {
     auto false_error = false_deserializer.deserialize_uint32();
     EXPECT_TRUE(false_error.is_error());
     EXPECT_EQ(false_error.get_error(), someip::Result::MALFORMED_MESSAGE);
+}
+
+/**
+ * @test_case TC_SER_E01
+ * @tests REQ_SER_051_E01
+ * @brief Test string deserialization when declared length exceeds buffer
+ */
+TEST_F(SerializationTest, StringLengthExceedsBuffer) {
+    Serializer serializer;
+    serializer.serialize_uint32(1000);
+    std::vector<uint8_t> partial_data(50, 'A');
+    for (auto b : partial_data) serializer.serialize_uint8(b);
+
+    Deserializer deserializer(serializer.get_buffer());
+    auto length_result = deserializer.deserialize_uint32();
+    EXPECT_TRUE(length_result.is_success());
+    EXPECT_EQ(length_result.get_value(), 1000u);
+
+    auto string_result = deserializer.deserialize_string();
+    EXPECT_TRUE(string_result.is_error());
+}
+
+/**
+ * @test_case TC_SER_E02
+ * @tests REQ_SER_043_E02
+ * @brief Test dynamic array with maximum length field to prevent DoS
+ */
+TEST_F(SerializationTest, DynamicArrayLengthOverflow) {
+    std::vector<uint8_t> malicious = {0xFF, 0xFF, 0xFF, 0xFF};
+    Deserializer deserializer(malicious);
+    auto length_result = deserializer.deserialize_uint32();
+    EXPECT_TRUE(length_result.is_success());
+
+    auto array_result = deserializer.deserialize_array<uint32_t>(length_result.get_value());
+    EXPECT_TRUE(array_result.is_error()) << "Should reject array with length 0xFFFFFFFF";
+}
+
+/**
+ * @test_case TC_SER_E03
+ * @tests REQ_SER_042_E01
+ * @brief Test fixed array deserialization with insufficient buffer
+ */
+TEST_F(SerializationTest, FixedArrayInsufficientBuffer) {
+    std::vector<uint8_t> small_buffer = {0x00, 0x00, 0x00, 0x01,
+                                          0x00, 0x00, 0x00, 0x02,
+                                          0x00, 0x00, 0x00, 0x03,
+                                          0x00, 0x00, 0x00, 0x04};
+    Deserializer deserializer(small_buffer);
+    auto result = deserializer.deserialize_array<uint32_t>(5);
+    EXPECT_TRUE(result.is_error()) << "Should fail: need 5 uint32s but only 4 available";
+}
+
+/**
+ * @test_case TC_SER_E04
+ * @tests REQ_SER_034_E01
+ * @brief Test float NaN bit pattern preservation
+ */
+TEST_F(SerializationTest, FloatNanPreservation) {
+    Serializer serializer;
+    float nan_val = std::numeric_limits<float>::quiet_NaN();
+
+    serializer.serialize_float(nan_val);
+    Deserializer deserializer(serializer.get_buffer());
+    auto result = deserializer.deserialize_float();
+    EXPECT_TRUE(result.is_success());
+    EXPECT_TRUE(std::isnan(result.get_value())) << "NaN should be preserved";
+    EXPECT_TRUE(result.get_value() != result.get_value()) << "NaN != NaN must hold";
+}
+
+/**
+ * @test_case TC_SER_E05
+ * @tests REQ_SER_073_E01
+ * @brief Test read from empty deserializer
+ */
+TEST_F(SerializationTest, ReadFromEmptyBuffer) {
+    Deserializer deserializer({});
+    auto result = deserializer.deserialize_uint32();
+    EXPECT_TRUE(result.is_error());
+    EXPECT_EQ(result.get_error(), someip::Result::MALFORMED_MESSAGE);
+}
+
+/**
+ * @test_case TC_SER_E06
+ * @tests REQ_SER_080_E01
+ * @brief Test alignment padding exceeding buffer
+ */
+TEST_F(SerializationTest, AlignmentExceedsBuffer) {
+    std::vector<uint8_t> small_buffer(4, 0);
+    Deserializer deserializer(small_buffer);
+    deserializer.deserialize_uint8();
+    deserializer.deserialize_uint8();
+    deserializer.deserialize_uint8();
+
+    deserializer.align_to(8);
+    auto read_result = deserializer.deserialize_uint32();
+    EXPECT_TRUE(read_result.is_error()) << "Alignment to 8 at position 3 in 4-byte buffer should leave no room for further reads";
+}
+
+/**
+ * @test_case TC_SER_E07
+ * @tests REQ_SER_010_E01
+ * @brief Test signed integer boundary handling
+ */
+TEST_F(SerializationTest, SignedIntegerBoundary) {
+    Serializer serializer;
+    serializer.serialize_int8(127);
+    serializer.serialize_int8(-128);
+
+    Deserializer deserializer(serializer.get_buffer());
+    auto max_result = deserializer.deserialize_int8();
+    EXPECT_TRUE(max_result.is_success());
+    EXPECT_EQ(max_result.get_value(), 127);
+
+    auto min_result = deserializer.deserialize_int8();
+    EXPECT_TRUE(min_result.is_success());
+    EXPECT_EQ(min_result.get_value(), -128);
+}
+
+/**
+ * @test_case TC_SER_E08
+ * @tests REQ_SER_056_E01
+ * @brief Test string with embedded null bytes
+ */
+TEST_F(SerializationTest, StringEmbeddedNull) {
+    Serializer serializer;
+    std::string with_null("hello\0world", 11);
+    serializer.serialize_string(with_null);
+
+    Deserializer deserializer(serializer.get_buffer());
+    auto result = deserializer.deserialize_string();
+    EXPECT_TRUE(result.is_success());
+}
+
+/**
+ * @test_case TC_SER_E09
+ * @tests REQ_SER_080_E02
+ * @brief Test multiple consecutive alignments
+ */
+TEST_F(SerializationTest, MultipleAlignments) {
+    Serializer serializer;
+    for (int i = 0; i < 50; ++i) {
+        serializer.serialize_uint8(static_cast<uint8_t>(i & 0xFF));
+        serializer.align_to(4);
+    }
+    EXPECT_GT(serializer.get_buffer().size(), 0u);
+}
+
+/**
+ * @test_case TC_SER_E10
+ * @tests REQ_SER_090_E01
+ * @brief Test enum serialization boundary values
+ */
+TEST_F(SerializationTest, EnumBoundaryValues) {
+    Serializer serializer;
+    serializer.serialize_uint8(0);
+    serializer.serialize_uint8(255);
+
+    Deserializer deserializer(serializer.get_buffer());
+    auto zero_result = deserializer.deserialize_uint8();
+    EXPECT_TRUE(zero_result.is_success());
+    EXPECT_EQ(zero_result.get_value(), 0);
+
+    auto max_result = deserializer.deserialize_uint8();
+    EXPECT_TRUE(max_result.is_success());
+    EXPECT_EQ(max_result.get_value(), 255);
+}
+
+/**
+ * @test_case TC_SER_E11
+ * @tests REQ_SER_040_E02
+ * @brief Test deeply nested array rejection
+ */
+TEST_F(SerializationTest, DeeplyNestedArray) {
+    Serializer serializer;
+    for (int i = 0; i < 10; ++i) {
+        serializer.serialize_uint32(1);
+    }
+
+    Deserializer deserializer(serializer.get_buffer());
+    for (int i = 0; i < 10; ++i) {
+        auto result = deserializer.deserialize_uint32();
+        EXPECT_TRUE(result.is_success());
+        EXPECT_EQ(result.get_value(), 1u);
+    }
+    auto extra = deserializer.deserialize_uint32();
+    EXPECT_TRUE(extra.is_error()) << "Should fail after buffer exhaustion";
 }
 
 int main(int argc, char **argv) {

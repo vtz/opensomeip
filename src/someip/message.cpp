@@ -526,6 +526,11 @@ bool Message::has_valid_header() const {
         return false;
     }
 
+    // REQ_MSG_053_E01: NOTIFICATION must carry return code E_OK
+    if (message_type_ == MessageType::NOTIFICATION && return_code_ != ReturnCode::E_OK) {
+        return false;
+    }
+
     // Check return code validity
     switch (return_code_) {
         case ReturnCode::E_OK:

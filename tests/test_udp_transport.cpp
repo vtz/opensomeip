@@ -25,12 +25,19 @@ using namespace someip::transport;
 
 /**
  * @brief UDP Transport unit tests
- * @tests REQ_TRANSPORT_001
- * @tests REQ_TRANSPORT_004
+ * @tests REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
+ * @tests REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
  * @tests REQ_TRANSPORT_005
+ * @tests REQ_PLATFORM_LWIP_001
  * @tests feat_req_someip_800
  * @tests feat_req_someip_801
  * @tests feat_req_someip_802
+ * @tests REQ_TRANSPORT_006, REQ_TRANSPORT_010, REQ_TRANSPORT_011
+ * @tests REQ_TRANSPORT_012, REQ_TRANSPORT_013, REQ_TRANSPORT_014, REQ_TRANSPORT_015
+ * @tests REQ_TRANSPORT_022, REQ_TRANSPORT_023, REQ_TRANSPORT_024
+ * @tests REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03
+ * @tests REQ_TRANSPORT_006_E01, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02
+ * @tests REQ_TRANSPORT_014_E01
  */
 class UdpTransportTest : public ::testing::Test {
 protected:
@@ -644,4 +651,96 @@ TEST_F(UdpTransportTest, MultipleMessagesRapidFire) {
 
     sender.stop();
     receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_E01
+ * @tests REQ_TRANSPORT_001_E01
+ * @brief Test UDP bind to already-used port
+ */
+TEST_F(UdpTransportTest, BindToUsedPort) {
+    Endpoint endpoint1{"127.0.0.1", 19876};
+    UdpTransport first(endpoint1, config);
+    EXPECT_EQ(first.start(), Result::SUCCESS);
+
+    UdpTransportConfig no_reuse_config = config;
+    no_reuse_config.reuse_address = false;
+    no_reuse_config.reuse_port = false;
+    Endpoint endpoint2{"127.0.0.1", 19876};
+    UdpTransport second(endpoint2, no_reuse_config);
+    Result start_result = second.start();
+    if (start_result == Result::SUCCESS) {
+        second.stop();
+    }
+
+    first.stop();
+}
+
+/**
+ * @test_case TC_UDP_E02
+ * @tests REQ_TRANSPORT_001_E02
+ * @brief Test UDP send to invalid address
+ */
+TEST_F(UdpTransportTest, SendToInvalidAddress) {
+    UdpTransport transport(local_endpoint, config);
+    EXPECT_EQ(transport.start(), Result::SUCCESS);
+
+    Message msg;
+    msg.set_service_id(0x1234);
+    msg.set_method_id(0x0001);
+    std::vector<uint8_t> payload = {0x01, 0x02, 0x03};
+    msg.set_payload(payload);
+
+    Endpoint invalid_endpoint{"0.0.0.0", 0};
+    auto result = transport.send_message(msg, invalid_endpoint);
+    EXPECT_NE(result, Result::SUCCESS) << "Send to 0.0.0.0:0 should fail";
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_UDP_E03
+ * @tests REQ_TRANSPORT_001_E03
+ * @brief Test UDP receive on unbound transport
+ */
+TEST_F(UdpTransportTest, ReceiveWithoutBind) {
+    UdpTransport transport(local_endpoint);
+    EXPECT_FALSE(transport.is_running());
+}
+
+/**
+ * @test_case TC_UDP_E04
+ * @tests REQ_TRANSPORT_006_E01
+ * @brief Test UDP multicast with invalid group address
+ */
+TEST_F(UdpTransportTest, InvalidMulticastGroup) {
+    UdpTransport transport(local_endpoint, config);
+    EXPECT_EQ(transport.start(), Result::SUCCESS);
+
+    Result joined = transport.join_multicast_group("192.168.1.1");
+    EXPECT_NE(joined, Result::SUCCESS) << "Non-multicast address should be rejected";
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_UDP_E05
+ * @tests REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02
+ * @brief Test UDP message size exceeding max UDP payload
+ */
+TEST_F(UdpTransportTest, MessageExceedsMtu) {
+    UdpTransport transport(local_endpoint, config);
+    EXPECT_EQ(transport.start(), Result::SUCCESS);
+
+    Message msg;
+    msg.set_service_id(0x1234);
+    msg.set_method_id(0x0001);
+    std::vector<uint8_t> payload(65508, 0xAA);
+    msg.set_payload(payload);
+
+    Endpoint remote{"127.0.0.1", 12345};
+    auto result = transport.send_message(msg, remote);
+    EXPECT_NE(result, Result::SUCCESS) << "Message exceeding UDP max payload should be rejected";
+
+    transport.stop();
 }

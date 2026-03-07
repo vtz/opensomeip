@@ -57,11 +57,16 @@ class TestCase:
     description: str = ""
 
 
-# Regex patterns for extracting annotations
-IMPLEMENTS_PATTERN = re.compile(r'@implements\s+(REQ_[A-Za-z0-9_]+)', re.IGNORECASE)
-SATISFIES_PATTERN = re.compile(r'@satisfies\s+(feat_req_[a-z0-9_]+)', re.IGNORECASE)
+# Regex patterns for extracting annotations (captures remainder of line after tag)
+IMPLEMENTS_LINE_PATTERN = re.compile(r'@implements\s+([^\n*]+)', re.IGNORECASE)
+SATISFIES_LINE_PATTERN = re.compile(r'@satisfies\s+([^\n*]+)', re.IGNORECASE)
 TEST_CASE_PATTERN = re.compile(r'@test_case\s+(TC_[A-Za-z0-9_]+)', re.IGNORECASE)
-TESTS_PATTERN = re.compile(r'@tests\s+([A-Za-z0-9_]+)', re.IGNORECASE)
+TESTS_LINE_PATTERN = re.compile(r'@tests\s+([^\n*]+)', re.IGNORECASE)
+
+# Individual ID patterns for splitting comma-separated values
+REQ_ID_PATTERN = re.compile(r'(REQ_[A-Za-z0-9_]+)', re.IGNORECASE)
+FEAT_REQ_PATTERN = re.compile(r'(feat_req_[a-z0-9_]+)', re.IGNORECASE)
+TEST_REF_PATTERN = re.compile(r'((?:REQ_|feat_req_)[A-Za-z0-9_]+)', re.IGNORECASE)
 BRIEF_PATTERN = re.compile(r'@brief\s+(.+?)(?:\n|\*\/|$)', re.IGNORECASE)
 
 # Patterns for function/class detection
@@ -168,10 +173,23 @@ def extract_from_cpp_file(file_path: Path) -> tuple:
     is_test_file = 'test' in file_path.name.lower()
 
     for start, end, comment_text in comment_blocks:
-        implements = IMPLEMENTS_PATTERN.findall(comment_text)
-        satisfies = SATISFIES_PATTERN.findall(comment_text)
+        # Extract comma-separated requirement IDs from @implements lines
+        implements = []
+        for line_match in IMPLEMENTS_LINE_PATTERN.finditer(comment_text):
+            implements.extend(REQ_ID_PATTERN.findall(line_match.group(1)))
+
+        # Extract comma-separated spec IDs from @satisfies lines
+        satisfies = []
+        for line_match in SATISFIES_LINE_PATTERN.finditer(comment_text):
+            satisfies.extend(FEAT_REQ_PATTERN.findall(line_match.group(1)))
+
         test_case_ids = TEST_CASE_PATTERN.findall(comment_text)
-        tests = TESTS_PATTERN.findall(comment_text)
+
+        # Extract comma-separated requirement IDs from @tests lines
+        tests = []
+        for line_match in TESTS_LINE_PATTERN.finditer(comment_text):
+            tests.extend(TEST_REF_PATTERN.findall(line_match.group(1)))
+
         brief_match = BRIEF_PATTERN.search(comment_text)
 
         if not (implements or satisfies or test_case_ids or tests):
@@ -182,10 +200,22 @@ def extract_from_cpp_file(file_path: Path) -> tuple:
         description = brief_match.group(1).strip() if brief_match else ""
 
         if test_case_ids or tests:
-            # This is a test case
-            for tc_id in test_case_ids:
+            if test_case_ids:
+                for tc_id in test_case_ids:
+                    test_case = TestCase(
+                        id=tc_id,
+                        file_path=str(file_path),
+                        line_number=line_number,
+                        test_name=function_name or "unknown",
+                        tests=tests + implements + satisfies,
+                        description=description
+                    )
+                    test_cases.append(test_case)
+            elif tests:
+                # @tests without @test_case: generate an ID from file and line
+                auto_tc_id = f"TC_{file_path.stem}_{line_number}"
                 test_case = TestCase(
-                    id=tc_id,
+                    id=auto_tc_id,
                     file_path=str(file_path),
                     line_number=line_number,
                     test_name=function_name or "unknown",
@@ -195,8 +225,9 @@ def extract_from_cpp_file(file_path: Path) -> tuple:
                 test_cases.append(test_case)
 
         if implements or satisfies:
-            # This is a code reference
-            ref_id = f"CODE_{file_path.stem}_{line_number}"
+            # Use parent directory name to avoid collisions between files with the same stem
+            parent_suffix = f"_{file_path.parent.name}" if file_path.parent.name not in ("src", "include", "tests") else ""
+            ref_id = f"CODE_{file_path.stem}{parent_suffix}_{line_number}"
             code_ref = CodeReference(
                 id=ref_id,
                 file_path=str(file_path),
@@ -221,9 +252,18 @@ def extract_from_python_file(file_path: Path) -> tuple:
 
     for start, end, docstring_text in docstrings:
         test_case_ids = TEST_CASE_PATTERN.findall(docstring_text)
-        tests = TESTS_PATTERN.findall(docstring_text)
-        implements = IMPLEMENTS_PATTERN.findall(docstring_text)
-        satisfies = SATISFIES_PATTERN.findall(docstring_text)
+
+        tests = []
+        for line_match in TESTS_LINE_PATTERN.finditer(docstring_text):
+            tests.extend(TEST_REF_PATTERN.findall(line_match.group(1)))
+
+        implements = []
+        for line_match in IMPLEMENTS_LINE_PATTERN.finditer(docstring_text):
+            implements.extend(REQ_ID_PATTERN.findall(line_match.group(1)))
+
+        satisfies = []
+        for line_match in SATISFIES_LINE_PATTERN.finditer(docstring_text):
+            satisfies.extend(FEAT_REQ_PATTERN.findall(line_match.group(1)))
 
         if not (test_case_ids or tests or implements or satisfies):
             continue

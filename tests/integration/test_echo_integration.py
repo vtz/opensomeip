@@ -4,8 +4,8 @@ Integration Tests for Echo Server/Client
 Tests the complete message flow from client to server and back,
 including serialization, transport, and deserialization.
 
-@tests REQ_TRANSPORT_001
-@tests REQ_TRANSPORT_004
+@tests REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
+@tests REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
 @tests REQ_ARCH_001
 @tests feat_req_someip_538
 @tests feat_req_someip_800

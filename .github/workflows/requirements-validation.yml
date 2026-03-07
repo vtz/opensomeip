@@ -71,7 +71,6 @@ jobs:
             --project-root . \
             --code-refs build/code_references.json \
             2>&1 | tee build/validation_report.txt
-        continue-on-error: true
 
       - name: Validate requirements (strict mode)
         id: validate_strict
@@ -82,7 +81,6 @@ jobs:
             --strict \
             --ci-mode \
             2>&1 | tee build/validation_strict.txt
-        continue-on-error: true
 
       - name: Check spec requirement mappings
         id: check_spec
@@ -254,3 +252,79 @@ jobs:
                 body: body
               });
             }
+<<<<<<< Updated upstream
+=======
+
+      - name: Upload validation artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: requirements-validation
+          path: |
+            build/code_references.json
+            build/validation_report.txt
+            build/validation_strict.txt
+            build/spec_mapping_report.md
+            build/implementation_verification.md
+            build/requirement_diff.md
+            build/docs/traceability/
+            build/docs/implementation_report.md
+          retention-days: 14
+
+      - name: Check traceability threshold
+        run: |
+          # Extract the "Fully traced" percentage from the validation report
+          TRACED_LINE=$(grep "Fully traced" build/validation_report.txt || echo "")
+          if [ -z "$TRACED_LINE" ]; then
+            echo "::warning::Could not extract traceability percentage"
+            exit 0
+          fi
+
+          TRACED_PCT=$(echo "$TRACED_LINE" | grep -oP '\d+\.\d+' | head -1)
+          if [ -z "$TRACED_PCT" ]; then
+            echo "::warning::Could not parse traceability percentage"
+            exit 0
+          fi
+
+          # Minimum traceability threshold (increase this over time)
+          THRESHOLD=15
+
+          echo "Fully traced: ${TRACED_PCT}%"
+          echo "Threshold: ${THRESHOLD}%"
+
+          PASS=$(python3 -c "print(1 if float('${TRACED_PCT}') >= ${THRESHOLD} else 0)")
+          if [ "$PASS" != "1" ]; then
+            echo "::error::Traceability ${TRACED_PCT}% is below threshold ${THRESHOLD}%"
+            exit 1
+          fi
+
+          echo "::notice::Traceability check passed: ${TRACED_PCT}% >= ${THRESHOLD}%"
+
+      - name: Check for traceability gaps
+        run: |
+          if [ -f "build/docs/traceability/gap_analysis.md" ]; then
+            if grep -q "SWE.3.*FAIL" build/docs/traceability/gap_analysis.md; then
+              echo "::error::SWE.3 FAILED - Missing implementation for requirements"
+              echo "See build/docs/traceability/gap_analysis.md for details"
+              exit 1
+            fi
+
+            if grep -q "SWE.6.*FAIL" build/docs/traceability/gap_analysis.md; then
+              echo "::error::SWE.6 FAILED - Missing test coverage for requirements"
+              echo "See build/docs/traceability/gap_analysis.md for details"
+              exit 1
+            fi
+
+            echo "::notice::ASPICE traceability validation passed"
+          else
+            echo "::warning::Gap analysis not generated - skipping traceability check"
+          fi
+
+      - name: Enforce strict validation
+        run: |
+          if [ "${{ steps.validate_strict.outcome }}" == "failure" ]; then
+            echo "::error::Requirements validation failed in strict mode"
+            echo "See validation_strict.txt for details"
+            exit 1
+          fi
+>>>>>>> Stashed changes

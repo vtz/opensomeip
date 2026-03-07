@@ -23,12 +23,16 @@ using namespace someip::transport;
 
 /**
  * @brief TCP Transport unit tests
- * @tests REQ_TRANSPORT_002
- * @tests REQ_TRANSPORT_003
- * @tests REQ_TRANSPORT_004
+ * @tests REQ_TRANSPORT_002a, REQ_TRANSPORT_002b
+ * @tests REQ_TRANSPORT_003a, REQ_TRANSPORT_003b
+ * @tests REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
  * @tests REQ_TRANSPORT_005
  * @tests feat_req_someip_850
  * @tests feat_req_someip_851
+ * @tests REQ_TRANSPORT_016, REQ_TRANSPORT_017, REQ_TRANSPORT_018, REQ_TRANSPORT_019
+ * @tests REQ_TRANSPORT_020, REQ_TRANSPORT_021, REQ_TRANSPORT_025
+ * @tests REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04
+ * @tests REQ_TRANSPORT_003_E01, REQ_TRANSPORT_016_E01
  */
 class TcpTransportTest : public ::testing::Test {
 protected:
@@ -421,4 +425,99 @@ TEST_F(TcpTransportTest, ConfigurationBoundaryValues) {
     TcpTransport transport2(boundary_config);
     // Should handle large values
     ASSERT_TRUE(true);
+}
+
+/**
+ * @test_case TC_TCP_E01
+ * @tests REQ_TRANSPORT_002_E01
+ * @brief Test TCP connect to unreachable host
+ */
+TEST_F(TcpTransportTest, ConnectUnreachable) {
+    TcpTransportConfig short_timeout;
+    short_timeout.connection_timeout = std::chrono::milliseconds(100);
+    short_timeout.receive_timeout = std::chrono::milliseconds(50);
+    short_timeout.send_timeout = std::chrono::milliseconds(50);
+    short_timeout.max_receive_buffer = 4096;
+
+    TcpTransport client(short_timeout);
+    Endpoint local_endpoint("127.0.0.1", 0);
+    Result init_result = client.initialize(local_endpoint);
+    ASSERT_EQ(init_result, Result::SUCCESS);
+    Result start_result = client.start();
+    ASSERT_EQ(start_result, Result::SUCCESS);
+
+    Result connect_result = client.connect(Endpoint("192.0.2.1", 9999));
+    EXPECT_NE(connect_result, Result::SUCCESS) << "Connection to unreachable host should fail";
+
+    client.stop();
+}
+
+/**
+ * @test_case TC_TCP_E02
+ * @tests REQ_TRANSPORT_002_E02
+ * @brief Test TCP send on disconnected transport
+ */
+TEST_F(TcpTransportTest, SendOnDisconnected) {
+    TcpTransport transport(config);
+    EXPECT_FALSE(transport.is_connected());
+
+    Message msg;
+    msg.set_service_id(0x1234);
+    msg.set_method_id(0x0001);
+
+    Endpoint dummy_endpoint("127.0.0.1", 30500);
+    Result result = transport.send_message(msg, dummy_endpoint);
+    EXPECT_NE(result, Result::SUCCESS) << "Send on disconnected should fail";
+}
+
+/**
+ * @test_case TC_TCP_E03
+ * @tests REQ_TRANSPORT_002_E03
+ * @brief Test TCP with zero connection timeout
+ */
+TEST_F(TcpTransportTest, ZeroConnectionTimeout) {
+    TcpTransportConfig zero_timeout;
+    zero_timeout.connection_timeout = std::chrono::milliseconds(0);
+    zero_timeout.receive_timeout = std::chrono::milliseconds(50);
+    zero_timeout.send_timeout = std::chrono::milliseconds(50);
+    zero_timeout.max_receive_buffer = 4096;
+
+    TcpTransport transport(zero_timeout);
+    Endpoint local_endpoint("127.0.0.1", 0);
+    Result init_result = transport.initialize(local_endpoint);
+    ASSERT_EQ(init_result, Result::SUCCESS);
+    Result start_result = transport.start();
+    ASSERT_EQ(start_result, Result::SUCCESS);
+
+    Result connect_result = transport.connect(Endpoint("127.0.0.1", 12345));
+    EXPECT_NE(connect_result, Result::SUCCESS) << "Zero timeout should result in immediate failure";
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_TCP_E04
+ * @tests REQ_TRANSPORT_002_E04, REQ_TRANSPORT_003_E01
+ * @brief Test TCP double disconnect
+ */
+TEST_F(TcpTransportTest, DoubleDisconnect) {
+    TcpTransport transport(config);
+    transport.disconnect();
+    transport.disconnect();
+    EXPECT_FALSE(transport.is_connected());
+}
+
+/**
+ * @test_case TC_TCP_E05
+ * @tests REQ_TRANSPORT_016_E01
+ * @brief Test TCP framing with zero-length message
+ */
+TEST_F(TcpTransportTest, ZeroLengthMessage) {
+    Message msg;
+    msg.set_service_id(0x0000);
+    msg.set_method_id(0x0000);
+
+    std::vector<uint8_t> serialized = msg.serialize();
+    EXPECT_FALSE(serialized.empty()) << "Even empty payload has header";
+    EXPECT_GE(serialized.size(), 16u) << "Minimum SOME/IP header is 16 bytes";
 }

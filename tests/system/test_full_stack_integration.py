@@ -9,8 +9,8 @@ Tests end-to-end functionality across all stack components:
 
 @tests REQ_ARCH_001
 @tests REQ_ARCH_002
-@tests REQ_TRANSPORT_001
-@tests REQ_TRANSPORT_002
+@tests REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
+@tests REQ_TRANSPORT_002a, REQ_TRANSPORT_002b
 @tests feat_req_someip_700
 @tests feat_req_someip_720
 @tests feat_req_someipsd_100

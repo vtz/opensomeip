@@ -278,88 +278,62 @@ This document provides a comprehensive traceability matrix mapping requirements 
 
 ---
 
-## 8. COMPREHENSIVE COVERAGE SUMMARY
+## 8. COMPREHENSIVE COVERAGE SUMMARY (VALIDATED)
 
-### Implementation Status by Category
+> **Note**: These metrics are produced by `scripts/validate_requirements.py`.
+> To regenerate, run: `cmake --build build --target requirements_check`
 
-| Category | Requirements | Implemented | Coverage |
-|----------|-------------|-------------|----------|
-| Message Format | 36 | 36 | ✅ 100% |
-| Serialization | 51 | 51 | ✅ 100% |
-| Service Discovery | 240 | 211 | ✅ 88% |
-| Transport Protocol | 37 | 37 | ✅ 100% |
-| UDP Transport | 15 | 15 | ✅ 100% |
-| TCP Transport | 10 | 10 | ✅ 100% |
-| Error Handling | 4 | 4 | ✅ 100% |
-| Session Management | 10 | 10 | ✅ 100% |
-| **E2E Protection** | **2** | **2** | ✅ **100%** |
+### Validated Traceability Metrics
 
-### Test Coverage Matrix
-
-| Component | Unit Tests | Integration Tests | Coverage |
-|-----------|------------|-------------------|----------|
-| Message Format | ✅ test_message.cpp | ✅ Integration tests | 🧪 95% |
-| Serialization | ✅ test_serialization.cpp | ✅ Integration tests | 🧪 98% |
-| SD Protocol | ✅ test_sd.cpp | ✅ SD integration tests | 🧪 90% |
-| TP Protocol | ✅ test_tp.cpp | ✅ TP example/demo | 🧪 95% |
-| UDP Transport | ✅ test_udp_transport.cpp | ✅ Network tests | 🧪 92% |
-| TCP Transport | ✅ test_tcp_transport.cpp | ✅ TCP examples | 🧪 95% |
-| Session Management | ✅ test_session_manager.cpp | ✅ RPC tests | 🧪 93% |
-| **E2E Protection** | ✅ **test_e2e.cpp** | ✅ **Integration tests** | 🧪 **100%** |
-
-### Current Status
-
-**✅ E2E Protection (Safety-Related)**
-- **Status**: Implementation completed
-- **Coverage**: Basic E2E framework with public standards
-- **Note**: AUTOSAR E2E profiles require external implementation due to licensing
-
----
-
-## 9. IMPLEMENTATION TO TEST TRACEABILITY
+| Metric | Value | Status |
+|--------|-------|--------|
+| Total requirements (RST) | 327 | - |
+| Fully traced (code + tests) | 52 (15.9%) | Needs improvement |
+| Requirements with code refs | 141 (43.1%) | Low |
+| Requirements with test coverage | 58 (17.7%) | Critical |
+| Orphaned (no code annotation) | 186 (56.9%) | Critical |
+| Spec-linked implementation reqs | 322/327 (98.5%) | Good |
 
 ### Test Suite Mapping
 
-| Implementation Component | Primary Tests | Secondary Tests | Coverage |
-|-------------------------|----------------|-----------------|----------|
-| `Message` class | `test_message.cpp` | Integration tests | 🧪 |
-| `Serializer/Deserializer` | `test_serialization.cpp` | All message tests | 🧪 |
-| `SdMessage/SdClient/SdServer` | `test_sd.cpp` | SD integration tests | 🧪 |
-| `TpSegmenter/TpReassembler` | `test_tp.cpp` | TP example | 🧪 |
-| `UdpTransport` | `test_udp_transport.cpp` | Network integration | 🧪 |
-| `TcpTransport` | `test_tcp_transport.cpp` | TCP examples | 🧪 |
-| `SessionManager` | `test_session_manager.cpp` | RPC integration | 🧪 |
-| **E2E Protection** | ✅ **test_e2e.cpp** | ✅ **Integration tests** | 🧪 |
+| Implementation Component | Primary Tests | Secondary Tests |
+|-------------------------|----------------|-----------------|
+| `Message` class | `test_message.cpp` | Integration tests |
+| `Serializer/Deserializer` | `test_serialization.cpp` | All message tests |
+| `SdMessage/SdClient/SdServer` | `test_sd.cpp` | SD integration tests |
+| `TpSegmenter/TpReassembler` | `test_tp.cpp` | TP example |
+| `UdpTransport` | `test_udp_transport.cpp` | Network integration |
+| `TcpTransport` | `test_tcp_transport.cpp` | TCP examples |
+| `SessionManager` | `test_session_manager.cpp` | RPC integration |
+| `E2EProtection` | `test_e2e.cpp` | Integration tests |
 
-### Test Quality Metrics
+### Key Observations
 
-| Metric | Target | Current | Status |
-|--------|--------|---------|--------|
-| Unit Test Coverage | >90% | ~92% | ✅ |
-| Integration Test Coverage | >85% | ~88% | ✅ |
-| Requirements Coverage | >90% | ~85% | 🟡 |
-| **E2E Protection Coverage** | **100%** | **100%** | ✅ |
+- Many requirements are likely implemented in code but lack `@implements` annotations
+- Many existing tests cover requirements but lack `@tests` annotations
+- The gap between "implemented" and "annotated as implemented" is significant
+- 5 platform requirements (REQ_PLATFORM_*) are missing `:satisfies:` fields
 
 ---
 
-## 10. RECOMMENDATIONS
+## 9. RECOMMENDATIONS
 
 ### Immediate Actions
-1. **Expand SD test coverage** - Add advanced SD option tests
-2. **Add configuration management** - Runtime service configuration
+1. Add `@implements` / `@satisfies` annotations to source code for implemented features
+2. Add `@tests` annotations to existing test functions
+3. Fix RPC test compilation issues
+4. Add `:satisfies:` fields to platform requirements
 
-### Long-term Goals
-1. **Achieve 95%+ specification coverage**
-2. **Add advanced SD features** (load balancing, IPv6)
-3. **Implement forward compatibility** features**
-4. **Consider AUTOSAR E2E profile integration** (external plugins)
+### Short-term
+1. Write new tests for genuinely untested requirements
+2. Update RST requirement status (mark unimplemented features as `planned`)
+3. Enable code coverage reporting in CI
 
-### Compliance Assessment
-- **Current**: ~90% core protocol compliant
-- **Target**: 95%+ for production automotive use
-- **Gap**: Advanced SD features and configuration management
-- **Timeline**: 1-2 months for enhanced compliance
+### Long-term
+1. Achieve >85% full traceability
+2. Add advanced SD features (load balancing, IPv6)
+3. Performance, stress, and fault-injection testing
 
 ---
 
-*This traceability matrix demonstrates comprehensive coverage of core SOME/IP protocol requirements including basic E2E protection. AUTOSAR E2E profiles require external implementation due to licensing restrictions.*
+*This traceability matrix is validated against the automated extraction scripts. Run `scripts/validate_requirements.py` for current numbers.*

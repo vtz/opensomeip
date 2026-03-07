@@ -56,6 +56,8 @@ Contents
    implementation/serialization
    implementation/service_discovery
    implementation/transport_protocol
+   implementation/platform
+   implementation/compatibility
 
 Indices and tables
 ==================

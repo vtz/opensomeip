@@ -186,45 +186,37 @@ This matrix maps individual test cases to specific requirements from the Open SO
 
 ---
 
-## 8. TEST COVERAGE METRICS
+## 8. TEST COVERAGE METRICS (VALIDATED)
 
-### Requirements Coverage by Test
+> **Note**: These metrics are produced by `scripts/validate_requirements.py`.
+> To regenerate, run: `cmake --build build --target requirements_check`
 
-| Requirement Category | Total Requirements | Tested Requirements | Coverage |
-|---------------------|-------------------|-------------------|----------|
-| Message Format | 36 | 36 | ✅ 100% |
-| Data Serialization | 51 | 51 | ✅ 100% |
-| Service Discovery | 240 | 211 | ✅ 88% |
-| Transport Protocol | 37 | 37 | ✅ 100% |
-| TCP Transport | 10 | 10 | ✅ 100% |
-| Session Management | 10 | 10 | ✅ 100% |
-| **E2E Protection** | **19** | **0** | ❌ **0%** |
+### Validated Traceability Summary
 
-### Test Quality Metrics
-
-| Metric | Target | Current | Status | Notes |
-|--------|--------|---------|--------|-------|
-| Unit Test Count | 50+ | 65+ | ✅ | Comprehensive test suite |
-| Test Files | 6+ | 6 | ✅ | All major components tested |
-| Requirements/Test Ratio | <5:1 | ~3:1 | ✅ | Good coverage density |
-| Integration Test Coverage | >80% | 85% | ✅ | Working examples validate integration |
-| Network Test Coverage | >70% | 27% | ⚠️ | Limited by sandbox environment |
-| **E2E Test Coverage** | **100%** | **0%** | ❌ | **Critical gap - no implementation** |
+| Metric | Value | Status |
+|--------|-------|--------|
+| Total requirements (RST) | 327 | - |
+| Fully traced (code + tests) | 52 (15.9%) | Needs improvement |
+| Requirements with code refs | 141 (43.1%) | Low |
+| Requirements with test coverage | 58 (17.7%) | Critical |
+| Orphaned (no code annotation) | 186 (56.9%) | Critical |
+| Missing spec links | 5 | Minor |
 
 ### Test Execution Results (Current Environment)
 
-| Test Suite | Tests | Passing | Coverage | Notes |
-|------------|-------|---------|----------|-------|
-| Message Tests | 13 | 13 | ✅ 100% | |
-| Serialization Tests | 7 | 7 | ✅ 100% | |
-| SD Tests | 13 | 13 | ✅ 100% | |
-| TP Tests | 11 | 11 | ✅ 100% | |
-| TCP Transport Tests | 11 | 3 | ⚠️ 27% | Sandbox network restrictions |
-| Session Manager Tests | 7 | 7 | ✅ 100% | |
-| RPC Tests | - | - | ❌ Failed | Compilation issues |
-| **TOTAL** | **65** | **54** | ✅ **83%** | **Network tests limited by sandbox** |
+| Test Suite | Tests | Passing | Notes |
+|------------|-------|---------|-------|
+| Message Tests | 13 | 13 | |
+| Serialization Tests | 16 | 16 | |
+| SD Tests | 13 | 13 | |
+| TP Tests | 11 | 11 | |
+| TCP Transport Tests | 11 | 3 | Sandbox network restrictions |
+| UDP Transport Tests | 5+ | 5+ | |
+| Session Manager Tests | 7 | 7 | |
+| E2E Tests | 10 | 10 | |
+| RPC Tests | - | - | Compilation issues |
 
-**Note**: TCP transport tests fail due to sandbox network restrictions, not code issues. Implementation is complete and functional in real environments.
+**Note**: TCP transport tests fail due to sandbox network restrictions, not code issues.
 
 ---
 
@@ -232,48 +224,33 @@ This matrix maps individual test cases to specific requirements from the Open SO
 
 ### Critical Gaps
 
-**🔴 E2E Protection Tests**
-- **Status**: 0 test cases (0% coverage)
-- **Impact**: Cannot validate safety-related features
-- **Priority**: 🔴 IMMEDIATE
+- **Annotation gap**: 186 requirements have no `@implements` annotation in code.
+  Many are likely implemented but unannotated.
+- **Test annotation gap**: 269 requirements have no `@tests` annotation.
+  Many existing tests cover requirements but lack the tag.
+- **RPC Tests**: Compilation issues prevent test execution.
 
-### Minor Gaps
+### Recommended Improvements
 
-**🟡 Advanced SD Features**
-- **Missing**: Load balancing, IPv6 full support
-- **Impact**: Gateway functionality limitations
-- **Priority**: 🟡 MEDIUM
-
-### Test Quality Improvements
-
-**Recommended Additions:**
-1. **Performance Tests** - Message throughput, latency
-2. **Stress Tests** - Concurrent connections, large payloads
-3. **Fault Injection Tests** - Network failures, corrupted data
-4. **Cross-Platform Tests** - Windows, different architectures
-5. **Fuzzing Tests** - Random input validation
+1. Add `@implements` / `@satisfies` annotations to source files
+2. Add `@tests` annotations to existing test functions
+3. Write new tests for genuinely untested requirements
+4. Performance, stress, and fault-injection testing
+5. Cross-platform and fuzzing tests
 
 ---
 
-## 10. TRACEABILITY VERIFICATION
+## 10. TRACEABILITY VERIFICATION (VALIDATED)
 
-### Requirements ↔ Implementation ↔ Tests
+### Requirements - Implementation - Tests
 
-| Traceability Level | Status | Verification Method |
-|-------------------|--------|-------------------|
-| Requirements → Implementation | ✅ 85% | Code review + documentation |
-| Implementation → Tests | ✅ 92% | Test execution + coverage analysis |
-| Requirements → Tests | ✅ 83% | Matrix mapping + verification |
-| **E2E Protection Traceability** | ❌ **0%** | **No implementation/tests** |
-
-### Compliance Evidence
-
-- **Unit Test Results**: All 71 tests passing ✅
-- **Integration Tests**: Working examples for all protocols ✅
-- **Safety Features**: Comprehensive validation and error handling ✅
-- **Documentation**: Complete traceability matrix ✅
-- **E2E Protection**: ❌ MISSING (critical gap)
+| Traceability Level | Validated | Method |
+|-------------------|-----------|--------|
+| Requirements with code refs | 43.1% | `extract_code_requirements.py` |
+| Requirements with test refs | 17.7% | `extract_code_requirements.py` |
+| Fully traced (code + tests) | 15.9% | `validate_requirements.py` |
+| Spec-linked implementation reqs | 98.5% (322/327) | `validate_requirements.py` |
 
 ---
 
-*This test traceability matrix demonstrates robust test coverage across all implemented SOME/IP features, with E2E protection identified as the critical testing gap for complete safety compliance.*
+*This test traceability matrix is validated against the automated extraction scripts. Numbers reflect `@tests` and `@test_case` annotations found in test source files.*

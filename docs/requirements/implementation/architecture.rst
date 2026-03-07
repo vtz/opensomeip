@@ -35,6 +35,7 @@ Modularity
 
 .. requirement:: Modular Architecture
    :id: REQ_ARCH_001
+   :satisfies: feat_req_someip_2, feat_req_someip_3, feat_req_someip_4, feat_req_someip_14, feat_req_someip_15, feat_req_someip_697
    :status: implemented
    :priority: high
    :verification: Inspection of CMakeLists.txt, src/CMakeLists.txt, and component dependency graph. Each layer must be independently testable and replaceable.
@@ -129,6 +130,7 @@ Coding Standards
 
 .. requirement:: Coding Standards Compliance
    :id: REQ_ARCH_005
+   :satisfies: feat_req_someip_105, feat_req_someip_109, feat_req_someip_449, feat_req_someip_472
    :status: implemented
    :priority: medium
    :verification: Execution of clang-format check, clang-tidy analysis, and code review against CODING_GUIDELINES.md.

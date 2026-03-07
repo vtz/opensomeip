@@ -21,6 +21,7 @@ namespace someip {
 
 /**
  * @brief Result codes for SOME/IP operations
+ * @implements REQ_ARCH_004, REQ_ARCH_005, REQ_ARCH_006, REQ_ARCH_007
  *
  * This enum defines all possible result codes that can be returned
  * by SOME/IP stack operations. Designed for safety-critical use.

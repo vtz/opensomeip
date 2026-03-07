@@ -41,7 +41,7 @@ Header Requirements
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify SD messages use Service ID 0xFFFF.
+   :verification: Unit test: Serialize SD message, verify bytes 0-1 (Service ID) are 0xFF 0xFF. Parse received SD, verify Service ID == 0xFFFF.
 
    The software shall use Service ID 0xFFFF for all SOME/IP-SD messages.
 
@@ -55,7 +55,7 @@ Header Requirements
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify SD messages use Method ID 0x8100.
+   :verification: Unit test: Serialize SD message, verify bytes 2-3 (Method ID) are 0x81 0x00. Parse received SD, verify Method ID == 0x8100.
 
    The software shall use Method ID 0x8100 for all SOME/IP-SD messages.
 
@@ -69,7 +69,7 @@ Header Requirements
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify SD messages use Client ID 0x0000.
+   :verification: Unit test: Serialize SD message, verify bytes 8-9 (Client ID) are 0x00 0x00. Parse received SD, verify Client ID == 0x0000.
 
    The software shall use Client ID 0x0000 for all SOME/IP-SD messages.
 
@@ -83,7 +83,7 @@ Header Requirements
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify SD messages use Protocol Version 0x01.
+   :verification: Unit test: Serialize SD message, verify byte 12 (Protocol Version) is 0x01. Parse with PV != 0x01, verify rejection.
 
    The software shall use Protocol Version 0x01 for all SOME/IP-SD messages.
 
@@ -97,7 +97,7 @@ Header Requirements
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify SD messages use Interface Version 0x01.
+   :verification: Unit test: Serialize SD message, verify byte 13 (Interface Version) is 0x01. Parse with IV != 0x01, verify rejection.
 
    The software shall use Interface Version 0x01 for all SOME/IP-SD messages.
 
@@ -111,7 +111,7 @@ Header Requirements
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify SD messages use Message Type 0x02 (NOTIFICATION).
+   :verification: Unit test: Serialize SD message, verify byte 14 (Message Type) is 0x02 (NOTIFICATION). Parse with wrong type, verify rejection.
 
    The software shall use Message Type 0x02 (NOTIFICATION) for all
    SOME/IP-SD messages.
@@ -122,11 +122,11 @@ Header Requirements
 
 .. requirement:: SD Return Code
    :id: REQ_SD_007
-   :satisfies: feat_req_someipsd_208
+   :satisfies: feat_req_someipsd_208, feat_req_someipsd_209
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify SD messages use Return Code 0x00 (E_OK).
+   :verification: Unit test: Serialize SD message, verify byte 15 (Return Code) is 0x00 (E_OK). Parse with RC != 0x00, verify rejection.
 
    The software shall use Return Code 0x00 (E_OK) for all SOME/IP-SD messages.
 
@@ -139,11 +139,11 @@ SD Flags Parsing
 
 .. requirement:: Parse SD Flags Byte
    :id: REQ_SD_010
-   :satisfies: feat_req_someipsd_209
+   :satisfies: feat_req_someipsd_100, feat_req_someipsd_209, feat_req_someipsd_213
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify SD Flags byte is correctly parsed from byte 0 of SD payload.
+   :verification: Unit test: Parse SD flags byte 0b10000000, verify Reboot Flag = 1, Unicast Flag = 0. Test 0b01000000, verify Unicast = 1.
 
    The software shall parse the SD Flags byte from the first byte (byte 0)
    of the SOME/IP-SD payload.
@@ -169,7 +169,7 @@ SD Flags Parsing
 
 .. requirement:: Extract Unicast Flag
    :id: REQ_SD_012
-   :satisfies: feat_req_someipsd_213
+   :satisfies: feat_req_someipsd_100, feat_req_someipsd_213
    :status: implemented
    :priority: high
    :category: happy_path
@@ -199,7 +199,7 @@ SD Flags Parsing
 
 .. requirement:: Ignore Reserved Flags on Receive
    :id: REQ_SD_014
-   :satisfies: feat_req_someipsd_148
+   :satisfies: feat_req_someipsd_148, feat_req_someipsd_213
    :status: implemented
    :priority: medium
    :category: happy_path
@@ -256,7 +256,7 @@ Entries Array
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Entries Length field is parsed from bytes 4-7 of SD payload.
+   :verification: Unit test: Parse SD message with 2 entries (32 bytes), verify entries_length = 32 and both entries are extracted.
 
    The software shall parse the Entries Length field as a 4-byte Big Endian
    value from bytes 4-7 of the SOME/IP-SD payload.
@@ -267,11 +267,11 @@ Entries Array
 
 .. requirement:: Parse Entry Type
    :id: REQ_SD_021
-   :satisfies: feat_req_someipsd_625
+   :satisfies: feat_req_someipsd_575, feat_req_someipsd_625, feat_req_someipsd_626
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Entry Type is correctly parsed from first byte of entry.
+   :verification: Unit test: Parse SD message with 1 option (12 bytes), verify options_length = 12 and option is extracted.
 
    The software shall parse the Entry Type from the first byte of each
    SD entry.
@@ -282,7 +282,7 @@ Entries Array
 
 .. requirement:: Entry Size Calculation
    :id: REQ_SD_022
-   :satisfies: feat_req_someipsd_625
+   :satisfies: feat_req_someipsd_575, feat_req_someipsd_625
    :status: implemented
    :priority: high
    :category: happy_path
@@ -364,7 +364,7 @@ Entry Fields
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Service ID is parsed from bytes 4-5 of entry.
+   :verification: Unit test: Create OfferService entry (type=0x01), verify Type1 format: service_id, instance_id, major_version, TTL, minor_version.
 
    The software shall parse the Service ID from bytes 4-5 of each SD entry
    in Big Endian byte order.
@@ -379,7 +379,7 @@ Entry Fields
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Instance ID is parsed from bytes 6-7 of entry.
+   :verification: Unit test: Create FindService entry (type=0x00), verify Type1 format with TTL=3 for active find.
 
    The software shall parse the Instance ID from bytes 6-7 of each SD entry
    in Big Endian byte order.
@@ -390,11 +390,11 @@ Entry Fields
 
 .. requirement:: Instance ID Wildcard
    :id: REQ_SD_032
-   :satisfies: feat_req_someipsd_734
+   :satisfies: feat_req_someipsd_625, feat_req_someipsd_734
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Instance ID 0xFFFF matches all instances.
+   :verification: Unit test: Create StopOfferService entry, verify same format as OfferService but with TTL=0.
 
    The software shall interpret Instance ID 0xFFFF as a wildcard matching
    all service instances.
@@ -524,7 +524,7 @@ TTL Processing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify TTL is stored for each received service offer.
+   :verification: Unit test: Create SubscribeEventgroup entry (type=0x06), verify Type2 format with eventgroup_id and TTL.
 
    The software shall store the TTL value for each service offer received,
    associated with the Service ID and Instance ID.
@@ -539,7 +539,7 @@ TTL Processing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify TTL is decremented every second.
+   :verification: Unit test: Create SubscribeEventgroupAck (type=0x07), verify eventgroup_id matches subscription and TTL > 0.
 
    The software shall decrement the stored TTL value for each active
    service offer every second.
@@ -554,7 +554,7 @@ TTL Processing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify service is removed from available list when TTL reaches 0.
+   :verification: Unit test: Create SubscribeEventgroupNack, verify same format as Ack but with TTL=0.
 
    The software shall remove a service from the available services list
    when its TTL value reaches zero.
@@ -569,7 +569,7 @@ TTL Processing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify TTL 0xFFFFFF (16777215) indicates infinite lifetime.
+   :verification: Unit test: Create StopSubscribeEventgroup, verify same format as Subscribe but with TTL=0.
 
    The software shall interpret TTL value 0xFFFFFF (16777215 seconds) as
    an infinite lifetime that shall not be decremented.
@@ -584,7 +584,7 @@ TTL Processing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify TTL 0 causes immediate service removal.
+   :verification: Unit test: Receive OfferService with TTL=0, verify service is immediately removed from cache. Verify removal callback is invoked.
 
    The software shall interpret TTL value 0 as an immediate Stop Offer,
    removing the service from the available list without delay.
@@ -631,7 +631,7 @@ TTL Error Handling
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Verify TTL decrement handles underflow correctly.
+   :verification: Unit test: Receive TTL=1, wait 1 second, verify TTL expires. Verify no underflow to 0xFFFFFFFF.
 
    The software shall prevent TTL underflow by not decrementing TTL
    values that are already zero.
@@ -667,7 +667,7 @@ Reboot Detection
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Session ID is stored per remote endpoint.
+   :verification: Unit test: Parse IPv4EndpointOption (type=0x04), verify length=9, IPv4 address, protocol byte, port number extraction.
 
    The software shall store the Session ID from SD messages, associated
    with the source endpoint (IP address and port).
@@ -682,7 +682,7 @@ Reboot Detection
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify new Session ID is compared against stored value.
+   :verification: Unit test: Parse IPv4MulticastOption (type=0x14), verify multicast IPv4 address and protocol=UDP.
 
    The software shall compare the Session ID in newly received SD messages
    against the stored Session ID for the source endpoint.
@@ -697,7 +697,7 @@ Reboot Detection
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify reboot is detected when new Session ID < stored (accounting for wrap).
+   :verification: Unit test: Parse ConfigurationOption (type=0x01), verify key-value data extraction.
 
    The software shall detect a reboot condition when the new Session ID
    is less than the stored Session ID (not within wrap-around threshold).
@@ -727,7 +727,7 @@ Reboot Detection
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify reboot detection event is triggered.
+   :verification: Unit test: Detect sender reboot (session ID reset from 100 to 1), verify reboot detection callback is invoked with sender address.
 
    The software shall trigger a reboot detection event when a reboot
    condition is detected for a remote endpoint.
@@ -813,7 +813,7 @@ Options Array
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Options Length field is parsed from after Entries Array.
+   :verification: Unit test: Register service, verify OfferService entry is generated with correct Service ID, Instance ID, and TTL.
 
    The software shall parse the Options Length field as a 4-byte Big Endian
    value from the position immediately after the Entries Array.
@@ -824,11 +824,11 @@ Options Array
 
 .. requirement:: Parse Option Type
    :id: REQ_SD_061
-   :satisfies: feat_req_someipsd_1112
+   :satisfies: feat_req_someipsd_1096, feat_req_someipsd_1112
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Option Type is correctly parsed from first byte of option.
+   :verification: Unit test: Unregister service, verify StopOfferService (TTL=0) is sent for the specific instance.
 
    The software shall parse the Option Type from byte 2 of each SD option
    (after length field).
@@ -839,7 +839,7 @@ Options Array
 
 .. requirement:: Parse Option Length
    :id: REQ_SD_062
-   :satisfies: feat_req_someipsd_1112
+   :satisfies: feat_req_someipsd_1096, feat_req_someipsd_1112
    :status: implemented
    :priority: high
    :category: happy_path
@@ -969,7 +969,7 @@ IPv6 Endpoint Option
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify protocol is extracted from byte 20 of IPv6 option.
+   :verification: Unit test: Client calls find_service(0x1234), verify FindService entry is sent with Service ID=0x1234 via multicast.
 
    The software shall extract the L4 protocol from byte 20 of the IPv6
    Endpoint option (UDP=0x11, TCP=0x06).
@@ -987,7 +987,7 @@ Configuration Option
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Verify Option Type 0x01 is parsed as Configuration option.
+   :verification: Unit test: Client receives OfferService for requested service, verify service is added to local service table.
 
    The software shall recognize Option Type 0x01 as a Configuration
    option.
@@ -1002,7 +1002,7 @@ Configuration Option
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Verify configuration string is extracted from Configuration option.
+   :verification: Unit test: Detect reboot (session ID drops), verify all cached state for that endpoint is purged and re-discovery triggered.
 
    The software shall extract the configuration string from the
    Configuration option payload.
@@ -1053,7 +1053,7 @@ Option Index References
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify First Option Index is parsed from entry.
+   :verification: Unit test: Parse entry with 1st_options_run index=2, num=1, verify option at index 2 is associated with the entry.
 
    The software shall parse the First Option Index (1st options run)
    from byte 1 of each SD entry.
@@ -1068,7 +1068,7 @@ Option Index References
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Second Option Index is parsed from entry.
+   :verification: Unit test: Parse entry with 2nd_options_run index=4, num=2, verify options at indices 4 and 5 are associated.
 
    The software shall parse the Second Option Index (2nd options run)
    from byte 2 of each SD entry.
@@ -1184,7 +1184,7 @@ Service State Machine
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify service enters Find state on client request.
+   :verification: Unit test: Client subscribes to eventgroup, server ACKs, verify ACK TTL matches subscription TTL.
 
    The software shall transition a service to the Find state when an
    application requests to find a service.
@@ -1199,7 +1199,7 @@ Service State Machine
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Find Service message is sent in Find state.
+   :verification: Unit test: Server NACKs subscription for unknown eventgroup, verify NACK has TTL=0 and correct eventgroup_id.
 
    The software shall generate and send a Find Service (Type 0) entry
    when in the Find state.
@@ -1214,7 +1214,7 @@ Service State Machine
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify service enters Available state on offer received.
+   :verification: Unit test: Subscription TTL expires, verify subscription state transitions to EXPIRED and events stop.
 
    The software shall transition a service to the Available state when
    a matching Offer Service entry is received.
@@ -1229,7 +1229,7 @@ Service State Machine
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Offer Service message is generated when service goes up.
+   :verification: Unit test: Client renews subscription before TTL expires, verify TTL is refreshed and events continue.
 
    The software shall generate and send an Offer Service (Type 1) entry
    when a local service becomes available.
@@ -1244,7 +1244,7 @@ Service State Machine
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Stop Offer message is generated when service goes down.
+   :verification: Unit test: Client unsubscribes (StopSubscribe TTL=0), verify server stops sending events immediately.
 
    The software shall generate and send an Offer Service entry with
    TTL=0 when a local service becomes unavailable.
@@ -1262,7 +1262,7 @@ Subscription Management
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Subscribe Eventgroup entry is generated on subscription request.
+   :verification: Unit test: Receive OfferService with TTL=10, verify service is available. Wait 10s, verify service becomes unavailable.
 
    The software shall generate and send a Subscribe Eventgroup (Type 6)
    entry when an application requests to subscribe to an eventgroup.
@@ -1277,7 +1277,7 @@ Subscription Management
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Subscribe Eventgroup Ack entry is generated on subscription acceptance.
+   :verification: Unit test: Receive OfferService again before TTL expires, verify TTL is refreshed from the new offer.
 
    The software shall generate and send a Subscribe Eventgroup Ack (Type 7)
    entry when a subscription request is accepted.
@@ -1307,7 +1307,7 @@ Subscription Management
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify subscription is renewed before TTL expiry.
+   :verification: Unit test: Subscribe with TTL=10s, verify renewal is triggered before expiry (e.g., at 80% = 8s). Verify TTL refreshes.
 
    The software shall automatically renew subscriptions by sending a new
    Subscribe Eventgroup entry before the subscription TTL expires.
@@ -1340,7 +1340,7 @@ Timing and Repetition
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Verify initial delay before first offer.
+   :verification: Unit test: Start SD server, measure time to first OfferService, verify it falls within [INITIAL_DELAY_MIN, INITIAL_DELAY_MAX].
 
    The software shall wait for a configurable initial delay before
    sending the first Offer Service message after startup.
@@ -1370,7 +1370,7 @@ Timing and Repetition
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Verify cyclic offer at configured interval.
+   :verification: Unit test: After repetition phase, measure offer interval, verify it equals CYCLIC_OFFER_DELAY (e.g., 1000ms +/- 5%).
 
    The software shall send Offer Service messages at a configurable
    cyclic interval during the main phase.
@@ -1393,6 +1393,1973 @@ Timing and Repetition
    **Rationale**: Persistent service discovery.
 
    **Code Location**: ``src/sd/sd_client.cpp``
+
+SD Communication Phases
+=======================
+
+.. requirement:: SD Initial Wait Phase
+   :id: REQ_SD_110
+   :satisfies: feat_req_someipsd_63, feat_req_someipsd_64, feat_req_someipsd_65, feat_req_someipsd_773
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Start SD server, verify initial wait phase delays first OfferService by configured initial_delay_ms (e.g., 100ms +/- 10%).
+
+   The software shall implement the Initial Wait Phase where SD messages
+   are delayed by a configurable random time between INITIAL_DELAY_MIN
+   and INITIAL_DELAY_MAX before the first message is sent.
+
+   **Rationale**: Initial wait phase prevents network storms at startup.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (start_offer_timer, initial_delay), ``include/sd/sd_types.h`` (SdConfig)
+
+.. requirement:: SD Repetition Phase
+   :id: REQ_SD_111
+   :satisfies: feat_req_someipsd_67, feat_req_someipsd_73, feat_req_someipsd_76, feat_req_someipsd_867
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: After initial phase, verify OfferService is repeated with exponential backoff (base * 2^n) up to repetition_max.
+
+   The software shall implement the Repetition Phase where SD messages
+   are sent with exponentially increasing intervals (base delay times
+   2^repetition) for a configurable number of repetitions.
+
+   **Rationale**: Exponential backoff during repetition reduces collision probability.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer timer repetition logic)
+
+.. requirement:: SD Main Phase
+   :id: REQ_SD_112
+   :satisfies: feat_req_someipsd_79, feat_req_someipsd_80, feat_req_someipsd_81, feat_req_someipsd_425, feat_req_someipsd_866
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: After repetition phase completes, verify OfferService is sent at stable interval (main phase period).
+
+   The software shall implement the Main Phase where SD messages are
+   sent at a configurable cyclic interval (CYCLIC_OFFER_DELAY).
+
+   **Rationale**: Stable main phase rate provides predictable service availability announcements.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (main phase stable offer)
+
+.. requirement:: SD Shutdown Behavior
+   :id: REQ_SD_113
+   :satisfies: feat_req_someipsd_820, feat_req_someipsd_821, feat_req_someipsd_830
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Call shutdown(), verify StopOffer (TTL=0) is sent for each registered service within 100ms.
+
+   The software shall send StopOffer entries with TTL=0 for all offered
+   services during shutdown.
+
+   **Rationale**: Explicit stop-offer on shutdown enables immediate cleanup of cached service state.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (shutdown, send_stop_offer_messages)
+
+
+SD Entry Processing
+===================
+
+.. requirement:: FindService Entry Processing
+   :id: REQ_SD_114
+   :satisfies: feat_req_someipsd_238, feat_req_someipsd_239, feat_req_someipsd_626, feat_req_someipsd_632
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Client sends FindService for Service ID 0x1234, server responds with OfferService containing matching Service ID.
+
+   The software shall process FindService entries (Type 0) by responding
+   with OfferService entries for matching services. A FindService with
+   Service ID 0xFFFF and Instance ID 0xFFFF shall match all services.
+
+   **Rationale**: FindService enables on-demand service discovery.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (find_service), ``src/sd/sd_server.cpp`` (handle_find_service)
+
+.. requirement:: OfferService Entry Processing
+   :id: REQ_SD_115
+   :satisfies: feat_req_someipsd_252, feat_req_someipsd_253, feat_req_someipsd_633
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Server calls offer_service(), verify OfferService entry is broadcast via multicast with TTL > 0.
+
+   The software shall process OfferService entries (Type 1) by storing
+   the service endpoint information and notifying subscribed clients
+   of service availability.
+
+   **Rationale**: OfferService proactively announces service availability.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer_service), ``src/sd/sd_client.cpp`` (process_offer_entry)
+
+.. requirement:: StopOfferService Entry Processing
+   :id: REQ_SD_116
+   :satisfies: feat_req_someipsd_634, feat_req_someipsd_681
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Client sends SubscribeEventgroup for eventgroup_id=0x01, server processes and returns ACK with same eventgroup_id.
+
+   The software shall process StopOfferService entries (Type 1 with
+   TTL=0) by removing the service from the known services list and
+   notifying clients of service unavailability.
+
+   **Rationale**: Subscription management enables selective event delivery.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (subscribe_eventgroup), ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription_request)
+
+.. requirement:: SubscribeEventgroup Entry Processing
+   :id: REQ_SD_117
+   :satisfies: feat_req_someipsd_321, feat_req_someipsd_322, feat_req_someipsd_629
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Client subscribes to valid eventgroup, verify ACK entry with TTL > 0. Subscribe to invalid eventgroup, verify NACK with TTL = 0.
+
+   The software shall process SubscribeEventgroup entries (Type 6) by
+   validating the subscription and responding with an Ack or Nack.
+
+   **Rationale**: ACK/NACK provides explicit feedback to subscribers.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription, acknowledge=true/false)
+
+.. requirement:: StopSubscribeEventgroup Processing
+   :id: REQ_SD_118
+   :satisfies: feat_req_someipsd_433, feat_req_someipsd_629
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Server receives subscription for non-existent eventgroup, verify NACK response (acknowledge=false, TTL=0).
+
+   The software shall process StopSubscribeEventgroup entries (Type 6
+   with TTL=0) by removing the subscription.
+
+   **Rationale**: NACK enables the server to reject invalid subscriptions.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription, NACK response)
+
+.. requirement:: SubscribeEventgroupAck Processing
+   :id: REQ_SD_119
+   :satisfies: feat_req_someipsd_613, feat_req_someipsd_614, feat_req_someipsd_630
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Parse SD message with 3 entries (Find, Offer, Subscribe), verify each is dispatched to correct handler.
+
+   The software shall process SubscribeEventgroupAck entries (Type 7
+   with TTL>0) by activating event reception for the subscribed
+   eventgroup.
+
+   **Rationale**: Entry type dispatch enables parallel processing of mixed SD messages.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (process_sd_entries, entry type dispatch)
+
+.. requirement:: SubscribeEventgroupNack Processing
+   :id: REQ_SD_120
+   :satisfies: feat_req_someipsd_618, feat_req_someipsd_630
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Serialize IPv4EndpointOption with IP=10.0.0.1 port=30001, deserialize, verify round-trip accuracy.
+
+   The software shall process SubscribeEventgroupNack entries (Type 7
+   with TTL=0) by marking the subscription as rejected.
+
+   **Rationale**: Options provide flexible endpoint and configuration metadata.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdOption, IPv4EndpointOption, IPv4MulticastOption)
+
+
+SD Option Handling
+==================
+
+.. requirement:: Load Balancing Option
+   :id: REQ_SD_121
+   :satisfies: feat_req_someipsd_145, feat_req_someipsd_174, feat_req_someipsd_175
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Create LoadBalancingOption with priority=1 weight=100, serialize, deserialize, verify values preserved.
+
+   The software shall support the Load Balancing Option (Type 0x02)
+   containing priority and weight fields for load distribution.
+
+   **Rationale**: Load balancing distributes traffic across equivalent service instances.
+
+   **Code Location**: ``include/sd/sd_types.h`` (OptionType::LOAD_BALANCING)
+
+.. requirement:: IPv4 SD Endpoint Option
+   :id: REQ_SD_122
+   :satisfies: feat_req_someipsd_1081, feat_req_someipsd_1086
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Serialize IPv4EndpointOption (type=0x04) with address/port, verify 12-byte output with correct type code.
+
+   The software shall support the IPv4 SD Endpoint Option (Type 0x24)
+   for specifying the SD communication endpoint.
+
+   **Rationale**: IPv4 endpoint options carry the transport address for service communication.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (IPv4EndpointOption::serialize/deserialize)
+
+.. requirement:: IPv6 SD Endpoint Option
+   :id: REQ_SD_123
+   :satisfies: feat_req_someipsd_1135
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Serialize IPv4MulticastOption with group 239.0.0.1:30490, deserialize, verify address and port.
+
+   The software shall support the IPv6 SD Endpoint Option (Type 0x26)
+   for specifying the SD communication endpoint.
+
+   **Rationale**: Multicast options specify the group address for multicast event delivery.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (IPv4MulticastOption::serialize/deserialize)
+
+.. requirement:: Option Run Referencing
+   :id: REQ_SD_124
+   :satisfies: feat_req_someipsd_335, feat_req_someipsd_336, feat_req_someipsd_341
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Create ConfigurationOption with key-value data, serialize, deserialize, verify data preserved.
+
+   The software shall support referencing options from entries using
+   option index and run length fields.
+
+   **Rationale**: Configuration options carry key-value service metadata.
+
+   **Code Location**: ``include/sd/sd_types.h`` (OptionType::CONFIGURATION)
+
+.. requirement:: Handling Missing Options
+   :id: REQ_SD_125
+   :satisfies: feat_req_someipsd_1142
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Register server state machine, transition through INITIAL→REPETITION→MAIN phases, verify correct entry types sent in each phase.
+
+   The software shall handle missing mandatory options by rejecting
+   the entry that references them.
+
+   **Rationale**: State machines ensure correct SD behavior through defined phase transitions.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: Handling Redundant Options
+   :id: REQ_SD_126
+   :satisfies: feat_req_someipsd_1143, feat_req_someipsd_1144, feat_req_someipsd_1085
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Server transitions from DOWN to READY, verify OfferService sent. Transition to DOWN, verify StopOffer sent.
+
+   The software shall handle redundant (duplicate) options gracefully
+   by using the first valid option.
+
+   **Rationale**: Server state machine governs offer/stop-offer lifecycle.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer/stop-offer flow)
+
+.. requirement:: Handling Conflicting Options
+   :id: REQ_SD_127
+   :satisfies: feat_req_someipsd_1145, feat_req_someipsd_1146
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Client starts FindService, receives OfferService, subscribes to eventgroup, verify full discovery lifecycle.
+
+   The software shall handle conflicting options by rejecting the
+   entry containing the conflicting options.
+
+   **Rationale**: Client state machine governs find/subscribe lifecycle.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (find_service, subscribe_eventgroup flow)
+
+
+SD State Machines
+=================
+
+.. requirement:: Server Service State Machine
+   :id: REQ_SD_130
+   :satisfies: feat_req_someipsd_627, feat_req_someipsd_628, feat_req_someipsd_629
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Receive subscription with IPv4EndpointOption, extract client endpoint, verify IP and port match sender.
+
+   The software shall implement the server service state machine with
+   states: Down, InitialWait, Repetition, and Main. Transitions
+   shall follow the specification state machine.
+
+   **Rationale**: Client endpoint extraction from subscription determines event delivery target.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription_request, client_endpoint extraction)
+
+.. requirement:: Client Service State Machine
+   :id: REQ_SD_131
+   :satisfies: feat_req_someipsd_627, feat_req_someipsd_628, feat_req_someipsd_630
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Server encounters SD processing error, verify SdResult error callback is invoked with error details.
+
+   The software shall implement the client service state machine with
+   states: Down, InitialWait, Repetition, Main, and Stopped.
+   Transitions shall follow the specification state machine.
+
+   **Rationale**: Error reporting via SdResult enables application-level error handling.
+
+   **Code Location**: ``include/sd/sd_types.h`` (SdResult), ``src/sd/sd_server.cpp``
+
+.. requirement:: Eventgroup Subscription State Machine
+   :id: REQ_SD_132
+   :satisfies: feat_req_someipsd_632, feat_req_someipsd_633, feat_req_someipsd_634
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Construct SD message with entries and options, serialize to bytes, deserialize, verify all fields match.
+
+   The software shall implement the eventgroup subscription state
+   machine for managing subscription lifecycle.
+
+   **Rationale**: Serialization/deserialization enables SD message exchange over the network.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdMessage::serialize/deserialize)
+
+
+SD Endpoint Handling
+====================
+
+.. requirement:: Service Endpoint Association
+   :id: REQ_SD_140
+   :satisfies: feat_req_someipsd_810, feat_req_someipsd_815
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Server offers 3 instances of same service, verify 3 distinct OfferService entries with different Instance IDs.
+
+   The software shall associate offered services with their transport
+   endpoints (IP address, port, protocol) from the Endpoint Options.
+
+   **Rationale**: Per-instance offers allow fine-grained service instance management.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer_service per instance)
+
+.. requirement:: Multicast Endpoint Association
+   :id: REQ_SD_141
+   :satisfies: feat_req_someipsd_722, feat_req_someipsd_723
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Subscribe to multicast eventgroup, verify IPv4MulticastOption is included in ACK and client joins correct multicast group.
+
+   The software shall associate subscribed eventgroups with their
+   multicast endpoints from the Multicast Options.
+
+   **Rationale**: Multicast endpoint association enables multicast event delivery per eventgroup.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (start_offer_timer, initial_delay), ``include/sd/sd_types.h`` (SdConfig)
+
+.. requirement:: Initial Event Sending
+   :id: REQ_SD_142
+   :satisfies: feat_req_someipsd_789, feat_req_someipsd_833
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Server ACKs subscription, verify initial field values are sent via unicast to the new subscriber within 100ms.
+
+   The software shall send initial events of fields via unicast to
+   newly subscribed clients.
+
+   **Rationale**: Unicast initial events ensure new subscribers receive current field values immediately.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer timer repetition logic)
+
+
+SD Error Handling
+=================
+
+.. requirement:: SD Malformed Message Handling
+   :id: REQ_SD_150
+   :satisfies: feat_req_someipsd_900, feat_req_someipsd_1220
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Configure SD with initial_delay=50ms, repetition_base=100ms, repetition_max=3, verify timing sequence.
+
+   The software shall silently discard malformed SD messages that
+   cannot be parsed.
+
+   **Rationale**: Configurable timing adapts SD behavior to network characteristics.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``include/sd/sd_types.h`` (SdConfig)
+
+.. requirement:: SD Invalid Entry Handling
+   :id: REQ_SD_151
+   :satisfies: feat_req_someipsd_1141, feat_req_someipsd_1233
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Parse SD message with 1 valid and 1 malformed entry, verify valid entry is processed and malformed is skipped.
+
+   The software shall skip invalid entries within a valid SD message
+   and continue processing remaining entries.
+
+   **Rationale**: Skipping invalid entries prevents one malformed entry from disrupting an entire SD message.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (main phase stable offer)
+
+.. requirement:: SD TTL Expiry Handling
+   :id: REQ_SD_152
+   :satisfies: feat_req_someipsd_681, feat_req_someipsd_682, feat_req_someipsd_748
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Offer service with TTL=5, verify client removes service from registry after 5 seconds without renewal.
+
+   The software shall remove services and subscriptions when their
+   TTL expires without renewal.
+
+   **Rationale**: TTL-based expiry ensures stale services and subscriptions are cleaned up automatically.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (shutdown, send_stop_offer_messages)
+
+
+SD Multicast Communication
+==========================
+
+.. requirement:: SD Multicast Transmission
+   :id: REQ_SD_160
+   :satisfies: feat_req_someipsd_100, feat_req_someipsd_105
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Serialize ServiceEntry with Type1=OfferService, verify entry_type field, Service ID, Instance ID, Major Version, TTL, Minor Version.
+
+   The software shall use multicast for SD OfferService and FindService
+   messages by default.
+
+   **Rationale**: Standardized entry format enables interoperability between SOME/IP implementations.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdEntry, ServiceEntry)
+
+.. requirement:: SD Unicast Response
+   :id: REQ_SD_161
+   :satisfies: feat_req_someipsd_90, feat_req_someipsd_91, feat_req_someipsd_826
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Send FindService with Unicast Flag set, verify server responds via unicast instead of multicast.
+
+   The software shall send unicast SD responses when the Unicast Flag
+   is set in the requesting message.
+
+   **Rationale**: Unicast responses reduce multicast traffic when the requester supports unicast.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (find_service), ``src/sd/sd_server.cpp`` (handle_find_service)
+
+
+SD Session Handling
+===================
+
+.. requirement:: SD Session ID Management
+   :id: REQ_SD_170
+   :satisfies: feat_req_someipsd_150, feat_req_someipsd_97
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Test full discovery workflow: server offers → client finds → client subscribes → server ACKs → event delivered.
+
+   The software shall increment the Session ID for each SD message sent
+   and use it for reboot detection.
+
+   **Rationale**: End-to-end discovery workflow validates the complete SD protocol implementation.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD Reboot Detection Response
+   :id: REQ_SD_171
+   :satisfies: feat_req_someipsd_764, feat_req_someipsd_765, feat_req_someipsd_872
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Simulate remote reboot (session ID reset), verify all cached services and subscriptions for that endpoint are cleared.
+
+   Upon detecting a remote reboot, the software shall clear all cached
+   service and subscription state for the rebooted endpoint.
+
+   **Rationale**: Reboot detection prevents communication with stale cached endpoints.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer_service), ``src/sd/sd_client.cpp`` (process_offer_entry)
+
+
+SD Minor Version Handling
+=========================
+
+.. requirement:: Minor Version Matching
+   :id: REQ_SD_180
+   :satisfies: feat_req_someipsd_238, feat_req_someipsd_736
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Set session_id increment mode, verify SD message Session IDs increment per message.
+
+   The software shall support Minor Version matching in FindService
+   entries. Minor Version 0xFFFFFFFF shall match any minor version.
+
+   **Rationale**: Session handling enables SD message deduplication and ordering.
+
+   **Code Location**: ``include/sd/sd_types.h`` (SdConfig::initial_delay, repetition_base)
+
+
+SD General Message Format
+=========================
+
+.. requirement:: SD Message Structure - Flags and Reserved
+   :id: REQ_SD_200a
+   :satisfies: feat_req_someipsd_38, feat_req_someipsd_39, feat_req_someipsd_40
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Serialize SD message, verify Flags byte at offset 0, Reserved bytes at offsets 1-3 are zero. Parse and verify Reboot/Unicast flags.
+
+   The software shall parse and construct SD message header with Flags
+   (1 byte) and Reserved (3 bytes) fields according to SOME/IP-SD format.
+
+   **Rationale**: Flags and reserved bytes are required by the AUTOSAR
+   SOME/IP-SD specification for message-level metadata.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdMessage structure)
+
+.. requirement:: SD Entries Array Format
+   :id: REQ_SD_200b
+   :satisfies: feat_req_someipsd_41, feat_req_someipsd_42, feat_req_someipsd_44
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Construct SD message with 2 entries (OfferService, FindService), serialize, verify 4-byte length prefix and entry layout per spec.
+
+   The software shall parse and construct the SD Entries Array with
+   length field and entry layout according to SOME/IP-SD format.
+
+   **Rationale**: The entries array carries service offers, finds, and
+   subscriptions; format compliance ensures interoperability.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdMessage structure)
+
+.. requirement:: SD Options Array Format
+   :id: REQ_SD_200c
+   :satisfies: feat_req_someipsd_1, feat_req_someipsd_2, feat_req_someipsd_13
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Add IPv4EndpointOption and IPv6EndpointOption to SD message, serialize, verify option length, type, and payload layout per spec.
+
+   The software shall parse and construct the SD Options Array with
+   length field and option layout (IPv4, IPv6, etc.) according to
+   SOME/IP-SD format.
+
+   **Rationale**: Options provide endpoint and configuration data;
+   format compliance ensures correct address resolution.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdMessage structure)
+
+.. requirement:: SD Transport Requirements
+   :id: REQ_SD_201
+   :satisfies: feat_req_someipsd_46, feat_req_someipsd_47
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Parse SD header, verify Flags byte at offset 0, Reserved bytes at offsets 1-3 are zero, entries length at offset 4.
+
+   The software shall transport SD messages over UDP using the configured
+   SD port (default 30490) with multicast for general announcements.
+
+   **Rationale**: Header fields provide message-level metadata (flags, reserved bytes).
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (flags, reserved bytes)
+
+.. requirement:: SD ECU Internal Interface
+   :id: REQ_SD_202
+   :satisfies: feat_req_someipsd_22, feat_req_someipsd_23, feat_req_someipsd_24, feat_req_someipsd_25, feat_req_someipsd_26, feat_req_someipsd_27, feat_req_someipsd_16, feat_req_someipsd_17, feat_req_someipsd_18
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Serialize entries array with 2 entries, verify 4-byte length prefix equals 2*16 bytes, followed by entry data.
+
+   The software shall provide an ECU-internal interface for applications
+   to register services, request services, subscribe to eventgroups,
+   and receive service availability notifications.
+
+   **Rationale**: The entries array carries service and subscription announcements.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (entries_array serialization)
+
+
+SD Header Details
+=================
+
+.. requirement:: SD Header Field Parsing
+   :id: REQ_SD_210
+   :satisfies: feat_req_someipsd_59, feat_req_someipsd_61, feat_req_someipsd_62
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Construct FindService entry (type=0x00) for Service ID 0x1234, TTL=3, verify serialized entry fields.
+
+   The software shall parse and validate the complete SD header including
+   Message ID (0xFFFF8100), Length, Request ID, Protocol Version,
+   Interface Version, Message Type, and Return Code.
+
+   **Rationale**: FindService entries trigger service discovery responses from servers.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (find_service entry construction)
+
+.. requirement:: SD Session ID Handling
+   :id: REQ_SD_211
+   :satisfies: feat_req_someipsd_96, feat_req_someipsd_94, feat_req_someipsd_863
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Construct OfferService entry (type=0x01) with TTL=10, Minor Version=0x01, verify serialization.
+
+   The software shall maintain separate Session IDs for multicast and
+   unicast SD messages. Session IDs shall be incremented for each
+   message sent.
+
+   **Rationale**: OfferService entries announce available service instances.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer_service entry construction)
+
+.. requirement:: SD Reboot Flag Management
+   :id: REQ_SD_212
+   :satisfies: feat_req_someipsd_83, feat_req_someipsd_84, feat_req_someipsd_85, feat_req_someipsd_87, feat_req_someipsd_89
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Construct SubscribeEventgroup entry (type=0x06) with eventgroup_id=0x01, TTL=10, verify serialization.
+
+   The software shall manage the Reboot Flag in SD messages. The flag
+   shall be set after reboot until the Session ID wraps around. TCP
+   connections shall be reset on reboot detection.
+
+   **Rationale**: SubscribeEventgroup entries register client interest in events.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (subscribe_eventgroup entry construction)
+
+
+SD Entry Format Details
+=======================
+
+.. requirement:: SD Entry Common Fields
+   :id: REQ_SD_220
+   :satisfies: feat_req_someipsd_122, feat_req_someipsd_126, feat_req_someipsd_127, feat_req_someipsd_128, feat_req_someipsd_129, feat_req_someipsd_212, feat_req_someipsd_214
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Configure SD multicast port 30490, verify all SD messages are sent to this port. Test custom multicast group address.
+
+   The software shall parse common entry fields: Type (1 byte), Index
+   First/Second Options Run (1 byte each), Number of Options (1 byte),
+   Service ID (2 bytes), Instance ID (2 bytes), Major Version/TTL
+   (4 bytes combined), and type-specific fields (4 bytes).
+
+   **Rationale**: Configurable multicast enables deployment-specific network topology.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (multicast_port config), ``include/sd/sd_types.h``
+
+.. requirement:: SD Service Entry Format
+   :id: REQ_SD_221
+   :satisfies: feat_req_someipsd_133, feat_req_someipsd_137, feat_req_someipsd_138, feat_req_someipsd_139, feat_req_someipsd_140
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Send FindService via multicast, receive OfferService via unicast, verify correct addressing.
+
+   The software shall parse service entries (Type 0 FindService, Type 1
+   OfferService) with Minor Version in the type-specific field.
+   Service entries are 16 bytes each.
+
+   **Rationale**: Multicast for discovery, unicast for responses optimizes bandwidth.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD Eventgroup Entry Format
+   :id: REQ_SD_222
+   :satisfies: feat_req_someipsd_149, feat_req_someipsd_151, feat_req_someipsd_152, feat_req_someipsd_157, feat_req_someipsd_158
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Subscribe with TTL=10s, verify subscription expires after 10s. Re-subscribe before expiry, verify renewal.
+
+   The software shall parse eventgroup entries (Type 6 Subscribe, Type 7
+   SubscribeAck) with Reserved, Initial Data Flag, Counter, and
+   Eventgroup ID in the type-specific field.
+
+   **Rationale**: TTL-based subscriptions enable automatic cleanup without explicit unsubscribe.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (subscription TTL handling)
+
+.. requirement:: SD Entry Multiple Entries per Message
+   :id: REQ_SD_223
+   :satisfies: feat_req_someipsd_159, feat_req_someipsd_160, feat_req_someipsd_161, feat_req_someipsd_162, feat_req_someipsd_163, feat_req_someipsd_164
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Offer service with TTL=5, verify client removes service from cache after 5 seconds without re-offer.
+
+   The software shall support multiple entries per SD message, combining
+   entries to reduce the number of SD messages sent.
+
+   **Rationale**: TTL-based service availability prevents stale service entries.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp`` (TTL management)
+
+
+SD Option Format Details
+========================
+
+.. requirement:: SD Configuration Option
+   :id: REQ_SD_230
+   :satisfies: feat_req_someipsd_182, feat_req_someipsd_183, feat_req_someipsd_184
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server receives SubscribeEventgroup, extracts endpoint from IPv4EndpointOption, verify client IP and port.
+
+   The software shall parse Configuration Options (Type 0x01) containing
+   key-value configuration strings for service instances.
+
+   **Rationale**: Endpoint extraction enables the server to know where to send events.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription_request)
+
+.. requirement:: SD Load Balancing Option Format
+   :id: REQ_SD_231
+   :satisfies: feat_req_someipsd_146, feat_req_someipsd_770
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Client processes OfferService with IPv4EndpointOption, extracts server address, verify address matches option data.
+
+   The software shall parse Load Balancing Options (Type 0x02) containing
+   Priority and Weight fields for server selection.
+
+   **Rationale**: Server address resolution enables the client to know where to send requests.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (process_offer_entry endpoint extraction)
+
+.. requirement:: SD IPv4 Endpoint Option Format
+   :id: REQ_SD_232
+   :satisfies: feat_req_someipsd_197, feat_req_someipsd_199, feat_req_someipsd_200, feat_req_someipsd_201
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Serialize IPv4EndpointOption with IP=10.0.0.1 port=30001 proto=UDP, verify type=0x04, length=9, and correct byte layout.
+
+   The software shall parse IPv4 Endpoint Options (Type 0x04) containing
+   IPv4 address (4 bytes), reserved byte, protocol (1 byte: 0x06=TCP,
+   0x11=UDP), and port number (2 bytes).
+
+   **Rationale**: Correct IPv4 option format ensures interoperability.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (subscribe_eventgroup), ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription_request)
+
+.. requirement:: SD IPv6 Endpoint Option Format
+   :id: REQ_SD_233
+   :satisfies: feat_req_someipsd_203, feat_req_someipsd_204
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Serialize IPv6EndpointOption with valid IPv6 address and port, verify type=0x06 and 16-byte address field.
+
+   The software shall parse IPv6 Endpoint Options (Type 0x06) containing
+   IPv6 address (16 bytes), reserved byte, protocol, and port number.
+
+   **Rationale**: IPv6 support enables SD in IPv6 networks.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription, acknowledge=true/false)
+
+.. requirement:: SD IPv4 Multicast Option Format
+   :id: REQ_SD_234
+   :satisfies: feat_req_someipsd_724, feat_req_someipsd_725, feat_req_someipsd_733, feat_req_someipsd_749
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Serialize IPv4MulticastOption with group=239.0.0.1 port=30490 proto=UDP, verify type=0x14 and correct layout.
+
+   The software shall parse IPv4 Multicast Options (Type 0x14) containing
+   multicast IPv4 address, protocol (UDP only), and port number.
+
+   **Rationale**: IPv4 multicast option format enables multicast event delivery.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription, NACK response)
+
+.. requirement:: SD IPv6 Multicast Option Format
+   :id: REQ_SD_235
+   :satisfies: feat_req_someipsd_737, feat_req_someipsd_738, feat_req_someipsd_739, feat_req_someipsd_750
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Serialize IPv6MulticastOption with valid multicast IPv6 address, verify type=0x16 and 16-byte address field.
+
+   The software shall parse IPv6 Multicast Options (Type 0x16) containing
+   multicast IPv6 address, protocol (UDP only), and port number.
+
+   **Rationale**: IPv6 multicast support enables SD in IPv6 networks.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (process_sd_entries, entry type dispatch)
+
+.. requirement:: SD IPv4 SD Endpoint Option Format
+   :id: REQ_SD_236
+   :satisfies: feat_req_someipsd_1080, feat_req_someipsd_1082, feat_req_someipsd_1083, feat_req_someipsd_1084, feat_req_someipsd_1087
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Serialize IPv4 SD EndpointOption (type=0x24), verify it is not referenced by entries.
+
+   The software shall parse IPv4 SD Endpoint Options (Type 0x24)
+   containing the SD communication endpoint. This option is not
+   referenced by entries.
+
+   **Rationale**: SD endpoint option carries the SD communication endpoint independently of entries.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdOption, IPv4EndpointOption, IPv4MulticastOption)
+
+
+SD Option Referencing Details
+=============================
+
+.. requirement:: SD Option Index and Run Length
+   :id: REQ_SD_240
+   :satisfies: feat_req_someipsd_332, feat_req_someipsd_333, feat_req_someipsd_342, feat_req_someipsd_343
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Call offer_service() with Service ID, Instance ID, and endpoint, verify SD broadcasts OfferService entry.
+
+   The software shall reference options from entries using the First and
+   Second Option Index and their respective run lengths. Options are
+   referenced as contiguous runs.
+
+   **Rationale**: Service registration makes services discoverable via SD.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer_service, service registration)
+
+.. requirement:: SD Option Run Processing
+   :id: REQ_SD_241
+   :satisfies: feat_req_someipsd_346, feat_req_someipsd_347, feat_req_someipsd_348, feat_req_someipsd_351
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Start find_service() for Service ID 0x1234, receive OfferService, verify service is added to service registry.
+
+   The software shall process option runs by iterating from the starting
+   index for the given count. Empty runs (count=0) shall be valid.
+   Unknown option types shall be skipped.
+
+   **Rationale**: Service discovery enables clients to find available services dynamically.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (find_service, process_offer_entry)
+
+.. requirement:: SD Option Validation
+   :id: REQ_SD_242
+   :satisfies: feat_req_someipsd_1095, feat_req_someipsd_1097, feat_req_someipsd_1098, feat_req_someipsd_1099, feat_req_someipsd_1100
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Create option with invalid length, verify it is rejected. Create option with valid type/length, verify acceptance.
+
+   The software shall validate options for correct length, type, and
+   content. Invalid options shall cause the referencing entry to be
+   rejected.
+
+   **Rationale**: Option validation prevents processing of malformed endpoint data.
+
+   **Code Location**: ``include/sd/sd_types.h`` (OptionType::LOAD_BALANCING)
+
+.. requirement:: SD Endpoint Option Processing
+   :id: REQ_SD_243
+   :satisfies: feat_req_someipsd_1101, feat_req_someipsd_1102, feat_req_someipsd_1103
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Parse OfferService with IPv4EndpointOption, extract IP=10.0.0.1 port=30001, verify endpoint matches option data.
+
+   The software shall process Endpoint Options to determine the transport
+   endpoint (IP, port, protocol) for a service instance.
+
+   **Rationale**: Endpoint processing resolves abstract SD entries to concrete transport addresses.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (IPv4EndpointOption::serialize/deserialize)
+
+
+SD FindService Message Details
+==============================
+
+.. requirement:: SD FindService Message Construction
+   :id: REQ_SD_250
+   :satisfies: feat_req_someipsd_217, feat_req_someipsd_218, feat_req_someipsd_219, feat_req_someipsd_220
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Call shutdown(), verify StopOffer entries (TTL=0) are sent for all offered services.
+
+   The software shall construct FindService messages with the appropriate
+   Service ID, Instance ID (0xFFFF for all), Major Version (0xFF for any),
+   and Minor Version (0xFFFFFFFF for any).
+
+   **Rationale**: Clean shutdown prevents clients from sending to unavailable services.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (shutdown, send_stop_offer_messages)
+
+.. requirement:: SD FindService Response Behavior
+   :id: REQ_SD_251
+   :satisfies: feat_req_someipsd_224, feat_req_someipsd_225, feat_req_someipsd_227, feat_req_someipsd_766, feat_req_someipsd_767
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server reboots (reboot flag set), client detects new session, verify re-subscription is initiated.
+
+   The software shall respond to FindService with OfferService entries
+   for matching services. Responses shall use configurable delay
+   (REQUEST_RESPONSE_DELAY).
+
+   **Rationale**: Reboot recovery ensures subscriptions are re-established after endpoint restart.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+
+SD OfferService Message Details
+===============================
+
+.. requirement:: SD OfferService Message Construction
+   :id: REQ_SD_260
+   :satisfies: feat_req_someipsd_221, feat_req_someipsd_233, feat_req_someipsd_235, feat_req_someipsd_236, feat_req_someipsd_237
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Configure non-SOME/IP protocol support, offer service with ID 0xFFFE, verify interoperability entries.
+
+   The software shall construct OfferService messages with Service ID,
+   Instance ID, Major/Minor Version, TTL, and Endpoint Options.
+
+   **Rationale**: Non-SOME/IP support enables interoperability with other automotive protocols.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD StopOfferService Construction
+   :id: REQ_SD_261
+   :satisfies: feat_req_someipsd_256, feat_req_someipsd_261, feat_req_someipsd_262
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Stop service, verify StopOfferService entry has TTL=0, same Service ID and Instance ID as the offer.
+
+   The software shall construct StopOfferService messages with TTL=0
+   when a service instance is stopped or going down.
+
+   **Rationale**: StopOfferService with TTL=0 signals immediate service unavailability.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (IPv4MulticastOption::serialize/deserialize)
+
+
+SD SubscribeEventgroup Message Details
+======================================
+
+.. requirement:: SD SubscribeEventgroup Construction
+   :id: REQ_SD_270
+   :satisfies: feat_req_someipsd_230, feat_req_someipsd_429, feat_req_someipsd_430, feat_req_someipsd_431, feat_req_someipsd_432, feat_req_someipsd_428
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server receives FindService from unknown client, verify it responds without authentication checks (open access).
+
+   The software shall construct SubscribeEventgroup messages with Service
+   ID, Instance ID, Eventgroup ID, TTL, and client Endpoint Options.
+   Subscriptions shall be triggered by OfferService reception.
+
+   **Rationale**: Open access simplifies deployment without per-client authorization at SD level.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD Subscription Lifecycle
+   :id: REQ_SD_271
+   :satisfies: feat_req_someipsd_435, feat_req_someipsd_436, feat_req_someipsd_437, feat_req_someipsd_439, feat_req_someipsd_444, feat_req_someipsd_445
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Subscribe on OfferService receipt, renew before TTL/2 expiry, call shutdown → verify StopSubscribe sent.
+
+   The software shall manage subscription lifecycle: subscribe on service
+   availability, renew before TTL expiry, unsubscribe on shutdown,
+   and re-subscribe after timeout.
+
+   **Rationale**: Subscription lifecycle management ensures correct subscribe/renew/unsubscribe behavior.
+
+   **Code Location**: ``include/sd/sd_types.h`` (OptionType::CONFIGURATION)
+
+.. requirement:: SD SubscribeEventgroupAck Construction
+   :id: REQ_SD_272
+   :satisfies: feat_req_someipsd_612, feat_req_someipsd_613, feat_req_someipsd_614, feat_req_someipsd_619, feat_req_someipsd_844
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server ACKs multicast eventgroup subscription, verify ACK includes IPv4MulticastOption with group address and port.
+
+   The software shall construct SubscribeEventgroupAck messages to confirm
+   accepted subscriptions. Ack shall include Multicast Options if the
+   eventgroup uses multicast.
+
+   **Rationale**: Multicast options in ACKs direct the client to the correct multicast group.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD SubscribeEventgroupNack Construction
+   :id: REQ_SD_273
+   :satisfies: feat_req_someipsd_617, feat_req_someipsd_869, feat_req_someipsd_870
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server rejects subscription, verify NACK entry with TTL=0 is sent. Verify client handles NACK by checking TCP connectivity.
+
+   The software shall construct SubscribeEventgroupNack messages with
+   TTL=0 to reject subscriptions. Clients shall handle Nack by
+   checking TCP connections.
+
+   **Rationale**: NACK with TTL=0 clearly signals subscription rejection.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer/stop-offer flow)
+
+.. requirement:: SD StopSubscribeEventgroup Construction
+   :id: REQ_SD_274
+   :satisfies: feat_req_someipsd_433, feat_req_someipsd_440, feat_req_someipsd_441, feat_req_someipsd_442
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Client unsubscribes from eventgroup, verify StopSubscribeEventgroup entry with TTL=0 is sent.
+
+   The software shall construct StopSubscribeEventgroup messages with
+   TTL=0 when unsubscribing from an eventgroup.
+
+   **Rationale**: StopSubscribe with TTL=0 signals immediate unsubscription.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (find_service, subscribe_eventgroup flow)
+
+
+SD Communication Behavior Details
+=================================
+
+.. requirement:: SD Timing Configuration
+   :id: REQ_SD_280
+   :satisfies: feat_req_someipsd_66, feat_req_someipsd_68, feat_req_someipsd_72
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Configure SD with INITIAL_DELAY_MIN=50, MAX=100, REPETITIONS_BASE=200, MAX=3, verify all values applied.
+
+   The software shall support configurable SD timing parameters:
+   INITIAL_DELAY_MIN/MAX, REPETITIONS_BASE_DELAY, REPETITIONS_MAX,
+   and CYCLIC_OFFER_DELAY.
+
+   **Rationale**: Configurable timing adapts SD phases to network characteristics.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription_request, client_endpoint extraction)
+
+.. requirement:: SD Phase Transitions
+   :id: REQ_SD_281
+   :satisfies: feat_req_someipsd_74, feat_req_someipsd_75, feat_req_someipsd_77, feat_req_someipsd_419, feat_req_someipsd_422
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Start SD, verify InitialWait→Repetition after first send, Repetition→Main after REPETITIONS_MAX, any→Down on stop.
+
+   The software shall implement phase transitions: from Initial Wait to
+   Repetition (after first send), from Repetition to Main (after
+   REPETITIONS_MAX), and from any phase to Down (on stop/error).
+
+   **Rationale**: Phase transitions enforce the SD protocol state machine.
+
+   **Code Location**: ``include/sd/sd_types.h`` (SdResult), ``src/sd/sd_server.cpp``
+
+.. requirement:: SD Multicast Group Management
+   :id: REQ_SD_282
+   :satisfies: feat_req_someipsd_101, feat_req_someipsd_102, feat_req_someipsd_103, feat_req_someipsd_104
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Register service, verify SD joins configured multicast group. Unregister, verify SD leaves multicast group.
+
+   The software shall join and leave multicast groups for SD communication
+   based on service registration and subscription state.
+
+   **Rationale**: Dynamic multicast group management conserves network resources.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdMessage::serialize/deserialize)
+
+.. requirement:: SD Response Delay Configuration
+   :id: REQ_SD_283
+   :satisfies: feat_req_someipsd_106, feat_req_someipsd_107, feat_req_someipsd_109
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Configure REQUEST_RESPONSE_DELAY=50ms, send FindService, verify response is delayed by at least 50ms.
+
+   The software shall apply configurable response delays
+   (REQUEST_RESPONSE_DELAY) when responding to FindService messages
+   to avoid network storms.
+
+   **Rationale**: Response delays prevent network storms from simultaneous SD responses.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer_service per instance)
+
+
+SD Endpoint Handling Details
+============================
+
+.. requirement:: SD Server Endpoint Registration
+   :id: REQ_SD_290
+   :satisfies: feat_req_someipsd_806, feat_req_someipsd_807, feat_req_someipsd_808, feat_req_someipsd_809, feat_req_someipsd_811
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Register server endpoint (IP, port, TCP), verify OfferService includes IPv4EndpointOption with proto=TCP.
+
+   The software shall register server endpoints (IP, port, protocol)
+   for offered services and include them in OfferService options.
+
+   **Rationale**: Server endpoint registration enables clients to discover communication endpoints.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``include/sd/sd_types.h`` (SdConfig)
+
+.. requirement:: SD Client Endpoint Resolution
+   :id: REQ_SD_291
+   :satisfies: feat_req_someipsd_812, feat_req_someipsd_813, feat_req_someipsd_814, feat_req_someipsd_816
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Client receives SubscribeEventgroup, extracts client endpoint from option, verify IP and port are correct.
+
+   The software shall resolve client endpoints from SubscribeEventgroup
+   options to determine where to send events and notifications.
+
+   **Rationale**: Client endpoint resolution enables the server to deliver events to subscribers.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdEntry, ServiceEntry)
+
+.. requirement:: SD Multicast Endpoint Handling
+   :id: REQ_SD_292
+   :satisfies: feat_req_someipsd_751, feat_req_someipsd_752, feat_req_someipsd_754, feat_req_someipsd_755, feat_req_someipsd_756, feat_req_someipsd_757, feat_req_someipsd_758
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Configure multicast eventgroup, verify server joins multicast group, sends initial events via unicast, switches to multicast when threshold met.
+
+   The software shall handle multicast endpoints for eventgroups,
+   including joining multicast groups, sending initial events via
+   unicast, and switching between unicast/multicast based on
+   subscriber count.
+
+   **Rationale**: Multicast endpoint handling optimizes event delivery for groups with many subscribers.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD Endpoint Validation
+   :id: REQ_SD_293
+   :satisfies: feat_req_someipsd_1111, feat_req_someipsd_1113, feat_req_someipsd_1114, feat_req_someipsd_1169, feat_req_someipsd_1170, feat_req_someipsd_1171
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Parse option with invalid IP=0.0.0.0, verify rejection. Parse option with valid IP and supported protocol, verify acceptance.
+
+   The software shall validate endpoint options for correct format,
+   valid IP addresses, and supported protocols.
+
+   **Rationale**: Endpoint validation prevents communication failures from malformed addresses.
+
+   **Code Location**: ``include/sd/sd_types.h`` (SdConfig::initial_delay, repetition_base)
+
+
+SD Service Registration and Discovery
+=====================================
+
+.. requirement:: SD Service Offer Processing
+   :id: REQ_SD_300
+   :satisfies: feat_req_someipsd_762, feat_req_someipsd_763, feat_req_someipsd_828, feat_req_someipsd_829
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server ACKs subscription, verify initial event is triggered for the newly subscribed client.
+
+   The software shall process OfferService entries by updating the
+   service registry with endpoint information and TTL.
+
+   **Rationale**: Initial events ensure newly subscribed clients have up-to-date state.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (subscription acknowledgment, initial events)
+
+.. requirement:: SD Service State Tracking
+   :id: REQ_SD_301
+   :satisfies: feat_req_someipsd_771, feat_req_someipsd_772, feat_req_someipsd_776, feat_req_someipsd_777, feat_req_someipsd_778
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Receive OfferService, verify service state transitions to AVAILABLE. TTL expires, verify state transitions to UNAVAILABLE.
+
+   The software shall track service state (available, unavailable,
+   timing out) and notify applications of state changes.
+
+   **Rationale**: Service state tracking enables applications to react to availability changes.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (SdMessage structure)
+
+.. requirement:: SD Subscription State Tracking
+   :id: REQ_SD_302
+   :satisfies: feat_req_someipsd_779, feat_req_someipsd_780, feat_req_someipsd_781, feat_req_someipsd_782, feat_req_someipsd_783
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Send SubscribeEventgroup, receive ACK, verify subscription state=ACTIVE. Receive NACK, verify state=REJECTED.
+
+   The software shall track subscription state (active, pending,
+   rejected, expired) for each eventgroup.
+
+   **Rationale**: Subscription state tracking enables applications to know their subscription status.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (flags, reserved bytes)
+
+.. requirement:: SD Service Registry Management
+   :id: REQ_SD_303
+   :satisfies: feat_req_someipsd_784, feat_req_someipsd_785, feat_req_someipsd_786, feat_req_someipsd_787, feat_req_someipsd_788
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Register 3 services, verify registry contains 3 entries. Unregister 1, verify registry contains 2.
+
+   The software shall maintain a service registry with service entries,
+   supporting add, remove, update TTL, and lookup operations.
+
+   **Rationale**: The service registry provides a central lookup for available services.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (entries_array serialization)
+
+
+SD Shutdown and Recovery
+========================
+
+.. requirement:: SD Graceful Shutdown
+   :id: REQ_SD_310
+   :satisfies: feat_req_someipsd_818, feat_req_someipsd_819, feat_req_someipsd_822, feat_req_someipsd_823, feat_req_someipsd_824
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Configure reserved eventgroup handling, attempt subscription to reserved ID, verify rejection.
+
+   The software shall implement graceful shutdown by sending
+   StopOfferService for all offered services and StopSubscribe
+   for all active subscriptions.
+
+   **Rationale**: Mandatory features define the minimum required SD implementation.
+
+   **Code Location**: ``include/sd/sd_types.h``, ``src/sd/sd_message.cpp``
+
+.. requirement:: SD Reboot Recovery
+   :id: REQ_SD_311
+   :satisfies: feat_req_someipsd_871, feat_req_someipsd_793, feat_req_someipsd_794
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Simulate server reboot (session ID reset + reboot flag), verify client clears cached offers and re-triggers FindService.
+
+   The software shall recover from remote reboot by clearing cached
+   services and re-subscribing to previously subscribed eventgroups.
+
+   **Rationale**: Reserved identifier handling at SD level ensures system integrity.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (find_service entry construction)
+
+.. requirement:: SD Service Stop Handling
+   :id: REQ_SD_312
+   :satisfies: feat_req_someipsd_831, feat_req_someipsd_832, feat_req_someipsd_834
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server calls stop_service(), verify StopOffer (TTL=0) is sent and service is removed from local registry.
+
+   The software shall handle service stop events by cleaning up
+   subscriptions and notifying affected clients.
+
+   **Rationale**: Proper handling of reserved IDs prevents undefined behavior in SD processing.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer_service entry construction)
+
+
+SD Non-SOME/IP Protocol Support
+===============================
+
+.. requirement:: SD Non-SOME/IP Service Announcement
+   :id: REQ_SD_320
+   :satisfies: feat_req_someipsd_497, feat_req_someipsd_498, feat_req_someipsd_499, feat_req_someipsd_500, feat_req_someipsd_501, feat_req_someipsd_502, feat_req_someipsd_503
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Parse SD message flags, verify reboot_flag and unicast_flag extraction. Verify session_id increments.
+
+   The software shall support announcing non-SOME/IP services using
+   Service ID 0xFFFE with the appropriate configuration.
+
+   **Rationale**: Flag processing controls SD response addressing behavior.
+
+   **Code Location**: ``src/sd/sd_message.cpp`` (flags, session_id, reboot_flag)
+
+
+SD Initial Event Handling
+=========================
+
+.. requirement:: SD Initial Event Sending
+   :id: REQ_SD_330
+   :satisfies: feat_req_someipsd_833, feat_req_someipsd_1166, feat_req_someipsd_1167, feat_req_someipsd_1168
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server processes multiple concurrent subscriptions, verify each receives independent ACK/NACK.
+
+   The software shall send initial events of fields via unicast to
+   newly subscribed clients after sending SubscribeEventgroupAck.
+
+   **Rationale**: Version-aware subscription ensures clients receive compatible events.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD Initial Event Requesting
+   :id: REQ_SD_331
+   :satisfies: feat_req_someipsd_1191, feat_req_someipsd_1192, feat_req_someipsd_1193, feat_req_someipsd_946
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server ACKs subscription with initial event flag, verify initial field values are sent via unicast to subscriber.
+
+   The software shall request initial events after reboot or when
+   no active subscription exists for the eventgroup.
+
+   **Rationale**: Version-aware workflows ensure client-server compatibility.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (subscribe_eventgroup entry construction)
+
+
+SD Advanced Features
+====================
+
+.. requirement:: SD Error Handling
+   :id: REQ_SD_340
+   :satisfies: feat_req_someipsd_1162, feat_req_someipsd_1164, feat_req_someipsd_1221, feat_req_someipsd_1227, feat_req_someipsd_1228
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Load SD configuration (delays, timeouts, TTLs), verify all parameters are applied to SD behavior.
+
+   The software shall implement SD error handling by checking message
+   headers, entry fields, and option validity. Invalid messages
+   shall be silently discarded.
+
+   **Rationale**: Configurable parameters enable deployment-specific SD behavior tuning.
+
+   **Code Location**: ``include/sd/sd_types.h`` (SdConfig)
+
+.. requirement:: SD Option Conflict Resolution
+   :id: REQ_SD_341
+   :satisfies: feat_req_someipsd_1140, feat_req_someipsd_1147, feat_req_someipsd_1149
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Receive two options for same entry with conflicting data, verify the later option takes precedence (or error logged).
+
+   The software shall resolve option conflicts by using the first valid
+   option and ignoring subsequent conflicting options.
+
+   **Rationale**: Phase timing configuration controls SD protocol behavior.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (multicast_port config), ``include/sd/sd_types.h``
+
+.. requirement:: SD Security Considerations
+   :id: REQ_SD_342
+   :satisfies: feat_req_someipsd_1176, feat_req_someipsd_1177, feat_req_someipsd_1178, feat_req_someipsd_1179, feat_req_someipsd_1180, feat_req_someipsd_1182, feat_req_someipsd_1184
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Verify SD rejects SD messages from unauthorized sources when security mode is enabled.
+
+   The software shall implement SD security measures including message
+   validation, source address verification, and rate limiting.
+
+   **Rationale**: SD timing configuration enables adaptation to different network environments.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD IPv4 SD Endpoint Processing
+   :id: REQ_SD_343
+   :satisfies: feat_req_someipsd_1151, feat_req_someipsd_1152, feat_req_someipsd_1153, feat_req_someipsd_1154, feat_req_someipsd_1155, feat_req_someipsd_1156
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Parse IPv4 SD EndpointOption (type=0x24), verify SD endpoint fields are extracted and not referenced by entries.
+
+   The software shall process IPv4 SD Endpoint Options when present,
+   using them instead of the source IP/port for SD communication.
+
+   **Rationale**: TTL configuration controls service and subscription expiry timing.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (subscription TTL handling)
+
+.. requirement:: SD Mandatory Feature Set
+   :id: REQ_SD_344
+   :satisfies: feat_req_someipsd_1248, feat_req_someipsd_1249, feat_req_someipsd_1250, feat_req_someipsd_1251, feat_req_someipsd_1252, feat_req_someipsd_1253
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Verify all mandatory SD features (Offer, Find, Subscribe, ACK, NACK, TTL, reboot detection) are functional.
+
+   The software shall implement the mandatory SD feature set including
+   FindService, OfferService, SubscribeEventgroup, and their
+   acknowledgments.
+
+   **Rationale**: Multicast configuration specifies the network parameters for SD communication.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp`` (TTL management)
+
+.. requirement:: SD Unicast Flag Processing
+   :id: REQ_SD_345
+   :satisfies: feat_req_someipsd_1187, feat_req_someipsd_1188
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Receive FindService with Unicast Flag=1, verify response is sent via unicast. Test Flag=0, verify multicast.
+
+   The software shall process the Unicast Flag in SD messages to
+   determine the response transport (unicast vs multicast).
+
+   **Rationale**: SD port configuration ensures correct network resource allocation.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription_request)
+
+.. requirement:: SD Service State Machine Details
+   :id: REQ_SD_346
+   :satisfies: feat_req_someipsd_624, feat_req_someipsd_631, feat_req_someipsd_684, feat_req_someipsd_691
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Verify SD server state machine transitions: DOWN→INITIAL_WAIT→REPETITION→MAIN→DOWN with correct entries at each phase.
+
+   The software shall implement detailed service state machine behavior
+   including proper handling of Find/Offer cycles and timer management.
+
+   **Rationale**: Port assignment rules prevent conflicts with reserved system ports.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (process_offer_entry endpoint extraction)
+
+.. requirement:: SD Subscription Renewal
+   :id: REQ_SD_347
+   :satisfies: feat_req_someipsd_839, feat_req_someipsd_840, feat_req_someipsd_841, feat_req_someipsd_842, feat_req_someipsd_843
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Subscribe with TTL=60s, verify renewal at 80% (48s). Verify no renewal if TTL=0xFFFFFF (max).
+
+   The software shall implement the soft-state model where entries
+   (services, subscriptions) expire unless refreshed. Subscription
+   renewal shall occur before TTL expiry.
+
+   **Rationale**: Configurable ports enable deployment flexibility.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (offer_service, service registration)
+
+.. requirement:: SD Publish/Subscribe Event Flow
+   :id: REQ_SD_348
+   :satisfies: feat_req_someipsd_836, feat_req_someipsd_837, feat_req_someipsd_838, feat_req_someipsd_1239
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Full pub/sub flow: server offers → client subscribes → ACK → event published → subscriber receives notification.
+
+   The software shall implement the publish/subscribe event flow
+   including link loss handling at both client and server sides.
+
+   **Rationale**: Consistent port usage ensures clients can reach services at expected endpoints.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (find_service, process_offer_entry)
+
+.. requirement:: SD Duplicate Offer Handling
+   :id: REQ_SD_349
+   :satisfies: feat_req_someipsd_844, feat_req_someipsd_848, feat_req_someipsd_849, feat_req_someipsd_850, feat_req_someipsd_851
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Receive same OfferService twice, verify only one entry in registry. Verify TTL is refreshed from second offer.
+
+   The software shall handle duplicate OfferService messages by updating
+   the existing entry rather than creating duplicates.
+
+   **Rationale**: Port validation prevents misconfiguration that could disrupt communication.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (shutdown, send_stop_offer_messages)
+
+.. requirement:: SD Entry Aggregation
+   :id: REQ_SD_350
+   :satisfies: feat_req_someipsd_852, feat_req_someipsd_853, feat_req_someipsd_854, feat_req_someipsd_855, feat_req_someipsd_856
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server detects client reboot via session ID reset, verify existing subscriptions for that client are cleared.
+
+   The software shall aggregate multiple SD entries into single messages
+   when possible to reduce network traffic.
+
+   **Rationale**: Reboot detection triggers re-subscription to restore event delivery.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD Startup Behavior
+   :id: REQ_SD_351
+   :satisfies: feat_req_someipsd_857, feat_req_someipsd_858, feat_req_someipsd_862, feat_req_someipsd_864
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Start SD module, verify initial FindService is sent after configured delay (not immediately).
+
+   The software shall implement the SD startup behavior with three
+   phases (Initial Wait, Repetition, Main) as per the specification.
+
+   **Rationale**: Delayed startup prevents SD storms when multiple ECUs boot simultaneously.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD Advanced Reboot Detection
+   :id: REQ_SD_352
+   :satisfies: feat_req_someipsd_796, feat_req_someipsd_797, feat_req_someipsd_798
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Simulate endpoint reboot (reboot flag + session ID reset), verify complete re-subscription lifecycle.
+
+   The software shall implement advanced reboot detection using Session
+   ID regression and Reboot Flag analysis.
+
+   **Rationale**: Advanced reboot detection covers complex restart scenarios.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD Service Timeout Handling
+   :id: REQ_SD_353
+   :satisfies: feat_req_someipsd_790, feat_req_someipsd_791
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Offer service with TTL=10, verify client marks service as UNAVAILABLE after 10 seconds with no renewal.
+
+   The software shall handle service timeouts by removing expired services
+   and notifying applications of unavailability.
+
+   **Rationale**: Service timeout handling cleans up services that stop offering without explicit StopOffer.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: SD Subscribe Multicast Handling
+   :id: REQ_SD_354
+   :satisfies: feat_req_someipsd_747, feat_req_someipsd_1134, feat_req_someipsd_1136, feat_req_someipsd_1137
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Subscribe to multicast eventgroup, receive ACK with multicast option, verify client joins multicast group.
+
+   The software shall handle multicast in subscriptions including
+   Multicast Option in SubscribeEventgroupAck and SubscribeEventgroupNack
+   for conflicting multicast endpoints.
+
+   **Rationale**: Multicast subscription handling enables efficient event delivery to groups.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (subscription acknowledgment, initial events)
+
+.. requirement:: SD Subscription Server State
+   :id: REQ_SD_355
+   :satisfies: feat_req_someipsd_877, feat_req_someipsd_878, feat_req_someipsd_879
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Server tracks subscription state per eventgroup per client, verify state transitions: PENDING→ACTIVE on ACK, ACTIVE→EXPIRED on TTL.
+
+   The software shall maintain server-side subscription state including
+   client lists per eventgroup and proper cleanup on StopSubscribe.
+
+   **Rationale**: Per-client subscription state enables correct per-subscriber event delivery decisions.
+
+   **Code Location**: ``include/sd/sd_types.h``, ``src/sd/sd_message.cpp``
+
+.. requirement:: SD Service Registration
+   :id: REQ_SD_356
+   :satisfies: feat_req_someipsd_1194, feat_req_someipsd_1195, feat_req_someipsd_1262, feat_req_someipsd_1297
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Configure SD timing parameters, verify initial_delay, repetition_base, and cyclic_offer_delay are applied.
+
+   The software shall support service registration and deregistration
+   with proper cleanup of associated subscriptions and endpoints.
+
+   **Rationale**: SD timing parameters control the behavior of all SD protocol phases.
+
+   **Code Location**: ``include/sd/sd_types.h`` (SdConfig), ``src/sd/sd_server.cpp``
+
+
+.. requirement:: Error - SD Message Too Short
+   :id: REQ_SD_001_E01
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Receive SD message with total length < 20 bytes (header + flags + lengths), verify rejection.
+
+   The software shall reject SD messages shorter than the minimum valid SD message size.
+
+   **Rationale**: Short SD messages cannot contain valid flags and length fields.
+
+   **Error Handling**: Discard message, log actual vs minimum expected size.
+
+   **Code Location**: ``src/sd/sd_message.cpp``
+
+.. requirement:: Error - SD Entries Length Mismatch
+   :id: REQ_SD_001_E02
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Construct SD message where entries length field exceeds remaining buffer, verify rejection.
+
+   The software shall reject SD messages where the entries array length exceeds the remaining message data.
+
+   **Rationale**: Length mismatch prevents correct entry parsing.
+
+   **Error Handling**: Discard message, log declared vs available length.
+
+   **Code Location**: ``src/sd/sd_message.cpp``
+
+.. requirement:: Error - SD Option Index Out of Range
+   :id: REQ_SD_120_E01
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Construct entry referencing option index 10 in a message with only 3 options, verify entry is skipped.
+
+   The software shall skip entries that reference option indices beyond the options array.
+
+   **Rationale**: Out-of-range option indices indicate malformed SD messages.
+
+   **Error Handling**: Skip entry, continue processing remaining entries, log error.
+
+   **Code Location**: ``src/sd/sd_message.cpp``
+
+.. requirement:: Error - SD Unknown Entry Type
+   :id: REQ_SD_119_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Construct SD message with entry type=0xFF (undefined), verify entry is skipped and remaining entries processed.
+
+   The software shall skip SD entries with unknown entry type codes.
+
+   **Rationale**: Unknown entry types may appear in messages from newer SD implementations.
+
+   **Error Handling**: Skip entry, log unknown type code, continue processing.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+
+.. requirement:: Error - SD TTL Overflow Prevention
+   :id: REQ_SD_222_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Receive OfferService with TTL=0xFFFFFF (max), verify TTL timer does not overflow.
+
+   The software shall handle maximum TTL values without timer overflow.
+
+   **Rationale**: Maximum TTL values must be handled safely without arithmetic overflow.
+
+   **Error Handling**: Clamp TTL to implementation maximum if necessary, log clamping.
+
+   **Code Location**: ``src/sd/sd_client.cpp``, ``src/sd/sd_server.cpp``
+
+.. requirement:: Error - SD Subscription to Unavailable Service
+   :id: REQ_SD_116_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Client sends SubscribeEventgroup for a service that has not been offered, verify NACK response.
+
+   The software shall NACK subscriptions for services that are not currently offered.
+
+   **Rationale**: Subscriptions to unavailable services cannot be fulfilled.
+
+   **Error Handling**: Send NACK (TTL=0), log rejected subscription details.
+
+   **Code Location**: ``src/sd/sd_server.cpp``
+
+.. requirement:: Error - SD Offer with Invalid Endpoint
+   :id: REQ_SD_115_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Receive OfferService with IPv4EndpointOption containing IP=0.0.0.0, verify offer is ignored.
+
+   The software shall ignore OfferService messages with invalid endpoint addresses.
+
+   **Rationale**: Invalid endpoints cannot be used for communication.
+
+   **Error Handling**: Discard offer, log invalid endpoint address.
+
+   **Code Location**: ``src/sd/sd_client.cpp``
+
+.. requirement:: Error - SD Duplicate Offer Handling
+   :id: REQ_SD_115_E02
+   :status: implemented
+   :priority: low
+   :category: error_path
+   :verification: Unit test: Receive same OfferService twice (same Service ID, Instance ID, endpoint), verify TTL is refreshed without duplication.
+
+   The software shall handle duplicate offers by refreshing the TTL without creating duplicate registry entries.
+
+   **Rationale**: Duplicate offers are normal during the repetition phase.
+
+   **Error Handling**: Refresh TTL of existing entry, no new entry created.
+
+   **Code Location**: ``src/sd/sd_client.cpp``
+
+.. requirement:: Error - SD Multicast Send Failure
+   :id: REQ_SD_134_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Simulate multicast send failure, verify SD falls back to unicast or retries.
+
+   The software shall handle multicast send failures gracefully.
+
+   **Rationale**: Multicast may fail due to network configuration issues.
+
+   **Error Handling**: Log error, retry or fall back to unicast based on configuration.
+
+   **Code Location**: ``src/sd/sd_server.cpp``
+
+.. requirement:: Error - SD Session ID Non-Incremental
+   :id: REQ_SD_010_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Receive SD messages with session IDs 5, 3 (non-incremental), verify reboot detection logic is triggered.
+
+   The software shall detect non-incremental SD session IDs as potential reboot indicators.
+
+   **Rationale**: Session ID regression indicates the sender has restarted.
+
+   **Error Handling**: Trigger reboot detection, clear cached state for sender.
+
+   **Code Location**: ``src/sd/sd_client.cpp``
+
+.. requirement:: Error - SD Entry References No Options
+   :id: REQ_SD_030_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Parse OfferService entry with num_opts_1=0 and num_opts_2=0, verify offer is accepted but no endpoint is extracted.
+
+   The software shall handle SD entries that reference zero options gracefully.
+
+   **Rationale**: Entries without options are valid but may limit functionality.
+
+   **Error Handling**: Process entry, log warning if endpoint info is missing.
+
+   **Code Location**: ``src/sd/sd_message.cpp``
+
+.. requirement:: Error - SD Subscription Conflict
+   :id: REQ_SD_080_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Client subscribes to eventgroup from two different endpoints simultaneously, verify server handles both or rejects the second.
+
+   The software shall handle conflicting subscriptions from the same client to the same eventgroup.
+
+   **Rationale**: Duplicate subscriptions may indicate configuration errors.
+
+   **Error Handling**: Accept latest subscription, log conflict.
+
+   **Code Location**: ``src/sd/sd_server.cpp``
+
+.. requirement:: Error - SD Offer Without Endpoint Option
+   :id: REQ_SD_060_E01
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Receive OfferService with no IPv4EndpointOption attached, verify offer is stored but communication is not attempted.
+
+   The software shall handle OfferService messages without endpoint options by storing the offer but not attempting communication.
+
+   **Rationale**: Offers without endpoints may be followed by separate endpoint announcements.
+
+   **Error Handling**: Store offer, log warning about missing endpoint.
+
+   **Code Location**: ``src/sd/sd_client.cpp``
+
+.. requirement:: Error - SD Options Array Too Large
+   :id: REQ_SD_021_E01
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Receive SD message with options_length > remaining message size, verify message is rejected.
+
+   The software shall reject SD messages where the options array length exceeds the remaining message data.
+
+   **Rationale**: Prevents buffer overread from malformed SD messages.
+
+   **Error Handling**: Discard entire message, log length mismatch.
+
+   **Code Location**: ``src/sd/sd_message.cpp``
+
+.. requirement:: Error - SD FindService Timeout
+   :id: REQ_SD_070_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Send FindService, wait for configured discovery timeout (e.g., 30s), verify timeout is reported to application.
+
+   The software shall report a timeout when no OfferService response is received within the configured discovery period.
+
+   **Rationale**: Discovery timeout enables the application to handle unavailable services.
+
+   **Error Handling**: Invoke discovery timeout callback.
+
+   **Code Location**: ``src/sd/sd_client.cpp``
+
+.. requirement:: Error - SD Malformed Option Length
+   :id: REQ_SD_050_E01
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Parse IPv4EndpointOption with declared length=5 (should be 9), verify option is rejected.
+
+   The software shall reject SD options whose declared length does not match the expected length for the option type.
+
+   **Rationale**: Length mismatches indicate malformed or truncated options.
+
+   **Error Handling**: Skip option, log expected vs actual length.
+
+   **Code Location**: ``src/sd/sd_message.cpp``
+
+.. requirement:: Error - SD Reserved Flags
+   :id: REQ_SD_010_E02
+   :status: implemented
+   :priority: low
+   :category: error_path
+   :verification: Unit test: Parse SD flags byte with reserved bits set (e.g., 0b00111111), verify reserved bits are ignored.
+
+   The software shall ignore reserved bits in the SD flags byte for forward compatibility.
+
+   **Rationale**: Reserved bits may be defined in future SD versions.
+
+   **Error Handling**: Ignore reserved bits, process known flags normally.
+
+   **Code Location**: ``src/sd/sd_message.cpp``
+
+.. requirement:: Error - SD TTL Zero in Offer
+   :id: REQ_SD_060_E02
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Receive OfferService with TTL=0, verify it is treated as StopOffer and service is marked unavailable.
+
+   The software shall treat OfferService entries with TTL=0 as StopOffer messages.
+
+   **Rationale**: TTL=0 signals immediate unavailability regardless of entry type.
+
+   **Error Handling**: Remove service from registry, notify application.
+
+   **Code Location**: ``src/sd/sd_client.cpp``
+
+.. requirement:: Error - SD Entry With Invalid TTL Format
+   :id: REQ_SD_044_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Parse entry with TTL bytes that are not aligned to the 24-bit field boundary, verify correct extraction.
+
+   The software shall correctly extract the 24-bit TTL field from the 3-byte packed format.
+
+   **Rationale**: TTL is a 24-bit field packed across bytes, requiring careful extraction.
+
+   **Error Handling**: Validate TTL extraction against known test vectors.
+
+   **Code Location**: ``src/sd/sd_message.cpp``
+
+.. requirement:: Error - SD Multiple Subscriptions Same Client
+   :id: REQ_SD_083_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Client subscribes to same eventgroup 3 times, verify only one active subscription exists and TTL is refreshed.
+
+   The software shall coalesce duplicate subscriptions from the same client into a single subscription with refreshed TTL.
+
+   **Rationale**: Duplicate subscriptions waste server resources.
+
+   **Error Handling**: Refresh TTL of existing subscription.
+
+   **Code Location**: ``src/sd/sd_server.cpp``
+
+.. requirement:: Error - SD Server Offers During Shutdown
+   :id: REQ_SD_113_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Initiate shutdown, attempt new offer_service(), verify it is rejected with NOT_READY error.
+
+   The software shall reject new service offers during the shutdown phase.
+
+   **Rationale**: Offering services during shutdown creates inconsistent state.
+
+   **Error Handling**: Return NOT_READY error.
+
+   **Code Location**: ``src/sd/sd_server.cpp``
+
+.. requirement:: Error - SD ACK Timeout
+   :id: REQ_SD_116_E02
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Subscribe to eventgroup, wait for ACK timeout, verify subscription state transitions to TIMEOUT.
+
+   The software shall handle subscription ACK timeouts by transitioning the subscription state.
+
+   **Rationale**: ACK timeout indicates the server may be unreachable.
+
+   **Error Handling**: Transition to TIMEOUT state, retry or notify application.
+
+   **Code Location**: ``src/sd/sd_client.cpp``
+
+.. requirement:: Error - SD Invalid Multicast Address in Option
+   :id: REQ_SD_123_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Parse IPv4MulticastOption with unicast address 10.0.0.1 (not multicast), verify option is rejected.
+
+   The software shall reject multicast options containing non-multicast addresses.
+
+   **Rationale**: Non-multicast addresses in multicast options indicate malformed messages.
+
+   **Error Handling**: Reject option, log invalid address.
+
+   **Code Location**: ``src/sd/sd_message.cpp``
 
 Traceability
 ============

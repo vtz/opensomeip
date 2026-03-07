@@ -36,7 +36,7 @@ Segment Calculation
 
 .. requirement:: Calculate Segment Count
    :id: REQ_TP_001
-   :satisfies: feat_req_someiptp_760
+   :satisfies: feat_req_someiptp_760, feat_req_someiptp_764, feat_req_someiptp_759
    :status: implemented
    :priority: high
    :category: happy_path
@@ -55,7 +55,7 @@ Segment Calculation
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify maximum segment payload is 1392 bytes.
+   :verification: Unit test: Segment a 5000-byte message, verify each non-final segment payload is exactly 1392 bytes (max segment payload).
 
    The software shall use a maximum segment payload size of 1392 bytes
    (87 x 16 bytes) to fit within UDP/IP limits and maintain alignment.
@@ -96,7 +96,7 @@ Segment Calculation
 
 .. requirement:: Preserve Original Message Fields
    :id: REQ_TP_005
-   :satisfies: feat_req_someiptp_762
+   :satisfies: feat_req_someiptp_762, feat_req_someiptp_774
    :status: implemented
    :priority: high
    :category: happy_path
@@ -115,7 +115,7 @@ Segment Calculation
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify all segments have the same Session ID.
+   :verification: Unit test: Segment a message, verify all resulting segments have the same Session ID as the original message.
 
    The software shall use the same Session ID for all segments of an
    original message.
@@ -141,7 +141,7 @@ Segment Calculation
 
 .. requirement:: Preserve Base Message Type
    :id: REQ_TP_008
-   :satisfies: feat_req_someiptp_765
+   :satisfies: feat_req_someiptp_765, feat_req_someiptp_774
    :status: implemented
    :priority: high
    :category: happy_path
@@ -232,7 +232,7 @@ Header Structure
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify TP header is exactly 4 bytes.
+   :verification: Unit test: Parse TP header, verify it is exactly 4 bytes: Offset (28 bits), Reserved (3 bits), More flag (1 bit).
 
    The software shall use a TP header size of exactly 4 bytes.
 
@@ -245,7 +245,7 @@ Offset Field
 
 .. requirement:: Offset Field Position
    :id: REQ_TP_012
-   :satisfies: feat_req_someiptp_766
+   :satisfies: feat_req_someiptp_766, feat_req_someiptp_768
    :status: implemented
    :priority: high
    :category: happy_path
@@ -264,7 +264,7 @@ Offset Field
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Offset value = byte_offset / 16.
+   :verification: Unit test: Construct segment at byte offset 1392, verify TP Offset field = 1392/16 = 87. Test offset 0 → Offset=0.
 
    The software shall calculate the Offset field value as the segment's
    byte offset in the original payload divided by 16.
@@ -279,7 +279,7 @@ Offset Field
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify first segment has Offset = 0.
+   :verification: Unit test: Segment a message, verify the first segment has TP Offset = 0 and More Segments Flag = 1.
 
    The software shall set the Offset field to 0 for the first segment.
 
@@ -341,7 +341,7 @@ Reserved Flags
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Verify Reserved flags are ignored during parsing.
+   :verification: Unit test: Receive segment with reserved flags set (bits 1-3 of last byte), verify segment is processed normally.
 
    The software shall ignore the Reserved flag values when parsing
    received TP segments.
@@ -389,7 +389,7 @@ More Segments Flag
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify More Segments = 0 for last segment.
+   :verification: Unit test: Segment 5000-byte message, verify last segment has More Segments = 0. Verify non-last have More = 1.
 
    The software shall set the More Segments flag to 0 for the last
    segment of a message.
@@ -460,7 +460,7 @@ Buffer Management
 
 .. requirement:: Allocate Reassembly Buffer
    :id: REQ_TP_030
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_782
    :status: implemented
    :priority: high
    :category: happy_path
@@ -505,7 +505,7 @@ Buffer Management
 
 .. requirement:: Buffer Resize on Final Segment
    :id: REQ_TP_033
-   :satisfies: feat_req_someiptp_770
+   :satisfies: feat_req_someiptp_770, feat_req_someiptp_783
    :status: implemented
    :priority: high
    :category: happy_path
@@ -523,7 +523,7 @@ Segment Storage
 
 .. requirement:: Store Segment by Offset
    :id: REQ_TP_034
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_789
    :status: implemented
    :priority: high
    :category: happy_path
@@ -538,7 +538,7 @@ Segment Storage
 
 .. requirement:: Track Received Segments
    :id: REQ_TP_035
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_789
    :status: implemented
    :priority: high
    :category: happy_path
@@ -572,7 +572,7 @@ Segment Storage
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Verify overlapping segments are detected.
+   :verification: Unit test: Receive segment at offset 0 (100 bytes), then offset 50 (100 bytes), verify overlap is detected and logged.
 
    The software shall detect segments that partially overlap with
    previously received segments.
@@ -585,7 +585,7 @@ Segment Storage
 
 .. requirement:: Handle Out-of-Order Segments
    :id: REQ_TP_038
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_789, feat_req_someiptp_790
    :status: implemented
    :priority: high
    :category: happy_path
@@ -603,7 +603,7 @@ Completion Detection
 
 .. requirement:: Complete on Last Segment with No Gaps
    :id: REQ_TP_039
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_783
    :status: implemented
    :priority: high
    :category: happy_path
@@ -633,7 +633,7 @@ Completion Detection
 
 .. requirement:: Deliver Reassembled Message
    :id: REQ_TP_041
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_783
    :status: implemented
    :priority: high
    :category: happy_path
@@ -669,7 +669,7 @@ Reassembly Error Handling
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Verify error when gaps remain after last segment.
+   :verification: Unit test: Receive segments at offsets 0 and 200 (gap at 100-199), then final segment, verify error for missing data.
 
    The software shall report an error if all segments are not received
    within the timeout period after the last segment is received.
@@ -698,7 +698,7 @@ Reassembly Error Handling
 
 .. requirement:: Error - Total Length Inconsistency
    :id: REQ_TP_043
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_792
    :status: implemented
    :priority: high
    :category: error_path
@@ -737,11 +737,11 @@ Timer Management
 
 .. requirement:: Start Reassembly Timer
    :id: REQ_TP_050
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_796
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify reassembly timer starts on first segment.
+   :verification: Unit test: Receive first segment of new message, verify reassembly timer is started. Verify timer is not restarted on subsequent segments.
 
    The software shall start a reassembly timer when the first segment
    of a new message is received.
@@ -782,11 +782,11 @@ Timer Management
 
 .. requirement:: Timer Expiry Detection
    :id: REQ_TP_053
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_796
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify timer expiry is detected promptly.
+   :verification: Unit test: Set reassembly timeout to 500ms, start reassembly, verify timeout fires within 500ms +/- 50ms.
 
    The software shall detect when the reassembly timer expires for
    any active reassembly operation.
@@ -800,11 +800,11 @@ Timeout Actions
 
 .. requirement:: Discard Buffer on Timeout
    :id: REQ_TP_054
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_796
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Verify all segments are discarded on timeout.
+   :verification: Unit test: Receive 3 of 5 expected segments, trigger timeout, verify all 3 segments' data is discarded from buffer.
 
    The software shall discard all received segments for a reassembly
    operation when the timeout expires.
@@ -821,7 +821,7 @@ Timeout Actions
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Verify buffer memory is released on timeout.
+   :verification: Unit test: Start reassembly with 1MB buffer, trigger timeout, verify memory is freed (no leak under valgrind/ASAN).
 
    The software shall release all memory associated with the reassembly
    buffer when the timeout expires.
@@ -834,11 +834,11 @@ Timeout Actions
 
 .. requirement:: Report Timeout Error
    :id: REQ_TP_056
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_792
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Verify timeout error is reported to application.
+   :verification: Unit test: Set timeout callback, trigger reassembly timeout, verify callback is invoked with Message ID and segment count.
 
    The software shall report a timeout error to the application layer
    when reassembly fails due to timeout.
@@ -874,7 +874,7 @@ Timer Error Handling
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Verify error handling when timer creation fails.
+   :verification: Unit test: Exhaust system timers, attempt new reassembly, verify fallback polling or segment rejection with error log.
 
    The software shall handle timer creation failures by using a fallback
    polling mechanism or rejecting the segment.
@@ -890,7 +890,7 @@ Timer Error Handling
    :status: implemented
    :priority: low
    :category: error_path
-   :verification: Unit test: Verify duplicate timer creation is prevented.
+   :verification: Unit test: Start reassembly (timer active), receive segment for same message, verify no second timer is created.
 
    The software shall prevent creation of duplicate timers for the
    same reassembly operation.
@@ -906,11 +906,11 @@ Statistics and Monitoring
 
 .. requirement:: Track Segmentation Statistics
    :id: REQ_TP_060
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_801
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Verify segmentation statistics are tracked.
+   :verification: Unit test: Segment 10 messages, verify statistics: messages_segmented=10, total_segments_sent matches expected count.
 
    The software shall track statistics for segmentation operations,
    including messages segmented and segments sent.
@@ -921,11 +921,11 @@ Statistics and Monitoring
 
 .. requirement:: Track Reassembly Statistics
    :id: REQ_TP_061
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_801
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Verify reassembly statistics are tracked.
+   :verification: Unit test: Reassemble 5 messages, verify statistics: messages_reassembled=5, total_segments_received is accurate.
 
    The software shall track statistics for reassembly operations,
    including messages reassembled and segments received.
@@ -936,11 +936,11 @@ Statistics and Monitoring
 
 .. requirement:: Track Error Statistics
    :id: REQ_TP_062
-   :satisfies: feat_req_someiptp_774
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_792
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Verify error statistics are tracked.
+   :verification: Unit test: Trigger 3 timeouts, verify error_statistics.timeouts=3. Trigger 2 retransmissions, verify count=2.
 
    The software shall track error statistics including timeouts,
    retransmissions, and malformed segments.
@@ -955,7 +955,7 @@ Statistics and Monitoring
    :status: implemented
    :priority: low
    :category: happy_path
-   :verification: Unit test: Verify active reassembly count can be queried.
+   :verification: Unit test: Start 3 concurrent reassemblies, complete 1, query active count, verify result is 2.
 
    The software shall provide a method to query the number of active
    reassembly operations.
@@ -963,6 +963,316 @@ Statistics and Monitoring
    **Rationale**: Resource monitoring.
 
    **Code Location**: ``src/tp/tp_manager.cpp``
+
+Sender Behavior
+===============
+
+.. requirement:: Segment Only Configured Messages
+   :id: REQ_TP_070
+   :satisfies: feat_req_someiptp_788, feat_req_someiptp_775
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Configure TP for method_id=0x0001, send oversized message for 0x0001 (segmented) and 0x0002 (rejected), verify only 0x0001 is segmented.
+
+   The software shall segment only messages that are configured for
+   SOME/IP-TP segmentation.
+
+   **Rationale**: Restricting segmentation to configured messages prevents unexpected bandwidth usage.
+
+   **Code Location**: ``src/tp/tp_segmenter.cpp`` (segment_message configuration check)
+
+.. requirement:: Send Segments in Ascending Order
+   :id: REQ_TP_071
+   :satisfies: feat_req_someiptp_777
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Segment a 5000-byte message into 4 segments, verify offsets are 0, 1392, 2784, 4176 (ascending).
+
+   The software shall send segments in ascending offset order.
+
+   **Rationale**: Ascending offset order simplifies receiver buffer management.
+
+   **Code Location**: ``src/tp/tp_segmenter.cpp`` (create_multi_segments, ascending offset)
+
+.. requirement:: Uniform Segment Size
+   :id: REQ_TP_072
+   :satisfies: feat_req_someiptp_778, feat_req_someiptp_779
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Segment a 5000-byte message, verify all non-final segments have size equal to max_segment_size. Verify final segment size <= max_segment_size.
+
+   All segments with More Segments Flag = 1 shall have the same size.
+   The sender shall maximize segment size within specification limits.
+
+   **Rationale**: Uniform segment size maximizes throughput and simplifies flow control.
+
+   **Code Location**: ``src/tp/tp_segmenter.cpp`` (max_segment_size uniformity)
+
+.. requirement:: No Overlapping or Duplicate Segments
+   :id: REQ_TP_073
+   :satisfies: feat_req_someiptp_780
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Segment a message and verify no two segments have overlapping byte ranges. Verify concatenation produces the original payload.
+
+   The sender shall not send overlapping or duplicated segments.
+
+   **Rationale**: No overlapping segments prevents ambiguous data and simplifies reassembly.
+
+   **Code Location**: ``src/tp/tp_segmenter.cpp`` (sequential offset calculation)
+
+.. requirement:: Configured Client IDs for TP
+   :id: REQ_TP_074
+   :satisfies: feat_req_someiptp_786
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Configure allowed Client IDs [0x0001, 0x0002], send TP segment with Client ID 0x0003, verify rejection.
+
+   The sender shall use only configured Client IDs for SOME/IP-TP
+   messages.
+
+   **Rationale**: Client ID restrictions enable per-client traffic accounting and access control.
+
+   **Code Location**: ``src/tp/tp_segmenter.cpp``, ``include/tp/tp_types.h``
+
+.. requirement:: Traffic Shaping for Segments
+   :id: REQ_TP_075
+   :satisfies: feat_req_someiptp_801
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Configure segment rate limit to 10 segments/second, send 100-segment message, verify send duration >= 10 seconds.
+
+   ECUs using SOME/IP-TP shall implement traffic shaping to limit the
+   rate of segments on the network.
+
+   **Rationale**: Traffic shaping prevents TP segments from overwhelming the network.
+
+   **Code Location**: ``src/tp/tp_segmenter.cpp``, ``include/tp/tp_types.h`` (TpConfig)
+
+
+Receiver Behavior Extensions
+============================
+
+.. requirement:: Session ID Based Reassembly Detection
+   :id: REQ_TP_076
+   :satisfies: feat_req_someiptp_793, feat_req_someiptp_795, feat_req_someiptp_776
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Send segments with Session ID 0x0001, then send segment with Session ID 0x0002 (same Message ID), verify new reassembly buffer is created.
+
+   The receiver shall use the Session ID to detect new original messages.
+   A segment with a different Session ID shall start a new reassembly.
+
+   **Rationale**: Session-based detection enables the receiver to handle concurrent messages from the same sender.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (process_segment, session_id matching)
+
+.. requirement:: Return Code from Last Segment
+   :id: REQ_TP_077
+   :satisfies: feat_req_someiptp_784
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Send 3 segments, last segment has Return Code 0x01 (E_NOT_OK), verify reassembled message Return Code is 0x01.
+
+   The Return Code of the reassembled message shall be taken from the
+   last segment received.
+
+   **Rationale**: Using the last segment's return code ensures the overall result reflects the final processing state.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (add_segment_to_buffer, last segment return code)
+
+.. requirement:: Clear TP Flag After Reassembly
+   :id: REQ_TP_078
+   :satisfies: feat_req_someiptp_785
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Reassemble TP message with TP_REQUEST (type=0x20), verify delivered message has Message Type 0x00 (REQUEST, TP flag cleared).
+
+   The Message Type passed to the application after reassembly shall
+   have the TP Flag set to 0.
+
+   **Rationale**: Clearing the TP flag presents a clean non-segmented message to the application layer.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (clear TP flag on completion)
+
+.. requirement:: Cancel Reassembly on Resource Exhaustion
+   :id: REQ_TP_079
+   :satisfies: feat_req_someiptp_796
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Set max reassembly buffer size, exceed it by sending many concurrent reassemblies, verify oldest is cancelled and resources freed.
+
+   The receiver shall cancel desegmentation when missing segments are
+   detected and resources are exhausted.
+
+   **Rationale**: Cancellation on resource exhaustion prevents memory exhaustion from incomplete reassemblies.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (cancel_reassembly)
+
+.. requirement:: No Cross-Message Reordering
+   :id: REQ_TP_080
+   :satisfies: feat_req_someiptp_802, feat_req_someiptp_803
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Interleave segments from Message A (session 1) and Message B (session 2) on same buffer, verify segments are not mixed.
+
+   Reordering of segments from different original messages using the
+   same buffer shall not be allowed.
+
+   **Rationale**: Isolating buffers by session prevents data corruption from interleaved segments.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (session_id isolation per buffer)
+
+.. requirement:: Overlapping Segment Handling
+   :id: REQ_TP_081
+   :satisfies: feat_req_someiptp_810, feat_req_someiptp_797, feat_req_someiptp_820
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Send segment at offset 0 (100 bytes), then send overlapping segment at offset 50 (100 bytes) with different data, verify reassembly is cancelled.
+
+   The receiver may cancel reassembly when overlapping or duplicated
+   segments change previously received bytes, if configurable.
+
+   **Rationale**: Detecting overlapping changes prevents silent data corruption.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (add_segment_to_buffer overlap detection)
+
+
+TP Informational References
+===========================
+
+.. requirement:: TP Error Handling
+   :id: REQ_TP_082
+   :satisfies: feat_req_someiptp_792, feat_req_someiptp_832
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Send segment with invalid TP header (offset not aligned to 16 bytes), verify error is reported and segment is discarded.
+
+   The software shall detect and handle obvious errors in received
+   TP segments gracefully.
+
+   **Rationale**: Graceful error handling prevents crashes from malformed TP headers.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (parse_tp_header validation)
+
+
+.. requirement:: Error - Segment Size Exceeds Maximum
+   :id: REQ_TP_072_E01
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Configure max_segment_size=1392, attempt to send segment of 2000 bytes, verify error.
+
+   The software shall reject segments that exceed the configured maximum segment size.
+
+   **Rationale**: Oversized segments violate the TP protocol and may cause receiver buffer overflows.
+
+   **Error Handling**: Return SEGMENT_TOO_LARGE error code.
+
+   **Code Location**: ``src/tp/tp_segmenter.cpp``
+
+.. requirement:: Error - Reassembly Buffer Full
+   :id: REQ_TP_076_E01
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Fill reassembly buffer to capacity, receive new segment, verify oldest incomplete reassembly is cancelled.
+
+   The software shall cancel the oldest incomplete reassembly when the reassembly buffer pool is full.
+
+   **Rationale**: Prevents memory exhaustion from many concurrent incomplete reassemblies.
+
+   **Error Handling**: Cancel oldest reassembly, log Message ID of cancelled reassembly.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp``
+
+.. requirement:: Error - Invalid TP Offset Alignment
+   :id: REQ_TP_071_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Receive segment with offset not aligned to 16 bytes, verify segment is rejected.
+
+   The software shall reject TP segments whose offset is not aligned to the required boundary.
+
+   **Rationale**: Misaligned offsets indicate protocol violations.
+
+   **Error Handling**: Discard segment, log offset value and expected alignment.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp``
+
+.. requirement:: Error - TP Message Type Mismatch
+   :id: REQ_TP_070_E01
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Receive TP segment with Message Type that does not match the first segment's type, verify rejection.
+
+   The software shall reject TP segments whose Message Type differs from the first segment in the reassembly.
+
+   **Rationale**: Type mismatches indicate crossed message streams.
+
+   **Error Handling**: Discard segment, log type mismatch details.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp``
+
+.. requirement:: Error - TP Zero-Length Segment
+   :id: REQ_TP_071_E02
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Receive TP segment with 0-byte payload, verify segment is discarded.
+
+   The software shall discard TP segments with zero-length payload.
+
+   **Rationale**: Zero-length segments carry no data and waste resources.
+
+   **Error Handling**: Discard segment, log warning.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp``
+
+.. requirement:: Error - TP Reassembly Result Exceeds Maximum Message Size
+   :id: REQ_TP_076_E02
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Receive segments that would reassemble into a message exceeding max_message_size, verify reassembly is cancelled.
+
+   The software shall cancel reassembly when the projected reassembled message would exceed the configured maximum message size.
+
+   **Rationale**: Prevents excessive memory allocation from crafted segment offsets.
+
+   **Error Handling**: Cancel reassembly, free buffer, log projected size.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp``
+
+.. requirement:: Error - TP Segment With Wrong Protocol Version
+   :id: REQ_TP_070_E02
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Receive TP segment with Protocol Version 0x02, verify segment is discarded before reassembly.
+
+   The software shall discard TP segments with unsupported Protocol Version.
+
+   **Rationale**: Protocol Version mismatch indicates incompatible TP implementation.
+
+   **Error Handling**: Discard segment, log version mismatch.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp``
 
 Traceability
 ============

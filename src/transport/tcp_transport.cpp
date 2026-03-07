@@ -26,8 +26,8 @@ namespace transport {
 
 /**
  * @brief TCP Transport constructor
- * @implements REQ_TRANSPORT_002
- * @implements REQ_TRANSPORT_003
+ * @implements REQ_TRANSPORT_002a, REQ_TRANSPORT_002b
+ * @implements REQ_TRANSPORT_003a, REQ_TRANSPORT_003b
  * @implements REQ_TRANSPORT_005
  * @satisfies feat_req_someip_850
  * @satisfies feat_req_someip_851

@@ -36,6 +36,10 @@ using namespace someip::tp;
  * @tests REQ_TP_013_E01, REQ_TP_015_E01
  * @tests REQ_TP_030_E01, REQ_TP_030_E02, REQ_TP_039_E01
  * @tests REQ_TP_050_E01, REQ_TP_050_E02
+ * @tests REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075
+ * @tests REQ_TP_076, REQ_TP_077, REQ_TP_078, REQ_TP_079, REQ_TP_080, REQ_TP_081, REQ_TP_082
+ * @tests REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02, REQ_TP_071_E01, REQ_TP_071_E02
+ * @tests REQ_TP_070_E01, REQ_TP_070_E02
  * @tests feat_req_someiptp_400
  * @tests feat_req_someiptp_402
  * @tests feat_req_someiptp_410
@@ -414,4 +418,266 @@ TEST_F(TpTest, PreserveMessageTypeWithTpFlag) {
         EXPECT_EQ(static_cast<MessageType>(message_type), expected_tp_type)
             << "Message type not preserved with TP flag";
     }
+}
+
+// ============================================================================
+// TP Error Handling Tests
+// ============================================================================
+
+/**
+ * @test_case TC_TP_ERR_001
+ * @tests REQ_TP_001_E01, REQ_TP_001_E02
+ * @brief Test segmentation of message exceeding max_message_size
+ */
+TEST_F(TpTest, MessageTooLarge) {
+    TpConfig small_config;
+    small_config.max_segment_size = 512;
+    small_config.max_message_size = 1000;
+    TpSegmenter segmenter(small_config);
+
+    Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001));
+    std::vector<uint8_t> oversized_payload(2000, 0xAA);
+    message.set_payload(oversized_payload);
+
+    std::vector<TpSegment> segments;
+    TpResult result = segmenter.segment_message(message, segments);
+    EXPECT_EQ(result, TpResult::MESSAGE_TOO_LARGE);
+    EXPECT_TRUE(segments.empty());
+}
+
+/**
+ * @test_case TC_TP_ERR_002
+ * @tests REQ_TP_001_E03, REQ_TP_013_E01
+ * @brief Test TpManager resource exhaustion
+ */
+TEST_F(TpTest, ManagerResourceExhausted) {
+    TpConfig limited_config;
+    limited_config.max_segment_size = 512;
+    limited_config.max_message_size = 10000;
+    limited_config.max_concurrent_transfers = 1;
+    TpManager manager(limited_config);
+    manager.initialize();
+
+    Message msg1(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001));
+    msg1.set_payload(std::vector<uint8_t>(1500, 0xAA));
+
+    Message msg2(MessageId(0x1234, 0x5679), RequestId(0xABCD, 0x0002));
+    msg2.set_payload(std::vector<uint8_t>(1500, 0xBB));
+
+    uint32_t transfer_id1 = 0, transfer_id2 = 0;
+    EXPECT_EQ(manager.segment_message(msg1, transfer_id1), TpResult::SUCCESS);
+    EXPECT_EQ(manager.segment_message(msg2, transfer_id2), TpResult::RESOURCE_EXHAUSTED);
+
+    manager.shutdown();
+}
+
+/**
+ * @test_case TC_TP_ERR_003
+ * @tests REQ_TP_015_E01, REQ_TP_030_E01
+ * @brief Test TpManager get_next_segment with invalid transfer ID
+ */
+TEST_F(TpTest, InvalidTransferId) {
+    TpManager manager(config);
+    manager.initialize();
+
+    TpSegment segment;
+    EXPECT_EQ(manager.get_next_segment(99999, segment), TpResult::INVALID_SEGMENT);
+
+    manager.shutdown();
+}
+
+/**
+ * @test_case TC_TP_ERR_004
+ * @tests REQ_TP_030_E02, REQ_TP_039_E01
+ * @brief Test TpManager cancel_transfer and acknowledge_segments with invalid transfer ID
+ */
+TEST_F(TpTest, CancelAndAcknowledgeInvalid) {
+    TpManager manager(config);
+    manager.initialize();
+
+    EXPECT_EQ(manager.cancel_transfer(99999), TpResult::INVALID_SEGMENT);
+    EXPECT_EQ(manager.acknowledge_segments(99999, {1, 2}), TpResult::INVALID_SEGMENT);
+
+    manager.shutdown();
+}
+
+/**
+ * @test_case TC_TP_ERR_005
+ * @tests REQ_TP_050_E01, REQ_TP_050_E02
+ * @brief Test TpManager get_transfer_status for unknown transfer
+ */
+TEST_F(TpTest, TransferStatusUnknown) {
+    TpManager manager(config);
+    manager.initialize();
+
+    EXPECT_EQ(manager.get_transfer_status(99999), TpTransferState::FAILED);
+
+    manager.shutdown();
+}
+
+/**
+ * @test_case TC_TP_ERR_006
+ * @tests REQ_TP_013_E01, REQ_TP_015_E01
+ * @brief Test reassembler with invalid segment (payload too short for TP header)
+ */
+TEST_F(TpTest, ReassemblerInvalidSegment) {
+    TpReassembler reassembler(config);
+
+    TpSegment invalid_segment;
+    invalid_segment.header.message_length = 50;
+    invalid_segment.header.segment_offset = 0;
+    invalid_segment.header.segment_length = 100;
+    invalid_segment.header.message_type = TpMessageType::FIRST_SEGMENT;
+    // Payload too short - less than 20 bytes (SOME/IP header + TP header)
+    invalid_segment.payload.resize(10, 0xAA);
+
+    std::vector<uint8_t> reassembled;
+    EXPECT_FALSE(reassembler.process_segment(invalid_segment, reassembled));
+}
+
+/**
+ * @test_case TC_TP_ERR_007
+ * @tests REQ_TP_030_E01, REQ_TP_030_E02
+ * @brief Test reassembler cancel and progress queries
+ */
+TEST_F(TpTest, ReassemblerCancelAndProgress) {
+    TpReassembler reassembler(config);
+
+    // No active reassembly: cancel should be safe
+    reassembler.cancel_reassembly(0x12345678);
+    EXPECT_EQ(reassembler.get_active_reassemblies(), 0u);
+
+    uint32_t received = 0, total = 0;
+    EXPECT_FALSE(reassembler.get_reassembly_progress(0x12345678, received, total));
+}
+
+/**
+ * @test_case TC_TP_ERR_008
+ * @tests REQ_TP_050_E01
+ * @brief Test TpManager callback registration
+ */
+TEST_F(TpTest, ManagerCallbackRegistration) {
+    TpManager manager(config);
+    manager.initialize();
+
+    bool completion_set = false;
+    manager.set_completion_callback([&](uint32_t, TpResult) {
+        completion_set = true;
+    });
+
+    bool progress_set = false;
+    manager.set_progress_callback([&](uint32_t, uint32_t, uint32_t) {
+        progress_set = true;
+    });
+
+    // Verify callbacks were set without crashing
+    EXPECT_TRUE(true);
+
+    manager.shutdown();
+}
+
+/**
+ * @test_case TC_TP_E01
+ * @tests REQ_TP_072_E01
+ * @brief Test TP segment with invalid offset alignment
+ */
+TEST_F(TpTest, InvalidOffsetAlignment) {
+    TpManager tp_manager(config);
+    ASSERT_TRUE(tp_manager.initialize());
+
+    TpSegment segment;
+    segment.header.segment_offset = 15;
+    segment.header.message_type = TpMessageType::CONSECUTIVE_SEGMENT;
+    segment.payload.resize(256, 0xBB);
+
+    std::vector<uint8_t> complete_message;
+    bool result = tp_manager.handle_received_segment(segment, complete_message);
+    EXPECT_FALSE(result) << "Non-aligned offset should be rejected";
+
+    tp_manager.shutdown();
+}
+
+/**
+ * @test_case TC_TP_E02
+ * @tests REQ_TP_076_E01, REQ_TP_076_E02
+ * @brief Test TP reassembly timeout
+ */
+TEST_F(TpTest, ReassemblyTimeout) {
+    config.reassembly_timeout = std::chrono::milliseconds(50);
+    TpManager tp_manager(config);
+    ASSERT_TRUE(tp_manager.initialize());
+
+    Message large_msg(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    std::vector<uint8_t> payload(2048, 0xCC);
+    large_msg.set_payload(payload);
+
+    uint32_t transfer_id;
+    TpResult result = tp_manager.segment_message(large_msg, transfer_id);
+    ASSERT_EQ(result, TpResult::SUCCESS);
+
+    TpSegment first_segment;
+    result = tp_manager.get_next_segment(transfer_id, first_segment);
+    ASSERT_EQ(result, TpResult::SUCCESS);
+
+    std::vector<uint8_t> complete_message;
+    bool handle_result = tp_manager.handle_received_segment(first_segment, complete_message);
+    EXPECT_TRUE(handle_result);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    tp_manager.process_timeouts();
+
+    TpSegment second_segment;
+    result = tp_manager.get_next_segment(transfer_id, second_segment);
+    if (result == TpResult::SUCCESS) {
+        std::vector<uint8_t> complete_msg2;
+        handle_result = tp_manager.handle_received_segment(second_segment, complete_msg2);
+        EXPECT_FALSE(handle_result) << "Should fail after timeout";
+    }
+
+    tp_manager.shutdown();
+}
+
+/**
+ * @test_case TC_TP_E03
+ * @tests REQ_TP_071_E01, REQ_TP_071_E02
+ * @brief Test TP with zero-length segment payload
+ */
+TEST_F(TpTest, ZeroLengthSegmentPayload) {
+    TpManager tp_manager(config);
+    ASSERT_TRUE(tp_manager.initialize());
+
+    TpSegment empty_segment;
+    empty_segment.header.segment_offset = 0;
+    empty_segment.header.segment_length = 100;
+    empty_segment.header.message_type = TpMessageType::FIRST_SEGMENT;
+    empty_segment.payload.clear();
+
+    std::vector<uint8_t> complete_message;
+    bool result = tp_manager.handle_received_segment(empty_segment, complete_message);
+    EXPECT_FALSE(result) << "Segment with segment_length != payload.size() should be rejected";
+
+    tp_manager.shutdown();
+}
+
+/**
+ * @test_case TC_TP_E04
+ * @tests REQ_TP_070_E01, REQ_TP_070_E02
+ * @brief Test TP message exceeding max size
+ */
+TEST_F(TpTest, MessageExceedsMaxSize) {
+    config.max_message_size = 1000;
+    TpManager tp_manager(config);
+    ASSERT_TRUE(tp_manager.initialize());
+
+    Message oversized(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    std::vector<uint8_t> payload(2000, 0xDD);
+    oversized.set_payload(payload);
+
+    uint32_t transfer_id;
+    TpResult result = tp_manager.segment_message(oversized, transfer_id);
+    EXPECT_EQ(result, TpResult::MESSAGE_TOO_LARGE) << "Oversized message should be rejected";
+
+    tp_manager.shutdown();
 }

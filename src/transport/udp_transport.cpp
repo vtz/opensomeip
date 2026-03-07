@@ -22,7 +22,7 @@ namespace transport {
 
 /**
  * @brief UDP Transport constructor
- * @implements REQ_TRANSPORT_001
+ * @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
  * @implements REQ_TRANSPORT_005
  * @satisfies feat_req_someip_800
  * @satisfies feat_req_someip_801
@@ -45,8 +45,8 @@ UdpTransport::~UdpTransport() {
 
 /**
  * @brief Send a SOME/IP message via UDP
- * @implements REQ_TRANSPORT_001
- * @implements REQ_TRANSPORT_004
+ * @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
+ * @implements REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
  * @satisfies feat_req_someip_800
  * @satisfies feat_req_someip_804
  */
