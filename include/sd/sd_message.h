@@ -22,9 +22,7 @@
 namespace someip {
 namespace sd {
 
-/**
- * @brief SD Entry base class
- */
+/** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C */
 class SdEntry {
 public:
     SdEntry(EntryType type, uint32_t ttl = 0)
@@ -52,9 +50,7 @@ protected:
     uint32_t ttl_{0};
 };
 
-/**
- * @brief Service Entry (Find/Offer Service)
- */
+/** @implements REQ_SD_200B */
 class ServiceEntry : public SdEntry {
 public:
     ServiceEntry(EntryType type = EntryType::FIND_SERVICE)
@@ -198,9 +194,7 @@ private:
     std::string config_string_;
 };
 
-/**
- * @brief SOME/IP SD Message
- */
+/** @implements REQ_SD_200A, REQ_SD_200C, REQ_MSG_113 */
 class SdMessage {
 public:
     SdMessage() = default;

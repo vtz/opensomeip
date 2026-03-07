@@ -114,6 +114,7 @@ public:
     }
 
 private:
+    /** @implements REQ_MSG_111, REQ_MSG_116, REQ_MSG_127, REQ_MSG_128, REQ_MSG_130, REQ_MSG_132A, REQ_MSG_133C, REQ_MSG_134, REQ_COMPAT_003 */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
         // Check if this is for our service and is a request
         if (message->get_service_id() != service_id_ || !message->is_request()) {
@@ -171,6 +172,7 @@ private:
         }
     }
 
+    /** @implements REQ_MSG_129 */
     void send_error_response(MessagePtr request, const transport::Endpoint& sender, ReturnCode error_code) {
         MessageId response_msg_id(request->get_service_id(), request->get_method_id());
         Message response(response_msg_id, request->get_request_id(),

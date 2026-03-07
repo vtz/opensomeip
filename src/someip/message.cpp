@@ -24,20 +24,6 @@ namespace someip {
 
 /**
  * @brief SOME/IP Message implementation
- * @implements REQ_ARCH_001
- * @implements REQ_ARCH_003
- * @implements REQ_MSG_001, REQ_MSG_002, REQ_MSG_003
- * @implements REQ_MSG_010, REQ_MSG_011, REQ_MSG_012
- * @implements REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
- * @implements REQ_MSG_030, REQ_MSG_031
- * @implements REQ_MSG_040, REQ_MSG_041
- * @implements REQ_MSG_050, REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_054, REQ_MSG_055
- * @implements REQ_MSG_056, REQ_MSG_057, REQ_MSG_058, REQ_MSG_059
- * @implements REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP
- * @implements REQ_MSG_070, REQ_MSG_072, REQ_MSG_073, REQ_MSG_074, REQ_MSG_075
- * @implements REQ_MSG_076, REQ_MSG_077, REQ_MSG_078, REQ_MSG_079, REQ_MSG_080
- * @implements REQ_MSG_090, REQ_MSG_091, REQ_MSG_092, REQ_MSG_093
- * @implements REQ_MSG_100
  * @satisfies feat_req_someip_538
  * @satisfies feat_req_someip_539
  * @satisfies feat_req_someip_540

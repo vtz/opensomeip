@@ -9,7 +9,6 @@
 
 /**
  * @brief ThreadX memory pool backend.
- * @implements REQ_PLATFORM_THREADX_002
  *
  * Provides a static pool allocator for Message objects using a
  * ThreadX TX_BLOCK_POOL.
@@ -21,6 +20,7 @@
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_THREADX_002, REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_INDEPENDENT, REQ_PAL_MEM_EXHAUST_E01, REQ_PAL_MEM_THREADSAFE_E01 */
 MessagePtr allocate_message();
 void release_message(Message* msg);
 

@@ -22,8 +22,7 @@ namespace transport {
 
 /**
  * @brief UDP Transport constructor
- * @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
- * @implements REQ_TRANSPORT_005
+ * @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c, REQ_TRANSPORT_005, REQ_TRANSPORT_012
  * @satisfies feat_req_someip_800
  * @satisfies feat_req_someip_801
  */
@@ -167,6 +166,7 @@ bool UdpTransport::is_running() const {
     return running_;
 }
 
+/** @implements REQ_TRANSPORT_011 */
 Result UdpTransport::join_multicast_group(const std::string& multicast_address) {
     platform::ScopedLock lock(socket_mutex_);
 
@@ -293,6 +293,7 @@ Result UdpTransport::create_socket() {
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_014 */
 Result UdpTransport::bind_socket() {
     platform::ScopedLock lock(socket_mutex_);
 
@@ -310,6 +311,7 @@ Result UdpTransport::bind_socket() {
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_011 */
 Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
     if (!is_multicast_address(endpoint.get_address())) {
         return Result::INVALID_ENDPOINT;

@@ -23,7 +23,6 @@ namespace transport {
 
 /**
  * @brief Transport endpoint implementation
- * @implements REQ_TRANSPORT_006
  */
 
 // Predefined endpoints
@@ -31,6 +30,7 @@ const Endpoint SOMEIP_SD_MULTICAST_ENDPOINT("239.118.122.69", 30490, TransportPr
 const Endpoint SOMEIP_DEFAULT_UDP_ENDPOINT("127.0.0.1", 30490, TransportProtocol::UDP);
 const Endpoint SOMEIP_DEFAULT_TCP_ENDPOINT("127.0.0.1", 30490, TransportProtocol::TCP);
 
+/** @implements REQ_TRANSPORT_006 */
 Endpoint::Endpoint()
     : address_("127.0.0.1"), port_(30490), protocol_(TransportProtocol::UDP) {
 }

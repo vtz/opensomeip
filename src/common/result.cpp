@@ -5,10 +5,10 @@ namespace someip {
 
 /**
  * @brief Convert Result enum to string representation
- * @implements REQ_ARCH_004, REQ_MY_001
  *
  * Provides consistent error handling with descriptive error codes.
  */
+/** @implements REQ_ARCH_004, REQ_MY_001 */
 std::string to_string(Result result) {
     static const std::unordered_map<Result, std::string> result_strings = {
         {Result::SUCCESS, "SUCCESS"},

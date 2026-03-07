@@ -19,13 +19,7 @@
 
 namespace someip {
 
-/**
- * @brief Result codes for SOME/IP operations
- * @implements REQ_ARCH_004, REQ_ARCH_005, REQ_ARCH_006, REQ_ARCH_007
- *
- * This enum defines all possible result codes that can be returned
- * by SOME/IP stack operations. Designed for safety-critical use.
- */
+/** @implements REQ_ARCH_004, REQ_ARCH_005, REQ_ARCH_006, REQ_ARCH_007 */
 enum class Result : uint8_t {
     // Success codes
     SUCCESS = 0x00,

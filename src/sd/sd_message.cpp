@@ -23,26 +23,12 @@ namespace sd {
 
 /**
  * @brief Service Discovery message serialization
- * @implements REQ_ARCH_001
- * @implements REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
- * @implements REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014
- * @implements REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026
- * @implements REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035
- * @implements REQ_SD_040, REQ_SD_041, REQ_SD_042, REQ_SD_043, REQ_SD_044, REQ_SD_045, REQ_SD_046
- * @implements REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054, REQ_SD_055, REQ_SD_056
- * @implements REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065
- * @implements REQ_SD_066, REQ_SD_067, REQ_SD_068, REQ_SD_069
- * @implements REQ_SD_070, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_074, REQ_SD_075, REQ_SD_076, REQ_SD_077
- * @implements REQ_SD_001_E01, REQ_SD_010_E01
- * @implements REQ_SD_020_E01, REQ_SD_020_E02, REQ_SD_021_E01, REQ_SD_022_E01
- * @implements REQ_SD_040_E01, REQ_SD_041_E01
- * @implements REQ_SD_050_E01, REQ_SD_052_E01
- * @implements REQ_SD_060_E01, REQ_SD_061_E01, REQ_SD_062_E01, REQ_SD_064_E01, REQ_SD_075_E01
  * @satisfies feat_req_someipsd_300
  * @satisfies feat_req_someipsd_301
  */
 
 // SdEntry serialization/deserialization
+/** @implements REQ_ARCH_001, REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007, REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014, REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026, REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035 */
 std::vector<uint8_t> SdEntry::serialize() const {
     std::vector<uint8_t> data;
     data.reserve(16);  // SD entry is 16 bytes
@@ -82,6 +68,7 @@ std::vector<uint8_t> SdEntry::serialize() const {
     return data;
 }
 
+/** @implements REQ_SD_001_E01, REQ_SD_010_E01, REQ_SD_020_E01, REQ_SD_020_E02, REQ_SD_021_E01, REQ_SD_022_E01 */
 bool SdEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     if (offset + 16 > data.size()) {
         return false;
@@ -97,6 +84,7 @@ bool SdEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
 }
 
 // ServiceEntry implementation
+/** @implements REQ_SD_040, REQ_SD_041, REQ_SD_042, REQ_SD_043, REQ_SD_044, REQ_SD_045, REQ_SD_046, REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054, REQ_SD_055, REQ_SD_056 */
 std::vector<uint8_t> ServiceEntry::serialize() const {
     std::vector<uint8_t> data = SdEntry::serialize();
 
@@ -114,6 +102,7 @@ std::vector<uint8_t> ServiceEntry::serialize() const {
     return data;
 }
 
+/** @implements REQ_SD_040_E01, REQ_SD_041_E01, REQ_SD_050_E01, REQ_SD_052_E01 */
 bool ServiceEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     if (!SdEntry::deserialize(data, offset)) {
         return false;
@@ -134,6 +123,7 @@ bool ServiceEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset)
 }
 
 // EventGroupEntry implementation
+/** @implements REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065, REQ_SD_066, REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_074, REQ_SD_075, REQ_SD_076, REQ_SD_077 */
 std::vector<uint8_t> EventGroupEntry::serialize() const {
     std::vector<uint8_t> data = SdEntry::serialize();
 
@@ -155,6 +145,7 @@ std::vector<uint8_t> EventGroupEntry::serialize() const {
     return data;
 }
 
+/** @implements REQ_SD_060_E01, REQ_SD_061_E01, REQ_SD_062_E01, REQ_SD_064_E01, REQ_SD_075_E01 */
 bool EventGroupEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     if (!SdEntry::deserialize(data, offset)) {
         return false;
@@ -207,6 +198,7 @@ bool SdOption::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
 }
 
 // IPv4EndpointOption implementation
+/** @implements REQ_SD_120, REQ_SD_122, REQ_SD_123 */
 std::vector<uint8_t> IPv4EndpointOption::serialize() const {
     std::vector<uint8_t> data = SdOption::serialize();
 
@@ -236,6 +228,7 @@ std::vector<uint8_t> IPv4EndpointOption::serialize() const {
     return data;
 }
 
+/** @implements REQ_SD_064_E01 */
 bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     if (!SdOption::deserialize(data, offset)) {
         return false;
@@ -293,6 +286,7 @@ std::string IPv4EndpointOption::get_ipv4_address_string() const {
 }
 
 // IPv4MulticastOption implementation
+/** @implements REQ_SD_132, REQ_SD_160 */
 std::vector<uint8_t> IPv4MulticastOption::serialize() const {
     std::vector<uint8_t> data = SdOption::serialize();
 
@@ -317,6 +311,7 @@ std::vector<uint8_t> IPv4MulticastOption::serialize() const {
     return data;
 }
 
+/** @implements REQ_SD_064_E01 */
 bool IPv4MulticastOption::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     if (!SdOption::deserialize(data, offset)) {
         return false;
@@ -346,6 +341,7 @@ bool IPv4MulticastOption::deserialize(const std::vector<uint8_t>& data, size_t& 
 }
 
 // ConfigurationOption implementation
+/** @implements REQ_SD_236, REQ_SD_243 */
 std::vector<uint8_t> ConfigurationOption::serialize() const {
     std::vector<uint8_t> data;
 
@@ -370,6 +366,7 @@ std::vector<uint8_t> ConfigurationOption::serialize() const {
     return data;
 }
 
+/** @implements REQ_SD_236, REQ_SD_243 */
 bool ConfigurationOption::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     if (!SdOption::deserialize(data, offset)) {
         return false;
@@ -395,6 +392,7 @@ void SdMessage::add_option(std::unique_ptr<SdOption> option) {
     options_.push_back(std::move(option));
 }
 
+/** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320 */
 std::vector<uint8_t> SdMessage::serialize() const {
     std::vector<uint8_t> data;
 
@@ -437,6 +435,7 @@ std::vector<uint8_t> SdMessage::serialize() const {
     return data;
 }
 
+/** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320 */
 bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     if (data.size() < 8) {
         return false;

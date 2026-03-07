@@ -26,9 +26,7 @@ namespace transport {
 
 /**
  * @brief TCP Transport constructor
- * @implements REQ_TRANSPORT_002a, REQ_TRANSPORT_002b
- * @implements REQ_TRANSPORT_003a, REQ_TRANSPORT_003b
- * @implements REQ_TRANSPORT_005
+ * @implements REQ_TRANSPORT_002a, REQ_TRANSPORT_002b, REQ_TRANSPORT_003a, REQ_TRANSPORT_003b, REQ_TRANSPORT_005
  * @satisfies feat_req_someip_850
  * @satisfies feat_req_someip_851
  */
@@ -147,6 +145,7 @@ Result TcpTransport::start() {
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_019 */
 Result TcpTransport::stop() {
     if (!running_) {
         return Result::SUCCESS;
@@ -305,6 +304,7 @@ Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_016, REQ_TRANSPORT_018 */
 Result TcpTransport::connect_internal(const Endpoint& endpoint) {
     sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -395,6 +395,7 @@ void TcpTransport::disconnect_internal() {
     }
 }
 
+/** @implements REQ_TRANSPORT_024 */
 void TcpTransport::receive_loop() {
     while (running_) {
         if (server_mode_) {

@@ -7,6 +7,10 @@
 #ifndef SOMEIP_PLATFORM_POSIX_THREAD_IMPL_H
 #define SOMEIP_PLATFORM_POSIX_THREAD_IMPL_H
 
+/**
+ * @brief POSIX/Host threading backend.
+ */
+
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -19,22 +23,28 @@
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_POSIX_001, REQ_PAL_MUTEX_LOCK, REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_TRYLOCK, REQ_PAL_MUTEX_NONCOPY */
 using Mutex = std::mutex;
 
+/** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_JOINABLE, REQ_PAL_THREAD_JOIN, REQ_PAL_THREAD_NONCOPY, REQ_PAL_THREAD_DTOR_E01 */
 class Thread {
 public:
     Thread() = default;
 
+    /** @implements REQ_PAL_THREAD_CREATE */
     template <typename Fn, typename... Args>
     explicit Thread(Fn&& fn, Args&&... args)
         : thread_(std::forward<Fn>(fn), std::forward<Args>(args)...) {}
 
+    /** @implements REQ_PAL_THREAD_DTOR_E01 */
     ~Thread() {
         if (thread_.joinable()) thread_.detach();
     }
 
+    /** @implements REQ_PAL_THREAD_JOINABLE */
     bool joinable() const { return thread_.joinable(); }
 
+    /** @implements REQ_PAL_THREAD_JOIN */
     void join() {
         if (thread_.joinable()) thread_.join();
     }
@@ -49,6 +59,7 @@ private:
 };
 
 namespace this_thread {
+/** @implements REQ_PAL_SLEEP_DURATION, REQ_PAL_SLEEP_ZERO */
 using std::this_thread::sleep_for;
 } // namespace this_thread
 

@@ -6,7 +6,6 @@
 
 /**
  * @brief Static pool allocator for SOME/IP Message objects on FreeRTOS.
- * @implements REQ_PLATFORM_FREERTOS_002
  *
  * Uses a fixed-size static buffer with a bitmap to track free blocks.
  * All operations are protected by a FreeRTOS mutex.
@@ -56,6 +55,7 @@ static void ensure_pool_init() {
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_FREERTOS_002 */
 MessagePtr allocate_message() {
     ensure_pool_init();
 

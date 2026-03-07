@@ -29,9 +29,6 @@ namespace sd {
  * @brief Service Discovery Client implementation
  * @implements REQ_ARCH_001
  * @implements REQ_ARCH_002
- * @implements REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084
- * @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094
- * @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103
  * @satisfies feat_req_someipsd_100
  * @satisfies feat_req_someipsd_101
  * @satisfies feat_req_someipsd_102
@@ -52,6 +49,7 @@ public:
         shutdown();
     }
 
+    /** @implements REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084 */
     bool initialize() {
         if (running_) {
             return true;
@@ -71,6 +69,7 @@ public:
         return true;
     }
 
+    /** @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094 */
     void shutdown() {
         if (!running_) {
             return;
@@ -90,10 +89,7 @@ public:
         transport_->stop();
     }
 
-    /**
-     * @brief Find a service using SD
-     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
-     */
+    /** @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_127, REQ_SD_131, REQ_SD_210, REQ_SD_212 */
     bool find_service(uint16_t service_id, FindServiceCallback callback,
                      std::chrono::milliseconds timeout) {
 
@@ -137,10 +133,7 @@ public:
         return true;
     }
 
-    /**
-     * @brief Subscribe to service availability notifications
-     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
-     */
+    /** @implements REQ_SD_114, REQ_SD_116 */
     bool subscribe_service(uint16_t service_id,
                           ServiceAvailableCallback available_callback,
                           ServiceUnavailableCallback unavailable_callback) {
@@ -158,15 +151,13 @@ public:
         return !already_exists;
     }
 
+    /** @implements REQ_SD_114, REQ_SD_116 */
     bool unsubscribe_service(uint16_t service_id) {
         platform::ScopedLock lock(subscriptions_mutex_);
         return service_subscriptions_.erase(service_id) > 0;
     }
 
-    /**
-     * @brief Subscribe to eventgroup
-     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
-     */
+    /** @implements REQ_SD_231, REQ_SD_232, REQ_SD_241 */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
         if (!running_) {
             return false;
@@ -205,6 +196,7 @@ public:
         return transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
     }
 
+    /** @implements REQ_SD_231, REQ_SD_232, REQ_SD_241 */
     bool unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
         if (!running_) {
             return false;
@@ -284,6 +276,7 @@ private:
         }
     }
 
+    /** @implements REQ_SD_311, REQ_SD_331 */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
         // Check if this is an SD message (service ID 0xFFFF)
         if (message->get_service_id() != 0xFFFF) {
@@ -312,6 +305,7 @@ private:
         // TODO: Handle transport errors
     }
 
+    /** @implements REQ_SD_311, REQ_SD_331 */
     void process_sd_entries(const SdMessage& message) {
         for (const auto& entry : message.get_entries()) {
             switch (entry->get_type()) {
@@ -330,6 +324,7 @@ private:
         }
     }
 
+    /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_346, REQ_SD_348 */
     void handle_service_offer(const ServiceEntry& entry, const SdMessage& message) {
         ServiceInstance instance;
         instance.service_id = entry.get_service_id();
@@ -394,6 +389,7 @@ private:
         }
     }
 
+    /** @implements REQ_SD_274 */
     void handle_service_stop_offer(const ServiceEntry& entry) {
         ServiceInstance instance;
         instance.service_id = entry.get_service_id();

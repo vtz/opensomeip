@@ -24,9 +24,7 @@
 namespace someip {
 namespace sd {
 
-/**
- * @brief SD (Service Discovery) entry types
- */
+/** @implements REQ_SD_242 */
 enum class EntryType : uint8_t {
     FIND_SERVICE = 0x00,           // Client searching for service
     OFFER_SERVICE = 0x01,          // Service offering itself
@@ -38,9 +36,7 @@ enum class EntryType : uint8_t {
     SUBSCRIBE_EVENTGROUP_NACK = 0x07
 };
 
-/**
- * @brief SD option types
- */
+/** @implements REQ_SD_121, REQ_SD_124 */
 enum class OptionType : uint8_t {
     CONFIGURATION = 0x01,
     LOAD_BALANCING = 0x02,
@@ -52,9 +48,7 @@ enum class OptionType : uint8_t {
     IPV6_SD_ENDPOINT = 0x26
 };
 
-/**
- * @brief Service discovery result codes
- */
+/** @implements REQ_SD_340 */
 enum class SdResult : uint8_t {
     SUCCESS,
     SERVICE_NOT_FOUND,
@@ -64,9 +58,7 @@ enum class SdResult : uint8_t {
     INVALID_PARAMETERS
 };
 
-/**
- * @brief Service instance information
- */
+/** @implements REQ_MSG_110, REQ_SD_293, REQ_SD_356 */
 struct ServiceInstance {
     uint16_t service_id{0};
     uint16_t instance_id{0};
@@ -83,9 +75,7 @@ struct ServiceInstance {
           major_version(maj_ver), minor_version(min_ver) {}
 };
 
-/**
- * @brief Event group information
- */
+/** @implements REQ_MSG_113, REQ_SD_271, REQ_SD_355 */
 struct EventGroup {
     uint16_t eventgroup_id{0};
     uint8_t major_version{0};
@@ -96,9 +86,7 @@ struct EventGroup {
         : eventgroup_id(eg_id), major_version(maj_ver), minor_version(min_ver) {}
 };
 
-/**
- * @brief Service discovery configuration
- */
+/** @implements REQ_SD_131, REQ_SD_180, REQ_SD_281, REQ_SD_310, REQ_COMPAT_030 */
 struct SdConfig {
     std::string multicast_address{"239.255.255.251"};  // Default SOME/IP SD multicast
     uint16_t multicast_port{30490};                    // Default SOME/IP SD port
@@ -120,9 +108,7 @@ using ServiceAvailableCallback = std::function<void(const ServiceInstance&)>;
 using ServiceUnavailableCallback = std::function<void(const ServiceInstance&)>;
 using FindServiceCallback = std::function<void(const std::vector<ServiceInstance>&)>;
 
-/**
- * @brief Subscription state
- */
+/** @implements REQ_SD_271 */
 enum class SubscriptionState : uint8_t {
     REQUESTED,
     SUBSCRIBED,

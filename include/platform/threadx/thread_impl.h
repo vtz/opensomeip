@@ -9,7 +9,6 @@
 
 /**
  * @brief ThreadX threading backend.
- * @implements REQ_PLATFORM_THREADX_001
  *
  * Provides Mutex, ConditionVariable, Thread, and sleep_for using
  * ThreadX primitives.
@@ -50,6 +49,7 @@
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_THREADX_001, REQ_PAL_MUTEX_LOCK, REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_TRYLOCK, REQ_PAL_MUTEX_NONCOPY, REQ_PAL_MUTEX_UNLOCK_E01 */
 class Mutex {
 public:
     Mutex() {
@@ -60,14 +60,17 @@ public:
         tx_mutex_delete(&mtx_);
     }
 
+    /** @implements REQ_PAL_MUTEX_LOCK */
     void lock() {
         tx_mutex_get(&mtx_, TX_WAIT_FOREVER);
     }
 
+    /** @implements REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_UNLOCK_E01 */
     void unlock() {
         tx_mutex_put(&mtx_);
     }
 
+    /** @implements REQ_PAL_MUTEX_TRYLOCK */
     bool try_lock() {
         return tx_mutex_get(&mtx_, TX_NO_WAIT) == TX_SUCCESS;
     }
@@ -79,6 +82,7 @@ private:
     TX_MUTEX mtx_;
 };
 
+/** @implements REQ_PAL_CV_WAIT, REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_NOTIFY_ONE, REQ_PAL_CV_NOTIFY_ALL, REQ_PAL_CV_OWNERSHIP */
 class ConditionVariable {
 public:
     ConditionVariable() {
@@ -89,14 +93,17 @@ public:
         tx_event_flags_delete(&ev_);
     }
 
+    /** @implements REQ_PAL_CV_NOTIFY_ONE */
     void notify_one() {
         tx_event_flags_set(&ev_, 0x1, TX_OR);
     }
 
+    /** @implements REQ_PAL_CV_NOTIFY_ALL */
     void notify_all() {
         tx_event_flags_set(&ev_, 0x1, TX_OR);
     }
 
+    /** @implements REQ_PAL_CV_WAIT, REQ_PAL_CV_OWNERSHIP */
     void wait(Mutex& mtx) {
         ULONG actual = 0;
         mtx.unlock();
@@ -104,6 +111,7 @@ public:
         mtx.lock();
     }
 
+    /** @implements REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_OWNERSHIP */
     template <typename Pred>
     void wait(Mutex& mtx, Pred pred) {
         while (!pred()) {
@@ -118,10 +126,12 @@ private:
     TX_EVENT_FLAGS_GROUP ev_;
 };
 
+/** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_JOINABLE, REQ_PAL_THREAD_JOIN, REQ_PAL_THREAD_NONCOPY, REQ_PAL_THREAD_CREATE_E01, REQ_PAL_THREAD_DTOR_E01 */
 class Thread {
 public:
     Thread() = default;
 
+    /** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_CREATE_E01 */
     template <typename Fn, typename... Args>
     explicit Thread(Fn&& fn, Args&&... args) {
         tx_event_flags_create(&join_ev_, const_cast<CHAR*>("someip_join"));
@@ -166,6 +176,7 @@ public:
         started_ = true;
     }
 
+    /** @implements REQ_PAL_THREAD_DTOR_E01 */
     ~Thread() {
         if (joinable()) {
             tx_thread_terminate(&tcb_);
@@ -182,8 +193,10 @@ public:
         }
     }
 
+    /** @implements REQ_PAL_THREAD_JOINABLE */
     bool joinable() const { return started_ && !joined_; }
 
+    /** @implements REQ_PAL_THREAD_JOIN */
     void join() {
         if (!joinable()) return;
         ULONG actual = 0;
@@ -267,6 +280,7 @@ private:
 
 namespace this_thread {
 
+/** @implements REQ_PAL_SLEEP_DURATION, REQ_PAL_SLEEP_ZERO */
 template <typename Rep, typename Period>
 void sleep_for(const std::chrono::duration<Rep, Period>& d) {
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();

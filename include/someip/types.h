@@ -21,6 +21,10 @@
 namespace someip {
 
 /**
+ * @brief SOME/IP type definitions
+ */
+
+/**
  * @brief SOME/IP protocol version
  */
 static constexpr uint8_t SOMEIP_PROTOCOL_VERSION = 0x01;
@@ -30,9 +34,7 @@ static constexpr uint8_t SOMEIP_PROTOCOL_VERSION = 0x01;
  */
 static constexpr uint8_t SOMEIP_INTERFACE_VERSION = 0x01;
 
-/**
- * @brief SOME/IP Service Discovery service ID
- */
+/** @implements REQ_MSG_112 */
 static constexpr uint16_t SOMEIP_SD_SERVICE_ID = 0xFFFF;
 
 /**
@@ -65,9 +67,7 @@ static constexpr uint8_t SOMEIP_SD_MESSAGE_TYPE = 0x02;
  */
 static constexpr uint8_t SOMEIP_SD_RETURN_CODE = 0x00;
 
-/**
- * @brief Message ID structure combining Service ID and Method/Event ID
- */
+/** @implements REQ_MSG_111 */
 struct MessageId {
     uint16_t service_id{0};
     uint16_t method_id{0};
@@ -136,9 +136,7 @@ enum class MessageType : uint8_t {
     TP_NOTIFICATION = 0x22
 };
 
-/**
- * @brief SOME/IP return codes
- */
+/** @implements REQ_MSG_131 */
 enum class ReturnCode : uint8_t {
     E_OK = 0x00,
     E_NOT_OK = 0x01,

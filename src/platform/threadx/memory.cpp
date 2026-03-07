@@ -6,7 +6,6 @@
 
 /**
  * @brief Static pool allocator for SOME/IP Message objects on ThreadX.
- * @implements REQ_PLATFORM_THREADX_002
  *
  * Uses a TX_BLOCK_POOL backed by a static buffer.  Pool creation is
  * performed lazily on first allocation, guarded by a TX_MUTEX.
@@ -61,6 +60,7 @@ static void ensure_pool_init() {
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_THREADX_002 */
 MessagePtr allocate_message() {
     ensure_pool_init();
 

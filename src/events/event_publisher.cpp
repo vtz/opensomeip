@@ -111,6 +111,7 @@ public:
         return true;
     }
 
+    /** @implements REQ_MSG_110, REQ_MSG_119, REQ_MSG_121A, REQ_MSG_121B, REQ_MSG_121C, REQ_MSG_141 */
     bool publish_event(uint16_t event_id, const std::vector<uint8_t>& data) {
         if (!running_) {
             return false;
@@ -153,6 +154,7 @@ public:
         return publish_event(event_id, data);
     }
 
+    /** @implements REQ_MSG_124, REQ_MSG_125, REQ_MSG_126 */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const std::vector<EventFilter>& filters) {
 

@@ -74,6 +74,7 @@ public:
         transport_->stop();
     }
 
+    /** @implements REQ_MSG_122 */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                             EventNotificationCallback notification_callback,
                             SubscriptionStatusCallback status_callback,
@@ -201,6 +202,7 @@ public:
         return true;
     }
 
+    /** @implements REQ_MSG_123 */
     std::vector<EventSubscription> get_active_subscriptions() const {
         platform::ScopedLock subs_lock(subscriptions_mutex_);
         std::vector<EventSubscription> result;

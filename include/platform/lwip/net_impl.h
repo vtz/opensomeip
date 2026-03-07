@@ -9,7 +9,6 @@
 
 /**
  * @brief lwIP socket-API networking backend.
- * @implements REQ_PLATFORM_LWIP_001
  *
  * lwIP's socket layer (lwip/sockets.h) is intentionally POSIX-compatible.
  * When LWIP_COMPAT_SOCKETS is enabled in lwipopts.h, standard names
@@ -48,15 +47,19 @@
 #define inet_pton(...)    lwip_inet_pton(__VA_ARGS__)
 #endif /* !LWIP_COMPAT_SOCKETS */
 
+/** @implements REQ_PLATFORM_LWIP_001 */
 #define someip_close_socket(fd) lwip_close(fd)
+/** @implements REQ_PLATFORM_LWIP_001 */
 #define someip_shutdown_socket(fd) lwip_shutdown(fd, SHUT_RDWR)
 
+/** @implements REQ_PLATFORM_LWIP_001 */
 static inline int someip_set_nonblocking(int fd) {
     int flags = lwip_fcntl(fd, F_GETFL, 0);
     if (flags < 0) return -1;
     return lwip_fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
 
+/** @implements REQ_PLATFORM_LWIP_001 */
 static inline int someip_set_blocking(int fd) {
     int flags = lwip_fcntl(fd, F_GETFL, 0);
     if (flags < 0) return -1;

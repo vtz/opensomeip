@@ -7,6 +7,10 @@
 #ifndef SOMEIP_PLATFORM_ZEPHYR_THREAD_IMPL_H
 #define SOMEIP_PLATFORM_ZEPHYR_THREAD_IMPL_H
 
+/**
+ * @brief Zephyr threading backend.
+ */
+
 #include <zephyr/kernel.h>
 #include <functional>
 #include <chrono>
@@ -19,17 +23,21 @@
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_ZEPHYR_001, REQ_PAL_MUTEX_LOCK, REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_TRYLOCK, REQ_PAL_MUTEX_NONCOPY, REQ_PAL_MUTEX_UNLOCK_E01 */
 class Mutex {
 public:
     Mutex()  { k_mutex_init(&m_); }
     ~Mutex() = default;
 
+    /** @implements REQ_PAL_MUTEX_LOCK */
     void lock()   {
         int rc = k_mutex_lock(&m_, K_FOREVER);
         __ASSERT(rc == 0, "k_mutex_lock failed: %d", rc);
         (void)rc;
     }
+    /** @implements REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_UNLOCK_E01 */
     void unlock() { k_mutex_unlock(&m_); }
+    /** @implements REQ_PAL_MUTEX_TRYLOCK */
     bool try_lock() { return k_mutex_lock(&m_, K_NO_WAIT) == 0; }
 
     k_mutex* native_handle() { return &m_; }
@@ -40,18 +48,23 @@ private:
     k_mutex m_;
 };
 
+/** @implements REQ_PAL_CV_WAIT, REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_NOTIFY_ONE, REQ_PAL_CV_NOTIFY_ALL, REQ_PAL_CV_OWNERSHIP */
 class ConditionVariable {
 public:
     ConditionVariable()  { k_condvar_init(&cv_); }
     ~ConditionVariable() = default;
 
+    /** @implements REQ_PAL_CV_NOTIFY_ONE */
     void notify_one() { k_condvar_signal(&cv_); }
+    /** @implements REQ_PAL_CV_NOTIFY_ALL */
     void notify_all() { k_condvar_broadcast(&cv_); }
 
+    /** @implements REQ_PAL_CV_WAIT, REQ_PAL_CV_OWNERSHIP */
     void wait(Mutex& mtx) {
         k_condvar_wait(&cv_, mtx.native_handle(), K_FOREVER);
     }
 
+    /** @implements REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_OWNERSHIP */
     template <typename Pred>
     void wait(Mutex& mtx, Pred pred) {
         while (!pred()) {
@@ -65,10 +78,12 @@ private:
     k_condvar cv_;
 };
 
+/** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_JOINABLE, REQ_PAL_THREAD_JOIN, REQ_PAL_THREAD_NONCOPY, REQ_PAL_THREAD_CREATE_E01, REQ_PAL_THREAD_DTOR_E01 */
 class Thread {
 public:
     Thread() = default;
 
+    /** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_CREATE_E01 */
     template <typename Fn, typename... Args>
     explicit Thread(Fn&& fn, Args&&... args) {
         ctx_ = new std::function<void()>(
@@ -83,6 +98,7 @@ public:
         started_ = true;
     }
 
+    /** @implements REQ_PAL_THREAD_DTOR_E01 */
     ~Thread() {
         if (joinable()) {
             k_thread_abort(&thread_);
@@ -92,8 +108,10 @@ public:
         }
     }
 
+    /** @implements REQ_PAL_THREAD_JOINABLE */
     bool joinable() const { return started_ && !joined_; }
 
+    /** @implements REQ_PAL_THREAD_JOIN */
     void join() {
         if (joinable()) {
             k_thread_join(&thread_, K_FOREVER);
@@ -121,6 +139,7 @@ private:
 
 namespace this_thread {
 
+/** @implements REQ_PAL_SLEEP_DURATION, REQ_PAL_SLEEP_ZERO */
 template <typename Rep, typename Period>
 void sleep_for(const std::chrono::duration<Rep, Period>& d) {
     int64_t ms = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();

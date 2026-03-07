@@ -19,7 +19,6 @@ namespace e2e {
 
 /**
  * @brief E2E CRC calculation functions
- * @implements REQ_E2E_PLUGIN_004
  * @satisfies feat_req_someip_102
  *
  * Provides CRC calculation using publicly available standards:
@@ -33,6 +32,7 @@ namespace E2ECRC {
 static constexpr uint8_t SAE_J1850_POLY = 0x1D;
 static constexpr uint8_t SAE_J1850_INIT = 0xFF;
 
+/** @implements REQ_E2E_PLUGIN_004 */
 uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data) {
     uint8_t crc = SAE_J1850_INIT;
 

@@ -30,9 +30,6 @@ namespace sd {
  * @brief Service Discovery Server implementation
  * @implements REQ_ARCH_001
  * @implements REQ_ARCH_002
- * @implements REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084
- * @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094
- * @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103
  * @satisfies feat_req_someipsd_200
  * @satisfies feat_req_someipsd_201
  * @satisfies feat_req_someipsd_202
@@ -53,6 +50,7 @@ public:
         shutdown();
     }
 
+    /** @implements REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084 */
     bool initialize() {
         if (running_) {
             return true;
@@ -75,6 +73,7 @@ public:
         return true;
     }
 
+    /** @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094 */
     void shutdown() {
         if (!running_) {
             return;
@@ -98,10 +97,7 @@ public:
         transport_->stop();
     }
 
-    /**
-     * @brief Offer a service using SD
-     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
-     */
+    /** @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152 */
     bool offer_service(const ServiceInstance& instance,
                       const std::string& unicast_endpoint,
                       const std::string& multicast_endpoint) {
@@ -141,6 +137,7 @@ public:
         return true;
     }
 
+    /** @implements REQ_SD_220, REQ_SD_221, REQ_SD_222, REQ_SD_223, REQ_SD_250, REQ_SD_251, REQ_SD_260 */
     bool stop_offer_service(uint16_t service_id, uint16_t instance_id) {
         platform::ScopedLock lock(offered_services_mutex_);
 
@@ -161,6 +158,7 @@ public:
         return true;
     }
 
+    /** @implements REQ_SD_270, REQ_SD_272, REQ_SD_273 */
     bool update_service_ttl(uint16_t service_id, uint16_t instance_id, uint32_t ttl_seconds) {
         platform::ScopedLock lock(offered_services_mutex_);
 
@@ -178,6 +176,7 @@ public:
         return true;
     }
 
+    /** @implements REQ_SD_115, REQ_SD_117, REQ_SD_118, REQ_SD_119 */
     bool handle_eventgroup_subscription(uint16_t service_id, uint16_t instance_id,
                                        uint16_t eventgroup_id, const std::string& client_address,
                                        bool acknowledge) {
@@ -274,6 +273,7 @@ private:
         }
     }
 
+    /** @implements REQ_SD_250, REQ_SD_251, REQ_SD_260 */
     void start_offer_timer() {
         if (offer_timer_thread_ && offer_timer_thread_->joinable()) {
             return;
@@ -306,6 +306,7 @@ private:
         }
     }
 
+    /** @implements REQ_SD_250, REQ_SD_251, REQ_SD_260 */
     void send_periodic_offers() {
         platform::ScopedLock lock(offered_services_mutex_);
 
@@ -329,10 +330,7 @@ private:
         }
     }
 
-    /**
-     * @brief Send service offer SD message
-     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
-     */
+    /** @implements REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152 */
     void send_service_offer(const OfferedService& service) {
         // Create offer service entry
         auto offer_entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
@@ -379,6 +377,7 @@ private:
         }
     }
 
+    /** @implements REQ_SD_220, REQ_SD_221, REQ_SD_222, REQ_SD_223 */
     void send_service_stop_offer(const OfferedService& service) {
         // Create stop offer service entry
         auto stop_entry = std::make_unique<ServiceEntry>(EntryType::STOP_OFFER_SERVICE);
@@ -403,6 +402,7 @@ private:
         }
     }
 
+    /** @implements REQ_SD_290, REQ_SD_292 */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
         // Check if this is an SD message (service ID 0xFFFF)
         if (message->get_service_id() != 0xFFFF) {
@@ -431,6 +431,7 @@ private:
         // TODO: Handle transport errors
     }
 
+    /** @implements REQ_SD_300, REQ_SD_312 */
     void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender) {
         for (const auto& entry : message.get_entries()) {
             switch (entry->get_type()) {
@@ -448,6 +449,7 @@ private:
         }
     }
 
+    /** @implements REQ_SD_330, REQ_SD_341, REQ_SD_342, REQ_SD_343, REQ_SD_344, REQ_SD_345 */
     void handle_find_service(const ServiceEntry& find_entry, const transport::Endpoint& sender) {
         platform::ScopedLock lock(offered_services_mutex_);
 
@@ -464,6 +466,7 @@ private:
         }
     }
 
+    /** @implements REQ_SD_347, REQ_SD_349, REQ_SD_350, REQ_SD_351, REQ_SD_352, REQ_SD_353, REQ_SD_354 */
     void handle_eventgroup_subscription_request(const EventGroupEntry& subscription_entry,
                                                const SdMessage& message,
                                                const transport::Endpoint& sender) {
@@ -498,10 +501,7 @@ private:
         );
     }
 
-    /**
-     * @brief Send service offer to specific client
-     * @implements REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007
-     */
+    /** @implements REQ_SD_280, REQ_SD_283 */
     void send_service_offer_to_client(const OfferedService& service, const transport::Endpoint& client) {
         // Create unicast offer message (similar to multicast but unicast)
         auto offer_entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);

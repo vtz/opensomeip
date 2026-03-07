@@ -7,23 +7,25 @@
 #ifndef SOMEIP_PLATFORM_HOST_CONDITION_VARIABLE_H
 #define SOMEIP_PLATFORM_HOST_CONDITION_VARIABLE_H
 
+/**
+ * @brief Host ConditionVariable backend.
+ */
+
 #include <mutex>
 #include <condition_variable>
 
 namespace someip {
 namespace platform {
 
-// ConditionVariable wrapper that matches the Zephyr RTOS API:
-//   wait(Mutex&) and wait(Mutex&, Pred)
-//
-// On host, Mutex == std::mutex. The wrapper uses std::unique_lock internally
-// and an RAII ReleaseOnExit guard to ensure lk.release() is called on every
-// exit path (normal and exceptional), so the caller retains mutex ownership.
+/** @implements REQ_PAL_CV_WAIT, REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_NOTIFY_ONE, REQ_PAL_CV_NOTIFY_ALL, REQ_PAL_CV_OWNERSHIP, REQ_PAL_CV_EXCEPT_E01 */
 class ConditionVariable {
 public:
+    /** @implements REQ_PAL_CV_NOTIFY_ONE */
     void notify_one() { cv_.notify_one(); }
+    /** @implements REQ_PAL_CV_NOTIFY_ALL */
     void notify_all() { cv_.notify_all(); }
 
+    /** @implements REQ_PAL_CV_WAIT, REQ_PAL_CV_OWNERSHIP, REQ_PAL_CV_EXCEPT_E01 */
     void wait(std::mutex& m) {
         std::unique_lock<std::mutex> lk(m, std::adopt_lock);
         ReleaseOnExit guard(lk);
@@ -32,6 +34,7 @@ public:
         guard.dismiss(); // guard's destructor must not call release() again
     }
 
+    /** @implements REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_OWNERSHIP, REQ_PAL_CV_EXCEPT_E01 */
     template <typename Pred>
     void wait(std::mutex& m, Pred pred) {
         std::unique_lock<std::mutex> lk(m, std::adopt_lock);

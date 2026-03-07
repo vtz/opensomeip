@@ -29,8 +29,6 @@ namespace e2e {
 
 /**
  * @brief Basic E2E protection profile
- * @implements REQ_E2E_PLUGIN_001
- * @implements REQ_E2E_PLUGIN_004
  * @satisfies feat_req_someip_102
  * @satisfies feat_req_someip_103
  *
@@ -53,6 +51,7 @@ class BasicE2EProfile : public E2EProfile {
 public:
     BasicE2EProfile() {}
 
+    /** @implements REQ_E2E_PLUGIN_001, REQ_E2E_PLUGIN_004 */
     Result protect(Message& msg, const E2EConfig& config) override {
         // Calculate CRC over protected data
         // CRC covers: Message ID, Length, Request ID, Protocol Version,
@@ -130,6 +129,7 @@ public:
         return Result::SUCCESS;
     }
 
+    /** @implements REQ_E2E_PLUGIN_001, REQ_E2E_PLUGIN_004 */
     Result validate(const Message& msg, const E2EConfig& config) override {
         // Extract E2E header from message
         std::optional<E2EHeader> header_opt = msg.get_e2e_header();

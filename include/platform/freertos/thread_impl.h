@@ -9,7 +9,6 @@
 
 /**
  * @brief FreeRTOS threading backend.
- * @implements REQ_PLATFORM_FREERTOS_001
  *
  * Provides Mutex, ConditionVariable, Thread, and sleep_for using
  * FreeRTOS primitives.
@@ -65,16 +64,19 @@ public:
         if (handle_) vSemaphoreDelete(handle_);
     }
 
+    /** @implements REQ_PAL_MUTEX_LOCK */
     void lock() {
         configASSERT(handle_ != nullptr);
         xSemaphoreTake(handle_, portMAX_DELAY);
     }
 
+    /** @implements REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_UNLOCK_E01 */
     void unlock() {
         configASSERT(handle_ != nullptr);
         xSemaphoreGive(handle_);
     }
 
+    /** @implements REQ_PAL_MUTEX_TRYLOCK */
     bool try_lock() {
         return xSemaphoreTake(handle_, 0) == pdTRUE;
     }
@@ -86,6 +88,7 @@ private:
     SemaphoreHandle_t handle_;
 };
 
+/** @implements REQ_PAL_CV_WAIT, REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_NOTIFY_ONE, REQ_PAL_CV_NOTIFY_ALL, REQ_PAL_CV_OWNERSHIP */
 class ConditionVariable {
 public:
     ConditionVariable()
@@ -99,8 +102,10 @@ public:
         if (sem_) vSemaphoreDelete(sem_);
     }
 
+    /** @implements REQ_PAL_CV_NOTIFY_ONE */
     void notify_one() { xSemaphoreGive(sem_); }
 
+    /** @implements REQ_PAL_CV_NOTIFY_ALL */
     void notify_all() {
         /* Best-effort: give multiple tokens.  Current codebase only uses
            notify_one() in production; notify_all() is provided for API
@@ -110,12 +115,14 @@ public:
         }
     }
 
+    /** @implements REQ_PAL_CV_WAIT, REQ_PAL_CV_OWNERSHIP */
     void wait(Mutex& mtx) {
         mtx.unlock();
         xSemaphoreTake(sem_, portMAX_DELAY);
         mtx.lock();
     }
 
+    /** @implements REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_OWNERSHIP */
     template <typename Pred>
     void wait(Mutex& mtx, Pred pred) {
         while (!pred()) {
@@ -130,10 +137,12 @@ private:
     SemaphoreHandle_t sem_;
 };
 
+/** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_JOINABLE, REQ_PAL_THREAD_JOIN, REQ_PAL_THREAD_NONCOPY, REQ_PAL_THREAD_CREATE_E01, REQ_PAL_THREAD_DTOR_E01 */
 class Thread {
 public:
     Thread() = default;
 
+    /** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_CREATE_E01 */
     template <typename Fn, typename... Args>
     explicit Thread(Fn&& fn, Args&&... args) {
         join_sem_ = xSemaphoreCreateBinary();
@@ -163,6 +172,7 @@ public:
         started_ = true;
     }
 
+    /** @implements REQ_PAL_THREAD_DTOR_E01 */
     ~Thread() {
         if (joinable()) {
             if (task_handle_) vTaskDelete(task_handle_);
@@ -174,8 +184,10 @@ public:
         }
     }
 
+    /** @implements REQ_PAL_THREAD_JOINABLE */
     bool joinable() const { return started_ && !joined_; }
 
+    /** @implements REQ_PAL_THREAD_JOIN */
     void join() {
         if (!joinable()) return;
         xSemaphoreTake(join_sem_, portMAX_DELAY);
@@ -213,6 +225,7 @@ private:
 
 namespace this_thread {
 
+/** @implements REQ_PAL_SLEEP_DURATION, REQ_PAL_SLEEP_ZERO */
 template <typename Rep, typename Period>
 void sleep_for(const std::chrono::duration<Rep, Period>& d) {
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();

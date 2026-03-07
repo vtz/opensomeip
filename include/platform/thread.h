@@ -16,7 +16,6 @@
 
 /**
  * @brief Portable threading primitives.
- * @implements REQ_PLATFORM_ARCH_001
  *
  * Platform-specific types (Mutex, ConditionVariable, Thread,
  * this_thread::sleep_for) are provided by the backend's thread_impl.h.
@@ -29,9 +28,12 @@
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_ARCH_001, REQ_PAL_LOCK_ACQUIRE, REQ_PAL_LOCK_RELEASE, REQ_PAL_LOCK_NONCOPY */
 class ScopedLock {
 public:
+    /** @implements REQ_PAL_LOCK_ACQUIRE */
     explicit ScopedLock(Mutex& m) : m_(m) { m_.lock(); }
+    /** @implements REQ_PAL_LOCK_RELEASE */
     ~ScopedLock() { m_.unlock(); }
     ScopedLock(const ScopedLock&) = delete;
     ScopedLock& operator=(const ScopedLock&) = delete;
