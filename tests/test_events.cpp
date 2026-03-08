@@ -18,12 +18,15 @@ using namespace someip::events;
 
 /**
  * @brief Events and Subscriptions unit tests
+ *
+ * Covers event type/enum definitions and struct construction.
+ * Functional event delivery, subscription routing, and session handling
+ * tests belong in dedicated integration tests.
+ *
  * @tests REQ_ARCH_001
  * @tests feat_req_someip_720
  * @tests feat_req_someip_730
- * @tests REQ_MSG_121a, REQ_MSG_121b, REQ_MSG_121c, REQ_MSG_122
- * @tests REQ_MSG_123, REQ_MSG_124, REQ_MSG_125, REQ_MSG_126
- * @tests REQ_MSG_113, REQ_MSG_119
+ * @tests REQ_MSG_126
  */
 class EventsTest : public ::testing::Test {
 protected:

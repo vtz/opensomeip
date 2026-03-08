@@ -133,7 +133,7 @@ def resolve_spec_id(
     if len(candidates) > 1:
         raw_prefix = re.sub(r'_\d+$', '', raw_id)
         domain_hint = _domain_from_impl_prefix(impl_id)
-        best = _pick_best_candidate(raw_prefix, domain_hint, candidates, spec_reqs)
+        best = _pick_best_candidate(raw_prefix, domain_hint, candidates)
         if best:
             return best, {
                 "impl_id": impl_id,
@@ -170,7 +170,6 @@ def _pick_best_candidate(
     raw_prefix: str,
     domain_hint: Optional[str],
     candidates: List[str],
-    spec_reqs: Dict[str, dict],
 ) -> Optional[str]:
     """When multiple spec IDs share a numeric suffix, pick the best match."""
     if domain_hint:

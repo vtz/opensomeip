@@ -28,20 +28,24 @@ to implementation and test coverage. No safety certification is claimed.
 
 | Metric | Value | Assessment |
 |--------|-------|------------|
-| Total requirements (RST) | 327 | - |
-| Fully traced (code + tests) | 327 (100.0%) | Excellent |
-| Requirements with code refs | 327 (100.0%) | Complete |
-| Requirements with test coverage | 327 (100.0%) | Complete |
-| Orphaned (no code annotation) | 0 (0.0%) | Resolved |
+| Total requirements (RST) | 649 | - |
+| Fully traced (code + tests) | 585 (90.1%) | Good |
+| Requirements with code refs | 587 | Good |
+| Requirements with test coverage | 647 | Good |
+| Orphaned (no code annotation) | 62 | Needs improvement |
 | Missing spec links | 0 | Resolved |
-| Code references extracted | 100 | - |
-| Test cases extracted | 79 | - |
+| Code references extracted | 587 | - |
+| Test cases extracted | 676 | - |
 
 ### Status
 
-All 327 requirements are fully traced with both code implementation references
-and test coverage annotations. The extraction script properly parses comma-separated
-requirement IDs from `@implements` and `@tests` annotations.
+585 of 649 requirements are fully traced with both code implementation references
+and test coverage annotations. 62 requirements remain without code annotations.
+The extraction script properly parses comma-separated requirement IDs from
+`@implements` and `@tests` annotations.
+
+> **Regeneration**: Run `cmake --build build --target requirements_check` to
+> update these metrics from `scripts/validate_requirements.py`.
 
 ## Coverage Breakdown
 
@@ -63,16 +67,19 @@ requirement IDs from `@implements` and `@tests` annotations.
 
 | Test Suite | Tests | Status |
 |------------|-------|--------|
-| Message Tests | 13 | All passing |
-| Serialization Tests | 16 | All passing |
-| SD Tests | 13 | All passing |
-| TP Tests | 11 | All passing |
-| TCP Transport Tests | 11 | 3/11 (sandbox network restrictions) |
-| UDP Transport Tests | 5+ | Passing |
-| Session Manager Tests | 7 | All passing |
-| E2E Tests | 10 | All passing |
-| RPC Tests | - | Compilation issues |
-| Events Tests | 5+ | Passing |
+| Message Tests | 23 | All passing |
+| Serialization Tests | 49 | All passing |
+| SD Tests | 52 | All passing |
+| TP Tests | 23 | All passing |
+| TCP Transport Tests | 16 | All passing |
+| UDP Transport Tests | 27 | All passing |
+| Platform Threading Tests | 21 | All passing |
+| E2E Tests | 11 | All passing |
+| RPC Tests | 8 | All passing |
+| Events Tests | 14 | All passing |
+| PAL FreeRTOS Mock | 22 | All passing |
+| PAL ThreadX Mock | 22 | All passing |
+| PAL Zephyr Mock | 22 | All passing |
 
 ## Validation Status
 

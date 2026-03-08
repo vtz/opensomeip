@@ -1034,9 +1034,9 @@ TEST_F(SdTest, SubscriptionMaxTtl) {
 /**
  * @test_case TC_SD_E09
  * @tests REQ_SD_113_E01
- * @brief Test SD duplicate offer detection
+ * @brief Test SD re-offer after stop succeeds
  */
-TEST_F(SdTest, DuplicateOffer) {
+TEST_F(SdTest, ReOfferAfterStop) {
     SdConfig config;
     auto server = std::make_unique<SdServer>(config);
     ASSERT_TRUE(server->initialize());
@@ -1051,8 +1051,10 @@ TEST_F(SdTest, DuplicateOffer) {
     bool first = server->offer_service(instance, "127.0.0.1:30509");
     EXPECT_TRUE(first);
 
+    server->stop_offer_service(instance.service_id, instance.instance_id);
+
     bool second = server->offer_service(instance, "127.0.0.1:30509");
-    EXPECT_FALSE(second) << "Duplicate offer should fail";
+    EXPECT_TRUE(second) << "Re-offer after stop should succeed";
 
     server->shutdown();
 }

@@ -43,9 +43,9 @@ public:
      */
     ~Thread() {
         if (thread_.joinable()) {
-            assert(!thread_.joinable() &&
+            assert(false &&
                    "Thread destroyed while still joinable — call join() or detach() first");
-            thread_.detach();
+            thread_.detach();  // fallback when NDEBUG disables the assert
         }
     }
 
@@ -57,6 +57,9 @@ public:
         if (thread_.joinable()) thread_.join();
     }
 
+    // Copy and move are disabled to match RTOS non-transferable thread handles
+    // (REQ_PAL_THREAD_NONCOPY) and prevent ownership transfer of the underlying
+    // std::thread.
     Thread(const Thread&) = delete;
     Thread& operator=(const Thread&) = delete;
     Thread(Thread&&) = delete;

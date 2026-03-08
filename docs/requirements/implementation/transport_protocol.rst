@@ -1112,8 +1112,8 @@ Receiver Behavior Extensions
    :category: error_path
    :verification: Unit test: Set max reassembly buffer size, exceed it by sending many concurrent reassemblies, verify oldest is cancelled and resources freed.
 
-   The receiver shall cancel desegmentation when missing segments are
-   detected and resources are exhausted.
+   The receiver shall cancel desegmentation when resources are exhausted,
+   consistent with REQ_TP_076_E01 (cancel the oldest incomplete reassembly).
 
    **Rationale**: Cancellation on resource exhaustion prevents memory exhaustion from incomplete reassemblies.
 
@@ -1234,13 +1234,16 @@ TP Informational References
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Receive TP segment with 0-byte payload, verify segment is discarded.
+   :verification: Unit test: (1) Receive a zero-length TP segment that is part of a multi-segment message, verify it is discarded. (2) Receive a single-segment message with zero-length payload (per REQ_TP_001_E03), verify it is accepted.
 
-   The software shall discard TP segments with zero-length payload.
+   The software shall discard TP segments with zero-length payload in
+   multi-segment messages.  A single-segment message with zero-length
+   payload (as produced by the sender contract in REQ_TP_001_E03) shall
+   be accepted.
 
-   **Rationale**: Zero-length segments carry no data and waste resources.
+   **Rationale**: Zero-length segments in multi-segment messages carry no data and waste resources, but a single-segment zero-payload message is a valid edge case defined by the sender contract.
 
-   **Error Handling**: Discard segment, log warning.
+   **Error Handling**: Discard zero-length segment in multi-segment context, log warning.
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 

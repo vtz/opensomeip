@@ -459,6 +459,8 @@ TEST_F(TcpTransportTest, ConnectUnreachable) {
  */
 TEST_F(TcpTransportTest, SendOnDisconnected) {
     TcpTransport transport(config);
+    Endpoint local_endpoint("127.0.0.1", 0);
+    ASSERT_EQ(transport.initialize(local_endpoint), Result::SUCCESS);
     EXPECT_FALSE(transport.is_connected());
 
     Message msg;
@@ -467,7 +469,7 @@ TEST_F(TcpTransportTest, SendOnDisconnected) {
 
     Endpoint dummy_endpoint("127.0.0.1", 30500);
     Result result = transport.send_message(msg, dummy_endpoint);
-    EXPECT_NE(result, Result::SUCCESS) << "Send on disconnected should fail";
+    EXPECT_NE(result, Result::SUCCESS) << "Send on initialized but disconnected transport should fail";
 }
 
 /**
