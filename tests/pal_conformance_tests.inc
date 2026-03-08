@@ -245,9 +245,92 @@ TEST(CVConformance, NotifyAllWakesAll) {
     EXPECT_EQ(woken.load(), N);
 }
 
+/**
+ * @test_case TC_MOCK_CV_NOTIFY_BEFORE_WAIT
+ * @tests REQ_PAL_CV_NOTIFY_ONE
+ * @brief Regression: notify_one() before any thread waits must not be lost.
+ *
+ * Reproduces the deadlock fixed in the ThreadX mock where
+ * tx_event_flags_get used a pure generation-counter predicate.  If the
+ * event was set before the waiter entered wait(), the generation had
+ * already advanced and the waiter would block forever.
+ */
+TEST(CVConformance, NotifyBeforeWaitDoesNotDeadlock) {
+    Mutex m;
+    ConditionVariable cv;
+    bool ready = false;
+
+    m.lock();
+    ready = true;
+    m.unlock();
+    cv.notify_one();
+
+    std::thread waiter([&] {
+        m.lock();
+        cv.wait(m, [&] { return ready; });
+        EXPECT_TRUE(ready);
+        m.unlock();
+    });
+    waiter.join();
+}
+
+/**
+ * @test_case TC_MOCK_CV_REPEATED_NOTIFY_WAIT
+ * @tests REQ_PAL_CV_NOTIFY_ONE, REQ_PAL_CV_WAIT_PRED
+ * @brief Regression: rapid signal/wait cycles must not lose wakeups.
+ */
+TEST(CVConformance, RepeatedNotifyWaitCycles) {
+    Mutex m;
+    ConditionVariable cv;
+    int value = 0;
+    bool done = false;
+
+    std::thread producer([&] {
+        for (int i = 1; i <= 5; ++i) {
+            m.lock();
+            value = i;
+            m.unlock();
+            cv.notify_one();
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        m.lock();
+        done = true;
+        m.unlock();
+        cv.notify_one();
+    });
+
+    m.lock();
+    cv.wait(m, [&] { return done; });
+    EXPECT_TRUE(done);
+    EXPECT_EQ(value, 5);
+    m.unlock();
+
+    producer.join();
+}
+
 /* ======================================================================== */
 /*  Thread Conformance                                                      */
 /* ======================================================================== */
+
+/**
+ * @test_case TC_MOCK_THREAD_JOIN_FAST
+ * @tests REQ_PAL_THREAD_JOIN
+ * @brief Regression: join() must succeed even when the thread body
+ *        completes before join() is called (event already signalled).
+ *
+ * This is the exact pattern that caused a CI deadlock on the ThreadX
+ * mock: the trampoline set the join event flag before the main thread
+ * entered tx_event_flags_get, causing a missed wakeup.
+ */
+TEST(ThreadConformance, JoinAfterFastCompletion) {
+    for (int i = 0; i < 20; ++i) {
+        std::atomic<bool> ran{false};
+        someip::platform::Thread t([&ran]() { ran = true; });
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        t.join();
+        EXPECT_TRUE(ran);
+    }
+}
 
 /**
  * @test_case TC_MOCK_THREAD_CREATE
