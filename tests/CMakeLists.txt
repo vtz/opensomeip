@@ -59,6 +59,8 @@ target_link_libraries(test_e2e someip-core gtest_main)
         ${CMAKE_SOURCE_DIR}/src/e2e/e2e_crc.cpp
     )
 
+    find_package(Threads REQUIRED)
+
     function(add_pal_mock_test TEST_NAME SOURCE_FILE MOCK_DIR BACKEND_DIR)
         add_executable(${TEST_NAME} ${SOURCE_FILE} ${PAL_MOCK_CORE_SOURCES})
         target_include_directories(${TEST_NAME} BEFORE PRIVATE
@@ -66,7 +68,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
             ${CMAKE_SOURCE_DIR}/include
             ${BACKEND_DIR}
         )
-        target_link_libraries(${TEST_NAME} PRIVATE gtest_main)
+        target_link_libraries(${TEST_NAME} PRIVATE gtest_main Threads::Threads)
         target_compile_features(${TEST_NAME} PRIVATE cxx_std_17)
         add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
     endfunction()
@@ -105,4 +107,13 @@ target_link_libraries(test_e2e someip-core gtest_main)
     add_test(NAME UdpTransportTest COMMAND test_udp_transport)
     add_test(NAME TpTest COMMAND test_tp)
     add_test(NAME E2ETest COMMAND test_e2e)
+
+    # Per-test timeout (seconds) to catch hangs in local and CI runs
+    set(_ALL_TESTS
+        PlatformThreadingTest SerializationTest MessageTest
+        SessionManagerTest EndpointTest RpcTest SdTest EventsTest
+        TcpTransportTest UdpTransportTest TpTest E2ETest
+        test_pal_freertos_mock test_pal_threadx_mock test_pal_zephyr_mock
+    )
+    set_tests_properties(${_ALL_TESTS} PROPERTIES TIMEOUT 30)
 endif()

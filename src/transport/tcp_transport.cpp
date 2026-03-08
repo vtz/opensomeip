@@ -202,26 +202,23 @@ int TcpTransport::accept_connection() {
         return -1;
     }
 
+    // Use select() with a short timeout so the receive_loop can check running_
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+    FD_SET(listen_socket_fd_, &read_fds);
+
+    struct timeval tv = {0, 100000}; // 100ms
+    int sel = select(listen_socket_fd_ + 1, &read_fds, nullptr, nullptr, &tv);
+    if (sel <= 0) {
+        return -1;
+    }
+
     sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
 
-    if (someip_set_blocking(listen_socket_fd_) < 0) {
-        return -1;
-    }
-
     int client_fd = accept(listen_socket_fd_, (sockaddr*)&client_addr, &client_len);
 
-    if (someip_set_nonblocking(listen_socket_fd_) < 0) {
-        if (client_fd >= 0) {
-            someip_close_socket(client_fd);
-        }
-        return -1;
-    }
-
     if (client_fd < 0) {
-        if (errno != EAGAIN && errno != EWOULDBLOCK) {
-            // Accept failed
-        }
         return -1;
     }
 
@@ -473,13 +470,15 @@ void TcpTransport::connection_monitor_loop() {
             auto time_since_activity = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now - connection_.last_activity);
 
-            // Check for connection timeout
             if (time_since_activity > std::chrono::minutes(5)) {
                 disconnect_internal();
             }
         }
 
-        platform::this_thread::sleep_for(std::chrono::seconds(30));
+        // Sleep in short intervals so stop() can join promptly
+        for (int i = 0; i < 300 && running_; ++i) {
+            platform::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
     }
 }
 

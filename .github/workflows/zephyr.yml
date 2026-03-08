@@ -17,7 +17,7 @@ jobs:
         run: |
           cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF -DSAFETY_LEVEL=NONE
           cmake --build build -j$(nproc)
-          cd build && ctest --output-on-failure
+          cd build && ctest --output-on-failure --timeout 30
 
   zephyr-native-sim:
     name: Zephyr native_sim
