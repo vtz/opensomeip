@@ -26,7 +26,6 @@ using namespace someip::events;
  * @tests REQ_ARCH_001
  * @tests feat_req_someip_720
  * @tests feat_req_someip_730
- * @tests REQ_MSG_126
  */
 class EventsTest : public ::testing::Test {
 protected:

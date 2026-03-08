@@ -133,7 +133,7 @@ bool TpManager::handle_received_segment(const TpSegment& segment, std::vector<ui
     return reassembler_->process_segment(segment, complete_message);
 }
 
-TpResult TpManager::acknowledge_segments(uint32_t transfer_id, const std::vector<uint16_t>& segments_acknowledged) {
+TpResult TpManager::acknowledge_segments(uint32_t transfer_id, const std::vector<uint16_t>& /*segments_acknowledged*/) {
     platform::ScopedLock lock(transfers_mutex_);
 
     auto it = active_transfers_.find(transfer_id);

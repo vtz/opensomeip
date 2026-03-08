@@ -1,6 +1,11 @@
 # Examples organized in hierarchical structure
 # Each subdirectory contains its own CMakeLists.txt
 
+# Examples are demonstration code; don't fail the build on warnings.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wno-error=unused-parameter -Wno-error=unused-const-variable)
+endif()
+
 # Basic Examples
 add_subdirectory(basic/hello_world)
 add_subdirectory(basic/method_calls)

@@ -67,12 +67,7 @@ Endpoint& Endpoint::operator=(Endpoint&& other) noexcept {
 }
 
 bool Endpoint::is_valid() const {
-    // Check port range (allow 0 for auto-assignment)
-    if (port_ > 65535) {
-        return false;
-    }
-
-    // Check address format
+    // port_ is uint16_t so it's always in [0, 65535]; no range check needed.
     return is_valid_ipv4(address_) || is_valid_ipv6(address_);
 }
 

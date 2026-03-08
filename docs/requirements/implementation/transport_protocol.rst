@@ -446,7 +446,7 @@ TP Header Error Handling
    The software shall reject and discard TP segments whose offset is not
    aligned to the required 16-byte boundary.
 
-   **Rationale**: Misaligned offsets indicate protocol violations and must be treated as errors per REQ_TP_071_E01 and REQ_TP_082.
+   **Rationale**: Misaligned offsets indicate protocol violations and must be treated as errors per REQ_TP_082_E03 and REQ_TP_082.
 
    **Error Handling**: Discard segment, log offset value and expected alignment.
 
@@ -1199,23 +1199,8 @@ TP Informational References
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 
-.. requirement:: Error - Invalid TP Offset Alignment
-   :id: REQ_TP_071_E01
-   :status: implemented
-   :priority: medium
-   :category: error_path
-   :verification: Unit test: Receive segment with offset not aligned to 16 bytes, verify segment is rejected.
-
-   The software shall reject TP segments whose offset is not aligned to the required boundary.
-
-   **Rationale**: Misaligned offsets indicate protocol violations.
-
-   **Error Handling**: Discard segment, log offset value and expected alignment.
-
-   **Code Location**: ``src/tp/tp_reassembler.cpp``
-
 .. requirement:: Error - TP Message Type Mismatch
-   :id: REQ_TP_070_E01
+   :id: REQ_TP_082_E01
    :status: implemented
    :priority: medium
    :category: error_path
@@ -1229,8 +1214,38 @@ TP Informational References
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 
+.. requirement:: Error - TP Segment With Wrong Protocol Version
+   :id: REQ_TP_082_E02
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Receive TP segment with Protocol Version 0x02, verify segment is discarded before reassembly.
+
+   The software shall discard TP segments with unsupported Protocol Version.
+
+   **Rationale**: Protocol Version mismatch indicates incompatible TP implementation.
+
+   **Error Handling**: Discard segment, log version mismatch.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp``
+
+.. requirement:: Error - Invalid TP Offset Alignment
+   :id: REQ_TP_082_E03
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Receive segment with offset not aligned to 16 bytes, verify segment is rejected.
+
+   The software shall reject TP segments whose offset is not aligned to the required boundary.
+
+   **Rationale**: Misaligned offsets indicate protocol violations.
+
+   **Error Handling**: Discard segment, log offset value and expected alignment.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp``
+
 .. requirement:: Error - TP Zero-Length Segment
-   :id: REQ_TP_071_E02
+   :id: REQ_TP_082_E04
    :status: implemented
    :priority: high
    :category: error_path
@@ -1259,21 +1274,6 @@ TP Informational References
    **Rationale**: Prevents excessive memory allocation from crafted segment offsets.
 
    **Error Handling**: Cancel reassembly, free buffer, log projected size.
-
-   **Code Location**: ``src/tp/tp_reassembler.cpp``
-
-.. requirement:: Error - TP Segment With Wrong Protocol Version
-   :id: REQ_TP_070_E02
-   :status: implemented
-   :priority: medium
-   :category: error_path
-   :verification: Unit test: Receive TP segment with Protocol Version 0x02, verify segment is discarded before reassembly.
-
-   The software shall discard TP segments with unsupported Protocol Version.
-
-   **Rationale**: Protocol Version mismatch indicates incompatible TP implementation.
-
-   **Error Handling**: Discard segment, log version mismatch.
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 

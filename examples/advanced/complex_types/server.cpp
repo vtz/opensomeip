@@ -235,7 +235,7 @@ private:
         return serializer.get_buffer();
     }
 
-    RpcResult handle_process_vehicle_data(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_process_vehicle_data(uint16_t /*client_id*/, uint16_t /*session_id*/,
                                         const std::vector<uint8_t>& input,
                                         std::vector<uint8_t>& output) {
         Deserializer deserializer(input);
@@ -271,8 +271,8 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_get_sensor_array(uint16_t client_id, uint16_t session_id,
-                                    const std::vector<uint8_t>& input,
+    RpcResult handle_get_sensor_array(uint16_t /*client_id*/, uint16_t /*session_id*/,
+                                    const std::vector<uint8_t>& /*input*/,
                                     std::vector<uint8_t>& output) {
         // Create sample sensor data
         SensorArray sensor_array;
@@ -289,7 +289,7 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_echo_complex_struct(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_echo_complex_struct(uint16_t /*client_id*/, uint16_t /*session_id*/,
                                        const std::vector<uint8_t>& input,
                                        std::vector<uint8_t>& output) {
         Deserializer deserializer(input);

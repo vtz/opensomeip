@@ -51,17 +51,22 @@ The extraction script properly parses comma-separated requirement IDs from
 
 ### Requirements Fully Traced (by module)
 
-| Module | Total Reqs | Code Refs | Tests | Fully Traced |
-|--------|-----------|-----------|-------|--------------|
-| Message Header (REQ_MSG_*) | 75 | 75 | 75 | 100% |
-| Serialization (REQ_SER_*) | 82 | 82 | 82 | 100% |
-| Service Discovery (REQ_SD_*) | 83 | 83 | 83 | 100% |
-| Transport Protocol (REQ_TP_*) | 53 | 53 | 53 | 100% |
-| Transport (REQ_TRANSPORT_*) | 6 | 6 | 6 | 100% |
-| Architecture (REQ_ARCH_*) | 7 | 7 | 7 | 100% |
-| E2E Plugin (REQ_E2E_PLUGIN_*) | 5 | 5 | 5 | 100% |
-| Platform (REQ_PLATFORM_*) | 7 | 7 | 7 | 100% |
-| Other (REQ_MY_*) | 1 | 1 | 1 | 100% |
+| Module | Total Reqs |
+|--------|-----------|
+| Service Discovery (REQ_SD_*) | 208 |
+| Message Header (REQ_MSG_*) | 128 |
+| Serialization (REQ_SER_*) | 115 |
+| Transport Protocol (REQ_TP_*) | 77 |
+| Transport (REQ_TRANSPORT_*) | 42 |
+| PAL Abstractions (REQ_PAL_*) | 35 |
+| Platform Backends (REQ_PLATFORM_*) | 17 |
+| Compatibility (REQ_COMPAT_*) | 17 |
+| Architecture (REQ_ARCH_*) | 7 |
+| E2E Plugin (REQ_E2E_PLUGIN_*) | 5 |
+
+> **Note**: Requirement counts reflect the full RST definitions.
+> Per-module code ref and test coverage details are available in the
+> `validate_requirements.py` output and `TEST_TRACEABILITY_MATRIX.md`.
 
 ### Test Execution Summary
 

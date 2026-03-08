@@ -16,7 +16,10 @@
 #include <condition_variable>
 #include <chrono>
 #include <functional>
-#include <cassert>
+#include <exception>
+#ifdef __cpp_exceptions
+#include <system_error>
+#endif
 
 #include "platform/host/host_condition_variable.h"
 
@@ -26,26 +29,33 @@ namespace platform {
 /** @implements REQ_PLATFORM_POSIX_001, REQ_PAL_MUTEX_LOCK, REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_TRYLOCK, REQ_PAL_MUTEX_NONCOPY */
 using Mutex = std::mutex;
 
-/** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_JOINABLE, REQ_PAL_THREAD_JOIN, REQ_PAL_THREAD_NONCOPY, REQ_PAL_THREAD_DTOR_E01 */
+/** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_JOINABLE, REQ_PAL_THREAD_JOIN, REQ_PAL_THREAD_NONCOPY, REQ_PAL_THREAD_CREATE_E01, REQ_PAL_THREAD_DTOR_E01 */
 class Thread {
 public:
     Thread() = default;
 
-    /** @implements REQ_PAL_THREAD_CREATE */
+    /** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_CREATE_E01 */
     template <typename Fn, typename... Args>
-    explicit Thread(Fn&& fn, Args&&... args)
-        : thread_(std::forward<Fn>(fn), std::forward<Args>(args)...) {}
+    explicit Thread(Fn&& fn, Args&&... args) {
+#ifdef __cpp_exceptions
+        try {
+            thread_ = std::thread(std::forward<Fn>(fn), std::forward<Args>(args)...);
+        } catch (const std::system_error&) {
+            // thread_ remains default-constructed (non-joinable)
+        }
+#else
+        thread_ = std::thread(std::forward<Fn>(fn), std::forward<Args>(args)...);
+#endif
+    }
 
     /**
      * @implements REQ_PAL_THREAD_DTOR_E01
      * Callers must explicitly join() or detach() before destruction.
-     * A joinable thread at destruction indicates a lifetime management bug.
+     * A joinable thread at destruction is a fatal programming error.
      */
     ~Thread() {
         if (thread_.joinable()) {
-            assert(false &&
-                   "Thread destroyed while still joinable — call join() or detach() first");
-            thread_.detach();  // fallback when NDEBUG disables the assert
+            std::terminate();
         }
     }
 
@@ -54,7 +64,10 @@ public:
 
     /** @implements REQ_PAL_THREAD_JOIN */
     void join() {
-        if (thread_.joinable()) thread_.join();
+        if (thread_.joinable() &&
+            thread_.get_id() != std::this_thread::get_id()) {
+            thread_.join();
+        }
     }
 
     // Copy and move are disabled to match RTOS non-transferable thread handles

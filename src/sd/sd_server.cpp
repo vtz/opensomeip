@@ -40,8 +40,8 @@ public:
         : config_(config),
           transport_(std::make_shared<transport::UdpTransport>(
               transport::Endpoint(config.unicast_address, config.unicast_port))),
-          running_(false),
-          next_offer_delay_(config.initial_delay) {
+          next_offer_delay_(config.initial_delay),
+          running_(false) {
 
         transport_->set_listener(this);
     }
@@ -419,15 +419,15 @@ private:
         process_sd_entries(sd_message, sender);
     }
 
-    void on_connection_lost(const transport::Endpoint& endpoint) override {
+    void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {
         // TODO: Handle connection loss
     }
 
-    void on_connection_established(const transport::Endpoint& endpoint) override {
+    void on_connection_established(const transport::Endpoint& /*endpoint*/) override {
         // TODO: Handle connection establishment
     }
 
-    void on_error(Result error) override {
+    void on_error(Result /*error*/) override {
         // TODO: Handle transport errors
     }
 
@@ -473,7 +473,7 @@ private:
         // Extract client endpoint from options
         std::string client_ip = sender.get_address();
         uint16_t client_port = sender.get_port();
-        uint8_t client_protocol = 0x11;  // Default to UDP
+        [[maybe_unused]] uint8_t client_protocol = 0x11;  // Default to UDP
 
         // Check if entry references an endpoint option
         uint8_t index1 = subscription_entry.get_index1();

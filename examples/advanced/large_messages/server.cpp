@@ -47,10 +47,10 @@ const uint16_t SEND_LARGE_DATA_METHOD_ID = 0x0001;
 const uint16_t RECEIVE_LARGE_DATA_METHOD_ID = 0x0002;
 const uint16_t ECHO_LARGE_DATA_METHOD_ID = 0x0003;
 
-// Large message sizes (exceeding typical MTU of 1500 bytes)
-const size_t SMALL_MESSAGE_SIZE = 2000;    // 2KB - requires segmentation
-const size_t MEDIUM_MESSAGE_SIZE = 10000;  // 10KB - multiple segments
-const size_t LARGE_MESSAGE_SIZE = 50000;   // 50KB - many segments
+// Large message sizes (exceeding typical MTU of 1500 bytes) — used by client
+[[maybe_unused]] const size_t SMALL_MESSAGE_SIZE = 2000;    // 2KB
+[[maybe_unused]] const size_t MEDIUM_MESSAGE_SIZE = 10000;  // 10KB
+[[maybe_unused]] const size_t LARGE_MESSAGE_SIZE = 50000;   // 50KB
 
 // Global flag for graceful shutdown
 std::atomic<bool> running{true};
@@ -166,7 +166,7 @@ private:
         return true;
     }
 
-    RpcResult handle_send_large_data(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_send_large_data(uint16_t /*client_id*/, uint16_t /*session_id*/,
                                    const std::vector<uint8_t>& input,
                                    std::vector<uint8_t>& output) {
         if (input.size() < 4) {
@@ -197,7 +197,7 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_receive_large_data(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_receive_large_data(uint16_t /*client_id*/, uint16_t /*session_id*/,
                                       const std::vector<uint8_t>& input,
                                       std::vector<uint8_t>& output) {
         std::cout << "Received large data: " << input.size() << " bytes" << std::endl;
@@ -228,7 +228,7 @@ private:
         }
     }
 
-    RpcResult handle_echo_large_data(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_echo_large_data(uint16_t /*client_id*/, uint16_t /*session_id*/,
                                    const std::vector<uint8_t>& input,
                                    std::vector<uint8_t>& output) {
         std::cout << "Echoing large data: " << input.size() << " bytes" << std::endl;

@@ -27,10 +27,9 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Dict, Set
 
 
-def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
+def extract_requirements_from_rst(rst_dir: Path) -> dict[str, dict]:
     """Extract requirements from RST files."""
     requirements = {}
 
@@ -38,14 +37,12 @@ def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
         return requirements
 
     for rst_file in rst_dir.rglob("*.rst"):
-        content = rst_file.read_text(encoding='utf-8', errors='ignore')
+        content = rst_file.read_text(encoding="utf-8", errors="ignore")
 
         # Pattern to match requirement directives
         pattern = re.compile(
-            r'\.\.\s+requirement::\s*(.+?)\n'
-            r'(.*?)'
-            r'(?=\.\.\s+\w+::|$)',
-            re.DOTALL
+            r"\.\.\s+requirement::\s*(.+?)\n" r"(.*?)" r"(?=\.\.\s+\w+::|$)",
+            re.DOTALL,
         )
 
         for match in pattern.finditer(content):
@@ -53,18 +50,18 @@ def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
             body = match.group(2)
 
             # Extract ID
-            id_match = re.search(r':id:\s*(REQ_[A-Za-z0-9_]+)', body, re.IGNORECASE)
+            id_match = re.search(r":id:\s*(REQ_[A-Za-z0-9_]+)", body, re.IGNORECASE)
             if not id_match:
                 continue
 
             req_id = id_match.group(1).upper()
 
             # Extract satisfies
-            satisfies_match = re.search(r':satisfies:\s*([^\n]+)', body)
+            satisfies_match = re.search(r":satisfies:\s*([^\n]+)", body)
             satisfies = satisfies_match.group(1).strip() if satisfies_match else ""
 
             # Extract status
-            status_match = re.search(r':status:\s*([^\n]+)', body)
+            status_match = re.search(r":status:\s*([^\n]+)", body)
             status = status_match.group(1).strip() if status_match else ""
 
             requirements[req_id] = {
@@ -72,16 +69,13 @@ def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
                 "title": title,
                 "satisfies": satisfies,
                 "status": status,
-                "file": str(rst_file.relative_to(rst_dir))
+                "file": str(rst_file.relative_to(rst_dir)),
             }
 
     return requirements
 
 
-def generate_diff_report(
-    current: Dict[str, dict],
-    baseline: Dict[str, dict]
-) -> str:
+def generate_diff_report(current: dict[str, dict], baseline: dict[str, dict]) -> str:
     """Generate markdown diff report."""
 
     current_ids = set(current.keys())
@@ -115,7 +109,7 @@ def generate_diff_report(
         for req_id in sorted(added):
             req = current[req_id]
             lines.append(f"- **{req_id}**: {req['title']}")
-            if req.get('satisfies'):
+            if req.get("satisfies"):
                 lines.append(f"  - Satisfies: {req['satisfies']}")
         lines.append("")
 
@@ -135,13 +129,13 @@ def generate_diff_report(
             new = current[req_id]
             lines.append(f"- **{req_id}**:")
 
-            if old.get('title') != new.get('title'):
+            if old.get("title") != new.get("title"):
                 lines.append(f"  - Title: `{old.get('title')}` → `{new.get('title')}`")
 
-            if old.get('satisfies') != new.get('satisfies'):
+            if old.get("satisfies") != new.get("satisfies"):
                 lines.append(f"  - Satisfies: `{old.get('satisfies')}` → `{new.get('satisfies')}`")
 
-            if old.get('status') != new.get('status'):
+            if old.get("status") != new.get("status"):
                 lines.append(f"  - Status: `{old.get('status')}` → `{new.get('status')}`")
         lines.append("")
 
@@ -153,27 +147,12 @@ def generate_diff_report(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate requirement diff report"
-    )
+    parser = argparse.ArgumentParser(description="Generate requirement diff report")
+    parser.add_argument("--current", type=Path, default=None, help="Current requirements directory")
     parser.add_argument(
-        "--current",
-        type=Path,
-        default=None,
-        help="Current requirements directory"
+        "--baseline", type=Path, default=None, help="Baseline requirements JSON or directory"
     )
-    parser.add_argument(
-        "--baseline",
-        type=Path,
-        default=None,
-        help="Baseline requirements JSON or directory"
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=None,
-        help="Output file (default: stdout)"
-    )
+    parser.add_argument("--output", type=Path, default=None, help="Output file (default: stdout)")
 
     args = parser.parse_args()
 
@@ -187,8 +166,8 @@ def main():
     # Load baseline (empty if not provided)
     baseline = {}
     if args.baseline and args.baseline.exists():
-        if args.baseline.suffix == '.json':
-            with open(args.baseline, 'r') as f:
+        if args.baseline.suffix == ".json":
+            with open(args.baseline) as f:
                 baseline = json.load(f)
         else:
             baseline = extract_requirements_from_rst(args.baseline)

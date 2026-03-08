@@ -29,50 +29,53 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
 
 
 @dataclass
 class Requirement:
     """Represents a requirement with its traceability links."""
+
     id: str
     title: str = ""
     type: str = "requirement"
-    satisfies: List[str] = field(default_factory=list)
-    implemented_by: List[str] = field(default_factory=list)
-    tested_by: List[str] = field(default_factory=list)
+    satisfies: list[str] = field(default_factory=list)
+    implemented_by: list[str] = field(default_factory=list)
+    tested_by: list[str] = field(default_factory=list)
 
 
 @dataclass
 class CodeReference:
     """Represents a code location."""
+
     id: str
     location: str
-    implements: List[str] = field(default_factory=list)
-    satisfies: List[str] = field(default_factory=list)
+    implements: list[str] = field(default_factory=list)
+    satisfies: list[str] = field(default_factory=list)
 
 
 @dataclass
 class TestCase:
     """Represents a test case."""
+
     id: str
     name: str
     location: str
-    tests: List[str] = field(default_factory=list)
+    tests: list[str] = field(default_factory=list)
 
 
-def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Dict[str, Requirement], Dict[str, List[str]]]:
+def extract_requirements_from_rst(
+    rst_dir: Path,
+) -> tuple[dict[str, Requirement], dict[str, list[str]]]:
     """Extract requirements and satisfies relationships from RST files."""
     requirements = {}
     satisfies_map = {}
 
     for rst_file in rst_dir.rglob("*.rst"):
-        content = rst_file.read_text(encoding='utf-8', errors='ignore')
+        content = rst_file.read_text(encoding="utf-8", errors="ignore")
 
         # Pattern to match requirement directives - first find the requirement block
         req_pattern = re.compile(
-            r'\.\.\s+requirement::\s*(.+?)\n((?:\s+:[a-z_]+:.*?\n)+)',
-            re.DOTALL | re.IGNORECASE
+            r"\.\.\s+requirement::\s*(.+?)\n((?:\s+:[a-z_]+:.*?\n)+)", re.DOTALL | re.IGNORECASE
         )
 
         for match in req_pattern.finditer(content):
@@ -80,22 +83,19 @@ def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Dict[str, Requirement]
             attrs_block = match.group(2)
 
             # Extract :id: field
-            id_match = re.search(r':id:\s*(REQ_[A-Za-z0-9_]+)', attrs_block, re.IGNORECASE)
+            id_match = re.search(r":id:\s*(REQ_[A-Za-z0-9_]+)", attrs_block, re.IGNORECASE)
             if not id_match:
                 continue
             req_id = id_match.group(1).upper()
 
             # Extract :satisfies: field
-            satisfies_match = re.search(r':satisfies:\s*([^\n]+)', attrs_block, re.IGNORECASE)
+            satisfies_match = re.search(r":satisfies:\s*([^\n]+)", attrs_block, re.IGNORECASE)
             satisfies_str = satisfies_match.group(1) if satisfies_match else ""
 
             satisfies = [s.strip() for s in satisfies_str.split(",") if s.strip()]
 
             requirements[req_id] = Requirement(
-                id=req_id,
-                title=title,
-                type="requirement",
-                satisfies=satisfies
+                id=req_id, title=title, type="requirement", satisfies=satisfies
             )
 
             if satisfies:
@@ -112,7 +112,7 @@ def load_code_references(json_path: Path) -> tuple:
     if not json_path.exists():
         return code_refs, test_cases
 
-    with open(json_path, 'r') as f:
+    with open(json_path) as f:
         data = json.load(f)
 
     needs = data.get("versions", {}).get("current", {}).get("needs", {})
@@ -128,7 +128,7 @@ def load_code_references(json_path: Path) -> tuple:
                 id=need_id,
                 location=need.get("code_location", ""),
                 implements=[i.upper() for i in implements],
-                satisfies=satisfies
+                satisfies=satisfies,
             )
 
         elif need_type == "test_case":
@@ -138,17 +138,17 @@ def load_code_references(json_path: Path) -> tuple:
                 id=need_id,
                 name=need.get("title", ""),
                 location=need.get("code_location", ""),
-                tests=tests
+                tests=tests,
             )
 
     return code_refs, test_cases
 
 
 def build_traceability(
-    requirements: Dict[str, Requirement],
-    code_refs: Dict[str, CodeReference],
-    test_cases: Dict[str, TestCase]
-) -> Dict[str, Requirement]:
+    requirements: dict[str, Requirement],
+    code_refs: dict[str, CodeReference],
+    test_cases: dict[str, TestCase],
+) -> dict[str, Requirement]:
     """Build full traceability links."""
 
     # Link code references to requirements
@@ -168,10 +168,10 @@ def build_traceability(
 
 
 def generate_html(
-    requirements: Dict[str, Requirement],
-    code_refs: Dict[str, CodeReference],
-    test_cases: Dict[str, TestCase],
-    output_path: Path
+    requirements: dict[str, Requirement],
+    code_refs: dict[str, CodeReference],
+    test_cases: dict[str, TestCase],
+    output_path: Path,
 ):
     """Generate HTML traceability matrix."""
 
@@ -198,7 +198,7 @@ def generate_html(
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+    <p>Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
 
     <div class="summary">
         <strong>Summary:</strong>
@@ -306,10 +306,10 @@ def generate_html(
 
 
 def generate_json(
-    requirements: Dict[str, Requirement],
-    code_refs: Dict[str, CodeReference],
-    test_cases: Dict[str, TestCase],
-    output_path: Path
+    requirements: dict[str, Requirement],
+    code_refs: dict[str, CodeReference],
+    test_cases: dict[str, TestCase],
+    output_path: Path,
 ):
     """Generate JSON traceability data."""
 
@@ -322,7 +322,7 @@ def generate_json(
                 "type": req.type,
                 "satisfies": req.satisfies,
                 "implemented_by": req.implemented_by,
-                "tested_by": req.tested_by
+                "tested_by": req.tested_by,
             }
             for req_id, req in requirements.items()
         },
@@ -331,22 +331,17 @@ def generate_json(
                 "id": ref.id,
                 "location": ref.location,
                 "implements": ref.implements,
-                "satisfies": ref.satisfies
+                "satisfies": ref.satisfies,
             }
             for ref_id, ref in code_refs.items()
         },
         "test_cases": {
-            tc_id: {
-                "id": tc.id,
-                "name": tc.name,
-                "location": tc.location,
-                "tests": tc.tests
-            }
+            tc_id: {"id": tc.id, "name": tc.name, "location": tc.location, "tests": tc.tests}
             for tc_id, tc in test_cases.items()
-        }
+        },
     }
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(data, f, indent=2)
 
 
@@ -461,10 +456,10 @@ def classify_test_type(test_path: str) -> str:
 
 
 def generate_gap_analysis(
-    requirements: Dict[str, Requirement],
-    satisfies_map: Dict[str, List[str]],
+    requirements: dict[str, Requirement],
+    satisfies_map: dict[str, list[str]],
     output_path: Path,
-    test_cases: Dict[str, TestCase] = None
+    test_cases: dict[str, TestCase] | None = None,
 ):
     """Generate gap analysis report highlighting traceability gaps."""
     from collections import defaultdict
@@ -474,7 +469,7 @@ def generate_gap_analysis(
         "no_tests": [],
         "missing_spec_links": [],
         "missing_spec_links_required": [],  # Only reqs that should have spec links
-        "fully_traced": []
+        "fully_traced": [],
     }
 
     # Categories by requirement type
@@ -486,7 +481,7 @@ def generate_gap_analysis(
     # Test type tracking
     test_type_counts = {"unit": 0, "integration": 0, "system": 0}
     if test_cases:
-        for tc_id, tc in test_cases.items():
+        for _tc_id, tc in test_cases.items():
             test_type = classify_test_type(tc.location)
             test_type_counts[test_type] += 1
 
@@ -541,7 +536,7 @@ def generate_gap_analysis(
         "serialization": "Serialization",
         "service_discovery": "Service Discovery",
         "transport_protocol": "Transport Protocol",
-        "other": "Other"
+        "other": "Other",
     }
 
     category_table = "| Category | Total | Implemented | Tested | Spec Linked |\n"
@@ -549,29 +544,31 @@ def generate_gap_analysis(
     for cat in sorted(by_category.keys()):
         stats = by_category[cat]
         name = category_names.get(cat, cat)
-        impl_pct = stats['implemented'] / stats['total'] * 100 if stats['total'] > 0 else 0
-        test_pct = stats['tested'] / stats['total'] * 100 if stats['total'] > 0 else 0
-        spec_pct = stats['spec_linked'] / stats['total'] * 100 if stats['total'] > 0 else 0
+        impl_pct = stats["implemented"] / stats["total"] * 100 if stats["total"] > 0 else 0
+        test_pct = stats["tested"] / stats["total"] * 100 if stats["total"] > 0 else 0
+        spec_pct = stats["spec_linked"] / stats["total"] * 100 if stats["total"] > 0 else 0
         category_table += f"| {name} | {stats['total']} | {stats['implemented']} ({impl_pct:.0f}%) | {stats['tested']} ({test_pct:.0f}%) | {stats['spec_linked']} ({spec_pct:.0f}%) |\n"
 
     # Calculate derived vs spec-linked requirements
     derived_categories = {"error_handling", "architectural", "plugin"}
-    derived_count = sum(by_category[cat]["total"] for cat in derived_categories if cat in by_category)
+    derived_count = sum(
+        by_category[cat]["total"] for cat in derived_categories if cat in by_category
+    )
     spec_derived_count = len(requirements) - derived_count
 
     # Generate report
     report = f"""# ASPICE Traceability Gap Analysis Report
 
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Summary
 
 - **Total Requirements**: {len(requirements)}
-- **Fully Traced (impl + tests)**: {len(gaps['fully_traced'])} ({len(gaps['fully_traced'])/len(requirements)*100:.1f}%)
-- **Missing Implementation**: {len(gaps['no_implementation'])}
-- **Missing Tests**: {len(gaps['no_tests'])}
-- **Missing Spec Links (all)**: {len(gaps['missing_spec_links'])}
-- **Missing Spec Links (required only)**: {len(gaps['missing_spec_links_required'])}
+- **Fully Traced (impl + tests)**: {len(gaps["fully_traced"])} ({len(gaps["fully_traced"]) / len(requirements) * 100:.1f}%)
+- **Missing Implementation**: {len(gaps["no_implementation"])}
+- **Missing Tests**: {len(gaps["no_tests"])}
+- **Missing Spec Links (all)**: {len(gaps["missing_spec_links"])}
+- **Missing Spec Links (required only)**: {len(gaps["missing_spec_links_required"])}
 
 ### Requirement Categories
 
@@ -587,18 +584,18 @@ may not require direct spec links.
 
 | Priority | Total | Implemented | Tested | Coverage |
 |----------|-------|-------------|--------|----------|
-| Critical | {by_priority['critical']['total']} | {by_priority['critical']['implemented']} | {by_priority['critical']['tested']} | {by_priority['critical']['implemented']/by_priority['critical']['total']*100 if by_priority['critical']['total'] > 0 else 0:.0f}% |
-| High | {by_priority['high']['total']} | {by_priority['high']['implemented']} | {by_priority['high']['tested']} | {by_priority['high']['implemented']/by_priority['high']['total']*100 if by_priority['high']['total'] > 0 else 0:.0f}% |
-| Medium | {by_priority['medium']['total']} | {by_priority['medium']['implemented']} | {by_priority['medium']['tested']} | {by_priority['medium']['implemented']/by_priority['medium']['total']*100 if by_priority['medium']['total'] > 0 else 0:.0f}% |
-| Low | {by_priority['low']['total']} | {by_priority['low']['implemented']} | {by_priority['low']['tested']} | {by_priority['low']['implemented']/by_priority['low']['total']*100 if by_priority['low']['total'] > 0 else 0:.0f}% |
+| Critical | {by_priority["critical"]["total"]} | {by_priority["critical"]["implemented"]} | {by_priority["critical"]["tested"]} | {by_priority["critical"]["implemented"] / by_priority["critical"]["total"] * 100 if by_priority["critical"]["total"] > 0 else 0:.0f}% |
+| High | {by_priority["high"]["total"]} | {by_priority["high"]["implemented"]} | {by_priority["high"]["tested"]} | {by_priority["high"]["implemented"] / by_priority["high"]["total"] * 100 if by_priority["high"]["total"] > 0 else 0:.0f}% |
+| Medium | {by_priority["medium"]["total"]} | {by_priority["medium"]["implemented"]} | {by_priority["medium"]["tested"]} | {by_priority["medium"]["implemented"] / by_priority["medium"]["total"] * 100 if by_priority["medium"]["total"] > 0 else 0:.0f}% |
+| Low | {by_priority["low"]["total"]} | {by_priority["low"]["implemented"]} | {by_priority["low"]["tested"]} | {by_priority["low"]["implemented"] / by_priority["low"]["total"] * 100 if by_priority["low"]["total"] > 0 else 0:.0f}% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | {test_type_counts.get('unit', 0)} |
-| Integration Tests | {test_type_counts.get('integration', 0)} |
-| System Tests | {test_type_counts.get('system', 0)} |
+| Unit Tests | {test_type_counts.get("unit", 0)} |
+| Integration Tests | {test_type_counts.get("integration", 0)} |
+| System Tests | {test_type_counts.get("system", 0)} |
 
 ## Gaps Requiring Attention
 
@@ -621,22 +618,22 @@ These are derived requirements (error handling, architectural, plugin) that don'
 ## ASPICE Compliance Assessment
 
 ### SWE.1 (Software Requirements Analysis)
-- **Status**: {'✅ PASS' if len(gaps['missing_spec_links_required']) == 0 else '⚠️ PARTIAL - Some spec-derived requirements missing links'}
+- **Status**: {"✅ PASS" if len(gaps["missing_spec_links_required"]) == 0 else "⚠️ PARTIAL - Some spec-derived requirements missing links"}
 - **Details**: Spec-derived requirements must satisfy at least one specification requirement
 - **Derived Requirements**: {derived_count} implementation-derived requirements do not require spec links
 
 ### SWE.3 (Software Architectural Design)
-- **Status**: {'✅ PASS' if len(gaps['no_implementation']) == 0 else '❌ FAIL - Missing implementations'}
+- **Status**: {"✅ PASS" if len(gaps["no_implementation"]) == 0 else "❌ FAIL - Missing implementations"}
 - **Details**: All requirements must have corresponding code implementation
 
 ### SWE.6 (Software Unit Verification)
-- **Status**: {'✅ PASS' if len(gaps['no_tests']) == 0 else '❌ FAIL - Missing test coverage'}
+- **Status**: {"✅ PASS" if len(gaps["no_tests"]) == 0 else "❌ FAIL - Missing test coverage"}
 - **Details**: All requirements must have corresponding test coverage
 
 ### Overall Compliance Level
-- **Current Level**: {'CL2' if len(gaps['fully_traced']) == len(requirements) else 'CL1' if len(gaps['fully_traced']) >= len(requirements) * 0.8 else 'CL0'}
+- **Current Level**: {"CL2" if len(gaps["fully_traced"]) == len(requirements) else "CL1" if len(gaps["fully_traced"]) >= len(requirements) * 0.8 else "CL0"}
 - **Target for Production**: CL2 (100% traceability)
-- **Gap to Target**: {len(requirements) - len(gaps['fully_traced'])} requirements
+- **Gap to Target**: {len(requirements) - len(gaps["fully_traced"])} requirements
 
 ## Recommendations
 
@@ -657,76 +654,60 @@ These are derived requirements (error handling, architectural, plugin) that don'
 
 
 def generate_csv(
-    requirements: Dict[str, Requirement],
-    code_refs: Dict[str, CodeReference],
-    test_cases: Dict[str, TestCase],
-    output_path: Path
+    requirements: dict[str, Requirement],
+    code_refs: dict[str, CodeReference],
+    test_cases: dict[str, TestCase],
+    output_path: Path,
 ):
     """Generate CSV traceability matrix."""
 
-    with open(output_path, 'w', newline='') as f:
+    with open(output_path, "w", newline="") as f:
         writer = csv.writer(f)
 
         # Header
-        writer.writerow([
-            "Requirement ID",
-            "Title",
-            "Type",
-            "Satisfies",
-            "Implemented By",
-            "Tested By",
-            "Has Implementation",
-            "Has Tests"
-        ])
+        writer.writerow(
+            [
+                "Requirement ID",
+                "Title",
+                "Type",
+                "Satisfies",
+                "Implemented By",
+                "Tested By",
+                "Has Implementation",
+                "Has Tests",
+            ]
+        )
 
         # Data
         for req_id in sorted(requirements.keys()):
             req = requirements[req_id]
-            writer.writerow([
-                req.id,
-                req.title,
-                req.type,
-                "; ".join(req.satisfies),
-                "; ".join(req.implemented_by),
-                "; ".join(req.tested_by),
-                "Yes" if req.implemented_by else "No",
-                "Yes" if req.tested_by else "No"
-            ])
+            writer.writerow(
+                [
+                    req.id,
+                    req.title,
+                    req.type,
+                    "; ".join(req.satisfies),
+                    "; ".join(req.implemented_by),
+                    "; ".join(req.tested_by),
+                    "Yes" if req.implemented_by else "No",
+                    "Yes" if req.tested_by else "No",
+                ]
+            )
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate traceability matrix"
+    parser = argparse.ArgumentParser(description="Generate traceability matrix")
+    parser.add_argument(
+        "--project-root", type=Path, default=Path.cwd(), help="Project root directory"
+    )
+    parser.add_argument("--code-refs", type=Path, default=None, help="Code references JSON file")
+    parser.add_argument(
+        "--requirements-dir", type=Path, default=None, help="Requirements RST directory"
     )
     parser.add_argument(
-        "--project-root",
-        type=Path,
-        default=Path.cwd(),
-        help="Project root directory"
+        "--output-dir", type=Path, default=None, help="Output directory for generated files"
     )
-    parser.add_argument(
-        "--code-refs",
-        type=Path,
-        default=None,
-        help="Code references JSON file"
-    )
-    parser.add_argument(
-        "--requirements-dir",
-        type=Path,
-        default=None,
-        help="Requirements RST directory"
-    )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=None,
-        help="Output directory for generated files"
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
@@ -777,19 +758,21 @@ def main():
         print(f"Generating gap analysis: {gap_report_path}")
     generate_gap_analysis(requirements, satisfies_map, gap_report_path, test_cases)
 
-    print(f"Traceability matrix generated:")
+    print("Traceability matrix generated:")
     print(f"  HTML: {html_path}")
     print(f"  JSON: {json_path}")
     print(f"  CSV: {csv_path}")
     print(f"  Gap Analysis: {gap_report_path}")
-    print(f"\nSummary:")
+    print("\nSummary:")
     print(f"  Requirements: {len(requirements)}")
     print(f"  Code References: {len(code_refs)}")
     print(f"  Test Cases: {len(test_cases)}")
 
     # Quick gap summary
     fully_traced = sum(1 for req in requirements.values() if req.implemented_by and req.tested_by)
-    print(f"  Fully Traced: {fully_traced}/{len(requirements)} ({fully_traced/len(requirements)*100:.1f}%)")
+    print(
+        f"  Fully Traced: {fully_traced}/{len(requirements)} ({fully_traced / len(requirements) * 100:.1f}%)"
+    )
 
     return 0
 

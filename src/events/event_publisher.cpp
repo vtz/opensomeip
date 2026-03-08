@@ -39,7 +39,7 @@ public:
         : service_id_(service_id), instance_id_(instance_id),
           transport_(std::make_shared<transport::UdpTransport>(
               transport::Endpoint("127.0.0.1", 0))),
-          running_(false), next_session_id_(1) {
+          next_session_id_(1), running_(false) {
 
         transport_->set_listener(this);
     }
@@ -309,7 +309,7 @@ private:
         }
     }
 
-    void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
+    void on_message_received(MessagePtr /*message*/, const transport::Endpoint& /*sender*/) override {
         // Handle subscription/unsubscription messages
         // This would typically come from SD or direct subscription messages
     }
@@ -328,11 +328,11 @@ private:
         }
     }
 
-    void on_connection_established(const transport::Endpoint& endpoint) override {
+    void on_connection_established(const transport::Endpoint& /*endpoint*/) override {
         // Handle new client connections
     }
 
-    void on_error(Result error) override {
+    void on_error(Result /*error*/) override {
         // Handle transport errors
     }
 

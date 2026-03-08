@@ -35,18 +35,17 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
 
 
 def load_json(file_path: Path) -> dict:
     """Load a JSON file."""
     if not file_path.exists():
         return {}
-    with open(file_path, 'r') as f:
+    with open(file_path) as f:
         return json.load(f)
 
 
-def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Set[str], Dict[str, List[str]]]:
+def extract_requirements_from_rst(rst_dir: Path) -> tuple[set[str], dict[str, list[str]]]:
     """Extract requirement IDs and their satisfies relationships from RST files."""
     requirements = set()
     satisfies_map = {}  # req_id -> list of satisfied spec requirements
@@ -54,17 +53,14 @@ def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Set[str], Dict[str, Li
     import re
 
     # Pattern to find requirement blocks - captures the entire directive block
-    req_block_pattern = re.compile(
-        r'\.\.\s+requirement::.*?\n((?:\s+:[^\n]+\n)+)',
-        re.IGNORECASE
-    )
+    req_block_pattern = re.compile(r"\.\.\s+requirement::.*?\n((?:\s+:[^\n]+\n)+)", re.IGNORECASE)
 
     # Patterns for individual fields
-    id_pattern = re.compile(r':id:\s*(REQ_[A-Za-z0-9_]+)', re.IGNORECASE)
-    satisfies_pattern = re.compile(r':satisfies:\s*([^\n]+)', re.IGNORECASE)
+    id_pattern = re.compile(r":id:\s*(REQ_[A-Za-z0-9_]+)", re.IGNORECASE)
+    satisfies_pattern = re.compile(r":satisfies:\s*([^\n]+)", re.IGNORECASE)
 
     for rst_file in rst_dir.rglob("*.rst"):
-        content = rst_file.read_text(encoding='utf-8', errors='ignore')
+        content = rst_file.read_text(encoding="utf-8", errors="ignore")
 
         for block_match in req_block_pattern.finditer(content):
             block_content = block_match.group(1)
@@ -88,11 +84,11 @@ def extract_requirements_from_rst(rst_dir: Path) -> Tuple[Set[str], Dict[str, Li
 
 
 def validate_requirements(
-    requirements: Set[str],
-    satisfies_map: Dict[str, List[str]],
+    requirements: set[str],
+    satisfies_map: dict[str, list[str]],
     code_refs: dict,
-    verbose: bool = False
-) -> Tuple[List[str], List[str], List[str]]:
+    verbose: bool = False,
+) -> tuple[list[str], list[str], list[str]]:
     """
     Validate requirements traceability.
 
@@ -110,7 +106,7 @@ def validate_requirements(
     code_satisfies = set()
     test_tests = set()
 
-    for need_id, need in needs.items():
+    for _need_id, need in needs.items():
         need_type = need.get("type", "")
 
         if need_type == "code_ref":
@@ -159,17 +155,19 @@ def validate_requirements(
         if req_id.startswith("REQ_"):  # Implementation requirement
             # Skip spec link validation for implementation-derived requirements
             is_implementation_derived = (
-                '_E0' in req_id or  # Error handling (_E01, _E02, _E03)
-                '_ARCH_' in req_id or  # Architectural
-                'PLUGIN' in req_id or  # Plugin requirements
-                'MY_' in req_id  # Custom requirements
+                "_E0" in req_id  # Error handling (_E01, _E02, _E03)
+                or "_ARCH_" in req_id  # Architectural
+                or "PLUGIN" in req_id  # Plugin requirements
+                or "MY_" in req_id  # Custom requirements
             )
 
             if not is_implementation_derived:
                 satisfies = satisfies_map.get(req_id, [])
                 if not satisfies:
                     missing_spec_links.append(req_id)
-                    errors.append(f"Implementation requirement {req_id} has no spec requirement links (missing :satisfies: field)")
+                    errors.append(
+                        f"Implementation requirement {req_id} has no spec requirement links (missing :satisfies: field)"
+                    )
 
     # Check for orphaned code references
     for ref in code_implements:
@@ -187,10 +185,14 @@ def validate_requirements(
     spec_linked = len(requirements) - len(missing_spec_links)
 
     # Gap Analysis Summary
-    info.append(f"\nGap Analysis Summary:")
+    info.append("\nGap Analysis Summary:")
     info.append(f"  Total requirements: {len(requirements)}")
-    info.append(f"  Fully traced (code + tests): {fully_traced}/{len(requirements)} ({fully_traced/len(requirements)*100:.1f}%)")
-    info.append(f"  Spec-linked implementation reqs: {spec_linked}/{len([r for r in requirements if r.startswith('REQ_')])}")
+    info.append(
+        f"  Fully traced (code + tests): {fully_traced}/{len(requirements)} ({fully_traced / len(requirements) * 100:.1f}%)"
+    )
+    info.append(
+        f"  Spec-linked implementation reqs: {spec_linked}/{len([r for r in requirements if r.startswith('REQ_')])}"
+    )
     info.append(f"  Requirements with code: {len(requirements & code_implements)}")
     info.append(f"  Requirements with tests: {len(requirements & test_tests)}")
     info.append(f"  Orphaned requirements (no code): {len(orphaned_requirements)}")
@@ -202,41 +204,18 @@ def validate_requirements(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Validate requirements completeness"
-    )
+    parser = argparse.ArgumentParser(description="Validate requirements completeness")
     parser.add_argument(
-        "--project-root",
-        type=Path,
-        default=Path.cwd(),
-        help="Project root directory"
+        "--project-root", type=Path, default=Path.cwd(), help="Project root directory"
     )
+    parser.add_argument("--code-refs", type=Path, default=None, help="Code references JSON file")
     parser.add_argument(
-        "--code-refs",
-        type=Path,
-        default=None,
-        help="Code references JSON file"
+        "--requirements-dir", type=Path, default=None, help="Requirements RST directory"
     )
+    parser.add_argument("--verbose", action="store_true", help="Verbose output")
+    parser.add_argument("--strict", action="store_true", help="Treat warnings as errors")
     parser.add_argument(
-        "--requirements-dir",
-        type=Path,
-        default=None,
-        help="Requirements RST directory"
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Verbose output"
-    )
-    parser.add_argument(
-        "--strict",
-        action="store_true",
-        help="Treat warnings as errors"
-    )
-    parser.add_argument(
-        "--ci-mode",
-        action="store_true",
-        help="CI mode: exit with code 2 if no requirements found"
+        "--ci-mode", action="store_true", help="CI mode: exit with code 2 if no requirements found"
     )
 
     args = parser.parse_args()

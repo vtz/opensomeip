@@ -338,7 +338,7 @@ bool Message::is_valid() const {
  * @implements REQ_MSG_004_E01, REQ_MSG_004_E02
  */
 bool Message::has_valid_service_id() const {
-    uint16_t service_id = get_service_id();
+    [[maybe_unused]] uint16_t service_id = get_service_id();
 
     // REQ_MSG_004: Reserved Service ID 0x0000 is technically invalid per spec
     // But we allow it for default/uninitialized messages to maintain backward compatibility
@@ -394,7 +394,7 @@ bool Message::has_valid_length() const {
  * @implements REQ_MSG_025
  */
 bool Message::has_valid_client_id() const {
-    uint16_t client_id = get_client_id();
+    [[maybe_unused]] uint16_t client_id = get_client_id();
 
     // REQ_MSG_025: Client ID 0 is reserved for SD
     // But allow it for default/uninitialized messages
@@ -407,7 +407,7 @@ bool Message::has_valid_client_id() const {
  * @implements REQ_MSG_024_E01, REQ_MSG_024_E02
  */
 bool Message::has_valid_session_id() const {
-    uint16_t session_id = get_session_id();
+    [[maybe_unused]] uint16_t session_id = get_session_id();
 
     // REQ_MSG_023: Session ID 0 is disabled session handling
     // This is valid but indicates no session management

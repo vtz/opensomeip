@@ -210,7 +210,7 @@ private:
     };
 
     /** @implements REQ_MSG_118, REQ_MSG_118_E01 */
-    void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
+    void on_message_received(MessagePtr message, const transport::Endpoint& /*sender*/) override {
         // Check if this is a response to one of our pending calls
         if (!message->is_response()) {
             return;
@@ -242,15 +242,15 @@ private:
         }
     }
 
-    void on_connection_lost(const transport::Endpoint& endpoint) override {
+    void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {
         // TODO: Handle connection loss
     }
 
-    void on_connection_established(const transport::Endpoint& endpoint) override {
+    void on_connection_established(const transport::Endpoint& /*endpoint*/) override {
         // TODO: Handle connection establishment
     }
 
-    void on_error(Result error) override {
+    void on_error(Result /*error*/) override {
         // TODO: Handle transport errors
     }
 

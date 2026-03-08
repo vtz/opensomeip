@@ -38,8 +38,8 @@ using namespace someip::tp;
  * @tests REQ_TP_050_E01, REQ_TP_050_E02
  * @tests REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075
  * @tests REQ_TP_076, REQ_TP_077, REQ_TP_078, REQ_TP_079, REQ_TP_080, REQ_TP_081, REQ_TP_082
- * @tests REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02, REQ_TP_071_E01, REQ_TP_071_E02
- * @tests REQ_TP_070_E01, REQ_TP_070_E02
+ * @tests REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
+ * @tests REQ_TP_082_E01, REQ_TP_082_E02, REQ_TP_082_E03, REQ_TP_082_E04
  * @tests feat_req_someiptp_400
  * @tests feat_req_someiptp_402
  * @tests feat_req_someiptp_410
@@ -642,7 +642,7 @@ TEST_F(TpTest, ReassemblyTimeout) {
 
 /**
  * @test_case TC_TP_E03
- * @tests REQ_TP_071_E01, REQ_TP_071_E02
+ * @tests REQ_TP_082_E03, REQ_TP_082_E04
  * @brief Test TP with zero-length segment payload
  */
 TEST_F(TpTest, ZeroLengthSegmentPayload) {
@@ -664,7 +664,7 @@ TEST_F(TpTest, ZeroLengthSegmentPayload) {
 
 /**
  * @test_case TC_TP_E04
- * @tests REQ_TP_070_E01, REQ_TP_070_E02
+ * @tests REQ_TP_082_E01, REQ_TP_082_E02
  * @brief Test TP message exceeding max size
  */
 TEST_F(TpTest, MessageExceedsMaxSize) {

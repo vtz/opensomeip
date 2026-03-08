@@ -30,10 +30,8 @@ import argparse
 import json
 import re
 import sys
-from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 
 def load_gap_analysis(gap_file: Path) -> dict:
@@ -60,14 +58,16 @@ def load_gap_analysis(gap_file: Path) -> dict:
             metrics[key] = int(match.group(1))
 
     # Extract priority breakdown
-    priority_pattern = r"\|\s*(Critical|High|Medium|Low)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)%\s*\|"
+    priority_pattern = (
+        r"\|\s*(Critical|High|Medium|Low)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)%\s*\|"
+    )
     priorities = {}
     for match in re.finditer(priority_pattern, content):
         priorities[match.group(1).lower()] = {
             "total": int(match.group(2)),
             "implemented": int(match.group(3)),
             "tested": int(match.group(4)),
-            "coverage": int(match.group(5))
+            "coverage": int(match.group(5)),
         }
     metrics["priorities"] = priorities
 
@@ -81,7 +81,7 @@ def load_gap_analysis(gap_file: Path) -> dict:
     return metrics
 
 
-def load_code_references(json_path: Path) -> Tuple[Set[str], Set[str]]:
+def load_code_references(json_path: Path) -> tuple[set[str], set[str]]:
     """Load implemented requirements and test cases from code references."""
     implemented = set()
     test_cases = set()
@@ -89,7 +89,7 @@ def load_code_references(json_path: Path) -> Tuple[Set[str], Set[str]]:
     if not json_path.exists():
         return implemented, test_cases
 
-    with open(json_path, 'r') as f:
+    with open(json_path) as f:
         data = json.load(f)
 
     needs = data.get("versions", {}).get("current", {}).get("needs", {})
@@ -110,7 +110,7 @@ def load_code_references(json_path: Path) -> Tuple[Set[str], Set[str]]:
     return implemented, test_cases
 
 
-def classify_requirement(req_id: str) -> Tuple[str, str]:
+def classify_requirement(req_id: str) -> tuple[str, str]:
     """Classify requirement by category and priority."""
     # Category
     if "_E0" in req_id or "_E1" in req_id:
@@ -137,9 +137,7 @@ def classify_requirement(req_id: str) -> Tuple[str, str]:
         priority = "low"
     elif category in ("architectural", "plugin"):
         priority = "high"
-    elif category == "message":
-        priority = "critical"
-    elif category == "serialization":
+    elif category == "message" or category == "serialization":
         priority = "critical"
     else:
         priority = "medium"
@@ -148,14 +146,11 @@ def classify_requirement(req_id: str) -> Tuple[str, str]:
 
 
 def generate_report(
-    metrics: dict,
-    implemented: Set[str],
-    test_cases: Set[str],
-    output_path: Optional[Path] = None
+    metrics: dict, implemented: set[str], test_cases: set[str], output_path: Path | None = None
 ) -> str:
     """Generate comprehensive implementation status report."""
 
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     lines = []
     lines.append("# OpenSOMEIP Implementation Status Report\n")
@@ -208,7 +203,9 @@ def generate_report(
             else:
                 status = "❌"
 
-            lines.append(f"| {prio.capitalize()} | {total_p} | {impl} | {tested} | {cov}% | {status} |")
+            lines.append(
+                f"| {prio.capitalize()} | {total_p} | {impl} | {tested} | {cov}% | {status} |"
+            )
         lines.append("")
 
     # Test Coverage
@@ -218,7 +215,9 @@ def generate_report(
         lines.append("| Test Level | Count | Description |")
         lines.append("|------------|-------|-------------|")
         lines.append(f"| Unit | {test_types.get('unit', 0)} | Component-level tests |")
-        lines.append(f"| Integration | {test_types.get('integration', 0)} | Module interaction tests |")
+        lines.append(
+            f"| Integration | {test_types.get('integration', 0)} | Module interaction tests |"
+        )
         lines.append(f"| System | {test_types.get('system', 0)} | End-to-end tests |")
         lines.append("")
 
@@ -243,9 +242,13 @@ def generate_report(
 
     lines.append("### Immediate Actions (P0)\n")
     if priorities.get("critical", {}).get("coverage", 100) < 80:
-        lines.append("1. **Complete Critical Requirements**: Focus on completing the remaining critical priority requirements")
+        lines.append(
+            "1. **Complete Critical Requirements**: Focus on completing the remaining critical priority requirements"
+        )
     if missing_spec > 0:
-        lines.append("2. **Add Spec Links**: Add `:satisfies:` links to requirements missing spec references")
+        lines.append(
+            "2. **Add Spec Links**: Add `:satisfies:` links to requirements missing spec references"
+        )
     if test_types.get("integration", 0) < 10:
         lines.append("3. **Add Integration Tests**: Increase integration test coverage")
 
@@ -273,7 +276,9 @@ def generate_report(
 
     # Next Steps
     lines.append("## Next Steps\n")
-    lines.append(f"1. **Current Focus**: Complete critical requirements (currently at {priorities.get('critical', {}).get('coverage', 0)}% coverage)")
+    lines.append(
+        f"1. **Current Focus**: Complete critical requirements (currently at {priorities.get('critical', {}).get('coverage', 0)}% coverage)"
+    )
     lines.append("2. **Target**: Achieve 80% overall traceability coverage")
     lines.append("3. **Timeline**: Review progress weekly using this report")
 
@@ -290,40 +295,22 @@ def main():
         description="Generate comprehensive implementation status report"
     )
     parser.add_argument(
-        "--project-root",
-        type=Path,
-        default=Path.cwd(),
-        help="Project root directory"
+        "--project-root", type=Path, default=Path.cwd(), help="Project root directory"
     )
     parser.add_argument(
-        "--gap-analysis",
-        type=Path,
-        default=None,
-        help="Gap analysis markdown file"
+        "--gap-analysis", type=Path, default=None, help="Gap analysis markdown file"
     )
-    parser.add_argument(
-        "--code-refs",
-        type=Path,
-        default=None,
-        help="Code references JSON file"
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=None,
-        help="Output report file"
-    )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("--code-refs", type=Path, default=None, help="Code references JSON file")
+    parser.add_argument("--output", type=Path, default=None, help="Output report file")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
     # Set defaults
     if args.gap_analysis is None:
-        args.gap_analysis = args.project_root / "build" / "docs" / "traceability" / "gap_analysis.md"
+        args.gap_analysis = (
+            args.project_root / "build" / "docs" / "traceability" / "gap_analysis.md"
+        )
 
     if args.code_refs is None:
         args.code_refs = args.project_root / "build" / "code_references.json"
@@ -343,7 +330,7 @@ def main():
 
     # Generate report
     print("\nGenerating report...")
-    report = generate_report(metrics, implemented, test_cases, args.output)
+    generate_report(metrics, implemented, test_cases, args.output)
 
     print(f"\nReport written to: {args.output}")
 

@@ -253,7 +253,7 @@ private:
         return std::to_string(service_id) + ":" + std::to_string(instance_id) + ":" + std::to_string(event_id);
     }
 
-    void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
+    void on_message_received(MessagePtr message, const transport::Endpoint& /*sender*/) override {
         // Check if this is an event notification
         if (message->get_message_type() != MessageType::NOTIFICATION) {
             return;
@@ -305,7 +305,7 @@ private:
         }
     }
 
-    void on_connection_lost(const transport::Endpoint& endpoint) override {
+    void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {
         // Handle service disconnection
         platform::ScopedLock subs_lock(subscriptions_mutex_);
 
@@ -318,11 +318,11 @@ private:
         }
     }
 
-    void on_connection_established(const transport::Endpoint& endpoint) override {
+    void on_connection_established(const transport::Endpoint& /*endpoint*/) override {
         // Handle service reconnection
     }
 
-    void on_error(Result error) override {
+    void on_error(Result /*error*/) override {
         // Handle transport errors
     }
 

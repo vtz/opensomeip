@@ -39,7 +39,7 @@ TpReassembler::~TpReassembler() {
  * @implements REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015
  * @implements REQ_TP_016, REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021
  * @implements REQ_TP_015_E01
- * @implements REQ_TP_070_E01, REQ_TP_070_E02, REQ_TP_071_E01, REQ_TP_071_E02
+ * @implements REQ_TP_082_E01, REQ_TP_082_E02, REQ_TP_082_E03, REQ_TP_082_E04
  * @implements REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
  * @implements REQ_TP_082
  */

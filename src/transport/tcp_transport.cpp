@@ -65,13 +65,10 @@ Result TcpTransport::initialize(const Endpoint& local_endpoint) {
     return Result::SUCCESS;
 }
 
-Result TcpTransport::send_message(const Message& message, const Endpoint& endpoint) {
+Result TcpTransport::send_message(const Message& message, const Endpoint& /*endpoint*/) {
     if (!is_connected()) {
         return Result::NOT_CONNECTED;
     }
-
-    // For TCP, we ignore the endpoint parameter and send over the established connection
-    // The endpoint is mainly used for UDP routing
 
     // Serialize message
     std::vector<uint8_t> data = message.serialize();

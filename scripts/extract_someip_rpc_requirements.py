@@ -24,13 +24,14 @@ SUMMARY_OVERRIDES = {
     "feat_req_someip_813": "UDP Binding shall support dynamic switching of eventgroups between unicast and multicast based on Multicast-Threshold.",
 }
 
+
 def main():
     spec_path = Path(__file__).resolve().parent.parent / "open-someip-spec/src/someip-rpc.rst"
     if not spec_path.exists():
         print(f"Error: {spec_path} not found")
         return 1
 
-    with open(spec_path, "r") as f:
+    with open(spec_path) as f:
         lines = f.readlines()
 
     current_section = "Unknown"
@@ -40,10 +41,7 @@ def main():
         if rid in SUMMARY_OVERRIDES:
             return SUMMARY_OVERRIDES[rid]
         content_start = block_text.find(":collapse:")
-        if content_start >= 0:
-            content_start = block_text.find("\n", content_start) + 1
-        else:
-            content_start = 0
+        content_start = block_text.find("\n", content_start) + 1 if content_start >= 0 else 0
         rest = block_text[content_start:]
         for ln in rest.split("\n"):
             s = ln.strip()
@@ -87,7 +85,13 @@ def main():
             while j < len(lines):
                 block.append(lines[j])
                 j += 1
-                if j < len(lines) and lines[j].strip() and not lines[j].startswith(" ") and not lines[j].startswith("\t") and ".. " in lines[j]:
+                if (
+                    j < len(lines)
+                    and lines[j].strip()
+                    and not lines[j].startswith(" ")
+                    and not lines[j].startswith("\t")
+                    and ".. " in lines[j]
+                ):
                     break
                 if j < len(lines) and re.match(r"^\.\.\s+\w+", lines[j]) and j > i + 2:
                     break

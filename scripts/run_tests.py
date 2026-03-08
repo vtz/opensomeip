@@ -20,14 +20,12 @@ Supports selective test execution, coverage reporting, and various output format
 """
 
 import argparse
+import json
+import os
 import subprocess
 import sys
-import os
-import json
-import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
 
 
 class TestRunner:
@@ -50,8 +48,9 @@ class TestRunner:
         self.test_results = {}
         self.coverage_data = {}
 
-    def run_command(self, cmd: List[str], cwd: Optional[Path] = None,
-                   capture_output: bool = True) -> Tuple[int, str, str]:
+    def run_command(
+        self, cmd: list[str], cwd: Path | None = None, capture_output: bool = True
+    ) -> tuple[int, str, str]:
         """Run a command and return exit code, stdout, stderr."""
         try:
             result = subprocess.run(
@@ -59,7 +58,7 @@ class TestRunner:
                 cwd=cwd or self.build_dir,
                 capture_output=capture_output,
                 text=True,
-                check=False
+                check=False,
             )
             return result.returncode, result.stdout, result.stderr
         except FileNotFoundError:
@@ -73,7 +72,7 @@ class TestRunner:
             print("🧹 Cleaning build directory...")
             # Clean from build directory if it exists, otherwise create it
             if self.build_dir.exists():
-                exit_code, stdout, stderr = self.run_command(["make", "clean"], self.build_dir)
+                exit_code, _stdout, _stderr = self.run_command(["make", "clean"], self.build_dir)
             else:
                 print("Build directory doesn't exist, skipping clean")
                 exit_code = 0
@@ -88,13 +87,13 @@ class TestRunner:
         else:
             cmake_args.extend(["-DCOVERAGE=OFF"])
 
-        exit_code, stdout, stderr = self.run_command(cmake_args, self.build_dir)
+        exit_code, _stdout, stderr = self.run_command(cmake_args, self.build_dir)
         if exit_code != 0:
             print(f"❌ CMake configuration failed: {stderr}")
             return False
 
         # Build
-        exit_code, stdout, stderr = self.run_command(["make", "-j", str(os.cpu_count() or 4)])
+        exit_code, _stdout, stderr = self.run_command(["make", "-j", str(os.cpu_count() or 4)])
         if exit_code != 0:
             print(f"❌ Build failed: {stderr}")
             return False
@@ -102,8 +101,9 @@ class TestRunner:
         print("✅ Build successful")
         return True
 
-    def run_unit_tests(self, test_filter: Optional[str] = None,
-                      output_format: str = "console") -> Dict[str, any]:
+    def run_unit_tests(
+        self, test_filter: str | None = None, output_format: str = "console"
+    ) -> dict[str, any]:
         """Run unit tests with optional filtering."""
         print(f"🧪 Running unit tests{f' (filter: {test_filter})' if test_filter else ''}...")
 
@@ -134,7 +134,7 @@ class TestRunner:
 
         return results
 
-    def run_integration_tests(self, test_filter: Optional[str] = None) -> Dict[str, any]:
+    def run_integration_tests(self, test_filter: str | None = None) -> dict[str, any]:
         """Run integration tests."""
         print("🔗 Running integration tests...")
 
@@ -159,7 +159,7 @@ class TestRunner:
 
         return results
 
-    def run_coverage(self) -> Dict[str, any]:
+    def run_coverage(self) -> dict[str, any]:
         """Generate coverage report."""
         print("📊 Generating coverage report...")
 
@@ -178,11 +178,11 @@ class TestRunner:
         if self._check_tool("clang-tidy"):
             tools_found = True
             print("  Running clang-tidy...")
-            exit_code, stdout, stderr = self.run_command(["make", "tidy"])
+            exit_code, _stdout, stderr = self.run_command(["make", "tidy"])
             if exit_code != 0:
-                print(f"⚠️  clang-tidy found issues")
+                print("⚠️  clang-tidy found issues")
                 # Print first few lines of output
-                lines = stderr.strip().split('\n')[:10]
+                lines = stderr.strip().split("\n")[:10]
                 for line in lines:
                     if line.strip():
                         print(f"     {line}")
@@ -205,13 +205,12 @@ class TestRunner:
                 "--suppress=missingIncludeSystem",
                 "--quiet",
                 str(self.project_root / "include"),
-                str(self.project_root / "src")
+                str(self.project_root / "src"),
             ]
-            exit_code, stdout, stderr = self.run_command(cmd, self.project_root)
+            exit_code, _stdout, stderr = self.run_command(cmd, self.project_root)
             if exit_code != 0:
-                print(f"⚠️  cppcheck found issues")
-                # Print first few lines of output
-                lines = stderr.strip().split('\n')[:5]
+                print("⚠️  cppcheck found issues")
+                lines = stderr.strip().split("\n")[:5]
                 for line in lines:
                     if line.strip():
                         print(f"     {line}")
@@ -223,7 +222,9 @@ class TestRunner:
             print("   Install: apt install cppcheck (Ubuntu) or brew install cppcheck (macOS)")
 
         if not tools_found:
-            print("ℹ️  No static analysis tools found. Install clang-tidy or cppcheck for code quality analysis.")
+            print(
+                "i  No static analysis tools found. Install clang-tidy or cppcheck for code quality analysis."
+            )
             print("   Run: ./scripts/install_dev_tools.sh")
             print("   Or manually: brew install llvm cppcheck  (macOS)")
             print("                apt install clang-tidy cppcheck  (Ubuntu)")
@@ -244,7 +245,7 @@ class TestRunner:
             print("⚠️  clang-format not found")
             return False
 
-        exit_code, stdout, stderr = self.run_command(["make", "format"])
+        exit_code, _stdout, stderr = self.run_command(["make", "format"])
         if exit_code != 0:
             print(f"❌ Code formatting failed: {stderr}")
             return False
@@ -252,7 +253,7 @@ class TestRunner:
         print("✅ Code formatted")
         return True
 
-    def generate_report(self, results: Dict[str, any], output_format: str = "console") -> None:
+    def generate_report(self, results: dict[str, any], output_format: str = "console") -> None:
         """Generate test report."""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -268,17 +269,19 @@ class TestRunner:
         if output_format != "console":
             self._print_report_paths(results)
 
-    def _parse_test_output(self, stdout: str, stderr: str) -> Dict[str, any]:
+    def _parse_test_output(self, stdout: str, stderr: str) -> dict[str, any]:
         """Parse CTest output."""
         results = {"total": 0, "passed": 0, "failed": 0, "skipped": 0}
 
         # Parse the output for test counts
-        for line in stdout.split('\n'):
+        for line in stdout.split("\n"):
             # Try multiple patterns for test summary
             import re
 
             # Pattern 1: "X% tests passed, Y tests failed out of Z"
-            match = re.search(r'(\d+)%\s+tests?\s+passed.*?(\d+)\s+tests?\s+failed.*?(\d+)', line.lower())
+            match = re.search(
+                r"(\d+)%\s+tests?\s+passed.*?(\d+)\s+tests?\s+failed.*?(\d+)", line.lower()
+            )
             if match:
                 passed_percent = int(match.group(1))
                 failed = int(match.group(2))
@@ -289,7 +292,9 @@ class TestRunner:
                 break
 
             # Pattern 2: "X tests passed, Y tests failed out of Z total"
-            match = re.search(r'(\d+)\s+tests?\s+passed.*?(\d+)\s+tests?\s+failed.*?(\d+)\s+total', line.lower())
+            match = re.search(
+                r"(\d+)\s+tests?\s+passed.*?(\d+)\s+tests?\s+failed.*?(\d+)\s+total", line.lower()
+            )
             if match:
                 results["passed"] = int(match.group(1))
                 results["failed"] = int(match.group(2))
@@ -298,7 +303,7 @@ class TestRunner:
 
         return results
 
-    def _parse_integration_output(self, stdout: str, stderr: str) -> Dict[str, any]:
+    def _parse_integration_output(self, stdout: str, stderr: str) -> dict[str, any]:
         """Parse integration test output."""
         # Basic parsing - could be enhanced for specific test frameworks
         results = {"total": 0, "passed": 0, "failed": 0}
@@ -311,14 +316,15 @@ class TestRunner:
 
         return results
 
-    def _parse_pytest_output(self, stdout: str, stderr: str) -> Dict[str, any]:
+    def _parse_pytest_output(self, stdout: str, stderr: str) -> dict[str, any]:
         """Parse pytest output."""
         results = {"total": 0, "passed": 0, "failed": 0, "skipped": 0}
 
         # Parse pytest output (usually at the end)
         # Example: "====== 10 passed, 2 failed, 1 skipped in 1.23s ======"
         import re
-        match = re.search(r'(\d+)\s+passed.*?(\d+)\s+failed.*?(\d+)\s+skipped', stdout)
+
+        match = re.search(r"(\d+)\s+passed.*?(\d+)\s+failed.*?(\d+)\s+skipped", stdout)
         if match:
             results["passed"] = int(match.group(1))
             results["failed"] = int(match.group(2))
@@ -327,20 +333,22 @@ class TestRunner:
 
         return results
 
-    def _parse_coverage_output(self, output: str) -> Dict[str, any]:
+    def _parse_coverage_output(self, output: str) -> dict[str, any]:
         """Parse gcovr coverage output."""
         coverage = {}
 
-        for line in output.split('\n'):
-            if 'lines:' in line:
+        for line in output.split("\n"):
+            if "lines:" in line:
                 # Extract percentage
                 import re
-                match = re.search(r'(\d+(?:\.\d+)?)%', line)
+
+                match = re.search(r"(\d+(?:\.\d+)?)%", line)
                 if match:
                     coverage["line_rate"] = float(match.group(1)) / 100.0
-            elif 'branches:' in line:
+            elif "branches:" in line:
                 import re
-                match = re.search(r'(\d+(?:\.\d+)?)%', line)
+
+                match = re.search(r"(\d+(?:\.\d+)?)%", line)
                 if match:
                     coverage["branch_rate"] = float(match.group(1)) / 100.0
 
@@ -348,33 +356,40 @@ class TestRunner:
 
     def _check_tool(self, tool: str) -> bool:
         """Check if a tool is available."""
-        exit_code, stdout, stderr = self.run_command(["which", tool])
+        exit_code, _stdout, _stderr = self.run_command(["which", tool])
         return exit_code == 0
 
     def _is_sandbox_environment(self) -> bool:
         """Check if we're running in a sandboxed environment."""
         # Check for common sandbox indicators
         import os
+
         return (
-            os.path.exists("/.dockerenv") or  # Docker
-            os.environ.get("SANDBOX") == "1" or  # Explicit sandbox flag
-            not self._check_tool("ss") or  # No system network tools
-            True  # Assume sandbox for safety
+            os.path.exists("/.dockerenv")  # Docker
+            or os.environ.get("SANDBOX") == "1"  # Explicit sandbox flag
+            or not self._check_tool("ss")  # No system network tools
+            or True  # Assume sandbox for safety
         )
 
-    def _run_gcovr_coverage(self) -> Dict[str, any]:
+    def _run_gcovr_coverage(self) -> dict[str, any]:
         """Run coverage with gcovr."""
         (self.build_dir / "coverage").mkdir(parents=True, exist_ok=True)
 
         gcovr_cmd = [
             "gcovr",
-            "--root", str(self.project_root),
-            "--exclude", str(self.project_root / "tests/"),
-            "--exclude", str(self.project_root / "examples/"),
-            "--exclude", str(self.build_dir),
-            "--html", "--html-details",
-            "--output", str(self.build_dir / "coverage" / "index.html"),
-            "--print-summary"
+            "--root",
+            str(self.project_root),
+            "--exclude",
+            str(self.project_root / "tests/"),
+            "--exclude",
+            str(self.project_root / "examples/"),
+            "--exclude",
+            str(self.build_dir),
+            "--html",
+            "--html-details",
+            "--output",
+            str(self.build_dir / "coverage" / "index.html"),
+            "--print-summary",
         ]
 
         exit_code, stdout, stderr = self.run_command(gcovr_cmd, self.build_dir)
@@ -385,14 +400,15 @@ class TestRunner:
         coverage = self._parse_coverage_output(stdout)
         coverage["html_report"] = str(self.build_dir / "coverage" / "index.html")
 
-        print(f"📈 Coverage: {coverage.get('line_rate', 0):.1%} lines, "
-              f"{coverage.get('branch_rate', 0):.1%} branches")
+        print(
+            f"📈 Coverage: {coverage.get('line_rate', 0):.1%} lines, "
+            f"{coverage.get('branch_rate', 0):.1%} branches"
+        )
         print(f"📄 HTML report: {coverage['html_report']}")
 
         return coverage
 
-
-    def _run_basic_gcov(self) -> Dict[str, any]:
+    def _run_basic_gcov(self) -> dict[str, any]:
         """Run basic gcov analysis using lcov if available, otherwise estimate."""
         print("  Running basic gcov analysis...")
 
@@ -426,7 +442,9 @@ class TestRunner:
         estimated_lines = len(src_gcda_files) * 100  # Rough estimate
         estimated_covered = int(estimated_lines * 0.75)  # Assume 75% coverage
 
-        print(f"  📊 Estimated Coverage: {estimated_covered/estimated_lines:.1%} lines ({estimated_covered}/{estimated_lines})")
+        print(
+            f"  📊 Estimated Coverage: {estimated_covered / estimated_lines:.1%} lines ({estimated_covered}/{estimated_lines})"
+        )
         print("  💡 For accurate coverage, install lcov: brew install lcov")
 
         return {
@@ -435,26 +453,40 @@ class TestRunner:
             "lines_covered": estimated_covered,
             "lines_total": estimated_lines,
             "branches_covered": int(estimated_lines * 0.7),
-            "branches_total": estimated_lines
+            "branches_total": estimated_lines,
         }
 
-    def _run_lcov_coverage(self) -> Dict[str, any]:
+    def _run_lcov_coverage(self) -> dict[str, any]:
         """Run lcov coverage analysis."""
         try:
             # Generate initial coverage data
             # Use multiple ignore-errors options to handle various issues
-            lcov_cmd = ["lcov", "--ignore-errors", "path,inconsistent,unsupported",
-                       "--capture", "--directory", str(self.build_dir),
-                       "--build-directory", str(self.build_dir),
-                       "--output-file", str(self.build_dir / "coverage.info")]
+            lcov_cmd = [
+                "lcov",
+                "--ignore-errors",
+                "path,inconsistent,unsupported",
+                "--capture",
+                "--directory",
+                str(self.build_dir),
+                "--build-directory",
+                str(self.build_dir),
+                "--output-file",
+                str(self.build_dir / "coverage.info"),
+            ]
             exit_code, stdout, stderr = self.run_command(lcov_cmd, self.build_dir)
             if exit_code != 0:
                 print(f"  lcov capture failed: {stderr}")
                 return {}
 
             # Remove test coverage, keep only library coverage
-            lcov_cmd = ["lcov", "--extract", str(self.build_dir / "coverage.info"),
-                       "*/src/*", "--output-file", str(self.build_dir / "coverage.filtered.info")]
+            lcov_cmd = [
+                "lcov",
+                "--extract",
+                str(self.build_dir / "coverage.info"),
+                "*/src/*",
+                "--output-file",
+                str(self.build_dir / "coverage.filtered.info"),
+            ]
             exit_code, stdout, stderr = self.run_command(lcov_cmd, self.build_dir)
             if exit_code != 0:
                 print(f"  lcov extract failed: {stderr}")
@@ -470,39 +502,41 @@ class TestRunner:
             line_rate = 0.0
             branch_rate = 0.0
 
-            for line in stdout.split('\n'):
-                if 'lines......:' in line and '%' in line:
+            for line in stdout.split("\n"):
+                if "lines......:" in line and "%" in line:
                     import re
-                    match = re.search(r'(\d+\.\d+)%', line)
+
+                    match = re.search(r"(\d+\.\d+)%", line)
                     if match:
                         line_rate = float(match.group(1)) / 100.0
-                elif 'branches...:' in line and '%' in line:
+                elif "branches...:" in line and "%" in line:
                     import re
-                    match = re.search(r'(\d+\.\d+)%', line)
+
+                    match = re.search(r"(\d+\.\d+)%", line)
                     if match:
                         branch_rate = float(match.group(1)) / 100.0
 
             if line_rate > 0 or branch_rate > 0:
                 print(f"  📊 LCOV Coverage: {line_rate:.1%} lines, {branch_rate:.1%} branches")
             else:
-                print(f"  📊 LCOV found no coverage data, using estimation")
+                print("  📊 LCOV found no coverage data, using estimation")
                 return {}  # Fall back to estimation
 
             return {
                 "line_rate": line_rate,
                 "branch_rate": branch_rate,
-                "lcov_file": str(self.build_dir / "coverage.filtered.info")
+                "lcov_file": str(self.build_dir / "coverage.filtered.info"),
             }
 
         except Exception as e:
             print(f"  LCOV analysis failed: {e}")
             return {}
 
-    def _print_console_report(self, results: Dict[str, any], timestamp: str) -> None:
+    def _print_console_report(self, results: dict[str, any], timestamp: str) -> None:
         """Print console report."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📋 SOME/IP Stack Test Report")
-        print("="*60)
+        print("=" * 60)
         print(f"Timestamp: {timestamp}")
         print(f"Build Directory: {self.build_dir}")
         print()
@@ -546,14 +580,14 @@ class TestRunner:
             print("   Status: ✅ ALL TESTS PASSED")
         else:
             print("   Status: ❌ TESTS FAILED")
-        print("="*60)
+        print("=" * 60)
 
-    def _generate_json_report(self, results: Dict[str, any], timestamp: str) -> None:
+    def _generate_json_report(self, results: dict[str, any], timestamp: str) -> None:
         """Generate JSON report."""
         report = {
             "timestamp": timestamp,
             "build_directory": str(self.build_dir),
-            "results": results
+            "results": results,
         }
 
         with open(self.build_dir / "test_report.json", "w") as f:
@@ -561,7 +595,7 @@ class TestRunner:
 
         print(f"📄 JSON report saved to {self.build_dir / 'test_report.json'}")
 
-    def _print_report_paths(self, results: Dict[str, any]) -> None:
+    def _print_report_paths(self, results: dict[str, any]) -> None:
         """Print paths to generated reports."""
         print("\n📋 Generated Reports:")
         print("=" * 50)
@@ -571,7 +605,7 @@ class TestRunner:
             junit_path = results["unit_tests"]["junit_xml"]
             if Path(junit_path).exists():
                 print(f"JUnit XML:     {junit_path}")
-                print(f"               (Compatible with Jenkins, GitLab CI, etc.)")
+                print("               (Compatible with Jenkins, GitLab CI, etc.)")
 
         # Coverage reports
         if "coverage" in results:
@@ -579,8 +613,10 @@ class TestRunner:
             if "html_report" in cov and Path(cov["html_report"]).exists():
                 print(f"Coverage HTML: {cov['html_report']}")
                 print("               (Open in browser for detailed coverage)")
-            print(f"Coverage:      {cov.get('line_rate', 0):.1%} lines, "
-                  f"{cov.get('branch_rate', 0):.1%} branches")
+            print(
+                f"Coverage:      {cov.get('line_rate', 0):.1%} lines, "
+                f"{cov.get('branch_rate', 0):.1%} branches"
+            )
 
         # JSON report
         json_report = self.build_dir / "test_report.json"
@@ -593,19 +629,27 @@ class TestRunner:
 def main():
     parser = argparse.ArgumentParser(
         description="SOME/IP Stack Test Runner",
-        epilog="Note: Run this script from the project root directory"
+        epilog="Note: Run this script from the project root directory",
     )
-    parser.add_argument("--build-dir", default="build", help="Build directory (relative to project root)")
+    parser.add_argument(
+        "--build-dir", default="build", help="Build directory (relative to project root)"
+    )
     parser.add_argument("--clean", action="store_true", help="Clean build before testing")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild project")
     parser.add_argument("--coverage", action="store_true", help="Enable coverage reporting")
     parser.add_argument("--filter", help="Filter tests by pattern")
     parser.add_argument("--unit-only", action="store_true", help="Run only unit tests")
-    parser.add_argument("--integration-only", action="store_true", help="Run only integration tests")
+    parser.add_argument(
+        "--integration-only", action="store_true", help="Run only integration tests"
+    )
     parser.add_argument("--static-analysis", action="store_true", help="Run static analysis")
     parser.add_argument("--format-code", action="store_true", help="Format code")
-    parser.add_argument("--report-format", choices=["console", "json", "html"],
-                       default="console", help="Report output format")
+    parser.add_argument(
+        "--report-format",
+        choices=["console", "json", "html"],
+        default="console",
+        help="Report output format",
+    )
 
     args = parser.parse_args()
 
@@ -613,19 +657,16 @@ def main():
     results = {}
 
     # Build if requested
-    if args.rebuild or args.clean:
-        if not runner.build_project(clean=args.clean, coverage=args.coverage):
-            sys.exit(1)
+    if (args.rebuild or args.clean) and not runner.build_project(
+        clean=args.clean, coverage=args.coverage
+    ):
+        sys.exit(1)
 
-    # Format code if requested
-    if args.format_code:
-        if not runner.format_code():
-            sys.exit(1)
+    if args.format_code and not runner.format_code():
+        sys.exit(1)
 
-    # Run static analysis if requested
-    if args.static_analysis:
-        if not runner.run_static_analysis():
-            sys.exit(1)
+    if args.static_analysis and not runner.run_static_analysis():
+        sys.exit(1)
 
     # Run tests
     if not args.integration_only:

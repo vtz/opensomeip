@@ -40,23 +40,24 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 
 @dataclass
 class RequirementPattern:
     """Pattern to match requirement implementation in code."""
+
     id: str
     title: str
     description: str
-    patterns: List[str] = field(default_factory=list)  # Regex patterns to search
-    values: List[str] = field(default_factory=list)    # Specific values to search
-    files: List[str] = field(default_factory=list)     # Expected implementation files
+    patterns: list[str] = field(default_factory=list)  # Regex patterns to search
+    values: list[str] = field(default_factory=list)  # Specific values to search
+    files: list[str] = field(default_factory=list)  # Expected implementation files
 
 
 @dataclass
 class ImplementationMatch:
     """Match found in code for a requirement."""
+
     file_path: str
     line_number: int
     match_type: str  # 'annotation', 'pattern', 'value', 'function'
@@ -66,7 +67,7 @@ class ImplementationMatch:
 
 # Requirement patterns for code matching
 # These map requirement IDs to expected code patterns
-REQUIREMENT_PATTERNS: Dict[str, RequirementPattern] = {
+REQUIREMENT_PATTERNS: dict[str, RequirementPattern] = {
     # Transport Protocol Requirements
     "REQ_TP_002": RequirementPattern(
         id="REQ_TP_002",
@@ -74,7 +75,7 @@ REQUIREMENT_PATTERNS: Dict[str, RequirementPattern] = {
         description="Maximum segment payload is 1392 bytes",
         patterns=[r"max_segment.*1392", r"1392.*bytes", r"MAX_SEGMENT.*1392"],
         values=["1392", "87 * 16"],
-        files=["tp_segmenter.cpp", "tp_types.h"]
+        files=["tp_segmenter.cpp", "tp_types.h"],
     ),
     "REQ_TP_003": RequirementPattern(
         id="REQ_TP_003",
@@ -82,7 +83,7 @@ REQUIREMENT_PATTERNS: Dict[str, RequirementPattern] = {
         description="Segments are multiples of 16 bytes",
         patterns=[r"align.*16", r"% 16", r"multiple.*16"],
         values=["16"],
-        files=["tp_segmenter.cpp"]
+        files=["tp_segmenter.cpp"],
     ),
     "REQ_TP_010": RequirementPattern(
         id="REQ_TP_010",
@@ -90,7 +91,7 @@ REQUIREMENT_PATTERNS: Dict[str, RequirementPattern] = {
         description="TP header at byte 16",
         patterns=[r"tp.*header.*16", r"header.*position.*16", r"byte.*16"],
         values=["16"],
-        files=["tp_segmenter.cpp", "tp_reassembler.cpp"]
+        files=["tp_segmenter.cpp", "tp_reassembler.cpp"],
     ),
     # Message Header Requirements
     "REQ_MSG_001": RequirementPattern(
@@ -98,14 +99,14 @@ REQUIREMENT_PATTERNS: Dict[str, RequirementPattern] = {
         title="Message Structure",
         description="SOME/IP message structure",
         patterns=[r"struct\s+Message", r"class\s+Message", r"Message\s*\{"],
-        files=["message.h", "message.cpp"]
+        files=["message.h", "message.cpp"],
     ),
     "REQ_MSG_011": RequirementPattern(
         id="REQ_MSG_011",
         title="Message ID",
         description="Message ID (Service ID + Method ID)",
         patterns=[r"message_id", r"service_id.*method_id", r"get_message_id"],
-        files=["message.h", "message.cpp"]
+        files=["message.h", "message.cpp"],
     ),
     # Serialization Requirements
     "REQ_SER_001": RequirementPattern(
@@ -113,14 +114,14 @@ REQUIREMENT_PATTERNS: Dict[str, RequirementPattern] = {
         title="Bool Serialization",
         description="Serialize bool as uint8",
         patterns=[r"serialize.*bool", r"bool.*uint8", r"write_bool"],
-        files=["serializer.cpp"]
+        files=["serializer.cpp"],
     ),
     "REQ_SER_005": RequirementPattern(
         id="REQ_SER_005",
         title="Big Endian Conversion",
         description="Multi-byte values in big endian",
         patterns=[r"big.*endian", r"hton", r"ntoh", r"byte.*swap"],
-        files=["serializer.cpp"]
+        files=["serializer.cpp"],
     ),
     # Service Discovery Requirements
     "REQ_SD_001": RequirementPattern(
@@ -128,22 +129,21 @@ REQUIREMENT_PATTERNS: Dict[str, RequirementPattern] = {
         title="SD Message Format",
         description="SD message format",
         patterns=[r"sd.*message", r"ServiceDiscovery", r"SDMessage"],
-        files=["sd_message.cpp", "sd_message.h"]
+        files=["sd_message.cpp", "sd_message.h"],
     ),
 }
 
 
-def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
+def extract_requirements_from_rst(rst_dir: Path) -> dict[str, dict]:
     """Extract requirements from RST files."""
     requirements = {}
 
     for rst_file in rst_dir.rglob("*.rst"):
-        content = rst_file.read_text(encoding='utf-8', errors='ignore')
+        content = rst_file.read_text(encoding="utf-8", errors="ignore")
 
         # Pattern to match requirement directives
         pattern = re.compile(
-            r'\.\.\s+requirement::\s*(.+?)\n((?:\s+:[a-z_]+:.*?\n)+)',
-            re.DOTALL | re.IGNORECASE
+            r"\.\.\s+requirement::\s*(.+?)\n((?:\s+:[a-z_]+:.*?\n)+)", re.DOTALL | re.IGNORECASE
         )
 
         for match in pattern.finditer(content):
@@ -151,7 +151,7 @@ def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
             attrs_block = match.group(2)
 
             # Extract ID
-            id_match = re.search(r':id:\s*(REQ_[A-Za-z0-9_]+)', attrs_block, re.IGNORECASE)
+            id_match = re.search(r":id:\s*(REQ_[A-Za-z0-9_]+)", attrs_block, re.IGNORECASE)
             if not id_match:
                 continue
 
@@ -165,7 +165,7 @@ def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
             description = content[desc_start:desc_end].strip()[:500]
 
             # Extract code location hint
-            code_loc_match = re.search(r'\*\*Code Location\*\*:\s*``([^`]+)``', description)
+            code_loc_match = re.search(r"\*\*Code Location\*\*:\s*``([^`]+)``", description)
             code_location = code_loc_match.group(1) if code_loc_match else ""
 
             requirements[req_id] = {
@@ -173,25 +173,25 @@ def extract_requirements_from_rst(rst_dir: Path) -> Dict[str, dict]:
                 "title": title,
                 "description": description,
                 "code_location": code_location,
-                "file": str(rst_file)
+                "file": str(rst_file),
             }
 
     return requirements
 
 
-def load_code_references(json_path: Path) -> Set[str]:
+def load_code_references(json_path: Path) -> set[str]:
     """Load implemented requirements from code references JSON."""
     implemented = set()
 
     if not json_path.exists():
         return implemented
 
-    with open(json_path, 'r') as f:
+    with open(json_path) as f:
         data = json.load(f)
 
     needs = data.get("versions", {}).get("current", {}).get("needs", {})
 
-    for need_id, need in needs.items():
+    for _need_id, need in needs.items():
         if need.get("type") == "code_ref":
             implements = need.get("implements", "")
             for req in implements.split(","):
@@ -203,16 +203,14 @@ def load_code_references(json_path: Path) -> Set[str]:
 
 
 def search_file_for_patterns(
-    file_path: Path,
-    patterns: List[str],
-    values: List[str]
-) -> List[ImplementationMatch]:
+    file_path: Path, patterns: list[str], values: list[str]
+) -> list[ImplementationMatch]:
     """Search a file for requirement implementation patterns."""
     matches = []
 
     try:
-        content = file_path.read_text(encoding='utf-8', errors='ignore')
-        lines = content.split('\n')
+        content = file_path.read_text(encoding="utf-8", errors="ignore")
+        lines = content.split("\n")
     except Exception:
         return matches
 
@@ -222,13 +220,15 @@ def search_file_for_patterns(
             regex = re.compile(pattern, re.IGNORECASE)
             for i, line in enumerate(lines, 1):
                 if regex.search(line):
-                    matches.append(ImplementationMatch(
-                        file_path=str(file_path),
-                        line_number=i,
-                        match_type="pattern",
-                        matched_text=line.strip()[:100],
-                        confidence="medium"
-                    ))
+                    matches.append(
+                        ImplementationMatch(
+                            file_path=str(file_path),
+                            line_number=i,
+                            match_type="pattern",
+                            matched_text=line.strip()[:100],
+                            confidence="medium",
+                        )
+                    )
         except re.error:
             continue
 
@@ -236,22 +236,22 @@ def search_file_for_patterns(
     for value in values:
         for i, line in enumerate(lines, 1):
             if value in line:
-                matches.append(ImplementationMatch(
-                    file_path=str(file_path),
-                    line_number=i,
-                    match_type="value",
-                    matched_text=line.strip()[:100],
-                    confidence="low"
-                ))
+                matches.append(
+                    ImplementationMatch(
+                        file_path=str(file_path),
+                        line_number=i,
+                        match_type="value",
+                        matched_text=line.strip()[:100],
+                        confidence="low",
+                    )
+                )
 
     return matches
 
 
 def search_for_implementation(
-    req_id: str,
-    requirement: dict,
-    src_dirs: List[Path]
-) -> List[ImplementationMatch]:
+    req_id: str, requirement: dict, src_dirs: list[Path]
+) -> list[ImplementationMatch]:
     """Search for implementation of a requirement."""
     matches = []
 
@@ -272,12 +272,14 @@ def search_for_implementation(
     title = requirement.get("title", "")
     if title:
         # Convert title to potential function/variable names
-        snake_case = re.sub(r'[^a-zA-Z0-9]', '_', title.lower())
-        camel_case = title.replace(' ', '')
-        search_patterns.extend([
-            re.escape(snake_case),
-            re.escape(camel_case),
-        ])
+        snake_case = re.sub(r"[^a-zA-Z0-9]", "_", title.lower())
+        camel_case = title.replace(" ", "")
+        search_patterns.extend(
+            [
+                re.escape(snake_case),
+                re.escape(camel_case),
+            ]
+        )
 
     # Add code location hint
     code_location = requirement.get("code_location", "")
@@ -293,7 +295,7 @@ def search_for_implementation(
         if target_files:
             for target in target_files:
                 for file_path in src_dir.rglob(f"*{target}*"):
-                    if file_path.suffix in ['.cpp', '.h', '.hpp', '.c']:
+                    if file_path.suffix in [".cpp", ".h", ".hpp", ".c"]:
                         file_matches = search_file_for_patterns(
                             file_path, search_patterns, search_values
                         )
@@ -301,9 +303,7 @@ def search_for_implementation(
         else:
             # Search all source files
             for file_path in src_dir.rglob("*.cpp"):
-                file_matches = search_file_for_patterns(
-                    file_path, search_patterns, search_values
-                )
+                file_matches = search_file_for_patterns(file_path, search_patterns, search_values)
                 matches.extend(file_matches)
 
     # Remove duplicates
@@ -319,11 +319,8 @@ def search_for_implementation(
 
 
 def analyze_requirements(
-    requirements: Dict[str, dict],
-    annotated: Set[str],
-    src_dirs: List[Path],
-    verbose: bool = False
-) -> Tuple[Dict[str, List[ImplementationMatch]], List[str], List[str]]:
+    requirements: dict[str, dict], annotated: set[str], src_dirs: list[Path], verbose: bool = False
+) -> tuple[dict[str, list[ImplementationMatch]], list[str], list[str]]:
     """
     Analyze all requirements for implementation status.
 
@@ -372,12 +369,12 @@ def analyze_requirements(
 
 
 def generate_report(
-    requirements: Dict[str, dict],
-    annotated: Set[str],
-    matches_by_req: Dict[str, List[ImplementationMatch]],
-    missing_annotations: List[str],
-    truly_missing: List[str],
-    output_path: Optional[Path]
+    requirements: dict[str, dict],
+    annotated: set[str],
+    matches_by_req: dict[str, list[ImplementationMatch]],
+    missing_annotations: list[str],
+    truly_missing: list[str],
+    output_path: Path | None,
 ) -> str:
     """Generate verification report."""
 
@@ -393,13 +390,17 @@ def generate_report(
     # Calculate effective implementation rate
     implemented = len(annotated) + len(missing_annotations)
     rate = implemented / len(requirements) * 100 if requirements else 0
-    lines.append(f"- **Effective Implementation Rate**: {implemented}/{len(requirements)} ({rate:.1f}%)")
+    lines.append(
+        f"- **Effective Implementation Rate**: {implemented}/{len(requirements)} ({rate:.1f}%)"
+    )
     lines.append("")
 
     # Missing annotations - need annotation fixes
     if missing_annotations:
         lines.append("## Requirements with Code but Missing Annotations\n")
-        lines.append("These requirements appear to be implemented but lack `@implements` annotations.\n")
+        lines.append(
+            "These requirements appear to be implemented but lack `@implements` annotations.\n"
+        )
         for req_id in sorted(missing_annotations):
             req = requirements.get(req_id, {})
             lines.append(f"### {req_id}: {req.get('title', 'Unknown')}\n")
@@ -476,51 +477,25 @@ def main():
         description="Verify implementation status by code pattern matching"
     )
     parser.add_argument(
-        "--project-root",
-        type=Path,
-        default=Path.cwd(),
-        help="Project root directory"
+        "--project-root", type=Path, default=Path.cwd(), help="Project root directory"
     )
     parser.add_argument(
-        "--requirements-dir",
-        type=Path,
-        default=None,
-        help="Requirements RST directory"
+        "--requirements-dir", type=Path, default=None, help="Requirements RST directory"
     )
+    parser.add_argument("--code-refs", type=Path, default=None, help="Code references JSON file")
     parser.add_argument(
-        "--code-refs",
-        type=Path,
-        default=None,
-        help="Code references JSON file"
+        "--src-dirs", nargs="+", default=["src", "include"], help="Source directories to search"
     )
+    parser.add_argument("--output", type=Path, default=None, help="Output report file")
     parser.add_argument(
-        "--src-dirs",
-        nargs="+",
-        default=["src", "include"],
-        help="Source directories to search"
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=None,
-        help="Output report file"
-    )
-    parser.add_argument(
-        "--min-coverage",
-        type=float,
-        default=0,
-        help="Minimum coverage percentage required"
+        "--min-coverage", type=float, default=0, help="Minimum coverage percentage required"
     )
     parser.add_argument(
         "--fail-on-critical-gaps",
         action="store_true",
-        help="Fail if critical requirements are missing"
+        help="Fail if critical requirements are missing",
     )
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
@@ -554,10 +529,8 @@ def main():
     )
 
     # Generate report
-    report = generate_report(
-        requirements, annotated, matches,
-        missing_annotations, truly_missing,
-        args.output
+    generate_report(
+        requirements, annotated, matches, missing_annotations, truly_missing, args.output
     )
 
     # Print summary
@@ -586,8 +559,7 @@ def main():
     if args.fail_on_critical_gaps:
         # Check for critical missing requirements (non-error handling, non-derived)
         critical_missing = [
-            r for r in truly_missing
-            if not ("_E0" in r or "_E1" in r or r.startswith("REQ_ARCH_"))
+            r for r in truly_missing if not ("_E0" in r or "_E1" in r or r.startswith("REQ_ARCH_"))
         ]
         if critical_missing:
             print(f"\n❌ {len(critical_missing)} critical requirements are missing")

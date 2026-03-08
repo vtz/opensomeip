@@ -33,10 +33,9 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 
-def extract_spec_requirements(spec_dir: Path) -> Dict[str, dict]:
+def extract_spec_requirements(spec_dir: Path) -> dict[str, dict]:
     """Extract feat_req_* requirements from open-someip-spec RST files."""
     spec_reqs = {}
 
@@ -45,19 +44,13 @@ def extract_spec_requirements(spec_dir: Path) -> Dict[str, dict]:
         return spec_reqs
 
     patterns = [
-        re.compile(
-            r'\.\.\s+feat_req::\s*[^\n]*\n\s+:id:\s*(feat_req_\w+)',
-            re.IGNORECASE
-        ),
-        re.compile(
-            r'\.\.\s+heading::\s*([^\n]+)\n\s+:id:\s*(feat_req_\w+)',
-            re.IGNORECASE
-        ),
+        re.compile(r"\.\.\s+feat_req::\s*[^\n]*\n\s+:id:\s*(feat_req_\w+)", re.IGNORECASE),
+        re.compile(r"\.\.\s+heading::\s*([^\n]+)\n\s+:id:\s*(feat_req_\w+)", re.IGNORECASE),
     ]
 
     for rst_file in spec_dir.rglob("*.rst"):
         try:
-            content = rst_file.read_text(encoding='utf-8', errors='ignore')
+            content = rst_file.read_text(encoding="utf-8", errors="ignore")
         except Exception:
             continue
 
@@ -65,33 +58,24 @@ def extract_spec_requirements(spec_dir: Path) -> Dict[str, dict]:
 
         for match in patterns[0].finditer(content):
             req_id = match.group(1).lower()
-            spec_reqs[req_id] = {
-                "id": req_id,
-                "file": rel_path,
-                "type": "requirement"
-            }
+            spec_reqs[req_id] = {"id": req_id, "file": rel_path, "type": "requirement"}
 
         for match in patterns[1].finditer(content):
             title = match.group(1).strip()
             req_id = match.group(2).lower()
-            spec_reqs[req_id] = {
-                "id": req_id,
-                "title": title,
-                "file": rel_path,
-                "type": "heading"
-            }
+            spec_reqs[req_id] = {"id": req_id, "title": title, "file": rel_path, "type": "heading"}
 
     return spec_reqs
 
 
-def build_numeric_index(spec_reqs: Dict[str, dict]) -> Dict[str, List[str]]:
+def build_numeric_index(spec_reqs: dict[str, dict]) -> dict[str, list[str]]:
     """Build an index from numeric suffix to all spec IDs sharing that suffix.
 
     This enables fuzzy matching when a `:satisfies:` link uses the wrong
     domain prefix (e.g. feat_req_someip_100 instead of feat_req_someipsd_100).
     """
-    num_pattern = re.compile(r'_(\d+)$')
-    index: Dict[str, List[str]] = defaultdict(list)
+    num_pattern = re.compile(r"_(\d+)$")
+    index: dict[str, list[str]] = defaultdict(list)
     for spec_id in spec_reqs:
         m = num_pattern.search(spec_id)
         if m:
@@ -101,10 +85,10 @@ def build_numeric_index(spec_reqs: Dict[str, dict]) -> Dict[str, List[str]]:
 
 def resolve_spec_id(
     raw_id: str,
-    spec_reqs: Dict[str, dict],
-    numeric_index: Dict[str, List[str]],
+    spec_reqs: dict[str, dict],
+    numeric_index: dict[str, list[str]],
     impl_id: str,
-) -> Tuple[Optional[str], Optional[dict]]:
+) -> tuple[str | None, dict | None]:
     """Resolve a `:satisfies:` value to its actual spec requirement.
 
     Returns (resolved_id, correction_info) where correction_info is None
@@ -113,7 +97,7 @@ def resolve_spec_id(
     if raw_id in spec_reqs:
         return raw_id, None
 
-    num_match = re.search(r'_(\d+)$', raw_id)
+    num_match = re.search(r"_(\d+)$", raw_id)
     if not num_match:
         return None, None
 
@@ -131,7 +115,7 @@ def resolve_spec_id(
         }
 
     if len(candidates) > 1:
-        raw_prefix = re.sub(r'_\d+$', '', raw_id)
+        raw_prefix = re.sub(r"_\d+$", "", raw_id)
         domain_hint = _domain_from_impl_prefix(impl_id)
         best = _pick_best_candidate(raw_prefix, domain_hint, candidates)
         if best:
@@ -147,7 +131,7 @@ def resolve_spec_id(
     return None, None
 
 
-def _domain_from_impl_prefix(impl_id: str) -> Optional[str]:
+def _domain_from_impl_prefix(impl_id: str) -> str | None:
     """Guess which spec domain an implementation requirement belongs to."""
     mapping = {
         "REQ_SD_": "someipsd",
@@ -168,9 +152,9 @@ def _domain_from_impl_prefix(impl_id: str) -> Optional[str]:
 
 def _pick_best_candidate(
     raw_prefix: str,
-    domain_hint: Optional[str],
-    candidates: List[str],
-) -> Optional[str]:
+    domain_hint: str | None,
+    candidates: list[str],
+) -> str | None:
     """When multiple spec IDs share a numeric suffix, pick the best match."""
     if domain_hint:
         domain_matches = [c for c in candidates if f"_{domain_hint}_" in c]
@@ -184,7 +168,7 @@ def _pick_best_candidate(
     return None
 
 
-def extract_impl_requirements(req_dir: Path) -> Tuple[Dict[str, dict], Dict[str, List[str]]]:
+def extract_impl_requirements(req_dir: Path) -> tuple[dict[str, dict], dict[str, list[str]]]:
     """Extract OpenSOMEIP requirements and their :satisfies: mappings."""
     requirements = {}
     satisfies_map = {}
@@ -193,13 +177,12 @@ def extract_impl_requirements(req_dir: Path) -> Tuple[Dict[str, dict], Dict[str,
         return requirements, satisfies_map
 
     pattern = re.compile(
-        r'\.\.\s+requirement::\s*(.+?)\n((?:\s+:[a-z_]+:.*?\n)+)',
-        re.DOTALL | re.IGNORECASE
+        r"\.\.\s+requirement::\s*(.+?)\n((?:\s+:[a-z_]+:.*?\n)+)", re.DOTALL | re.IGNORECASE
     )
 
     for rst_file in req_dir.rglob("*.rst"):
         try:
-            content = rst_file.read_text(encoding='utf-8', errors='ignore')
+            content = rst_file.read_text(encoding="utf-8", errors="ignore")
         except Exception:
             continue
 
@@ -207,13 +190,13 @@ def extract_impl_requirements(req_dir: Path) -> Tuple[Dict[str, dict], Dict[str,
             title = match.group(1).strip()
             attrs_block = match.group(2)
 
-            id_match = re.search(r':id:\s*(REQ_[A-Za-z0-9_]+)', attrs_block, re.IGNORECASE)
+            id_match = re.search(r":id:\s*(REQ_[A-Za-z0-9_]+)", attrs_block, re.IGNORECASE)
             if not id_match:
                 continue
 
             req_id = id_match.group(1).upper()
 
-            satisfies_match = re.search(r':satisfies:\s*([^\n]+)', attrs_block, re.IGNORECASE)
+            satisfies_match = re.search(r":satisfies:\s*([^\n]+)", attrs_block, re.IGNORECASE)
             satisfies = []
             if satisfies_match:
                 satisfies_str = satisfies_match.group(1)
@@ -223,7 +206,7 @@ def extract_impl_requirements(req_dir: Path) -> Tuple[Dict[str, dict], Dict[str,
                 "id": req_id,
                 "title": title,
                 "satisfies": satisfies,
-                "file": str(rst_file)
+                "file": str(rst_file),
             }
 
             if satisfies:
@@ -250,10 +233,10 @@ def classify_requirement(req_id: str) -> str:
 
 
 def analyze_mappings(
-    spec_reqs: Dict[str, dict],
-    impl_reqs: Dict[str, dict],
-    satisfies_map: Dict[str, List[str]],
-) -> Dict[str, any]:
+    spec_reqs: dict[str, dict],
+    impl_reqs: dict[str, dict],
+    satisfies_map: dict[str, list[str]],
+) -> dict[str, any]:
     """Analyze spec to implementation mappings with fuzzy resolution."""
     numeric_index = build_numeric_index(spec_reqs)
 
@@ -279,9 +262,7 @@ def analyze_mappings(
             if raw_id.startswith("req_"):
                 continue
 
-            resolved_id, correction = resolve_spec_id(
-                raw_id, spec_reqs, numeric_index, impl_id
-            )
+            resolved_id, correction = resolve_spec_id(raw_id, spec_reqs, numeric_index, impl_id)
 
             if resolved_id:
                 resolved_ids.append(resolved_id)
@@ -290,10 +271,12 @@ def analyze_mappings(
                 if correction:
                     results["auto_corrections"].append(correction)
             else:
-                results["unresolvable_links"].append({
-                    "impl_id": impl_id,
-                    "invalid_spec_id": raw_id,
-                })
+                results["unresolvable_links"].append(
+                    {
+                        "impl_id": impl_id,
+                        "invalid_spec_id": raw_id,
+                    }
+                )
 
         if resolved_ids:
             results["impl_to_spec"][impl_id] = resolved_ids
@@ -314,17 +297,17 @@ def analyze_mappings(
 
 
 def generate_report(
-    spec_reqs: Dict[str, dict],
-    impl_reqs: Dict[str, dict],
-    analysis: Dict[str, any],
-    output_path: Path = None
+    spec_reqs: dict[str, dict],
+    impl_reqs: dict[str, dict],
+    analysis: dict[str, any],
+    output_path: Path | None = None,
 ) -> str:
     """Generate spec mapping report."""
     lines = []
     lines.append("# Spec Requirements Mapping Report\n")
 
-    mapped_count = len(analysis['mapped_spec_reqs'])
-    total_spec = analysis['spec_req_count']
+    mapped_count = len(analysis["mapped_spec_reqs"])
+    total_spec = analysis["spec_req_count"]
     coverage = mapped_count / total_spec * 100 if total_spec > 0 else 0
 
     # Summary
@@ -335,19 +318,23 @@ def generate_report(
     lines.append(f"  - Implementation-derived: {analysis['impl_derived_count']}")
     lines.append(f"- **Mapped Spec Requirements**: {mapped_count}")
     lines.append(f"- **Unmapped Spec Requirements**: {len(analysis['unmapped_spec_reqs'])}")
-    lines.append(f"- **Implementation Reqs Missing Spec Links**: {len(analysis['impl_missing_spec_link'])}")
+    lines.append(
+        f"- **Implementation Reqs Missing Spec Links**: {len(analysis['impl_missing_spec_link'])}"
+    )
     lines.append(f"- **Auto-Corrected Links**: {len(analysis['auto_corrections'])}")
     lines.append(f"- **Unresolvable Links**: {len(analysis['unresolvable_links'])}")
     lines.append("")
     lines.append(f"**Spec Coverage**: {coverage:.1f}%\n")
 
     # Auto-corrections
-    if analysis['auto_corrections']:
+    if analysis["auto_corrections"]:
         lines.append("## Auto-Corrected Spec Links\n")
-        lines.append("These `:satisfies:` values had wrong prefixes but were resolved by numeric suffix:\n")
+        lines.append(
+            "These `:satisfies:` values had wrong prefixes but were resolved by numeric suffix:\n"
+        )
         lines.append("| Implementation Req | Written | Resolved | Confidence | Spec File |")
         lines.append("|---|---|---|---|---|")
-        for c in sorted(analysis['auto_corrections'], key=lambda x: x['impl_id']):
+        for c in sorted(analysis["auto_corrections"], key=lambda x: x["impl_id"]):
             lines.append(
                 f"| {c['impl_id']} | `{c['written']}` | `{c['resolved']}` "
                 f"| {c['confidence']} | {c['file']} |"
@@ -355,20 +342,20 @@ def generate_report(
         lines.append("")
 
     # Unresolvable links
-    if analysis['unresolvable_links']:
+    if analysis["unresolvable_links"]:
         lines.append("## Unresolvable Spec Links\n")
         lines.append("These `:satisfies:` values could not be matched to any spec requirement:\n")
-        for item in analysis['unresolvable_links']:
+        for item in analysis["unresolvable_links"]:
             lines.append(f"- **{item['impl_id']}** → `{item['invalid_spec_id']}`")
         lines.append("")
 
     # Missing spec links
-    if analysis['impl_missing_spec_link']:
+    if analysis["impl_missing_spec_link"]:
         lines.append("## Implementation Requirements Missing Spec Links\n")
         lines.append("These spec-derived requirements should have `:satisfies:` links:\n")
 
         by_prefix = defaultdict(list)
-        for impl_id in analysis['impl_missing_spec_link']:
+        for impl_id in analysis["impl_missing_spec_link"]:
             parts = impl_id.split("_")
             prefix = parts[1] if len(parts) > 1 else "OTHER"
             by_prefix[prefix].append(impl_id)
@@ -385,15 +372,17 @@ def generate_report(
 
     by_file = defaultdict(list)
     for spec_id, info in spec_reqs.items():
-        by_file[info.get('file', 'unknown')].append(spec_id)
+        by_file[info.get("file", "unknown")].append(spec_id)
 
     for file_path, spec_ids in sorted(by_file.items()):
-        mapped = [s for s in spec_ids if s in analysis['mapped_spec_reqs']]
-        unmapped = [s for s in spec_ids if s not in analysis['mapped_spec_reqs']]
+        mapped = [s for s in spec_ids if s in analysis["mapped_spec_reqs"]]
+        unmapped = [s for s in spec_ids if s not in analysis["mapped_spec_reqs"]]
         file_coverage = len(mapped) / len(spec_ids) * 100 if spec_ids else 0
 
         lines.append(f"### {file_path}")
-        lines.append(f"- Total: {len(spec_ids)}, Mapped: {len(mapped)}, Coverage: {file_coverage:.0f}%")
+        lines.append(
+            f"- Total: {len(spec_ids)}, Mapped: {len(mapped)}, Coverage: {file_coverage:.0f}%"
+        )
 
         if unmapped and len(unmapped) <= 10:
             lines.append("- Unmapped: " + ", ".join(sorted(unmapped)))
@@ -406,11 +395,11 @@ def generate_report(
     lines.append("| Spec Requirement | Implementation Requirements |")
     lines.append("|------------------|----------------------------|")
 
-    for spec_id in sorted(analysis['spec_to_impl'].keys()):
-        impl_ids = analysis['spec_to_impl'][spec_id]
-        display = ', '.join(sorted(impl_ids)[:5])
+    for spec_id in sorted(analysis["spec_to_impl"].keys()):
+        impl_ids = analysis["spec_to_impl"][spec_id]
+        display = ", ".join(sorted(impl_ids)[:5])
         if len(impl_ids) > 5:
-            display += f'... (+{len(impl_ids) - 5})'
+            display += f"... (+{len(impl_ids) - 5})"
         lines.append(f"| {spec_id} | {display} |")
 
     lines.append("")
@@ -425,33 +414,17 @@ def generate_report(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Verify spec requirement mappings"
-    )
+    parser = argparse.ArgumentParser(description="Verify spec requirement mappings")
     parser.add_argument(
-        "--project-root", type=Path, default=Path.cwd(),
-        help="Project root directory"
+        "--project-root", type=Path, default=Path.cwd(), help="Project root directory"
     )
+    parser.add_argument("--spec-dir", type=Path, default=None, help="open-someip-spec directory")
     parser.add_argument(
-        "--spec-dir", type=Path, default=None,
-        help="open-someip-spec directory"
+        "--requirements-dir", type=Path, default=None, help="OpenSOMEIP requirements directory"
     )
-    parser.add_argument(
-        "--requirements-dir", type=Path, default=None,
-        help="OpenSOMEIP requirements directory"
-    )
-    parser.add_argument(
-        "--output", type=Path, default=None,
-        help="Output report file"
-    )
-    parser.add_argument(
-        "--strict", action="store_true",
-        help="Fail on unresolvable links"
-    )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true",
-        help="Verbose output"
-    )
+    parser.add_argument("--output", type=Path, default=None, help="Output report file")
+    parser.add_argument("--strict", action="store_true", help="Fail on unresolvable links")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
@@ -469,7 +442,7 @@ def main():
 
     prefixes = defaultdict(int)
     for sid in spec_reqs:
-        prefix = re.sub(r'_\d+$', '', sid)
+        prefix = re.sub(r"_\d+$", "", sid)
         prefixes[prefix] += 1
     for p, c in sorted(prefixes.items()):
         print(f"    {p}_*: {c}")
@@ -496,15 +469,15 @@ def main():
     print(f"  Unresolvable links: {len(analysis['unresolvable_links'])}")
     print(f"  Missing spec links: {len(analysis['impl_missing_spec_link'])}")
 
-    if analysis['spec_req_count'] > 0:
-        coverage = len(analysis['mapped_spec_reqs']) / analysis['spec_req_count'] * 100
+    if analysis["spec_req_count"] > 0:
+        coverage = len(analysis["mapped_spec_reqs"]) / analysis["spec_req_count"] * 100
         print(f"  Spec coverage: {coverage:.1f}%")
 
-    if analysis['auto_corrections']:
+    if analysis["auto_corrections"]:
         print(f"\n  Auto-corrected {len(analysis['auto_corrections'])} wrong-prefix links:")
-        for c in analysis['auto_corrections'][:10]:
+        for c in analysis["auto_corrections"][:10]:
             print(f"    {c['impl_id']}: {c['written']} → {c['resolved']}")
-        if len(analysis['auto_corrections']) > 10:
+        if len(analysis["auto_corrections"]) > 10:
             print(f"    ... and {len(analysis['auto_corrections']) - 10} more")
 
     if args.output:
@@ -512,11 +485,13 @@ def main():
 
     exit_code = 0
     if args.strict:
-        if analysis['unresolvable_links']:
+        if analysis["unresolvable_links"]:
             print(f"\nFAIL: {len(analysis['unresolvable_links'])} unresolvable spec links")
             exit_code = 1
-        if analysis['impl_missing_spec_link']:
-            print(f"\nFAIL: {len(analysis['impl_missing_spec_link'])} implementation requirements missing spec links")
+        if analysis["impl_missing_spec_link"]:
+            print(
+                f"\nFAIL: {len(analysis['impl_missing_spec_link'])} implementation requirements missing spec links"
+            )
             exit_code = 1
 
     return exit_code

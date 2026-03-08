@@ -70,13 +70,13 @@ public:
         cv_.notify_one();
     }
 
-    void on_connection_lost(const Endpoint& endpoint) override {
+    void on_connection_lost(const Endpoint& /*endpoint*/) override {
         std::scoped_lock lock(mutex_);
         connection_lost_ = true;
         cv_.notify_one();
     }
 
-    void on_connection_established(const Endpoint& endpoint) override {
+    void on_connection_established(const Endpoint& /*endpoint*/) override {
         std::scoped_lock lock(mutex_);
         connection_established_ = true;
         cv_.notify_one();

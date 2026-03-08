@@ -39,8 +39,8 @@ public:
         : config_(config),
           transport_(std::make_shared<transport::UdpTransport>(
               transport::Endpoint(config.unicast_address, config.unicast_port))),
-          running_(false),
-          next_request_id_(1) {
+          next_request_id_(1),
+          running_(false) {
 
         transport_->set_listener(this);
     }
@@ -277,7 +277,7 @@ private:
     }
 
     /** @implements REQ_SD_116_E01, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_311, REQ_SD_331 */
-    void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
+    void on_message_received(MessagePtr message, const transport::Endpoint& /*sender*/) override {
         // Check if this is an SD message (service ID 0xFFFF)
         if (message->get_service_id() != 0xFFFF) {
             return;
@@ -293,15 +293,15 @@ private:
         process_sd_entries(sd_message);
     }
 
-    void on_connection_lost(const transport::Endpoint& endpoint) override {
+    void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {
         // TODO: Handle connection loss
     }
 
-    void on_connection_established(const transport::Endpoint& endpoint) override {
+    void on_connection_established(const transport::Endpoint& /*endpoint*/) override {
         // TODO: Handle connection establishment
     }
 
-    void on_error(Result error) override {
+    void on_error(Result /*error*/) override {
         // TODO: Handle transport errors
     }
 

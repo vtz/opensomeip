@@ -42,6 +42,7 @@ option(BUILD_EXAMPLES "Build example programs" ON)
 option(BUILD_VSOMEIP_INTEROP "Build vsomeip interoperability examples (requires vsomeip3 and Boost)" OFF)
 option(BUILD_TOOLS "Build development tools (reserved for future use)" OFF)
 option(COVERAGE "Enable code coverage reporting" OFF)
+option(ENABLE_WERROR "Treat compiler warnings as errors (recommended for CI)" OFF)
 
 # Platform backend selection
 option(SOMEIP_USE_FREERTOS "Use FreeRTOS for threading primitives" OFF)
@@ -134,9 +135,16 @@ if(BUILD_TESTS)
     set(GTEST_INCLUDE_DIRS ${googletest_SOURCE_DIR}/include)
 endif()
 
-# Compiler flags for safety
+# Compiler warnings: always enabled for early detection of issues
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic")
+    if(ENABLE_WERROR)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+    endif()
+endif()
+
+# Additional compiler flags for safety-critical builds
 if(SAFETY_LEVEL STREQUAL "ASIL_B" OR SAFETY_LEVEL STREQUAL "ASIL_C" OR SAFETY_LEVEL STREQUAL "ASIL_D")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector-strong")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address -fsanitize=undefined")

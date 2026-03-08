@@ -163,7 +163,7 @@ private:
     }
 
     RpcResult handle_get_stats(uint16_t client_id, uint16_t session_id,
-                              const std::vector<uint8_t>& input,
+                              const std::vector<uint8_t>& /*input*/,
                               std::vector<uint8_t>& output) {
         uint32_t call_count = total_calls_.load();
 

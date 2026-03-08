@@ -504,6 +504,10 @@ TEST_F(TcpTransportTest, ZeroConnectionTimeout) {
  */
 TEST_F(TcpTransportTest, DoubleDisconnect) {
     TcpTransport transport(config);
+    Endpoint local_endpoint("127.0.0.1", 0);
+    ASSERT_EQ(transport.initialize(local_endpoint), Result::SUCCESS);
+    EXPECT_FALSE(transport.is_connected());
+
     transport.disconnect();
     transport.disconnect();
     EXPECT_FALSE(transport.is_connected());

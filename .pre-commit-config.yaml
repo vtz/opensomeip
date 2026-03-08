@@ -24,6 +24,16 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
 
+  # Python linting (ruff) for scripts/
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.6
+    hooks:
+      - id: ruff
+        args: ['--fix', '--exit-non-zero-on-fix']
+        files: ^scripts/
+      - id: ruff-format
+        files: ^scripts/
+
   # Commit message linting (Conventional Commits)
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v3.1.0
