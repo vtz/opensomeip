@@ -306,7 +306,7 @@ def analyze_mappings(
         category = classify_requirement(impl_id)
         if category == "spec_derived":
             results["spec_derived_count"] += 1
-            if impl_id not in satisfies_map or not satisfies_map[impl_id]:
+            if impl_id not in results["impl_to_spec"] or not results["impl_to_spec"][impl_id]:
                 results["impl_missing_spec_link"].append(impl_id)
         else:
             results["impl_derived_count"] += 1
@@ -483,7 +483,7 @@ def main():
     print("\nAnalyzing mappings...")
     analysis = analyze_mappings(spec_reqs, impl_reqs, satisfies_map)
 
-    report = generate_report(spec_reqs, impl_reqs, analysis, args.output)
+    generate_report(spec_reqs, impl_reqs, analysis, args.output)
 
     print("\n" + "=" * 40)
     print("Summary:")

@@ -456,7 +456,7 @@ TEST_F(TpTest, ManagerResourceExhausted) {
     limited_config.max_message_size = 10000;
     limited_config.max_concurrent_transfers = 1;
     TpManager manager(limited_config);
-    manager.initialize();
+    ASSERT_TRUE(manager.initialize());
 
     Message msg1(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001));
     msg1.set_payload(std::vector<uint8_t>(1500, 0xAA));
@@ -478,7 +478,7 @@ TEST_F(TpTest, ManagerResourceExhausted) {
  */
 TEST_F(TpTest, InvalidTransferId) {
     TpManager manager(config);
-    manager.initialize();
+    ASSERT_TRUE(manager.initialize());
 
     TpSegment segment;
     EXPECT_EQ(manager.get_next_segment(99999, segment), TpResult::INVALID_SEGMENT);
@@ -493,7 +493,7 @@ TEST_F(TpTest, InvalidTransferId) {
  */
 TEST_F(TpTest, CancelAndAcknowledgeInvalid) {
     TpManager manager(config);
-    manager.initialize();
+    ASSERT_TRUE(manager.initialize());
 
     EXPECT_EQ(manager.cancel_transfer(99999), TpResult::INVALID_SEGMENT);
     EXPECT_EQ(manager.acknowledge_segments(99999, {1, 2}), TpResult::INVALID_SEGMENT);
@@ -508,7 +508,7 @@ TEST_F(TpTest, CancelAndAcknowledgeInvalid) {
  */
 TEST_F(TpTest, TransferStatusUnknown) {
     TpManager manager(config);
-    manager.initialize();
+    ASSERT_TRUE(manager.initialize());
 
     EXPECT_EQ(manager.get_transfer_status(99999), TpTransferState::FAILED);
 
@@ -558,7 +558,7 @@ TEST_F(TpTest, ReassemblerCancelAndProgress) {
  */
 TEST_F(TpTest, ManagerCallbackRegistration) {
     TpManager manager(config);
-    manager.initialize();
+    ASSERT_TRUE(manager.initialize());
 
     bool completion_set = false;
     manager.set_completion_callback([&](uint32_t, TpResult) {
@@ -570,7 +570,9 @@ TEST_F(TpTest, ManagerCallbackRegistration) {
         progress_set = true;
     });
 
-    // Verify callbacks were set without crashing
+    // Verify callbacks were registered without crash.
+    // Callback invocation depends on internal transfer lifecycle;
+    // this test validates that registration itself is safe.
     EXPECT_TRUE(true);
 
     manager.shutdown();

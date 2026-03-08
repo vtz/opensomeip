@@ -3,12 +3,6 @@ Integration Tests for Echo Server/Client
 
 Tests the complete message flow from client to server and back,
 including serialization, transport, and deserialization.
-
-@tests REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
-@tests REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
-@tests REQ_ARCH_001
-@tests feat_req_someip_538
-@tests feat_req_someip_800
 """
 
 import pytest
@@ -22,6 +16,12 @@ from someip_test_framework import someip_test_scenario, SomeIpEndpoint
 async def test_echo_message_flow(echo_scenario):
     """
     Test complete echo message flow: client -> server -> client
+
+    @tests REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
+    @tests REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
+    @tests REQ_ARCH_001
+    @tests feat_req_someip_538
+    @tests feat_req_someip_800
 
     This tests:
     - Message serialization on client
@@ -77,7 +77,11 @@ async def test_echo_message_flow(echo_scenario):
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_echo_multiple_messages(echo_scenario):
-    """Test sending multiple messages in sequence"""
+    """Test sending multiple messages in sequence
+
+    @tests REQ_TRANSPORT_001a, REQ_TRANSPORT_001b
+    @tests REQ_TRANSPORT_004a, REQ_TRANSPORT_004b
+    """
     async with someip_test_scenario(echo_scenario) as scenario:
         client = scenario.clients[0]
 

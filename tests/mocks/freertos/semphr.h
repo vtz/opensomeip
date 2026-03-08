@@ -46,7 +46,10 @@ inline BaseType_t xSemaphoreTake(SemaphoreHandle_t sem, TickType_t timeout) {
         if (sem->count > 0) { --sem->count; return pdTRUE; }
         return pdFALSE;
     }
-    sem->cv.wait(lk, [&] { return sem->count > 0; });
+    auto deadline = std::chrono::milliseconds(static_cast<unsigned long>(timeout));
+    if (!sem->cv.wait_for(lk, deadline, [&] { return sem->count > 0; })) {
+        return pdFALSE;
+    }
     --sem->count;
     return pdTRUE;
 }

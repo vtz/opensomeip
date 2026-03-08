@@ -328,6 +328,7 @@ TEST(MutexTest, DoubleUnlockNoCrash) {
     Mutex m;
     m.lock();
     m.unlock();
+    m.unlock();
     // Platform-defined behavior, but must not crash
     EXPECT_TRUE(true);
 }

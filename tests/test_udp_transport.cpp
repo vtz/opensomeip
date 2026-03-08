@@ -659,16 +659,21 @@ TEST_F(UdpTransportTest, MultipleMessagesRapidFire) {
  * @brief Test UDP bind to already-used port
  */
 TEST_F(UdpTransportTest, BindToUsedPort) {
-    Endpoint endpoint1{"127.0.0.1", 19876};
+    // Bind first transport on ephemeral port
+    Endpoint endpoint1{"127.0.0.1", 0};
     UdpTransport first(endpoint1, config);
-    EXPECT_EQ(first.start(), Result::SUCCESS);
+    ASSERT_EQ(first.start(), Result::SUCCESS);
 
+    // Use the same port for the second transport with reuse disabled
+    uint16_t bound_port = first.get_local_endpoint().get_port();
     UdpTransportConfig no_reuse_config = config;
     no_reuse_config.reuse_address = false;
     no_reuse_config.reuse_port = false;
-    Endpoint endpoint2{"127.0.0.1", 19876};
+    Endpoint endpoint2{"127.0.0.1", bound_port};
     UdpTransport second(endpoint2, no_reuse_config);
     Result start_result = second.start();
+    EXPECT_NE(start_result, Result::SUCCESS)
+        << "Binding to an already-used port with reuse disabled should fail";
     if (start_result == Result::SUCCESS) {
         second.stop();
     }
@@ -706,6 +711,10 @@ TEST_F(UdpTransportTest, SendToInvalidAddress) {
 TEST_F(UdpTransportTest, ReceiveWithoutBind) {
     UdpTransport transport(local_endpoint);
     EXPECT_FALSE(transport.is_running());
+
+    // Attempting to receive on an unbound transport should return nullptr
+    auto received = transport.receive_message();
+    EXPECT_EQ(received, nullptr) << "Receive on unbound transport should return nullptr";
 }
 
 /**
@@ -729,6 +738,8 @@ TEST_F(UdpTransportTest, InvalidMulticastGroup) {
  * @brief Test UDP message size exceeding max UDP payload
  */
 TEST_F(UdpTransportTest, MessageExceedsMtu) {
+    // Disable the configurable size check to test the raw UDP max-payload rejection
+    config.max_message_size = 0;
     UdpTransport transport(local_endpoint, config);
     EXPECT_EQ(transport.start(), Result::SUCCESS);
 

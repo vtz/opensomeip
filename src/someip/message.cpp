@@ -518,8 +518,10 @@ bool Message::has_valid_header() const {
         return false;
     }
 
-    // REQ_MSG_053_E01: NOTIFICATION must carry return code E_OK
-    if (message_type_ == MessageType::NOTIFICATION && return_code_ != ReturnCode::E_OK) {
+    // REQ_MSG_053_E01: NOTIFICATION / TP_NOTIFICATION must carry return code E_OK
+    if ((message_type_ == MessageType::NOTIFICATION ||
+         message_type_ == MessageType::TP_NOTIFICATION) &&
+        return_code_ != ReturnCode::E_OK) {
         return false;
     }
 

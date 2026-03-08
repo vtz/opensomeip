@@ -16,7 +16,7 @@
 #include <condition_variable>
 #include <chrono>
 #include <functional>
-#include <tuple>
+#include <cassert>
 
 #include "platform/host/host_condition_variable.h"
 
@@ -36,9 +36,17 @@ public:
     explicit Thread(Fn&& fn, Args&&... args)
         : thread_(std::forward<Fn>(fn), std::forward<Args>(args)...) {}
 
-    /** @implements REQ_PAL_THREAD_DTOR_E01 */
+    /**
+     * @implements REQ_PAL_THREAD_DTOR_E01
+     * Callers must explicitly join() or detach() before destruction.
+     * A joinable thread at destruction indicates a lifetime management bug.
+     */
     ~Thread() {
-        if (thread_.joinable()) thread_.detach();
+        if (thread_.joinable()) {
+            assert(!thread_.joinable() &&
+                   "Thread destroyed while still joinable — call join() or detach() first");
+            thread_.detach();
+        }
     }
 
     /** @implements REQ_PAL_THREAD_JOINABLE */

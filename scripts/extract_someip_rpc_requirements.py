@@ -72,10 +72,10 @@ def main():
         hm = re.match(r"^\.\. heading::\s*(.+)$", line)
         if hm:
             section = hm.group(1).strip()
+            current_section = section
             for j in range(i + 1, min(i + 6, len(lines))):
                 im = re.search(r":id:\s*(feat_req_someip_\d+)", lines[j])
                 if im:
-                    current_section = section
                     items.append((current_section, im.group(1), "heading", section))
                     break
             i += 1

@@ -212,8 +212,9 @@ def extract_from_cpp_file(file_path: Path) -> tuple:
                     )
                     test_cases.append(test_case)
             elif tests:
-                # @tests without @test_case: generate an ID from file and line
-                auto_tc_id = f"TC_{file_path.stem}_{line_number}"
+                # @tests without @test_case: generate an ID from function name or file
+                suffix = function_name if function_name else str(line_number)
+                auto_tc_id = f"TC_{file_path.stem}_{suffix}"
                 test_case = TestCase(
                     id=auto_tc_id,
                     file_path=str(file_path),

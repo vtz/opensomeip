@@ -462,11 +462,15 @@ TEST_F(MessageTest, SerializationBufferOverflow) {
     msg.set_service_id(0x1234);
     msg.set_method_id(0x5678);
 
+    // Use a payload that fits in memory but exceeds the SOME/IP length field maximum
+    // (length field is 32-bit minus 8 bytes of header = 0xFFFFFFF7 max payload).
+    // We can't actually allocate that, so test with a 1 MiB payload to verify
+    // normal large serialization still works (positive path).
     std::vector<uint8_t> large_payload(1024 * 1024, 0xAA);
     msg.set_payload(large_payload);
 
     std::vector<uint8_t> serialized = msg.serialize();
-    EXPECT_FALSE(serialized.empty()) << "Serialization should produce output";
+    EXPECT_FALSE(serialized.empty()) << "1 MiB payload should serialize successfully";
     EXPECT_EQ(serialized.size(), msg.get_total_size());
 }
 
@@ -480,12 +484,12 @@ TEST_F(MessageTest, PayloadSizeExceedsMaximum) {
     msg.set_service_id(0x1234);
     msg.set_method_id(0x0001);
 
-    std::vector<uint8_t> oversized(0xFFFFFFF0 - 8, 0x00);
-    if (oversized.empty()) {
-        GTEST_SKIP() << "Cannot allocate oversized payload for test";
-    }
-    msg.set_payload(oversized);
-    EXPECT_FALSE(msg.is_valid()) << "Oversized payload should fail validation";
+    // Set a small payload then manually set an oversized length to avoid OOM
+    std::vector<uint8_t> small_payload = {0x01, 0x02, 0x03};
+    msg.set_payload(small_payload);
+    // Force the internal length to exceed the SOME/IP maximum
+    msg.set_length(0xFFFFFFF0);
+    EXPECT_FALSE(msg.is_valid()) << "Oversized length should fail validation";
 }
 
 /**
@@ -494,15 +498,24 @@ TEST_F(MessageTest, PayloadSizeExceedsMaximum) {
  * @brief Test rejection of reserved instance IDs
  */
 TEST_F(MessageTest, ReservedInstanceIdRejection) {
+    // REQ_MSG_110_E01: Verify that reserved client/instance IDs can be set
+    // and retrieved correctly. The SD layer (ServiceEntry) enforces instance
+    // ID restrictions; the Message layer currently accepts all client IDs.
     Message msg;
     msg.set_service_id(0x1234);
     msg.set_method_id(0x0001);
+    msg.set_message_type(MessageType::REQUEST);
+    msg.set_return_code(ReturnCode::E_OK);
 
     msg.set_client_id(0x0000);
     EXPECT_EQ(msg.get_client_id(), 0x0000);
 
     msg.set_client_id(0xFFFF);
     EXPECT_EQ(msg.get_client_id(), 0xFFFF);
+
+    msg.set_client_id(0x0001);
+    EXPECT_EQ(msg.get_client_id(), 0x0001);
+    EXPECT_TRUE(msg.is_valid()) << "Normal client ID should produce a valid message";
 }
 
 /**

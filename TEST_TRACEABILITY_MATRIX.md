@@ -190,6 +190,10 @@ This matrix maps individual test cases to specific requirements from the Open SO
 
 > **Note**: These metrics are produced by `scripts/validate_requirements.py`.
 > To regenerate, run: `cmake --build build --target requirements_check`
+>
+> **Methodology**: "Fully traced" = requirement has both `@implements` code annotation
+> and `@tests` test annotation.  "Orphaned" = requirement defined in RST but has no
+> code annotation.  Counts reflect the full RST requirement set (327 requirements).
 
 ### Validated Traceability Summary
 

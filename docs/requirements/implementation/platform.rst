@@ -126,7 +126,7 @@ Mutex Interface
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Static analysis: Verify Mutex copy constructor and copy-assignment operator are ``= delete``. Verify code that attempts to copy a Mutex does not compile.
+   :verification: Static analysis: Verify Mutex copy constructor, copy-assignment operator, move constructor (``Mutex::Mutex(Mutex&&)``), and move-assignment operator (``Mutex::operator=(Mutex&&)``) are all ``= delete``. Verify code that attempts to copy or move a Mutex does not compile.
 
    ``Mutex`` shall be non-copyable and non-movable. Copy constructor,
    copy-assignment, move constructor, and move-assignment shall be deleted.

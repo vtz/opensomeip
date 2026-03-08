@@ -30,7 +30,6 @@ using namespace someip::rpc;
  * @tests REQ_MSG_114, REQ_MSG_115, REQ_MSG_116, REQ_MSG_118
  * @tests REQ_MSG_127, REQ_MSG_128, REQ_MSG_129, REQ_MSG_130, REQ_MSG_131
  * @tests REQ_MSG_132a, REQ_MSG_132b, REQ_MSG_133a, REQ_MSG_133b, REQ_MSG_133c
- * @tests REQ_MSG_114_E01, REQ_MSG_114_E02
  */
 class RpcTest : public ::testing::Test {
 protected:

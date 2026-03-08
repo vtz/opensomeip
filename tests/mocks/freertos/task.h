@@ -9,6 +9,8 @@
 #include "FreeRTOS.h"
 #include <thread>
 #include <chrono>
+#include <atomic>
+#include <new>
 
 struct MockTaskHandle {};
 typedef MockTaskHandle* TaskHandle_t;
@@ -22,10 +24,17 @@ inline BaseType_t xTaskCreate(
         UBaseType_t /*priority*/,
         TaskHandle_t* handle_out)
 {
+    MockTaskHandle* h = nullptr;
+    try {
+        h = new MockTaskHandle();
+    } catch (const std::bad_alloc&) {
+        return errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY;
+    }
+
     std::thread t([fn, param]() { fn(param); });
     t.detach();
 
-    if (handle_out) *handle_out = new MockTaskHandle();
+    if (handle_out) *handle_out = h;
     return pdPASS;
 }
 

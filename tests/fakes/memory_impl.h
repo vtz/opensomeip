@@ -15,8 +15,13 @@
  */
 
 #include <atomic>
+#include <memory>
 
 namespace someip {
+
+class Message;
+using MessagePtr = std::shared_ptr<Message>;
+
 namespace platform {
 
 inline std::atomic<int>& alloc_count() {

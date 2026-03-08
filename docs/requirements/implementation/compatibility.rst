@@ -27,12 +27,15 @@ Forward Compatibility
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Send 20-byte message to handler expecting 16 bytes, verify handler processes first 16 bytes and ignores excess 4 bytes without error.
+   :verification: Unit test: (Positive) Send message with 4 trailing unknown payload bytes beyond expected fields, verify handler processes known fields and ignores trailing bytes without error. (Negative) Send message whose header/overall length is inconsistent with the declared length field, verify deserialization returns an error (throws or returns failure).
 
-   The software shall support receiving messages and dynamic-length elements
-   that are longer than expected by truncating excess bytes without error.
+   The software shall support receiving messages with unknown or trailing
+   extensible payload fields that are longer than expected by ignoring the
+   trailing bytes without error.  The software shall strictly validate
+   header and overall message length consistency and reject messages whose
+   header length does not match the actual data length.
 
-   **Rationale**: Forward compatibility enables incremental service updates without breaking existing clients.
+   **Rationale**: Forward compatibility enables incremental service updates without breaking existing clients; strict header-length validation prevents corrupt or truncated frames from being processed.
 
    **Code Location**: ``src/someip/message.cpp``
 
@@ -235,6 +238,7 @@ Compatibility Informational
 
 .. requirement:: Error - Incompatible Major Version
    :id: REQ_COMPAT_010_E01
+   :satisfies: REQ_COMPAT_010
    :status: implemented
    :priority: high
    :category: error_path
@@ -250,6 +254,7 @@ Compatibility Informational
 
 .. requirement:: Error - Reserved Service ID in Application Message
    :id: REQ_COMPAT_020_E01
+   :satisfies: REQ_COMPAT_020
    :status: implemented
    :priority: high
    :category: error_path
@@ -265,6 +270,7 @@ Compatibility Informational
 
 .. requirement:: Error - Unknown Message Dropped Count
    :id: REQ_COMPAT_003_E01
+   :satisfies: REQ_COMPAT_003
    :status: implemented
    :priority: low
    :category: error_path
@@ -280,6 +286,7 @@ Compatibility Informational
 
 .. requirement:: Error - Forward Compatibility Length Clamp
    :id: REQ_COMPAT_001_E01
+   :satisfies: REQ_COMPAT_001
    :status: implemented
    :priority: medium
    :category: error_path

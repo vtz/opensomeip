@@ -14,6 +14,7 @@
 #include <chrono>
 #include <functional>
 #include <cassert>
+#include <atomic>
 
 #define __ASSERT(cond, ...) assert(cond)
 
@@ -89,6 +90,7 @@ struct k_thread {
     std::thread impl_thread;
     bool started{false};
     bool joined{false};
+    std::atomic<bool> stop_requested{false};
 };
 
 inline k_tid_t k_thread_create(
@@ -115,8 +117,9 @@ inline int k_thread_join(k_thread* thread, k_timeout_t /*timeout*/) {
 }
 
 inline void k_thread_abort(k_thread* thread) {
+    thread->stop_requested = true;
     if (thread->impl_thread.joinable()) {
-        thread->impl_thread.detach();
+        thread->impl_thread.join();
     }
     thread->started = false;
 }

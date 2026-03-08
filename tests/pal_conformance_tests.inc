@@ -112,6 +112,7 @@ TEST(MutexConformance, DoubleUnlockNoCrash) {
     Mutex m;
     m.lock();
     m.unlock();
+    m.unlock();
     SUCCEED();
 }
 
@@ -327,6 +328,9 @@ TEST(ThreadConformance, DestructorWithoutJoinSafe) {
         someip::platform::Thread t([]() {
             /* completes immediately */
         });
+        // Brief sleep ensures the thread body finishes before destruction.
+        // This test verifies that destroying an already-completed but
+        // unjoined thread does not crash (REQ_PAL_THREAD_DTOR_E01).
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
     SUCCEED();

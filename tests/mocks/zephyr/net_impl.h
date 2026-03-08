@@ -15,7 +15,7 @@
 
 inline int someip_close_socket(int fd) { return close(fd); }
 
-inline void someip_shutdown_socket(int fd) { shutdown(fd, SHUT_RDWR); }
+inline int someip_shutdown_socket(int fd) { return shutdown(fd, SHUT_RDWR); }
 
 inline int someip_set_nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);

@@ -290,13 +290,13 @@ find_program(SPHINX_BUILD sphinx-build
 )
 
 # Requirements documentation directory
-set(REQUIREMENTS_SOURCE_DIR ${CMAKE_SOURCE_DIR}/docs/requirements)
-set(REQUIREMENTS_BUILD_DIR ${CMAKE_BINARY_DIR}/docs/requirements)
-set(TRACEABILITY_BUILD_DIR ${CMAKE_BINARY_DIR}/docs/traceability)
+set(REQUIREMENTS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs/requirements)
+set(REQUIREMENTS_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs/requirements)
+set(TRACEABILITY_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs/traceability)
 
 # Build open-someip-spec to generate needs.json (if available)
-set(SPEC_SOURCE_DIR ${CMAKE_SOURCE_DIR}/open-someip-spec/src)
-set(SPEC_BUILD_DIR ${CMAKE_SOURCE_DIR}/open-someip-spec/build)
+set(SPEC_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/open-someip-spec/src)
+set(SPEC_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/open-someip-spec/build)
 set(SPEC_NEEDS_JSON ${SPEC_BUILD_DIR}/needs.json)
 
 if(Python3_FOUND)
@@ -304,32 +304,32 @@ if(Python3_FOUND)
 
     # Extract @implements, @tests, @satisfies annotations from source code
     add_custom_target(extract_code_requirements
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/extract_code_requirements.py
-                --project-root ${CMAKE_SOURCE_DIR}
-                --output ${CMAKE_BINARY_DIR}/code_references.json
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/extract_code_requirements.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
+                --output ${CMAKE_CURRENT_BINARY_DIR}/code_references.json
                 --src-dirs src include
                 --test-dirs tests
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Extracting requirement traceability from source code"
     )
 
     # Validate requirements completeness and traceability
     add_custom_target(requirements_check
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/validate_requirements.py
-                --project-root ${CMAKE_SOURCE_DIR}
-                --code-refs ${CMAKE_BINARY_DIR}/code_references.json
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/validate_requirements.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
+                --code-refs ${CMAKE_CURRENT_BINARY_DIR}/code_references.json
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS extract_code_requirements
         COMMENT "Validating requirements completeness"
     )
 
     # Strict validation (fails on any gap)
     add_custom_target(requirements_check_strict
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/validate_requirements.py
-                --project-root ${CMAKE_SOURCE_DIR}
-                --code-refs ${CMAKE_BINARY_DIR}/code_references.json
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/validate_requirements.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
+                --code-refs ${CMAKE_CURRENT_BINARY_DIR}/code_references.json
                 --strict
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS extract_code_requirements
         COMMENT "Validating requirements completeness (strict mode)"
     )
@@ -337,41 +337,41 @@ if(Python3_FOUND)
     # Generate traceability matrix documents
     add_custom_target(traceability_matrix
         COMMAND ${CMAKE_COMMAND} -E make_directory ${TRACEABILITY_BUILD_DIR}
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_traceability_matrix.py
-                --project-root ${CMAKE_SOURCE_DIR}
-                --code-refs ${CMAKE_BINARY_DIR}/code_references.json
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_traceability_matrix.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
+                --code-refs ${CMAKE_CURRENT_BINARY_DIR}/code_references.json
                 --output-dir ${TRACEABILITY_BUILD_DIR}
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS extract_code_requirements
         COMMENT "Generating traceability matrix"
     )
 
     # Check spec requirement mappings
     add_custom_target(spec_check
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/check_spec_requirements.py
-                --project-root ${CMAKE_SOURCE_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_spec_requirements.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
                 --output ${TRACEABILITY_BUILD_DIR}/spec_mapping_report.md
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Checking spec requirement mappings"
     )
 
     # Verify implementation status against RST definitions
     add_custom_target(implementation_status
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/verify_implementation_status.py
-                --project-root ${CMAKE_SOURCE_DIR}
-                --code-refs ${CMAKE_BINARY_DIR}/code_references.json
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_implementation_status.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
+                --code-refs ${CMAKE_CURRENT_BINARY_DIR}/code_references.json
                 --output ${TRACEABILITY_BUILD_DIR}/implementation_verification.md
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS extract_code_requirements
         COMMENT "Verifying implementation status"
     )
 
     # Generate implementation report
     add_custom_target(implementation_report
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_implementation_report.py
-                --project-root ${CMAKE_SOURCE_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_implementation_report.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
                 --output ${TRACEABILITY_BUILD_DIR}/implementation_report.md
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Generating implementation report"
     )
 
@@ -379,41 +379,41 @@ if(Python3_FOUND)
     add_custom_target(traceability_docs
         COMMAND ${CMAKE_COMMAND} -E make_directory ${TRACEABILITY_BUILD_DIR}
         COMMAND ${CMAKE_COMMAND} -E echo "=== Extracting code references ==="
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/extract_code_requirements.py
-                --project-root ${CMAKE_SOURCE_DIR}
-                --output ${CMAKE_BINARY_DIR}/code_references.json
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/extract_code_requirements.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
+                --output ${CMAKE_CURRENT_BINARY_DIR}/code_references.json
                 --src-dirs src include
                 --test-dirs tests
         COMMAND ${CMAKE_COMMAND} -E echo ""
         COMMAND ${CMAKE_COMMAND} -E echo "=== Validating requirements ==="
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/validate_requirements.py
-                --project-root ${CMAKE_SOURCE_DIR}
-                --code-refs ${CMAKE_BINARY_DIR}/code_references.json
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/validate_requirements.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
+                --code-refs ${CMAKE_CURRENT_BINARY_DIR}/code_references.json
         COMMAND ${CMAKE_COMMAND} -E echo ""
         COMMAND ${CMAKE_COMMAND} -E echo "=== Generating traceability matrix ==="
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_traceability_matrix.py
-                --project-root ${CMAKE_SOURCE_DIR}
-                --code-refs ${CMAKE_BINARY_DIR}/code_references.json
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_traceability_matrix.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
+                --code-refs ${CMAKE_CURRENT_BINARY_DIR}/code_references.json
                 --output-dir ${TRACEABILITY_BUILD_DIR}
         COMMAND ${CMAKE_COMMAND} -E echo ""
         COMMAND ${CMAKE_COMMAND} -E echo "=== Checking spec mappings ==="
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/check_spec_requirements.py
-                --project-root ${CMAKE_SOURCE_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/check_spec_requirements.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
                 --output ${TRACEABILITY_BUILD_DIR}/spec_mapping_report.md
         COMMAND ${CMAKE_COMMAND} -E echo ""
         COMMAND ${CMAKE_COMMAND} -E echo "=== Verifying implementation status ==="
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/verify_implementation_status.py
-                --project-root ${CMAKE_SOURCE_DIR}
-                --code-refs ${CMAKE_BINARY_DIR}/code_references.json
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_implementation_status.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
+                --code-refs ${CMAKE_CURRENT_BINARY_DIR}/code_references.json
                 --output ${TRACEABILITY_BUILD_DIR}/implementation_verification.md
         COMMAND ${CMAKE_COMMAND} -E echo ""
         COMMAND ${CMAKE_COMMAND} -E echo "=== Generating implementation report ==="
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/generate_implementation_report.py
-                --project-root ${CMAKE_SOURCE_DIR}
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_implementation_report.py
+                --project-root ${CMAKE_CURRENT_SOURCE_DIR}
                 --output ${TRACEABILITY_BUILD_DIR}/implementation_report.md
         COMMAND ${CMAKE_COMMAND} -E echo ""
         COMMAND ${CMAKE_COMMAND} -E echo "=== All traceability docs written to ${TRACEABILITY_BUILD_DIR} ==="
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Generating all traceability documentation"
     )
 
@@ -421,14 +421,14 @@ if(Python3_FOUND)
     if(SPHINX_BUILD)
         add_custom_target(spec_docs
             COMMAND ${SPHINX_BUILD} -b needs ${SPEC_SOURCE_DIR} ${SPEC_BUILD_DIR}
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/open-someip-spec
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/open-someip-spec
             COMMENT "Building open-someip-spec documentation to generate needs.json"
         )
 
         add_custom_target(requirements_docs
             COMMAND ${CMAKE_COMMAND} -E make_directory ${REQUIREMENTS_BUILD_DIR}
             COMMAND ${SPHINX_BUILD} -b html ${REQUIREMENTS_SOURCE_DIR} ${REQUIREMENTS_BUILD_DIR}
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             DEPENDS extract_code_requirements
             COMMENT "Building requirements documentation (Sphinx HTML)"
         )
@@ -444,7 +444,9 @@ if(Python3_FOUND)
         message(STATUS "Requirements targets available: traceability_docs, traceability_matrix, requirements_check, requirements_check_strict, spec_check, implementation_status, implementation_report (Sphinx not found - requirements_docs unavailable)")
     endif()
 else()
-    # No Python3 at all
+    # No Python3 at all — create placeholder targets so the build graph is complete
+    message(STATUS "Python3 not found - requirements documentation targets will produce diagnostics only")
+
     add_custom_target(traceability_docs
         COMMAND ${CMAKE_COMMAND} -E echo "Python3 not found. Requirements tools are unavailable."
         COMMAND ${CMAKE_COMMAND} -E false
@@ -462,7 +464,26 @@ else()
         COMMAND ${CMAKE_COMMAND} -E echo "Python3 not found."
         COMMAND ${CMAKE_COMMAND} -E false
     )
-    message(STATUS "Python3 not found - requirements documentation targets will not work")
+    add_custom_target(extract_code_requirements
+        COMMAND ${CMAKE_COMMAND} -E echo "Python3 not found. Cannot extract code requirements."
+        COMMAND ${CMAKE_COMMAND} -E false
+    )
+    add_custom_target(requirements_check_strict
+        COMMAND ${CMAKE_COMMAND} -E echo "Python3 not found. Cannot run strict requirements check."
+        COMMAND ${CMAKE_COMMAND} -E false
+    )
+    add_custom_target(spec_check
+        COMMAND ${CMAKE_COMMAND} -E echo "Python3 not found. Cannot check spec requirements."
+        COMMAND ${CMAKE_COMMAND} -E false
+    )
+    add_custom_target(implementation_status
+        COMMAND ${CMAKE_COMMAND} -E echo "Python3 not found. Cannot verify implementation status."
+        COMMAND ${CMAKE_COMMAND} -E false
+    )
+    add_custom_target(implementation_report
+        COMMAND ${CMAKE_COMMAND} -E echo "Python3 not found. Cannot generate implementation report."
+        COMMAND ${CMAKE_COMMAND} -E false
+    )
 endif()
 
 ################################################################################

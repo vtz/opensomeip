@@ -29,6 +29,9 @@ typedef unsigned char UCHAR;
 #define TX_AUTO_START     1u
 #define TX_OR             0u
 #define TX_OR_CLEAR       1u
+#define TX_AND            2u
+#define TX_AND_CLEAR      3u
+#define TX_DONT_START     0u
 
 #ifndef TX_TIMER_TICKS_PER_SECOND
 #define TX_TIMER_TICKS_PER_SECOND 1000u
@@ -104,18 +107,33 @@ inline UINT tx_event_flags_get(TX_EVENT_FLAGS_GROUP* g,
                                ULONG requested, UINT get_option,
                                ULONG* actual, ULONG wait) {
     std::unique_lock<std::mutex> lk(g->mtx);
+
+    bool is_and = (get_option == TX_AND || get_option == TX_AND_CLEAR);
+    auto flags_match = [&]() -> bool {
+        if (is_and) return (g->flags & requested) == requested;
+        return (g->flags & requested) != 0;
+    };
+
     if (wait == TX_NO_WAIT) {
-        if (g->flags & requested) {
-            *actual = g->flags & requested;
-            if (get_option == TX_OR_CLEAR) g->flags &= ~requested;
+        if (!flags_match()) return TX_NOT_AVAILABLE;
+    } else {
+        // Wait until flags match OR a new generation arrives (for
+        // notify_all broadcasts where another waiter may clear first).
+        // Checking flags_match() here prevents the "already set" deadlock:
+        // if the event was signalled before we entered wait, we proceed
+        // immediately instead of blocking on a gen that already passed.
+        uint64_t entry_gen = g->gen;
+        g->cv.wait(lk, [&] { return flags_match() || g->gen > entry_gen; });
+        if (!flags_match()) {
+            *actual = g->flags;
             return TX_SUCCESS;
         }
-        return TX_NOT_AVAILABLE;
     }
-    uint64_t my_gen = g->gen;
-    g->cv.wait(lk, [&] { return g->gen > my_gen; });
-    *actual = requested;
-    (void)get_option;
+
+    *actual = g->flags;
+    if (get_option == TX_OR_CLEAR || get_option == TX_AND_CLEAR) {
+        g->flags &= ~(g->flags & requested);
+    }
     return TX_SUCCESS;
 }
 
@@ -131,6 +149,11 @@ typedef void (*tx_thread_entry_t)(ULONG);
 struct TX_THREAD {
     std::thread thread;
     bool created{false};
+    bool running{false};
+    bool terminated{false};
+    bool suspended{true};
+    std::mutex mtx;
+    std::condition_variable resume_cv;
 };
 
 inline UINT tx_thread_create(
@@ -143,21 +166,58 @@ inline UINT tx_thread_create(
         UINT  /*priority*/,
         UINT  /*preempt_threshold*/,
         ULONG /*time_slice*/,
-        UINT  /*auto_start*/)
+        UINT  auto_start)
 {
-    tcb->thread = std::thread([entry, entry_input]() {
-        entry(entry_input);
-    });
-    tcb->thread.detach();
     tcb->created = true;
+    tcb->terminated = false;
+    tcb->suspended = (auto_start != TX_AUTO_START);
+
+    tcb->thread = std::thread([tcb, entry, entry_input]() {
+        {
+            std::unique_lock<std::mutex> lk(tcb->mtx);
+            tcb->resume_cv.wait(lk, [&] { return !tcb->suspended || tcb->terminated; });
+        }
+        if (!tcb->terminated) {
+            tcb->running = true;
+            entry(entry_input);
+            tcb->running = false;
+        }
+    });
+
+    if (auto_start == TX_AUTO_START) {
+        std::lock_guard<std::mutex> lk(tcb->mtx);
+        tcb->suspended = false;
+        tcb->resume_cv.notify_one();
+    }
+
     return TX_SUCCESS;
 }
 
-inline UINT tx_thread_terminate(TX_THREAD* /*tcb*/) {
+inline UINT tx_thread_resume(TX_THREAD* tcb) {
+    std::lock_guard<std::mutex> lk(tcb->mtx);
+    tcb->suspended = false;
+    tcb->resume_cv.notify_one();
+    return TX_SUCCESS;
+}
+
+inline UINT tx_thread_terminate(TX_THREAD* tcb) {
+    {
+        std::lock_guard<std::mutex> lk(tcb->mtx);
+        tcb->terminated = true;
+        tcb->resume_cv.notify_one();
+    }
+    if (tcb->thread.joinable()) {
+        tcb->thread.join();
+    }
+    tcb->running = false;
     return TX_SUCCESS;
 }
 
 inline UINT tx_thread_delete(TX_THREAD* tcb) {
+    assert(!tcb->running && "tx_thread_delete called on a running thread");
+    if (tcb->thread.joinable()) {
+        tcb->thread.join();
+    }
     tcb->created = false;
     return TX_SUCCESS;
 }

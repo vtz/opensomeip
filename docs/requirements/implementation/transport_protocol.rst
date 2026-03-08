@@ -441,16 +441,16 @@ TP Header Error Handling
    :status: implemented
    :priority: medium
    :category: error_path
-   :verification: Unit test: Verify warning when received Offset is not 16-byte aligned.
+   :verification: Unit test: Receive segment with offset not aligned to 16 bytes, verify segment is rejected and discarded.
 
-   The software shall log a warning when a received segment has an
-   Offset value that is not aligned to 16 bytes.
+   The software shall reject and discard TP segments whose offset is not
+   aligned to the required 16-byte boundary.
 
-   **Rationale**: Malformed segment detection.
+   **Rationale**: Misaligned offsets indicate protocol violations and must be treated as errors per REQ_TP_071_E01 and REQ_TP_082.
 
-   **Error Handling**: Log warning; process segment.
+   **Error Handling**: Discard segment, log offset value and expected alignment.
 
-   **Code Location**: ``src/tp/tp_reassembler.cpp``
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (parse_tp_header validation)
 
 Reassembly Requirements
 =======================

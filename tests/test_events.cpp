@@ -23,8 +23,7 @@ using namespace someip::events;
  * @tests feat_req_someip_730
  * @tests REQ_MSG_121a, REQ_MSG_121b, REQ_MSG_121c, REQ_MSG_122
  * @tests REQ_MSG_123, REQ_MSG_124, REQ_MSG_125, REQ_MSG_126
- * @tests REQ_MSG_113, REQ_MSG_119, REQ_MSG_121_E01, REQ_MSG_121_E02
- * @tests REQ_MSG_123_E01, REQ_MSG_124_E01, REQ_MSG_125_E01
+ * @tests REQ_MSG_113, REQ_MSG_119
  */
 class EventsTest : public ::testing::Test {
 protected:

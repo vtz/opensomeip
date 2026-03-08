@@ -514,8 +514,8 @@ TEST_F(TcpTransportTest, DoubleDisconnect) {
  */
 TEST_F(TcpTransportTest, ZeroLengthMessage) {
     Message msg;
-    msg.set_service_id(0x0000);
-    msg.set_method_id(0x0000);
+    msg.set_service_id(0x1234);
+    msg.set_method_id(0x0001);
 
     std::vector<uint8_t> serialized = msg.serialize();
     EXPECT_FALSE(serialized.empty()) << "Even empty payload has header";

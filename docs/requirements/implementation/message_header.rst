@@ -1287,10 +1287,12 @@ Identifier Ranges
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Register two services with the same Service ID and verify the second registration returns an error or overwrites.
+   :verification: Unit test: Register two services with the same Service ID and verify the second registration is rejected with an explicit error.
 
    The software shall enforce that different services within the same
-   vehicle have different Service IDs.
+   vehicle have different Service IDs.  Attempting to register a
+   duplicate Service ID shall return an error; the existing registration
+   remains unchanged.
 
    **Rationale**: Unique Service IDs prevent routing ambiguity in the vehicle network.
 
@@ -1413,10 +1415,12 @@ RPC Communication Patterns
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Publish 3 events and verify Session IDs increment sequentially. Verify Session ID is independent per eventgroup.
+   :verification: Unit test: Enable event session handling, publish 3 events and verify Session IDs increment sequentially and are independent per eventgroup.
 
-   The software shall optionally use session handling for events,
-   notification events, and fire-and-forget methods if required.
+   When event session handling is enabled via configuration, the software
+   shall use session handling for events, notification events, and
+   fire-and-forget methods and increment session IDs per event group
+   using the ``next_session_id_`` mechanism.
 
    **Rationale**: Session handling for events enables detection of missed notifications.
 
@@ -2002,13 +2006,15 @@ Header Informational References
    :status: implemented
    :priority: low
    :category: error_path
-   :verification: Unit test: Register notifier for field A twice, verify second registration replaces the first (or returns error).
+   :verification: Unit test: Register notifier for field A twice, verify second registration replaces the first and no resource leak occurs.
 
-   The software shall handle duplicate notifier registration for the same field without resource leak.
+   The software shall handle duplicate notifier registration for the same
+   field by replacing the existing notifier with the new one.  The
+   previous notifier shall be released to prevent resource leaks.
 
    **Rationale**: Duplicate registration without cleanup causes dangling references.
 
-   **Error Handling**: Replace existing notifier or return error if not allowed.
+   **Error Handling**: Replace existing notifier; release the old one.
 
    **Code Location**: ``src/events/event_publisher.cpp``
 

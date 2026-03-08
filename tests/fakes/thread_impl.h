@@ -24,7 +24,7 @@
 #include <functional>
 #include <chrono>
 #include <cstdint>
-#include <tuple>
+#include <thread>
 #include <vector>
 
 namespace someip {
@@ -67,6 +67,7 @@ public:
         ++wait_pred_count;
         while (!pred()) {
             m.unlock();
+            std::this_thread::yield();
             m.lock();
         }
     }

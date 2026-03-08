@@ -26,5 +26,6 @@ typedef uint32_t StackType_t;
 #define tskIDLE_PRIORITY       0
 
 #define pdMS_TO_TICKS(ms) ((TickType_t)(ms))
+#define errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY ((BaseType_t)-1)
 
 #endif /* MOCK_FREERTOS_H */

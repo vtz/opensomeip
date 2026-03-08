@@ -61,9 +61,9 @@ using namespace someip::sd;
  * @tests REQ_SD_343, REQ_SD_344, REQ_SD_345, REQ_SD_346, REQ_SD_347, REQ_SD_348, REQ_SD_349
  * @tests REQ_SD_350, REQ_SD_351, REQ_SD_352, REQ_SD_353, REQ_SD_354, REQ_SD_355, REQ_SD_356
  * @tests REQ_COMPAT_030
- * @tests REQ_SD_001_E01, REQ_SD_001_E02, REQ_SD_010_E01, REQ_SD_010_E02
- * @tests REQ_SD_021_E01, REQ_SD_030_E01, REQ_SD_044_E01, REQ_SD_050_E01
- * @tests REQ_SD_060_E01, REQ_SD_060_E02, REQ_SD_070_E01, REQ_SD_080_E01, REQ_SD_083_E01
+ * @tests REQ_SD_001_E02, REQ_SD_010_E02
+ * @tests REQ_SD_030_E01, REQ_SD_044_E01
+ * @tests REQ_SD_060_E02, REQ_SD_070_E01, REQ_SD_080_E01, REQ_SD_083_E01
  * @tests REQ_SD_113_E01, REQ_SD_115_E01, REQ_SD_115_E02, REQ_SD_116_E01, REQ_SD_116_E02
  * @tests REQ_SD_119_E01, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_134_E01, REQ_SD_222_E01
  * @tests feat_req_someipsd_100
@@ -844,7 +844,7 @@ TEST_F(SdTest, ServerDuplicateOffer) {
     SdConfig config;
     auto server = std::make_shared<SdServer>(config);
 
-    server->initialize();
+    ASSERT_TRUE(server->initialize());
 
     ServiceInstance service1;
     service1.service_id = 0x1234;
@@ -869,7 +869,7 @@ TEST_F(SdTest, ClientDoubleSubscribe) {
     SdConfig config;
     auto client = std::make_shared<SdClient>(config);
 
-    client->initialize();
+    ASSERT_TRUE(client->initialize());
 
     int count = 0;
     EXPECT_TRUE(client->subscribe_service(
@@ -1070,6 +1070,7 @@ TEST_F(SdTest, MalformedOptionIndex) {
     entry.set_index2(0x0F);
 
     EXPECT_EQ(entry.get_index1(), 0xFF);
+    EXPECT_EQ(entry.get_index2(), 0x0F);
 }
 
 /**
@@ -1078,12 +1079,20 @@ TEST_F(SdTest, MalformedOptionIndex) {
  * @brief Test SD with unsupported entry type
  */
 TEST_F(SdTest, UnsupportedEntryType) {
-    std::vector<uint8_t> unknown_type_data = {0xFF};
-    EntryType type = static_cast<EntryType>(0xFF);
-    EXPECT_NE(type, EntryType::FIND_SERVICE);
-    EXPECT_NE(type, EntryType::OFFER_SERVICE);
-    EXPECT_NE(type, EntryType::SUBSCRIBE_EVENTGROUP);
-    EXPECT_NE(type, EntryType::SUBSCRIBE_EVENTGROUP_ACK);
+    // Build a minimal 16-byte SD entry with an unknown type (0xFF)
+    std::vector<uint8_t> unknown_type_data(16, 0x00);
+    unknown_type_data[0] = 0xFF;  // type byte
+
+    ServiceEntry entry(EntryType::FIND_SERVICE);
+    size_t offset = 0;
+    bool ok = entry.deserialize(unknown_type_data, offset);
+    // Deserialization of an unknown type should fail or produce a mismatched type
+    if (ok) {
+        EXPECT_NE(entry.get_type(), EntryType::FIND_SERVICE);
+        EXPECT_NE(entry.get_type(), EntryType::OFFER_SERVICE);
+    } else {
+        SUCCEED() << "deserialize correctly rejected unknown entry type";
+    }
 }
 
 /**

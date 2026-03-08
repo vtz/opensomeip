@@ -76,19 +76,26 @@ requirement IDs from `@implements` and `@tests` annotations.
 
 ## Validation Status
 
-`validate_requirements.py --strict` passes with zero errors:
-- 0 orphaned requirements
-- 0 missing spec links
-- 327/327 fully traced
+> **Methodology**: Traceability counts are produced by `scripts/validate_requirements.py`
+> using `@implements`, `@tests`, and `:satisfies:` annotations in source code and RST files.
+> "Fully traced" means a requirement has both a code annotation (`@implements`) and a
+> test annotation (`@tests`).  Run `cmake --build build --target requirements_check`
+> to regenerate.  See `TEST_TRACEABILITY_MATRIX.md` Section 8 for the detailed breakdown.
+
+`validate_requirements.py --strict` passes with zero critical errors.
+Current validated traceability metrics should be read from the most recent
+`requirements_check` output or `TEST_TRACEABILITY_MATRIX.md` Section 8.
 
 ## Recommendations
 
 ### Short-term
+
 - Add performance, stress, and fault-injection tests
 - Improve code coverage (line/branch) beyond traceability
 - Add pre-commit hooks for annotation checks
 
 ### Long-term
+
 - Implement advanced SD features (load balancing, IPv6)
 - Add cross-platform test coverage (FreeRTOS, ThreadX hardware)
 
