@@ -45,6 +45,7 @@ UdpTransport::~UdpTransport() {
 /**
  * @brief Send a SOME/IP message via UDP
  * @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
+ * @implements REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03
  * @implements REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
  * @satisfies feat_req_someip_800
  * @satisfies feat_req_someip_804
@@ -85,6 +86,7 @@ MessagePtr UdpTransport::receive_message() {
     return message;
 }
 
+/** @implements REQ_TRANSPORT_006_E01 */
 Result UdpTransport::connect(const Endpoint& endpoint) {
     // UDP is connectionless, so this just validates the endpoint
     if (!endpoint.is_valid()) {
@@ -116,6 +118,7 @@ void UdpTransport::set_listener(ITransportListener* listener) {
     listener_ = listener;
 }
 
+/** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_021, REQ_TRANSPORT_022, REQ_TRANSPORT_023 */
 Result UdpTransport::start() {
     if (is_running()) {
         return Result::SUCCESS;
@@ -139,6 +142,7 @@ Result UdpTransport::start() {
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_025 */
 Result UdpTransport::stop() {
     // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.VirtualCall) - safe: no override expected
     if (!running_.load()) {
@@ -166,7 +170,7 @@ bool UdpTransport::is_running() const {
     return running_;
 }
 
-/** @implements REQ_TRANSPORT_011 */
+/** @implements REQ_TRANSPORT_011, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02 */
 Result UdpTransport::join_multicast_group(const std::string& multicast_address) {
     platform::ScopedLock lock(socket_mutex_);
 
@@ -212,6 +216,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02 */
 Result UdpTransport::leave_multicast_group(const std::string& multicast_address) {
     platform::ScopedLock lock(socket_mutex_);
 
@@ -293,7 +298,7 @@ Result UdpTransport::create_socket() {
     return Result::SUCCESS;
 }
 
-/** @implements REQ_TRANSPORT_014 */
+/** @implements REQ_TRANSPORT_014, REQ_TRANSPORT_014_E01 */
 Result UdpTransport::bind_socket() {
     platform::ScopedLock lock(socket_mutex_);
 
@@ -311,7 +316,7 @@ Result UdpTransport::bind_socket() {
     return Result::SUCCESS;
 }
 
-/** @implements REQ_TRANSPORT_011 */
+/** @implements REQ_TRANSPORT_011, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02 */
 Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
     if (!is_multicast_address(endpoint.get_address())) {
         return Result::INVALID_ENDPOINT;
@@ -379,6 +384,7 @@ void UdpTransport::receive_loop() {
     }
 }
 
+/** @implements REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03 */
 Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint& endpoint) {
     platform::ScopedLock lock(socket_mutex_);
 
@@ -401,6 +407,7 @@ Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint&
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_010 */
 Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender) {
     sockaddr_in src_addr;
     socklen_t addr_len = sizeof(src_addr);

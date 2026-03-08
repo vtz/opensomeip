@@ -28,6 +28,7 @@
  * @tests REQ_PAL_BYTE_HTONS, REQ_PAL_BYTE_NTOHS, REQ_PAL_BYTE_HTONL, REQ_PAL_BYTE_NTOHL
  * @tests REQ_PLATFORM_POSIX_001, REQ_PLATFORM_POSIX_002
  * @tests REQ_PLATFORM_POSIX_003, REQ_PLATFORM_POSIX_004
+ * @tests REQ_PLATFORM_WIN32_001, REQ_PLATFORM_WIN32_002, REQ_PLATFORM_WIN32_003, REQ_PLATFORM_WIN32_004
  *
  * Covers the three bugs found during code review and fixed in
  * include/platform/host/host_condition_variable.h:

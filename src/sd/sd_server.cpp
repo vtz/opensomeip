@@ -50,7 +50,7 @@ public:
         shutdown();
     }
 
-    /** @implements REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084 */
+    /** @implements REQ_SD_080, REQ_SD_080_E01, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_083_E01, REQ_SD_084 */
     bool initialize() {
         if (running_) {
             return true;
@@ -176,7 +176,7 @@ public:
         return true;
     }
 
-    /** @implements REQ_SD_115, REQ_SD_117, REQ_SD_118, REQ_SD_119 */
+    /** @implements REQ_SD_115, REQ_SD_115_E01, REQ_SD_115_E02, REQ_SD_117, REQ_SD_118, REQ_SD_119, REQ_SD_119_E01 */
     bool handle_eventgroup_subscription(uint16_t service_id, uint16_t instance_id,
                                        uint16_t eventgroup_id, const std::string& client_address,
                                        bool acknowledge) {

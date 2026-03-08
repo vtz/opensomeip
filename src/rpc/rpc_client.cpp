@@ -128,7 +128,7 @@ public:
         }
     }
 
-    /** @implements REQ_MSG_114, REQ_MSG_118, REQ_MSG_120 */
+    /** @implements REQ_MSG_114, REQ_MSG_114_E01, REQ_MSG_114_E02, REQ_MSG_118, REQ_MSG_118_E01, REQ_MSG_120, REQ_MSG_120_E01 */
     RpcCallHandle call_method_async(uint16_t service_id, MethodId method_id,
                                     const std::vector<uint8_t>& parameters,
                                     RpcCallback callback,
@@ -209,7 +209,7 @@ private:
         RpcCallback callback;
     };
 
-    /** @implements REQ_MSG_118 */
+    /** @implements REQ_MSG_118, REQ_MSG_118_E01 */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
         // Check if this is a response to one of our pending calls
         if (!message->is_response()) {

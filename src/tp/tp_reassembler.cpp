@@ -39,6 +39,9 @@ TpReassembler::~TpReassembler() {
  * @implements REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015
  * @implements REQ_TP_016, REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021
  * @implements REQ_TP_015_E01
+ * @implements REQ_TP_070_E01, REQ_TP_070_E02, REQ_TP_071_E01, REQ_TP_071_E02
+ * @implements REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
+ * @implements REQ_TP_082
  */
 bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
                                    uint16_t& offset, bool& more_segments) {
@@ -71,7 +74,8 @@ bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
 /**
  * @brief Process a received TP segment
  * @implements REQ_TP_030, REQ_TP_031, REQ_TP_032
- * @implements REQ_TP_030_E01
+ * @implements REQ_TP_030_E01, REQ_TP_076, REQ_TP_077, REQ_TP_078
+ * @implements REQ_TP_079, REQ_TP_080, REQ_TP_081, REQ_TP_082
  */
 bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_t>& complete_message) {
     if (!validate_segment(segment)) {
@@ -101,7 +105,7 @@ bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_
 /**
  * @brief Validate a TP segment
  * @implements REQ_TP_033, REQ_TP_034, REQ_TP_035
- * @implements REQ_TP_030_E02
+ * @implements REQ_TP_030_E02, REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
  */
 bool TpReassembler::validate_segment(const TpSegment& segment) const {
     const auto config = get_config_copy();
@@ -164,7 +168,7 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
 /**
  * @brief Add segment to reassembly buffer
  * @implements REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043
- * @implements REQ_TP_039_E01
+ * @implements REQ_TP_039_E01, REQ_TP_080, REQ_TP_081
  */
 bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment) {
     // Calculate actual payload bytes (excluding headers)
@@ -267,11 +271,19 @@ bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& recei
     return true;
 }
 
+/**
+ * @brief Cancel reassembly for a message
+ * @implements REQ_TP_079
+ */
 void TpReassembler::cancel_reassembly(uint32_t message_id) {
     platform::ScopedLock lock(buffers_mutex_);
     reassembly_buffers_.erase(message_id);
 }
 
+/**
+ * @brief Process reassembly timeouts
+ * @implements REQ_TP_079
+ */
 void TpReassembler::process_timeouts() {
     const auto config = get_config_copy();
 

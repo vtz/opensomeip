@@ -34,12 +34,7 @@ TpSegmenter::~TpSegmenter() = default;
 /**
  * @brief Segment a message into TP segments
  * @implements REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_004
- * @implements REQ_TP_001_E01
- */
-/**
- * @brief Segment a message into TP segments
- * @implements REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_004
- * @implements REQ_TP_001_E01
+ * @implements REQ_TP_001_E01, REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075
  */
 TpResult TpSegmenter::segment_message(const Message& message, std::vector<TpSegment>& segments) {
     // Get the message payload (without headers - TP handles payload only)
@@ -83,6 +78,8 @@ TpResult TpSegmenter::segment_message(const Message& message, std::vector<TpSegm
  * @implements REQ_TP_013, REQ_TP_014, REQ_TP_015, REQ_TP_016, REQ_TP_017
  * @implements REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021, REQ_TP_022
  * @implements REQ_TP_001_E02, REQ_TP_001_E03, REQ_TP_013_E01, REQ_TP_015_E01
+ * @implements REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075
+ * @implements REQ_TP_076, REQ_TP_077, REQ_TP_078
  */
 TpResult TpSegmenter::create_multi_segments(const Message& message,
                                           const std::vector<uint8_t>& payload,
@@ -184,6 +181,10 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
     return TpResult::SUCCESS;
 }
 
+/**
+ * @brief Update TP segmenter configuration
+ * @implements REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075
+ */
 void TpSegmenter::update_config(const TpConfig& config) {
     config_ = config;
 }

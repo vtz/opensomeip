@@ -202,7 +202,7 @@ public:
         return true;
     }
 
-    /** @implements REQ_MSG_123 */
+    /** @implements REQ_MSG_123, REQ_MSG_123_E01 */
     std::vector<EventSubscription> get_active_subscriptions() const {
         platform::ScopedLock subs_lock(subscriptions_mutex_);
         std::vector<EventSubscription> result;

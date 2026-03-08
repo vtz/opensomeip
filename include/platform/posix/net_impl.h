@@ -24,14 +24,14 @@
 /** @implements REQ_PAL_NET_SHUTDOWN */
 #define someip_shutdown_socket(fd) shutdown(fd, SHUT_RDWR)
 
-/** @implements REQ_PAL_NET_NONBLOCK */
+/** @implements REQ_PAL_NET_NONBLOCK, REQ_PAL_NET_MODE_E01 */
 static inline int someip_set_nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags < 0) return -1;
     return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
 
-/** @implements REQ_PAL_NET_BLOCK */
+/** @implements REQ_PAL_NET_BLOCK, REQ_PAL_NET_MODE_E01 */
 static inline int someip_set_blocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     if (flags < 0) return -1;

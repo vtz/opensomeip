@@ -54,6 +54,7 @@
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_FREERTOS_001 */
 class Mutex {
 public:
     Mutex() : handle_(xSemaphoreCreateMutex()) {

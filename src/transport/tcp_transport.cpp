@@ -196,6 +196,7 @@ Result TcpTransport::enable_server_mode(int backlog) {
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_003_E01 */
 int TcpTransport::accept_connection() {
     if (!server_mode_ || listen_socket_fd_ == -1) {
         return -1;
@@ -259,6 +260,7 @@ Result TcpTransport::bind_socket() {
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_017 */
 Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
     if (blocking) {
         if (someip_set_blocking(socket_fd) < 0) {
@@ -304,7 +306,7 @@ Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
     return Result::SUCCESS;
 }
 
-/** @implements REQ_TRANSPORT_016, REQ_TRANSPORT_018 */
+/** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04, REQ_TRANSPORT_016, REQ_TRANSPORT_016_E01, REQ_TRANSPORT_018 */
 Result TcpTransport::connect_internal(const Endpoint& endpoint) {
     sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
@@ -481,6 +483,7 @@ void TcpTransport::connection_monitor_loop() {
     }
 }
 
+/** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04 */
 Result TcpTransport::send_data(int socket_fd, const std::vector<uint8_t>& data) {
     size_t total_sent = 0;
     const uint8_t* buffer = data.data();
@@ -503,6 +506,7 @@ Result TcpTransport::send_data(int socket_fd, const std::vector<uint8_t>& data) 
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04 */
 Result TcpTransport::receive_data(int socket_fd, std::vector<uint8_t>& data) {
     // Respect maximum receive buffer size from config
     size_t max_chunk_size = std::min(static_cast<size_t>(4096), config_.max_receive_buffer - data.size());

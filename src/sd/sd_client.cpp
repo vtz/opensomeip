@@ -89,7 +89,7 @@ public:
         transport_->stop();
     }
 
-    /** @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_127, REQ_SD_131, REQ_SD_210, REQ_SD_212 */
+    /** @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_127, REQ_SD_131, REQ_SD_210, REQ_SD_211, REQ_SD_212 */
     bool find_service(uint16_t service_id, FindServiceCallback callback,
                      std::chrono::milliseconds timeout) {
 
@@ -151,13 +151,13 @@ public:
         return !already_exists;
     }
 
-    /** @implements REQ_SD_114, REQ_SD_116 */
+    /** @implements REQ_SD_114, REQ_SD_116, REQ_SD_116_E01, REQ_SD_116_E02 */
     bool unsubscribe_service(uint16_t service_id) {
         platform::ScopedLock lock(subscriptions_mutex_);
         return service_subscriptions_.erase(service_id) > 0;
     }
 
-    /** @implements REQ_SD_231, REQ_SD_232, REQ_SD_241 */
+    /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_211, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240, REQ_SD_241 */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
         if (!running_) {
             return false;
@@ -196,7 +196,7 @@ public:
         return transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
     }
 
-    /** @implements REQ_SD_231, REQ_SD_232, REQ_SD_241 */
+    /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240 */
     bool unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
         if (!running_) {
             return false;
@@ -276,7 +276,7 @@ private:
         }
     }
 
-    /** @implements REQ_SD_311, REQ_SD_331 */
+    /** @implements REQ_SD_116_E01, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_311, REQ_SD_331 */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
         // Check if this is an SD message (service ID 0xFFFF)
         if (message->get_service_id() != 0xFFFF) {
@@ -324,7 +324,7 @@ private:
         }
     }
 
-    /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_346, REQ_SD_348 */
+    /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240, REQ_SD_346, REQ_SD_348 */
     void handle_service_offer(const ServiceEntry& entry, const SdMessage& message) {
         ServiceInstance instance;
         instance.service_id = entry.get_service_id();

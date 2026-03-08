@@ -68,7 +68,7 @@ std::vector<uint8_t> SdEntry::serialize() const {
     return data;
 }
 
-/** @implements REQ_SD_001_E01, REQ_SD_010_E01, REQ_SD_020_E01, REQ_SD_020_E02, REQ_SD_021_E01, REQ_SD_022_E01 */
+/** @implements REQ_SD_001_E01, REQ_SD_001_E02, REQ_SD_010_E01, REQ_SD_010_E02, REQ_SD_020_E01, REQ_SD_020_E02, REQ_SD_021_E01, REQ_SD_022_E01 */
 bool SdEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     if (offset + 16 > data.size()) {
         return false;
@@ -102,7 +102,7 @@ std::vector<uint8_t> ServiceEntry::serialize() const {
     return data;
 }
 
-/** @implements REQ_SD_040_E01, REQ_SD_041_E01, REQ_SD_050_E01, REQ_SD_052_E01 */
+/** @implements REQ_SD_040_E01, REQ_SD_041_E01, REQ_SD_044_E01, REQ_SD_050_E01, REQ_SD_052_E01 */
 bool ServiceEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     if (!SdEntry::deserialize(data, offset)) {
         return false;
@@ -145,7 +145,7 @@ std::vector<uint8_t> EventGroupEntry::serialize() const {
     return data;
 }
 
-/** @implements REQ_SD_060_E01, REQ_SD_061_E01, REQ_SD_062_E01, REQ_SD_064_E01, REQ_SD_075_E01 */
+/** @implements REQ_SD_060_E01, REQ_SD_060_E02, REQ_SD_061_E01, REQ_SD_062_E01, REQ_SD_064_E01, REQ_SD_070_E01, REQ_SD_075_E01 */
 bool EventGroupEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     if (!SdEntry::deserialize(data, offset)) {
         return false;
@@ -435,7 +435,7 @@ std::vector<uint8_t> SdMessage::serialize() const {
     return data;
 }
 
-/** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320 */
+/** @implements REQ_SD_030_E01, REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320 */
 bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     if (data.size() < 8) {
         return false;

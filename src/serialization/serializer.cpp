@@ -46,7 +46,7 @@ void Serializer::serialize_bool(bool value) {
 
 /**
  * @brief Serialize uint8 value (single byte, no endian conversion)
- * @implements REQ_SER_001
+ * @implements REQ_SER_001, REQ_SER_001_E01
  */
 void Serializer::serialize_uint8(uint8_t value) {
     buffer_.push_back(value);
@@ -54,7 +54,7 @@ void Serializer::serialize_uint8(uint8_t value) {
 
 /**
  * @brief Serialize uint16 value in Big Endian byte order
- * @implements REQ_SER_002
+ * @implements REQ_SER_002, REQ_SER_002_E01
  */
 void Serializer::serialize_uint16(uint16_t value) {
     append_be_uint16(value);
@@ -62,7 +62,7 @@ void Serializer::serialize_uint16(uint16_t value) {
 
 /**
  * @brief Serialize uint32 value in Big Endian byte order
- * @implements REQ_SER_003
+ * @implements REQ_SER_003, REQ_SER_003_E01
  */
 void Serializer::serialize_uint32(uint32_t value) {
     append_be_uint32(value);
@@ -70,7 +70,7 @@ void Serializer::serialize_uint32(uint32_t value) {
 
 /**
  * @brief Serialize uint64 value in Big Endian byte order
- * @implements REQ_SER_004
+ * @implements REQ_SER_004, REQ_SER_004_E01
  */
 void Serializer::serialize_uint64(uint64_t value) {
     append_be_uint64(value);
@@ -78,7 +78,7 @@ void Serializer::serialize_uint64(uint64_t value) {
 
 /**
  * @brief Serialize int8 value (single byte, two's complement)
- * @implements REQ_SER_010
+ * @implements REQ_SER_010, REQ_SER_010_E01
  */
 void Serializer::serialize_int8(int8_t value) {
     buffer_.push_back(static_cast<uint8_t>(value));
@@ -110,7 +110,7 @@ void Serializer::serialize_int64(int64_t value) {
 
 /**
  * @brief Serialize float value using IEEE 754 in Big Endian
- * @implements REQ_SER_030
+ * @implements REQ_SER_030, REQ_SER_030_E01
  */
 void Serializer::serialize_float(float value) {
     append_be_float(value);
@@ -118,7 +118,7 @@ void Serializer::serialize_float(float value) {
 
 /**
  * @brief Serialize double value using IEEE 754 in Big Endian
- * @implements REQ_SER_031
+ * @implements REQ_SER_031, REQ_SER_031_E01
  */
 void Serializer::serialize_double(double value) {
     append_be_double(value);
@@ -127,7 +127,8 @@ void Serializer::serialize_double(double value) {
 /**
  * @brief Serialize string with length prefix and padding
  * @implements REQ_SER_040, REQ_SER_041, REQ_SER_042
- * @implements REQ_SER_050, REQ_SER_051
+ * @implements REQ_SER_040_E01, REQ_SER_040_E02, REQ_SER_042_E01
+ * @implements REQ_SER_050, REQ_SER_051, REQ_SER_050_E01, REQ_SER_050_E02
  */
 void Serializer::serialize_string(const std::string& value) {
     // Serialize string length as uint32_t
@@ -143,6 +144,8 @@ void Serializer::serialize_string(const std::string& value) {
 /**
  * @brief Align buffer to specified boundary by adding padding bytes
  * @implements REQ_SER_050, REQ_SER_051, REQ_SER_052
+ * @implements REQ_SER_080, REQ_SER_081, REQ_SER_082
+ * @implements REQ_SER_080_E01, REQ_SER_080_E02
  */
 void Serializer::align_to(size_t alignment) {
     size_t current_size = buffer_.size();
@@ -155,7 +158,7 @@ void Serializer::align_to(size_t alignment) {
 
 /**
  * @brief Add explicit padding bytes to buffer
- * @implements REQ_SER_052
+ * @implements REQ_SER_052, REQ_SER_081
  */
 void Serializer::add_padding(size_t bytes) {
     for (size_t i = 0; i < bytes; ++i) {
@@ -235,6 +238,10 @@ Deserializer::Deserializer(std::vector<uint8_t>&& data)
     : buffer_(std::move(data)), position_(0) {
 }
 
+/**
+ * @brief Reset deserializer position to beginning
+ * @implements REQ_SER_075
+ */
 void Deserializer::reset() {
     position_ = 0;
 }
@@ -401,6 +408,10 @@ DeserializationResult<std::string> Deserializer::deserialize_string() {
     return DeserializationResult<std::string>::success(std::move(result));
 }
 
+/**
+ * @brief Set deserializer position (bounds-checked)
+ * @implements REQ_SER_073
+ */
 bool Deserializer::set_position(size_t pos) {
     bool valid = pos <= buffer_.size();
     if (valid) {
@@ -413,6 +424,10 @@ void Deserializer::skip(size_t bytes) {
     position_ = std::min(position_ + bytes, buffer_.size());
 }
 
+/**
+ * @brief Align deserializer position to specified boundary
+ * @implements REQ_SER_080, REQ_SER_081, REQ_SER_082
+ */
 void Deserializer::align_to(size_t alignment) {
     size_t padding = (alignment - (position_ % alignment)) % alignment;
     skip(padding);

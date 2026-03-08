@@ -224,6 +224,11 @@ TpStatistics TpManager::get_statistics() const {
     return statistics_;
 }
 
+/**
+ * @brief Update TP manager configuration
+ * @implements REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075
+ * @implements REQ_TP_076, REQ_TP_077, REQ_TP_078
+ */
 void TpManager::update_config(const TpConfig& config) {
     config_ = config;
     segmenter_->update_config(config);

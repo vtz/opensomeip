@@ -28,7 +28,7 @@ using namespace someip::transport;
  * @tests REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
  * @tests REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
  * @tests REQ_TRANSPORT_005
- * @tests REQ_PLATFORM_LWIP_001
+ * @tests REQ_PLATFORM_LWIP_001, REQ_PLATFORM_LWIP_002
  * @tests feat_req_someip_800
  * @tests feat_req_someip_801
  * @tests feat_req_someip_802
