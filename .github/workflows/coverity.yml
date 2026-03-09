@@ -52,8 +52,7 @@ jobs:
       - name: Download Coverity Build Tool
         run: |
           curl -fsS \
-            --form "token=${COVERITY_SCAN_TOKEN}" \
-            --form "project=vtz-opensomeip" \
+            -d "token=${COVERITY_SCAN_TOKEN}&project=vtz/opensomeip" \
             -o coverity_tool.tgz \
             https://scan.coverity.com/download/linux64
           mkdir -p coverity_tool
@@ -78,4 +77,4 @@ jobs:
             --form file=@analysis-results.tgz \
             --form version="${{ github.sha }}" \
             --form description="Automated Coverity Scan from GitHub Actions" \
-            https://scan.coverity.com/builds?project=vtz-opensomeip
+            https://scan.coverity.com/builds?project=vtz/opensomeip
