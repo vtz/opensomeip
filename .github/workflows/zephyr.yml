@@ -9,8 +9,6 @@ on:
 
 permissions:
   contents: read
-  checks: write
-  pull-requests: write
 
 jobs:
   host-build:
@@ -22,7 +20,7 @@ jobs:
         run: |
           cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF -DSAFETY_LEVEL=NONE
           cmake --build build -j$(nproc)
-          cd build && ctest --output-on-failure --timeout 30 --output-junit junit_results.xml
+          cd build && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -160,10 +158,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: test-results-*
-          merge-multiple: true
 
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
         with:
           files: "**/junit_results.xml"
           check_name: "Zephyr Test Results"
