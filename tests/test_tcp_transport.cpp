@@ -503,14 +503,32 @@ TEST_F(TcpTransportTest, ZeroConnectionTimeout) {
  * @brief Test TCP double disconnect
  */
 TEST_F(TcpTransportTest, DoubleDisconnect) {
-    TcpTransport transport(config);
-    Endpoint local_endpoint("127.0.0.1", 0);
-    ASSERT_EQ(transport.initialize(local_endpoint), Result::SUCCESS);
-    EXPECT_FALSE(transport.is_connected());
+    // Set up a listening server so the client can establish a real connection.
+    TcpTransport server(config);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
 
-    transport.disconnect();
-    transport.disconnect();
-    EXPECT_FALSE(transport.is_connected());
+    Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+
+    Result conn = client.connect(server_ep);
+    ASSERT_EQ(conn, Result::SUCCESS) << "Localhost connect should succeed";
+    EXPECT_TRUE(client.is_connected());
+
+    client.disconnect();
+    EXPECT_FALSE(client.is_connected());
+
+    // Second disconnect must be a safe no-op.
+    client.disconnect();
+    EXPECT_FALSE(client.is_connected());
+
+    client.stop();
+    server.stop();
 }
 
 /**
