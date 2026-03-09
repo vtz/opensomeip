@@ -1,0 +1,66 @@
+################################################################################
+# Copyright (c) 2025 Vinicius Tadeu Zein
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+
+name: Coverity Scan
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.cursor/**'
+
+permissions:
+  contents: read
+
+jobs:
+  coverity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Coverity Build Tool
+        run: |
+          curl -fsS \
+            --data-urlencode "token=${{ secrets.COVERITY_SCAN_TOKEN }}" \
+            --data-urlencode "project=vtz-opensomeip" \
+            -o coverity_tool.tgz \
+            https://scan.coverity.com/download/cxx/linux64
+          mkdir -p coverity_tool
+          tar xzf coverity_tool.tgz --strip-components=1 -C coverity_tool
+
+      - name: Configure CMake
+        run: >
+          cmake -B build
+          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_BUILD_TYPE=Release
+          -DENABLE_WERROR=ON
+
+      - name: Build with cov-build
+        run: coverity_tool/bin/cov-build --dir cov-int cmake --build build
+
+      - name: Submit to Coverity Scan
+        run: |
+          tar czf analysis-results.tgz cov-int
+          curl -fsS \
+            --form token=${{ secrets.COVERITY_SCAN_TOKEN }} \
+            --form email=vtzein@gmail.com \
+            --form file=@analysis-results.tgz \
+            --form version="${{ github.sha }}" \
+            --form description="Automated Coverity Scan from GitHub Actions" \
+            https://scan.coverity.com/builds?project=vtz-opensomeip

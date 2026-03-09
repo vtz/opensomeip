@@ -16,6 +16,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B17)
 [![CMake](https://img.shields.io/badge/CMake-3.20+-blue.svg)](https://cmake.org/)
+[![Coverity Scan](https://scan.coverity.com/projects/32942/badge.svg)](https://scan.coverity.com/projects/vtz-opensomeip)
 
 **OpenSOME/IP** (`opensomeip`) is a modern, open-source C++17 implementation of the Scalable service-Oriented MiddlewarE over IP (SOME/IP) protocol for automotive and embedded systems.
 
