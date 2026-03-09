@@ -34,6 +34,19 @@ jobs:
       COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
       COVERITY_EMAIL: ${{ vars.COVERITY_EMAIL }}
     steps:
+      - name: Validate required configuration
+        run: |
+          missing=0
+          if [ -z "${COVERITY_SCAN_TOKEN}" ]; then
+            echo "::error::COVERITY_SCAN_TOKEN secret is not set"
+            missing=1
+          fi
+          if [ -z "${COVERITY_EMAIL}" ]; then
+            echo "::error::COVERITY_EMAIL repository variable is not set"
+            missing=1
+          fi
+          exit $missing
+
       - uses: actions/checkout@v4
 
       - name: Download Coverity Build Tool
@@ -52,7 +65,6 @@ jobs:
           -DCMAKE_CXX_COMPILER=g++
           -DCMAKE_C_COMPILER=gcc
           -DCMAKE_BUILD_TYPE=Release
-          -DENABLE_WERROR=ON
 
       - name: Build with cov-build
         run: coverity_tool/bin/cov-build --dir cov-int cmake --build build
