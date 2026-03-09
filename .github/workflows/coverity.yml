@@ -52,10 +52,10 @@ jobs:
       - name: Download Coverity Build Tool
         run: |
           curl -fsS \
-            --data-urlencode "token=${COVERITY_SCAN_TOKEN}" \
-            --data-urlencode "project=vtz-opensomeip" \
+            --form "token=${COVERITY_SCAN_TOKEN}" \
+            --form "project=vtz-opensomeip" \
             -o coverity_tool.tgz \
-            https://scan.coverity.com/download/cxx/linux64
+            https://scan.coverity.com/download/linux64
           mkdir -p coverity_tool
           tar xzf coverity_tool.tgz --strip-components=1 -C coverity_tool
 
