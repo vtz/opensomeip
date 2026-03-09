@@ -31,39 +31,41 @@ namespace sd {
 /** @implements REQ_ARCH_001, REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007, REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014, REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026, REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035 */
 std::vector<uint8_t> SdEntry::serialize() const {
     std::vector<uint8_t> data;
-    data.reserve(16);  // SD entry is 16 bytes
+    data.reserve(16);  // SD entry is exactly 16 bytes per SOME/IP-SD spec
 
-    // Type (1 byte)
+    // Byte 0: Type
     data.push_back(static_cast<uint8_t>(type_));
 
-    // Index 1 (1 byte)
+    // Byte 1: Index 1st options run
     data.push_back(index1_);
 
-    // Index 2 (1 byte)
+    // Byte 2: Index 2nd options run
     data.push_back(index2_);
 
-    // Number of Options 1 (1 byte) - derived classes will handle
+    // Byte 3: #Opt1 (upper 4 bits) | #Opt2 (lower 4 bits)
     data.push_back(0);
 
-    // Number of Options 2 (1 byte) - derived classes will handle
-    data.push_back(0);
-
-    // Service ID (2 bytes) - derived classes will handle
+    // Bytes 4-5: Service ID — derived classes override
     data.push_back(0);
     data.push_back(0);
 
-    // Instance ID (2 bytes) - derived classes will handle
+    // Bytes 6-7: Instance ID — derived classes override
     data.push_back(0);
     data.push_back(0);
 
-    // Major Version (1 byte) - derived classes will handle
+    // Byte 8: Major Version — derived classes override
     data.push_back(0);
 
-    // TTL (4 bytes)
-    data.push_back((ttl_ >> 24) & 0xFF);
+    // Bytes 9-11: TTL (24-bit)
     data.push_back((ttl_ >> 16) & 0xFF);
     data.push_back((ttl_ >> 8) & 0xFF);
     data.push_back(ttl_ & 0xFF);
+
+    // Bytes 12-15: Minor Version or EventGroup fields — derived classes override
+    data.push_back(0);
+    data.push_back(0);
+    data.push_back(0);
+    data.push_back(0);
 
     return data;
 }
@@ -74,12 +76,12 @@ bool SdEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
         return false;
     }
 
-    type_ = static_cast<EntryType>(data[offset++]);
-    index1_ = data[offset++];
-    index2_ = data[offset++];
-    offset += 2;  // Skip number of options (handled by SdMessage)
+    type_ = static_cast<EntryType>(data[offset++]);   // byte 0
+    index1_ = data[offset++];                          // byte 1
+    index2_ = data[offset++];                          // byte 2
+    offset += 1;  // byte 3: #Opt1|#Opt2 (handled by SdMessage)
 
-    // Service ID, Instance ID, Major Version, TTL will be handled by derived classes
+    // Bytes 4-15 handled by derived classes
     return true;
 }
 
@@ -88,16 +90,19 @@ bool SdEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
 std::vector<uint8_t> ServiceEntry::serialize() const {
     std::vector<uint8_t> data = SdEntry::serialize();
 
-    // Override the service ID field (bytes 4-5)
+    // Bytes 4-5: Service ID
     data[4] = (service_id_ >> 8) & 0xFF;
     data[5] = service_id_ & 0xFF;
 
-    // Override the instance ID field (bytes 6-7)
+    // Bytes 6-7: Instance ID
     data[6] = (instance_id_ >> 8) & 0xFF;
     data[7] = instance_id_ & 0xFF;
 
-    // Override the major version field (byte 8)
+    // Byte 8: Major Version
     data[8] = major_version_;
+
+    // Bytes 12-15: Minor Version (32-bit per spec, stored as uint8_t in our API)
+    data[15] = minor_version_;
 
     return data;
 }
@@ -108,17 +113,21 @@ bool ServiceEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset)
         return false;
     }
 
-    if (offset + 9 > data.size()) {
+    if (offset + 12 > data.size()) {
         return false;
     }
 
+    // SdEntry::deserialize consumed bytes 0-4 (type, idx1, idx2, opts, skip).
+    // We're now at byte 5 within the 16-byte entry.
     service_id_ = (data[offset] << 8) | data[offset + 1];
     instance_id_ = (data[offset + 2] << 8) | data[offset + 3];
     major_version_ = data[offset + 4];
-    ttl_ = (data[offset + 5] << 24) | (data[offset + 6] << 16) |
-           (data[offset + 7] << 8) | data[offset + 8];
+    // TTL is 24-bit (bytes 9-11 of the entry)
+    ttl_ = (data[offset + 5] << 16) | (data[offset + 6] << 8) | data[offset + 7];
+    // Minor version is 32-bit (bytes 12-15), but stored as uint8_t (low byte)
+    minor_version_ = data[offset + 11];
 
-    offset += 9;
+    offset += 12;
     return true;
 }
 
@@ -127,20 +136,21 @@ bool ServiceEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset)
 std::vector<uint8_t> EventGroupEntry::serialize() const {
     std::vector<uint8_t> data = SdEntry::serialize();
 
-    // Override the service ID field (bytes 4-5)
+    // Bytes 4-5: Service ID
     data[4] = (service_id_ >> 8) & 0xFF;
     data[5] = service_id_ & 0xFF;
 
-    // Override the instance ID field (bytes 6-7)
+    // Bytes 6-7: Instance ID
     data[6] = (instance_id_ >> 8) & 0xFF;
     data[7] = instance_id_ & 0xFF;
 
-    // Override the major version field (byte 8)
+    // Byte 8: Major Version
     data[8] = major_version_;
 
-    // Event group ID (bytes 9-10)
-    data.push_back((eventgroup_id_ >> 8) & 0xFF);
-    data.push_back(eventgroup_id_ & 0xFF);
+    // Bytes 12-13: Reserved + Counter (left as zero from base)
+    // Bytes 14-15: EventGroup ID
+    data[14] = (eventgroup_id_ >> 8) & 0xFF;
+    data[15] = eventgroup_id_ & 0xFF;
 
     return data;
 }
@@ -151,18 +161,20 @@ bool EventGroupEntry::deserialize(const std::vector<uint8_t>& data, size_t& offs
         return false;
     }
 
-    if (offset + 11 > data.size()) {
+    if (offset + 12 > data.size()) {
         return false;
     }
 
     service_id_ = (data[offset] << 8) | data[offset + 1];
     instance_id_ = (data[offset + 2] << 8) | data[offset + 3];
     major_version_ = data[offset + 4];
-    ttl_ = (data[offset + 5] << 24) | (data[offset + 6] << 16) |
-           (data[offset + 7] << 8) | data[offset + 8];
-    eventgroup_id_ = (data[offset + 9] << 8) | data[offset + 10];
+    // TTL is 24-bit (bytes 9-11 of the entry)
+    ttl_ = (data[offset + 5] << 16) | (data[offset + 6] << 8) | data[offset + 7];
+    // Bytes 12-13: Reserved + Counter (skip)
+    // Bytes 14-15: EventGroup ID
+    eventgroup_id_ = (data[offset + 10] << 8) | data[offset + 11];
 
-    offset += 11;
+    offset += 12;
     return true;
 }
 

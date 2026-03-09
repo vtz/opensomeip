@@ -1119,10 +1119,16 @@ TEST_F(SdTest, ZeroLengthOptions) {
     std::vector<uint8_t> serialized = sd_msg.serialize();
     EXPECT_FALSE(serialized.empty()) << "Serialized message with entries and zero options";
 
-    // Verify the serialized format contains an entries-length field and a
-    // zero-length options array.  Full round-trip is not asserted here because
-    // ServiceEntry::serialize() produces a compact entry whose length is not
-    // a multiple of the SD 16-byte entry alignment; the serialization format
-    // is validated by dedicated ServiceEntrySerialization tests.
-    EXPECT_GT(serialized.size(), 8u) << "Should contain header + entries + options length";
+    SdMessage deserialized;
+    bool result = deserialized.deserialize(serialized);
+    EXPECT_TRUE(result) << "Zero-options message should round-trip";
+    EXPECT_EQ(deserialized.get_options().size(), 0u) << "Options array should be empty";
+    ASSERT_EQ(deserialized.get_entries().size(), 1u) << "Should have one entry";
+
+    auto* de = dynamic_cast<ServiceEntry*>(deserialized.get_entries()[0].get());
+    ASSERT_NE(de, nullptr);
+    EXPECT_EQ(de->get_service_id(), 0x1234);
+    EXPECT_EQ(de->get_instance_id(), 0xFFFF);
+    EXPECT_EQ(de->get_major_version(), 0xFF);
+    EXPECT_EQ(de->get_ttl(), 3u);
 }
