@@ -16,6 +16,11 @@ on:
       - 'LICENSE'
       - '.cursor/**'
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   stub-compile-check:
     name: FreeRTOS+lwIP stub compile check
@@ -49,4 +54,33 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -S ${{ github.workspace }}
           cmake --build build_freertos_rt --config Release
-          cd build_freertos_rt && ctest --output-on-failure --timeout 30 --no-tests=error
+          cd build_freertos_rt && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-freertos
+          path: build_freertos_rt/junit_results.xml
+          retention-days: 14
+
+  publish-test-results:
+    name: Publish Test Results
+    runs-on: ubuntu-latest
+    needs: [runtime-tests]
+    if: always()
+    permissions:
+      checks: write
+      pull-requests: write
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "**/junit_results.xml"
+          check_name: "FreeRTOS Test Results"

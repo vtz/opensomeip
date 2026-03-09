@@ -7,6 +7,11 @@ on:
     branches: ["main"]
     paths-ignore: ['**/*.md','docs/**','LICENSE','.cursor/**']
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
   host-build:
     name: Host Build + Tests
@@ -17,7 +22,15 @@ jobs:
         run: |
           cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF -DSAFETY_LEVEL=NONE
           cmake --build build -j$(nproc)
-          cd build && ctest --output-on-failure --timeout 30
+          cd build && ctest --output-on-failure --timeout 30 --output-junit junit_results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-zephyr-host
+          path: build/junit_results.xml
+          retention-days: 14
 
   zephyr-native-sim:
     name: Zephyr native_sim
@@ -133,3 +146,24 @@ jobs:
       - name: Build hello_s32k (mr_canhubk3)
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: west build -b mr_canhubk3 zephyr/samples/hello_s32k -d build/s32k344
+
+  publish-test-results:
+    name: Publish Test Results
+    runs-on: ubuntu-latest
+    needs: [host-build]
+    if: always()
+    permissions:
+      checks: write
+      pull-requests: write
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "**/junit_results.xml"
+          check_name: "Zephyr Test Results"
