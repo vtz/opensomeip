@@ -30,13 +30,16 @@ permissions:
 jobs:
   coverity:
     runs-on: ubuntu-latest
+    env:
+      COVERITY_SCAN_TOKEN: ${{ secrets.COVERITY_SCAN_TOKEN }}
+      COVERITY_EMAIL: ${{ vars.COVERITY_EMAIL }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Download Coverity Build Tool
         run: |
           curl -fsS \
-            --data-urlencode "token=${{ secrets.COVERITY_SCAN_TOKEN }}" \
+            --data-urlencode "token=${COVERITY_SCAN_TOKEN}" \
             --data-urlencode "project=vtz-opensomeip" \
             -o coverity_tool.tgz \
             https://scan.coverity.com/download/cxx/linux64
@@ -58,8 +61,8 @@ jobs:
         run: |
           tar czf analysis-results.tgz cov-int
           curl -fsS \
-            --form token=${{ secrets.COVERITY_SCAN_TOKEN }} \
-            --form email=vtzein@gmail.com \
+            --form "token=${COVERITY_SCAN_TOKEN}" \
+            --form "email=${COVERITY_EMAIL}" \
             --form file=@analysis-results.tgz \
             --form version="${{ github.sha }}" \
             --form description="Automated Coverity Scan from GitHub Actions" \
