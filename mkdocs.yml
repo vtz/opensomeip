@@ -1,0 +1,127 @@
+site_name: OpenSOME/IP
+site_description: Open-source C++17 SOME/IP protocol stack for automotive and embedded systems
+site_url: https://vtz.github.io/opensomeip/
+repo_url: https://github.com/vtz/opensomeip
+repo_name: vtz/opensomeip
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/car-connected
+  favicon: images/favicon.png
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: deep purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Quick Start: getting-started.md
+    - Build Instructions: BUILD.md
+    - Integration Guide: INTEGRATION_GUIDE.md
+    - Git Submodule Setup: SETUP_GIT_SUBMODULE.md
+  - Architecture:
+    - Overview: project-overview.md
+    - E2E Protection: architecture/e2e_protection.md
+  - Platforms:
+    - Zephyr RTOS: ZEPHYR_PORT.md
+    - FreeRTOS: FREERTOS_PORT.md
+    - Eclipse ThreadX: THREADX_PORT.md
+    - Risk Register: PLATFORM_RISK_REGISTER.md
+  - API Reference:
+    - Overview: api/index.md
+    - Service Discovery: api/sd.md
+    - RPC: api/rpc.md
+    - Transport Protocol: api/tp.md
+    - Events: api/events.md
+    - E2E Protection: api/e2e.md
+    - Serialization: api/serialization.md
+  - Examples:
+    - Overview: examples/index.md
+  - Testing:
+    - Test Plan: SOMEIP_ACCEPTANCE_TEST_PLAN.md
+    - Test Status: TEST_PLAN_STATUS.md
+    - Test Reporting: TEST_REPORTING.md
+    - Coding Guidelines: CODING_GUIDELINES.md
+  - Contributing:
+    - How to Contribute: contributing.md
+    - Changelog: changelog.md
+  - Specification:
+    - Requirements: https://vtz.github.io/opensomeip/requirements/
+    - Traceability Matrix: https://vtz.github.io/opensomeip/traceability/matrix.html
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/vtz/opensomeip
+  generator: false
+
+copyright: Copyright &copy; 2025-2026 Vinicius Tadeu Zein &mdash; Apache License 2.0

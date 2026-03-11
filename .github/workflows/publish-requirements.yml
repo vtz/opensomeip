@@ -1,22 +1,20 @@
-# Publish Requirements Documentation to GitHub Pages
+# Publish Project Documentation to GitHub Pages
 #
-# This workflow builds and publishes the requirements documentation
-# and traceability matrices to GitHub Pages.
+# Builds the full project site with MkDocs Material, plus the Sphinx
+# requirements documentation and traceability matrix.
 
-name: Publish Requirements Documentation
+name: Publish Documentation
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -37,7 +35,9 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install sphinx>=7.0 sphinx-needs>=5.0.0 sphinxcontrib-plantuml
+          pip install \
+            mkdocs-material \
+            sphinx>=7.0 sphinx-needs>=5.0.0 sphinxcontrib-plantuml
           pip install -r open-someip-spec/requirements.txt
 
       - name: Build open-someip-spec
@@ -57,7 +57,7 @@ jobs:
             --src-dirs src include \
             --test-dirs tests
 
-      - name: Build requirements documentation
+      - name: Build requirements documentation (Sphinx)
         run: |
           sphinx-build -b html docs/requirements build/docs/requirements
 
@@ -68,30 +68,24 @@ jobs:
             --code-refs build/code_references.json \
             --output-dir build/docs/traceability
 
-      - name: Create index page
+      - name: Prepare site sources
         run: |
-          cat > build/docs/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>OpenSOMEIP Documentation</title>
-            <style>
-              body { font-family: sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
-              h1 { color: #333; }
-              a { color: #0066cc; }
-              ul { list-style-type: none; padding: 0; }
-              li { margin: 10px 0; }
-            </style>
-          </head>
-          <body>
-            <h1>OpenSOMEIP Documentation</h1>
-            <ul>
-              <li><a href="requirements/index.html">Requirements Documentation</a></li>
-              <li><a href="traceability/matrix.html">Traceability Matrix</a></li>
-            </ul>
-          </body>
-          </html>
-          EOF
+          ./scripts/prepare_site.sh
+
+      - name: Build project site (MkDocs)
+        run: |
+          mkdocs build --site-dir build/site
+
+      - name: Assemble final output
+        run: |
+          # MkDocs output is the main site
+          mkdir -p build/site/requirements build/site/traceability
+
+          # Copy Sphinx requirements into the site
+          cp -r build/docs/requirements/* build/site/requirements/
+
+          # Copy traceability matrix into the site
+          cp -r build/docs/traceability/* build/site/traceability/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -99,7 +93,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: build/docs
+          path: build/site
 
   deploy:
     environment:

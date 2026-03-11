@@ -1,0 +1,160 @@
+{% extends "main.html" %}
+
+{% block tabs %}
+  {{ super() }}
+
+  <section class="os-hero">
+    <div class="os-hero__inner">
+      <div class="os-hero__content">
+        <h1 class="os-hero__title">Open<span class="os-hero__accent">SOME/IP</span></h1>
+        <p class="os-hero__tagline">
+          A modern, open-source C++17 implementation of the SOME/IP protocol
+          for automotive and embedded systems.
+        </p>
+        <div class="os-hero__badges">
+          <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg">
+          <img alt="C++17" src="https://img.shields.io/badge/C%2B%2B-17-blue.svg">
+          <img alt="CMake" src="https://img.shields.io/badge/CMake-3.20+-blue.svg">
+          <img alt="Coverity" src="https://scan.coverity.com/projects/32942/badge.svg">
+        </div>
+        <div class="os-hero__actions">
+          <a href="getting-started/" class="md-button md-button--primary">Get Started</a>
+          <a href="project-overview/" class="md-button">Learn More</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="os-features">
+    <div class="os-features__inner">
+      <h2 class="os-features__title">Core Capabilities</h2>
+      <div class="os-features__grid">
+
+        <div class="os-feature">
+          <div class="os-feature__icon">
+            <span class="twemoji">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m0 14H4V8l8 5 8-5v10m-8-7L4 6h16l-8 5Z"/></svg>
+            </span>
+          </div>
+          <h3>Message Format &amp; Serialization</h3>
+          <p>Complete SOME/IP message handling with big-endian serialization, validation, and session management.</p>
+        </div>
+
+        <div class="os-feature">
+          <div class="os-feature__icon">
+            <span class="twemoji">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20m0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16m-1-5h2v2h-2v-2m0-8h2v6h-2V7m8.93 1.36-1.42-1.42 1.42-1.42 1.41 1.42-1.41 1.42M3.07 8.36l1.42-1.42 1.41 1.42-1.41 1.42-1.42-1.42Z"/></svg>
+            </span>
+          </div>
+          <h3>Service Discovery</h3>
+          <p>Full multicast-based SOME/IP-SD with offer, find, subscribe, and IPv4 endpoint options.</p>
+        </div>
+
+        <div class="os-feature">
+          <div class="os-feature__icon">
+            <span class="twemoji">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4m0 4a3 3 0 0 1 3 3c0 1.31-.84 2.42-2 2.83V14h-2v-3.17A2.99 2.99 0 0 1 12 5Z"/></svg>
+            </span>
+          </div>
+          <h3>E2E Protection</h3>
+          <p>CRC-based message integrity with profile registry, supporting safety-oriented automotive applications.</p>
+        </div>
+
+        <div class="os-feature">
+          <div class="os-feature__icon">
+            <span class="twemoji">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 16l-4-4V8.82C14.16 8.4 15 7.3 15 6c0-1.66-1.34-3-3-3S9 4.34 9 6c0 1.3.84 2.4 2 2.82V12l-4 4H2v5h5v-3.05l4-4.2 4 4.2V21h5v-5h-3z"/></svg>
+            </span>
+          </div>
+          <h3>RPC &amp; Events</h3>
+          <p>Request/response and publish/subscribe communication patterns for service-oriented architectures.</p>
+        </div>
+
+        <div class="os-feature">
+          <div class="os-feature__icon">
+            <span class="twemoji">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6.62 10.79a15.15 15.15 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.01-.24c1.12.37 2.33.57 3.58.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.46.57 3.57.11.33.03.7-.25 1.02l-2.2 2.2Z"/></svg>
+            </span>
+          </div>
+          <h3>Transport Bindings</h3>
+          <p>UDP and TCP transports with configurable blocking modes, buffer sizes, and Transport Protocol for large messages.</p>
+        </div>
+
+        <div class="os-feature">
+          <div class="os-feature__icon">
+            <span class="twemoji">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.5 1h-8A2.5 2.5 0 0 0 5 3.5v17A2.5 2.5 0 0 0 7.5 23h8a2.5 2.5 0 0 0 2.5-2.5v-17A2.5 2.5 0 0 0 15.5 1m-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5m4.5-4H7V4h9v14Z"/></svg>
+            </span>
+          </div>
+          <h3>Multi-Platform</h3>
+          <p>Runs on POSIX/Linux, macOS, Zephyr RTOS, FreeRTOS, and Eclipse ThreadX with a clean PAL.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="os-platforms">
+    <div class="os-platforms__inner">
+      <h2 class="os-platforms__title">Platform Support</h2>
+      <p class="os-platforms__subtitle">One protocol stack, many targets</p>
+      <div class="os-platforms__grid">
+        <div class="os-platform">
+          <h3>POSIX / Linux</h3>
+          <p>Full-featured desktop and server support with native socket transport.</p>
+        </div>
+        <div class="os-platform">
+          <h3>macOS</h3>
+          <p>Development and testing with cross-platform demo support.</p>
+        </div>
+        <div class="os-platform">
+          <h3>Zephyr RTOS</h3>
+          <p>Automotive-grade RTOS with native_sim and ARM target support.</p>
+        </div>
+        <div class="os-platform">
+          <h3>FreeRTOS</h3>
+          <p>FreeRTOS + lwIP integration with Linux POSIX layer for testing.</p>
+        </div>
+        <div class="os-platform">
+          <h3>Eclipse ThreadX</h3>
+          <p>ThreadX + lwIP integration with Linux port for CI.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="os-stats">
+    <div class="os-stats__inner">
+      <div class="os-stat">
+        <div class="os-stat__number">169+</div>
+        <div class="os-stat__label">C++ Unit Tests</div>
+      </div>
+      <div class="os-stat">
+        <div class="os-stat__number">80+</div>
+        <div class="os-stat__label">Python Tests</div>
+      </div>
+      <div class="os-stat">
+        <div class="os-stat__number">585</div>
+        <div class="os-stat__label">Requirements Traced</div>
+      </div>
+      <div class="os-stat">
+        <div class="os-stat__number">5</div>
+        <div class="os-stat__label">Platform Targets</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="os-cta">
+    <div class="os-cta__inner">
+      <h2>Ready to build automotive middleware?</h2>
+      <p>OpenSOME/IP is Apache 2.0 licensed. Use it freely in commercial and personal projects.</p>
+      <div class="os-cta__actions">
+        <a href="getting-started/" class="md-button md-button--primary">Get Started</a>
+        <a href="https://github.com/vtz/opensomeip" class="md-button">View on GitHub</a>
+      </div>
+    </div>
+  </section>
+
+{% endblock %}
+
+{% block content %}{% endblock %}
