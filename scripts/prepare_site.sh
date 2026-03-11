@@ -9,8 +9,15 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 DOCS="$PROJECT_ROOT/docs"
 
 strip_copyright() {
-  # Remove the leading HTML copyright comment block if present
-  sed '/^<!--$/,/^-->$/d' "$1"
+  # Remove only the leading HTML copyright comment block (<!-- … -->).
+  # Later HTML comments in the file are preserved.
+  awk '
+    BEGIN { in_header = 0; done = 0 }
+    !done && NR == 1 && /^<!--$/ { in_header = 1; next }
+    in_header && /^-->$/ { in_header = 0; done = 1; next }
+    in_header { next }
+    { print }
+  ' "$1"
 }
 
 mkdir -p "$DOCS/api" "$DOCS/examples"
@@ -20,11 +27,24 @@ strip_copyright "$PROJECT_ROOT/CONTRIBUTING.md" > "$DOCS/contributing.md"
 strip_copyright "$PROJECT_ROOT/CHANGELOG.md"    > "$DOCS/changelog.md"
 
 # ── API module docs (from include/ READMEs) ───────────────────────
-strip_copyright "$PROJECT_ROOT/include/sd/README.md"     > "$DOCS/api/sd.md"
-strip_copyright "$PROJECT_ROOT/include/rpc/README.md"    > "$DOCS/api/rpc.md"
-strip_copyright "$PROJECT_ROOT/include/tp/README.md"     > "$DOCS/api/tp.md"
-strip_copyright "$PROJECT_ROOT/include/events/README.md" > "$DOCS/api/events.md"
-strip_copyright "$PROJECT_ROOT/include/e2e/README.md"    > "$DOCS/api/e2e.md"
+for pair in \
+  "sd/README.md:api/sd.md" \
+  "rpc/README.md:api/rpc.md" \
+  "tp/README.md:api/tp.md" \
+  "events/README.md:api/events.md" \
+  "e2e/README.md:api/e2e.md"; do
+  src="$PROJECT_ROOT/include/${pair%%:*}"
+  dst="$DOCS/${pair##*:}"
+  if [ -f "$src" ]; then
+    strip_copyright "$src" > "$dst"
+    # Rewrite repo-relative links to MkDocs-relative links
+    if [ -f "$dst" ]; then
+      sed -i.bak 's|(../../docs/architecture/|(../architecture/|g' "$dst" && rm -f "$dst.bak"
+    fi
+  else
+    echo "WARNING: $src not found, skipping" >&2
+  fi
+done
 
 # Serialization may or may not have a README
 if [ -f "$PROJECT_ROOT/include/serialization/README.md" ]; then
@@ -50,48 +70,25 @@ MDEOF
 fi
 
 # ── Examples overview ──────────────────────────────────────────────
-cat > "$DOCS/examples/index.md" << 'MDEOF'
-# Examples
+# Canonical source: docs/examples/index.md (committed to the repo).
+# Not generated here to avoid a dual-source-of-truth problem.
 
-OpenSOME/IP ships with working examples covering basic and advanced usage.
-
-## Basic Examples
-
-| Example | Description |
-|---------|-------------|
-| [Hello World](https://github.com/vtz/opensomeip/tree/main/examples/basic/hello_world) | Minimal client/server demo |
-| [Method Calls](https://github.com/vtz/opensomeip/tree/main/examples/basic/method_calls) | RPC method invocation |
-| [Events](https://github.com/vtz/opensomeip/tree/main/examples/basic/events) | Publish/subscribe event system |
-
-## Advanced Examples
-
-| Example | Description |
-|---------|-------------|
-| [UDP Configuration](https://github.com/vtz/opensomeip/tree/main/examples/advanced/udp_config) | Configuring UDP socket options |
-| [Multi-Service](https://github.com/vtz/opensomeip/tree/main/examples/advanced/multi_service) | Running multiple services |
-| [Large Messages](https://github.com/vtz/opensomeip/tree/main/examples/advanced/large_messages) | Transport Protocol for oversized payloads |
-| [Complex Types](https://github.com/vtz/opensomeip/tree/main/examples/advanced/complex_types) | Serializing structs and arrays |
-
-## Specialized Examples
-
-| Example | Description |
-|---------|-------------|
-| [E2E Protection](https://github.com/vtz/opensomeip/tree/main/examples/e2e_protection) | End-to-End message integrity |
-| [Cross-Platform Demo](https://github.com/vtz/opensomeip/tree/main/examples/cross_platform_demo) | macOS client ↔ Linux Docker server |
-| [Protocol Checker](https://github.com/vtz/opensomeip/tree/main/examples/protocol_checker) | Raw SOME/IP packet inspection (C) |
-| [Infra Test](https://github.com/vtz/opensomeip/tree/main/examples/infra_test) | Multicast listener/sender tools |
-
-## Building Examples
-
-All examples are built as part of the normal CMake build:
-
-```bash
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
-```
-
-Example binaries are placed in `build/bin/`.
-MDEOF
+# ── Traceability reports (CI-generated) ───────────────────────────
+# In CI, the traceability MD reports are copied from build/docs/traceability/
+# into docs/specification/ by the workflow. For local dev, create stubs so
+# MkDocs can build without errors.
+mkdir -p "$DOCS/specification"
+for pair in \
+  "gap-analysis.md:ASPICE Traceability Gap Analysis Report" \
+  "implementation-report.md:OpenSOMEIP Implementation Status Report" \
+  "implementation-verification.md:Implementation Verification Report" \
+  "spec-mapping-report.md:Spec Requirements Mapping Report"; do
+  dst="$DOCS/specification/${pair%%:*}"
+  title="${pair##*:}"
+  if [ ! -f "$dst" ]; then
+    printf '# %s\n\n!!! info "CI-generated"\n\n    This report is generated during CI.\n    Run the traceability pipeline locally or see the deployed site for full content.\n' \
+      "$title" > "$dst"
+  fi
+done
 
 echo "Site preparation complete."

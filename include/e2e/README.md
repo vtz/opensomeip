@@ -51,7 +51,7 @@ Main interface for E2E protection operations.
 - `Result protect(Message& message, const E2EConfig& config)` - Protect a message before sending
 - `Result validate(const Message& message, const E2EConfig& config)` - Validate a received message
 - `std::optional<E2EHeader> extract_header(const Message& message)` - Extract E2E header from message
-- `bool has_e2e_protection(const Message& message)` - Check if message has E2E protection
+- `bool has_e2e_protection(const Message& message) const` - Check if message has E2E protection
 
 ### E2EConfig
 
@@ -108,7 +108,7 @@ External E2E profiles (e.g., AUTOSAR profiles) can be integrated by:
 2. Registering the profile via `E2EProfileRegistry::register_profile()`
 3. Using the profile via `E2EConfig::profile_id` or `profile_name`
 
-See `examples/e2e_protection/plugin_integration.cpp` for an example.
+See the E2E protection examples under `examples/e2e_protection/` for a working integration.
 
 ## Error Handling
 
@@ -121,5 +121,5 @@ E2E protection returns `Result` codes:
 
 ## See Also
 
-- `docs/architecture/e2e_protection.md` - Architecture documentation
-- `examples/e2e_protection/` - Example programs
+- [E2E Protection Architecture](../../docs/architecture/e2e_protection.md) -- Design and data flow
+- [E2E Protection Examples](https://github.com/vtz/opensomeip/tree/main/examples/e2e_protection) -- Working code samples

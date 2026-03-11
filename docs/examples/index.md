@@ -35,7 +35,7 @@ All examples are built as part of the normal CMake build:
 ```bash
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
+cmake --build . --parallel
 ```
 
 Example binaries are placed in `build/bin/`.

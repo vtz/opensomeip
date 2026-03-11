@@ -123,7 +123,7 @@ A clean PAL enables porting to new platforms:
 
 ## Project Structure
 
-```
+```text
 opensomeip/
 ├── include/           # Public headers (the API surface)
 │   ├── someip/        # Core protocol types
@@ -151,5 +151,5 @@ Protocol coverage is tracked against the [Open SOME/IP Specification](https://gi
 - Traceability maintained via Sphinx-Needs annotations in code
 - Coverage reports generated on every CI run
 
-See the [Requirements Documentation](https://vtz.github.io/opensomeip/requirements/) and
-[Traceability Matrix](https://vtz.github.io/opensomeip/traceability/matrix.html) for details.
+See the [Requirements Documentation](../requirements/) and
+[Traceability Matrix](../traceability/matrix.html) for details.

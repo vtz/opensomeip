@@ -185,7 +185,7 @@ config.ttl = std::chrono::milliseconds(3600000); // 1 hour
 
 ### Timing Behavior
 
-1. **Initial Offer**: Sent immediately when service is offered
+1. **Initial Offer**: Sent after the configured `initial_delay` (default 100 ms); set to zero for immediate sending
 2. **Repetition Phase**: Offers sent with exponential backoff
 3. **Cyclic Phase**: Regular offers sent every 30 seconds
 4. **TTL Expiration**: Services expire after TTL seconds

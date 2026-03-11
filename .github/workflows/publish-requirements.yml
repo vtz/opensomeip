@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install \
-            mkdocs-material \
+            mkdocs-material>=9.5,<10 \
             sphinx>=7.0 sphinx-needs>=5.0.0 sphinxcontrib-plantuml
           pip install -r open-someip-spec/requirements.txt
 
@@ -71,6 +71,16 @@ jobs:
       - name: Prepare site sources
         run: |
           ./scripts/prepare_site.sh
+
+          # Copy traceability MD reports so MkDocs can render them natively
+          mkdir -p docs/specification
+          for f in gap_analysis.md implementation_report.md \
+                   implementation_verification.md spec_mapping_report.md; do
+            src="build/docs/traceability/$f"
+            if [ -f "$src" ]; then
+              cp "$src" "docs/specification/$(echo "$f" | sed 's/_/-/g')"
+            fi
+          done
 
       - name: Build project site (MkDocs)
         run: |

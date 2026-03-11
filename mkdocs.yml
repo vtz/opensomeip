@@ -115,8 +115,13 @@ nav:
     - How to Contribute: contributing.md
     - Changelog: changelog.md
   - Specification:
-    - Requirements: https://vtz.github.io/opensomeip/requirements/
-    - Traceability Matrix: https://vtz.github.io/opensomeip/traceability/matrix.html
+    - Overview: specification/index.md
+    - Gap Analysis: specification/gap-analysis.md
+    - Implementation Status: specification/implementation-report.md
+    - Implementation Verification: specification/implementation-verification.md
+    - Spec Mapping: specification/spec-mapping-report.md
+    - Requirements: specification/requirements.md
+    - Traceability Matrix: specification/traceability-matrix.md
 
 extra:
   social:
