@@ -1,7 +1,7 @@
 # Specification & Traceability
 
 OpenSOME/IP tracks protocol coverage against the
-[Open SOME/IP Specification](https://github.com/COVESA/open-someip-spec)
+[Open SOME/IP Specification](https://github.com/some-ip-com/open-someip-spec)
 using Sphinx-Needs annotations embedded directly in the source code.
 
 ## At a Glance

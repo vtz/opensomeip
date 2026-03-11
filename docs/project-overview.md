@@ -145,7 +145,7 @@ opensomeip/
 
 ## Standards Compliance
 
-Protocol coverage is tracked against the [Open SOME/IP Specification](https://github.com/COVESA/open-someip-spec):
+Protocol coverage is tracked against the [Open SOME/IP Specification](https://github.com/some-ip-com/open-someip-spec):
 
 - **585 / 649** specification requirements traced
 - Traceability maintained via Sphinx-Needs annotations in code
