@@ -36,7 +36,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install \
-            mkdocs-material>=9.5,<10 \
+            "mkdocs-material>=9.5,<10" \
             sphinx>=7.0 sphinx-needs>=5.0.0 sphinxcontrib-plantuml
           pip install -r open-someip-spec/requirements.txt
 
