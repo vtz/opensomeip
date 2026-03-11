@@ -78,7 +78,10 @@ jobs:
                    implementation_verification.md spec_mapping_report.md; do
             src="build/docs/traceability/$f"
             if [ -f "$src" ]; then
-              cp "$src" "docs/specification/$(echo "$f" | sed 's/_/-/g')"
+              dst="docs/specification/$(echo "$f" | sed 's/_/-/g')"
+              cp "$src" "$dst"
+              # Ensure trailing newline so pre-commit end-of-file-fixer passes
+              sed -i -e '$a\' "$dst"
             fi
           done
 
