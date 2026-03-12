@@ -42,7 +42,9 @@ for pair in \
       sed -i.bak 's|(../../docs/architecture/|(../architecture/|g' "$dst" && rm -f "$dst.bak"
     fi
   else
-    echo "WARNING: $src not found, skipping" >&2
+    echo "ERROR: $src not found (required source for $dst)" >&2
+    rm -f "$dst"
+    exit 1
   fi
 done
 

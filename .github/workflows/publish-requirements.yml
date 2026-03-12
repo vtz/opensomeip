@@ -68,21 +68,28 @@ jobs:
             --code-refs build/code_references.json \
             --output-dir build/docs/traceability
 
+      - name: Generate implementation report
+        run: |
+          python scripts/generate_implementation_report.py \
+            --project-root . \
+            --output build/docs/traceability/implementation_report.md
+
       - name: Prepare site sources
         run: |
           ./scripts/prepare_site.sh
 
-          # Copy traceability MD reports so MkDocs can render them natively
+          # Copy CI-generated traceability MD reports so MkDocs renders them
+          # natively.  Only gap_analysis.md and implementation_report.md have
+          # generators today; implementation_verification.md and
+          # spec_mapping_report.md are served as stubs from prepare_site.sh
+          # until their generators are added.
           mkdir -p docs/specification
-          for f in gap_analysis.md implementation_report.md \
-                   implementation_verification.md spec_mapping_report.md; do
+          for f in gap_analysis.md implementation_report.md; do
             src="build/docs/traceability/$f"
-            if [ -f "$src" ]; then
-              dst="docs/specification/$(echo "$f" | sed 's/_/-/g')"
-              cp "$src" "$dst"
-              # Ensure trailing newline so pre-commit end-of-file-fixer passes
-              sed -i -e '$a\' "$dst"
-            fi
+            dst="docs/specification/${f//_/-}"
+            cp "$src" "$dst"
+            # Ensure trailing newline so pre-commit end-of-file-fixer passes
+            sed -i -e '$a\' "$dst"
           done
 
       - name: Build project site (MkDocs)

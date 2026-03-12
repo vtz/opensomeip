@@ -44,8 +44,8 @@ Generated: 2026-03-07 09:04:56
 
 ### Immediate Actions (P0)
 
-2. **Add Spec Links**: Add `:satisfies:` links to requirements missing spec references
-3. **Add Integration Tests**: Increase integration test coverage
+1. **Add Spec Links**: Add `:satisfies:` links to requirements missing spec references
+2. **Add Integration Tests**: Increase integration test coverage
 
 ### Short-term Actions (P1)
 

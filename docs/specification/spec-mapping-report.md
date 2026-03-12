@@ -17,18 +17,23 @@
 ## Spec Requirements Coverage by Category
 
 ### someip-compat.rst
+
 - Total: 18, Mapped: 18, Coverage: 100%
 
 ### someip-ids.rst
+
 - Total: 9, Mapped: 9, Coverage: 100%
 
 ### someip-rpc.rst
+
 - Total: 304, Mapped: 304, Coverage: 100%
 
 ### someip-sd.rst
+
 - Total: 374, Mapped: 374, Coverage: 100%
 
 ### someip-tp.rst
+
 - Total: 43, Mapped: 43, Coverage: 100%
 
 ## Detailed Mapping
