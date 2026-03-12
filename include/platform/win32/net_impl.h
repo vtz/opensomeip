@@ -13,6 +13,7 @@
 #pragma comment(lib, "ws2_32.lib")
 
 using ssize_t = SSIZE_T;
+using in_addr_t = u_long;
 
 #define someip_close_socket(fd) closesocket(fd)
 #define someip_shutdown_socket(fd) shutdown(fd, SD_BOTH)
