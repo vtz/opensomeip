@@ -70,7 +70,7 @@ int main() {
     std::vector<uint8_t> serialized = safety_msg.serialize();
 
     Message received_msg;
-    if (!received_msg.deserialize(serialized)) {
+    if (!received_msg.deserialize(serialized, /*expect_e2e=*/true)) {
         std::cerr << "CRITICAL: Failed to deserialize safety-critical message!" << std::endl;
         return 1;
     }

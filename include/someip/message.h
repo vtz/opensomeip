@@ -110,7 +110,7 @@ public:
 
     // Serialization methods
     std::vector<uint8_t> serialize() const;
-    bool deserialize(const std::vector<uint8_t>& data);
+    bool deserialize(const std::vector<uint8_t>& data, bool expect_e2e = false);
 
     // Validation methods
     bool is_valid() const;

@@ -63,9 +63,9 @@ int main() {
     std::vector<uint8_t> serialized = msg.serialize();
     std::cout << "Serialized message size: " << serialized.size() << " bytes" << std::endl;
 
-    // Deserialize message
+    // Deserialize message — receiver knows this message carries E2E protection
     Message received_msg;
-    if (!received_msg.deserialize(serialized)) {
+    if (!received_msg.deserialize(serialized, /*expect_e2e=*/true)) {
         std::cerr << "Failed to deserialize message" << std::endl;
         return 1;
     }

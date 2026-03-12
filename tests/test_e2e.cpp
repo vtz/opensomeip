@@ -219,9 +219,9 @@ TEST_F(E2ETest, MessageSerializationWithE2E) {
     // Serialize
     std::vector<uint8_t> serialized = msg.serialize();
 
-    // Deserialize
+    // Deserialize — receiver knows this message carries E2E protection
     Message deserialized;
-    EXPECT_TRUE(deserialized.deserialize(serialized));
+    EXPECT_TRUE(deserialized.deserialize(serialized, /*expect_e2e=*/true));
 
     // Check E2E header
     EXPECT_TRUE(deserialized.has_e2e_header());

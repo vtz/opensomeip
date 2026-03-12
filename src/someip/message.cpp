@@ -190,7 +190,7 @@ std::vector<uint8_t> Message::serialize() const {
  * @implements REQ_MSG_012_E01, REQ_MSG_014_E01, REQ_MSG_014_E02
  * @satisfies feat_req_someip_45, feat_req_someip_60, feat_req_someip_67
  */
-bool Message::deserialize(const std::vector<uint8_t>& data) {
+bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
     if (data.size() < MIN_MESSAGE_SIZE) {
         return false;
     }
@@ -241,12 +241,26 @@ bool Message::deserialize(const std::vector<uint8_t>& data) {
     }
     return_code_ = static_cast<ReturnCode>(data[offset++]);
 
-    // E2E headers are NOT auto-detected during deserialization.
-    // Heuristic detection of E2E headers from raw payload bytes is unreliable
-    // and causes false positives (arbitrary payload data matching the E2E header
-    // structure). E2E protection must be applied explicitly at a higher layer
-    // using set_e2e_header() / get_e2e_header().
+    // E2E headers are NOT auto-detected from wire bytes — heuristic detection
+    // is unreliable and produces platform-dependent results.  Per AUTOSAR
+    // SOME/IP, E2E protection is configuration-driven: the caller passes
+    // expect_e2e = true when the message is known to carry an E2E header.
     e2e_header_.reset();
+    if (expect_e2e) {
+        constexpr size_t e2e_header_size = e2e::E2EHeader::get_header_size();
+        size_t remaining = data.size() - offset;
+        if (remaining >= e2e_header_size && length_ >= 8 + e2e_header_size) {
+            e2e::E2EHeader header;
+            if (header.deserialize(data, offset)) {
+                e2e_header_ = header;
+                offset += e2e_header_size;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
 
     // Calculate expected payload size based on whether we found an E2E header
     if (length_ < 8) {
