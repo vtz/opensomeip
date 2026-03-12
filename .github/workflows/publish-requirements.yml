@@ -37,7 +37,7 @@ jobs:
         run: |
           pip install \
             "mkdocs-material>=9.5,<10" \
-            sphinx>=7.0 sphinx-needs>=5.0.0 sphinxcontrib-plantuml
+            "sphinx>=7.0" "sphinx-needs>=5.0.0" sphinxcontrib-plantuml
           pip install -r open-someip-spec/requirements.txt
 
       - name: Build open-someip-spec
@@ -116,6 +116,7 @@ jobs:
           path: build/site
 
   deploy:
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
