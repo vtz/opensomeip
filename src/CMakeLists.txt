@@ -166,6 +166,16 @@ target_link_libraries(someip-tp PRIVATE someip-core PRIVATE someip-transport)
 # Create convenience aliases for backward compatibility
 add_library(someip-common ALIAS someip-core)
 
+# On Windows, <windows.h> pulls in <wingdi.h> which defines ERROR as a macro.
+# This collides with MessageType::ERROR.  NOGDI suppresses that header entirely;
+# WIN32_LEAN_AND_MEAN trims other unused Win32 sub-headers.
+if(WIN32)
+    foreach(_tgt someip-core-obj someip-e2e-obj someip-serialization
+                 someip-transport someip-rpc someip-sd someip-events someip-tp)
+        target_compile_definitions(${_tgt} PRIVATE NOGDI WIN32_LEAN_AND_MEAN)
+    endforeach()
+endif()
+
 # Set library properties (only on real targets, not aliases)
 set_target_properties(someip-core someip-serialization someip-transport PROPERTIES
     VERSION ${PROJECT_VERSION}
