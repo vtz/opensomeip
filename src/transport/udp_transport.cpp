@@ -12,6 +12,7 @@
  ********************************************************************************/
 
 #include "transport/udp_transport.h"
+#include "platform/net.h"
 #include "platform/memory.h"
 #include "common/result.h"
 #include <cstring>
@@ -186,7 +187,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
     mreq.imr_multiaddr.s_addr = inet_addr(multicast_address.c_str());
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 
-    if (setsockopt(socket_fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+    if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
         // In containerized/CI environments, multicast may not be available
         // Continue without multicast support rather than failing
         // This allows SOME/IP to work with unicast-only networking
@@ -194,13 +195,13 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
 
     // Enable multicast loopback for local testing
     int loop = 1;
-    if (setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop)) < 0) {
+    if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_LOOP, &loop, sizeof(loop)) < 0) {
         // Not critical, continue
     }
 
     // Set multicast TTL from config (per SOME/IP spec, default 1 = local network only)
     int ttl = config_.multicast_ttl;
-    if (setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0) {
+    if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0) {
         // Not critical, continue
     }
 
@@ -208,7 +209,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
     if (!config_.multicast_interface.empty()) {
         struct in_addr interface_addr;
         interface_addr.s_addr = inet_addr(config_.multicast_interface.c_str());
-        if (setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_IF, &interface_addr, sizeof(interface_addr)) < 0) {
+        if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_IF, &interface_addr, sizeof(interface_addr)) < 0) {
             // Not critical, continue
         }
     }
@@ -232,7 +233,7 @@ Result UdpTransport::leave_multicast_group(const std::string& multicast_address)
     mreq.imr_multiaddr.s_addr = inet_addr(multicast_address.c_str());
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 
-    if (setsockopt(socket_fd_, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+    if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
         return Result::NETWORK_ERROR;
     }
 
@@ -250,7 +251,7 @@ Result UdpTransport::create_socket() {
     // Set socket options
     if (config_.reuse_address) {
         int reuse = 1;
-        if (setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+        if (someip_setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
             someip_close_socket(socket_fd_);
             socket_fd_ = -1;
             return Result::NETWORK_ERROR;
@@ -262,7 +263,7 @@ Result UdpTransport::create_socket() {
 #ifdef SO_REUSEPORT
     if (config_.reuse_port) {
         int reuse = 1;
-        if (setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) < 0) {
+        if (someip_setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) < 0) {
             // Not critical - some systems don't support SO_REUSEPORT
         }
     }
@@ -270,7 +271,7 @@ Result UdpTransport::create_socket() {
 
     if (config_.enable_broadcast) {
         int broadcast = 1;
-        if (setsockopt(socket_fd_, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0) {
+        if (someip_setsockopt(socket_fd_, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0) {
             someip_close_socket(socket_fd_);
             socket_fd_ = -1;
             return Result::NETWORK_ERROR;
@@ -278,11 +279,13 @@ Result UdpTransport::create_socket() {
     }
 
     // Set buffer sizes (non-critical - may fail in restricted environments like CI/containers)
-    if (setsockopt(socket_fd_, SOL_SOCKET, SO_RCVBUF, &config_.receive_buffer_size, sizeof(config_.receive_buffer_size)) < 0) {
+    int rcvbuf = static_cast<int>(config_.receive_buffer_size);
+    if (someip_setsockopt(socket_fd_, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf)) < 0) {
         // Not critical - continue with default buffer size
     }
 
-    if (setsockopt(socket_fd_, SOL_SOCKET, SO_SNDBUF, &config_.send_buffer_size, sizeof(config_.send_buffer_size)) < 0) {
+    int sndbuf = static_cast<int>(config_.send_buffer_size);
+    if (someip_setsockopt(socket_fd_, SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)) < 0) {
         // Not critical - continue with default buffer size
     }
 
@@ -332,7 +335,7 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
         mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     }
 
-    if (setsockopt(socket_fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+    if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
         return Result::NETWORK_ERROR;
     }
 
@@ -393,8 +396,9 @@ Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint&
     }
 
     sockaddr_in dest_addr = create_sockaddr(endpoint);
-    ssize_t sent = sendto(socket_fd_, data.data(), data.size(), 0,
-                         reinterpret_cast<sockaddr*>(&dest_addr), sizeof(dest_addr));
+    ssize_t sent = someip_sendto(socket_fd_, data.data(), data.size(), 0,
+                                reinterpret_cast<sockaddr*>(&dest_addr),
+                                sizeof(dest_addr));
 
     if (sent < 0) {
         return Result::NETWORK_ERROR;
@@ -412,17 +416,18 @@ Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender) 
     sockaddr_in src_addr;
     socklen_t addr_len = sizeof(src_addr);
 
-    ssize_t received = recvfrom(socket_fd_, data.data(), data.size(), 0,
-                               reinterpret_cast<sockaddr*>(&src_addr), &addr_len);
+    ssize_t received = someip_recvfrom(socket_fd_, data.data(), data.size(), 0,
+                                       reinterpret_cast<sockaddr*>(&src_addr),
+                                       &addr_len);
 
     if (received < 0) {
-        // Socket was closed during shutdown
-        if (errno == EBADF || errno == EINTR) {
+        int err = someip_socket_errno();
+
+        if (err == SOMEIP_EBADF || err == SOMEIP_EINTR) {
             return Result::NOT_CONNECTED;
         }
 
-        // In non-blocking mode, EAGAIN/EWOULDBLOCK means no data available
-        if (!config_.blocking && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        if (!config_.blocking && (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK)) {
             return Result::TIMEOUT;
         }
 

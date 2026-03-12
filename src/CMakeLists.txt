@@ -166,13 +166,14 @@ target_link_libraries(someip-tp PRIVATE someip-core PRIVATE someip-transport)
 # Create convenience aliases for backward compatibility
 add_library(someip-common ALIAS someip-core)
 
-# On Windows, <windows.h> pulls in <wingdi.h> which defines ERROR as a macro.
-# This collides with MessageType::ERROR.  NOGDI suppresses that header entirely;
-# WIN32_LEAN_AND_MEAN trims other unused Win32 sub-headers.
+# Windows portability: suppress problematic macros from <windows.h>.
+#   NOGDI            – prevents <wingdi.h> (defines ERROR as 0)
+#   WIN32_LEAN_AND_MEAN – trims unused Win32 sub-headers
+#   NOMINMAX         – prevents min/max macros that break std::min/std::max
 if(WIN32)
     foreach(_tgt someip-core-obj someip-e2e-obj someip-serialization
                  someip-transport someip-rpc someip-sd someip-events someip-tp)
-        target_compile_definitions(${_tgt} PRIVATE NOGDI WIN32_LEAN_AND_MEAN)
+        target_compile_definitions(${_tgt} PRIVATE NOGDI WIN32_LEAN_AND_MEAN NOMINMAX)
     endforeach()
 endif()
 

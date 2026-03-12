@@ -66,4 +66,31 @@ static inline int someip_set_blocking(int fd) {
     return lwip_fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
 }
 
+/* ---------- Portable socket-call wrappers (pass-through on lwIP) ----------- */
+
+#define someip_setsockopt  setsockopt
+#define someip_getsockopt  getsockopt
+#define someip_sendto      sendto
+#define someip_recvfrom    recvfrom
+#define someip_send        send
+#define someip_recv        recv
+
+static inline int someip_set_socket_timeout(int fd, int optname,
+                                            int timeout_ms) {
+    struct timeval tv;
+    tv.tv_sec  = timeout_ms / 1000;
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    return setsockopt(fd, SOL_SOCKET, optname, &tv, sizeof(tv));
+}
+
+/* ---------- Error reporting (pass-through on lwIP) ------------------------- */
+
+static inline int someip_socket_errno() { return errno; }
+
+#define SOMEIP_EAGAIN      EAGAIN
+#define SOMEIP_EWOULDBLOCK EWOULDBLOCK
+#define SOMEIP_EINPROGRESS EINPROGRESS
+#define SOMEIP_EBADF       EBADF
+#define SOMEIP_EINTR       EINTR
+
 #endif // SOMEIP_PLATFORM_LWIP_NET_IMPL_H

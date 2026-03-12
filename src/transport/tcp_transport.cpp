@@ -18,7 +18,6 @@
 #include <cstring>
 #include <iostream>
 #include <algorithm>
-#include <cerrno>
 #include <cstdio>
 
 namespace someip {
@@ -270,32 +269,26 @@ Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
 #if (!defined(__ZEPHYR__) || defined(CONFIG_ARCH_POSIX)) && !defined(SOMEIP_NET_LWIP)
     if (config_.keep_alive) {
         int keep_alive = 1;
-#ifdef __APPLE__
-        setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPALIVE, &keep_alive, sizeof(keep_alive));
         int keep_alive_interval = static_cast<int>(config_.keep_alive_interval.count() / 1000);
-        setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPINTVL, &keep_alive_interval, sizeof(keep_alive_interval));
-        setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPCNT, &keep_alive, sizeof(keep_alive));
+#if defined(__APPLE__)
+        someip_setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPALIVE, &keep_alive, sizeof(keep_alive));
+#elif defined(_WIN32)
+        someip_setsockopt(socket_fd, SOL_SOCKET, SO_KEEPALIVE, &keep_alive, sizeof(keep_alive));
 #else
-        setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPIDLE, &keep_alive, sizeof(keep_alive));
-        int keep_alive_interval = static_cast<int>(config_.keep_alive_interval.count() / 1000);
-        setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPINTVL, &keep_alive_interval, sizeof(keep_alive_interval));
-        setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPCNT, &keep_alive, sizeof(keep_alive));
+        someip_setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPIDLE, &keep_alive, sizeof(keep_alive));
+#endif
+#if !defined(_WIN32)
+        someip_setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPINTVL, &keep_alive_interval, sizeof(keep_alive_interval));
+        someip_setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPCNT, &keep_alive, sizeof(keep_alive));
+#else
+        (void)keep_alive_interval;
 #endif
     }
 #endif
 
     // Send/receive timeouts
-    struct timeval send_timeout = {
-        static_cast<time_t>(config_.send_timeout.count() / 1000),
-        static_cast<suseconds_t>((config_.send_timeout.count() % 1000) * 1000)
-    };
-    setsockopt(socket_fd, SOL_SOCKET, SO_SNDTIMEO, &send_timeout, sizeof(send_timeout));
-
-    struct timeval recv_timeout = {
-        static_cast<time_t>(config_.receive_timeout.count() / 1000),
-        static_cast<suseconds_t>((config_.receive_timeout.count() % 1000) * 1000)
-    };
-    setsockopt(socket_fd, SOL_SOCKET, SO_RCVTIMEO, &recv_timeout, sizeof(recv_timeout));
+    someip_set_socket_timeout(socket_fd, SO_SNDTIMEO, static_cast<int>(config_.send_timeout.count()));
+    someip_set_socket_timeout(socket_fd, SO_RCVTIMEO, static_cast<int>(config_.receive_timeout.count()));
 
     return Result::SUCCESS;
 }
@@ -327,16 +320,15 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         }
 
         return Result::SUCCESS;
-    } else if (errno == EINPROGRESS) {
+    } else if (someip_socket_errno() == SOMEIP_EINPROGRESS) {
         // Connection in progress - wait for completion
         fd_set write_fds;
         FD_ZERO(&write_fds);
         FD_SET(connection_.socket_fd, &write_fds);
 
-        struct timeval timeout = {
-            static_cast<time_t>(config_.connection_timeout.count() / 1000),
-            static_cast<suseconds_t>((config_.connection_timeout.count() % 1000) * 1000)
-        };
+        struct timeval timeout;
+        timeout.tv_sec  = static_cast<decltype(timeout.tv_sec)>(config_.connection_timeout.count() / 1000);
+        timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>((config_.connection_timeout.count() % 1000) * 1000);
 
         connect_result = select(connection_.socket_fd + 1, nullptr, &write_fds, nullptr, &timeout);
 
@@ -344,7 +336,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
             // Check if connection was successful
             int error = 0;
             socklen_t len = sizeof(error);
-            getsockopt(connection_.socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
+            someip_getsockopt(connection_.socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
 
             if (error == 0) {
                 connection_.state = TcpConnectionState::CONNECTED;
@@ -485,10 +477,12 @@ Result TcpTransport::send_data(int socket_fd, const std::vector<uint8_t>& data) 
     const uint8_t* buffer = data.data();
 
     while (total_sent < data.size()) {
-        ssize_t sent = send(socket_fd, buffer + total_sent, data.size() - total_sent, 0);
+        ssize_t sent = someip_send(socket_fd, buffer + total_sent,
+                                   data.size() - total_sent, 0);
 
         if (sent < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+            int err = someip_socket_errno();
+            if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK) {
                 continue;  // Retry
             }
             return Result::NETWORK_ERROR;
@@ -511,10 +505,11 @@ Result TcpTransport::receive_data(int socket_fd, std::vector<uint8_t>& data) {
     }
 
     uint8_t buffer[4096];
-    ssize_t received = recv(socket_fd, buffer, max_chunk_size, 0);
+    ssize_t received = someip_recv(socket_fd, buffer, max_chunk_size, 0);
 
     if (received < 0) {
-        if (errno == EAGAIN || errno == EWOULDBLOCK) {
+        int err = someip_socket_errno();
+        if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK) {
             return Result::SUCCESS;  // No data available
         }
         return Result::NETWORK_ERROR;
