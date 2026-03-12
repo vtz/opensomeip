@@ -37,6 +37,29 @@ jobs:
             -S ${{ github.workspace }}
           cmake --build build_freertos
 
+  stub-compile-check-fedora:
+    name: FreeRTOS+lwIP stub compile check (Fedora 42)
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:42
+    steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            gcc gcc-c++ cmake ninja-build git
+
+      - uses: actions/checkout@v4
+
+      - name: Build with FreeRTOS+lwIP stubs
+        run: |
+          cmake -G Ninja -B build_freertos \
+            -DSOMEIP_USE_FREERTOS=ON \
+            -DSOMEIP_USE_LWIP=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_CXX_FLAGS="-I$(pwd)/tests/stubs/freertos -I$(pwd)/tests/stubs/lwip"
+          cmake --build build_freertos
+
   runtime-tests:
     name: FreeRTOS POSIX port runtime tests
     runs-on: ubuntu-latest
@@ -59,6 +82,37 @@ jobs:
         if: always()
         with:
           name: test-results-freertos
+          path: build_freertos_rt/junit_results.xml
+          retention-days: 14
+
+  runtime-tests-fedora:
+    name: FreeRTOS POSIX port runtime tests (Fedora 42)
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:42
+    steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            gcc gcc-c++ cmake ninja-build git
+
+      - uses: actions/checkout@v4
+
+      - name: Build & run FreeRTOS POSIX port tests
+        run: |
+          cmake -G Ninja -B build_freertos_rt \
+            -DSOMEIP_FREERTOS_LINUX_TESTS=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build build_freertos_rt --config Release
+          cd build_freertos_rt && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-freertos-fedora42
           path: build_freertos_rt/junit_results.xml
           retention-days: 14
 
@@ -111,7 +165,7 @@ jobs:
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [runtime-tests]
+    needs: [runtime-tests, runtime-tests-fedora]
     if: always()
     permissions:
       checks: write

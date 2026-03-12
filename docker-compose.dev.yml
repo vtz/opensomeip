@@ -14,3 +14,13 @@ services:
     working_dir: /workspace/someip
     stdin_open: true
     tty: true
+
+  fedora-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.fedora42
+    volumes:
+      - .:/workspace/someip
+    working_dir: /workspace/someip
+    stdin_open: true
+    tty: true
