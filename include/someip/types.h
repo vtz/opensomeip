@@ -122,6 +122,9 @@ struct RequestId {
 /**
  * @brief SOME/IP message types
  */
+#ifdef ERROR
+#undef ERROR
+#endif
 enum class MessageType : uint8_t {
     REQUEST = 0x00,
     REQUEST_NO_RETURN = 0x01,
