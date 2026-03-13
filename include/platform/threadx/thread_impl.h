@@ -32,7 +32,6 @@
 #include <tx_api.h>
 
 #include <atomic>
-#include <cstdlib>
 #include <functional>
 #include <chrono>
 #include <cstdint>
