@@ -270,12 +270,11 @@ Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
     if (config_.keep_alive) {
         int keep_alive = 1;
         int keep_alive_interval = static_cast<int>(config_.keep_alive_interval.count() / 1000);
-#if defined(__APPLE__)
-        someip_setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPALIVE, &keep_alive, sizeof(keep_alive));
-#elif defined(_WIN32)
         someip_setsockopt(socket_fd, SOL_SOCKET, SO_KEEPALIVE, &keep_alive, sizeof(keep_alive));
-#else
-        someip_setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPIDLE, &keep_alive, sizeof(keep_alive));
+#if defined(__APPLE__)
+        someip_setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPALIVE, &keep_alive_interval, sizeof(keep_alive_interval));
+#elif !defined(_WIN32)
+        someip_setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPIDLE, &keep_alive_interval, sizeof(keep_alive_interval));
 #endif
 #if !defined(_WIN32)
         someip_setsockopt(socket_fd, IPPROTO_TCP, TCP_KEEPINTVL, &keep_alive_interval, sizeof(keep_alive_interval));
