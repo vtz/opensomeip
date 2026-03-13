@@ -197,31 +197,35 @@ TEST(ConditionVariableTest, NotifyOneWakesExactlyOneWaiter) {
     Mutex m;
     ConditionVariable cv;
     std::atomic<int> woken{0};
-    int wake_permits = 0; // guarded by m; each waiter consumes one permit on exit
+    std::atomic<int> ready_count{0};
+    int wake_permits = 0;
     const int kWaiters = 4;
 
     std::vector<std::thread> waiters;
     for (int i = 0; i < kWaiters; ++i) {
         waiters.emplace_back([&]() {
             m.lock();
+            ready_count.fetch_add(1, std::memory_order_release);
             cv.wait(m, [&]{ return wake_permits > 0; });
-            --wake_permits; // consume permit before releasing the mutex
+            --wake_permits;
             ++woken;
             m.unlock();
         });
     }
 
-    // Let all waiters settle into the predicate-wait state.
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
-
-    // Grant exactly one permit and wake one waiter.
-    { m.lock(); wake_permits = 1; m.unlock(); }
+    while (ready_count.load(std::memory_order_acquire) < kWaiters) {
+        std::this_thread::yield();
+    }
+    // Acquiring the mutex guarantees the last waiter has entered cv.wait()
+    m.lock(); wake_permits = 1; m.unlock();
     cv.notify_one();
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
 
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+    while (woken.load() < 1 && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::yield();
+    }
     EXPECT_EQ(woken.load(), 1) << "notify_one must wake exactly one waiter";
 
-    // Grant enough permits for all remaining waiters and unblock them.
     { m.lock(); wake_permits = kWaiters; m.unlock(); }
     cv.notify_all();
     for (auto& t : waiters) t.join();
@@ -235,19 +239,25 @@ TEST(ConditionVariableTest, NotifyAllWakesAllWaiters) {
     Mutex m;
     ConditionVariable cv;
     std::atomic<int> woken{0};
+    std::atomic<int> ready_count{0};
+    bool go = false;
     const int kWaiters = 4;
 
     std::vector<std::thread> waiters;
     for (int i = 0; i < kWaiters; ++i) {
         waiters.emplace_back([&]() {
             m.lock();
-            cv.wait(m);
+            ready_count.fetch_add(1, std::memory_order_release);
+            cv.wait(m, [&]{ return go; });
             ++woken;
             m.unlock();
         });
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    while (ready_count.load(std::memory_order_acquire) < kWaiters) {
+        std::this_thread::yield();
+    }
+    { m.lock(); go = true; m.unlock(); }
     cv.notify_all();
     for (auto& t : waiters) t.join();
 
