@@ -333,12 +333,11 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         connect_result = select(connection_.socket_fd + 1, nullptr, &write_fds, nullptr, &timeout);
 
         if (connect_result > 0) {
-            // Check if connection was successful
             int error = 0;
             socklen_t len = sizeof(error);
-            someip_getsockopt(connection_.socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
+            int gso_ret = someip_getsockopt(connection_.socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
 
-            if (error == 0) {
+            if (gso_ret == 0 && error == 0) {
                 connection_.state = TcpConnectionState::CONNECTED;
                 connection_.update_activity();
 
@@ -350,7 +349,6 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
             }
         }
 
-        // Connection failed
         disconnect_internal();
         return Result::NETWORK_ERROR;
     } else {
