@@ -18,6 +18,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 /** @implements REQ_PLATFORM_POSIX_003, REQ_PAL_NET_CLOSE */
 #define someip_close_socket(fd) close(fd)
