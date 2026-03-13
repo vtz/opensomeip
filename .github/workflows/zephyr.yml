@@ -63,8 +63,6 @@ jobs:
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
           west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto
-          # test_core is a real test binary. native_sim may keep running after main()
-          # and hit timeout=124 even when tests already passed, so validate output.
           if timeout 30 build/ns_tc/zephyr/zephyr.exe > /tmp/test_core.log 2>&1; then
             rc=0
           else
@@ -76,11 +74,13 @@ jobs:
           elif [ "$rc" -ne 0 ]; then
             exit "$rc"
           fi
+      - name: Convert test_core results to JUnit XML
+        if: always()
+        run: python3 scripts/zephyr_to_junit.py /tmp/test_core.log test_core /tmp/test_core_junit.xml || true
       - name: Build & run test_transport
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
           west build -b native_sim zephyr/tests/test_transport -d build/ns_tp --pristine auto
-          # test_transport follows the same timeout handling as test_core.
           if timeout 30 build/ns_tp/zephyr/zephyr.exe > /tmp/test_transport.log 2>&1; then
             rc=0
           else
@@ -92,6 +92,16 @@ jobs:
           elif [ "$rc" -ne 0 ]; then
             exit "$rc"
           fi
+      - name: Convert test_transport results to JUnit XML
+        if: always()
+        run: python3 scripts/zephyr_to_junit.py /tmp/test_transport.log test_transport /tmp/test_transport_junit.xml || true
+      - name: Upload Zephyr native_sim test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-zephyr-native-sim
+          path: /tmp/*_junit.xml
+          retention-days: 14
       - name: Build & run someip_echo
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
@@ -148,7 +158,7 @@ jobs:
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [host-build]
+    needs: [host-build, zephyr-native-sim]
     if: always()
     permissions:
       checks: write
