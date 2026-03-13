@@ -108,7 +108,7 @@ Result UdpTransport::disconnect() {
 }
 
 bool UdpTransport::is_connected() const {
-    return is_running() && socket_fd_ >= 0;
+    return is_running() && socket_fd_ != SOMEIP_INVALID_SOCKET;
 }
 
 Endpoint UdpTransport::get_local_endpoint() const {
@@ -133,7 +133,7 @@ Result UdpTransport::start() {
     result = bind_socket();
     if (result != Result::SUCCESS) {
         someip_close_socket(socket_fd_);
-        socket_fd_ = -1;
+        socket_fd_ = SOMEIP_INVALID_SOCKET;
         return result;
     }
 
@@ -153,10 +153,10 @@ Result UdpTransport::stop() {
     running_ = false;
 
     // Close socket to wake up receive thread
-    if (socket_fd_ >= 0) {
+    if (socket_fd_ != SOMEIP_INVALID_SOCKET) {
         someip_shutdown_socket(socket_fd_);
         someip_close_socket(socket_fd_);
-        socket_fd_ = -1;
+        socket_fd_ = SOMEIP_INVALID_SOCKET;
     }
 
     // Wait for receive thread to finish
@@ -175,7 +175,7 @@ bool UdpTransport::is_running() const {
 Result UdpTransport::join_multicast_group(const std::string& multicast_address) {
     platform::ScopedLock lock(socket_mutex_);
 
-    if (socket_fd_ < 0) {
+    if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return Result::NOT_CONNECTED;
     }
 
@@ -221,7 +221,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
 Result UdpTransport::leave_multicast_group(const std::string& multicast_address) {
     platform::ScopedLock lock(socket_mutex_);
 
-    if (socket_fd_ < 0) {
+    if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return Result::NOT_CONNECTED;
     }
 
@@ -244,7 +244,7 @@ Result UdpTransport::create_socket() {
     platform::ScopedLock lock(socket_mutex_);
 
     socket_fd_ = socket(AF_INET, SOCK_DGRAM, 0);
-    if (socket_fd_ < 0) {
+    if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return Result::NETWORK_ERROR;
     }
 
@@ -253,7 +253,7 @@ Result UdpTransport::create_socket() {
         int reuse = 1;
         if (someip_setsockopt(socket_fd_, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
             someip_close_socket(socket_fd_);
-            socket_fd_ = -1;
+            socket_fd_ = SOMEIP_INVALID_SOCKET;
             return Result::NETWORK_ERROR;
         }
     }
@@ -273,7 +273,7 @@ Result UdpTransport::create_socket() {
         int broadcast = 1;
         if (someip_setsockopt(socket_fd_, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)) < 0) {
             someip_close_socket(socket_fd_);
-            socket_fd_ = -1;
+            socket_fd_ = SOMEIP_INVALID_SOCKET;
             return Result::NETWORK_ERROR;
         }
     }
@@ -293,7 +293,7 @@ Result UdpTransport::create_socket() {
     if (!config_.blocking) {
         if (someip_set_nonblocking(socket_fd_) < 0) {
             someip_close_socket(socket_fd_);
-            socket_fd_ = -1;
+            socket_fd_ = SOMEIP_INVALID_SOCKET;
             return Result::NETWORK_ERROR;
         }
     }
@@ -391,7 +391,7 @@ void UdpTransport::receive_loop() {
 Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint& endpoint) {
     platform::ScopedLock lock(socket_mutex_);
 
-    if (socket_fd_ < 0) {
+    if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return Result::NOT_CONNECTED;
     }
 

@@ -6,6 +6,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
+using someip_socket_t = int;
+#define SOMEIP_INVALID_SOCKET (-1)
 inline int someip_close_socket(int fd) { return close(fd); }
 inline void someip_shutdown_socket(int fd) { shutdown(fd, SHUT_RDWR); }
 inline int someip_set_nonblocking(int fd) {

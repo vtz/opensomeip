@@ -87,7 +87,7 @@ public:
 private:
     Endpoint local_endpoint_;
     UdpTransportConfig config_;
-    int socket_fd_{-1};
+    someip_socket_t socket_fd_{SOMEIP_INVALID_SOCKET};
     std::atomic<bool> running_;
     std::unique_ptr<platform::Thread> receive_thread_;
     ITransportListener* listener_{nullptr};

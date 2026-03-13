@@ -62,6 +62,8 @@
 #endif
 
 typedef uint32_t in_addr_t;
+using someip_socket_t = int;
+#define SOMEIP_INVALID_SOCKET (-1)
 
 static inline uint32_t someip_zephyr_inet_addr(const char *cp) {
     struct in_addr addr;

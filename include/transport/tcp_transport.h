@@ -15,6 +15,7 @@
 #define SOMEIP_TRANSPORT_TCP_TRANSPORT_H
 
 #include "transport/transport.h"
+#include "platform/net.h"
 #include "platform/thread.h"
 #include <cstddef>
 #include <atomic>
@@ -37,7 +38,7 @@ enum class TcpConnectionState : uint8_t {
  * @brief TCP Connection Information
  */
 struct TcpConnection {
-    int socket_fd{-1};
+    someip_socket_t socket_fd{SOMEIP_INVALID_SOCKET};
     Endpoint remote_endpoint;
     TcpConnectionState state{TcpConnectionState::DISCONNECTED};
     std::chrono::steady_clock::time_point last_activity{std::chrono::steady_clock::now()};
@@ -179,7 +180,7 @@ public:
      * @brief Accept incoming connection (server mode)
      * @return New connection socket FD or -1 on error
      */
-    int accept_connection();
+    someip_socket_t accept_connection();
 
 private:
     TcpTransportConfig config_;
@@ -199,18 +200,18 @@ private:
 
     platform::Mutex connection_mutex_;
     bool server_mode_{false};
-    int listen_socket_fd_{-1};
+    someip_socket_t listen_socket_fd_{SOMEIP_INVALID_SOCKET};
 
     // Helper methods
     Result create_socket();
     Result bind_socket();
-    Result setup_socket_options(int socket_fd, bool blocking = true);
+    Result setup_socket_options(someip_socket_t socket_fd, bool blocking = true);
     Result connect_internal(const Endpoint& endpoint);
     void disconnect_internal();
     void receive_loop();
     void connection_monitor_loop();
-    Result send_data(int socket_fd, const std::vector<uint8_t>& data);
-    Result receive_data(int socket_fd, std::vector<uint8_t>& data);
+    Result send_data(someip_socket_t socket_fd, const std::vector<uint8_t>& data);
+    Result receive_data(someip_socket_t socket_fd, std::vector<uint8_t>& data);
     bool parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message);
 
     // Message parsing

@@ -153,9 +153,9 @@ Result TcpTransport::stop() {
     disconnect_internal();
 
     // Close listen socket if in server mode
-    if (server_mode_ && listen_socket_fd_ != -1) {
+    if (server_mode_ && listen_socket_fd_ != SOMEIP_INVALID_SOCKET) {
         someip_close_socket(listen_socket_fd_);
-        listen_socket_fd_ = -1;
+        listen_socket_fd_ = SOMEIP_INVALID_SOCKET;
     }
 
     // Wait for threads to finish
@@ -178,7 +178,7 @@ TcpConnectionState TcpTransport::get_connection_state() const {
 }
 
 Result TcpTransport::enable_server_mode(int backlog) {
-    if (connection_.socket_fd == -1) {
+    if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
         return Result::NOT_INITIALIZED;
     }
 
@@ -193,9 +193,9 @@ Result TcpTransport::enable_server_mode(int backlog) {
 }
 
 /** @implements REQ_TRANSPORT_003_E01 */
-int TcpTransport::accept_connection() {
-    if (!server_mode_ || listen_socket_fd_ == -1) {
-        return -1;
+someip_socket_t TcpTransport::accept_connection() {
+    if (!server_mode_ || listen_socket_fd_ == SOMEIP_INVALID_SOCKET) {
+        return SOMEIP_INVALID_SOCKET;
     }
 
     // Use select() with a short timeout so the receive_loop can check running_
@@ -204,18 +204,18 @@ int TcpTransport::accept_connection() {
     FD_SET(listen_socket_fd_, &read_fds);
 
     struct timeval tv = {0, 100000}; // 100ms
-    int sel = select(listen_socket_fd_ + 1, &read_fds, nullptr, nullptr, &tv);
+    int sel = select(static_cast<int>(listen_socket_fd_) + 1, &read_fds, nullptr, nullptr, &tv);
     if (sel <= 0) {
-        return -1;
+        return SOMEIP_INVALID_SOCKET;
     }
 
     sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
 
-    int client_fd = accept(listen_socket_fd_, (sockaddr*)&client_addr, &client_len);
+    someip_socket_t client_fd = accept(listen_socket_fd_, (sockaddr*)&client_addr, &client_len);
 
-    if (client_fd < 0) {
-        return -1;
+    if (client_fd == SOMEIP_INVALID_SOCKET) {
+        return SOMEIP_INVALID_SOCKET;
     }
 
     setup_socket_options(client_fd, true);
@@ -227,7 +227,7 @@ int TcpTransport::accept_connection() {
 
 Result TcpTransport::create_socket() {
     connection_.socket_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (connection_.socket_fd < 0) {
+    if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
         return Result::NETWORK_ERROR;
     }
 
@@ -236,7 +236,7 @@ Result TcpTransport::create_socket() {
 }
 
 Result TcpTransport::bind_socket() {
-    if (connection_.socket_fd == -1) {
+    if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
         return Result::NOT_INITIALIZED;
     }
 
@@ -254,7 +254,7 @@ Result TcpTransport::bind_socket() {
 }
 
 /** @implements REQ_TRANSPORT_017 */
-Result TcpTransport::setup_socket_options(int socket_fd, bool blocking) {
+Result TcpTransport::setup_socket_options(someip_socket_t socket_fd, bool blocking) {
     if (blocking) {
         if (someip_set_blocking(socket_fd) < 0) {
             return Result::NETWORK_ERROR;
@@ -329,7 +329,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         timeout.tv_sec  = static_cast<decltype(timeout.tv_sec)>(config_.connection_timeout.count() / 1000);
         timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>((config_.connection_timeout.count() % 1000) * 1000);
 
-        connect_result = select(connection_.socket_fd + 1, nullptr, &write_fds, nullptr, &timeout);
+        connect_result = select(static_cast<int>(connection_.socket_fd) + 1, nullptr, &write_fds, nullptr, &timeout);
 
         if (connect_result > 0) {
             int error = 0;
@@ -360,12 +360,12 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
 void TcpTransport::disconnect_internal() {
     platform::ScopedLock lock(connection_mutex_);
 
-    if (connection_.socket_fd != -1) {
+    if (connection_.socket_fd != SOMEIP_INVALID_SOCKET) {
         connection_.state = TcpConnectionState::DISCONNECTING;
 
         someip_shutdown_socket(connection_.socket_fd);
         someip_close_socket(connection_.socket_fd);
-        connection_.socket_fd = -1;
+        connection_.socket_fd = SOMEIP_INVALID_SOCKET;
 
         connection_.state = TcpConnectionState::DISCONNECTED;
 
@@ -385,7 +385,7 @@ void TcpTransport::receive_loop() {
     while (running_) {
         if (server_mode_) {
             // In server mode, accept new connections
-            if (listen_socket_fd_ != -1) {
+            if (listen_socket_fd_ != SOMEIP_INVALID_SOCKET) {
                 // Check connection limit before accepting
                 if (active_connections_.load() >= config_.max_connections) {
                     // Too many connections, wait a bit before checking again
@@ -393,8 +393,8 @@ void TcpTransport::receive_loop() {
                     continue;
                 }
 
-                int client_fd = accept_connection();
-                if (client_fd != -1) {
+                someip_socket_t client_fd = accept_connection();
+                if (client_fd != SOMEIP_INVALID_SOCKET) {
                     // For this simple implementation, we'll handle one client at a time
                     // In a real implementation, you'd manage multiple client connections
                     if (!is_connected()) {
@@ -469,7 +469,7 @@ void TcpTransport::connection_monitor_loop() {
 }
 
 /** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04 */
-Result TcpTransport::send_data(int socket_fd, const std::vector<uint8_t>& data) {
+Result TcpTransport::send_data(someip_socket_t socket_fd, const std::vector<uint8_t>& data) {
     size_t total_sent = 0;
     const uint8_t* buffer = data.data();
 
@@ -494,7 +494,7 @@ Result TcpTransport::send_data(int socket_fd, const std::vector<uint8_t>& data) 
 }
 
 /** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04 */
-Result TcpTransport::receive_data(int socket_fd, std::vector<uint8_t>& data) {
+Result TcpTransport::receive_data(someip_socket_t socket_fd, std::vector<uint8_t>& data) {
     // Respect maximum receive buffer size from config
     size_t max_chunk_size = std::min(static_cast<size_t>(4096), config_.max_receive_buffer - data.size());
     if (max_chunk_size == 0) {

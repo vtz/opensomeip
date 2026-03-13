@@ -13,6 +13,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+using someip_socket_t = int;
+#define SOMEIP_INVALID_SOCKET (-1)
+
 inline int someip_close_socket(int fd) { return close(fd); }
 
 inline int someip_shutdown_socket(int fd) { return shutdown(fd, SHUT_RDWR); }

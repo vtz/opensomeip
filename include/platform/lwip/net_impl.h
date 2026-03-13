@@ -47,6 +47,9 @@
 #define inet_pton(...)    lwip_inet_pton(__VA_ARGS__)
 #endif /* !LWIP_COMPAT_SOCKETS */
 
+using someip_socket_t = int;
+#define SOMEIP_INVALID_SOCKET (-1)
+
 /** @implements REQ_PLATFORM_LWIP_001 */
 #define someip_close_socket(fd) lwip_close(fd)
 /** @implements REQ_PLATFORM_LWIP_001 */

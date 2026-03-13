@@ -20,6 +20,9 @@
 #include <fcntl.h>
 #include <errno.h>
 
+using someip_socket_t = int;
+#define SOMEIP_INVALID_SOCKET (-1)
+
 /** @implements REQ_PLATFORM_POSIX_003, REQ_PAL_NET_CLOSE */
 #define someip_close_socket(fd) close(fd)
 /** @implements REQ_PAL_NET_SHUTDOWN */
