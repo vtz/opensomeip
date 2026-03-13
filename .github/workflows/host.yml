@@ -35,6 +35,10 @@ jobs:
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+            build_type: Release
 
     steps:
       - uses: actions/checkout@v4
@@ -45,7 +49,16 @@ jobs:
         run: |
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-      - name: Configure CMake
+      - name: Configure CMake (MSVC)
+        if: matrix.c_compiler == 'cl'
+        run: >
+          cmake -B ${{ steps.strings.outputs.build-output-dir }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DENABLE_WERROR=ON
+          -S ${{ github.workspace }}
+
+      - name: Configure CMake (GCC/Clang)
+        if: matrix.c_compiler != 'cl'
         run: >
           cmake -B ${{ steps.strings.outputs.build-output-dir }}
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
@@ -65,7 +78,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-host-${{ matrix.c_compiler }}
+          name: test-results-host-${{ matrix.os }}-${{ matrix.c_compiler }}
           path: ${{ steps.strings.outputs.build-output-dir }}/junit_results.xml
           retention-days: 14
 
