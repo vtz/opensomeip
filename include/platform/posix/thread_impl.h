@@ -40,11 +40,13 @@ public:
 #ifdef __cpp_exceptions
         try {
             thread_ = std::thread(std::forward<Fn>(fn), std::forward<Args>(args)...);
+            started_ = true;
         } catch (const std::system_error&) {
             // thread_ remains default-constructed (non-joinable)
         }
 #else
         thread_ = std::thread(std::forward<Fn>(fn), std::forward<Args>(args)...);
+        started_ = true;
 #endif
     }
 
@@ -61,6 +63,9 @@ public:
 
     /** @implements REQ_PAL_THREAD_JOINABLE */
     bool joinable() const { return thread_.joinable(); }
+
+    /** Returns true if the thread was successfully created and started. */
+    bool started() const { return started_; }
 
     /** @implements REQ_PAL_THREAD_JOIN */
     void join() {
@@ -80,6 +85,7 @@ public:
 
 private:
     std::thread thread_;
+    bool started_{false};
 };
 
 namespace this_thread {

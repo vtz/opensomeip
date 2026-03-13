@@ -103,6 +103,8 @@ public:
 
     bool joinable() const { return started_ && !joined_; }
 
+    bool started() const { return started_; }
+
     void join() {
         if (joinable()) {
             joined_ = true;

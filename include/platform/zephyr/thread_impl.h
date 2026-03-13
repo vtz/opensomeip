@@ -111,6 +111,9 @@ public:
     /** @implements REQ_PAL_THREAD_JOINABLE */
     bool joinable() const { return started_ && !joined_; }
 
+    /** Returns true if the thread was successfully created and started. */
+    bool started() const { return started_; }
+
     /** @implements REQ_PAL_THREAD_JOIN */
     void join() {
         if (joinable()) {
