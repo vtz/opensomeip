@@ -1,0 +1,67 @@
+name: Python Tests
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.cursor/**'
+  pull_request:
+    branches: ["main"]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.cursor/**'
+
+permissions:
+  contents: read
+
+jobs:
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r tests/python/requirements.txt
+
+      - name: Build C++ project
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+
+      - name: Run Python integration tests
+        working-directory: tests/python
+        run: >
+          python -m pytest ../integration/ ../system/
+          -v --tb=short -ra
+          --junitxml=junit_results.xml
+          --cov=someip
+          --cov-report=xml:coverage.xml
+          --cov-report=term-missing
+          -k "not performance and not slow"
+        continue-on-error: true
+
+      - name: Upload Python test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-python
+          path: tests/python/junit_results.xml
+          retention-days: 14
+
+      - name: Upload Python coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-coverage
+          path: tests/python/coverage.xml
+          retention-days: 14
