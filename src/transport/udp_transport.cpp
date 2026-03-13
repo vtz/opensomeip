@@ -396,9 +396,12 @@ Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint&
     }
 
     sockaddr_in dest_addr = create_sockaddr(endpoint);
-    ssize_t sent = someip_sendto(socket_fd_, data.data(), data.size(), 0,
-                                reinterpret_cast<sockaddr*>(&dest_addr),
-                                sizeof(dest_addr));
+    ssize_t sent;
+    do {
+        sent = someip_sendto(socket_fd_, data.data(), data.size(), 0,
+                             reinterpret_cast<sockaddr*>(&dest_addr),
+                             sizeof(dest_addr));
+    } while (sent < 0 && someip_socket_errno() == SOMEIP_EINTR);
 
     if (sent < 0) {
         return Result::NETWORK_ERROR;
@@ -416,14 +419,17 @@ Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender) 
     sockaddr_in src_addr;
     socklen_t addr_len = sizeof(src_addr);
 
-    ssize_t received = someip_recvfrom(socket_fd_, data.data(), data.size(), 0,
-                                       reinterpret_cast<sockaddr*>(&src_addr),
-                                       &addr_len);
+    ssize_t received;
+    do {
+        received = someip_recvfrom(socket_fd_, data.data(), data.size(), 0,
+                                   reinterpret_cast<sockaddr*>(&src_addr),
+                                   &addr_len);
+    } while (received < 0 && someip_socket_errno() == SOMEIP_EINTR);
 
     if (received < 0) {
         int err = someip_socket_errno();
 
-        if (err == SOMEIP_EBADF || err == SOMEIP_EINTR) {
+        if (err == SOMEIP_EBADF) {
             return Result::NOT_CONNECTED;
         }
 
