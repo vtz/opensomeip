@@ -482,8 +482,8 @@ Result TcpTransport::send_data(int socket_fd, const std::vector<uint8_t>& data) 
 
         if (sent < 0) {
             int err = someip_socket_errno();
-            if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK) {
-                continue;  // Retry
+            if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK || err == SOMEIP_EINTR) {
+                continue;
             }
             return Result::NETWORK_ERROR;
         } else if (sent == 0) {
@@ -509,8 +509,8 @@ Result TcpTransport::receive_data(int socket_fd, std::vector<uint8_t>& data) {
 
     if (received < 0) {
         int err = someip_socket_errno();
-        if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK) {
-            return Result::SUCCESS;  // No data available
+        if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK || err == SOMEIP_EINTR) {
+            return Result::SUCCESS;  // No data available or interrupted
         }
         return Result::NETWORK_ERROR;
     } else if (received == 0) {
