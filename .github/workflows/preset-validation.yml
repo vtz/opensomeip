@@ -1,0 +1,64 @@
+name: Preset Validation
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'CMakePresets.json'
+      - 'cmake/**'
+      - 'CMakeLists.txt'
+      - 'src/CMakeLists.txt'
+  pull_request:
+    branches: ["main"]
+    paths:
+      - 'CMakePresets.json'
+      - 'cmake/**'
+      - 'CMakeLists.txt'
+      - 'src/CMakeLists.txt'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-host-presets:
+    name: Validate host presets
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset:
+          - host-linux
+          - host-linux-tests
+          - freertos-stub-compile
+          - threadx-stub-compile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (${{ matrix.preset }})
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build (${{ matrix.preset }})
+        run: cmake --build --preset ${{ matrix.preset }}
+
+  validate-cross-presets:
+    name: Validate cross-compile presets
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset:
+          - freertos-cortexm4
+          - threadx-cortexm4
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi g++-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Configure (${{ matrix.preset }})
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build (${{ matrix.preset }})
+        run: cmake --build --preset ${{ matrix.preset }}
