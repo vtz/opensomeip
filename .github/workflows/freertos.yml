@@ -26,16 +26,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build with FreeRTOS+lwIP stubs
+      - name: Configure (freertos-stub-compile preset)
+        run: cmake --preset freertos-stub-compile
+
+      - name: Build
+        run: cmake --build --preset freertos-stub-compile
+
+  cross-compile-check:
+    name: FreeRTOS ARM Cortex-M4 cross-compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
         run: |
-          cmake -B build_freertos \
-            -DSOMEIP_USE_FREERTOS=ON \
-            -DSOMEIP_USE_LWIP=ON \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_CXX_FLAGS="-I${{ github.workspace }}/tests/stubs/freertos -I${{ github.workspace }}/tests/stubs/lwip" \
-            -S ${{ github.workspace }}
-          cmake --build build_freertos
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi g++-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Configure (freertos-cortexm4 preset)
+        run: cmake --preset freertos-cortexm4
+
+      - name: Build
+        run: cmake --build --preset freertos-cortexm4
 
   stub-compile-check-fedora:
     name: FreeRTOS+lwIP stub compile check (Fedora 42)
@@ -66,23 +78,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build & run FreeRTOS POSIX port tests
-        run: |
-          cmake -B build_freertos_rt \
-            -DSOMEIP_FREERTOS_LINUX_TESTS=ON \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_BUILD_TYPE=Release \
-            -S ${{ github.workspace }}
-          cmake --build build_freertos_rt --config Release
-          cd build_freertos_rt && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
+      - name: Configure (freertos-linux-tests preset)
+        run: cmake --preset freertos-linux-tests
+
+      - name: Build
+        run: cmake --build --preset freertos-linux-tests
+
+      - name: Test
+        run: ctest --preset freertos-linux-tests --output-junit junit_results.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-freertos
-          path: build_freertos_rt/junit_results.xml
+          path: build/freertos-linux-tests/junit_results.xml
           retention-days: 14
 
   runtime-tests-fedora:
