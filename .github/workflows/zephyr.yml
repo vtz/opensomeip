@@ -56,7 +56,7 @@ jobs:
       - name: Init Zephyr
         run: |
           python3.12 -m pip install jsonschema west
-          west init /tmp/zp && cd /tmp/zp
+          west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
           python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
       - name: Build & run test_core
@@ -138,7 +138,7 @@ jobs:
       - name: Init Zephyr
         run: |
           python3.12 -m pip install jsonschema west
-          west init /tmp/zp && cd /tmp/zp
+          west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
           python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
       - name: Build hello_s32k (mr_canhubk3)
