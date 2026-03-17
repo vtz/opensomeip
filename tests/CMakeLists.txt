@@ -45,6 +45,16 @@ target_link_libraries(test_e2e someip-core gtest_main)
     add_executable(test_platform_threading test_platform_threading.cpp)
     target_link_libraries(test_platform_threading someip-core gtest_main)
 
+    # Winsock init for tests that use sockets (WSAStartup before main)
+    if(WIN32)
+        set(_SOCKET_TESTS
+            test_platform_threading test_udp_transport test_tcp_transport
+            test_rpc test_sd test_events)
+        foreach(_t ${_SOCKET_TESTS})
+            target_sources(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winsock_init.cpp)
+        endforeach()
+    endif()
+
     # ---- PAL Conformance Tests (mock RTOS backends) ----
     #
     # Each test compiles the PAL backend (thread_impl.h, memory_impl.h) against
