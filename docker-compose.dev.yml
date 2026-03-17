@@ -19,6 +19,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.fedora42
+    user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - .:/workspace/someip
     working_dir: /workspace/someip

@@ -13,7 +13,7 @@
 #   docker-compose -f docker-compose.dev.yml run --rm fedora-dev bash
 #
 # Inside the container:
-#   cmake -B build -DBUILD_TESTS=ON && cmake --build build && cd build && ctest
+#   cmake -G Ninja -B build -DBUILD_TESTS=ON && cmake --build build && cd build && ctest
 
 FROM fedora:42
 

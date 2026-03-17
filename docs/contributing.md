@@ -40,8 +40,8 @@ This project follows a code of conduct to ensure a welcoming environment for all
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/your-username/someip-stack.git
-   cd someip-stack
+   git clone https://github.com/your-username/opensomeip.git
+   cd opensomeip
    ```
 
 2. **Build Dependencies**
@@ -93,7 +93,7 @@ docker-compose -f docker-compose.dev.yml run --rm fedora-dev bash
 Inside either container, build and test with:
 
 ```bash
-cmake -B build -DBUILD_TESTS=ON && cmake --build build && cd build && ctest
+cmake -G Ninja -B build -DBUILD_TESTS=ON && cmake --build build && cd build && ctest
 ```
 
 ## Development Workflow
@@ -181,7 +181,7 @@ pre-commit run --all-files
 ### Naming Conventions
 
 - **Classes**: `PascalCase` (e.g., `Message`, `UdpTransport`)
-- **Functions/Methods**: `camelCase` (e.g., `serialize()`, `sendMessage()`)
+- **Functions/Methods**: `snake_case` (e.g., `serialize()`, `send_message()`)
 - **Variables**: `snake_case` (e.g., `message_id`, `local_endpoint`)
 - **Constants**: `SCREAMING_SNAKE_CASE` (e.g., `HEADER_SIZE`)
 - **Namespaces**: `lowercase` (e.g., `someip`, `transport`)
