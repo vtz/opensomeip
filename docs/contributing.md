@@ -51,9 +51,8 @@ This project follows a code of conduct to ensure a welcoming environment for all
 
 3. **Build Project**
    ```bash
-   mkdir build && cd build
-   cmake .. -DCMAKE_BUILD_TYPE=Debug
-   make -j$(nproc)
+   cmake -B build -DCMAKE_BUILD_TYPE=Debug
+   cmake --build build -j$(nproc)
    ```
 
 4. **Run Tests**
