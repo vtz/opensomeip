@@ -84,6 +84,10 @@ if(NOT SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_THREADX)
     target_link_libraries(someip-core PUBLIC Threads::Threads)
 endif()
 
+if(WIN32)
+    target_link_libraries(someip-core PUBLIC ws2_32)
+endif()
+
 # FreeRTOS platform sources
 if(SOMEIP_USE_FREERTOS)
     target_sources(someip-core PRIVATE
