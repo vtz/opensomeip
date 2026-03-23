@@ -221,7 +221,7 @@ private:
         return calculator_server_.initialize();
     }
 
-    RpcResult handle_calculator_op(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_calculator_op(uint16_t, uint16_t,
                                   const std::vector<uint8_t>& input, std::vector<uint8_t>& output,
                                   const std::string& op_name,
                                   std::function<int32_t(int32_t, int32_t)> operation) {
@@ -264,8 +264,8 @@ private:
         }
     }
 
-    RpcResult handle_get_calc_history(uint16_t client_id, uint16_t session_id,
-                                    const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
+    RpcResult handle_get_calc_history(uint16_t, uint16_t,
+                                    const std::vector<uint8_t>&, std::vector<uint8_t>& output) {
         std::lock_guard<std::mutex> lock(calc_mutex_);
 
         std::string history;
@@ -324,8 +324,8 @@ private:
         return filesystem_server_.initialize();
     }
 
-    RpcResult handle_list_dir(uint16_t client_id, uint16_t session_id,
-                            const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
+    RpcResult handle_list_dir(uint16_t, uint16_t,
+                            const std::vector<uint8_t>&, std::vector<uint8_t>& output) {
         std::lock_guard<std::mutex> lock(fs_mutex_);
 
         std::string file_list;
@@ -340,7 +340,7 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_read_file(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_read_file(uint16_t, uint16_t,
                              const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
         if (input.empty()) {
             return RpcResult::INVALID_PARAMETERS;
@@ -362,7 +362,7 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_write_file(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_write_file(uint16_t, uint16_t,
                               const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
         if (input.size() < 2) {  // Need at least filename null terminator + 1 data byte
             return RpcResult::INVALID_PARAMETERS;
@@ -389,7 +389,7 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_delete_file(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_delete_file(uint16_t, uint16_t,
                                const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
         if (input.empty()) {
             return RpcResult::INVALID_PARAMETERS;
@@ -413,7 +413,7 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_get_file_info(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_get_file_info(uint16_t, uint16_t,
                                  const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
         if (input.empty()) {
             return RpcResult::INVALID_PARAMETERS;
@@ -487,8 +487,8 @@ private:
         return sensor_server_.initialize();
     }
 
-    RpcResult handle_get_sensor_readings(uint16_t client_id, uint16_t session_id,
-                                       const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
+    RpcResult handle_get_sensor_readings(uint16_t, uint16_t,
+                                       const std::vector<uint8_t>&, std::vector<uint8_t>& output) {
         std::lock_guard<std::mutex> lock(sensor_mutex_);
 
         // Generate current sensor readings
@@ -529,7 +529,7 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_set_sensor_config(uint16_t client_id, uint16_t session_id,
+    RpcResult handle_set_sensor_config(uint16_t, uint16_t,
                                      const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
         if (input.size() < 7) {  // 3 booleans + 4-byte interval
             return RpcResult::INVALID_PARAMETERS;
@@ -553,8 +553,8 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_calibrate_sensor(uint16_t client_id, uint16_t session_id,
-                                    const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
+    RpcResult handle_calibrate_sensor(uint16_t, uint16_t,
+                                    const std::vector<uint8_t>&, std::vector<uint8_t>& output) {
         std::cout << "[SENSOR] Starting sensor calibration..." << std::endl;
 
         // Simulate calibration process
@@ -646,8 +646,8 @@ private:
         return system_server_.initialize();
     }
 
-    RpcResult handle_get_system_info(uint16_t client_id, uint16_t session_id,
-                                   const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
+    RpcResult handle_get_system_info(uint16_t, uint16_t,
+                                   const std::vector<uint8_t>&, std::vector<uint8_t>& output) {
         std::string info = "Multi-Service SOME/IP Server\n";
         info += "Version: 1.0.0\n";
         info += "Services: Calculator, Filesystem, Sensor, System\n";
@@ -660,8 +660,8 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_get_system_load(uint16_t client_id, uint16_t session_id,
-                                   const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
+    RpcResult handle_get_system_load(uint16_t, uint16_t,
+                                   const std::vector<uint8_t>&, std::vector<uint8_t>& output) {
         // Simulate system load
         float cpu_load = 25.0f + (rand() % 500) / 10.0f;    // 25-75%
         float memory_load = 40.0f + (rand() % 300) / 10.0f; // 40-70%
@@ -698,8 +698,8 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_system_shutdown(uint16_t client_id, uint16_t session_id,
-                                   const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
+    RpcResult handle_system_shutdown(uint16_t client_id, uint16_t,
+                                   const std::vector<uint8_t>&, std::vector<uint8_t>& output) {
         std::cout << "[SYSTEM] Shutdown requested by client 0x" << std::hex << client_id << std::endl;
         std::cout << "Note: This is a demo - actual shutdown not performed" << std::endl;
 
@@ -708,8 +708,8 @@ private:
         return RpcResult::SUCCESS;
     }
 
-    RpcResult handle_system_restart(uint16_t client_id, uint16_t session_id,
-                                  const std::vector<uint8_t>& input, std::vector<uint8_t>& output) {
+    RpcResult handle_system_restart(uint16_t client_id, uint16_t,
+                                  const std::vector<uint8_t>&, std::vector<uint8_t>& output) {
         std::cout << "[SYSTEM] Restart requested by client 0x" << std::hex << client_id << std::endl;
         std::cout << "Note: This is a demo - actual restart not performed" << std::endl;
 

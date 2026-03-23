@@ -33,6 +33,19 @@ Under the hood, the preset in `CMakePresets.json` defines:
 - **PAL selection**: `SOMEIP_USE_FREERTOS=ON`, `SOMEIP_USE_LWIP=ON`
 - **Build type**: `Release`
 
+### Host presets
+
+For native host builds, use the preset that matches your OS:
+
+```bash
+cmake --preset host-linux        # Linux
+cmake --preset host-macos        # macOS
+cmake --preset host-linux-tests  # Linux with tests
+cmake --preset host-macos-tests  # macOS with tests
+```
+
+`host-macos` is an alias for `host-linux` — both use the POSIX PAL backend. The separate name avoids confusion when `cmake --list-presets` is run on a Mac.
+
 ### Platform Abstraction Layer (PAL)
 
 The PAL is selected via include-path switching at configure time. Each preset sets the appropriate `SOMEIP_USE_*` options, which cause CMake to include the correct `*_impl.h` headers from the platform backend directory. No source code changes are needed to switch targets.
@@ -145,6 +158,88 @@ cmake --build --preset threadx-cortexm4
 ```
 
 Works identically to the FreeRTOS preset but selects the ThreadX PAL backend. The same customization and BSP integration approach applies.
+
+## Linux Cross-Compilation (with sysroot)
+
+When cross-compiling for *another Linux target* (e.g. building on x86_64 for AArch64 or ARMv7), the target still runs Linux and uses the POSIX PAL — no `SOMEIP_USE_*` flags are needed. You need two things from your vendor or build environment:
+
+1. **A cross-compiler** — e.g. `aarch64-linux-gnu-gcc` / `aarch64-linux-gnu-g++`
+2. **A sysroot** — a directory containing the target's C library, kernel headers, and any other libraries. This is typically provided by a Yocto SDK, Buildroot output, or the distro's cross packages.
+
+### Using the preset
+
+```bash
+# Install the cross-compiler (Ubuntu/Debian)
+sudo apt-get install gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+
+# Build opensomeip — pass the sysroot if the compiler doesn't include one
+cmake --preset linux-aarch64 -DLINUX_CROSS_SYSROOT=/opt/sysroot/aarch64
+cmake --build --preset linux-aarch64
+```
+
+If your cross-compiler already ships with a sysroot (common with Yocto/Linaro SDKs), you can omit `-DLINUX_CROSS_SYSROOT` and the compiler's built-in sysroot will be used automatically.
+
+### Customizing for a different target
+
+Override the prefix and architecture for any Linux target. For example, ARMv7 hard-float:
+
+```bash
+cmake -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/linux-cross-gcc.cmake \
+      -DLINUX_CROSS_PREFIX=arm-linux-gnueabihf- \
+      -DLINUX_CROSS_ARCH=arm \
+      -DLINUX_CROSS_SYSROOT=/opt/sysroot/armhf \
+      -B build/linux-armhf
+cmake --build build/linux-armhf
+```
+
+Or create a reusable preset in `CMakeUserPresets.json` (git-ignored):
+
+```json
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "linux-armhf",
+      "displayName": "Linux ARMv7 Hard-Float",
+      "inherits": "linux-cross",
+      "cacheVariables": {
+        "LINUX_CROSS_ARCH": "arm",
+        "LINUX_CROSS_PREFIX": "arm-linux-gnueabihf-",
+        "LINUX_CROSS_SYSROOT": "/opt/sysroot/armhf"
+      }
+    }
+  ]
+}
+```
+
+Then simply: `cmake --preset linux-armhf && cmake --build build/linux-armhf`
+
+### Yocto / Buildroot integration
+
+Most embedded Linux SDKs provide an environment setup script that exports `CC`, `CXX`, `SYSROOT`, etc. You can source that script first and then point the toolchain file at the right paths:
+
+```bash
+# Source the Yocto SDK environment
+source /opt/poky/environment-setup-aarch64-poky-linux
+
+# Use the SDK's compiler and sysroot
+cmake -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/linux-cross-gcc.cmake \
+      -DLINUX_CROSS_PREFIX="${CROSS_COMPILE}" \
+      -DLINUX_CROSS_SYSROOT="${SDKTARGETSYSROOT}" \
+      -DLINUX_CROSS_ARCH=aarch64 \
+      -B build/yocto-aarch64
+cmake --build build/yocto-aarch64
+```
+
+### What the sysroot must contain
+
+At a minimum, the sysroot needs:
+
+- **C/C++ standard library** headers and shared objects (glibc, musl, or similar)
+- **POSIX threading** (`pthread.h`, `libpthread.so`)
+- **BSD sockets** (`sys/socket.h`, `netinet/in.h`, `arpa/inet.h`)
+
+These are present in any standard Linux sysroot. No additional embedded libraries (FreeRTOS, lwIP) are required since the target is a full Linux system.
 
 ## Zephyr
 

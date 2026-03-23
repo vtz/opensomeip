@@ -54,7 +54,7 @@ const uint16_t CALC_GET_HISTORY_METHOD_ID = 0x0005;
 const uint16_t FS_LIST_DIR_METHOD_ID = 0x0001;
 const uint16_t FS_READ_FILE_METHOD_ID = 0x0002;
 const uint16_t FS_WRITE_FILE_METHOD_ID = 0x0003;
-const uint16_t FS_DELETE_FILE_METHOD_ID = 0x0004;
+[[maybe_unused]] const uint16_t FS_DELETE_FILE_METHOD_ID = 0x0004;
 const uint16_t FS_GET_FILE_INFO_METHOD_ID = 0x0005;
 
 // Sensor Service Methods
@@ -65,13 +65,13 @@ const uint16_t SENSOR_CALIBRATE_METHOD_ID = 0x0003;
 // System Service Methods
 const uint16_t SYS_GET_INFO_METHOD_ID = 0x0001;
 const uint16_t SYS_GET_LOAD_METHOD_ID = 0x0002;
-const uint16_t SYS_SHUTDOWN_METHOD_ID = 0x0003;
-const uint16_t SYS_RESTART_METHOD_ID = 0x0004;
+[[maybe_unused]] const uint16_t SYS_SHUTDOWN_METHOD_ID = 0x0003;
+[[maybe_unused]] const uint16_t SYS_RESTART_METHOD_ID = 0x0004;
 
 // Sensor Event IDs
-const uint16_t TEMPERATURE_EVENT_ID = 0x8001;
-const uint16_t HUMIDITY_EVENT_ID = 0x8002;
-const uint16_t PRESSURE_EVENT_ID = 0x8003;
+[[maybe_unused]] const uint16_t TEMPERATURE_EVENT_ID = 0x8001;
+[[maybe_unused]] const uint16_t HUMIDITY_EVENT_ID = 0x8002;
+[[maybe_unused]] const uint16_t PRESSURE_EVENT_ID = 0x8003;
 
 class MultiServiceClient {
 public:

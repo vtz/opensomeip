@@ -5,14 +5,22 @@ CMake-based build system for the SOME/IP stack, supporting host (POSIX/Win32) an
 ## Quick Start
 
 ```bash
-# Host build (Linux/macOS, POSIX)
+# Host build (Linux)
 cmake --preset host-linux
 cmake --build --preset host-linux
 
+# Host build (macOS) — same POSIX backend, separate preset for clarity
+cmake --preset host-macos
+cmake --build --preset host-macos
+
 # Host build with tests
-cmake --preset host-linux-tests
+cmake --preset host-linux-tests   # or host-macos-tests on macOS
 cmake --build --preset host-linux-tests
 ctest --preset host-linux-tests
+
+# Cross-compile for AArch64 Linux (e.g. Raspberry Pi)
+cmake --preset linux-aarch64 -DLINUX_CROSS_SYSROOT=/opt/sysroot/aarch64
+cmake --build --preset linux-aarch64
 
 # Cross-compile for ARM Cortex-M4 with FreeRTOS
 cmake --preset freertos-cortexm4
@@ -35,6 +43,9 @@ cmake --list-presets
 |--------|-------------|-----------|
 | `host-linux` | Native POSIX build (Release) | System compiler |
 | `host-linux-tests` | Native POSIX with tests and examples | System compiler |
+| `host-macos` | Native macOS build (POSIX, alias for `host-linux`) | System compiler |
+| `host-macos-tests` | Native macOS with tests (alias for `host-linux-tests`) | System compiler |
+| `linux-aarch64` | AArch64 Linux cross-compile (POSIX) | `aarch64-linux-gnu-gcc` |
 | `freertos-stub-compile` | FreeRTOS+lwIP stub compile check | System compiler |
 | `freertos-linux-tests` | FreeRTOS POSIX port runtime tests | System compiler |
 | `freertos-cortexm4` | ARM Cortex-M4 cross-compile (FreeRTOS+lwIP) | `arm-none-eabi-gcc` |
@@ -83,6 +94,25 @@ Override in a preset or on the command line:
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/arm-none-eabi-gcc.cmake \
       -DARM_CPU=cortex-m7 -DARM_FPU=fpv5-d16 \
       -DSOMEIP_USE_FREERTOS=ON -DSOMEIP_USE_LWIP=ON ..
+```
+
+### `cmake/toolchains/linux-cross-gcc.cmake`
+
+Generic Linux-to-Linux cross-compilation toolchain for building on one architecture (e.g. x86_64) and targeting another (e.g. AArch64, ARMv7). The target is still a Linux system with POSIX, so no `SOMEIP_USE_*` flags are needed.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `LINUX_CROSS_ARCH` | `aarch64` | Target architecture (`aarch64`, `arm`, `riscv64`, ...) |
+| `LINUX_CROSS_PREFIX` | `aarch64-linux-gnu-` | Toolchain binary prefix |
+| `LINUX_CROSS_SYSROOT` | *(empty)* | Path to the target sysroot (leave empty to use the compiler's default) |
+
+Override in a preset or on the command line:
+
+```bash
+cmake -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/linux-cross-gcc.cmake \
+      -DLINUX_CROSS_PREFIX=arm-linux-gnueabihf- \
+      -DLINUX_CROSS_ARCH=arm \
+      -DLINUX_CROSS_SYSROOT=/opt/sysroot/armhf ..
 ```
 
 ## Zephyr

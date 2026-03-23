@@ -33,6 +33,35 @@
       }
     },
     {
+      "name": "host-macos",
+      "displayName": "Host macOS (POSIX)",
+      "description": "Native macOS build using POSIX threading and BSD sockets",
+      "inherits": "host-linux"
+    },
+    {
+      "name": "host-macos-tests",
+      "displayName": "Host macOS with Tests",
+      "description": "Native macOS build with unit tests enabled",
+      "inherits": "host-linux-tests"
+    },
+    {
+      "name": "linux-cross",
+      "hidden": true,
+      "description": "Base preset for Linux-to-Linux cross-compilation with a sysroot",
+      "inherits": "base",
+      "toolchainFile": "${sourceDir}/cmake/toolchains/linux-cross-gcc.cmake"
+    },
+    {
+      "name": "linux-aarch64",
+      "displayName": "Linux AArch64 Cross-Compile",
+      "description": "Cross-compile for AArch64 Linux target (e.g. Raspberry Pi, embedded Linux)",
+      "inherits": "linux-cross",
+      "cacheVariables": {
+        "LINUX_CROSS_ARCH": "aarch64",
+        "LINUX_CROSS_PREFIX": "aarch64-linux-gnu-"
+      }
+    },
+    {
       "name": "freertos-stub-compile",
       "displayName": "FreeRTOS+lwIP Stub Compile Check",
       "description": "Host-compiler build against FreeRTOS/lwIP stub headers (syntax verification only)",
@@ -83,7 +112,8 @@
       "description": "Runtime tests using Eclipse ThreadX Linux port (FetchContent)",
       "inherits": "base",
       "cacheVariables": {
-        "SOMEIP_THREADX_LINUX_TESTS": "ON"
+        "SOMEIP_THREADX_LINUX_TESTS": "ON",
+        "CMAKE_POLICY_VERSION_MINIMUM": "3.5"
       }
     },
     {
@@ -97,7 +127,8 @@
         "SOMEIP_USE_LWIP": "ON",
         "ARM_CPU": "cortex-m4",
         "ARM_FPU": "fpv4-sp-d16",
-        "ARM_FLOAT_ABI": "hard"
+        "ARM_FLOAT_ABI": "hard",
+        "CMAKE_POLICY_VERSION_MINIMUM": "3.5"
       }
     }
   ],
@@ -109,6 +140,18 @@
     {
       "name": "host-linux-tests",
       "configurePreset": "host-linux-tests"
+    },
+    {
+      "name": "host-macos",
+      "configurePreset": "host-macos"
+    },
+    {
+      "name": "host-macos-tests",
+      "configurePreset": "host-macos-tests"
+    },
+    {
+      "name": "linux-aarch64",
+      "configurePreset": "linux-aarch64"
     },
     {
       "name": "freertos-stub-compile",
@@ -139,6 +182,17 @@
     {
       "name": "host-linux-tests",
       "configurePreset": "host-linux-tests",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "timeout": 30,
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "host-macos-tests",
+      "configurePreset": "host-macos-tests",
       "output": {
         "outputOnFailure": true
       },

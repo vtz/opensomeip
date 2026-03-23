@@ -40,6 +40,24 @@ jobs:
       - name: Build (${{ matrix.preset }})
         run: cmake --build --preset ${{ matrix.preset }}
 
+  validate-macos-presets:
+    name: Validate macOS presets
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        preset:
+          - host-macos
+          - host-macos-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure (${{ matrix.preset }})
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build (${{ matrix.preset }})
+        run: cmake --build --preset ${{ matrix.preset }}
+
   validate-cross-presets:
     name: Validate cross-compile presets
     runs-on: ubuntu-latest
