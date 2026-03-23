@@ -58,7 +58,7 @@ Install the ARM GCC toolchain:
 
 ```bash
 # Ubuntu/Debian
-sudo apt-get install gcc-arm-none-eabi g++-arm-none-eabi libnewlib-arm-none-eabi
+sudo apt-get install gcc-arm-none-eabi libnewlib-arm-none-eabi
 
 # macOS (Homebrew)
 brew install --cask gcc-arm-embedded
