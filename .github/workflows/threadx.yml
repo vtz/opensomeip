@@ -20,17 +20,17 @@ permissions:
   contents: read
 
 jobs:
-  stub-compile-check:
-    name: ThreadX+lwIP stub compile check
+  compile-check:
+    name: ThreadX PAL compile check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure (threadx-stub-compile preset)
-        run: cmake --preset threadx-stub-compile
+      - name: Configure (threadx-compile-check preset)
+        run: cmake --preset threadx-compile-check
 
       - name: Build
-        run: cmake --build --preset threadx-stub-compile
+        run: cmake --build --preset threadx-compile-check
 
   cross-compile-check:
     name: ThreadX ARM Cortex-M4 cross-compile

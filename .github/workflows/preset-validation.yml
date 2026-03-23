@@ -29,8 +29,8 @@ jobs:
         preset:
           - host-linux
           - host-linux-tests
-          - freertos-stub-compile
-          - threadx-stub-compile
+          - freertos-compile-check
+          - threadx-compile-check
     steps:
       - uses: actions/checkout@v4
 

@@ -62,14 +62,13 @@
       }
     },
     {
-      "name": "freertos-stub-compile",
-      "displayName": "FreeRTOS+lwIP Stub Compile Check",
-      "description": "Host-compiler build against FreeRTOS/lwIP stub headers (syntax verification only)",
+      "name": "freertos-compile-check",
+      "displayName": "FreeRTOS Compile Check",
+      "description": "Host-compiler build with real FreeRTOS kernel (PAL threading verification)",
       "inherits": "base",
       "cacheVariables": {
         "SOMEIP_USE_FREERTOS": "ON",
-        "SOMEIP_USE_LWIP": "ON",
-        "CMAKE_CXX_FLAGS": "-I${sourceDir}/tests/stubs/freertos -I${sourceDir}/tests/stubs/lwip"
+        "FREERTOS_PORT": "GCC_POSIX"
       }
     },
     {
@@ -90,20 +89,22 @@
       "cacheVariables": {
         "SOMEIP_USE_FREERTOS": "ON",
         "SOMEIP_USE_LWIP": "ON",
+        "FREERTOS_PORT": "GCC_ARM_CM4F",
         "ARM_CPU": "cortex-m4",
         "ARM_FPU": "fpv4-sp-d16",
         "ARM_FLOAT_ABI": "hard"
       }
     },
     {
-      "name": "threadx-stub-compile",
-      "displayName": "ThreadX+lwIP Stub Compile Check",
-      "description": "Host-compiler build against ThreadX/lwIP stub headers (syntax verification only)",
+      "name": "threadx-compile-check",
+      "displayName": "ThreadX Compile Check",
+      "description": "Host-compiler build with real ThreadX kernel (PAL threading verification)",
       "inherits": "base",
       "cacheVariables": {
         "SOMEIP_USE_THREADX": "ON",
-        "SOMEIP_USE_LWIP": "ON",
-        "CMAKE_CXX_FLAGS": "-I${sourceDir}/tests/stubs/threadx -I${sourceDir}/tests/stubs/lwip"
+        "THREADX_ARCH": "linux",
+        "THREADX_TOOLCHAIN": "gnu",
+        "CMAKE_POLICY_VERSION_MINIMUM": "3.5"
       }
     },
     {
@@ -125,6 +126,8 @@
       "cacheVariables": {
         "SOMEIP_USE_THREADX": "ON",
         "SOMEIP_USE_LWIP": "ON",
+        "THREADX_ARCH": "cortex_m4",
+        "THREADX_TOOLCHAIN": "gnu",
         "ARM_CPU": "cortex-m4",
         "ARM_FPU": "fpv4-sp-d16",
         "ARM_FLOAT_ABI": "hard",
@@ -154,8 +157,8 @@
       "configurePreset": "linux-aarch64"
     },
     {
-      "name": "freertos-stub-compile",
-      "configurePreset": "freertos-stub-compile"
+      "name": "freertos-compile-check",
+      "configurePreset": "freertos-compile-check"
     },
     {
       "name": "freertos-linux-tests",
@@ -166,8 +169,8 @@
       "configurePreset": "freertos-cortexm4"
     },
     {
-      "name": "threadx-stub-compile",
-      "configurePreset": "threadx-stub-compile"
+      "name": "threadx-compile-check",
+      "configurePreset": "threadx-compile-check"
     },
     {
       "name": "threadx-linux-tests",

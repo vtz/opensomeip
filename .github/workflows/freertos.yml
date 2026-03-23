@@ -20,17 +20,17 @@ permissions:
   contents: read
 
 jobs:
-  stub-compile-check:
-    name: FreeRTOS+lwIP stub compile check
+  compile-check:
+    name: FreeRTOS PAL compile check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure (freertos-stub-compile preset)
-        run: cmake --preset freertos-stub-compile
+      - name: Configure (freertos-compile-check preset)
+        run: cmake --preset freertos-compile-check
 
       - name: Build
-        run: cmake --build --preset freertos-stub-compile
+        run: cmake --build --preset freertos-compile-check
 
   cross-compile-check:
     name: FreeRTOS ARM Cortex-M4 cross-compile

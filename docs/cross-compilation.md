@@ -117,12 +117,15 @@ cmake --build build/freertos-cortexm7
 
 ### Integration with your BSP
 
-The cross-compiled libraries are standalone -- they do not include FreeRTOS or lwIP themselves. Your board support package (BSP) must provide:
+The CMake build fetches the **FreeRTOS** or **ThreadX** kernel and **lwIP** (headers) automatically via FetchContent when the corresponding `SOMEIP_USE_*` options are enabled. It also supplies minimal `FreeRTOSConfig.h` and `lwipopts.h` files suitable for CI and smoke builds.
 
-1. **FreeRTOS kernel** headers and library (with a `FreeRTOSConfig.h` for your board)
-2. **lwIP** headers and library (with `lwipopts.h` for your board)
-3. **Linker script** for your specific MCU
-4. **Startup code** (reset handler, vector table)
+For production firmware, you should use your own RTOS and lwIP trees and tune configuration for your hardware by setting `FETCHCONTENT_SOURCE_DIR_FREERTOS_KERNEL`, `FETCHCONTENT_SOURCE_DIR_THREADX`, or `FETCHCONTENT_SOURCE_DIR_LWIP` so CMake uses your copies instead of the default fetch.
+
+Your board support package (BSP) must still provide:
+
+1. **Linker script** for your specific MCU
+2. **Startup code** (reset handler, vector table)
+3. **Board-specific configuration** — a production `FreeRTOSConfig.h` and `lwipopts.h` (and ThreadX port/config as required by your BSP) aligned with your hardware and memory map
 
 Link the SOME/IP libraries into your firmware:
 

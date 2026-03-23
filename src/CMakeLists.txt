@@ -84,6 +84,19 @@ if(NOT SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_THREADX)
     target_link_libraries(someip-core PUBLIC Threads::Threads)
 endif()
 
+# RTOS kernel linkage: propagate include dirs to OBJECT libraries so
+# FreeRTOS.h/tx_api.h and their port headers are found during compilation.
+if(SOMEIP_USE_FREERTOS AND TARGET freertos_kernel)
+    target_link_libraries(someip-core-obj PUBLIC freertos_kernel)
+    target_link_libraries(someip-e2e-obj PUBLIC freertos_kernel)
+    target_link_libraries(someip-core PUBLIC freertos_kernel)
+endif()
+if(SOMEIP_USE_THREADX AND TARGET threadx)
+    target_link_libraries(someip-core-obj PUBLIC threadx)
+    target_link_libraries(someip-e2e-obj PUBLIC threadx)
+    target_link_libraries(someip-core PUBLIC threadx)
+endif()
+
 if(WIN32)
     target_link_libraries(someip-core PUBLIC ws2_32)
 endif()

@@ -46,10 +46,10 @@ cmake --list-presets
 | `host-macos` | Native macOS build (POSIX, alias for `host-linux`) | System compiler |
 | `host-macos-tests` | Native macOS with tests (alias for `host-linux-tests`) | System compiler |
 | `linux-aarch64` | AArch64 Linux cross-compile (POSIX) | `aarch64-linux-gnu-gcc` |
-| `freertos-stub-compile` | FreeRTOS+lwIP stub compile check | System compiler |
+| `freertos-compile-check` | FreeRTOS PAL compile check (host compiler) | System compiler |
 | `freertos-linux-tests` | FreeRTOS POSIX port runtime tests | System compiler |
 | `freertos-cortexm4` | ARM Cortex-M4 cross-compile (FreeRTOS+lwIP) | `arm-none-eabi-gcc` |
-| `threadx-stub-compile` | ThreadX+lwIP stub compile check | System compiler |
+| `threadx-compile-check` | ThreadX PAL compile check (host compiler) | System compiler |
 | `threadx-linux-tests` | ThreadX Linux port runtime tests | System compiler |
 | `threadx-cortexm4` | ARM Cortex-M4 cross-compile (ThreadX+lwIP) | `arm-none-eabi-gcc` |
 
@@ -149,4 +149,8 @@ The build system selects the correct PAL backend via include-path switching. Eac
 - **CMake 3.20+** (3.21+ for CMakePresets.json)
 - **C++17 compiler**: GCC 9+, Clang 10+, MSVC 2019+
 - **Google Test**: Fetched via FetchContent (when `BUILD_TESTS=ON`)
+- **FreeRTOS Kernel**: Fetched via FetchContent (when `SOMEIP_USE_FREERTOS=ON`)
+- **ThreadX**: Fetched via FetchContent (when `SOMEIP_USE_THREADX=ON`)
+- **lwIP**: Fetched via FetchContent (when `SOMEIP_USE_LWIP=ON`, headers only)
+- If you already have these dependencies in your project, you can override FetchContent with `FETCHCONTENT_SOURCE_DIR_<NAME>` (for example `FETCHCONTENT_SOURCE_DIR_FREERTOS_KERNEL`, `FETCHCONTENT_SOURCE_DIR_THREADX`, or `FETCHCONTENT_SOURCE_DIR_LWIP`).
 - **arm-none-eabi-gcc**: Required for ARM cross-compilation presets
