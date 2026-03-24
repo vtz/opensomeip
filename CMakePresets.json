@@ -110,7 +110,7 @@
     {
       "name": "threadx-linux-tests",
       "displayName": "ThreadX Linux Port Tests",
-      "description": "Runtime tests using Eclipse ThreadX Linux port (FetchContent)",
+      "description": "Runtime tests using Eclipse ThreadX Linux port (FetchContent). CMAKE_POLICY_VERSION_MINIMUM=3.5 works around ThreadX's legacy CMakeLists.txt.",
       "inherits": "base",
       "cacheVariables": {
         "SOMEIP_THREADX_LINUX_TESTS": "ON",
@@ -120,7 +120,7 @@
     {
       "name": "threadx-cortexm4",
       "displayName": "ThreadX ARM Cortex-M4",
-      "description": "Cross-compile for ARM Cortex-M4 with ThreadX and lwIP",
+      "description": "Cross-compile for ARM Cortex-M4 with ThreadX and lwIP. CMAKE_POLICY_VERSION_MINIMUM=3.5 works around ThreadX's legacy CMakeLists.txt.",
       "inherits": "base",
       "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi-gcc.cmake",
       "cacheVariables": {
