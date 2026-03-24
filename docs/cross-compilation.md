@@ -299,7 +299,7 @@ To add support for a new board or RTOS:
 1. **Create the PAL backend** (if the RTOS is new):
    - Add `include/platform/<rtos>/thread_impl.h` and `memory_impl.h`
    - Add `src/platform/<rtos>/memory.cpp` if needed
-   - Add stubs in `tests/stubs/<rtos>/` and mocks in `tests/mocks/<rtos>/`
+   - Add mocks in `tests/mocks/<rtos>/`
 
 2. **Add PAL selection logic** in `CMakeLists.txt` and `src/CMakeLists.txt`
 
