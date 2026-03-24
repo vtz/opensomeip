@@ -22,6 +22,10 @@
 #define LWIP_IPV6            0
 #define LWIP_IGMP            1
 
+/* Pool sizes below are minimal for CI compilation only.
+ * TcpTransportConfig::max_connections defaults to 10, which requires
+ * at least 11 TCP PCBs (10 connections + 1 listen).  Production
+ * lwipopts.h should set MEMP_NUM_TCP_PCB >= max_connections + 1. */
 #define MEM_SIZE             (16 * 1024)
 #define MEMP_NUM_NETCONN     8
 #define MEMP_NUM_TCP_PCB     8
