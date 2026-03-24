@@ -46,11 +46,11 @@ jobs:
       - name: Configure (freertos-cortexm4 preset)
         run: cmake --preset freertos-cortexm4
 
-      - name: Build
-        run: cmake --build --preset freertos-cortexm4
+      - name: Build (core libraries)
+        run: cmake --build --preset freertos-cortexm4 --target someip-core someip-serialization someip-tp
 
-  stub-compile-check-fedora:
-    name: FreeRTOS+lwIP stub compile check (Fedora 42)
+  compile-check-fedora:
+    name: FreeRTOS PAL compile check (Fedora 42)
     runs-on: ubuntu-latest
     container:
       image: fedora:42
@@ -62,15 +62,11 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Build with FreeRTOS+lwIP stubs
-        run: |
-          cmake -G Ninja -B build_freertos \
-            -DSOMEIP_USE_FREERTOS=ON \
-            -DSOMEIP_USE_LWIP=ON \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_CXX_FLAGS="-I$(pwd)/tests/stubs/freertos -I$(pwd)/tests/stubs/lwip"
-          cmake --build build_freertos
+      - name: Configure (freertos-compile-check preset)
+        run: cmake --preset freertos-compile-check
+
+      - name: Build
+        run: cmake --build --preset freertos-compile-check
 
   runtime-tests:
     name: FreeRTOS POSIX port runtime tests

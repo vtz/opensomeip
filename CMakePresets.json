@@ -98,7 +98,7 @@
     {
       "name": "threadx-compile-check",
       "displayName": "ThreadX Compile Check",
-      "description": "Host-compiler build with real ThreadX kernel (PAL threading verification)",
+      "description": "Host-compiler build with real ThreadX kernel (PAL threading verification). CMAKE_POLICY_VERSION_MINIMUM works around CMake 3.27+ policy enforcement against ThreadX's legacy CMakeLists.txt.",
       "inherits": "base",
       "cacheVariables": {
         "SOMEIP_USE_THREADX": "ON",

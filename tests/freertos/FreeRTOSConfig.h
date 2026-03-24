@@ -54,6 +54,11 @@
 
 #define configUSE_TIMERS                         1
 
+/* ARM Cortex-M port requirements (unused by the POSIX port) */
+#define configCPU_CLOCK_HZ                       ((uint32_t)168000000)
+#define configKERNEL_INTERRUPT_PRIORITY           255
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY      191
+
 #define configASSERT(x)                                                        \
     do {                                                                       \
         if (!(x)) {                                                            \

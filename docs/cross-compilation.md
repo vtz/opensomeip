@@ -304,6 +304,7 @@ To add support for a new board or RTOS:
 2. **Add PAL selection logic** in `CMakeLists.txt` and `src/CMakeLists.txt`
 
 3. **Create a preset** in `CMakePresets.json`:
+
    ```json
    {
      "name": "myrtos-cortexm4",

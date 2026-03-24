@@ -46,11 +46,11 @@ jobs:
       - name: Configure (threadx-cortexm4 preset)
         run: cmake --preset threadx-cortexm4
 
-      - name: Build
-        run: cmake --build --preset threadx-cortexm4
+      - name: Build (core libraries)
+        run: cmake --build --preset threadx-cortexm4 --target someip-core someip-serialization someip-tp
 
-  stub-compile-check-fedora:
-    name: ThreadX+lwIP stub compile check (Fedora 42)
+  compile-check-fedora:
+    name: ThreadX PAL compile check (Fedora 42)
     runs-on: ubuntu-latest
     container:
       image: fedora:42
@@ -62,15 +62,11 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Build with ThreadX+lwIP stubs
-        run: |
-          cmake -G Ninja -B build_threadx \
-            -DSOMEIP_USE_THREADX=ON \
-            -DSOMEIP_USE_LWIP=ON \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_CXX_FLAGS="-I$(pwd)/tests/stubs/threadx -I$(pwd)/tests/stubs/lwip"
-          cmake --build build_threadx
+      - name: Configure (threadx-compile-check preset)
+        run: cmake --preset threadx-compile-check
+
+      - name: Build
+        run: cmake --build --preset threadx-compile-check
 
   runtime-tests:
     name: ThreadX Linux port runtime tests

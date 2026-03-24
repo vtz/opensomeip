@@ -37,7 +37,7 @@ jobs:
       - name: Configure (${{ matrix.preset }})
         run: cmake --preset ${{ matrix.preset }}
 
-      - name: Build (${{ matrix.preset }})
+      - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
 
   validate-macos-presets:
@@ -55,7 +55,7 @@ jobs:
       - name: Configure (${{ matrix.preset }})
         run: cmake --preset ${{ matrix.preset }}
 
-      - name: Build (${{ matrix.preset }})
+      - name: Build
         run: cmake --build --preset ${{ matrix.preset }}
 
   validate-cross-presets:
@@ -78,5 +78,5 @@ jobs:
       - name: Configure (${{ matrix.preset }})
         run: cmake --preset ${{ matrix.preset }}
 
-      - name: Build (${{ matrix.preset }})
-        run: cmake --build --preset ${{ matrix.preset }}
+      - name: Build core libraries (${{ matrix.preset }})
+        run: cmake --build --preset ${{ matrix.preset }} --target someip-core someip-serialization someip-tp

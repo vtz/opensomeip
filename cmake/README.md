@@ -43,8 +43,8 @@ cmake --list-presets
 |--------|-------------|-----------|
 | `host-linux` | Native POSIX build (Release) | System compiler |
 | `host-linux-tests` | Native POSIX with tests and examples | System compiler |
-| `host-macos` | Native macOS build (POSIX, alias for `host-linux`) | System compiler |
-| `host-macos-tests` | Native macOS with tests (alias for `host-linux-tests`) | System compiler |
+| `host-macos` | Native macOS build (POSIX, inherits from `host-linux`) | System compiler |
+| `host-macos-tests` | Native macOS with tests (inherits from `host-linux-tests`) | System compiler |
 | `linux-aarch64` | AArch64 Linux cross-compile (POSIX) | `aarch64-linux-gnu-gcc` |
 | `freertos-compile-check` | FreeRTOS PAL compile check (host compiler) | System compiler |
 | `freertos-linux-tests` | FreeRTOS POSIX port runtime tests | System compiler |
@@ -152,5 +152,6 @@ The build system selects the correct PAL backend via include-path switching. Eac
 - **FreeRTOS Kernel**: Fetched via FetchContent (when `SOMEIP_USE_FREERTOS=ON`)
 - **ThreadX**: Fetched via FetchContent (when `SOMEIP_USE_THREADX=ON`)
 - **lwIP**: Fetched via FetchContent (when `SOMEIP_USE_LWIP=ON`, headers only)
+- **ThreadX policy note**: ThreadX presets set `CMAKE_POLICY_VERSION_MINIMUM=3.5` to work around CMake 3.27+ policy enforcement against ThreadX's upstream `CMakeLists.txt`, which still uses patterns deprecated after CMake 3.5. This has no effect on the SOME/IP stack itself.
 - If you already have these dependencies in your project, you can override FetchContent with `FETCHCONTENT_SOURCE_DIR_<NAME>` (for example `FETCHCONTENT_SOURCE_DIR_FREERTOS_KERNEL`, `FETCHCONTENT_SOURCE_DIR_THREADX`, or `FETCHCONTENT_SOURCE_DIR_LWIP`).
 - **arm-none-eabi-gcc**: Required for ARM cross-compilation presets
