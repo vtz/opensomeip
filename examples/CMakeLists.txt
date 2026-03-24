@@ -26,5 +26,10 @@ if(BUILD_VSOMEIP_INTEROP)
     add_subdirectory(vsomeip_interop)
 endif()
 
-# All examples have been migrated to hierarchical structure
-# Legacy examples removed - use basic/ and advanced/ subdirectories
+# Renode-specific examples (only built when Renode test presets are active)
+if(SOMEIP_FREERTOS_RENODE_TESTS)
+    add_subdirectory(renode/freertos_multitask)
+endif()
+if(SOMEIP_THREADX_RENODE_TESTS)
+    add_subdirectory(renode/threadx_pool_demo)
+endif()

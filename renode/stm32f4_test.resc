@@ -1,0 +1,33 @@
+################################################################################
+# Renode headless test script for STM32F407 Discovery (Cortex-M4F)
+#
+# Used for both FreeRTOS and ThreadX Renode test builds.
+# Captures USART2 output to a file for automated result parsing.
+#
+# Variables (set before including):
+#   $firmware  - path to the ARM ELF (e.g. @build/renode/test_freertos_renode.elf)
+#   $logfile   - path to write UART output (e.g. @/tmp/uart.log)
+#
+# Usage:
+#   renode --disable-xwt --plain \
+#     -e '$firmware=@path/to/test.elf; $logfile=@/tmp/uart.log; i @stm32f4_test.resc'
+#
+# Copyright (c) 2025 Vinicius Tadeu Zein
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+
+using sysbus
+
+mach create "stm32f4"
+machine LoadPlatformDescription @platforms/boards/stm32f4_discovery-kit.repl
+
+# Capture USART2 output to file for automated result parsing
+sysbus.usart2 CreateFileTerminal $logfile
+
+macro reset
+"""
+    sysbus LoadELF $firmware
+"""
+runMacro $reset
+
+echo "STM32F407 headless test -- starting simulation."

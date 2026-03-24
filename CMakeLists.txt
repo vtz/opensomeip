@@ -53,6 +53,10 @@ option(SOMEIP_USE_LWIP     "Use lwIP for network sockets" OFF)
 option(SOMEIP_FREERTOS_LINUX_TESTS "Build and run FreeRTOS runtime tests using FreeRTOS POSIX port" OFF)
 option(SOMEIP_THREADX_LINUX_TESTS "Build and run ThreadX runtime tests using Eclipse ThreadX linux port" OFF)
 
+# RTOS Renode ARM target tests (cross-compiled, run on Renode simulator)
+option(SOMEIP_FREERTOS_RENODE_TESTS "Build FreeRTOS tests for Cortex-M4F STM32F407 (Renode)" OFF)
+option(SOMEIP_THREADX_RENODE_TESTS "Build ThreadX tests for Cortex-M4 STM32F407 (Renode)" OFF)
+
 # Derive backend from runtime test mode before include-path/backend selection.
 if(SOMEIP_FREERTOS_LINUX_TESTS AND SOMEIP_THREADX_LINUX_TESTS)
     message(FATAL_ERROR "SOMEIP_FREERTOS_LINUX_TESTS and SOMEIP_THREADX_LINUX_TESTS are mutually exclusive")
@@ -78,9 +82,15 @@ if(SOMEIP_USE_FREERTOS)
     set(FREERTOS_HEAP "4" CACHE STRING "" FORCE)
 
     add_library(freertos_config INTERFACE)
-    target_include_directories(freertos_config SYSTEM INTERFACE
-        ${PROJECT_SOURCE_DIR}/tests/freertos
-    )
+    if(SOMEIP_FREERTOS_RENODE_TESTS)
+        target_include_directories(freertos_config SYSTEM INTERFACE
+            ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode
+        )
+    else()
+        target_include_directories(freertos_config SYSTEM INTERFACE
+            ${PROJECT_SOURCE_DIR}/tests/freertos
+        )
+    endif()
 
     FetchContent_Declare(freertos_kernel
         GIT_REPOSITORY https://github.com/FreeRTOS/FreeRTOS-Kernel.git
@@ -89,10 +99,17 @@ if(SOMEIP_USE_FREERTOS)
     )
     FetchContent_MakeAvailable(freertos_kernel)
 
-    include_directories(
-        ${freertos_kernel_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/tests/freertos
-    )
+    if(SOMEIP_FREERTOS_RENODE_TESTS)
+        include_directories(
+            ${freertos_kernel_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode
+        )
+    else()
+        include_directories(
+            ${freertos_kernel_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}/tests/freertos
+        )
+    endif()
     if(SOMEIP_FREERTOS_LINUX_TESTS AND NOT WIN32)
         include_directories(${freertos_kernel_SOURCE_DIR}/portable/ThirdParty/GCC/Posix)
     endif()
@@ -303,6 +320,59 @@ endif()
 if(BUILD_TESTS AND NOT SOMEIP_FREERTOS_LINUX_TESTS AND NOT SOMEIP_THREADX_LINUX_TESTS)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+# RTOS Renode target tests (cross-compiled ARM ELFs for Renode simulation)
+if(SOMEIP_FREERTOS_RENODE_TESTS)
+    add_subdirectory(bsp/stm32f407_renode)
+
+    add_executable(test_freertos_renode tests/freertos/test_freertos_core.cpp)
+    target_include_directories(test_freertos_renode PRIVATE
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode
+    )
+    target_link_libraries(test_freertos_renode PRIVATE
+        someip-core
+        someip-serialization
+        someip-transport
+        stm32f407_bsp
+    )
+    target_link_options(test_freertos_renode PRIVATE
+        -T${BSP_LINKER_SCRIPT}
+        -Wl,--gc-sections
+        -Wl,--print-memory-usage
+    )
+    set_target_properties(test_freertos_renode PROPERTIES
+        SUFFIX ".elf"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/renode"
+    )
+endif()
+
+if(SOMEIP_THREADX_RENODE_TESTS)
+    if(NOT TARGET stm32f407_bsp)
+        add_subdirectory(bsp/stm32f407_renode)
+    endif()
+
+    add_executable(test_threadx_renode tests/threadx/test_threadx_core.cpp)
+    target_include_directories(test_threadx_renode PRIVATE
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode
+    )
+    target_link_libraries(test_threadx_renode PRIVATE
+        someip-core
+        someip-serialization
+        someip-transport
+        stm32f407_bsp
+    )
+    target_link_options(test_threadx_renode PRIVATE
+        -T${BSP_LINKER_SCRIPT}
+        -Wl,--gc-sections
+        -Wl,--print-memory-usage
+    )
+    set_target_properties(test_threadx_renode PROPERTIES
+        SUFFIX ".elf"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/renode"
+    )
 endif()
 
 if(BUILD_EXAMPLES)
