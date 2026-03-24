@@ -98,6 +98,10 @@ static inline in_addr_t someip_inet_addr(const char* cp) {
     return ::inet_addr(cp);
 }
 
+static inline int someip_inet_pton(int af, const char* src, void* dst) {
+    return ::inet_pton(af, src, dst);
+}
+
 static inline const char* someip_inet_ntop(int af, const void* src,
                                            char* dst, socklen_t size) {
     return ::inet_ntop(af, src, dst, size);

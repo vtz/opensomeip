@@ -281,8 +281,7 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
 
 void IPv4EndpointOption::set_ipv4_address_from_string(const std::string& ip_address) {
     struct in_addr addr;
-    if (inet_pton(AF_INET, ip_address.c_str(), &addr) == 1) {
-        // inet_pton gives us network byte order, store as-is
+    if (someip_inet_pton(AF_INET, ip_address.c_str(), &addr) == 1) {
         ipv4_address_ = addr.s_addr;
     } else {
         ipv4_address_ = 0;
@@ -293,7 +292,7 @@ std::string IPv4EndpointOption::get_ipv4_address_string() const {
     char buffer[INET_ADDRSTRLEN];
     struct in_addr addr;
     addr.s_addr = ipv4_address_;  // Already in network byte order
-    inet_ntop(AF_INET, &addr, buffer, sizeof(buffer));
+    someip_inet_ntop(AF_INET, &addr, buffer, sizeof(buffer));
     return buffer;
 }
 

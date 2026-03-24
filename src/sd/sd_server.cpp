@@ -21,6 +21,7 @@
 #include <atomic>
 #include <chrono>
 #include "platform/byteorder.h"
+#include "platform/net.h"
 #include <algorithm>
 
 namespace someip {
@@ -196,7 +197,7 @@ public:
         // Add IPv4 multicast option (spec requires multicast option for ACK)
         auto multicast_option = std::make_unique<IPv4MulticastOption>();
         // Convert multicast address to network byte order
-        in_addr_t multicast_addr = inet_addr(config_.multicast_address.c_str());
+        in_addr_t multicast_addr = someip_inet_addr(config_.multicast_address.c_str());
         multicast_option->set_ipv4_address(multicast_addr);
         multicast_option->set_port(someip_htons(config_.multicast_port));
         response_message.add_option(std::move(multicast_option));
