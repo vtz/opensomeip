@@ -46,8 +46,8 @@ jobs:
       - name: Configure (freertos-cortexm4 preset)
         run: cmake --preset freertos-cortexm4
 
-      - name: Build (core libraries)
-        run: cmake --build --preset freertos-cortexm4 --target someip-core someip-serialization someip-tp
+      - name: Build
+        run: cmake --build --preset freertos-cortexm4
 
   compile-check-fedora:
     name: FreeRTOS PAL compile check (Fedora 42)

@@ -20,6 +20,7 @@
 #define LWIP_UDP             1
 #define LWIP_IPV4            1
 #define LWIP_IPV6            0
+#define LWIP_IGMP            1
 
 #define MEM_SIZE             (16 * 1024)
 #define MEMP_NUM_NETCONN     8

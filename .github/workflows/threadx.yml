@@ -46,8 +46,8 @@ jobs:
       - name: Configure (threadx-cortexm4 preset)
         run: cmake --preset threadx-cortexm4
 
-      - name: Build (core libraries)
-        run: cmake --build --preset threadx-cortexm4 --target someip-core someip-serialization someip-tp
+      - name: Build
+        run: cmake --build --preset threadx-cortexm4
 
   compile-check-fedora:
     name: ThreadX PAL compile check (Fedora 42)

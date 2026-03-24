@@ -215,6 +215,7 @@ endif()
 
 if(SOMEIP_USE_LWIP)
     include_directories(include/platform/lwip)
+    add_compile_definitions(SOMEIP_NET_LWIP)
 elseif(WIN32)
     # win32 net/byteorder already included above
 else()

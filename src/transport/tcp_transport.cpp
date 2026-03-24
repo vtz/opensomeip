@@ -57,7 +57,7 @@ Result TcpTransport::initialize(const Endpoint& local_endpoint) {
     // Update local endpoint with the actual bound port (useful when port was 0)
     sockaddr_in bound_addr;
     socklen_t addr_len = sizeof(bound_addr);
-    if (getsockname(connection_.socket_fd, (sockaddr*)&bound_addr, &addr_len) == 0) {
+    if (someip_getsockname(connection_.socket_fd, (sockaddr*)&bound_addr, &addr_len) == 0) {
         local_endpoint_ = Endpoint(local_endpoint_.get_address(), ntohs(bound_addr.sin_port));
     }
 
@@ -182,7 +182,7 @@ Result TcpTransport::enable_server_mode(int backlog) {
         return Result::NOT_INITIALIZED;
     }
 
-    if (listen(connection_.socket_fd, backlog) < 0) {
+    if (someip_listen(connection_.socket_fd, backlog) < 0) {
         return Result::NETWORK_ERROR;
     }
 
@@ -198,13 +198,12 @@ someip_socket_t TcpTransport::accept_connection() {
         return SOMEIP_INVALID_SOCKET;
     }
 
-    // Use select() with a short timeout so the receive_loop can check running_
     fd_set read_fds;
     FD_ZERO(&read_fds);
     FD_SET(listen_socket_fd_, &read_fds);
 
     struct timeval tv = {0, 100000}; // 100ms
-    int sel = select(static_cast<int>(listen_socket_fd_) + 1, &read_fds, nullptr, nullptr, &tv);
+    int sel = someip_select(static_cast<int>(listen_socket_fd_) + 1, &read_fds, nullptr, nullptr, &tv);
     if (sel <= 0) {
         return SOMEIP_INVALID_SOCKET;
     }
@@ -212,7 +211,7 @@ someip_socket_t TcpTransport::accept_connection() {
     sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
 
-    someip_socket_t client_fd = accept(listen_socket_fd_, (sockaddr*)&client_addr, &client_len);
+    someip_socket_t client_fd = someip_accept(listen_socket_fd_, (sockaddr*)&client_addr, &client_len);
 
     if (client_fd == SOMEIP_INVALID_SOCKET) {
         return SOMEIP_INVALID_SOCKET;
@@ -226,7 +225,7 @@ someip_socket_t TcpTransport::accept_connection() {
 // Private helper methods
 
 Result TcpTransport::create_socket() {
-    connection_.socket_fd = socket(AF_INET, SOCK_STREAM, 0);
+    connection_.socket_fd = someip_socket(AF_INET, SOCK_STREAM, 0);
     if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
         return Result::NETWORK_ERROR;
     }
@@ -244,9 +243,9 @@ Result TcpTransport::bind_socket() {
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(local_endpoint_.get_port());
-    addr.sin_addr.s_addr = inet_addr(local_endpoint_.get_address().c_str());
+    addr.sin_addr.s_addr = someip_inet_addr(local_endpoint_.get_address().c_str());
 
-    if (bind(connection_.socket_fd, (sockaddr*)&addr, sizeof(addr)) < 0) {
+    if (someip_bind(connection_.socket_fd, (sockaddr*)&addr, sizeof(addr)) < 0) {
         return Result::NETWORK_ERROR;
     }
 
@@ -298,16 +297,12 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(endpoint.get_port());
-    addr.sin_addr.s_addr = inet_addr(endpoint.get_address().c_str());
+    addr.sin_addr.s_addr = someip_inet_addr(endpoint.get_address().c_str());
 
     connection_.state = TcpConnectionState::CONNECTING;
     connection_.remote_endpoint = endpoint;
 
-#if defined(__ZEPHYR__)
-    int connect_result = zsock_connect(connection_.socket_fd, (sockaddr*)&addr, sizeof(addr));
-#else
-    int connect_result = ::connect(connection_.socket_fd, (sockaddr*)&addr, sizeof(addr));
-#endif
+    int connect_result = someip_connect(connection_.socket_fd, (sockaddr*)&addr, sizeof(addr));
 
     if (connect_result == 0) {
         // Connected immediately
@@ -329,7 +324,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         timeout.tv_sec  = static_cast<decltype(timeout.tv_sec)>(config_.connection_timeout.count() / 1000);
         timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>((config_.connection_timeout.count() % 1000) * 1000);
 
-        connect_result = select(static_cast<int>(connection_.socket_fd) + 1, nullptr, &write_fds, nullptr, &timeout);
+        connect_result = someip_select(static_cast<int>(connection_.socket_fd) + 1, nullptr, &write_fds, nullptr, &timeout);
 
         if (connect_result > 0) {
             int error = 0;

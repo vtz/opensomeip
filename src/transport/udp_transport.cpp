@@ -184,7 +184,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
     }
 
     struct ip_mreq mreq;
-    mreq.imr_multiaddr.s_addr = inet_addr(multicast_address.c_str());
+    mreq.imr_multiaddr.s_addr = someip_inet_addr(multicast_address.c_str());
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 
     if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
@@ -208,7 +208,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
     // Set multicast interface if specified
     if (!config_.multicast_interface.empty()) {
         struct in_addr interface_addr;
-        interface_addr.s_addr = inet_addr(config_.multicast_interface.c_str());
+        interface_addr.s_addr = someip_inet_addr(config_.multicast_interface.c_str());
         if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_IF, &interface_addr, sizeof(interface_addr)) < 0) {
             // Not critical, continue
         }
@@ -230,7 +230,7 @@ Result UdpTransport::leave_multicast_group(const std::string& multicast_address)
     }
 
     struct ip_mreq mreq;
-    mreq.imr_multiaddr.s_addr = inet_addr(multicast_address.c_str());
+    mreq.imr_multiaddr.s_addr = someip_inet_addr(multicast_address.c_str());
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 
     if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
@@ -243,7 +243,7 @@ Result UdpTransport::leave_multicast_group(const std::string& multicast_address)
 Result UdpTransport::create_socket() {
     platform::ScopedLock lock(socket_mutex_);
 
-    socket_fd_ = socket(AF_INET, SOCK_DGRAM, 0);
+    socket_fd_ = someip_socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return Result::NETWORK_ERROR;
     }
@@ -306,13 +306,13 @@ Result UdpTransport::bind_socket() {
     platform::ScopedLock lock(socket_mutex_);
 
     sockaddr_in addr = create_sockaddr(local_endpoint_);
-    if (bind(socket_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    if (someip_bind(socket_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
         return Result::NETWORK_ERROR;
     }
 
     // Get the actual port assigned by the OS (important for port 0)
     socklen_t addr_len = sizeof(addr);
-    if (getsockname(socket_fd_, reinterpret_cast<sockaddr*>(&addr), &addr_len) == 0) {
+    if (someip_getsockname(socket_fd_, reinterpret_cast<sockaddr*>(&addr), &addr_len) == 0) {
         local_endpoint_ = sockaddr_to_endpoint(addr);
     }
 
@@ -326,11 +326,11 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
     }
 
     struct ip_mreq mreq;
-    mreq.imr_multiaddr.s_addr = inet_addr(endpoint.get_address().c_str());
+    mreq.imr_multiaddr.s_addr = someip_inet_addr(endpoint.get_address().c_str());
 
     // Use configured interface or INADDR_ANY
     if (!config_.multicast_interface.empty()) {
-        mreq.imr_interface.s_addr = inet_addr(config_.multicast_interface.c_str());
+        mreq.imr_interface.s_addr = someip_inet_addr(config_.multicast_interface.c_str());
     } else {
         mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     }
@@ -451,19 +451,19 @@ sockaddr_in UdpTransport::create_sockaddr(const Endpoint& endpoint) const {
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons(endpoint.get_port());
-    addr.sin_addr.s_addr = inet_addr(endpoint.get_address().c_str());
+    addr.sin_addr.s_addr = someip_inet_addr(endpoint.get_address().c_str());
     return addr;
 }
 
 Endpoint UdpTransport::sockaddr_to_endpoint(const sockaddr_in& addr) const {
     char ip_str[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &addr.sin_addr, ip_str, sizeof(ip_str));
+    someip_inet_ntop(AF_INET, &addr.sin_addr, ip_str, sizeof(ip_str));
 
     return Endpoint(ip_str, ntohs(addr.sin_port), TransportProtocol::UDP);
 }
 
 bool UdpTransport::is_multicast_address(const std::string& address) const {
-    in_addr_t addr = inet_addr(address.c_str());
+    in_addr_t addr = someip_inet_addr(address.c_str());
     if (addr == INADDR_NONE) {
         return false;
     }
