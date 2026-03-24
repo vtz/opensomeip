@@ -92,7 +92,6 @@ static inline const char* someip_inet_ntop(int af, const void* src,
 
 /* ---------- Socket options (Winsock uses char*, not void*) ------------------ */
 
-/** @implements REQ_PAL_NET_SOCKOPT */
 static inline int someip_setsockopt(someip_socket_t fd, int level, int optname,
                                     const void* optval, socklen_t optlen) {
     return setsockopt(fd, level, optname,
@@ -100,7 +99,6 @@ static inline int someip_setsockopt(someip_socket_t fd, int level, int optname,
                       static_cast<int>(optlen));
 }
 
-/** @implements REQ_PAL_NET_SOCKOPT */
 static inline int someip_getsockopt(someip_socket_t fd, int level, int optname,
                                     void* optval, socklen_t* optlen) {
     return getsockopt(fd, level, optname,
@@ -110,7 +108,6 @@ static inline int someip_getsockopt(someip_socket_t fd, int level, int optname,
 
 /* ---------- Data transfer (Winsock uses char*, int len) --------------------- */
 
-/** @implements REQ_PAL_NET_SEND */
 static inline ssize_t someip_sendto(someip_socket_t fd, const void* buf, size_t len,
                                     int flags, const struct sockaddr* dest,
                                     socklen_t addrlen) {
@@ -118,7 +115,6 @@ static inline ssize_t someip_sendto(someip_socket_t fd, const void* buf, size_t 
                   static_cast<int>(len), flags, dest, static_cast<int>(addrlen));
 }
 
-/** @implements REQ_PAL_NET_RECV */
 static inline ssize_t someip_recvfrom(someip_socket_t fd, void* buf, size_t len,
                                       int flags, struct sockaddr* src,
                                       socklen_t* addrlen) {
@@ -127,14 +123,12 @@ static inline ssize_t someip_recvfrom(someip_socket_t fd, void* buf, size_t len,
                     reinterpret_cast<int*>(addrlen));
 }
 
-/** @implements REQ_PAL_NET_SEND */
 static inline ssize_t someip_send(someip_socket_t fd, const void* buf, size_t len,
                                   int flags) {
     return send(fd, reinterpret_cast<const char*>(buf),
                 static_cast<int>(len), flags);
 }
 
-/** @implements REQ_PAL_NET_RECV */
 static inline ssize_t someip_recv(someip_socket_t fd, void* buf, size_t len, int flags) {
     return recv(fd, reinterpret_cast<char*>(buf),
                 static_cast<int>(len), flags);

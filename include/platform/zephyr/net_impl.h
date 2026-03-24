@@ -20,8 +20,10 @@
  */
 #define socket(...)       zsock_socket(__VA_ARGS__)
 #define close(...)        zsock_close(__VA_ARGS__)
+#define shutdown(...)     zsock_shutdown(__VA_ARGS__)
 #define bind(...)         zsock_bind(__VA_ARGS__)
 #define listen(...)       zsock_listen(__VA_ARGS__)
+#define connect(...)      zsock_connect(__VA_ARGS__)
 #define accept(...)       zsock_accept(__VA_ARGS__)
 #define send(...)         zsock_send(__VA_ARGS__)
 #define sendto(...)       zsock_sendto(__VA_ARGS__)
