@@ -41,7 +41,7 @@ OpenSOME/IP provides a complete, standards-compliant C++ implementation of the S
 
 - **Truly Open Source**: Apache 2.0 licensed - use freely in commercial and personal projects
 - **Modern C++17**: Clean, maintainable codebase with no legacy dependencies
-- **Production Ready**: 169 C++ unit tests + 80+ Python tests with coverage reporting and CI/CD integration
+- **Production Ready**: 169 C++ unit tests + 80+ Python tests with coverage reporting, CI/CD integration, and [Renode](https://renode.io/) hardware simulation testing on ARM Cortex-M targets
 - **Well Documented**: Complete API documentation, examples, and traceability matrices
 - **Active Development**: Regular updates and community-driven improvements
 - **Easy Integration**: CMake-based build system works with any C++ project
@@ -67,9 +67,10 @@ This project uses [Semantic Versioning](https://semver.org/). See [VERSION.md](V
 - POSIX-compatible system (Linux, macOS)
 
 **Embedded / RTOS targets**: See the dedicated port guides:
-- [Zephyr RTOS port](docs/ZEPHYR_PORT.md) – runs on `native_sim` and ARM targets
-- [FreeRTOS port](docs/FREERTOS_PORT.md) – uses the FreeRTOS POSIX layer for Linux integration tests
-- [Eclipse ThreadX port](docs/THREADX_PORT.md) – uses the ThreadX Linux port for integration tests
+- [Zephyr RTOS port](docs/ZEPHYR_PORT.md) – runs on `native_sim` and ARM targets (Renode S32K388 simulation)
+- [FreeRTOS port](docs/FREERTOS_PORT.md) – Linux POSIX tests + Renode STM32F407 Cortex-M4F simulation
+- [Eclipse ThreadX port](docs/THREADX_PORT.md) – Linux port tests + Renode STM32F407 Cortex-M4 simulation
+- [Cross-compilation guide](docs/cross-compilation.md) – presets, toolchains, and Renode testing
 
 ### Optional Development Tools
 

@@ -143,6 +143,46 @@ This option:
 The test task calls `exit()` after completing, since
 `vTaskStartScheduler()` never returns.
 
+## Renode Testing (STM32F407 Cortex-M4F)
+
+For testing on actual ARM Cortex-M4F architecture, the project supports
+running tests on the [Renode](https://renode.io/) hardware simulator
+using a simulated STM32F407 Discovery board.
+
+### Running locally
+
+```bash
+# Requires arm-none-eabi-gcc and Renode installed
+./scripts/run_freertos_renode_test.sh --timeout 60
+```
+
+The script handles the full workflow:
+1. Cross-compiles with the `freertos-cortexm4-renode` CMake preset
+2. Launches Renode headless with `renode/stm32f4_test.resc`
+3. Captures USART2 output via `CreateFileTerminal`
+4. Parses `[PASS]`/`[FAIL]` results and generates JUnit XML
+
+### CMake preset
+
+```bash
+cmake --preset freertos-cortexm4-renode
+cmake --build --preset freertos-cortexm4-renode
+```
+
+This preset:
+- Uses the `arm-none-eabi-gcc` toolchain for Cortex-M4F
+- Enables `SOMEIP_FREERTOS_RENODE_TESTS=ON`
+- Builds `test_freertos_renode.elf` linked with a minimal BSP
+  (`bsp/stm32f407_renode/`) providing startup code, linker script,
+  and UART retarget
+
+### Renode example
+
+The `examples/renode/freertos_multitask/` demo shows a producer/consumer
+pattern with FreeRTOS tasks exchanging SOME/IP messages via a FreeRTOS
+queue, exercising `platform::Mutex` and `platform::allocate_message()`
+on real ARM code paths.
+
 ## Supported Platform Combinations
 
 | Platform | Threading Backend | Networking Backend | Status |

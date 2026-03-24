@@ -156,6 +156,45 @@ This option:
 The test binary calls `exit()` after completing, since
 `tx_kernel_enter()` never returns.
 
+## Renode Testing (STM32F407 Cortex-M4)
+
+For testing on actual ARM Cortex-M4 architecture, the project supports
+running tests on the [Renode](https://renode.io/) hardware simulator
+using a simulated STM32F407 Discovery board.
+
+### Running locally
+
+```bash
+# Requires arm-none-eabi-gcc and Renode installed
+./scripts/run_threadx_renode_test.sh --timeout 60
+```
+
+The script handles the full workflow:
+1. Cross-compiles with the `threadx-cortexm4-renode` CMake preset
+2. Launches Renode headless with `renode/stm32f4_test.resc`
+3. Captures USART2 output via `CreateFileTerminal`
+4. Parses `[PASS]`/`[FAIL]` results and generates JUnit XML
+
+### CMake preset
+
+```bash
+cmake --preset threadx-cortexm4-renode
+cmake --build --preset threadx-cortexm4-renode
+```
+
+This preset:
+- Uses the `arm-none-eabi-gcc` toolchain for Cortex-M4
+- Enables `SOMEIP_THREADX_RENODE_TESTS=ON`
+- Builds `test_threadx_renode.elf` linked with the shared BSP
+  (`bsp/stm32f407_renode/`) and ThreadX-specific config (`tx_user.h`)
+
+### Renode example
+
+The `examples/renode/threadx_pool_demo/` demo shows burst allocation
+of SOME/IP messages using `platform::allocate_message()` (ThreadX byte
+pool), with a worker thread deserializing and hex-dumping messages on
+real ARM code paths.
+
 ## Supported Platform Combinations
 
 | Platform | Threading Backend | Networking Backend | Status |

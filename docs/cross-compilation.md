@@ -135,6 +135,8 @@ target_link_libraries(my_firmware PRIVATE someip-core someip-transport someip-sd
 
 ### Testing without hardware
 
+#### Linux-port tests (POSIX threads)
+
 Use the Linux-port presets to run the actual FreeRTOS/ThreadX kernel on POSIX threads:
 
 ```bash
@@ -150,6 +152,32 @@ ctest --preset threadx-linux-tests
 ```
 
 These tests exercise the real PAL implementation with real RTOS primitives, without requiring embedded hardware.
+
+#### Renode simulation (real ARM target)
+
+For testing on actual ARM Cortex-M architecture (not POSIX threads), use the Renode presets. These cross-compile full ELF binaries with startup code and UART retarget, then run them on the [Renode](https://renode.io/) open-source hardware simulator:
+
+```bash
+# FreeRTOS on Renode (STM32F407 Cortex-M4F)
+./scripts/run_freertos_renode_test.sh --timeout 60
+
+# ThreadX on Renode (STM32F407 Cortex-M4)
+./scripts/run_threadx_renode_test.sh --timeout 60
+```
+
+These scripts handle the full workflow: cross-compile with the Renode preset, launch Renode headless, capture UART output, parse `[PASS]`/`[FAIL]` results, and optionally generate JUnit XML (`--junit-output PATH`).
+
+The Renode presets use a minimal bare-metal BSP (`bsp/stm32f407_renode/`) that provides startup code, a linker script matching the STM32F407 memory map, and UART retarget so `printf` output is captured by Renode's `FileTerminal`.
+
+For Zephyr, the Renode test runner builds and runs tests for the `s32k388_renode` board (NXP S32K388 Cortex-M7):
+
+```bash
+# Requires ZEPHYR_BASE to be set
+./scripts/run_renode_test.sh test_core --timeout 60
+./scripts/run_renode_test.sh test_transport --timeout 60
+```
+
+**Prerequisites**: Install [Renode](https://renode.io/download/) and the ARM GCC toolchain (`arm-none-eabi-gcc`).
 
 ## ThreadX + lwIP
 

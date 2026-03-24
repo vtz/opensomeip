@@ -145,6 +145,44 @@ and standard `std::make_shared` are used, matching the host build.
 The Zephyr backend (`k_thread`, `k_mem_slab`, `zsock_*`) is only
 active on real hardware targets.
 
+## Renode Testing (S32K388 Cortex-M7)
+
+For testing on actual ARM Cortex-M7 architecture, the project supports
+running tests on the [Renode](https://renode.io/) hardware simulator
+using the `s32k388_renode` board. Unlike `native_sim`, this exercises
+the real Zephyr PAL backend (`k_thread`, `k_mutex`, `zsock_*`) on a
+simulated NXP S32K388.
+
+### Running locally
+
+```bash
+# Requires ZEPHYR_BASE to be set and Renode installed
+./scripts/run_renode_test.sh test_core --timeout 60
+./scripts/run_renode_test.sh test_transport --timeout 60
+```
+
+The script handles the full workflow:
+1. Builds the test for `s32k388_renode` via `west build`
+2. Launches Renode headless (`--disable-xwt`) with a test `.resc` script
+3. Captures UART output (LPUART0) to a temporary file via `CreateFileTerminal`
+4. Parses `[PASS]`/`[FAIL]` results and the summary line
+5. Optionally generates JUnit XML (`--junit-output PATH`)
+
+### Renode demo sample
+
+The `zephyr/samples/renode_demo/` sample demonstrates a full SOME/IP
+UDP request/response on the simulated S32K388:
+- A server thread binds a UDP socket on the simulated GMAC Ethernet
+- A client thread sends a SOME/IP request and validates the response
+- Output follows the standard `[PASS]`/`[FAIL]` format for automated parsing
+
+### Renode scripts
+
+| Script | Purpose |
+|--------|---------|
+| `zephyr/renode/s32k388_test.resc` | Headless test script (uses `CreateFileTerminal`, auto-starts) |
+| `zephyr/renode/s32k388_someip.resc` | Interactive development script (uses `showAnalyzer`) |
+
 ## CI Integration
 
 Zephyr tests run in the `ghcr.io/zephyrproject-rtos/ci` container:
@@ -155,6 +193,8 @@ Zephyr tests run in the `ghcr.io/zephyrproject-rtos/ci` container:
 | `test_transport` | `native_sim/native/64` | Build + runtime (3 tests) |
 | `someip_echo` | `native_sim/native/64` | Build + runtime |
 | `mr_canhubk3` | `mr_canhubk3` | Cross-compile only |
+| `test_core` | `s32k388_renode` | Build + Renode runtime |
+| `test_transport` | `s32k388_renode` | Build + Renode runtime |
 
 See `.github/workflows/zephyr.yml` for the full workflow.
 
