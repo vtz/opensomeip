@@ -1,5 +1,10 @@
 {% extends "main.html" %}
 
+{% block extrahead %}
+  {{ super() }}
+  <meta property="og:type" content="website">
+{% endblock %}
+
 {% block tabs %}
   {{ super() }}
 

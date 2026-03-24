@@ -1,3 +1,7 @@
+---
+description: Quick start guide for OpenSOME/IP. Build and run a C++17 SOME/IP stack on Linux, macOS, Zephyr, FreeRTOS, or ThreadX in minutes.
+---
+
 # Getting Started
 
 Get OpenSOME/IP up and running in minutes.

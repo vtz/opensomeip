@@ -1,3 +1,7 @@
+---
+description: OpenSOME/IP architecture and design. Modular, layered C++17 SOME/IP stack with service discovery, RPC, events, E2E protection, and transport protocol layers.
+---
+
 # Architecture & Design
 
 OpenSOME/IP follows a modular, layered architecture with clear separation of concerns.

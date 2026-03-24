@@ -1,3 +1,7 @@
+---
+description: OpenSOME/IP API reference. Covers service discovery, RPC, transport protocol, events, E2E protection, and serialization modules.
+---
+
 # API Reference
 
 OpenSOME/IP is organized into self-contained modules, each with its own public header directory under `include/`.

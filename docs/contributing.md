@@ -1,3 +1,6 @@
+---
+description: How to contribute to OpenSOME/IP. Development workflow, coding standards, testing guidelines, and pull request process.
+---
 
 # Contributing to SOME/IP Stack
 

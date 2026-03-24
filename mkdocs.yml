@@ -1,5 +1,6 @@
 site_name: OpenSOME/IP
 site_description: Open-source C++17 SOME/IP protocol stack for automotive and embedded systems
+site_author: Vinicius Tadeu Zein
 site_url: https://vtz.github.io/opensomeip/
 repo_url: https://github.com/vtz/opensomeip
 repo_name: vtz/opensomeip
