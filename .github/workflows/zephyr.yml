@@ -155,10 +155,68 @@ jobs:
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: west build -b mr_canhubk3 zephyr/samples/hello_s32k -d build/s32k344
 
+  zephyr-renode-s32k388:
+    name: Zephyr S32K388 Renode Tests
+    runs-on: ubuntu-latest
+    container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
+      RENODE_VERSION: "1.15.3"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python 3.12
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq software-properties-common > /dev/null
+          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
+          apt-get update -qq
+          apt-get install -y -qq python3.12 python3.12-venv > /dev/null
+          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
+          python3.12 -m ensurepip --upgrade
+          python3.12 -m pip install --upgrade pip
+      - name: Install Zephyr SDK (ARM toolchain)
+        run: |
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
+          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
+          tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
+          /opt/zephyr-sdk-0.17.0/setup.sh -c
+      - name: Install Renode
+        run: |
+          wget -q https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz
+          mkdir -p /opt/renode
+          tar xzf renode-${RENODE_VERSION}.linux-portable.tar.gz -C /opt/renode --strip-components=1
+          ln -s /opt/renode/renode /usr/local/bin/renode
+      - name: Init Zephyr
+        run: |
+          python3.12 -m pip install jsonschema west
+          west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
+          west update --narrow -o=--depth=1 && west zephyr-export
+          python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+      - name: Build & run test_core on Renode
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: |
+          ./scripts/run_renode_test.sh test_core \
+            --timeout 60 \
+            --junit-output /tmp/renode_test_core_junit.xml
+      - name: Build & run test_transport on Renode
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: |
+          ./scripts/run_renode_test.sh test_transport \
+            --timeout 60 \
+            --junit-output /tmp/renode_test_transport_junit.xml
+      - name: Upload Renode test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-zephyr-renode
+          path: /tmp/renode_*_junit.xml
+          retention-days: 14
+
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [host-build, zephyr-native-sim]
+    needs: [host-build, zephyr-native-sim, zephyr-renode-s32k388]
     if: always()
     permissions:
       checks: write

@@ -18,6 +18,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ZEPHYR_DIR="$PROJECT_DIR/zephyr"
 BUILD_BASE="$PROJECT_DIR/build/zephyr"
+RENODE_SCRIPT="$ZEPHYR_DIR/renode/s32k388_test.resc"
 
 TARGET="${1:-native_sim}"
 MODE="${2:-}"
@@ -57,6 +58,15 @@ run_test() {
             FAILED=$((FAILED + 1))
             return
         fi
+    elif [ "$board" = "s32k388_renode" ]; then
+        printf "  Running on Renode...\n"
+        if "$SCRIPT_DIR/run_renode_test.sh" "$app_name" --timeout 60; then
+            PASSED=$((PASSED + 1))
+        else
+            echo "  Renode: FAILED"
+            FAILED=$((FAILED + 1))
+            return
+        fi
     else
         echo "  (runtime test requires Renode or hardware)"
         PASSED=$((PASSED + 1))
@@ -84,8 +94,9 @@ case "$TARGET" in
         run_test hello_s32k   "$ZEPHYR_DIR/samples/hello_s32k"   mr_canhubk3
         ;;
     s32k388_renode)
-        run_test test_core    "$ZEPHYR_DIR/tests/test_core"      s32k388_renode
-        run_test hello_s32k   "$ZEPHYR_DIR/samples/hello_s32k"   s32k388_renode
+        run_test test_core      "$ZEPHYR_DIR/tests/test_core"      s32k388_renode
+        run_test test_transport "$ZEPHYR_DIR/tests/test_transport" s32k388_renode
+        run_test hello_s32k     "$ZEPHYR_DIR/samples/hello_s32k"   s32k388_renode
         ;;
     *)
         echo "ERROR: Unknown target '$TARGET'"

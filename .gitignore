@@ -76,6 +76,9 @@ docs/_build/
 .env
 .env.local
 
+# Progress tracking (never commit)
+status.md
+
 # Test output
 test_results.xml
 test_results.json

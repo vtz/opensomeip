@@ -1,0 +1,32 @@
+################################################################################
+# Renode headless test script for NXP S32K388 + SOME/IP stack
+#
+# Designed for automated CI usage: captures UART output to a file for parsing.
+#
+# Variables (set before including):
+#   $firmware  - path to the Zephyr ELF (e.g. @build/zephyr/zephyr.elf)
+#   $logfile   - path to write UART output (e.g. @/tmp/uart.log)
+#
+# Usage:
+#   renode --disable-xwt --plain \
+#     -e '$firmware=@path/to/zephyr.elf; $logfile=@/tmp/uart.log; i @s32k388_test.resc'
+#
+# Copyright (c) 2025 Vinicius Tadeu Zein
+# SPDX-License-Identifier: Apache-2.0
+################################################################################
+
+using sysbus
+
+mach create "s32k388"
+machine LoadPlatformDescription @platforms/cpus/nxp-s32k388.repl
+
+# Capture UART output to file for automated result parsing
+sysbus.lpuart0 CreateFileTerminal $logfile
+
+macro reset
+"""
+    sysbus LoadELF $firmware
+"""
+runMacro $reset
+
+echo "S32K388 headless test -- starting simulation."
