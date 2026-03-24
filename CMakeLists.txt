@@ -123,6 +123,7 @@ endif()
 
 # --- ThreadX ---
 if(SOMEIP_USE_THREADX)
+    enable_language(C)
     if(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
         set(THREADX_ARCH "linux" CACHE STRING "" FORCE)
     elseif(NOT DEFINED CACHE{THREADX_ARCH})
