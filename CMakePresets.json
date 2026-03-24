@@ -103,6 +103,7 @@
       "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi-gcc.cmake",
       "cacheVariables": {
         "SOMEIP_USE_FREERTOS": "ON",
+        "SOMEIP_USE_LWIP": "ON",
         "SOMEIP_FREERTOS_RENODE_TESTS": "ON",
         "FREERTOS_PORT": "GCC_ARM_CM4F",
         "ARM_CPU": "cortex-m4",
@@ -157,6 +158,7 @@
       "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi-gcc.cmake",
       "cacheVariables": {
         "SOMEIP_USE_THREADX": "ON",
+        "SOMEIP_USE_LWIP": "ON",
         "SOMEIP_THREADX_RENODE_TESTS": "ON",
         "THREADX_ARCH": "cortex_m4",
         "THREADX_TOOLCHAIN": "gnu",

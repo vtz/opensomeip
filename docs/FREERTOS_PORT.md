@@ -171,7 +171,10 @@ cmake --build --preset freertos-cortexm4-renode
 
 This preset:
 - Uses the `arm-none-eabi-gcc` toolchain for Cortex-M4F
-- Enables `SOMEIP_FREERTOS_RENODE_TESTS=ON`
+- Enables `SOMEIP_FREERTOS_RENODE_TESTS=ON` and `SOMEIP_USE_LWIP=ON`
+- Uses lwIP headers (fetched via FetchContent, not compiled) so the
+  build matches the real deployment configuration; byteorder macros
+  resolve to `__builtin_bswap` intrinsics via `cmake/config/lwip/arch/cc.h`
 - Builds `test_freertos_renode.elf` linked with a minimal BSP
   (`bsp/stm32f407_renode/`) providing startup code, linker script,
   and UART retarget

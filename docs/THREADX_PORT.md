@@ -184,7 +184,10 @@ cmake --build --preset threadx-cortexm4-renode
 
 This preset:
 - Uses the `arm-none-eabi-gcc` toolchain for Cortex-M4
-- Enables `SOMEIP_THREADX_RENODE_TESTS=ON`
+- Enables `SOMEIP_THREADX_RENODE_TESTS=ON` and `SOMEIP_USE_LWIP=ON`
+- Uses lwIP headers (fetched via FetchContent, not compiled) so the
+  build matches the real deployment configuration; byteorder macros
+  resolve to `__builtin_bswap` intrinsics via `cmake/config/lwip/arch/cc.h`
 - Builds `test_threadx_renode.elf` linked with the shared BSP
   (`bsp/stm32f407_renode/`) and ThreadX-specific config (`tx_user.h`)
 

@@ -245,8 +245,6 @@ if(SOMEIP_USE_LWIP)
     add_compile_definitions(SOMEIP_NET_LWIP)
 elseif(WIN32)
     # win32 net/byteorder already included above
-elseif(CMAKE_CROSSCOMPILING AND (SOMEIP_USE_FREERTOS OR SOMEIP_USE_THREADX))
-    include_directories(include/platform/baremetal)
 else()
     # posix net/byteorder already included above
 endif()

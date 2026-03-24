@@ -167,7 +167,7 @@ For testing on actual ARM Cortex-M architecture (not POSIX threads), use the Ren
 
 These scripts handle the full workflow: cross-compile with the Renode preset, launch Renode headless, capture UART output, parse `[PASS]`/`[FAIL]` results, and optionally generate JUnit XML (`--junit-output PATH`).
 
-The Renode presets use a minimal bare-metal BSP (`bsp/stm32f407_renode/`) that provides startup code, a linker script matching the STM32F407 memory map, and UART retarget so `printf` output is captured by Renode's `FileTerminal`.
+The Renode presets enable `SOMEIP_USE_LWIP=ON` (headers-only via FetchContent) so the build matches the real deployment configuration. lwIP byteorder macros are resolved inline via `__builtin_bswap` intrinsics defined in `cmake/config/lwip/arch/cc.h`, avoiding a link-time dependency on lwIP's compiled library. A minimal BSP (`bsp/stm32f407_renode/`) provides startup code, a linker script matching the STM32F407 memory map, and UART retarget so `printf` output is captured by Renode's `FileTerminal`.
 
 For Zephyr, the Renode test runner builds and runs tests for the `s32k388_renode` board (NXP S32K388 Cortex-M7):
 
