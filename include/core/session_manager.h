@@ -52,7 +52,7 @@ struct Session {
 
     bool is_expired(std::chrono::seconds timeout) const {
         auto now = std::chrono::steady_clock::now();
-        return (now - last_activity) > timeout;
+        return (now - last_activity) >= timeout;
     }
 };
 
