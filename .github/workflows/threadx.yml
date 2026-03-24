@@ -168,10 +168,44 @@ jobs:
           path: coverage-threadx.xml
           retention-days: 14
 
+  renode-cortexm4:
+    name: ThreadX Cortex-M4 Renode Tests
+    runs-on: ubuntu-latest
+    env:
+      RENODE_VERSION: "1.15.3"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Install Renode
+        run: |
+          wget -q https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz
+          sudo mkdir -p /opt/renode
+          sudo tar xzf renode-${RENODE_VERSION}.linux-portable.tar.gz -C /opt/renode --strip-components=1
+          sudo ln -s /opt/renode/renode /usr/local/bin/renode
+
+      - name: Build & run ThreadX tests on Renode
+        run: |
+          ./scripts/run_threadx_renode_test.sh \
+            --timeout 60 \
+            --junit-output /tmp/threadx_renode_junit.xml
+
+      - name: Upload Renode test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-threadx-renode
+          path: /tmp/threadx_renode_junit.xml
+          retention-days: 14
+
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [runtime-tests, runtime-tests-fedora]
+    needs: [runtime-tests, runtime-tests-fedora, renode-cortexm4]
     if: always()
     permissions:
       checks: write

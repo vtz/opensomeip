@@ -66,6 +66,12 @@ if(SOMEIP_FREERTOS_LINUX_TESTS AND NOT WIN32)
 elseif(SOMEIP_THREADX_LINUX_TESTS AND NOT WIN32)
     set(SOMEIP_USE_THREADX ON CACHE BOOL "" FORCE)
 endif()
+if(SOMEIP_FREERTOS_RENODE_TESTS)
+    set(SOMEIP_USE_FREERTOS ON CACHE BOOL "" FORCE)
+endif()
+if(SOMEIP_THREADX_RENODE_TESTS)
+    set(SOMEIP_USE_THREADX ON CACHE BOOL "" FORCE)
+endif()
 
 # Fetch RTOS kernels and lwIP early — before add_subdirectory(src) — so their
 # headers are on the include path when PAL *_impl.h files are compiled.
@@ -137,6 +143,9 @@ if(SOMEIP_USE_THREADX)
         ${threadx_SOURCE_DIR}/common/inc
         ${threadx_SOURCE_DIR}/ports/${THREADX_ARCH}/${THREADX_TOOLCHAIN}/inc
     )
+    if(SOMEIP_THREADX_RENODE_TESTS)
+        include_directories(${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode)
+    endif()
 endif()
 
 # --- lwIP (headers only — we don't build lwIP itself, the user's BSP does) ---
