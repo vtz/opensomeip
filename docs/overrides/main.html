@@ -10,7 +10,7 @@
   {% if "://" in raw_image %}
     {% set page_image = raw_image %}
   {% else %}
-    {% set page_image = config.site_url ~ raw_image %}
+    {% set page_image = config.site_url.rstrip('/') ~ '/' ~ raw_image.lstrip('/') %}
   {% endif %}
 
   <meta name="keywords" content="SOME/IP, AUTOSAR, automotive middleware, C++17, embedded systems, service discovery, protocol stack, Zephyr, FreeRTOS, ThreadX">
