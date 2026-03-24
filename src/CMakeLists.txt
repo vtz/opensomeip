@@ -30,22 +30,22 @@ set(E2E_SOURCES
 # --- Platform backend selection via include path ---
 # Threading / memory backend
 if(SOMEIP_USE_FREERTOS)
-    set(SOMEIP_THREADING_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/freertos)
+    set(SOMEIP_THREADING_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/freertos)
 elseif(SOMEIP_USE_THREADX)
-    set(SOMEIP_THREADING_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/threadx)
+    set(SOMEIP_THREADING_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/threadx)
 elseif(WIN32)
-    set(SOMEIP_THREADING_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/win32)
+    set(SOMEIP_THREADING_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/win32)
 else()
-    set(SOMEIP_THREADING_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/posix)
+    set(SOMEIP_THREADING_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/posix)
 endif()
 
 # Networking backend
 if(SOMEIP_USE_LWIP)
-    set(SOMEIP_NET_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/lwip)
+    set(SOMEIP_NET_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/lwip)
 elseif(WIN32)
-    set(SOMEIP_NET_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/win32)
+    set(SOMEIP_NET_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/win32)
 else()
-    set(SOMEIP_NET_IMPL_DIR ${CMAKE_SOURCE_DIR}/include/platform/posix)
+    set(SOMEIP_NET_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/posix)
 endif()
 
 # Use OBJECT libraries to avoid circular dependency between core and E2E
@@ -54,7 +54,7 @@ endif()
 # Core object library
 add_library(someip-core-obj OBJECT ${CORE_SOURCES})
 target_include_directories(someip-core-obj PUBLIC
-    ${CMAKE_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
     ${SOMEIP_THREADING_IMPL_DIR}
     ${SOMEIP_NET_IMPL_DIR}
 )
@@ -62,7 +62,7 @@ target_include_directories(someip-core-obj PUBLIC
 # E2E object library
 add_library(someip-e2e-obj OBJECT ${E2E_SOURCES})
 target_include_directories(someip-e2e-obj PUBLIC
-    ${CMAKE_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
     ${SOMEIP_THREADING_IMPL_DIR}
     ${SOMEIP_NET_IMPL_DIR}
 )
@@ -73,7 +73,7 @@ add_library(someip-core STATIC
     $<TARGET_OBJECTS:someip-e2e-obj>
 )
 target_include_directories(someip-core PUBLIC
-    ${CMAKE_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
     ${SOMEIP_THREADING_IMPL_DIR}
     ${SOMEIP_NET_IMPL_DIR}
 )
@@ -118,7 +118,7 @@ add_library(someip-e2e ALIAS someip-core)
 
 # Create serialization library (depends on core)
 add_library(someip-serialization STATIC ${SERIALIZATION_SOURCES})
-target_include_directories(someip-serialization PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(someip-serialization PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(someip-serialization PUBLIC someip-core)
 
 # RPC library sources
@@ -150,7 +150,7 @@ set(TP_SOURCES
 # Create transport library (depends on core + threading)
 add_library(someip-transport STATIC ${TRANSPORT_SOURCES})
 target_include_directories(someip-transport PUBLIC
-    ${CMAKE_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
     ${SOMEIP_THREADING_IMPL_DIR}
     ${SOMEIP_NET_IMPL_DIR}
 )
@@ -162,22 +162,22 @@ endif()
 
 # Create RPC library (depends on core, transport, serialization)
 add_library(someip-rpc STATIC ${RPC_SOURCES})
-target_include_directories(someip-rpc PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(someip-rpc PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(someip-rpc PRIVATE someip-core PRIVATE someip-transport PRIVATE someip-serialization)
 
 # Create SD library (depends on core, transport)
 add_library(someip-sd STATIC ${SD_SOURCES})
-target_include_directories(someip-sd PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(someip-sd PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(someip-sd PRIVATE someip-core PRIVATE someip-transport)
 
 # Create Events library (depends on core, transport, rpc)
 add_library(someip-events STATIC ${EVENTS_SOURCES})
-target_include_directories(someip-events PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(someip-events PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(someip-events PRIVATE someip-core PRIVATE someip-transport PRIVATE someip-rpc)
 
 # Create TP library (depends on core, transport)
 add_library(someip-tp STATIC ${TP_SOURCES})
-target_include_directories(someip-tp PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(someip-tp PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(someip-tp PRIVATE someip-core PRIVATE someip-transport)
 
 # Create convenience aliases for backward compatibility
