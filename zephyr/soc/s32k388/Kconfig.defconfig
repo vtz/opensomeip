@@ -1,0 +1,12 @@
+if SOC_S32K388
+
+config SOC
+	default "s32k388"
+
+config NUM_IRQS
+	default 240
+
+config SYS_CLOCK_HW_CYCLES_PER_SEC
+	default 160000000
+
+endif # SOC_S32K388

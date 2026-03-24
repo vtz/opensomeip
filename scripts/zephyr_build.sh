@@ -106,7 +106,8 @@ echo "  Build:  $BUILD_DIR"
 echo ""
 
 west build -b "$BOARD" "$APP_DIR" -d "$BUILD_DIR" --pristine auto -- \
-    -DBOARD_ROOT="$ZEPHYR_DIR" 2>&1
+    -DBOARD_ROOT="$ZEPHYR_DIR" \
+    -DSOC_ROOT="$ZEPHYR_DIR" 2>&1
 
 echo ""
 echo "=== Build complete ==="

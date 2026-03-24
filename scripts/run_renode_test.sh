@@ -88,7 +88,8 @@ echo "  Timeout: ${TIMEOUT}s"
 # --- Build ---
 echo "  Building..."
 west build -b "$BOARD" "$APP_DIR" -d "$BUILD_DIR" --pristine auto -- \
-    -DBOARD_ROOT="$ZEPHYR_DIR" 2>&1
+    -DBOARD_ROOT="$ZEPHYR_DIR" \
+    -DSOC_ROOT="$ZEPHYR_DIR" 2>&1
 
 ELF_PATH="$BUILD_DIR/zephyr/zephyr.elf"
 

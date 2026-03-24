@@ -1,0 +1,5 @@
+config SOC_S32K388
+	bool
+
+config SOC
+	default "s32k388" if SOC_S32K388
