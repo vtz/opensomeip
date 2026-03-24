@@ -1,6 +1,2 @@
 socs:
   - name: s32k388
-    cpuclusters:
-      - name: m7
-        cpus:
-          - name: cpu0
