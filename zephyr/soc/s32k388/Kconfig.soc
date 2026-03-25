@@ -1,10 +1,5 @@
 config SOC_S32K388
 	bool
-	select ARM
-	select CPU_CORTEX_M7
-	select CPU_CORTEX_M_HAS_SYSTICK
-	select CPU_HAS_FPU
-	select CPU_HAS_ARM_MPU
 
 config SOC
 	default "s32k388" if SOC_S32K388

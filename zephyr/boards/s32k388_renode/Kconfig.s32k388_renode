@@ -1,0 +1,5 @@
+# Copyright (c) 2025 Vinicius Tadeu Zein
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_S32K388_RENODE
+	select SOC_S32K388
