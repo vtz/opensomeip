@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.cursor/**'
+  pull_request:
+    branches: ["main"]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.cursor/**'
+
+permissions:
+  contents: read
+  checks: write
+
+jobs:
+  host:
+    uses: ./.github/workflows/host.yml
+    permissions:
+      contents: read
+      checks: write
+    secrets: inherit
+
+  freertos:
+    uses: ./.github/workflows/freertos.yml
+    permissions:
+      contents: read
+      checks: write
+    secrets: inherit
+
+  threadx:
+    uses: ./.github/workflows/threadx.yml
+    permissions:
+      contents: read
+      checks: write
+    secrets: inherit
+
+  zephyr:
+    uses: ./.github/workflows/zephyr.yml
+    permissions:
+      contents: read
+      checks: write
+    secrets: inherit
+
+  python:
+    uses: ./.github/workflows/python-tests.yml
+    permissions:
+      contents: read
+      checks: write
+    secrets: inherit
+
+  requirements:
+    uses: ./.github/workflows/requirements-validation.yml
+    permissions:
+      contents: read
+    secrets: inherit

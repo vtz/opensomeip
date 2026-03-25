@@ -1,20 +1,8 @@
 name: ThreadX Build & Test
 
 on:
-  push:
-    branches: ["main"]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.cursor/**'
-  pull_request:
-    branches: ["main"]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.cursor/**'
+  workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read

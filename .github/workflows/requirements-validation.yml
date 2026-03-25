@@ -5,34 +5,8 @@
 name: Requirements Validation
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - 'docs/requirements/**'
-      - 'src/**'
-      - 'include/**'
-      - 'tests/**'
-      - 'scripts/extract_code_requirements.py'
-      - 'scripts/validate_requirements.py'
-      - 'scripts/generate_requirement_diff.py'
-      - 'scripts/generate_traceability_matrix.py'
-      - 'scripts/verify_implementation_status.py'
-      - 'scripts/check_spec_requirements.py'
-      - 'scripts/generate_implementation_report.py'
-  pull_request:
-    branches: ["main"]
-    paths:
-      - 'docs/requirements/**'
-      - 'src/**'
-      - 'include/**'
-      - 'tests/**'
-      - 'scripts/extract_code_requirements.py'
-      - 'scripts/validate_requirements.py'
-      - 'scripts/generate_requirement_diff.py'
-      - 'scripts/generate_traceability_matrix.py'
-      - 'scripts/verify_implementation_status.py'
-      - 'scripts/check_spec_requirements.py'
-      - 'scripts/generate_implementation_report.py'
+  workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
