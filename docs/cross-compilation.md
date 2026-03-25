@@ -85,7 +85,7 @@ cmake --preset freertos-cortexm4
 cmake --build --preset freertos-cortexm4
 ```
 
-This produces `someip-core.a` (and other library targets) compiled for ARM Cortex-M4 with FreeRTOS threading and lwIP networking.
+This produces `libopensomeip.a` compiled for ARM Cortex-M4 with FreeRTOS threading and lwIP networking.
 
 ### Customizing for a different Cortex-M variant
 
@@ -130,7 +130,7 @@ Your board support package (BSP) must still provide:
 Link the SOME/IP libraries into your firmware:
 
 ```cmake
-target_link_libraries(my_firmware PRIVATE someip-core someip-transport someip-sd)
+target_link_libraries(my_firmware PRIVATE opensomeip)
 ```
 
 ### Testing without hardware

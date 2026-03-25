@@ -20,8 +20,7 @@ if(SOMEIP_THREADX_RENODE_TESTS)
     )
     target_compile_definitions(threadx_pool_demo PRIVATE TX_INCLUDE_USER_DEFINE_FILE)
     target_link_libraries(threadx_pool_demo PRIVATE
-        someip-core
-        someip-serialization
+        opensomeip
         stm32f407_bsp
     )
 

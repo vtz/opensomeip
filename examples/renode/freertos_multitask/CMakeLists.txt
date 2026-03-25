@@ -21,8 +21,7 @@ if(SOMEIP_FREERTOS_RENODE_TESTS)
     )
 
     target_link_libraries(freertos_multitask_demo PRIVATE
-        someip-core
-        someip-serialization
+        opensomeip
         stm32f407_bsp
     )
 

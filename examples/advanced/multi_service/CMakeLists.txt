@@ -2,12 +2,12 @@
 
 # Server executable
 add_executable(multi_service_server server.cpp)
-target_link_libraries(multi_service_server someip-events)
+target_link_libraries(multi_service_server opensomeip)
 target_include_directories(multi_service_server PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Client executable
 add_executable(multi_service_client client.cpp)
-target_link_libraries(multi_service_client someip-rpc)
+target_link_libraries(multi_service_client opensomeip)
 target_include_directories(multi_service_client PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 

@@ -2,12 +2,12 @@
 
 # Server executable
 add_executable(hello_world_server server.cpp)
-target_link_libraries(hello_world_server someip-transport)
+target_link_libraries(hello_world_server opensomeip)
 target_include_directories(hello_world_server PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Client executable
 add_executable(hello_world_client client.cpp)
-target_link_libraries(hello_world_client someip-transport)
+target_link_libraries(hello_world_client opensomeip)
 target_include_directories(hello_world_client PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 

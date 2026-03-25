@@ -1,30 +1,30 @@
-# Core library sources
-set(CORE_SOURCES
+# All library sources consolidated into a single target.
+# Linker --gc-sections handles dead code elimination for consumers that only
+# use a subset of the stack (~570K total, 30 object files).
+set(OPENSOMEIP_SOURCES
     common/result.cpp
     someip/types.cpp
     someip/message.cpp
     core/session_manager.cpp
-)
-
-# Serialization library sources
-set(SERIALIZATION_SOURCES
     serialization/serializer.cpp
-)
-
-# Transport library sources
-set(TRANSPORT_SOURCES
     transport/endpoint.cpp
     transport/udp_transport.cpp
     transport/tcp_transport.cpp
-)
-
-# E2E library sources (defined before core since core depends on E2E header)
-set(E2E_SOURCES
     e2e/e2e_protection.cpp
     e2e/e2e_header.cpp
     e2e/e2e_crc.cpp
     e2e/e2e_profile_registry.cpp
     e2e/e2e_profiles/standard_profile.cpp
+    rpc/rpc_client.cpp
+    rpc/rpc_server.cpp
+    sd/sd_message.cpp
+    sd/sd_client.cpp
+    sd/sd_server.cpp
+    events/event_publisher.cpp
+    events/event_subscriber.cpp
+    tp/tp_segmenter.cpp
+    tp/tp_reassembler.cpp
+    tp/tp_manager.cpp
 )
 
 # --- Platform backend selection via include path ---
@@ -48,154 +48,66 @@ else()
     set(SOMEIP_NET_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/posix)
 endif()
 
-# Use OBJECT libraries to avoid circular dependency between core and E2E
-# Both are compiled separately but linked together
-
-# Core object library
-add_library(someip-core-obj OBJECT ${CORE_SOURCES})
-target_include_directories(someip-core-obj PUBLIC
+# Single consolidated library target
+add_library(opensomeip STATIC ${OPENSOMEIP_SOURCES})
+target_include_directories(opensomeip PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${SOMEIP_THREADING_IMPL_DIR}
     ${SOMEIP_NET_IMPL_DIR}
 )
 
-# E2E object library
-add_library(someip-e2e-obj OBJECT ${E2E_SOURCES})
-target_include_directories(someip-e2e-obj PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-    ${SOMEIP_THREADING_IMPL_DIR}
-    ${SOMEIP_NET_IMPL_DIR}
-)
-
-# Create combined core library that includes both core and E2E objects
-add_library(someip-core STATIC
-    $<TARGET_OBJECTS:someip-core-obj>
-    $<TARGET_OBJECTS:someip-e2e-obj>
-)
-target_include_directories(someip-core PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-    ${SOMEIP_THREADING_IMPL_DIR}
-    ${SOMEIP_NET_IMPL_DIR}
-)
-
-# Threading library: only link pthreads on non-RTOS builds
+# Threading: only link pthreads on non-RTOS builds
 if(NOT SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_THREADX)
     find_package(Threads REQUIRED)
-    target_link_libraries(someip-core PUBLIC Threads::Threads)
+    target_link_libraries(opensomeip PUBLIC Threads::Threads)
 endif()
 
-# RTOS kernel linkage: propagate include dirs to OBJECT libraries so
-# FreeRTOS.h/tx_api.h and their port headers are found during compilation.
+# RTOS kernel linkage
 if(SOMEIP_USE_FREERTOS AND TARGET freertos_kernel)
-    target_link_libraries(someip-core-obj PUBLIC freertos_kernel)
-    target_link_libraries(someip-e2e-obj PUBLIC freertos_kernel)
-    target_link_libraries(someip-core PUBLIC freertos_kernel)
+    target_link_libraries(opensomeip PUBLIC freertos_kernel)
 endif()
 if(SOMEIP_USE_THREADX AND TARGET threadx)
-    target_link_libraries(someip-core-obj PUBLIC threadx)
-    target_link_libraries(someip-e2e-obj PUBLIC threadx)
-    target_link_libraries(someip-core PUBLIC threadx)
+    target_link_libraries(opensomeip PUBLIC threadx)
 endif()
 
 if(WIN32)
-    target_link_libraries(someip-core PUBLIC ws2_32)
+    target_link_libraries(opensomeip PUBLIC ws2_32)
 endif()
 
 # FreeRTOS platform sources
 if(SOMEIP_USE_FREERTOS)
-    target_sources(someip-core PRIVATE
+    target_sources(opensomeip PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/freertos/memory.cpp)
 endif()
 
 # ThreadX platform sources
 if(SOMEIP_USE_THREADX)
-    target_sources(someip-core PRIVATE
+    target_sources(opensomeip PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/threadx/memory.cpp)
 endif()
 
-# Create E2E library as an alias to core (for backward compatibility)
-add_library(someip-e2e ALIAS someip-core)
-
-# Create serialization library (depends on core)
-add_library(someip-serialization STATIC ${SERIALIZATION_SOURCES})
-target_include_directories(someip-serialization PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(someip-serialization PUBLIC someip-core)
-
-# RPC library sources
-set(RPC_SOURCES
-    rpc/rpc_client.cpp
-    rpc/rpc_server.cpp
-)
-
-# SD library sources
-set(SD_SOURCES
-    sd/sd_message.cpp
-    sd/sd_client.cpp
-    sd/sd_server.cpp
-)
-
-# Events library sources
-set(EVENTS_SOURCES
-    events/event_publisher.cpp
-    events/event_subscriber.cpp
-)
-
-# TP library sources
-set(TP_SOURCES
-    tp/tp_segmenter.cpp
-    tp/tp_reassembler.cpp
-    tp/tp_manager.cpp
-)
-
-# Create transport library (depends on core + threading)
-add_library(someip-transport STATIC ${TRANSPORT_SOURCES})
-target_include_directories(someip-transport PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-    ${SOMEIP_THREADING_IMPL_DIR}
-    ${SOMEIP_NET_IMPL_DIR}
-)
-if(NOT SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_THREADX)
-    target_link_libraries(someip-transport PRIVATE someip-core PRIVATE Threads::Threads)
-else()
-    target_link_libraries(someip-transport PRIVATE someip-core)
-endif()
-
-# Create RPC library (depends on core, transport, serialization)
-add_library(someip-rpc STATIC ${RPC_SOURCES})
-target_include_directories(someip-rpc PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(someip-rpc PRIVATE someip-core PRIVATE someip-transport PRIVATE someip-serialization)
-
-# Create SD library (depends on core, transport)
-add_library(someip-sd STATIC ${SD_SOURCES})
-target_include_directories(someip-sd PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(someip-sd PRIVATE someip-core PRIVATE someip-transport)
-
-# Create Events library (depends on core, transport, rpc)
-add_library(someip-events STATIC ${EVENTS_SOURCES})
-target_include_directories(someip-events PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(someip-events PRIVATE someip-core PRIVATE someip-transport PRIVATE someip-rpc)
-
-# Create TP library (depends on core, transport)
-add_library(someip-tp STATIC ${TP_SOURCES})
-target_include_directories(someip-tp PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(someip-tp PRIVATE someip-core PRIVATE someip-transport)
-
-# Create convenience aliases for backward compatibility
-add_library(someip-common ALIAS someip-core)
+# Backward-compatible aliases so existing target_link_libraries() calls
+# continue to work (e.g. target_link_libraries(my_app someip-rpc)).
+add_library(someip-core ALIAS opensomeip)
+add_library(someip-transport ALIAS opensomeip)
+add_library(someip-rpc ALIAS opensomeip)
+add_library(someip-sd ALIAS opensomeip)
+add_library(someip-events ALIAS opensomeip)
+add_library(someip-tp ALIAS opensomeip)
+add_library(someip-serialization ALIAS opensomeip)
+add_library(someip-e2e ALIAS opensomeip)
+add_library(someip-common ALIAS opensomeip)
 
 # Windows portability: suppress problematic macros from <windows.h>.
 #   NOGDI            – prevents <wingdi.h> (defines ERROR as 0)
 #   WIN32_LEAN_AND_MEAN – trims unused Win32 sub-headers
 #   NOMINMAX         – prevents min/max macros that break std::min/std::max
 if(WIN32)
-    foreach(_tgt someip-core-obj someip-e2e-obj someip-serialization
-                 someip-transport someip-rpc someip-sd someip-events someip-tp)
-        target_compile_definitions(${_tgt} PRIVATE NOGDI WIN32_LEAN_AND_MEAN NOMINMAX)
-    endforeach()
+    target_compile_definitions(opensomeip PRIVATE NOGDI WIN32_LEAN_AND_MEAN NOMINMAX)
 endif()
 
-# Set library properties (only on real targets, not aliases)
-set_target_properties(someip-core someip-serialization someip-transport PROPERTIES
+# Set library properties
+set_target_properties(opensomeip PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
 )

@@ -2,12 +2,12 @@
 
 # Publisher executable
 add_executable(events_publisher publisher.cpp)
-target_link_libraries(events_publisher someip-events)
+target_link_libraries(events_publisher opensomeip)
 target_include_directories(events_publisher PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Subscriber executable
 add_executable(events_subscriber subscriber.cpp)
-target_link_libraries(events_subscriber someip-events)
+target_link_libraries(events_subscriber opensomeip)
 target_include_directories(events_subscriber PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Custom targets for convenience

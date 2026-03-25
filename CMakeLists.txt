@@ -576,7 +576,7 @@ endif()
 ################################################################################
 
 install(DIRECTORY include/ DESTINATION include/someip FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION lib FILES_MATCHING PATTERN "libsomeip*")
+install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION lib FILES_MATCHING PATTERN "libopensomeip*")
 
 ################################################################################
 # Configure Summary

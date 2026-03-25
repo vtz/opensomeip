@@ -2,12 +2,12 @@
 
 # Server executable
 add_executable(method_calls_server server.cpp)
-target_link_libraries(method_calls_server someip-rpc)
+target_link_libraries(method_calls_server opensomeip)
 target_include_directories(method_calls_server PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Client executable
 add_executable(method_calls_client client.cpp)
-target_link_libraries(method_calls_client someip-rpc)
+target_link_libraries(method_calls_client opensomeip)
 target_include_directories(method_calls_client PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 

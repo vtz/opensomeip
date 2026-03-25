@@ -132,17 +132,19 @@ The build system selects the correct PAL backend via include-path switching. Eac
 | `zephyr` | Zephyr `k_thread`, `k_mutex` | Zephyr sockets | Zephyr module build |
 | `lwip` | -- | lwIP sockets | `SOMEIP_USE_LWIP=ON` |
 
-## Library Targets
+## Library Target
+
+All SOME/IP sources are built as a single static library. Consumers link one target:
+
+```cmake
+target_link_libraries(my_app opensomeip)
+```
 
 | Target | Description |
 |--------|-------------|
-| `someip-core` | Core protocol + E2E protection |
-| `someip-transport` | UDP and TCP transport |
-| `someip-sd` | Service Discovery |
-| `someip-rpc` | RPC client/server |
-| `someip-events` | Event publisher/subscriber |
-| `someip-tp` | SOME/IP-TP segmentation/reassembly |
-| `someip-serialization` | Payload serialization |
+| `opensomeip` | Complete SOME/IP stack (core, transport, SD, RPC, events, TP, E2E, serialization) |
+
+For backward compatibility the legacy per-component names (`someip-core`, `someip-transport`, `someip-rpc`, `someip-sd`, `someip-events`, `someip-tp`, `someip-serialization`, `someip-e2e`, `someip-common`) are kept as CMake ALIAS targets that resolve to `opensomeip`. Dead code is eliminated by the linker via `--gc-sections`.
 
 ## Dependencies
 

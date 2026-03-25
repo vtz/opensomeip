@@ -2,12 +2,12 @@
 
 # Server executable
 add_executable(complex_types_server server.cpp)
-target_link_libraries(complex_types_server someip-rpc)
+target_link_libraries(complex_types_server opensomeip)
 target_include_directories(complex_types_server PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Client executable
 add_executable(complex_types_client client.cpp)
-target_link_libraries(complex_types_client someip-rpc)
+target_link_libraries(complex_types_client opensomeip)
 target_include_directories(complex_types_client PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 

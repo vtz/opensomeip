@@ -2,12 +2,12 @@
 
 # Server executable
 add_executable(large_messages_server server.cpp)
-target_link_libraries(large_messages_server someip-rpc someip-tp)
+target_link_libraries(large_messages_server opensomeip)
 target_include_directories(large_messages_server PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 # Client executable
 add_executable(large_messages_client client.cpp)
-target_link_libraries(large_messages_client someip-rpc someip-tp)
+target_link_libraries(large_messages_client opensomeip)
 target_include_directories(large_messages_client PRIVATE ${CMAKE_SOURCE_DIR}/include)
 
 
