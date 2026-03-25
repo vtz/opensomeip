@@ -119,6 +119,8 @@ public:
         if (joinable()) {
             k_thread_join(&thread_, K_FOREVER);
             joined_ = true;
+            delete ctx_;
+            ctx_ = nullptr;
         }
     }
 
