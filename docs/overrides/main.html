@@ -3,10 +3,10 @@
 {% block extrahead %}
   {{ super() }}
 
-  {% set page_title = page.title | default(config.site_name, true) %}
-  {% set page_desc = page.meta.description | default(config.site_description, true) %}
-  {% set page_url = page.canonical_url | default(config.site_url, true) %}
-  {% set raw_image = page.meta.image | default("images/social-card.png", true) %}
+  {% set page_title = (page.title if page else none) | default(config.site_name, true) %}
+  {% set page_desc = (page.meta.description if page and page.meta else none) | default(config.site_description, true) %}
+  {% set page_url = (page.canonical_url if page else none) | default(config.site_url, true) %}
+  {% set raw_image = (page.meta.image if page and page.meta else none) | default("images/social-card.png", true) %}
   {% if "://" in raw_image %}
     {% set page_image = raw_image %}
   {% else %}
