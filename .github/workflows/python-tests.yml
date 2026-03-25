@@ -44,7 +44,7 @@ jobs:
           python -m pytest ../integration/ ../system/
           -v --tb=short -ra
           --junitxml=junit_results.xml
-          --cov=someip
+          --cov=someip_test_framework
           --cov-report=xml:coverage.xml
           --cov-report=term-missing
           -k "not performance and not slow"
