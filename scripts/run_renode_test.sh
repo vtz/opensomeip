@@ -30,6 +30,7 @@ PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ZEPHYR_DIR="$PROJECT_DIR/zephyr"
 BUILD_BASE="$PROJECT_DIR/build/zephyr"
 RENODE_SCRIPT="$ZEPHYR_DIR/renode/s32k388_test.resc"
+RENODE_PLATFORM="$ZEPHYR_DIR/renode/s32k388_renode.repl"
 
 APP="test_core"
 TIMEOUT=60
@@ -113,7 +114,7 @@ echo "  Starting Renode (headless)..."
 echo "  UART log: $LOGFILE"
 
 timeout "$TIMEOUT" renode --disable-xwt --plain \
-    -e "\$firmware=@$ELF_PATH; \$logfile=@$LOGFILE; i @$RENODE_SCRIPT; start" \
+    -e "\$firmware=@$ELF_PATH; \$logfile=@$LOGFILE; \$platform=@$RENODE_PLATFORM; i @$RENODE_SCRIPT; start" \
     -e "sleep $TIMEOUT; quit" 2>&1 || true
 
 # --- Parse UART output ---

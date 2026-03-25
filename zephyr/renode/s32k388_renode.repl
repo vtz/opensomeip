@@ -1,0 +1,22 @@
+// Minimal Renode platform for S32K388 simulation.
+//
+// Uses a PL011 UART instead of NXP LPUART so that the Zephyr build
+// does not depend on the NXP HAL (which is not installed in CI).
+// Memory regions match the board DTS.
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m7"
+    nvic: nvic
+
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    priorityMask: 0xF0
+    -> cpu@0
+
+sram: Memory.MappedMemory @ sysbus 0x20400000
+    size: 0x80000
+
+flash: Memory.MappedMemory @ sysbus 0x00400000
+    size: 0x800000
+
+uart0: UART.PL011 @ sysbus 0x40090000
+    -> nvic@33
