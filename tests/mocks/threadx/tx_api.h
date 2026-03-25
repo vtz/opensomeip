@@ -214,10 +214,10 @@ inline UINT tx_thread_terminate(TX_THREAD* tcb) {
 }
 
 inline UINT tx_thread_delete(TX_THREAD* tcb) {
-    assert(!tcb->running && "tx_thread_delete called on a running thread");
     if (tcb->thread.joinable()) {
         tcb->thread.join();
     }
+    assert(!tcb->running && "tx_thread_delete called on a running thread");
     tcb->created = false;
     return TX_SUCCESS;
 }
