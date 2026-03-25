@@ -183,9 +183,9 @@ jobs:
 
       - name: Install Renode
         run: |
-          wget -q https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz
+          wget -q "https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz"
           sudo mkdir -p /opt/renode
-          sudo tar xzf renode-${RENODE_VERSION}.linux-portable.tar.gz -C /opt/renode --strip-components=1
+          sudo tar xzf "renode-${RENODE_VERSION}.linux-portable.tar.gz" -C /opt/renode --strip-components=1
           sudo ln -s /opt/renode/renode /usr/local/bin/renode
 
       - name: Build & run ThreadX tests on Renode
@@ -219,5 +219,5 @@ jobs:
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
         with:
-          files: "**/junit_results.xml"
+          files: "**/*junit*.xml"
           check_name: "ThreadX Test Results"

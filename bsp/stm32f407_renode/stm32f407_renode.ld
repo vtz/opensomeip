@@ -109,6 +109,7 @@ SECTIONS
         PROVIDE(end = .);
         PROVIDE(_end = .);
         . = . + 0x10000; /* 64KB heap */
+        PROVIDE(__heap_limit__ = .);
         . = . + 0x4000;  /* 16KB stack */
         . = ALIGN(8);
     } > SRAM

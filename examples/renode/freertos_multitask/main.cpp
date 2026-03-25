@@ -15,11 +15,12 @@
  *  - Consumer task: dequeues serialized messages, deserializes them, validates
  *    the round-trip integrity, and prints per-message results via UART.
  *
- *  - Uses platform::Mutex to protect a shared message counter.
+ *  - Uses std::atomic counters for thread-safe result tracking.
  *
  * Output goes to USART2 so Renode's FileTerminal can capture results.
  */
 
+#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -28,7 +29,6 @@
 #include "someip/message.h"
 #include "someip/types.h"
 #include "serialization/serializer.h"
-#include "platform/thread.h"
 #include "platform/memory.h"
 
 #include <FreeRTOS.h>
@@ -38,21 +38,18 @@
 using namespace someip;
 
 static const int NUM_MESSAGES = 10;
-static int demo_passed = 0;
-static int demo_failed = 0;
-static someip::platform::Mutex counter_mutex;
+static std::atomic<int> demo_passed{0};
+static std::atomic<int> demo_failed{0};
 
 #define DEMO_CHECK(cond, name)                                  \
     do {                                                        \
-        counter_mutex.lock();                                   \
         if (cond) {                                             \
             printf("  [PASS] %s\n", name);                      \
-            demo_passed++;                                      \
+            demo_passed.fetch_add(1);                           \
         } else {                                                \
             printf("  [FAIL] %s\n", name);                      \
-            demo_failed++;                                      \
+            demo_failed.fetch_add(1);                           \
         }                                                       \
-        counter_mutex.unlock();                                 \
     } while (0)
 
 struct SerializedMsg {
@@ -69,6 +66,7 @@ static void producer_task(void *) {
         auto msg = someip::platform::allocate_message();
         if (!msg) {
             printf("  Producer: allocation failed at message %d\n", i);
+            demo_failed.fetch_add(1);
             continue;
         }
 
@@ -91,6 +89,7 @@ static void producer_task(void *) {
 
         if (xQueueSend(msg_queue, &smsg, pdMS_TO_TICKS(500)) != pdPASS) {
             printf("  Producer: queue full at message %d\n", i);
+            demo_failed.fetch_add(1);
         }
 
         vTaskDelay(pdMS_TO_TICKS(50));
@@ -129,15 +128,17 @@ static void consumer_task(void *) {
             received++;
         } else {
             printf("  Consumer: timeout waiting for message %d\n", received);
+            demo_failed.fetch_add(1);
             break;
         }
     }
 
     printf("--- Consumer: done (received %d/%d messages) ---\n", received, NUM_MESSAGES);
 
-    printf("\n=== Results: %d passed, %d failed ===\n", demo_passed, demo_failed);
+    printf("\n=== Results: %d passed, %d failed ===\n",
+           demo_passed.load(), demo_failed.load());
 
-    exit(demo_failed > 0 ? 1 : 0);
+    exit(demo_failed.load() > 0 ? 1 : 0);
 }
 
 static void demo_task(void *) {
@@ -149,17 +150,26 @@ static void demo_task(void *) {
         exit(1);
     }
 
-    xTaskCreate(producer_task, "producer", configMINIMAL_STACK_SIZE * 4,
-                NULL, tskIDLE_PRIORITY + 2, NULL);
-    xTaskCreate(consumer_task, "consumer", configMINIMAL_STACK_SIZE * 4,
-                NULL, tskIDLE_PRIORITY + 1, NULL);
+    if (xTaskCreate(producer_task, "producer", configMINIMAL_STACK_SIZE * 4,
+                    NULL, tskIDLE_PRIORITY + 2, NULL) != pdPASS) {
+        printf("FATAL: failed to create producer task\n");
+        exit(1);
+    }
+    if (xTaskCreate(consumer_task, "consumer", configMINIMAL_STACK_SIZE * 4,
+                    NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
+        printf("FATAL: failed to create consumer task\n");
+        exit(1);
+    }
 
     vTaskDelete(NULL);
 }
 
 int main() {
-    xTaskCreate(demo_task, "demo", configMINIMAL_STACK_SIZE * 2,
-                NULL, tskIDLE_PRIORITY + 3, NULL);
+    if (xTaskCreate(demo_task, "demo", configMINIMAL_STACK_SIZE * 2,
+                    NULL, tskIDLE_PRIORITY + 3, NULL) != pdPASS) {
+        printf("FATAL: failed to create demo task\n");
+        return 1;
+    }
     vTaskStartScheduler();
     return 1;
 }

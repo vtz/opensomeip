@@ -34,20 +34,21 @@
 using namespace someip;
 using namespace someip::transport;
 
+static const uint16_t CLIENT_PORT = 30501;
 static std::atomic<uint16_t> server_port{0};
 static std::atomic<bool> server_ready{false};
 
-static int demo_passed = 0;
-static int demo_failed = 0;
+static std::atomic<int> demo_passed{0};
+static std::atomic<int> demo_failed{0};
 
 #define DEMO_CHECK(cond, name)                                  \
     do {                                                        \
         if (cond) {                                             \
             printf("  [PASS] %s\n", name);                      \
-            demo_passed++;                                      \
+            demo_passed.fetch_add(1);                           \
         } else {                                                \
             printf("  [FAIL] %s\n", name);                      \
-            demo_failed++;                                      \
+            demo_failed.fetch_add(1);                           \
         }                                                       \
     } while (0)
 
@@ -98,7 +99,7 @@ static void server_task() {
     std::vector<uint8_t> resp_payload = {0xCA, 0xFE};
     response.set_payload(resp_payload);
 
-    Endpoint client_addr("127.0.0.1", 0);
+    Endpoint client_addr("127.0.0.1", CLIENT_PORT);
     rc = server.send_message(response, client_addr);
     printf("  Server: sent response (%s)\n",
            rc == Result::SUCCESS ? "OK" : "FAILED");
@@ -114,7 +115,7 @@ static void client_task() {
 
     printf("\n--- Client: starting ---\n");
 
-    Endpoint bind_ep("0.0.0.0", 0);
+    Endpoint bind_ep("0.0.0.0", CLIENT_PORT);
     UdpTransportConfig config;
     config.blocking = false;
 
@@ -166,8 +167,9 @@ int main() {
     cli.join();
     srv.join();
 
-    printf("\n=== Results: %d passed, %d failed ===\n", demo_passed, demo_failed);
+    printf("\n=== Results: %d passed, %d failed ===\n",
+           demo_passed.load(), demo_failed.load());
     printf("=== Demo complete ===\n");
 
-    return demo_failed > 0 ? 1 : 0;
+    return demo_failed.load() > 0 ? 1 : 0;
 }

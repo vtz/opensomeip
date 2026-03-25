@@ -21,6 +21,7 @@
  * Output goes to USART2 so Renode's FileTerminal can capture results.
  */
 
+#include <atomic>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -29,7 +30,6 @@
 #include "someip/message.h"
 #include "someip/types.h"
 #include "serialization/serializer.h"
-#include "platform/thread.h"
 #include "platform/memory.h"
 
 extern "C" {
@@ -39,21 +39,18 @@ extern "C" {
 using namespace someip;
 
 static const int NUM_MESSAGES = 8;
-static int demo_passed = 0;
-static int demo_failed = 0;
-static someip::platform::Mutex result_mutex;
+static std::atomic<int> demo_passed{0};
+static std::atomic<int> demo_failed{0};
 
 #define DEMO_CHECK(cond, name)                                  \
     do {                                                        \
-        result_mutex.lock();                                    \
         if (cond) {                                             \
             printf("  [PASS] %s\n", name);                      \
-            demo_passed++;                                      \
+            demo_passed.fetch_add(1);                           \
         } else {                                                \
             printf("  [FAIL] %s\n", name);                      \
-            demo_failed++;                                      \
+            demo_failed.fetch_add(1);                           \
         }                                                       \
-        result_mutex.unlock();                                  \
     } while (0)
 
 struct MsgSlot {
@@ -63,9 +60,9 @@ struct MsgSlot {
 };
 
 static MsgSlot slots[NUM_MESSAGES];
-static volatile bool allocator_done = false;
-static volatile int  alloc_count = 0;
-static volatile int  release_count = 0;
+static std::atomic<bool> allocator_done{false};
+static std::atomic<int>  alloc_count{0};
+static std::atomic<int>  release_count{0};
 
 static void allocator_entry(ULONG) {
     printf("\n--- Allocator: burst-allocating %d messages ---\n", NUM_MESSAGES);
@@ -78,7 +75,7 @@ static void allocator_entry(ULONG) {
         DEMO_CHECK(msg != nullptr, name_buf);
 
         if (!msg) continue;
-        alloc_count++;
+        alloc_count.fetch_add(1);
 
         msg->set_service_id(0x2000 + i);
         msg->set_method_id(0x0010);
@@ -97,16 +94,16 @@ static void allocator_entry(ULONG) {
         slots[i].used = true;
 
         msg.reset();
-        release_count++;
+        release_count.fetch_add(1);
     }
 
     printf("--- Allocator: done (allocated=%d, released=%d) ---\n",
-           alloc_count, release_count);
-    allocator_done = true;
+           alloc_count.load(), release_count.load());
+    allocator_done.store(true);
 }
 
 static void worker_entry(ULONG) {
-    while (!allocator_done) {
+    while (!allocator_done.load()) {
         tx_thread_sleep(10);
     }
 
@@ -143,11 +140,12 @@ static void worker_entry(ULONG) {
     printf("--- Worker: done ---\n");
 
     printf("\n--- Pool stats: allocated=%d released=%d ---\n",
-           alloc_count, release_count);
+           alloc_count.load(), release_count.load());
 
-    printf("\n=== Results: %d passed, %d failed ===\n", demo_passed, demo_failed);
+    printf("\n=== Results: %d passed, %d failed ===\n",
+           demo_passed.load(), demo_failed.load());
 
-    exit(demo_failed > 0 ? 1 : 0);
+    exit(demo_failed.load() > 0 ? 1 : 0);
 }
 
 static TX_THREAD alloc_thread;

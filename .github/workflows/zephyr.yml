@@ -183,9 +183,9 @@ jobs:
           /opt/zephyr-sdk-0.17.0/setup.sh -c
       - name: Install Renode
         run: |
-          wget -q https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz
+          wget -q "https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz"
           mkdir -p /opt/renode
-          tar xzf renode-${RENODE_VERSION}.linux-portable.tar.gz -C /opt/renode --strip-components=1
+          tar xzf "renode-${RENODE_VERSION}.linux-portable.tar.gz" -C /opt/renode --strip-components=1
           ln -s /opt/renode/renode /usr/local/bin/renode
       - name: Init Zephyr
         run: |
@@ -224,5 +224,5 @@ jobs:
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
         with:
-          files: "**/junit_results.xml"
+          files: "**/*junit*.xml"
           check_name: "Zephyr Test Results"

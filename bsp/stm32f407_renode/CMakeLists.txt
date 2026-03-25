@@ -16,6 +16,8 @@ target_include_directories(stm32f407_bsp PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# Use the Renode-specific linker script
-set(BSP_LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/stm32f407_renode.ld"
-    CACHE FILEPATH "Linker script for STM32F407 Renode BSP" FORCE)
+# Use the Renode-specific linker script unless the user provided one externally
+if(NOT BSP_LINKER_SCRIPT)
+    set(BSP_LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/stm32f407_renode.ld"
+        CACHE FILEPATH "Linker script for STM32F407 Renode BSP")
+endif()

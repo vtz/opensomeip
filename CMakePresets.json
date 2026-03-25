@@ -99,15 +99,10 @@
       "name": "freertos-cortexm4-renode",
       "displayName": "FreeRTOS Cortex-M4 (Renode STM32F4)",
       "description": "Cross-compile FreeRTOS tests for ARM Cortex-M4, runnable on Renode STM32F407 simulator",
-      "inherits": "base",
-      "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi-gcc.cmake",
+      "inherits": "freertos-cortexm4",
       "cacheVariables": {
-        "SOMEIP_USE_FREERTOS": "ON",
-        "SOMEIP_USE_LWIP": "ON",
         "SOMEIP_FREERTOS_RENODE_TESTS": "ON",
         "FREERTOS_PORT": "GCC_ARM_CM3",
-        "ARM_CPU": "cortex-m4",
-        "ARM_FPU": "fpv4-sp-d16",
         "ARM_FLOAT_ABI": "soft"
       }
     },
@@ -154,18 +149,10 @@
       "name": "threadx-cortexm4-renode",
       "displayName": "ThreadX Cortex-M4 (Renode STM32F4)",
       "description": "Cross-compile ThreadX tests for ARM Cortex-M4, runnable on Renode STM32F407 simulator. CMAKE_POLICY_VERSION_MINIMUM=3.5 works around ThreadX's legacy CMakeLists.txt.",
-      "inherits": "base",
-      "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi-gcc.cmake",
+      "inherits": "threadx-cortexm4",
       "cacheVariables": {
-        "SOMEIP_USE_THREADX": "ON",
-        "SOMEIP_USE_LWIP": "ON",
         "SOMEIP_THREADX_RENODE_TESTS": "ON",
-        "THREADX_ARCH": "cortex_m4",
-        "THREADX_TOOLCHAIN": "gnu",
-        "ARM_CPU": "cortex-m4",
-        "ARM_FPU": "fpv4-sp-d16",
-        "ARM_FLOAT_ABI": "soft",
-        "CMAKE_POLICY_VERSION_MINIMUM": "3.5"
+        "ARM_FLOAT_ABI": "soft"
       }
     }
   ],

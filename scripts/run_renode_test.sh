@@ -113,9 +113,9 @@ trap 'rm -f "$LOGFILE"' EXIT
 echo "  Starting Renode (headless)..."
 echo "  UART log: $LOGFILE"
 
-timeout "$TIMEOUT" renode --disable-xwt --plain \
+timeout --preserve-status "$TIMEOUT" renode --disable-xwt --plain \
     -e "\$firmware=@$ELF_PATH; \$logfile=@$LOGFILE; \$platform=@$RENODE_PLATFORM; i @$RENODE_SCRIPT; start" \
-    -e "sleep $TIMEOUT; quit" 2>&1 || true
+    2>&1 || true
 
 # --- Parse UART output ---
 echo ""
@@ -151,7 +151,7 @@ fi
 # --- JUnit XML ---
 if [ -n "$JUNIT_OUTPUT" ] && [ -f "$LOGFILE" ]; then
     echo "  Generating JUnit XML: $JUNIT_OUTPUT"
-    python3 "$SCRIPT_DIR/zephyr_to_junit.py" "$LOGFILE" "${APP}_renode" "$JUNIT_OUTPUT" || true
+    python3 "$SCRIPT_DIR/zephyr_to_junit.py" "$LOGFILE" "${APP}_renode" "$JUNIT_OUTPUT" || echo "  WARNING: JUnit XML generation failed"
 fi
 
 echo "=== Renode test complete ==="

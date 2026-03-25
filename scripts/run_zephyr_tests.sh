@@ -18,7 +18,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 ZEPHYR_DIR="$PROJECT_DIR/zephyr"
 BUILD_BASE="$PROJECT_DIR/build/zephyr"
-RENODE_SCRIPT="$ZEPHYR_DIR/renode/s32k388_test.resc"
 
 TARGET="${1:-native_sim}"
 MODE="${2:-}"

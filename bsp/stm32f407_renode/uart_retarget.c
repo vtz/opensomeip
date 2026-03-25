@@ -64,13 +64,18 @@ int _lseek(int fd, int offset, int whence) { (void)fd; (void)offset; (void)whenc
 int _read(int fd, char *buf, int len)      { (void)fd; (void)buf; (void)len; return 0; }
 
 extern char end;
+extern char __heap_limit__;
 static char *heap_end = 0;
 
 void *_sbrk(int incr) {
     if (heap_end == 0) {
         heap_end = &end;
     }
+    char *new_end = heap_end + incr;
+    if (new_end > &__heap_limit__) {
+        return (void *)-1;
+    }
     char *prev = heap_end;
-    heap_end += incr;
+    heap_end = new_end;
     return prev;
 }

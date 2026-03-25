@@ -11,7 +11,6 @@
  ********************************************************************************/
 
 #include <stdint.h>
-#include <string.h>
 
 extern uint32_t _estack;
 extern uint32_t _sdata, _edata, _sidata;
