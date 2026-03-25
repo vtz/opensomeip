@@ -12,50 +12,36 @@
 #include <zephyr/sys/byteorder.h>
 
 /*
- * Map standard POSIX socket names to Zephyr's zsock_ API.
- * CONFIG_NET_SOCKETS_POSIX_NAMES was removed in Zephyr 4.3.x;
- * these macros replicate its behaviour for third-party code that
- * still uses raw POSIX names.  opensomeip transport code uses the
- * someip_* inline wrappers below instead.
+ * Zephyr 4.3.x removed CONFIG_NET_SOCKETS_POSIX_NAMES.
+ * All opensomeip transport code uses someip_* inline wrappers defined
+ * below, so we do NOT define function-like macros (connect, send, …)
+ * — those would conflict with C++ method names.
+ *
+ * We DO provide type and constant aliases that the portable transport
+ * code relies on (fd_set, FD_ZERO, timeval, …).
  */
-#define socket(...)       zsock_socket(__VA_ARGS__)
-#define close(...)        zsock_close(__VA_ARGS__)
-#define shutdown(...)     zsock_shutdown(__VA_ARGS__)
-#define bind(...)         zsock_bind(__VA_ARGS__)
-#define listen(...)       zsock_listen(__VA_ARGS__)
-#define connect(...)      zsock_connect(__VA_ARGS__)
-#define accept(...)       zsock_accept(__VA_ARGS__)
-#define send(...)         zsock_send(__VA_ARGS__)
-#define sendto(...)       zsock_sendto(__VA_ARGS__)
-#define recv(...)         zsock_recv(__VA_ARGS__)
-#define recvfrom(...)     zsock_recvfrom(__VA_ARGS__)
-#define setsockopt(...)   zsock_setsockopt(__VA_ARGS__)
-#define getsockopt(...)   zsock_getsockopt(__VA_ARGS__)
-#define getsockname(...)  zsock_getsockname(__VA_ARGS__)
-#define fcntl(...)        zsock_fcntl(__VA_ARGS__)
-#define select(...)       zsock_select(__VA_ARGS__)
-#define poll(...)         zsock_poll(__VA_ARGS__)
-#define inet_ntop(...)    zsock_inet_ntop(__VA_ARGS__)
-#define inet_pton(...)    zsock_inet_pton(__VA_ARGS__)
-
+#ifndef FD_ZERO
 #define fd_set            zsock_fd_set
-#define timeval           zsock_timeval
-#undef  FD_ZERO
 #define FD_ZERO(...)      ZSOCK_FD_ZERO(__VA_ARGS__)
-#undef  FD_SET
 #define FD_SET(...)       ZSOCK_FD_SET(__VA_ARGS__)
-#undef  FD_CLR
 #define FD_CLR(...)       ZSOCK_FD_CLR(__VA_ARGS__)
-#undef  FD_ISSET
 #define FD_ISSET(...)     ZSOCK_FD_ISSET(__VA_ARGS__)
+#endif
 
+#ifndef F_GETFL
 #define F_GETFL           ZVFS_F_GETFL
 #define F_SETFL           ZVFS_F_SETFL
-#define O_NONBLOCK        ZVFS_O_NONBLOCK
+#endif
 
+#ifndef O_NONBLOCK
+#define O_NONBLOCK        ZVFS_O_NONBLOCK
+#endif
+
+#ifndef SHUT_RDWR
 #define SHUT_RD           ZSOCK_SHUT_RD
 #define SHUT_WR           ZSOCK_SHUT_WR
 #define SHUT_RDWR         ZSOCK_SHUT_RDWR
+#endif
 
 #ifndef INADDR_NONE
 #define INADDR_NONE       ((uint32_t)0xffffffff)
@@ -131,10 +117,10 @@ static inline int someip_getsockname(someip_socket_t fd, struct sockaddr* addr,
 
 /* ---------- I/O multiplexing ----------------------------------------------- */
 
-static inline int someip_select(int nfds, zsock_fd_set* readfds,
-                                zsock_fd_set* writefds,
-                                zsock_fd_set* exceptfds,
-                                struct zsock_timeval* timeout) {
+static inline int someip_select(int nfds, fd_set* readfds,
+                                fd_set* writefds,
+                                fd_set* exceptfds,
+                                struct timeval* timeout) {
     return zsock_select(nfds, readfds, writefds, exceptfds, timeout);
 }
 
@@ -195,7 +181,7 @@ static inline ssize_t someip_recv(someip_socket_t fd, void* buf,
 
 static inline int someip_set_socket_timeout(someip_socket_t fd, int optname,
                                             int timeout_ms) {
-    struct zsock_timeval tv;
+    struct timeval tv;
     tv.tv_sec  = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
     return zsock_setsockopt(fd, SOL_SOCKET, optname, &tv, sizeof(tv));
