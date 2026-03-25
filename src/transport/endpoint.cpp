@@ -222,7 +222,10 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
             ++groups;
         } else {
             // Allow a single "::" compression sequence (two adjacent colons).
-            if (has_double_colon && !compression_used && pos == double_colon) {
+            // When "::" appears mid-string, the first ':' is consumed as a
+            // group separator, so the empty token may land at double_colon+1.
+            if (has_double_colon && !compression_used &&
+                (pos == double_colon || pos == double_colon + 1)) {
                 compression_used = true;
             } else if (has_double_colon && compression_used && pos == double_colon + 1) {
                 // Second ':' from the same "::" token; valid, nothing to count.

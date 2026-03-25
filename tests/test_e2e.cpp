@@ -243,3 +243,452 @@ TEST_F(E2ETest, MessageWithoutE2E) {
     E2EProtection protection;
     EXPECT_FALSE(protection.has_e2e_protection(msg));
 }
+
+// ============================================================================
+// E2E CRC — MC/DC and edge cases
+//
+// calculate_crc has a switch on crc_type:
+//   case 0 → SAE-J1850 (8-bit)
+//   case 1 → ITU-T X.25 (16-bit)
+//   case 2 → CRC32
+//   default → 0
+// And a guard: if (offset + length > data.size()) return 0
+// ============================================================================
+
+/**
+ * @test_case TC_E2E_CRC_001
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief calculate_crc: out-of-bounds range returns 0
+ */
+TEST_F(E2ETest, CRC_OutOfBoundsRange) {
+    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+    uint32_t crc = E2ECRC::calculate_crc(data, 2, 5, 0);  // offset+length=7 > size=4
+    EXPECT_EQ(crc, 0u);
+}
+
+/**
+ * @test_case TC_E2E_CRC_002
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief calculate_crc: all CRC type branches produce correct dispatch
+ */
+TEST_F(E2ETest, CRC_AllTypeBranches) {
+    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+
+    uint32_t crc8  = E2ECRC::calculate_crc(data, 0, 4, 0);
+    uint32_t crc16 = E2ECRC::calculate_crc(data, 0, 4, 1);
+    uint32_t crc32 = E2ECRC::calculate_crc(data, 0, 4, 2);
+    uint32_t unk   = E2ECRC::calculate_crc(data, 0, 4, 255);
+
+    // Ranged CRC should match direct calls
+    EXPECT_EQ(crc8,  static_cast<uint32_t>(E2ECRC::calculate_crc8_sae_j1850(data)));
+    EXPECT_EQ(crc16, static_cast<uint32_t>(E2ECRC::calculate_crc16_itu_x25(data)));
+    EXPECT_EQ(crc32, E2ECRC::calculate_crc32(data));
+    EXPECT_EQ(unk, 0u);  // Unknown type returns 0
+}
+
+/**
+ * @test_case TC_E2E_CRC_003
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief CRC-8 SAE-J1850: deterministic for same input, different for different input
+ */
+TEST_F(E2ETest, CRC8_Deterministic) {
+    std::vector<uint8_t> data1 = {0x01, 0x02, 0x03, 0x04};
+    std::vector<uint8_t> data2 = {0x01, 0x02, 0x03, 0x05};
+
+    uint8_t crc_a = E2ECRC::calculate_crc8_sae_j1850(data1);
+    uint8_t crc_b = E2ECRC::calculate_crc8_sae_j1850(data1);
+    uint8_t crc_c = E2ECRC::calculate_crc8_sae_j1850(data2);
+
+    EXPECT_EQ(crc_a, crc_b);  // Deterministic
+    EXPECT_NE(crc_a, crc_c);  // Different data → different CRC
+}
+
+/**
+ * @test_case TC_E2E_CRC_004
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief CRC-16 ITU-T X.25: single-byte input
+ */
+TEST_F(E2ETest, CRC16_SingleByte) {
+    std::vector<uint8_t> data = {0x42};
+    uint16_t crc = E2ECRC::calculate_crc16_itu_x25(data);
+    EXPECT_NE(crc, 0u);
+    EXPECT_NE(crc, 0xFFFFu);
+}
+
+/**
+ * @test_case TC_E2E_CRC_005
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief CRC-32: verify different from CRC-8/16 for same data
+ */
+TEST_F(E2ETest, CRC32_DiffersFromOtherTypes) {
+    std::vector<uint8_t> data = {0xDE, 0xAD, 0xBE, 0xEF};
+
+    uint32_t crc8  = E2ECRC::calculate_crc8_sae_j1850(data);
+    uint32_t crc16 = E2ECRC::calculate_crc16_itu_x25(data);
+    uint32_t crc32 = E2ECRC::calculate_crc32(data);
+
+    EXPECT_NE(crc32, crc8);
+    EXPECT_NE(crc32, crc16);
+}
+
+/**
+ * @test_case TC_E2E_CRC_006
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief calculate_crc with sub-range of data
+ */
+TEST_F(E2ETest, CRC_SubRange) {
+    std::vector<uint8_t> data = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+
+    // CRC over [2..4) = {0xCC, 0xDD}
+    uint32_t crc_sub = E2ECRC::calculate_crc(data, 2, 2, 0);
+    std::vector<uint8_t> sub = {0xCC, 0xDD};
+    uint32_t crc_direct = E2ECRC::calculate_crc8_sae_j1850(sub);
+    EXPECT_EQ(crc_sub, crc_direct);
+}
+
+// ============================================================================
+// E2E Header deserialization edge cases
+// ============================================================================
+
+/**
+ * @test_case TC_E2E_HDR_001
+ * @tests REQ_E2E_PLUGIN_005
+ * @brief Deserialization fails when buffer is too short
+ */
+TEST_F(E2ETest, HeaderDeserialize_BufferTooShort) {
+    E2EHeader header;
+    std::vector<uint8_t> short_buf(8, 0x00);
+    EXPECT_FALSE(header.deserialize(short_buf));
+}
+
+/**
+ * @test_case TC_E2E_HDR_002
+ * @tests REQ_E2E_PLUGIN_005
+ * @brief Deserialization with non-zero offset
+ */
+TEST_F(E2ETest, HeaderDeserialize_WithOffset) {
+    E2EHeader original(0xAABBCCDD, 0x11223344, 0x5566, 0x7788);
+    std::vector<uint8_t> serialized = original.serialize();
+
+    // Prefix with garbage, use offset to skip it
+    std::vector<uint8_t> padded = {0xFF, 0xFF, 0xFF, 0xFF};
+    padded.insert(padded.end(), serialized.begin(), serialized.end());
+
+    E2EHeader deserialized;
+    EXPECT_TRUE(deserialized.deserialize(padded, 4));
+    EXPECT_EQ(deserialized.crc, original.crc);
+    EXPECT_EQ(deserialized.counter, original.counter);
+    EXPECT_EQ(deserialized.data_id, original.data_id);
+    EXPECT_EQ(deserialized.freshness_value, original.freshness_value);
+}
+
+/**
+ * @test_case TC_E2E_HDR_003
+ * @tests REQ_E2E_PLUGIN_005
+ * @brief Deserialization fails when offset puts header past end of buffer
+ */
+TEST_F(E2ETest, HeaderDeserialize_OffsetPastEnd) {
+    E2EHeader header;
+    std::vector<uint8_t> buf(12, 0x00);
+    EXPECT_FALSE(header.deserialize(buf, 8));  // offset 8 + header 12 = 20 > 12
+}
+
+/**
+ * @test_case TC_E2E_HDR_004
+ * @tests REQ_E2E_PLUGIN_005
+ * @brief Header is_valid always returns true (profile-level validation)
+ */
+TEST_F(E2ETest, HeaderIsValid) {
+    E2EHeader header;
+    EXPECT_TRUE(header.is_valid());
+
+    E2EHeader header2(0, 0, 0, 0);
+    EXPECT_TRUE(header2.is_valid());
+
+    E2EHeader header3(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFF, 0xFFFF);
+    EXPECT_TRUE(header3.is_valid());
+}
+
+/**
+ * @test_case TC_E2E_HDR_005
+ * @tests REQ_E2E_PLUGIN_005
+ * @brief Header size is exactly 12 bytes
+ */
+TEST_F(E2ETest, HeaderSize) {
+    EXPECT_EQ(E2EHeader::get_header_size(), 12u);
+}
+
+/**
+ * @test_case TC_E2E_HDR_006
+ * @tests REQ_E2E_PLUGIN_005
+ * @brief Serialization round-trip preserves all field boundary values
+ */
+TEST_F(E2ETest, HeaderRoundTrip_BoundaryValues) {
+    E2EHeader zero(0, 0, 0, 0);
+    E2EHeader max_vals(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFF, 0xFFFF);
+
+    auto ser_zero = zero.serialize();
+    auto ser_max = max_vals.serialize();
+    EXPECT_EQ(ser_zero.size(), 12u);
+    EXPECT_EQ(ser_max.size(), 12u);
+
+    E2EHeader deser_zero, deser_max;
+    EXPECT_TRUE(deser_zero.deserialize(ser_zero));
+    EXPECT_TRUE(deser_max.deserialize(ser_max));
+
+    EXPECT_EQ(deser_zero.crc, 0u);
+    EXPECT_EQ(deser_zero.counter, 0u);
+    EXPECT_EQ(deser_zero.data_id, 0u);
+    EXPECT_EQ(deser_zero.freshness_value, 0u);
+
+    EXPECT_EQ(deser_max.crc, 0xFFFFFFFFu);
+    EXPECT_EQ(deser_max.counter, 0xFFFFFFFFu);
+    EXPECT_EQ(deser_max.data_id, 0xFFFFu);
+    EXPECT_EQ(deser_max.freshness_value, 0xFFFFu);
+}
+
+// ============================================================================
+// E2E Protection — MC/DC for counter validation
+//
+// BasicE2EProfile::validate has these decisions for counter:
+//   D1: last_counter == 0  (first message)
+//   D2: header.counter >= 1 && header.counter <= max_counter_value
+//   D3: header.counter == last_counter  (same message)
+//   D4: header.counter > last_counter  (monotonic increase)
+//   D5: last_counter > max_counter_value - 10  (near rollover)
+//   D6: header.counter >= 1 && header.counter <= 10  (valid rollover)
+//
+// And for CRC type masking:
+//   crc_type == 0 → mask 0xFF
+//   crc_type == 1 → mask 0xFFFF
+//   else → 32-bit compare
+// ============================================================================
+
+/**
+ * @test_case TC_E2E_MCDC_001
+ * @tests REQ_E2E_PLUGIN_001, REQ_E2E_PLUGIN_004
+ * @brief E2E protect/validate with CRC type 0 (SAE-J1850, 8-bit)
+ */
+TEST_F(E2ETest, ProtectValidate_CRCType0) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
+    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+
+    E2EConfig config(0xAAAA);
+    config.enable_crc = true;
+    config.enable_counter = false;
+    config.enable_freshness = false;
+    config.crc_type = 0;  // SAE-J1850
+
+    EXPECT_EQ(protection.protect(msg, config), Result::SUCCESS);
+    EXPECT_EQ(protection.validate(msg, config), Result::SUCCESS);
+}
+
+/**
+ * @test_case TC_E2E_MCDC_002
+ * @tests REQ_E2E_PLUGIN_001, REQ_E2E_PLUGIN_004
+ * @brief E2E protect/validate with CRC type 2 (CRC-32)
+ */
+TEST_F(E2ETest, ProtectValidate_CRCType2) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
+    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+
+    E2EConfig config(0xBBBB);
+    config.enable_crc = true;
+    config.enable_counter = false;
+    config.enable_freshness = false;
+    config.crc_type = 2;  // CRC-32
+
+    EXPECT_EQ(protection.protect(msg, config), Result::SUCCESS);
+    EXPECT_EQ(protection.validate(msg, config), Result::SUCCESS);
+}
+
+/**
+ * @test_case TC_E2E_MCDC_003
+ * @tests REQ_E2E_PLUGIN_001
+ * @brief MC/DC: counter only, no CRC, no freshness — isolate counter logic
+ *
+ * D1: first message (last_counter==0) → counter_valid depends on D2
+ * D2: header.counter >= 1 && header.counter <= max → accept
+ */
+TEST_F(E2ETest, CounterOnly_FirstMessage_ValidCounter) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
+    msg.set_payload({0x01, 0x02});
+
+    E2EConfig config(0x1111);
+    config.enable_crc = false;
+    config.enable_counter = true;
+    config.enable_freshness = false;
+    config.max_counter_value = 100;
+
+    EXPECT_EQ(protection.protect(msg, config), Result::SUCCESS);
+    EXPECT_EQ(protection.validate(msg, config), Result::SUCCESS);
+}
+
+/**
+ * @test_case TC_E2E_MCDC_004
+ * @tests REQ_E2E_PLUGIN_001
+ * @brief MC/DC: monotonically increasing counters are accepted (D4 path)
+ */
+TEST_F(E2ETest, CounterOnly_MonotonicIncrease) {
+    E2EProtection protection;
+
+    E2EConfig config(0x2222);
+    config.enable_crc = false;
+    config.enable_counter = true;
+    config.enable_freshness = false;
+    config.max_counter_value = 1000;
+
+    for (int i = 0; i < 5; ++i) {
+        Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
+        msg.set_payload({0x01, 0x02});
+
+        EXPECT_EQ(protection.protect(msg, config), Result::SUCCESS);
+        EXPECT_EQ(protection.validate(msg, config), Result::SUCCESS)
+            << "Message " << i << " should validate with increasing counter";
+    }
+}
+
+/**
+ * @test_case TC_E2E_MCDC_005
+ * @tests REQ_E2E_PLUGIN_001
+ * @brief MC/DC for enable_crc=F, enable_counter=F, enable_freshness=F
+ *        All feature guards are false → only data_id checked.
+ */
+TEST_F(E2ETest, AllFeaturesDisabled) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
+    msg.set_payload({0x01, 0x02});
+
+    E2EConfig config(0x3333);
+    config.enable_crc = false;
+    config.enable_counter = false;
+    config.enable_freshness = false;
+
+    EXPECT_EQ(protection.protect(msg, config), Result::SUCCESS);
+    EXPECT_EQ(protection.validate(msg, config), Result::SUCCESS);
+}
+
+/**
+ * @test_case TC_E2E_MCDC_006
+ * @tests REQ_E2E_PLUGIN_001
+ * @brief MC/DC: validate fails when no E2E header is present
+ */
+TEST_F(E2ETest, Validate_NoHeader) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
+    msg.set_payload({0x01, 0x02});
+
+    E2EConfig config(0x4444);
+    config.enable_crc = false;
+    config.enable_counter = false;
+    config.enable_freshness = false;
+
+    Result result = protection.validate(msg, config);
+    EXPECT_NE(result, Result::SUCCESS);
+}
+
+/**
+ * @test_case TC_E2E_MCDC_007
+ * @tests REQ_E2E_PLUGIN_001
+ * @brief MC/DC: CRC corruption with 8-bit CRC type — masked comparison
+ */
+TEST_F(E2ETest, CRCType0_Corruption) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
+    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+
+    E2EConfig config(0x5555);
+    config.enable_crc = true;
+    config.enable_counter = false;
+    config.enable_freshness = false;
+    config.crc_type = 0;
+
+    EXPECT_EQ(protection.protect(msg, config), Result::SUCCESS);
+
+    auto header = msg.get_e2e_header().value();
+    header.crc ^= 0x01;  // Flip one bit in the 8-bit CRC
+    msg.set_e2e_header(header);
+
+    EXPECT_NE(protection.validate(msg, config), Result::SUCCESS);
+}
+
+/**
+ * @test_case TC_E2E_MCDC_008
+ * @tests REQ_E2E_PLUGIN_001
+ * @brief extract_header returns the E2E header when present
+ */
+TEST_F(E2ETest, ExtractHeader) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
+    msg.set_payload({0x01, 0x02});
+
+    E2EConfig config(0x6666);
+    config.enable_crc = true;
+    config.enable_counter = true;
+    config.enable_freshness = true;
+
+    EXPECT_EQ(protection.protect(msg, config), Result::SUCCESS);
+
+    auto extracted = protection.extract_header(msg);
+    ASSERT_TRUE(extracted.has_value());
+    EXPECT_EQ(extracted->data_id, 0x6666);
+    EXPECT_NE(extracted->counter, 0u);
+}
+
+/**
+ * @test_case TC_E2E_MCDC_009
+ * @tests REQ_E2E_PLUGIN_001
+ * @brief extract_header returns empty when no E2E header
+ */
+TEST_F(E2ETest, ExtractHeader_NoHeader) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
+    msg.set_payload({0x01, 0x02});
+
+    auto extracted = protection.extract_header(msg);
+    EXPECT_FALSE(extracted.has_value());
+}
+
+/**
+ * @test_case TC_E2E_MCDC_010
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief Profile registry: default profile has expected identity
+ */
+TEST_F(E2ETest, ProfileRegistry_DefaultProfile) {
+    E2EProfileRegistry& registry = E2EProfileRegistry::instance();
+    E2EProfile* profile = registry.get_default_profile();
+
+    ASSERT_NE(profile, nullptr);
+    EXPECT_EQ(profile->get_profile_id(), 0u);
+    EXPECT_EQ(profile->get_profile_name(), "basic");
+    EXPECT_EQ(profile->get_header_size(), E2EHeader::get_header_size());
+}
+
+/**
+ * @test_case TC_E2E_MCDC_011
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief Profile lookup by name matches lookup by ID
+ */
+TEST_F(E2ETest, ProfileRegistry_LookupByName) {
+    E2EProfileRegistry& registry = E2EProfileRegistry::instance();
+    E2EProfile* by_id = registry.get_profile(static_cast<uint32_t>(0));
+    E2EProfile* by_name = registry.get_profile(std::string("basic"));
+
+    ASSERT_NE(by_id, nullptr);
+    ASSERT_NE(by_name, nullptr);
+    EXPECT_EQ(by_id, by_name);
+}
+
+/**
+ * @test_case TC_E2E_MCDC_012
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief Profile lookup returns nullptr for unknown profile
+ */
+TEST_F(E2ETest, ProfileRegistry_UnknownProfile) {
+    E2EProfileRegistry& registry = E2EProfileRegistry::instance();
+    EXPECT_EQ(registry.get_profile(static_cast<uint32_t>(999)), nullptr);
+    EXPECT_EQ(registry.get_profile(std::string("nonexistent")), nullptr);
+}

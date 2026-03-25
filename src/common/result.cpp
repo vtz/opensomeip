@@ -13,6 +13,7 @@ std::string to_string(Result result) {
     static const std::unordered_map<Result, std::string> result_strings = {
         {Result::SUCCESS, "SUCCESS"},
         {Result::NETWORK_ERROR, "NETWORK_ERROR"},
+        {Result::NOT_CONNECTED, "NOT_CONNECTED"},
         {Result::CONNECTION_LOST, "CONNECTION_LOST"},
         {Result::CONNECTION_REFUSED, "CONNECTION_REFUSED"},
         {Result::TIMEOUT, "TIMEOUT"},

@@ -10,9 +10,9 @@ if(BUILD_TESTS)
     add_executable(test_session_manager test_session_manager.cpp)
     target_link_libraries(test_session_manager someip-core gtest_main)
 
-    # Endpoint tests (placeholder until transport is implemented)
+    # Endpoint tests
     add_executable(test_endpoint test_endpoint.cpp)
-    target_link_libraries(test_endpoint someip-core gtest_main)
+    target_link_libraries(test_endpoint someip-transport gtest_main)
 
     # RPC tests
     add_executable(test_rpc test_rpc.cpp)
@@ -112,7 +112,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     add_test(NAME SerializationTest COMMAND test_serialization)
     add_test(NAME MessageTest COMMAND test_message)
     add_test(NAME SessionManagerTest COMMAND test_session_manager)
-    add_test(NAME EndpointTest COMMAND test_endpoint)  # Placeholder test
+    add_test(NAME EndpointTest COMMAND test_endpoint)
     add_test(NAME RpcTest COMMAND test_rpc)
     add_test(NAME SdTest COMMAND test_sd)
     add_test(NAME EventsTest COMMAND test_events)
