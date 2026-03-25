@@ -210,6 +210,8 @@ jobs:
     permissions:
       checks: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download test results
         uses: actions/download-artifact@v4
         with:
