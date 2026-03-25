@@ -127,30 +127,59 @@ For minimal deployments, you can copy the header files and implement only what y
 ### Add as Subdirectory
 
 ```cmake
-# CMakeLists.txt
 cmake_minimum_required(VERSION 3.20)
 project(my_project)
 
-# Add SOME/IP as subdirectory
-add_subdirectory(vendor/some-ip)
+add_subdirectory(vendor/opensomeip)
 
-# Link libraries
 add_executable(my_app main.cpp)
-target_link_libraries(my_app someip-common someip-serialization)
+target_link_libraries(my_app PRIVATE someip-transport)
 ```
+
+### Lightweight Integration
+
+By default, OpenSOME/IP builds tests (which downloads GoogleTest), examples, and registers development tool targets (clang-tidy, clang-format, traceability). When integrating the library into your own project, you can disable everything you don't need:
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+project(my_project)
+
+# Disable tests (avoids GoogleTest download), examples, and dev tools
+set(BUILD_TESTS OFF CACHE BOOL "")
+set(BUILD_EXAMPLES OFF CACHE BOOL "")
+set(SOMEIP_DEV_TOOLS OFF CACHE BOOL "")
+
+add_subdirectory(vendor/opensomeip)
+
+add_executable(my_app main.cpp)
+target_link_libraries(my_app PRIVATE someip-transport)
+```
+
+| Option | Default | What it controls |
+|--------|---------|------------------|
+| `BUILD_TESTS` | `ON` | Unit tests and GoogleTest download |
+| `BUILD_EXAMPLES` | `ON` | Example programs |
+| `SOMEIP_DEV_TOOLS` | `ON` | Static analysis, formatting, and traceability targets |
+| `SOMEIP_USE_FREERTOS` | `OFF` | FreeRTOS kernel (FetchContent) |
+| `SOMEIP_USE_THREADX` | `OFF` | Eclipse ThreadX kernel (FetchContent) |
+| `SOMEIP_USE_LWIP` | `OFF` | lwIP networking stack (FetchContent) |
+
+Platform backends (FreeRTOS, ThreadX, lwIP) are **never** fetched unless explicitly enabled. The Zephyr port uses a separate West/Zephyr build and is not part of the root CMake tree.
 
 ### External Project
 
 ```cmake
-# CMakeLists.txt
 include(ExternalProject)
 
 ExternalProject_Add(someip
-    GIT_REPOSITORY https://github.com/your-org/some-ip-stack.git
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/vendor
+    GIT_REPOSITORY https://github.com/vtz/opensomeip.git
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/vendor
+        -DBUILD_TESTS=OFF
+        -DBUILD_EXAMPLES=OFF
+        -DSOMEIP_DEV_TOOLS=OFF
 )
 
-# Use installed libraries
 include_directories(${CMAKE_BINARY_DIR}/vendor/include)
 link_directories(${CMAKE_BINARY_DIR}/vendor/lib)
 ```
@@ -158,7 +187,6 @@ link_directories(${CMAKE_BINARY_DIR}/vendor/lib)
 ### Find Package
 
 ```cmake
-# CMakeLists.txt
 find_package(SomeIP REQUIRED)
 target_link_libraries(my_app SomeIP::someip-common)
 ```

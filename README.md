@@ -490,12 +490,20 @@ if (!msg.is_valid()) {
 
 Add to your `CMakeLists.txt`:
 ```cmake
-# Add SOME/IP as subdirectory or external project
-add_subdirectory(path/to/someip)
-
-# Link libraries
-target_link_libraries(your_target someip-common someip-transport)
+add_subdirectory(vendor/opensomeip)
+target_link_libraries(your_target PRIVATE someip-transport)
 ```
+
+For a **lightweight integration** (no test downloads, no examples, no dev-tool discovery):
+```cmake
+set(BUILD_TESTS OFF CACHE BOOL "")
+set(BUILD_EXAMPLES OFF CACHE BOOL "")
+set(SOMEIP_DEV_TOOLS OFF CACHE BOOL "")
+add_subdirectory(vendor/opensomeip)
+target_link_libraries(your_target PRIVATE someip-transport)
+```
+
+Platform backends (FreeRTOS, ThreadX, lwIP) are **never** fetched unless you explicitly enable them via `SOMEIP_USE_FREERTOS`, `SOMEIP_USE_THREADX`, or `SOMEIP_USE_LWIP`. The Zephyr port uses a separate West/Zephyr module build and is not part of the root CMake tree at all. See the [Integration Guide](docs/INTEGRATION_GUIDE.md) for full details.
 
 ### Safety-Oriented Integration (non-certified)
 
