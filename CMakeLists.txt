@@ -278,13 +278,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Static analysis and formatting (gated by SOMEIP_DEV_TOOLS)
 if(SOMEIP_DEV_TOOLS)
     find_program(CLANG_TIDY_EXE clang-tidy
-        PATHS /opt/homebrew/Cellar/llvm/*/bin
+        PATHS /opt/homebrew/opt/llvm/bin
               /usr/local/opt/llvm/bin
               /usr/local/bin
               /usr/bin
     )
     find_program(CLANG_FORMAT_EXE clang-format
-        PATHS /opt/homebrew/Cellar/llvm/*/bin
+        PATHS /opt/homebrew/opt/llvm/bin
               /usr/local/opt/llvm/bin
               /usr/local/bin
               /usr/bin
@@ -412,7 +412,7 @@ if(SOMEIP_DEV_TOOLS)
     find_package(Python3 COMPONENTS Interpreter)
 
     find_program(SPHINX_BUILD sphinx-build
-        PATHS /usr/local/bin /usr/bin ~/.local/bin
+        PATHS /usr/local/bin /usr/bin $ENV{HOME}/.local/bin
     )
 
     set(REQUIREMENTS_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/docs/requirements)
