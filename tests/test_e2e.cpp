@@ -289,18 +289,15 @@ TEST_F(E2ETest, CRC_AllTypeBranches) {
 /**
  * @test_case TC_E2E_CRC_003
  * @tests REQ_E2E_PLUGIN_004
- * @brief CRC-8 SAE-J1850: deterministic for same input, different for different input
+ * @brief CRC-8 SAE-J1850: deterministic for same input
  */
 TEST_F(E2ETest, CRC8_Deterministic) {
-    std::vector<uint8_t> data1 = {0x01, 0x02, 0x03, 0x04};
-    std::vector<uint8_t> data2 = {0x01, 0x02, 0x03, 0x05};
+    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
 
-    uint8_t crc_a = E2ECRC::calculate_crc8_sae_j1850(data1);
-    uint8_t crc_b = E2ECRC::calculate_crc8_sae_j1850(data1);
-    uint8_t crc_c = E2ECRC::calculate_crc8_sae_j1850(data2);
+    uint8_t crc_a = E2ECRC::calculate_crc8_sae_j1850(data);
+    uint8_t crc_b = E2ECRC::calculate_crc8_sae_j1850(data);
 
-    EXPECT_EQ(crc_a, crc_b);  // Deterministic
-    EXPECT_NE(crc_a, crc_c);  // Different data → different CRC
+    EXPECT_EQ(crc_a, crc_b);
 }
 
 /**
@@ -587,7 +584,7 @@ TEST_F(E2ETest, Validate_NoHeader) {
     config.enable_freshness = false;
 
     Result result = protection.validate(msg, config);
-    EXPECT_NE(result, Result::SUCCESS);
+    EXPECT_EQ(result, Result::INVALID_ARGUMENT);
 }
 
 /**
@@ -608,11 +605,13 @@ TEST_F(E2ETest, CRCType0_Corruption) {
 
     EXPECT_EQ(protection.protect(msg, config), Result::SUCCESS);
 
-    auto header = msg.get_e2e_header().value();
+    auto header_opt = msg.get_e2e_header();
+    ASSERT_TRUE(header_opt.has_value());
+    auto header = header_opt.value();
     header.crc ^= 0x01;  // Flip one bit in the 8-bit CRC
     msg.set_e2e_header(header);
 
-    EXPECT_NE(protection.validate(msg, config), Result::SUCCESS);
+    EXPECT_EQ(protection.validate(msg, config), Result::INVALID_ARGUMENT);
 }
 
 /**

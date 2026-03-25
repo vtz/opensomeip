@@ -197,6 +197,16 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
         if (address.front() == ':' || address.back() == ':') {
             return false;
         }
+    } else {
+        // Leading ':' is only valid as part of "::" (address starts with "::")
+        if (address.front() == ':' && double_colon != 0) {
+            return false;
+        }
+        // Trailing ':' is only valid as part of "::" (address ends with "::")
+        if (address.back() == ':' &&
+            (address.size() < 2 || address.compare(address.size() - 2, 2, "::") != 0)) {
+            return false;
+        }
     }
 
     // Reject ":::" by checking for three consecutive colons

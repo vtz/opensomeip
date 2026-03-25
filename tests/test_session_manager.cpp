@@ -255,18 +255,21 @@ TEST_F(SessionManagerTest, CleanupKeepsFreshSessions) {
  */
 TEST_F(SessionManagerTest, CleanupMixedSessions) {
     uint16_t s1 = session_mgr_->create_session(0x1001);
-
-    // Wait so s1 ages, then create s2 which is fresh
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     uint16_t s2 = session_mgr_->create_session(0x1002);
 
-    // Timeout of 40ms: s1 should be expired, s2 should not
-    size_t cleaned = session_mgr_->cleanup_expired_sessions(
-        std::chrono::seconds(0));  // 0 timeout means all are expired
+    auto stale = session_mgr_->get_session(s1);
+    auto fresh = session_mgr_->get_session(s2);
+    ASSERT_NE(stale, nullptr);
+    ASSERT_NE(fresh, nullptr);
 
-    EXPECT_EQ(cleaned, 2u);  // Both cleaned with 0 timeout
+    // Artificially age s1 by shifting its last_activity back
+    stale->last_activity -= std::chrono::seconds(2);
+
+    // Timeout of 1s: s1 (2s old) should be expired, s2 (fresh) should not
+    size_t cleaned = session_mgr_->cleanup_expired_sessions(std::chrono::seconds(1));
+    EXPECT_EQ(cleaned, 1u);
     EXPECT_FALSE(session_mgr_->validate_session(s1));
-    EXPECT_FALSE(session_mgr_->validate_session(s2));
+    EXPECT_TRUE(session_mgr_->validate_session(s2));
 }
 
 // ============================================================================
