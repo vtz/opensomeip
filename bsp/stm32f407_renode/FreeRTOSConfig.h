@@ -45,15 +45,11 @@
 
 #define configUSE_TIMERS                         1
 
-/* Cortex-M4F specific */
+/* Cortex-M4 specific (no FPU -- Renode's stm32f4 platform uses cortex-m4) */
 #define configCPU_CLOCK_HZ                       ((uint32_t)168000000)
-#define configKERNEL_INTERRUPT_PRIORITY          255
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY     191
-#define __FPU_PRESENT                            1
-#define __FPU_USED                               1
-
-/* Enable FPU context saving in FreeRTOS */
-#define configENABLE_FPU                         1
+#define configPRIO_BITS                          4
+#define configKERNEL_INTERRUPT_PRIORITY          (15 << (8 - configPRIO_BITS))
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY     (5 << (8 - configPRIO_BITS))
 
 #define INCLUDE_vTaskPrioritySet                 1
 #define INCLUDE_uxTaskPriorityGet                1

@@ -7,7 +7,7 @@
 # Shared by FreeRTOS and ThreadX Renode test builds.
 ################################################################################
 
-add_library(stm32f407_bsp STATIC
+add_library(stm32f407_bsp OBJECT
     startup.c
     uart_retarget.c
 )

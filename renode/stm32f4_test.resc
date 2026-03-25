@@ -22,7 +22,7 @@ mach create "stm32f4"
 machine LoadPlatformDescription @platforms/boards/stm32f4_discovery-kit.repl
 
 # Capture USART2 output to file for automated result parsing
-sysbus.usart2 CreateFileTerminal $logfile
+sysbus.usart2 CreateFileBackend $logfile true
 
 macro reset
 """

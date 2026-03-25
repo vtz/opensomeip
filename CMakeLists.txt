@@ -368,6 +368,9 @@ if(SOMEIP_THREADX_RENODE_TESTS)
         ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode
     )
+    target_sources(test_threadx_renode PRIVATE
+        ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode/tx_initialize_low_level.c
+    )
     target_link_libraries(test_threadx_renode PRIVATE
         someip-core
         someip-serialization

@@ -4,13 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * Linker script for STM32F407 on Renode.
- * Flash: 1MB at 0x08000000, SRAM: 192KB at 0x20000000.
+ * Flash: 1MB at 0x08000000, SRAM: 256KB at 0x20000000.
+ * Real STM32F407 has 192KB SRAM + 64KB CCM; Renode maps a contiguous
+ * 256KB block which is sufficient for test binaries.
  ******************************************************************************/
 
 MEMORY
 {
     FLASH (rx)  : ORIGIN = 0x08000000, LENGTH = 1024K
-    SRAM  (rwx) : ORIGIN = 0x20000000, LENGTH = 192K
+    SRAM  (rwx) : ORIGIN = 0x20000000, LENGTH = 256K
 }
 
 _estack = ORIGIN(SRAM) + LENGTH(SRAM);

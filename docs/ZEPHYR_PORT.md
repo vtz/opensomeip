@@ -164,7 +164,7 @@ simulated NXP S32K388.
 The script handles the full workflow:
 1. Builds the test for `s32k388_renode` via `west build`
 2. Launches Renode headless (`--disable-xwt`) with a test `.resc` script
-3. Captures UART output (LPUART0) to a temporary file via `CreateFileTerminal`
+3. Captures UART output (LPUART0) to a temporary file via `CreateFileBackend`
 4. Parses `[PASS]`/`[FAIL]` results and the summary line
 5. Optionally generates JUnit XML (`--junit-output PATH`)
 
@@ -180,7 +180,7 @@ UDP request/response on the simulated S32K388:
 
 | Script | Purpose |
 |--------|---------|
-| `zephyr/renode/s32k388_test.resc` | Headless test script (uses `CreateFileTerminal`, auto-starts) |
+| `zephyr/renode/s32k388_test.resc` | Headless test script (uses `CreateFileBackend`, auto-starts) |
 | `zephyr/renode/s32k388_someip.resc` | Interactive development script (uses `showAnalyzer`) |
 
 ## CI Integration

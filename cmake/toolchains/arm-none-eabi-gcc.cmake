@@ -47,10 +47,14 @@ set(ARM_FLOAT_ABI "hard"         CACHE STRING "ARM float ABI (soft, softfp, hard
 
 set(ARM_COMMON_FLAGS "-mcpu=${ARM_CPU} -mthumb -mfpu=${ARM_FPU} -mfloat-abi=${ARM_FLOAT_ABI}")
 
-set(CMAKE_C_FLAGS_INIT   "${ARM_COMMON_FLAGS} -ffunction-sections -fdata-sections -specs=nosys.specs")
-set(CMAKE_CXX_FLAGS_INIT "${ARM_COMMON_FLAGS} -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti -specs=nosys.specs")
+set(CMAKE_C_FLAGS_INIT   "${ARM_COMMON_FLAGS} -ffunction-sections -fdata-sections")
+set(CMAKE_CXX_FLAGS_INIT "${ARM_COMMON_FLAGS} -ffunction-sections -fdata-sections -fno-exceptions -fno-rtti")
 set(CMAKE_ASM_FLAGS_INIT "${ARM_COMMON_FLAGS}")
 
+# -specs=nosys.specs provides syscall stubs (-lnosys) for bare-metal.
+# It must appear ONLY in the linker flags, not in C/CXX flags, to avoid a
+# Debian/Ubuntu packaging bug where loading the spec file twice triggers
+# "attempt to rename spec 'link_gcc_c_sequence' to already defined spec".
 set(CMAKE_EXE_LINKER_FLAGS_INIT "-Wl,--gc-sections -specs=nosys.specs")
 
 # Bare-metal: skip compiler introspection that requires running code on the host

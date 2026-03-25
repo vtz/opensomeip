@@ -21,7 +21,7 @@ mach create "s32k388"
 machine LoadPlatformDescription @platforms/cpus/nxp-s32k388.repl
 
 # Capture UART output to file for automated result parsing
-sysbus.lpuart0 CreateFileTerminal $logfile
+sysbus.lpuart0 CreateFileBackend $logfile true
 
 macro reset
 """

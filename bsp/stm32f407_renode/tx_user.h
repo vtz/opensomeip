@@ -19,6 +19,7 @@
 /* Disable features not needed for test/demo to reduce code size */
 #define TX_DISABLE_NOTIFY_CALLBACKS
 #define TX_DISABLE_REDUNDANT_CLEARING
+#define TX_DISABLE_ERROR_CHECKING
 
 /* Stack checking in debug builds */
 #ifndef NDEBUG

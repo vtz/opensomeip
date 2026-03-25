@@ -172,7 +172,7 @@ using a simulated STM32F407 Discovery board.
 The script handles the full workflow:
 1. Cross-compiles with the `threadx-cortexm4-renode` CMake preset
 2. Launches Renode headless with `renode/stm32f4_test.resc`
-3. Captures USART2 output via `CreateFileTerminal`
+3. Captures USART2 output via `CreateFileBackend`
 4. Parses `[PASS]`/`[FAIL]` results and generates JUnit XML
 
 ### CMake preset
