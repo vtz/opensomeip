@@ -220,6 +220,15 @@ jobs:
         with:
           pattern: test-results-host-*
 
+      - name: Set test suite names in JUnit XML
+        run: |
+          for dir in test-results-*/; do
+            suite=$(echo "$dir" | sed 's|^test-results-||;s|/$||')
+            for xml in "$dir"*.xml; do
+              [ -f "$xml" ] && sed -i "s/<testsuite name=\"\"/<testsuite name=\"${suite}\"/" "$xml"
+            done
+          done
+
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
         with:
