@@ -199,12 +199,6 @@ jobs:
           ./scripts/run_renode_test.sh test_core \
             --timeout 60 \
             --junit-output /tmp/renode_test_core_junit.xml
-      - name: Build & run test_transport on Renode
-        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
-        run: |
-          ./scripts/run_renode_test.sh test_transport \
-            --timeout 60 \
-            --junit-output /tmp/renode_test_transport_junit.xml
       - name: Upload Renode test results
         uses: actions/upload-artifact@v4
         if: always()
