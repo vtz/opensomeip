@@ -328,6 +328,9 @@ TEST_F(E2ETest, CRC16_SingleByte) {
  * @test_case TC_E2E_CRC_005
  * @tests REQ_E2E_PLUGIN_004
  * @brief Each CRC type produces a non-zero result for a known payload
+ *
+ * The payload {0xDE, 0xAD, 0xBE, 0xEF} was verified to produce non-zero
+ * results for all three CRC algorithms (SAE-J1850, ITU-T X.25, CRC-32).
  */
 TEST_F(E2ETest, CRC_AllTypesNonZeroForKnownPayload) {
     std::vector<uint8_t> data = {0xDE, 0xAD, 0xBE, 0xEF};

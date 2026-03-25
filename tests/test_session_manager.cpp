@@ -187,6 +187,7 @@ TEST_F(SessionManagerTest, ValidateSession_ErrorState) {
     uint16_t session_id = session_mgr_->create_session(0x1001);
 
     auto session = session_mgr_->get_session(session_id);
+    ASSERT_NE(session, nullptr);
     session->state = SessionState::ERROR;
     EXPECT_FALSE(session_mgr_->validate_session(session_id));
 }
@@ -199,6 +200,7 @@ TEST_F(SessionManagerTest, ValidateSession_ErrorState) {
 TEST_F(SessionManagerTest, UpdateActivity) {
     uint16_t session_id = session_mgr_->create_session(0x1001);
     auto session = session_mgr_->get_session(session_id);
+    ASSERT_NE(session, nullptr);
     auto original_time = session->last_activity;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -299,6 +301,7 @@ TEST_F(SessionManagerTest, SessionCount_ExcludesNonActive) {
     EXPECT_EQ(session_mgr_->get_active_session_count(), 2u);
 
     auto session = session_mgr_->get_session(s1);
+    ASSERT_NE(session, nullptr);
     session->state = SessionState::INACTIVE;
 
     EXPECT_EQ(session_mgr_->get_active_session_count(), 1u);
