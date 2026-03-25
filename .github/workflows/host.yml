@@ -60,7 +60,12 @@ jobs:
 
       - name: Test
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: ctest --build-config ${{ matrix.build_type }} --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
+        shell: bash
+        env:
+          GTEST_OUTPUT: "xml:${{ github.workspace }}/gtest_results/"
+        run: |
+          mkdir -p "${{ github.workspace }}/gtest_results"
+          ctest --build-config ${{ matrix.build_type }} --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -68,6 +73,14 @@ jobs:
         with:
           name: test-results-host-${{ matrix.os }}-${{ matrix.c_compiler }}
           path: ${{ steps.strings.outputs.build-output-dir }}/junit_results.xml
+          retention-days: 14
+
+      - name: Upload GTest detailed results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtest-results-host-${{ matrix.os }}-${{ matrix.c_compiler }}
+          path: ${{ github.workspace }}/gtest_results/
           retention-days: 14
 
   build-fedora:
@@ -106,7 +119,11 @@ jobs:
 
       - name: Test
         working-directory: build
-        run: ctest --build-config Release --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
+        env:
+          GTEST_OUTPUT: "xml:${{ github.workspace }}/gtest_results/"
+        run: |
+          mkdir -p "${{ github.workspace }}/gtest_results"
+          ctest --build-config Release --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -114,6 +131,14 @@ jobs:
         with:
           name: test-results-host-fedora42-${{ matrix.c_compiler }}
           path: build/junit_results.xml
+          retention-days: 14
+
+      - name: Upload GTest detailed results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtest-results-host-fedora42-${{ matrix.c_compiler }}
+          path: ${{ github.workspace }}/gtest_results/
           retention-days: 14
 
   coverage:
@@ -146,7 +171,11 @@ jobs:
 
       - name: Run tests
         working-directory: build
-        run: ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
+        env:
+          GTEST_OUTPUT: "xml:${{ github.workspace }}/gtest_results/"
+        run: |
+          mkdir -p "${{ github.workspace }}/gtest_results"
+          ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Generate coverage report
         run: |
@@ -176,6 +205,14 @@ jobs:
         with:
           name: test-results-host-coverage
           path: build/junit_results.xml
+          retention-days: 14
+
+      - name: Upload GTest detailed results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtest-results-host-coverage
+          path: ${{ github.workspace }}/gtest_results/
           retention-days: 14
 
       - name: Code Coverage Summary
@@ -220,6 +257,12 @@ jobs:
         with:
           pattern: test-results-host-*
 
+      - name: Download GTest detailed results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: gtest-results-host-*
+          path: gtest-downloads
+
       - name: Set test suite names in JUnit XML
         run: |
           for dir in test-results-*/; do
@@ -240,7 +283,7 @@ jobs:
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
         with:
           name: "Host Test Report"
-          path: "**/junit_results.xml"
+          path: "gtest-downloads/**/*.xml"
           reporter: java-junit
           list-tests: 'all'
           list-suites: 'all'
