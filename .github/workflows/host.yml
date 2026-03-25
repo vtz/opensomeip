@@ -225,7 +225,7 @@ jobs:
           for dir in test-results-*/; do
             suite=$(echo "$dir" | sed 's|^test-results-||;s|/$||')
             for xml in "$dir"*.xml; do
-              [ -f "$xml" ] && sed -i "s/<testsuite name=\"\"/<testsuite name=\"${suite}\"/" "$xml"
+              [ -f "$xml" ] && sed -i "s/<testsuite name=\"(empty)\"/<testsuite name=\"${suite}\"/" "$xml"
             done
           done
 
