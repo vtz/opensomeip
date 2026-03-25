@@ -54,6 +54,10 @@
         compatible = "simple-bus";
         ranges;
 
+        nvic: interrupt-controller@e000e100 {
+            arm,num-irq-priority-bits = <4>;
+        };
+
         lpuart0: serial@40328000 {
             compatible = "nxp,kinetis-lpuart";
             reg = <0x40328000 0x1000>;
