@@ -65,7 +65,7 @@ jobs:
       - name: Download test results
         uses: actions/download-artifact@v4
         with:
-          pattern: test-results-*
+          pattern: test-results-python*
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
