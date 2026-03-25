@@ -420,7 +420,7 @@ if(SOMEIP_DEV_TOOLS)
     set(TRACEABILITY_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/docs/traceability)
 
     set(SPEC_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/open-someip-spec/src)
-    set(SPEC_BUILD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/open-someip-spec/build)
+    set(SPEC_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/open-someip-spec)
     set(SPEC_NEEDS_JSON ${SPEC_BUILD_DIR}/needs.json)
 
     if(Python3_FOUND)
