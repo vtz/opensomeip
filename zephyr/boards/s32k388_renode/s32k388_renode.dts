@@ -2,10 +2,10 @@
  * Device tree for NXP S32K388 Renode simulation target.
  *
  * Minimal description: single Cortex-M7 core, 512KB SRAM, 8MB flash,
- * PL011 UART console.  Uses a PL011 UART instead of the NXP LPUART
- * so that the Zephyr serial driver does not depend on the NXP HAL.
- * Memory addresses match the custom Renode platform file
- * `zephyr/renode/s32k388_renode.repl`.
+ * SBSA UART console.  Uses an ARM SBSA UART (simplified PL011 subset)
+ * so that the Zephyr serial driver does not depend on the NXP HAL or
+ * clock control.  Memory addresses match the custom Renode platform
+ * file `zephyr/renode/s32k388_renode.repl`.
  *
  * Copyright (c) 2025 Vinicius Tadeu Zein
  * SPDX-License-Identifier: Apache-2.0
@@ -61,9 +61,8 @@
         };
 
         uart0: serial@40090000 {
-            compatible = "arm,pl011";
+            compatible = "arm,sbsa-uart";
             reg = <0x40090000 0x1000>;
-            interrupts = <33 0>;
             status = "okay";
             current-speed = <115200>;
         };
