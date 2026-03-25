@@ -213,6 +213,8 @@ jobs:
         run: |
           if [ -f code-coverage-results.md ]; then
             cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "*Coverage summary not available.*" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   publish-test-results:

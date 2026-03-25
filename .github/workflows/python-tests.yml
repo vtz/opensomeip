@@ -65,3 +65,23 @@ jobs:
           name: python-coverage
           path: tests/python/coverage.xml
           retention-days: 14
+
+  publish-test-results:
+    name: Publish Test Results
+    runs-on: ubuntu-latest
+    needs: [python-tests]
+    if: always()
+    permissions:
+      checks: write
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
+        with:
+          files: "**/*junit*.xml"
+          check_name: "Python Test Results"
+          comment_mode: "off"
