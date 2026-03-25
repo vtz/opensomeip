@@ -214,7 +214,6 @@ jobs:
     if: always()
     permissions:
       checks: write
-      pull-requests: write
     steps:
       - name: Download test results
         uses: actions/download-artifact@v4
@@ -226,3 +225,4 @@ jobs:
         with:
           files: "**/*junit*.xml"
           check_name: "Zephyr Test Results"
+          comment_mode: "off"
