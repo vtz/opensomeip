@@ -19,7 +19,7 @@ extern VOID *_tx_initialize_unused_memory;
 #define SYSTICK_LOAD   (*(volatile uint32_t *)0xE000E014)
 #define SCB_SHPR3      (*(volatile uint32_t *)0xE000ED20)
 
-#define SYSTICK_HZ     160000000U
+#define SYSTICK_HZ     168000000U
 #define TICK_HZ        100U
 
 extern void *_end;

@@ -15,6 +15,10 @@ if(SOMEIP_THREADX_RENODE_TESTS)
         ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode
     )
 
+    target_sources(threadx_pool_demo PRIVATE
+        ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode/tx_initialize_low_level.c
+    )
+    target_compile_definitions(threadx_pool_demo PRIVATE TX_INCLUDE_USER_DEFINE_FILE)
     target_link_libraries(threadx_pool_demo PRIVATE
         someip-core
         someip-serialization

@@ -143,7 +143,7 @@ This option:
 The test task calls `exit()` after completing, since
 `vTaskStartScheduler()` never returns.
 
-## Renode Testing (STM32F407 Cortex-M4F)
+## Renode Testing (STM32F407 Cortex-M4)
 
 For testing on actual ARM Cortex-M4F architecture, the project supports
 running tests on the [Renode](https://renode.io/) hardware simulator

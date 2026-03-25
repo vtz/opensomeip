@@ -40,6 +40,7 @@ static void uart_init(void) {
 }
 
 static void uart_putchar(char c) {
+    while (!(USART_SR & USART_SR_TXE)) {}
     USART_DR = (uint32_t)c;
 }
 

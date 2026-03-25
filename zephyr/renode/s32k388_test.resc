@@ -10,7 +10,7 @@
 #
 # Usage:
 #   renode --disable-xwt --plain \
-#     -e '$firmware=@path/to/zephyr.elf; $logfile=@/tmp/uart.log; $platform=@path/to/s32k388_renode.repl; i @s32k388_test.resc'
+#     -e '$firmware=@path/to/zephyr.elf; $logfile=@/tmp/uart.log; $platform=@path/to/s32k388_renode.repl; i @s32k388_test.resc; start'
 #
 # Copyright (c) 2025 Vinicius Tadeu Zein
 # SPDX-License-Identifier: Apache-2.0

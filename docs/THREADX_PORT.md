@@ -194,7 +194,7 @@ This preset:
 ### Renode example
 
 The `examples/renode/threadx_pool_demo/` demo shows burst allocation
-of SOME/IP messages using `platform::allocate_message()` (ThreadX byte
+of SOME/IP messages using `platform::allocate_message()` (ThreadX block
 pool), with a worker thread deserializing and hex-dumping messages on
 real ARM code paths.
 

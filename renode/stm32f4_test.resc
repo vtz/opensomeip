@@ -10,7 +10,7 @@
 #
 # Usage:
 #   renode --disable-xwt --plain \
-#     -e '$firmware=@path/to/test.elf; $logfile=@/tmp/uart.log; i @stm32f4_test.resc'
+#     -e '$firmware=@path/to/test.elf; $logfile=@/tmp/uart.log; i @stm32f4_test.resc; start'
 #
 # Copyright (c) 2025 Vinicius Tadeu Zein
 # SPDX-License-Identifier: Apache-2.0

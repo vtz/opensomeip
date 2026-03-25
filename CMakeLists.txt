@@ -374,6 +374,7 @@ if(SOMEIP_THREADX_RENODE_TESTS)
     target_sources(test_threadx_renode PRIVATE
         ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode/tx_initialize_low_level.c
     )
+    target_compile_definitions(test_threadx_renode PRIVATE TX_INCLUDE_USER_DEFINE_FILE)
     target_link_libraries(test_threadx_renode PRIVATE
         someip-core
         someip-serialization

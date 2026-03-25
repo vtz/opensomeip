@@ -180,7 +180,7 @@ UDP request/response on the simulated S32K388:
 
 | Script | Purpose |
 |--------|---------|
-| `zephyr/renode/s32k388_test.resc` | Headless test script (uses `CreateFileBackend`, auto-starts) |
+| `zephyr/renode/s32k388_test.resc` | Headless test script (uses `CreateFileBackend`; caller must pass `start`) |
 | `zephyr/renode/s32k388_someip.resc` | Interactive development script (uses `showAnalyzer`) |
 
 ## CI Integration
