@@ -160,14 +160,25 @@ tests/
 ├── README.md                 # This file
 │
 # C++ Unit Tests (in parent directory)
-├── test_serialization.cpp
-├── test_message.cpp
-├── test_session_manager.cpp
-├── test_endpoint.cpp
-├── test_rpc.cpp
-├── test_sd.cpp
-├── test_events.cpp
-├── test_tp.cpp
+├── test_e2e.cpp                  # E2E CRC, header, protection/validation (36 tests)
+├── test_endpoint.cpp             # IPv4/IPv6 validation, MC/DC coverage (75 tests)
+├── test_events.cpp               # Event subscription and notification (14 tests)
+├── test_message.cpp              # Message format and validation (23 tests)
+├── test_pal_freertos_mock.cpp    # FreeRTOS PAL conformance (25 tests)
+├── test_pal_threadx_mock.cpp     # ThreadX PAL conformance (25 tests)
+├── test_pal_zephyr_mock.cpp      # Zephyr PAL conformance (25 tests)
+├── test_platform_threading.cpp   # Threading primitives (21 tests)
+├── test_rpc.cpp                  # RPC request/response (8 tests)
+├── test_sd.cpp                   # Service Discovery protocol (52 tests)
+├── test_serialization.cpp        # Serialization/deserialization (49 tests)
+├── test_session_manager.cpp      # Session lifecycle, MC/DC (23 tests)
+├── test_tcp_transport.cpp        # TCP transport binding (17 tests)
+├── test_tp.cpp                   # SOME/IP-TP segmentation (23 tests)
+├── test_udp_transport.cpp        # UDP transport binding (27 tests)
+│
+# RTOS-specific tests
+├── freertos/test_freertos_core.cpp   # FreeRTOS Linux-port + Renode
+├── threadx/test_threadx_core.cpp     # ThreadX Linux-port + Renode
 ```
 
 ## Advanced Testing Features

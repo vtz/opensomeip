@@ -19,12 +19,21 @@ This matrix maps individual test cases to specific requirements from the Open SO
 
 ## Test File Structure
 
-- **test_message.cpp**: Message format and validation tests
-- **test_serialization.cpp**: Data serialization/deserialization tests
-- **test_sd.cpp**: Service Discovery protocol tests
-- **test_tp.cpp**: Transport Protocol segmentation tests
-- **test_tcp_transport.cpp**: TCP transport binding tests
-- **test_session_manager.cpp**: Session management tests
+- **test_e2e.cpp**: End-to-End protection, CRC algorithms, header serialization, MC/DC validation (36 tests)
+- **test_endpoint.cpp**: IPv4/IPv6 address validation with MC/DC coverage, multicast, comparison, hash (75 tests)
+- **test_events.cpp**: Event subscription, notification, and event groups (14 tests)
+- **test_message.cpp**: Message format and validation tests (23 tests)
+- **test_pal_freertos_mock.cpp**: FreeRTOS PAL conformance (25 tests)
+- **test_pal_threadx_mock.cpp**: ThreadX PAL conformance (25 tests)
+- **test_pal_zephyr_mock.cpp**: Zephyr PAL conformance (25 tests)
+- **test_platform_threading.cpp**: Threading, mutex, condition variable primitives (21 tests)
+- **test_rpc.cpp**: RPC request/response handling (8 tests)
+- **test_sd.cpp**: Service Discovery protocol tests (52 tests)
+- **test_serialization.cpp**: Data serialization/deserialization tests (49 tests)
+- **test_session_manager.cpp**: Session lifecycle, expiry, state transitions with MC/DC (23 tests)
+- **test_tcp_transport.cpp**: TCP transport binding tests (17 tests)
+- **test_tp.cpp**: Transport Protocol segmentation tests (23 tests)
+- **test_udp_transport.cpp**: UDP transport binding tests (27 tests)
 
 ---
 
@@ -49,7 +58,7 @@ This matrix maps individual test cases to specific requirements from the Open SO
 | `MessageTest.InvalidMessageDetection` | feat_req_someip_569 | Malformed message detection | ✅ |
 
 **Test File**: `tests/test_message.cpp`
-**Coverage**: 13 test cases covering 30+ requirements
+**Coverage**: 23 test cases covering 30+ requirements
 
 ---
 
@@ -77,7 +86,7 @@ This matrix maps individual test cases to specific requirements from the Open SO
 | `SerializationTest.BoundaryConditions` | feat_req_someip_620-622 | Edge case handling | ✅ |
 
 **Test File**: `tests/test_serialization.cpp`
-**Coverage**: 16 test cases covering all data type requirements
+**Coverage**: 49 test cases covering all data type requirements
 
 ---
 
@@ -102,7 +111,7 @@ This matrix maps individual test cases to specific requirements from the Open SO
 | `SdTest.ClientServerInteraction` | feat_req_someipsd_400-450 | Client-server SD protocol flow | ✅ |
 
 **Test File**: `tests/test_sd.cpp`
-**Coverage**: 13 test cases covering SD protocol requirements
+**Coverage**: 52 test cases covering SD protocol requirements
 
 ---
 
@@ -125,7 +134,7 @@ This matrix maps individual test cases to specific requirements from the Open SO
 | `TpTest.SubsequentSegments` | feat_req_someiptp_411 | Subsequent segment payload only | ✅ |
 
 **Test File**: `tests/test_tp.cpp`
-**Coverage**: 11 test cases covering all TP requirements
+**Coverage**: 23 test cases covering all TP requirements
 
 ---
 
@@ -167,7 +176,7 @@ This matrix maps individual test cases to specific requirements from the Open SO
 | `SessionManagerTest.SessionStateTransitions` | feat_req_someip_913 | Session state management | ✅ |
 
 **Test File**: `tests/test_session_manager.cpp`
-**Coverage**: 7 test cases covering session management requirements
+**Coverage**: 23 test cases covering session management requirements
 
 ---
 

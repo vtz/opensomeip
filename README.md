@@ -41,7 +41,7 @@ OpenSOME/IP provides a complete, standards-compliant C++ implementation of the S
 
 - **Truly Open Source**: Apache 2.0 licensed - use freely in commercial and personal projects
 - **Modern C++17**: Clean, maintainable codebase with no legacy dependencies
-- **Production Ready**: 169 C++ unit tests + 80+ Python tests with coverage reporting, CI/CD integration, and [Renode](https://renode.io/) hardware simulation testing on ARM Cortex-M targets
+- **Production Ready**: 443 C++ unit tests across 15 test suites + 80+ Python tests with coverage reporting, CI/CD integration, and [Renode](https://renode.io/) hardware simulation testing on ARM Cortex-M targets
 - **Well Documented**: Complete API documentation, examples, and traceability matrices
 - **Active Development**: Regular updates and community-driven improvements
 - **Easy Integration**: CMake-based build system works with any C++ project
@@ -392,7 +392,7 @@ OpenSOME/IP follows a modular, layered architecture with clear separation of con
 ├──
 ├── tests/                        # Test suite
 │   ├── CMakeLists.txt            # Test build configuration
-│   ├── test_*.cpp                # C++ unit tests (12 files, 169 tests)
+│   ├── test_*.cpp                # C++ unit tests (15 suites, 443 tests)
 │   ├── integration/              # Python integration tests
 │   ├── system/                   # System-level tests
 │   └── python/                   # Python test framework
@@ -547,18 +547,25 @@ Platform backends (FreeRTOS, ThreadX, lwIP) are **never** fetched unless you exp
 
 ## Testing
 
-### Current Test Coverage (169 C++ unit tests + 80+ Python tests)
+### Current Test Coverage (443 C++ unit tests + 80+ Python tests)
 
-- Message serialization/deserialization
-- Message creation and validation
-- Session management
-- UDP/TCP transport functionality
-- Service Discovery (SD) protocol
-- Transport Protocol (TP) segmentation
-- RPC request/response handling
-- Event system functionality
-- End-to-End (E2E) protection
-- Error handling and input validation
+| Suite | Tests | Description |
+|-------|-------|-------------|
+| test_endpoint | 75 | IPv4/IPv6 validation with MC/DC, multicast, comparison, hash |
+| test_sd | 52 | Service Discovery protocol, offers, finds, options |
+| test_serialization | 49 | Data type serialization/deserialization, boundary values |
+| test_e2e | 36 | E2E CRC algorithms, header, protection/validation with MC/DC |
+| test_udp_transport | 27 | UDP transport binding, send/receive, multicast |
+| test_pal_*_mock (×3) | 25 each | PAL conformance for FreeRTOS, ThreadX, Zephyr |
+| test_message | 23 | Message creation, serialization, validation |
+| test_session_manager | 23 | Session lifecycle, expiry, state transitions with MC/DC |
+| test_tp | 23 | SOME/IP-TP segmentation and reassembly |
+| test_platform_threading | 21 | Threading, mutex, condition variable, sleep |
+| test_tcp_transport | 17 | TCP transport binding, connection management |
+| test_events | 14 | Event subscription, notification, groups |
+| test_rpc | 8 | RPC request/response, method calls |
+
+Additional test coverage:
 - Integration testing (Python)
 - System testing and conformance testing (Python)
 
