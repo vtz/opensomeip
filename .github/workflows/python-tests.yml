@@ -85,3 +85,4 @@ jobs:
           files: "**/*junit*.xml"
           check_name: "Python Test Results"
           comment_mode: "off"
+          action_fail: "false"
