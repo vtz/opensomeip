@@ -24,6 +24,11 @@ machine LoadPlatformDescription $platform
 # Capture UART output to file for automated result parsing
 sysbus.uart0 CreateFileBackend $logfile true
 
+# Enable PL011 UART (UARTCR = UARTEN | TXE | RXE = 0x0301).
+# The SBSA UART driver doesn't initialise hardware registers, so
+# the PL011 model starts with UARTEN=0 and rejects writes.
+sysbus WriteDoubleWord 0x40090030 0x0301
+
 macro reset
 """
     sysbus LoadELF $firmware
