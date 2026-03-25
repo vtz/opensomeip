@@ -45,10 +45,19 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Include FetchContent for dependencies
 include(FetchContent)
 
+# Default heavy targets only for standalone builds.
+if(PROJECT_IS_TOP_LEVEL)
+    set(_someip_default_build_tests ON)
+    set(_someip_default_build_examples ON)
+else()
+    set(_someip_default_build_tests OFF)
+    set(_someip_default_build_examples OFF)
+endif()
+
 # Safety-critical build options
 option(SAFETY_LEVEL "Safety level (ASIL_A, ASIL_B, ASIL_C, ASIL_D)" "ASIL_B")
-option(BUILD_TESTS "Build test executables" ON)
-option(BUILD_EXAMPLES "Build example programs" ON)
+option(BUILD_TESTS "Build test executables" ${_someip_default_build_tests})
+option(BUILD_EXAMPLES "Build example programs" ${_someip_default_build_examples})
 option(BUILD_VSOMEIP_INTEROP "Build vsomeip interoperability examples (requires vsomeip3 and Boost)" OFF)
 option(BUILD_TOOLS "Build development tools (reserved for future use)" OFF)
 option(SOMEIP_DEV_TOOLS "Enable development tools (static analysis, formatting, traceability targets)" ON)
