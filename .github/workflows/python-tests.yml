@@ -94,5 +94,5 @@ jobs:
           reporter: java-junit
           list-tests: 'all'
           list-suites: 'all'
-          use-actions-summary: 'true'
+          use-actions-summary: 'false'
           fail-on-error: 'false'
