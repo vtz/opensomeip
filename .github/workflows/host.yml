@@ -210,7 +210,10 @@ jobs:
 
       - name: Write coverage to Job Summary
         if: always()
-        run: cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          if [ -f code-coverage-results.md ]; then
+            cat code-coverage-results.md >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   publish-test-results:
     name: Publish Test Results
