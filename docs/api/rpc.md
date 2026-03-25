@@ -1,3 +1,7 @@
+---
+title: SOME/IP RPC API
+description: C++ API for SOME/IP Remote Procedure Calls. Request/response communication with session handling, return codes, and timeout management.
+---
 
 # RPC (Remote Procedure Call) Layer
 

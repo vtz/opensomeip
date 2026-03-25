@@ -1,3 +1,8 @@
+---
+title: SOME/IP on Zephyr RTOS
+description: Run a full SOME/IP protocol stack on Zephyr RTOS. Build instructions, native_sim testing, and ARM target support for OpenSOME/IP.
+---
+
 # Zephyr RTOS Platform Port
 
 ## Overview

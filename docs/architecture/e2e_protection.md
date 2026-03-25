@@ -1,3 +1,8 @@
+---
+title: SOME/IP E2E Protection
+description: End-to-End protection for SOME/IP messages. CRC-based data integrity, sequence validation, and freshness checking for safety-critical automotive applications.
+---
+
 # E2E Protection Architecture
 
 ## Overview

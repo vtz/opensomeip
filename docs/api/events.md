@@ -1,3 +1,7 @@
+---
+title: SOME/IP Events API
+description: C++ API for SOME/IP publish/subscribe events. Event groups, notification handlers, and subscriber management for automotive SOA.
+---
 
 # Events Layer
 

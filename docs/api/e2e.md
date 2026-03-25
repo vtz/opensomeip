@@ -1,3 +1,8 @@
+---
+title: SOME/IP E2E Protection API
+description: C++ API for SOME/IP End-to-End protection. CRC profiles, data integrity verification, and sequence counters for safety-critical automotive messaging.
+---
+
 # E2E Protection API
 
 End-to-End (E2E) protection for SOME/IP messages provides data integrity, sequence validation, and freshness checking for safety-critical communications.

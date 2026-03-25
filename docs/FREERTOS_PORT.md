@@ -1,3 +1,8 @@
+---
+title: SOME/IP on FreeRTOS
+description: Run a full SOME/IP protocol stack on FreeRTOS with lwIP networking. Build, test, and integrate OpenSOME/IP in FreeRTOS projects.
+---
+
 # FreeRTOS + lwIP Platform Port
 
 ## Overview

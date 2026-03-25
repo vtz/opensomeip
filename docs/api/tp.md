@@ -1,3 +1,7 @@
+---
+title: SOME/IP-TP Transport Protocol API
+description: C++ API for SOME/IP Transport Protocol. Segment and reassemble large messages over UDP with configurable buffer sizes.
+---
 
 # SOME/IP Transport Protocol (TP) Layer
 

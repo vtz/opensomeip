@@ -1,3 +1,8 @@
+---
+title: SOME/IP on Eclipse ThreadX
+description: Run a full SOME/IP protocol stack on Eclipse ThreadX with lwIP networking. Build, test, and integrate OpenSOME/IP in ThreadX projects.
+---
+
 # ThreadX + lwIP Platform Port
 
 ## Overview

@@ -1,3 +1,7 @@
+---
+title: SOME/IP-SD Service Discovery API
+description: C++ API for SOME/IP Service Discovery. Multicast-based offer, find, subscribe with IPv4/IPv6 endpoint options and TTL management.
+---
 
 # Service Discovery (SD) Layer
 
