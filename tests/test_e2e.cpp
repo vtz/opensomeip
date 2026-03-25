@@ -12,6 +12,7 @@
  ********************************************************************************/
 
 #include <gtest/gtest.h>
+#include <cstddef>
 #include "e2e/e2e_protection.h"
 #include "e2e/e2e_header.h"
 #include "e2e/e2e_config.h"
@@ -267,6 +268,17 @@ TEST_F(E2ETest, CRC_OutOfBoundsRange) {
 }
 
 /**
+ * @test_case TC_E2E_CRC_001b
+ * @tests REQ_E2E_PLUGIN_004
+ * @brief calculate_crc: size_t overflow in offset+length is caught
+ */
+TEST_F(E2ETest, CRC_OverflowGuard) {
+    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+    uint32_t crc = E2ECRC::calculate_crc(data, SIZE_MAX, 1, 0);
+    EXPECT_EQ(crc, 0u);
+}
+
+/**
  * @test_case TC_E2E_CRC_002
  * @tests REQ_E2E_PLUGIN_004
  * @brief calculate_crc: all CRC type branches produce correct dispatch
@@ -315,17 +327,14 @@ TEST_F(E2ETest, CRC16_SingleByte) {
 /**
  * @test_case TC_E2E_CRC_005
  * @tests REQ_E2E_PLUGIN_004
- * @brief CRC-32: verify different from CRC-8/16 for same data
+ * @brief Each CRC type produces a non-zero result for a known payload
  */
-TEST_F(E2ETest, CRC32_DiffersFromOtherTypes) {
+TEST_F(E2ETest, CRC_AllTypesNonZeroForKnownPayload) {
     std::vector<uint8_t> data = {0xDE, 0xAD, 0xBE, 0xEF};
 
-    uint32_t crc8  = E2ECRC::calculate_crc8_sae_j1850(data);
-    uint32_t crc16 = E2ECRC::calculate_crc16_itu_x25(data);
-    uint32_t crc32 = E2ECRC::calculate_crc32(data);
-
-    EXPECT_NE(crc32, crc8);
-    EXPECT_NE(crc32, crc16);
+    EXPECT_NE(E2ECRC::calculate_crc8_sae_j1850(data), 0u);
+    EXPECT_NE(E2ECRC::calculate_crc16_itu_x25(data), 0u);
+    EXPECT_NE(E2ECRC::calculate_crc32(data), 0u);
 }
 
 /**

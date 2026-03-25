@@ -52,7 +52,7 @@ TEST_F(SessionManagerTest, CreateSession) {
     uint16_t client_id = 0x1001;
     uint16_t session_id = session_mgr_->create_session(client_id);
 
-    EXPECT_NE(session_id, 0);
+    EXPECT_NE(session_id, 0u);
     EXPECT_TRUE(session_mgr_->validate_session(session_id));
 }
 
@@ -338,8 +338,12 @@ TEST_F(SessionManagerTest, SessionParameterizedConstruction) {
  * @brief Session::is_expired is true when elapsed >= timeout
  *
  * MC/DC for: (now - last_activity) >= timeout
- *   elapsed >= timeout → true
- *   elapsed < timeout  → false
+ *   elapsed >= timeout → true   (timeout=0 guarantees elapsed >= 0)
+ *   elapsed < timeout  → false  (timeout=3600s, session just created)
+ *
+ * The exact boundary case (elapsed == timeout) is intentionally omitted
+ * because wall-clock timing makes precise equality tests unreliable in
+ * unit tests. The two cases above achieve the required decision coverage.
  */
 TEST_F(SessionManagerTest, Session_IsExpired) {
     Session s(1, 0x1001);

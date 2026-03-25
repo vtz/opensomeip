@@ -115,7 +115,7 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
 }
 
 uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type) {
-    if (offset + length > data.size()) {
+    if (offset > data.size() || length > data.size() || offset > data.size() - length) {
         return 0;
     }
 
