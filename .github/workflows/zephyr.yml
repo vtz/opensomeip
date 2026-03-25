@@ -226,3 +226,13 @@ jobs:
           files: "**/*junit*.xml"
           check_name: "Zephyr Test Results"
           comment_mode: "off"
+
+      - name: Detailed Test Report
+        uses: dorny/test-reporter@v3
+        with:
+          name: "Zephyr Test Report"
+          path: "**/*junit*.xml"
+          reporter: java-junit
+          list-tests: 'all'
+          list-suites: 'all'
+          use-actions-summary: 'true'

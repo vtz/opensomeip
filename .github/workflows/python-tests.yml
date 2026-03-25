@@ -86,3 +86,14 @@ jobs:
           check_name: "Python Test Results"
           comment_mode: "off"
           fail_on: "nothing"
+
+      - name: Detailed Test Report
+        uses: dorny/test-reporter@v3
+        with:
+          name: "Python Test Report"
+          path: "**/*junit*.xml"
+          reporter: java-junit
+          list-tests: 'all'
+          list-suites: 'all'
+          use-actions-summary: 'true'
+          fail-on-error: 'false'
