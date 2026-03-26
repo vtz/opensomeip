@@ -261,16 +261,6 @@ jobs:
             [ -f "$f" ] && cp "$f" dorny-inputs/
           done
 
-      - name: Prefix GTest suite names with build context
-        run: |
-          for dir in gtest-downloads/gtest-results-zephyr-*/; do
-            [ -d "$dir" ] || continue
-            context=$(echo "$dir" | sed 's|^gtest-downloads/gtest-results-zephyr-||;s|/$||')
-            for xml in "$dir"*.xml; do
-              [ -f "$xml" ] && sed -i "s/<testsuite name=\"/<testsuite name=\"${context} \/ /" "$xml"
-            done
-          done
-
       - name: Detailed Test Report
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
         with:

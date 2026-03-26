@@ -269,16 +269,6 @@ jobs:
             done
           done
 
-      - name: Prefix GTest suite names with build context
-        run: |
-          for dir in gtest-downloads/gtest-results-host-*/; do
-            [ -d "$dir" ] || continue
-            context=$(echo "$dir" | sed 's|^gtest-downloads/gtest-results-host-||;s|/$||')
-            for xml in "$dir"*.xml; do
-              [ -f "$xml" ] && sed -i "s/<testsuite name=\"/<testsuite name=\"${context} \/ /" "$xml"
-            done
-          done
-
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
         with:
@@ -286,11 +276,67 @@ jobs:
           check_name: "Host Test Results"
           comment_mode: "off"
 
-      - name: Detailed Test Report
+      - name: Detailed Test Report (ubuntu-latest-gcc)
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        if: always()
         with:
-          name: "Host Test Report"
-          path: "gtest-downloads/**/*.xml"
+          name: "Host Tests (ubuntu-latest-gcc)"
+          path: "gtest-downloads/gtest-results-host-ubuntu-latest-gcc/*.xml"
+          reporter: java-junit
+          list-tests: 'all'
+          list-suites: 'all'
+          use-actions-summary: 'false'
+
+      - name: Detailed Test Report (ubuntu-latest-clang)
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        if: always()
+        with:
+          name: "Host Tests (ubuntu-latest-clang)"
+          path: "gtest-downloads/gtest-results-host-ubuntu-latest-clang/*.xml"
+          reporter: java-junit
+          list-tests: 'all'
+          list-suites: 'all'
+          use-actions-summary: 'false'
+
+      - name: Detailed Test Report (windows-latest-cl)
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        if: always()
+        with:
+          name: "Host Tests (windows-latest-cl)"
+          path: "gtest-downloads/gtest-results-host-windows-latest-cl/*.xml"
+          reporter: java-junit
+          list-tests: 'all'
+          list-suites: 'all'
+          use-actions-summary: 'false'
+
+      - name: Detailed Test Report (fedora42-gcc)
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        if: always()
+        with:
+          name: "Host Tests (fedora42-gcc)"
+          path: "gtest-downloads/gtest-results-host-fedora42-gcc/*.xml"
+          reporter: java-junit
+          list-tests: 'all'
+          list-suites: 'all'
+          use-actions-summary: 'false'
+
+      - name: Detailed Test Report (fedora42-clang)
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        if: always()
+        with:
+          name: "Host Tests (fedora42-clang)"
+          path: "gtest-downloads/gtest-results-host-fedora42-clang/*.xml"
+          reporter: java-junit
+          list-tests: 'all'
+          list-suites: 'all'
+          use-actions-summary: 'false'
+
+      - name: Detailed Test Report (coverage)
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        if: always()
+        with:
+          name: "Host Tests (coverage)"
+          path: "gtest-downloads/gtest-results-host-coverage/*.xml"
           reporter: java-junit
           list-tests: 'all'
           list-suites: 'all'
