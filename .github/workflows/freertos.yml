@@ -198,8 +198,6 @@ jobs:
     permissions:
       checks: write
     steps:
-      - uses: actions/checkout@v4
-
       - name: Download test results
         uses: actions/download-artifact@v4
         with:
@@ -221,12 +219,18 @@ jobs:
           check_name: "FreeRTOS Test Results"
           comment_mode: "off"
 
+      - name: Convert JUnit XML to CTRF
+        if: always()
+        run: npx junit-to-ctrf "test-results-*/**/*.xml" -o ctrf/freertos-report.json -t freertos
+
       - name: Detailed Test Report
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        uses: ctrf-io/github-test-reporter@v1
+        if: always()
         with:
-          name: "FreeRTOS Test Report"
-          path: "**/*junit*.xml"
-          reporter: java-junit
-          list-tests: 'all'
-          list-suites: 'all'
-          use-actions-summary: 'false'
+          report-path: 'ctrf/freertos-report.json'
+          title: 'FreeRTOS Test Report'
+          summary-report: true
+          test-list-report: true
+          failed-report: true
+          suite-folded-report: true
+          use-suite-name: true

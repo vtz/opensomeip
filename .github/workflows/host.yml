@@ -247,8 +247,6 @@ jobs:
     permissions:
       checks: write
     steps:
-      - uses: actions/checkout@v4
-
       - name: Download test results
         uses: actions/download-artifact@v4
         with:
@@ -276,68 +274,18 @@ jobs:
           check_name: "Host Test Results"
           comment_mode: "off"
 
-      - name: Detailed Test Report (ubuntu-latest-gcc)
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+      - name: Convert GTest XML to CTRF
         if: always()
-        with:
-          name: "Host Tests (ubuntu-latest-gcc)"
-          path: "gtest-downloads/gtest-results-host-ubuntu-latest-gcc/*.xml"
-          reporter: java-junit
-          list-tests: 'all'
-          list-suites: 'all'
-          use-actions-summary: 'false'
+        run: npx junit-to-ctrf "gtest-downloads/**/*.xml" -o ctrf/host-report.json -t host
 
-      - name: Detailed Test Report (ubuntu-latest-clang)
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+      - name: Detailed Test Report
+        uses: ctrf-io/github-test-reporter@v1
         if: always()
         with:
-          name: "Host Tests (ubuntu-latest-clang)"
-          path: "gtest-downloads/gtest-results-host-ubuntu-latest-clang/*.xml"
-          reporter: java-junit
-          list-tests: 'all'
-          list-suites: 'all'
-          use-actions-summary: 'false'
-
-      - name: Detailed Test Report (windows-latest-cl)
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
-        if: always()
-        with:
-          name: "Host Tests (windows-latest-cl)"
-          path: "gtest-downloads/gtest-results-host-windows-latest-cl/*.xml"
-          reporter: java-junit
-          list-tests: 'all'
-          list-suites: 'all'
-          use-actions-summary: 'false'
-
-      - name: Detailed Test Report (fedora42-gcc)
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
-        if: always()
-        with:
-          name: "Host Tests (fedora42-gcc)"
-          path: "gtest-downloads/gtest-results-host-fedora42-gcc/*.xml"
-          reporter: java-junit
-          list-tests: 'all'
-          list-suites: 'all'
-          use-actions-summary: 'false'
-
-      - name: Detailed Test Report (fedora42-clang)
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
-        if: always()
-        with:
-          name: "Host Tests (fedora42-clang)"
-          path: "gtest-downloads/gtest-results-host-fedora42-clang/*.xml"
-          reporter: java-junit
-          list-tests: 'all'
-          list-suites: 'all'
-          use-actions-summary: 'false'
-
-      - name: Detailed Test Report (coverage)
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
-        if: always()
-        with:
-          name: "Host Tests (coverage)"
-          path: "gtest-downloads/gtest-results-host-coverage/*.xml"
-          reporter: java-junit
-          list-tests: 'all'
-          list-suites: 'all'
-          use-actions-summary: 'false'
+          report-path: 'ctrf/host-report.json'
+          title: 'Host Test Report'
+          summary-report: true
+          test-list-report: true
+          failed-report: true
+          suite-folded-report: true
+          use-suite-name: true

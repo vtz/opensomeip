@@ -62,8 +62,6 @@ jobs:
     permissions:
       checks: write
     steps:
-      - uses: actions/checkout@v4
-
       - name: Download test results
         uses: actions/download-artifact@v4
         with:
@@ -86,13 +84,19 @@ jobs:
           comment_mode: "off"
           fail_on: "nothing"
 
+      - name: Convert JUnit XML to CTRF
+        if: always()
+        run: npx junit-to-ctrf "test-results-*/**/*.xml" -o ctrf/python-report.json -t pytest
+
       - name: Detailed Test Report
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        uses: ctrf-io/github-test-reporter@v1
+        if: always()
         with:
-          name: "Python Test Report"
-          path: "**/*junit*.xml"
-          reporter: java-junit
-          list-tests: 'all'
-          list-suites: 'all'
-          use-actions-summary: 'false'
-          fail-on-error: 'false'
+          report-path: 'ctrf/python-report.json'
+          title: 'Python Test Report'
+          summary-report: true
+          test-list-report: true
+          failed-report: true
+          suite-folded-report: true
+          use-suite-name: true
+          exit-on-fail: false

@@ -221,8 +221,6 @@ jobs:
     permissions:
       checks: write
     steps:
-      - uses: actions/checkout@v4
-
       - name: Download test results
         uses: actions/download-artifact@v4
         with:
@@ -251,22 +249,29 @@ jobs:
           check_name: "Zephyr Test Results"
           comment_mode: "off"
 
-      - name: Merge detailed results for dorny
+      - name: Merge all test XML for detailed report
+        if: always()
         run: |
-          mkdir -p dorny-inputs
+          mkdir -p all-results
           for f in gtest-downloads/*/*.xml; do
-            [ -f "$f" ] && cp "$f" dorny-inputs/
+            [ -f "$f" ] && cp "$f" all-results/
           done
           for f in test-results-zephyr-native-sim/*.xml test-results-zephyr-renode/*.xml; do
-            [ -f "$f" ] && cp "$f" dorny-inputs/
+            [ -f "$f" ] && cp "$f" all-results/
           done
 
+      - name: Convert JUnit XML to CTRF
+        if: always()
+        run: npx junit-to-ctrf "all-results/*.xml" -o ctrf/zephyr-report.json -t zephyr
+
       - name: Detailed Test Report
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        uses: ctrf-io/github-test-reporter@v1
+        if: always()
         with:
-          name: "Zephyr Test Report"
-          path: "dorny-inputs/**/*.xml"
-          reporter: java-junit
-          list-tests: 'all'
-          list-suites: 'all'
-          use-actions-summary: 'false'
+          report-path: 'ctrf/zephyr-report.json'
+          title: 'Zephyr Test Report'
+          summary-report: true
+          test-list-report: true
+          failed-report: true
+          suite-folded-report: true
+          use-suite-name: true
