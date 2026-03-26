@@ -270,7 +270,7 @@ jobs:
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
         with:
-          files: "**/junit_results.xml"
+          files: "gtest-downloads/**/*.xml"
           check_name: "Host Test Results"
           comment_mode: "off"
 

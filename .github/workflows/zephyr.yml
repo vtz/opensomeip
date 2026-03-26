@@ -245,7 +245,10 @@ jobs:
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
         with:
-          files: "**/*junit*.xml"
+          files: |
+            gtest-downloads/**/*.xml
+            test-results-zephyr-native-sim/*.xml
+            test-results-zephyr-renode/*.xml
           check_name: "Zephyr Test Results"
           comment_mode: "off"
 
