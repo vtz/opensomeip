@@ -69,11 +69,7 @@ jobs:
         run: cmake --build --preset freertos-linux-tests
 
       - name: Test
-        env:
-          GTEST_OUTPUT: "xml:${{ github.workspace }}/gtest_results/"
-        run: |
-          mkdir -p "${{ github.workspace }}/gtest_results"
-          ctest --preset freertos-linux-tests --output-junit junit_results.xml
+        run: ctest --preset freertos-linux-tests --output-junit junit_results.xml
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -81,14 +77,6 @@ jobs:
         with:
           name: test-results-freertos
           path: build/freertos-linux-tests/junit_results.xml
-          retention-days: 14
-
-      - name: Upload GTest detailed results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gtest-results-freertos
-          path: ${{ github.workspace }}/gtest_results/
           retention-days: 14
 
   runtime-tests-fedora:
@@ -105,8 +93,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build & run FreeRTOS POSIX port tests
-        env:
-          GTEST_OUTPUT: "xml:${{ github.workspace }}/gtest_results/"
         run: |
           cmake -G Ninja -B build_freertos_rt \
             -DSOMEIP_FREERTOS_LINUX_TESTS=ON \
@@ -114,7 +100,6 @@ jobs:
             -DBUILD_EXAMPLES=OFF \
             -DCMAKE_BUILD_TYPE=Release
           cmake --build build_freertos_rt --config Release
-          mkdir -p "${{ github.workspace }}/gtest_results"
           cd build_freertos_rt && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
@@ -123,14 +108,6 @@ jobs:
         with:
           name: test-results-freertos-fedora42
           path: build_freertos_rt/junit_results.xml
-          retention-days: 14
-
-      - name: Upload GTest detailed results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gtest-results-freertos-fedora42
-          path: ${{ github.workspace }}/gtest_results/
           retention-days: 14
 
   coverage:
@@ -228,29 +205,13 @@ jobs:
         with:
           pattern: test-results-freertos*
 
-      - name: Download GTest detailed results
-        uses: actions/download-artifact@v4
-        with:
-          pattern: gtest-results-freertos*
-          path: gtest-downloads
-
       - name: Set test suite names in JUnit XML
         run: |
           for dir in test-results-*/; do
             suite=$(echo "$dir" | sed 's|^test-results-||;s|/$||')
             for xml in "$dir"*.xml; do
-              [ -f "$xml" ] && sed -i "s/<testsuite name=\"(empty)\"/<testsuite name=\"${suite}\"/" "$xml"
+              [ -f "$xml" ] && sed -i "s/<testsuite name=\"[^\"]*\"/<testsuite name=\"${suite}\"/" "$xml"
             done
-          done
-
-      - name: Merge detailed results for dorny
-        run: |
-          mkdir -p dorny-inputs
-          for f in gtest-downloads/*/*.xml; do
-            [ -f "$f" ] && cp "$f" dorny-inputs/
-          done
-          for f in test-results-freertos-renode/*.xml; do
-            [ -f "$f" ] && cp "$f" dorny-inputs/
           done
 
       - name: Publish Test Results
@@ -264,7 +225,7 @@ jobs:
         uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
         with:
           name: "FreeRTOS Test Report"
-          path: "dorny-inputs/**/*.xml"
+          path: "**/*junit*.xml"
           reporter: java-junit
           list-tests: 'all'
           list-suites: 'all'

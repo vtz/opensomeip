@@ -61,10 +61,9 @@ jobs:
       - name: Test
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         shell: bash
-        env:
-          GTEST_OUTPUT: "xml:${{ github.workspace }}/gtest_results/"
         run: |
-          mkdir -p "${{ github.workspace }}/gtest_results"
+          mkdir -p "$GITHUB_WORKSPACE/gtest_results"
+          export GTEST_OUTPUT="xml:$GITHUB_WORKSPACE/gtest_results/"
           ctest --build-config ${{ matrix.build_type }} --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
@@ -119,10 +118,9 @@ jobs:
 
       - name: Test
         working-directory: build
-        env:
-          GTEST_OUTPUT: "xml:${{ github.workspace }}/gtest_results/"
         run: |
-          mkdir -p "${{ github.workspace }}/gtest_results"
+          mkdir -p "$GITHUB_WORKSPACE/gtest_results"
+          export GTEST_OUTPUT="xml:$GITHUB_WORKSPACE/gtest_results/"
           ctest --build-config Release --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
@@ -171,10 +169,9 @@ jobs:
 
       - name: Run tests
         working-directory: build
-        env:
-          GTEST_OUTPUT: "xml:${{ github.workspace }}/gtest_results/"
         run: |
-          mkdir -p "${{ github.workspace }}/gtest_results"
+          mkdir -p "$GITHUB_WORKSPACE/gtest_results"
+          export GTEST_OUTPUT="xml:$GITHUB_WORKSPACE/gtest_results/"
           ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Generate coverage report
@@ -268,7 +265,7 @@ jobs:
           for dir in test-results-*/; do
             suite=$(echo "$dir" | sed 's|^test-results-||;s|/$||')
             for xml in "$dir"*.xml; do
-              [ -f "$xml" ] && sed -i "s/<testsuite name=\"(empty)\"/<testsuite name=\"${suite}\"/" "$xml"
+              [ -f "$xml" ] && sed -i "s/<testsuite name=\"[^\"]*\"/<testsuite name=\"${suite}\"/" "$xml"
             done
           done
 
