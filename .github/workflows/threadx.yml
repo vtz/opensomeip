@@ -245,7 +245,6 @@ jobs:
           title: 'ThreadX Test Report'
           summary: false
           summary-report: true
-          suite-list-report: true
           failed-report: true
           use-suite-name: true
           status-check: true
