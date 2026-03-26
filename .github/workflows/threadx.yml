@@ -226,8 +226,6 @@ jobs:
       - name: Detailed Test Report
         uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
         if: always()
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         with:
           report-path: 'ctrf/threadx-report.json'
           title: 'ThreadX Test Report'
@@ -235,6 +233,20 @@ jobs:
           test-list-report: true
           failed-report: true
           suite-folded-report: true
+          use-suite-name: true
+
+      - name: ThreadX Test Check Run
+        uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          report-path: 'ctrf/threadx-report.json'
+          title: 'ThreadX Test Report'
+          summary: false
+          summary-report: true
+          suite-list-report: true
+          failed-report: true
           use-suite-name: true
           status-check: true
           status-check-name: 'ThreadX Detailed Test Report'
