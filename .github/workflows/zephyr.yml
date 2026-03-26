@@ -285,6 +285,7 @@ jobs:
         if: always()
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         with:
           report-path: 'ctrf/zephyr-report.json'
           title: 'Zephyr Test Report'
