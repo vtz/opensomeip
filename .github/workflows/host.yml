@@ -274,11 +274,21 @@ jobs:
           check_name: "Host Test Results"
           comment_mode: "off"
 
-      # CTest JUnit XML (test-results-*/) is aggregate (one entry per binary);
-      # GTest XML (gtest-downloads/) has per-test-case granularity for CTRF.
+      - name: Tag GTest XMLs with build variant
+        if: always()
+        run: |
+          for dir in gtest-downloads/gtest-results-host-*/; do
+            variant=$(basename "$dir" | sed 's/^gtest-results-host-//')
+            for xml in "$dir"*.xml; do
+              [ -f "$xml" ] && sed -i \
+                -e "s/<testsuite name=\"/<testsuite name=\"[${variant}] /g" \
+                -e "s/classname=\"/classname=\"[${variant}] /g" "$xml"
+            done
+          done
+
       - name: Convert GTest XML to CTRF
         if: always()
-        run: npx junit-to-ctrf "gtest-downloads/**/*.xml" -o ctrf/host-report.json -t host
+        run: npx junit-to-ctrf@0.0.14 "gtest-downloads/**/*.xml" -o ctrf/host-report.json -t host
 
       - name: Detailed Test Report
         uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
