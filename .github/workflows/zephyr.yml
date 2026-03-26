@@ -252,12 +252,13 @@ jobs:
       - name: Merge all test XML for detailed report
         if: always()
         run: |
+          shopt -s nullglob
           mkdir -p all-results
           for f in gtest-downloads/*/*.xml; do
-            [ -f "$f" ] && cp "$f" all-results/
+            cp "$f" all-results/
           done
           for f in test-results-zephyr-native-sim/*.xml test-results-zephyr-renode/*.xml; do
-            [ -f "$f" ] && cp "$f" all-results/
+            cp "$f" all-results/
           done
 
       - name: Convert JUnit XML to CTRF
