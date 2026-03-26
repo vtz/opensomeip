@@ -265,7 +265,7 @@ jobs:
         run: npx junit-to-ctrf "all-results/*.xml" -o ctrf/zephyr-report.json -t zephyr
 
       - name: Detailed Test Report
-        uses: ctrf-io/github-test-reporter@v1
+        uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
         if: always()
         with:
           report-path: 'ctrf/zephyr-report.json'

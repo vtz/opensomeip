@@ -224,7 +224,7 @@ jobs:
         run: npx junit-to-ctrf "test-results-*/**/*.xml" -o ctrf/freertos-report.json -t freertos
 
       - name: Detailed Test Report
-        uses: ctrf-io/github-test-reporter@v1
+        uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
         if: always()
         with:
           report-path: 'ctrf/freertos-report.json'
