@@ -287,3 +287,5 @@ jobs:
           failed-report: true
           suite-folded-report: true
           use-suite-name: true
+          status-check: true
+          status-check-name: 'Host Detailed Test Report'

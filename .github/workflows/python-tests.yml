@@ -100,3 +100,5 @@ jobs:
           suite-folded-report: true
           use-suite-name: true
           exit-on-fail: false
+          status-check: true
+          status-check-name: 'Python Detailed Test Report'
