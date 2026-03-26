@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: Apache-2.0
+# Packit configuration for automated RPM builds via Fedora Copr.
+# Docs: https://packit.dev/docs/configuration
+
+specfile_path: packaging/opensomeip.spec
+upstream_project_url: https://github.com/vtz/opensomeip
+upstream_tag_template: v{version}
+copy_upstream_release_description: true
+
+srpm_build_deps:
+  - cmake
+  - gcc-c++
+
+actions:
+  # Packit creates the tarball from git; fix-spec-file updates Version/Release.
+  # The archive name must match %autosetup -n %{name}-%{version}.
+  create-archive:
+    - bash -c "tar czf opensomeip-$(cat VERSION).tar.gz --transform 's,^,opensomeip-$(cat VERSION)/,' --exclude=.git --exclude=.github --exclude='*.core' ."
+    - bash -c "echo opensomeip-$(cat VERSION).tar.gz"
+
+jobs:
+  # Build RPM on every pull request (validates spec before merge).
+  - job: copr_build
+    trigger: pull_request
+    targets:
+      - fedora-all
+
+  # Publish to Copr on GitHub Release (triggered by v* tag).
+  - job: copr_build
+    trigger: release
+    owner: vtz
+    project: opensomeip
+    targets:
+      - fedora-all

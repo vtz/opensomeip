@@ -575,8 +575,12 @@ endif()
 # Installation
 ################################################################################
 
-install(DIRECTORY include/ DESTINATION include/someip FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY ${CMAKE_BINARY_DIR}/lib/ DESTINATION lib FILES_MATCHING PATTERN "libopensomeip*")
+include(GNUInstallDirs)
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/someip FILES_MATCHING PATTERN "*.h")
+install(TARGETS opensomeip
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
 ################################################################################
 # Configure Summary
