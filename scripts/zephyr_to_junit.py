@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Parse Zephyr test output and generate JUnit XML.
+"""Parse Zephyr/FreeRTOS/ThreadX test output and generate JUnit XML.
 
 Parses lines like:
     === Results: 5 passed, 0 failed ===
-    PASS - test_name
+    PASS - test_name       (Zephyr native_sim format)
     FAIL - test_name
+    [PASS] test_name       (Renode UART output format)
+    [FAIL] test_name
 """
 
 import re
@@ -20,8 +22,8 @@ def parse_zephyr_log(log_text: str, suite_name: str) -> ET.Element:
     failures = 0
 
     for line in log_text.splitlines():
-        pass_match = re.match(r"\s*PASS\s*-\s*(.+)", line)
-        fail_match = re.match(r"\s*FAIL\s*-\s*(.+)", line)
+        pass_match = re.match(r"\s*(?:PASS\s*-|\[PASS\])\s*(.+)", line)
+        fail_match = re.match(r"\s*(?:FAIL\s*-|\[FAIL\])\s*(.+)", line)
 
         if pass_match:
             tests += 1
