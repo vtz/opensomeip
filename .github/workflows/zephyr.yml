@@ -280,18 +280,28 @@ jobs:
           suite-folded-report: true
           use-suite-name: true
 
-      - name: Zephyr Test Check Run
-        uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
+      - name: Create Zephyr Test Check Run
         if: always()
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        with:
-          report-path: 'ctrf/zephyr-report.json'
-          title: 'Zephyr Test Report'
-          summary: false
-          summary-report: true
-          failed-report: true
-          use-suite-name: true
-          status-check: true
-          status-check-name: 'Zephyr Detailed Test Report'
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          REPORT="ctrf/zephyr-report.json"
+          if [ ! -f "$REPORT" ]; then echo "No CTRF report found"; exit 0; fi
+          TOTAL=$(jq '.results.summary.tests' "$REPORT")
+          PASSED=$(jq '.results.summary.passed' "$REPORT")
+          FAILED=$(jq '.results.summary.failed' "$REPORT")
+          SKIPPED=$(jq '.results.summary.skipped' "$REPORT")
+          CONCLUSION="success"; [ "$FAILED" -gt 0 ] && CONCLUSION="failure"
+          BODY="## Zephyr Test Report"$'\n\n'"| Tests | Passed | Failed | Skipped |"$'\n'"|-|-|-|-|"$'\n'"| $TOTAL | $PASSED | $FAILED | $SKIPPED |"
+          if [ "$FAILED" -gt 0 ]; then
+            FAILS=$(jq -r '[.results.tests[] | select(.status=="failed")] | .[0:50] | .[] | "| \(.suite // "-") | \(.name) |"' "$REPORT")
+            BODY="$BODY"$'\n\n'"### Failed Tests"$'\n'"| Suite | Test |"$'\n'"|-|-|"$'\n'"$FAILS"
+          fi
+          gh api repos/${{ github.repository }}/check-runs \
+            -f "head_sha=${SHA}" \
+            -f "name=Zephyr Detailed Test Report" \
+            -f "status=completed" \
+            -f "conclusion=${CONCLUSION}" \
+            -f "output[title]=Zephyr: ${PASSED}/${TOTAL} passed" \
+            -f "output[summary]=${BODY}"

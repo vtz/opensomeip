@@ -101,19 +101,28 @@ jobs:
           use-suite-name: true
           exit-on-fail: false
 
-      - name: Python Test Check Run
-        uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
+      - name: Create Python Test Check Run
         if: always()
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        with:
-          report-path: 'ctrf/python-report.json'
-          title: 'Python Test Report'
-          summary: false
-          summary-report: true
-          failed-report: true
-          use-suite-name: true
-          exit-on-fail: false
-          status-check: true
-          status-check-name: 'Python Detailed Test Report'
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+          REPORT="ctrf/python-report.json"
+          if [ ! -f "$REPORT" ]; then echo "No CTRF report found"; exit 0; fi
+          TOTAL=$(jq '.results.summary.tests' "$REPORT")
+          PASSED=$(jq '.results.summary.passed' "$REPORT")
+          FAILED=$(jq '.results.summary.failed' "$REPORT")
+          SKIPPED=$(jq '.results.summary.skipped' "$REPORT")
+          CONCLUSION="success"; [ "$FAILED" -gt 0 ] && CONCLUSION="failure"
+          BODY="## Python Test Report"$'\n\n'"| Tests | Passed | Failed | Skipped |"$'\n'"|-|-|-|-|"$'\n'"| $TOTAL | $PASSED | $FAILED | $SKIPPED |"
+          if [ "$FAILED" -gt 0 ]; then
+            FAILS=$(jq -r '[.results.tests[] | select(.status=="failed")] | .[0:50] | .[] | "| \(.suite // "-") | \(.name) |"' "$REPORT")
+            BODY="$BODY"$'\n\n'"### Failed Tests"$'\n'"| Suite | Test |"$'\n'"|-|-|"$'\n'"$FAILS"
+          fi
+          gh api repos/${{ github.repository }}/check-runs \
+            -f "head_sha=${SHA}" \
+            -f "name=Python Detailed Test Report" \
+            -f "status=completed" \
+            -f "conclusion=${CONCLUSION}" \
+            -f "output[title]=Python: ${PASSED}/${TOTAL} passed" \
+            -f "output[summary]=${BODY}"
