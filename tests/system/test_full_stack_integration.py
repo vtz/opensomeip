@@ -28,88 +28,54 @@ from pathlib import Path
 
 from someip_test_framework import (
     TestProcess, TestScenario, SomeIpEndpoint,
-    someip_test_scenario, get_build_bin_path
+    someip_test_scenario,
 )
 
 
 @pytest.mark.system
 @pytest.mark.slow
-def test_service_discovery_and_rpc(sd_server_executable,
-                                  rpc_server_executable, rpc_client_executable):
+def test_service_discovery_and_rpc(sd_server_executable, sd_client_executable):
     """
-    System test: SD server offers calculator service, SD client discovers it,
-    then performs RPC calls to the calculator.
+    System test: SD server offers service 0x1000 via Service Discovery,
+    SD client discovers it, sends SOME/IP requests, and verifies responses.
     """
-    pytest.skip("No SD client binary exists yet (sd_demo is server-only)")
+    server_proc = TestProcess(sd_server_executable)
+    client_proc = TestProcess(sd_client_executable)
 
-    build_bin = get_build_bin_path()
-
-    # Create test scenario
-    scenario = TestScenario(
-        name="full_stack_test",
-        description="Complete SD + RPC integration test",
-        setup_time=3.0,
-        test_timeout=60.0
-    )
-
-    # Start SD server (offers calculator service)
-    scenario.add_process(sd_server_executable)
-
-    # Start actual RPC calculator server
-    scenario.add_process(rpc_server_executable, "8888")
-
-    # Run the scenario
-    processes_started = []
     try:
-        # Start processes
-        for process in scenario.processes:
-            print(f"Starting: {process.executable} {' '.join(process.args)}")
-            if process.start():
-                processes_started.append(process)
-            else:
-                pytest.fail(f"Failed to start process: {process.executable}")
+        assert server_proc.start(), "Failed to start sd_demo_server"
+        time.sleep(2.0)
+        assert server_proc.is_running, "sd_demo_server died during startup"
 
-        # Wait for services to start up
-        time.sleep(5.0)
+        assert client_proc.start(), "Failed to start sd_demo_client"
 
-        # Check that all processes are still running
-        for process in processes_started:
-            assert process.is_running, f"Process died: {process.executable}"
+        # sd_demo_client discovers the service, sends 3 requests, and exits
+        deadline = time.time() + 30.0
+        while client_proc.is_running and time.time() < deadline:
+            time.sleep(0.5)
 
-        # Wait for SD discovery and RPC operations to complete
-        time.sleep(10.0)
+        assert not client_proc.is_running, "sd_demo_client did not finish in time"
 
-        # Verify processes completed successfully
-        for process in processes_started:
-            if process.is_running:
-                # Try graceful shutdown
-                process.stop(timeout=5.0)
+        client_rc = client_proc.returncode
+        client_out = client_proc.stdout or ""
+        print(f"sd_demo_client exited with code {client_rc}")
+        print(f"STDOUT: {client_out}")
+        if client_proc.stderr:
+            print(f"STDERR: {client_proc.stderr}")
 
-        # Check return codes
-        for process in processes_started:
-            returncode = process.returncode
-            stdout = process.stdout or ""
-            stderr = process.stderr or ""
+        assert client_rc == 0, (
+            f"sd_demo_client failed (exit {client_rc}): {client_out}"
+        )
+        assert "3/3 round-trips OK" in client_out, (
+            f"sd_demo_client did not complete all round-trips: {client_out}"
+        )
 
-            print(f"Process {process.executable} exited with code {returncode}")
-            if stdout:
-                print(f"STDOUT: {stdout[:500]}...")
-            if stderr:
-                print(f"STDERR: {stderr[:500]}...")
-
-            # SD and RPC processes should exit cleanly
-            assert returncode == 0, f"Process {process.executable} failed with code {returncode}"
-
-        print("✅ Full stack SD + RPC test completed successfully")
-
-    except Exception as e:
-        # Clean up on failure
-        for process in reversed(processes_started):
+    finally:
+        for p in (client_proc, server_proc):
             try:
-                process.stop(timeout=2.0)
-            except:
+                p.stop(timeout=3.0)
+            except Exception:
                 pass
-        raise
 
 
 @pytest.mark.system

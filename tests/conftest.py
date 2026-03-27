@@ -133,6 +133,11 @@ def sd_server_executable(build_bin_path) -> str:
     return _require_executable(build_bin_path, "sd_demo_server")
 
 
+@pytest.fixture(scope="session")
+def sd_client_executable(build_bin_path) -> str:
+    return _require_executable(build_bin_path, "sd_demo_client")
+
+
 
 @pytest.fixture(scope="session")
 def event_publisher_executable(build_bin_path) -> str:
@@ -173,9 +178,10 @@ def rpc_scenario(rpc_server_executable, rpc_client_executable, localhost_endpoin
 
 
 @pytest.fixture
-def sd_scenario(sd_server_executable, multicast_endpoint, localhost_endpoint) -> TestScenario:
+def sd_scenario(sd_server_executable, sd_client_executable, multicast_endpoint, localhost_endpoint) -> TestScenario:
     scenario = TestScenario(name="sd_test", description="Service Discovery test scenario")
     scenario.add_process(sd_server_executable)
+    scenario.add_process(sd_client_executable)
     return scenario
 
 
