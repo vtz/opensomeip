@@ -125,6 +125,46 @@ jobs:
       - name: Build someip_sd_client
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: west build -b native_sim zephyr/samples/someip_sd_client -d build/ns_sd --pristine auto
+      - name: Build & run test_core (ASan + UBSan)
+        run: |
+          west build -b native_sim zephyr/tests/test_core \
+            -d build/ns_tc_asan --pristine auto \
+            -- -DOVERLAY_CONFIG="boards/native_sim_asan.conf"
+          if timeout 60 build/ns_tc_asan/zephyr/zephyr.exe > /tmp/test_core_asan.log 2>&1; then
+            rc=0
+          else
+            rc=$?
+          fi
+          cat /tmp/test_core_asan.log
+          if [ "$rc" -eq 124 ]; then
+            grep -Eq "=== Results: [0-9]+ passed, 0 failed ===" /tmp/test_core_asan.log || exit 1
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
+        env:
+          ZEPHYR_BASE: /tmp/zp/zephyr
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+      - name: Build & run test_transport (ASan + UBSan)
+        run: |
+          west build -b native_sim zephyr/tests/test_transport \
+            -d build/ns_tp_asan --pristine auto \
+            -- -DOVERLAY_CONFIG="boards/native_sim_asan.conf"
+          if timeout 60 build/ns_tp_asan/zephyr/zephyr.exe > /tmp/test_transport_asan.log 2>&1; then
+            rc=0
+          else
+            rc=$?
+          fi
+          cat /tmp/test_transport_asan.log
+          if [ "$rc" -eq 124 ]; then
+            grep -Eq "=== Results: [0-9]+ passed, 0 failed ===" /tmp/test_transport_asan.log || exit 1
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
+        env:
+          ZEPHYR_BASE: /tmp/zp/zephyr
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
 
   zephyr-s32k344-build:
     name: Zephyr S32K344 cross-compile
