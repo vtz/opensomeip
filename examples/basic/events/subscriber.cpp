@@ -52,35 +52,24 @@ void signal_handler(int signal) {
     running = false;
 }
 
-class SensorSubscriber : public EventSubscriber {
+class SensorSubscriber {
 public:
     SensorSubscriber() : subscriber_(SENSOR_SERVICE_ID) {}
 
     bool initialize() {
-        // Set up event handlers
-        subscriber_.set_event_handler(TEMPERATURE_EVENT_ID,
-            [this](const EventNotification& notification) {
-                on_temperature_event(notification);
-            });
-
-        subscriber_.set_event_handler(SPEED_EVENT_ID,
-            [this](const EventNotification& notification) {
-                on_speed_event(notification);
-            });
-
-        // Subscribe to events
-        if (!subscriber_.subscribe_event(TEMPERATURE_EVENT_ID, SENSOR_EVENTGROUP_ID)) {
-            std::cerr << "Failed to subscribe to temperature event" << std::endl;
-            return false;
-        }
-
-        if (!subscriber_.subscribe_event(SPEED_EVENT_ID, SENSOR_EVENTGROUP_ID)) {
-            std::cerr << "Failed to subscribe to speed event" << std::endl;
-            return false;
-        }
-
         if (!subscriber_.initialize()) {
             std::cerr << "Failed to initialize event subscriber" << std::endl;
+            return false;
+        }
+
+        // Subscribe to the sensor event group with a single notification callback
+        // that dispatches based on event_id.
+        if (!subscriber_.subscribe_eventgroup(
+                SENSOR_SERVICE_ID, 0x0001, SENSOR_EVENTGROUP_ID,
+                [this](const EventNotification& notification) {
+                    on_event_received(notification);
+                })) {
+            std::cerr << "Failed to subscribe to sensor event group" << std::endl;
             return false;
         }
 
@@ -107,49 +96,53 @@ public:
 private:
     EventSubscriber subscriber_;
 
+    void on_event_received(const EventNotification& notification) {
+        if (notification.event_id == TEMPERATURE_EVENT_ID) {
+            on_temperature_event(notification);
+        } else if (notification.event_id == SPEED_EVENT_ID) {
+            on_speed_event(notification);
+        }
+    }
+
     void on_temperature_event(const EventNotification& notification) {
         if (notification.event_data.size() < 4) {
-            std::cout << "❌ Temperature event: Invalid data size" << std::endl;
+            std::cout << "Temperature event: Invalid data size" << std::endl;
             return;
         }
 
-        // Deserialize temperature (big-endian float)
-        uint32_t temp_bits = (notification.event_data[0] << 24) |
-                           (notification.event_data[1] << 16) |
-                           (notification.event_data[2] << 8) |
-                           notification.event_data[3];
+        uint32_t temp_bits = (static_cast<uint32_t>(notification.event_data[0]) << 24) |
+                             (static_cast<uint32_t>(notification.event_data[1]) << 16) |
+                             (static_cast<uint32_t>(notification.event_data[2]) << 8) |
+                              static_cast<uint32_t>(notification.event_data[3]);
 
         float temperature;
         std::memcpy(&temperature, &temp_bits, sizeof(float));
 
-        // Get timestamp
         auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
             notification.timestamp.time_since_epoch()).count();
 
-        std::cout << "🌡️  Temperature Event: " << std::fixed << std::setprecision(1)
-                  << temperature << "°C (at " << timestamp << "ms)" << std::endl;
+        std::cout << "Temperature Event: " << std::fixed << std::setprecision(1)
+                  << temperature << " C (at " << timestamp << "ms)" << std::endl;
     }
 
     void on_speed_event(const EventNotification& notification) {
         if (notification.event_data.size() < 4) {
-            std::cout << "❌ Speed event: Invalid data size" << std::endl;
+            std::cout << "Speed event: Invalid data size" << std::endl;
             return;
         }
 
-        // Deserialize speed (big-endian float)
-        uint32_t speed_bits = (notification.event_data[0] << 24) |
-                            (notification.event_data[1] << 16) |
-                            (notification.event_data[2] << 8) |
-                            notification.event_data[3];
+        uint32_t speed_bits = (static_cast<uint32_t>(notification.event_data[0]) << 24) |
+                              (static_cast<uint32_t>(notification.event_data[1]) << 16) |
+                              (static_cast<uint32_t>(notification.event_data[2]) << 8) |
+                               static_cast<uint32_t>(notification.event_data[3]);
 
         float speed;
         std::memcpy(&speed, &speed_bits, sizeof(float));
 
-        // Get timestamp
         auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
             notification.timestamp.time_since_epoch()).count();
 
-        std::cout << "🚗 Speed Event: " << std::fixed << std::setprecision(1)
+        std::cout << "Speed Event: " << std::fixed << std::setprecision(1)
                   << speed << " km/h (at " << timestamp << "ms)" << std::endl;
     }
 };

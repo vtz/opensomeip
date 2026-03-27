@@ -16,13 +16,22 @@ Events are sent periodically to simulate real sensor data streams.
 - `subscriber.cpp` - Sensor data subscriber that receives and displays events
 - `README.md` - This documentation
 
+## Building
+
+From the project root:
+
+```bash
+cmake -B build -DBUILD_EXAMPLES=ON
+cmake --build build --target events_publisher events_subscriber
+```
+
+The binaries are placed in `build/bin/`.
+
 ## Running the Example
 
 ### Terminal 1 - Start the Publisher
 ```bash
-cd examples/basic/events
-make publisher
-./publisher
+./build/bin/events_publisher
 ```
 
 You should see:
@@ -35,18 +44,14 @@ Publishing events:
 
 Sensor Publisher running. Press Ctrl+C to exit.
 Publishing sensor data...
-📊 Published Temperature: 22.5°C
-🚗 Published Speed: 65.3 km/h
-📊 Published Temperature: 19.8°C
-🚗 Published Speed: 78.1 km/h
+Published Temperature: 22.5 C
+Published Speed: 65.3 km/h
 ...
 ```
 
 ### Terminal 2 - Start the Subscriber
 ```bash
-cd examples/basic/events
-make subscriber
-./subscriber
+./build/bin/events_subscriber
 ```
 
 You should see:
@@ -59,36 +64,33 @@ Subscribed to events:
 
 Sensor Subscriber running. Press Ctrl+C to exit.
 Waiting for sensor events...
-🌡️  Temperature Event: 22.5°C (at 1234567890ms)
-🚗 Speed Event: 65.3 km/h (at 1234567891ms)
-🌡️  Temperature Event: 19.8°C (at 1234567892ms)
-🚗 Speed Event: 78.1 km/h (at 1234567893ms)
+Temperature Event: 22.5 C (at 1234567890ms)
+Speed Event: 65.3 km/h (at 1234567891ms)
 ...
 ```
 
 ## What This Example Demonstrates
 
-1. **Event Publishing**: How to offer and publish events using `EventPublisher`
-2. **Event Subscription**: How to subscribe to events using `EventSubscriber`
-3. **Event Handlers**: Setting up callback functions for different event types
+1. **Event Publishing**: How to register and publish events using `EventPublisher`
+2. **Event Subscription**: How to subscribe to event groups using `EventSubscriber::subscribe_eventgroup()`
+3. **Event Handlers**: Setting up a notification callback that dispatches by event ID
 4. **Periodic Events**: Publishing events at regular intervals
 5. **Event Data Serialization**: Converting sensor data to/from byte arrays
 6. **Event Groups**: Organizing related events into groups
-7. **Timestamp Handling**: Working with event timestamps
 
 ## Code Structure
 
 ### Publisher (`publisher.cpp`)
 - Creates `EventPublisher` for service ID `0x3000`
-- Offers two events: Temperature (ID `0x8001`) and Speed (ID `0x8002`)
+- Registers two events: Temperature (ID `0x8001`) and Speed (ID `0x8002`)
 - Generates realistic sensor data using random number generation
 - Publishes events at different intervals (2s for temp, 1.5s for speed)
 - Serializes float data to big-endian byte arrays
 
 ### Subscriber (`subscriber.cpp`)
-- Creates `EventSubscriber` for service ID `0x3000`
-- Subscribes to both temperature and speed events
-- Sets up event handlers using lambda functions
+- Creates `EventSubscriber` with a client ID
+- Initializes the subscriber, then subscribes to the sensor event group via `subscribe_eventgroup()`
+- Provides a single `EventNotificationCallback` that dispatches events by `event_id`
 - Deserializes received event data from big-endian byte arrays
 - Displays events with timestamps
 
@@ -99,7 +101,7 @@ Waiting for sensor events...
 - **Event Group**: `0x0001`
 - **Reliability**: Unreliable
 - **Type**: Periodic (every 2 seconds)
-- **Data**: Single float (temperature in °C)
+- **Data**: Single float (temperature in degrees C)
 
 ### Speed Event
 - **Event ID**: `0x8002`
@@ -120,7 +122,7 @@ Waiting for sensor events...
 
 ### Publish-Subscribe Pattern
 - **Publisher**: Offers events and publishes data
-- **Subscriber**: Subscribes to events and receives notifications
+- **Subscriber**: Subscribes to event groups and receives notifications
 - **Decoupling**: Publisher and subscriber operate independently
 
 ### Event Types
@@ -129,15 +131,15 @@ Waiting for sensor events...
 
 ### Data Flow
 ```
-Publisher → SOME/IP Event → Transport → Subscriber
-    ↓              ↓              ↓          ↓
-Generate → Serialize → Send → Receive → Deserialize → Display
+Publisher -> SOME/IP Event -> Transport -> Subscriber
+    |              |              |          |
+Generate -> Serialize -> Send -> Receive -> Deserialize -> Display
 ```
 
 ## Error Handling
 
 The example demonstrates:
-- Failed event offering/subscription handling
+- Failed event registration/subscription handling
 - Invalid event data size checking
 - Transport initialization error handling
 
