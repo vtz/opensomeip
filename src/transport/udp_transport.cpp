@@ -346,6 +346,7 @@ void UdpTransport::receive_loop() {
     std::vector<uint8_t> buffer(config_.receive_buffer_size);
 
     while (running_) {
+        buffer.resize(config_.receive_buffer_size);
         Endpoint sender;
         Result result = receive_data(buffer, sender);
 

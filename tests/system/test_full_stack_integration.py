@@ -244,110 +244,109 @@ def test_transport_protocol_segmentation(tp_example_executable):
 @pytest.mark.system
 @pytest.mark.performance
 @pytest.mark.slow
-def test_echo_performance(echo_server_executable, echo_client_executable, tmp_path):
+def test_echo_performance(echo_server_executable, available_port):
     """
-    Performance test: Measure echo server/client throughput and latency.
-    Runs multiple clients against a single server.
+    Performance test: Measure echo server throughput and latency by sending
+    SOME/IP REQUEST messages over UDP and timing the RESPONSE round-trips.
     """
+    import socket
+    import struct
     import threading
     import queue
 
-    num_clients = 5
-    messages_per_client = 100
-    message_size = 1024  # 1KB messages
+    HELLO_SERVICE_ID = 0x1000
+    SAY_HELLO_METHOD_ID = 0x0001
 
-    results_queue = queue.Queue()
+    num_clients = 3
+    messages_per_client = 50
 
-    def client_worker(client_id: int):
-        """Worker function for each client thread"""
+    def build_request(payload: bytes, client_id: int, session_id: int) -> bytes:
+        return struct.pack(
+            ">HHIHHBBBB",
+            HELLO_SERVICE_ID, SAY_HELLO_METHOD_ID,
+            8 + len(payload), client_id, session_id,
+            0x01, 0x01, 0x00, 0x00,
+        ) + payload
+
+    results_queue: queue.Queue = queue.Queue()
+
+    def client_worker(client_id: int, port: int):
         try:
-            # Start client process
-            client_process = TestProcess(
-                echo_client_executable,
-                [str(9999)],  # Server port
-                cwd=str(tmp_path)
-            )
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(3.0)
+            sock.bind(("127.0.0.1", 0))
 
-            start_time = time.time()
             success_count = 0
+            start_time = time.time()
 
-            # Note: This is a simplified performance test.
-            # In a real implementation, you'd modify the echo client
-            # to accept parameters for message count and size.
+            for seq in range(messages_per_client):
+                payload = f"perf-{client_id}-{seq}".encode()
+                msg = build_request(payload, 0xA000 + client_id, seq + 1)
+                sock.sendto(msg, ("127.0.0.1", port))
+                try:
+                    data, _ = sock.recvfrom(65536)
+                    if len(data) >= 16:
+                        success_count += 1
+                except socket.timeout:
+                    pass
 
-            if client_process.start():
-                # Wait for client to complete (simplified)
-                time.sleep(2.0)  # Assume client runs for 2 seconds
-
-                client_process.stop()
-                end_time = time.time()
-
-                if client_process.returncode == 0:
-                    success_count = messages_per_client  # Assume all succeeded
+            elapsed = time.time() - start_time
+            sock.close()
 
             results_queue.put({
-                'client_id': client_id,
-                'duration': end_time - start_time,
-                'messages': success_count
+                "client_id": client_id,
+                "duration": elapsed,
+                "messages": success_count,
             })
-
         except Exception as e:
-            results_queue.put({
-                'client_id': client_id,
-                'error': str(e)
-            })
+            results_queue.put({"client_id": client_id, "error": str(e)})
 
-    # Start server
-    server_process = TestProcess(echo_server_executable, ["9999"])
+    server_process = TestProcess(
+        echo_server_executable,
+        env={**os.environ, "HELLO_BIND_HOST": "127.0.0.1",
+             "HELLO_BIND_PORT": str(available_port)},
+    )
     assert server_process.start(), "Failed to start echo server"
 
     try:
-        # Wait for server to start
         time.sleep(1.0)
 
-        # Start client threads
-        threads = []
-        for i in range(num_clients):
-            thread = threading.Thread(target=client_worker, args=(i,))
-            threads.append(thread)
-            thread.start()
+        threads = [
+            threading.Thread(target=client_worker, args=(i, available_port))
+            for i in range(num_clients)
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join(timeout=30.0)
 
-        # Wait for all clients to complete
-        for thread in threads:
-            thread.join(timeout=30.0)
-
-        # Collect results
         total_messages = 0
         total_time = 0.0
         errors = []
 
         for _ in range(num_clients):
-            result = results_queue.get(timeout=1.0)
-            if 'error' in result:
-                errors.append(result['error'])
+            result = results_queue.get(timeout=5.0)
+            if "error" in result:
+                errors.append(result["error"])
             else:
-                total_messages += result['messages']
-                total_time = max(total_time, result['duration'])
+                total_messages += result["messages"]
+                total_time = max(total_time, result["duration"])
 
-        # Stop server
         server_process.stop()
 
-        # Analyze results
         if errors:
             pytest.fail(f"Performance test had errors: {errors}")
 
+        assert total_messages > 0, "No successful round-trips"
         throughput = total_messages / total_time if total_time > 0 else 0
         avg_latency = (total_time * 1000) / total_messages if total_messages > 0 else 0
 
         print(f"Throughput: {throughput:.2f} msg/sec")
         print(f"Avg latency: {avg_latency:.2f} ms")
-        # Basic performance assertions
         assert throughput > 10, f"Throughput too low: {throughput} msg/sec"
         assert avg_latency < 100, f"Latency too high: {avg_latency} ms"
 
-        print("✅ Performance test completed successfully")
-
-    except Exception as e:
+    except Exception:
         server_process.stop()
         raise
 

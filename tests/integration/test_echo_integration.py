@@ -17,6 +17,7 @@ MSG_TYPE_REQUEST = 0x00
 MSG_TYPE_RESPONSE = 0x80
 RETURN_CODE_OK = 0x00
 PROTOCOL_VERSION = 0x01
+INTERFACE_VERSION = 0x01
 
 
 def _build_request(payload: bytes, client_id: int = 0xABCD,
@@ -30,7 +31,7 @@ def _build_request(payload: bytes, client_id: int = 0xABCD,
         client_id,
         session_id,
         PROTOCOL_VERSION,
-        0x00,               # Interface Version
+        INTERFACE_VERSION,
         MSG_TYPE_REQUEST,
         RETURN_CODE_OK,
     )
