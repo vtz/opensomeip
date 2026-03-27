@@ -97,7 +97,7 @@ jobs:
           summary-report: true
           failed-report: true
           suite-list-report: true
-          suite-folded-report: true
+          test-report: true
           use-suite-name: true
           exit-on-fail: false
 
