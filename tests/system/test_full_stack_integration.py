@@ -272,19 +272,21 @@ def test_echo_performance(echo_server_executable, available_port):
     def _is_valid_response(data: bytes, expected_cid: int, expected_sid: int) -> bool:
         if len(data) < 16:
             return False
-        svc, method, _length, cid, sid, _pv, _iv, mt, rc = struct.unpack(
+        svc, method, length, cid, sid, _pv, _iv, mt, rc = struct.unpack(
             ">HHIHHBBBB", data[:16],
         )
-        return (svc == HELLO_SERVICE_ID and method == SAY_HELLO_METHOD_ID
+        return (len(data) == 8 + length
+                and svc == HELLO_SERVICE_ID and method == SAY_HELLO_METHOD_ID
                 and mt == MSG_TYPE_RESPONSE and rc == 0x00
                 and cid == expected_cid and sid == expected_sid)
 
     results_queue: queue.Queue = queue.Queue()
 
+    WORKER_BUDGET = 25.0
+
     def client_worker(client_id: int, port: int):
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(3.0)
             sock.bind(("127.0.0.1", 0))
 
             cid = 0xA000 + client_id
@@ -292,6 +294,11 @@ def test_echo_performance(echo_server_executable, available_port):
             start_time = time.time()
 
             for seq in range(messages_per_client):
+                remaining = WORKER_BUDGET - (time.time() - start_time)
+                if remaining <= 0:
+                    break
+                sock.settimeout(min(0.5, remaining))
+
                 sid = seq + 1
                 payload = f"perf-{client_id}-{seq}".encode()
                 msg = build_request(payload, cid, sid)
