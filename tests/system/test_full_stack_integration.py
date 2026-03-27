@@ -372,7 +372,7 @@ def test_someip_message_format_compliance():
     header_data = struct.pack(">HHIHHBBBB",
                             0xFFFF,  # Service ID
                             0xFFFF,  # Method ID
-                            16,      # Length
+                            8,       # Length (Client ID .. Return Code, no payload)
                             0x1234,  # Client ID
                             0x0001,  # Session ID
                             0x01,    # Protocol Version

@@ -6,8 +6,9 @@ tests/integration/ and tests/system/ regardless of working directory.
 """
 
 import sys
-import os
+import tempfile
 from pathlib import Path
+from typing import Generator
 
 # Ensure tests/python/ is importable (someip_test_framework lives there)
 _python_dir = str(Path(__file__).parent / "python")
@@ -15,9 +16,6 @@ if _python_dir not in sys.path:
     sys.path.insert(0, _python_dir)
 
 import pytest
-import asyncio
-import tempfile
-from typing import Generator
 
 from someip_test_framework import (
     SomeIpEndpoint, SomeIpService, TestScenario,
@@ -57,15 +55,9 @@ def temp_dir() -> Generator[str, None, None]:
 
 
 @pytest.fixture
-def available_port():
-    """Find an available port for testing"""
-    import socket
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("", 0))
-        s.listen(1)
-        port = s.getsockname()[1]
-    return port
+def available_port(unused_udp_port: int) -> int:
+    """Find an available UDP port for testing (delegates to pytest-asyncio)."""
+    return unused_udp_port
 
 
 # ---------------------------------------------------------------------------
@@ -165,7 +157,7 @@ def tp_example_executable(build_bin_path) -> str:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-def echo_scenario(echo_server_executable, echo_client_executable, localhost_endpoint) -> TestScenario:
+def echo_scenario(echo_server_executable, localhost_endpoint) -> TestScenario:
     scenario = TestScenario(name="echo_test", description="Basic echo server/client test scenario")
     scenario.add_process(echo_server_executable, str(localhost_endpoint.port))
     scenario.add_client(localhost_endpoint)

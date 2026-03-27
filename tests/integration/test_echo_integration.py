@@ -117,14 +117,11 @@ async def test_echo_multiple_messages(echo_scenario):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_echo_concurrent_clients(echo_scenario, available_port):
+async def test_echo_concurrent_clients(echo_scenario):
     """Test multiple clients connecting to the same server"""
-    # Create additional clients
-    client2 = SomeIpEndpoint("127.0.0.1", available_port + 1)
-    client3 = SomeIpEndpoint("127.0.0.1", available_port + 2)
-
-    echo_scenario.clients.append(SomeIpTestClient(client2))
-    echo_scenario.clients.append(SomeIpTestClient(client3))
+    server_endpoint = echo_scenario.clients[0].endpoint
+    echo_scenario.clients.append(SomeIpTestClient(server_endpoint))
+    echo_scenario.clients.append(SomeIpTestClient(server_endpoint))
 
     async with someip_test_scenario(echo_scenario) as scenario:
         clients = scenario.clients
