@@ -25,6 +25,7 @@ Thank you for your interest in contributing to the SOME/IP Stack! This document 
   - [Pre-commit Hooks Setup](#pre-commit-hooks-setup)
 - [Coding Standards](#coding-standards)
 - [Testing](#testing)
+  - [Running Tests Locally (Pre-PR)](#running-tests-locally-pre-pr)
 - [Documentation](#documentation)
 - [Pull Request Process](#pull-request-process)
 - [Reporting Issues](#reporting-issues)
@@ -274,18 +275,134 @@ TEST_F(MessageTest, SerializationRoundTrip) {
 }
 ```
 
-### Running Tests
+### Running Tests Locally (Pre-PR)
+
+Before opening a pull request you **must** run the pre-PR test suite and
+ensure every check passes.  The script mirrors the CI pipeline so a green
+local run reliably predicts green CI.
 
 ```bash
-# Run all tests
-ctest
+# macOS / Ubuntu / Fedora
+./scripts/run_pre_pr_tests.sh
 
-# Run specific test
-ctest -R MessageTest
+# Windows (PowerShell)
+.\scripts\run_pre_pr_tests.ps1
+```
 
-# Run with coverage
-cmake .. -DCOVERAGE=ON
-make coverage
+The script runs, in order:
+
+1. **Pre-commit hooks** (`pre-commit run --all-files`)
+2. **C++ build** via the appropriate CMake preset for your OS
+3. **C++ unit tests** via CTest (GTest)
+4. **Python integration & system tests** via pytest
+
+Optional flags (both scripts):
+
+| Flag                            | Description                                      |
+| ------------------------------- | ------------------------------------------------ |
+| `--sanitizers` / `-Sanitizers`  | Rebuild with ASan + UBSan and re-run CTest       |
+| `--coverage` / `-Coverage`      | Rebuild with gcov flags, run tests, generate report |
+| `--all` / `-All`                | Enable both sanitizers and coverage               |
+| `--skip-python` / `-SkipPython` | Skip Python integration / system tests            |
+| `--help` / `-Help`              | Show usage information                            |
+
+#### Platform Prerequisites
+
+<details>
+<summary><strong>macOS</strong></summary>
+
+```bash
+# Xcode Command Line Tools (provides clang/clang++)
+xcode-select --install
+
+# CMake, Python, pre-commit
+brew install cmake python
+pip install pre-commit
+pre-commit install && pre-commit install --hook-type commit-msg
+
+# (Optional) Ninja for faster builds
+brew install ninja
+```
+
+CMake preset: `host-macos-tests`.  The script auto-detects macOS and selects
+this preset.  Note: `nproc` is unavailable — the script uses
+`sysctl -n hw.ncpu` automatically.
+
+</details>
+
+<details>
+<summary><strong>Ubuntu (22.04 / 24.04)</strong></summary>
+
+```bash
+sudo apt-get update
+sudo apt-get install -y build-essential cmake python3 python3-pip python3-venv
+
+pip install pre-commit
+pre-commit install && pre-commit install --hook-type commit-msg
+```
+
+CMake preset: `host-linux-tests`.  CI tests with both GCC and Clang — to test
+with Clang locally:
+
+```bash
+cmake --preset host-linux-tests \
+  -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+```
+
+</details>
+
+<details>
+<summary><strong>Fedora (42+)</strong></summary>
+
+```bash
+sudo dnf install -y gcc gcc-c++ clang cmake ninja-build python3 python3-pip
+
+pip install pre-commit
+pre-commit install && pre-commit install --hook-type commit-msg
+```
+
+CMake preset: `host-linux-tests`.  CI runs inside a `fedora:42` container — to
+replicate locally with Podman/Docker:
+
+```bash
+podman run --rm -v "$PWD:/src:Z" -w /src fedora:42 \
+  bash -c "dnf install -y gcc gcc-c++ cmake ninja-build python3 python3-pip && \
+           pip install pre-commit && ./scripts/run_pre_pr_tests.sh"
+```
+
+</details>
+
+<details>
+<summary><strong>Windows</strong></summary>
+
+- **Visual Studio 2019+** with the *Desktop development with C++* workload
+  (provides MSVC `cl`)
+- **CMake** (bundled with Visual Studio or install standalone)
+- **Python 3.12+** ([python.org](https://www.python.org/downloads/))
+
+```powershell
+pip install pre-commit
+pre-commit install
+pre-commit install --hook-type commit-msg
+```
+
+CMake preset: `host-windows-tests`.  The PowerShell script auto-detects
+Windows.  Note: PAL mock conformance tests are excluded on Windows (they
+depend on POSIX headers).
+
+</details>
+
+### Running Individual Tests
+
+```bash
+# Run a specific CTest target
+ctest --test-dir build/<preset> -R MessageTest
+
+# Run with coverage (manual)
+cmake -B build/coverage -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_CXX_FLAGS="--coverage" -DBUILD_TESTS=ON
+cmake --build build/coverage
+ctest --test-dir build/coverage
 ```
 
 ## Documentation
@@ -326,13 +443,12 @@ Result send_message(const Message& message, const Endpoint& destination);
 
 ### Before Submitting
 
-1. **Pre-commit Hooks**: Run `pre-commit run --all-files` to check for issues
+1. **Run the pre-PR test suite**: Execute `./scripts/run_pre_pr_tests.sh` (or `.\scripts\run_pre_pr_tests.ps1` on Windows) and ensure all checks pass.  See [Running Tests Locally](#running-tests-locally-pre-pr) for platform-specific setup.
 2. **Commit Messages**: Ensure all commits follow Conventional Commits format
 3. **Code Review**: Self-review your code
 4. **Tests**: Add/update tests for new functionality
 5. **Documentation**: Update relevant documentation
 6. **Linting**: Ensure code follows style guidelines
-7. **Testing**: All tests pass locally (`ctest --output-on-failure`)
 
 ### Pull Request Template
 

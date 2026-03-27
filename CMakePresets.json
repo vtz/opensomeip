@@ -45,6 +45,22 @@
       "inherits": "host-linux-tests"
     },
     {
+      "name": "host-windows",
+      "displayName": "Host Windows (MSVC)",
+      "description": "Native Windows build using MSVC",
+      "inherits": "base"
+    },
+    {
+      "name": "host-windows-tests",
+      "displayName": "Host Windows with Tests",
+      "description": "Native Windows build with unit tests enabled",
+      "inherits": "base",
+      "cacheVariables": {
+        "BUILD_TESTS": "ON",
+        "BUILD_EXAMPLES": "ON"
+      }
+    },
+    {
       "name": "linux-cross",
       "hidden": true,
       "description": "Base preset for Linux-to-Linux cross-compilation with a sysroot",
@@ -174,6 +190,14 @@
       "configurePreset": "host-macos-tests"
     },
     {
+      "name": "host-windows",
+      "configurePreset": "host-windows"
+    },
+    {
+      "name": "host-windows-tests",
+      "configurePreset": "host-windows-tests"
+    },
+    {
       "name": "linux-aarch64",
       "configurePreset": "linux-aarch64"
     },
@@ -225,6 +249,17 @@
     {
       "name": "host-macos-tests",
       "configurePreset": "host-macos-tests",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "timeout": 30,
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "host-windows-tests",
+      "configurePreset": "host-windows-tests",
       "output": {
         "outputOnFailure": true
       },
