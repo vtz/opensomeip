@@ -173,6 +173,52 @@ static void test_threadx_memory_pool() {
     CHECK(msg3 != nullptr, "pool_realloc_after_release");
 }
 
+static void test_threadx_pool_diagnostics() {
+    printf("\n--- ThreadX block pool diagnostics ---\n");
+
+    extern TX_BLOCK_POOL message_pool;
+    extern bool pool_initialized;
+
+    if (!pool_initialized) {
+        auto init_msg = someip::platform::allocate_message();
+        init_msg.reset();
+    }
+
+    ULONG available_blocks = 0;
+    ULONG total_blocks = 0;
+    TX_THREAD* first_suspended = nullptr;
+    ULONG suspended_count = 0;
+    TX_BLOCK_POOL* next_pool = nullptr;
+    CHAR* name = nullptr;
+
+    UINT status = tx_block_pool_info_get(&message_pool, &name, &available_blocks,
+                                          &total_blocks, &first_suspended,
+                                          &suspended_count, &next_pool);
+    CHECK(status == TX_SUCCESS, "pool_info_query");
+    printf("  Pool '%s': %lu available / %lu total blocks\n",
+           name ? name : "(null)", available_blocks, total_blocks);
+    CHECK(available_blocks == total_blocks, "all_blocks_available_before_test");
+
+    {
+        auto msg1 = someip::platform::allocate_message();
+        auto msg2 = someip::platform::allocate_message();
+        CHECK(msg1 != nullptr, "diag_alloc_1");
+        CHECK(msg2 != nullptr, "diag_alloc_2");
+
+        ULONG avail_during = 0;
+        tx_block_pool_info_get(&message_pool, nullptr, &avail_during,
+                               nullptr, nullptr, nullptr, nullptr);
+        CHECK(avail_during == available_blocks - 2, "blocks_decreased_by_2");
+        printf("  During alloc: %lu available\n", avail_during);
+    }
+
+    ULONG avail_after = 0;
+    tx_block_pool_info_get(&message_pool, nullptr, &avail_after,
+                           nullptr, nullptr, nullptr, nullptr);
+    CHECK(avail_after == available_blocks, "blocks_restored_after_release");
+    printf("  After release: %lu available (restored)\n", avail_after);
+}
+
 static TX_THREAD test_thread;
 static UCHAR test_stack[8192];
 
@@ -185,6 +231,7 @@ static void test_thread_entry(ULONG) {
     test_serializer();
     test_threadx_threading();
     test_threadx_memory_pool();
+    test_threadx_pool_diagnostics();
 
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);

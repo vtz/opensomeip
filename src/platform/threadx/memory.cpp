@@ -31,9 +31,9 @@ static constexpr size_t POOL_SIZE = SOMEIP_THREADX_MESSAGE_POOL_SIZE;
 alignas(someip::Message) static UCHAR
     pool_buffer[POOL_SIZE * sizeof(someip::Message)];
 
-static TX_BLOCK_POOL message_pool;
+TX_BLOCK_POOL message_pool;
 static TX_MUTEX pool_guard;
-static bool pool_initialized = false;
+bool pool_initialized = false;
 
 static void ensure_pool_init() {
     if (pool_initialized) return;
