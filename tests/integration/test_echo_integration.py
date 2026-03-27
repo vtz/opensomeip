@@ -44,6 +44,12 @@ def _parse_response(data: bytes) -> dict:
     svc, method, length, cid, sid, pv, iv, mt, rc = struct.unpack(
         ">HHIHHBBBB", data[:16],
     )
+    actual_payload_len = len(data) - 16
+    expected_payload_len = length - 8
+    assert actual_payload_len == expected_payload_len, (
+        f"Length field mismatch: header says {length} "
+        f"(payload {expected_payload_len}), actual payload {actual_payload_len}"
+    )
     return {
         "service_id": svc,
         "method_id": method,

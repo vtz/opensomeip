@@ -381,5 +381,6 @@ def test_someip_message_format_compliance():
 
     assert len(header_data) == 16, "Header should be 16 bytes"
     assert header_data[:4] == b'\xFF\xFF\xFF\xFF', "Service/Method ID bytes incorrect"
-
-    print("✅ SOME/IP message format compliance test passed")
+    assert header_data[4:8] == b'\x00\x00\x00\x08', "Length field should be 8 (big-endian)"
+    assert header_data[8:10] == b'\x12\x34', "Client ID bytes incorrect"
+    assert header_data[10:12] == b'\x00\x01', "Session ID bytes incorrect"
