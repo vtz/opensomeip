@@ -25,6 +25,14 @@
 namespace someip {
 namespace sd {
 
+static std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
+    transport::UdpTransportConfig cfg;
+    cfg.reuse_port = true;
+    cfg.multicast_interface = config.unicast_address;
+    return std::make_shared<transport::UdpTransport>(
+        transport::Endpoint("0.0.0.0", config.multicast_port), cfg);
+}
+
 /**
  * @brief Service Discovery Client implementation
  * @implements REQ_ARCH_001
@@ -37,8 +45,7 @@ class SdClientImpl : public transport::ITransportListener {
 public:
     SdClientImpl(const SdConfig& config)
         : config_(config),
-          transport_(std::make_shared<transport::UdpTransport>(
-              transport::Endpoint(config.unicast_address, config.unicast_port))),
+          transport_(create_sd_transport(config)),
           next_request_id_(1),
           running_(false) {
 
@@ -182,9 +189,9 @@ public:
         endpoint_option->set_protocol(0x11);  // UDP
         sd_message.add_option(std::move(endpoint_option));
 
-        // Set option index in entry
         auto* sub_entry = static_cast<EventGroupEntry*>(sd_message.get_entries()[0].get());
-        sub_entry->set_index1(0);  // Reference first option
+        sub_entry->set_index1(0);
+        sub_entry->set_num_opts1(1);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
@@ -265,14 +272,13 @@ private:
             return false;
         }
 
-        // Use standard SOME/IP SD multicast address
-        return udp_transport->join_multicast_group("224.224.224.245") == Result::SUCCESS;
+        return udp_transport->join_multicast_group(config_.multicast_address) == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
         auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
         if (udp_transport) {
-            udp_transport->leave_multicast_group("224.224.224.245");
+            udp_transport->leave_multicast_group(config_.multicast_address);
         }
     }
 
@@ -336,7 +342,7 @@ private:
         // Extract endpoint information from options
         const auto& options = message.get_options();
         uint8_t index1 = entry.get_index1();
-        uint8_t run1 = entry.get_index1() ? 1 : 0;  // Simple case: check if index1 is set
+        uint8_t run1 = entry.get_num_opts1();
 
         for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
             const auto& option = options[index1 + i];

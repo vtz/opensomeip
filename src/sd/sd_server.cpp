@@ -27,6 +27,14 @@
 namespace someip {
 namespace sd {
 
+static std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
+    transport::UdpTransportConfig cfg;
+    cfg.reuse_port = true;
+    cfg.multicast_interface = config.unicast_address;
+    return std::make_shared<transport::UdpTransport>(
+        transport::Endpoint("0.0.0.0", config.multicast_port), cfg);
+}
+
 /**
  * @brief Service Discovery Server implementation
  * @implements REQ_ARCH_001
@@ -39,8 +47,7 @@ class SdServerImpl : public transport::ITransportListener {
 public:
     SdServerImpl(const SdConfig& config)
         : config_(config),
-          transport_(std::make_shared<transport::UdpTransport>(
-              transport::Endpoint(config.unicast_address, config.unicast_port))),
+          transport_(create_sd_transport(config)),
           next_offer_delay_(config.initial_delay),
           running_(false) {
 
@@ -202,9 +209,9 @@ public:
         multicast_option->set_port(someip_htons(config_.multicast_port));
         response_message.add_option(std::move(multicast_option));
 
-        // Set option index in entry
         auto* entry = static_cast<EventGroupEntry*>(response_message.get_entries()[0].get());
-        entry->set_index1(0);  // Reference first option
+        entry->set_index1(0);
+        entry->set_num_opts1(1);
 
         // Send unicast response to client
         // Parse client_address (format: "ip:port" or just "ip")
@@ -263,14 +270,13 @@ private:
             return false;
         }
 
-        // Use standard SOME/IP SD multicast address
-        return udp_transport->join_multicast_group("224.224.224.245") == Result::SUCCESS;
+        return udp_transport->join_multicast_group(config_.multicast_address) == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
         auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
         if (udp_transport) {
-            udp_transport->leave_multicast_group("224.224.224.245");
+            udp_transport->leave_multicast_group(config_.multicast_address);
         }
     }
 
@@ -360,10 +366,9 @@ private:
 
         sd_message.add_option(std::move(endpoint_option));
 
-        // Set option index in the entry (first option, so index 0)
         auto* offer_entry_ptr = static_cast<ServiceEntry*>(sd_message.get_entries()[0].get());
-        offer_entry_ptr->set_index1(0);  // Reference first option
-        offer_entry_ptr->set_index2(0);  // No second option
+        offer_entry_ptr->set_index1(0);
+        offer_entry_ptr->set_num_opts1(1);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
@@ -532,10 +537,9 @@ private:
 
         sd_message.add_option(std::move(endpoint_option));
 
-        // Set option index in the entry (first option, so index 0)
         auto* offer_entry_ptr = static_cast<ServiceEntry*>(sd_message.get_entries()[0].get());
-        offer_entry_ptr->set_index1(0);  // Reference first option
-        offer_entry_ptr->set_index2(0);  // No second option
+        offer_entry_ptr->set_index1(0);
+        offer_entry_ptr->set_num_opts1(1);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),

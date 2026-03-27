@@ -36,9 +36,13 @@ public:
 
     uint8_t get_index1() const { return index1_; }
     void set_index1(uint8_t index) { index1_ = index; }
+    uint8_t get_num_opts1() const { return num_opts1_; }
+    void set_num_opts1(uint8_t n) { num_opts1_ = n; }
 
     uint8_t get_index2() const { return index2_; }
     void set_index2(uint8_t index) { index2_ = index; }
+    uint8_t get_num_opts2() const { return num_opts2_; }
+    void set_num_opts2(uint8_t n) { num_opts2_ = n; }
 
     virtual std::vector<uint8_t> serialize() const = 0;
     virtual bool deserialize(const std::vector<uint8_t>& data, size_t& offset) = 0;
@@ -47,6 +51,8 @@ protected:
     EntryType type_{EntryType::FIND_SERVICE};
     uint8_t index1_{0};
     uint8_t index2_{0};
+    uint8_t num_opts1_{0};
+    uint8_t num_opts2_{0};
     uint32_t ttl_{0};
 };
 

@@ -43,7 +43,7 @@ std::vector<uint8_t> SdEntry::serialize() const {
     data.push_back(index2_);
 
     // Byte 3: #Opt1 (upper 4 bits) | #Opt2 (lower 4 bits)
-    data.push_back(0);
+    data.push_back(static_cast<uint8_t>((num_opts1_ << 4) | (num_opts2_ & 0x0F)));
 
     // Bytes 4-5: Service ID — derived classes override
     data.push_back(0);
@@ -79,7 +79,9 @@ bool SdEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     type_ = static_cast<EntryType>(data[offset++]);   // byte 0
     index1_ = data[offset++];                          // byte 1
     index2_ = data[offset++];                          // byte 2
-    offset += 1;  // byte 3: #Opt1|#Opt2 (handled by SdMessage)
+    uint8_t opts_byte = data[offset++];                // byte 3
+    num_opts1_ = (opts_byte >> 4) & 0x0F;
+    num_opts2_ = opts_byte & 0x0F;
 
     // Bytes 4-15 handled by derived classes
     return true;
@@ -407,142 +409,148 @@ void SdMessage::add_option(std::unique_ptr<SdOption> option) {
 std::vector<uint8_t> SdMessage::serialize() const {
     std::vector<uint8_t> data;
 
-    // SOME/IP SD Header (8 bytes)
     // Flags (1 byte) - ensure reserved bits 5-0 are zero (REQ_SD_013)
-    uint8_t flags_to_send = flags_ & 0xC0;  // Keep only bits 7 and 6
+    uint8_t flags_to_send = flags_ & 0xC0;
     data.push_back(flags_to_send);
 
-    // Reserved (3 bytes) - we use 4 bytes total for reserved_
+    // Reserved (3 bytes)
     data.push_back((reserved_ >> 16) & 0xFF);
     data.push_back((reserved_ >> 8) & 0xFF);
     data.push_back(reserved_ & 0xFF);
 
-    // Length (4 bytes) - placeholder, will be filled later
-    size_t length_offset = data.size();
+    // Length of Entries Array (4 bytes) - placeholder
+    size_t entries_len_offset = data.size();
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
 
-    // Entries
+    // Entries Array
+    size_t entries_start = data.size();
     for (const auto& entry : entries_) {
         auto entry_data = entry->serialize();
         data.insert(data.end(), entry_data.begin(), entry_data.end());
     }
+    uint32_t entries_length = data.size() - entries_start;
 
-    // Options
+    // Back-fill Length of Entries Array
+    data[entries_len_offset]     = (entries_length >> 24) & 0xFF;
+    data[entries_len_offset + 1] = (entries_length >> 16) & 0xFF;
+    data[entries_len_offset + 2] = (entries_length >> 8) & 0xFF;
+    data[entries_len_offset + 3] = entries_length & 0xFF;
+
+    // Length of Options Array (4 bytes) - placeholder
+    size_t options_len_offset = data.size();
+    data.push_back(0);
+    data.push_back(0);
+    data.push_back(0);
+    data.push_back(0);
+
+    // Options Array
+    size_t options_start = data.size();
     for (const auto& option : options_) {
         auto option_data = option->serialize();
         data.insert(data.end(), option_data.begin(), option_data.end());
     }
+    uint32_t options_length = data.size() - options_start;
 
-    // Update length (total length - 8 byte header)
-    uint32_t total_length = data.size() - 8;
-    data[length_offset] = (total_length >> 24) & 0xFF;
-    data[length_offset + 1] = (total_length >> 16) & 0xFF;
-    data[length_offset + 2] = (total_length >> 8) & 0xFF;
-    data[length_offset + 3] = total_length & 0xFF;
+    // Back-fill Length of Options Array
+    data[options_len_offset]     = (options_length >> 24) & 0xFF;
+    data[options_len_offset + 1] = (options_length >> 16) & 0xFF;
+    data[options_len_offset + 2] = (options_length >> 8) & 0xFF;
+    data[options_len_offset + 3] = options_length & 0xFF;
 
     return data;
 }
 
 /** @implements REQ_SD_030_E01, REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320 */
 bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
-    if (data.size() < 8) {
+    if (data.size() < 12) {
         return false;
     }
 
     size_t offset = 0;
 
-    // SOME/IP SD Header
+    // Flags (1 byte) + Reserved (3 bytes)
     flags_ = data[offset++];
     reserved_ = (data[offset] << 16) | (data[offset + 1] << 8) | data[offset + 2];
     offset += 3;
 
-    // Note: Reserved bits 5-0 in flags are ignored (REQ_SD_014)
-
-    uint32_t length = (data[offset] << 24) | (data[offset + 1] << 16) |
-                     (data[offset + 2] << 8) | data[offset + 3];
+    // Length of Entries Array (4 bytes)
+    uint32_t entries_length = (data[offset] << 24) | (data[offset + 1] << 16) |
+                              (data[offset + 2] << 8) | data[offset + 3];
     offset += 4;
 
-    if (offset + length > data.size()) {
+    if (offset + entries_length > data.size()) {
         return false;
     }
 
-    // Check if entries length is a multiple of entry size (16 bytes) (REQ_SD_020_E02)
-    if (length % 16 != 0) {
-        std::cout << "Warning: SD entries length " << length
-                  << " is not a multiple of entry size (16 bytes)" << std::endl;
-        // Continue processing but log warning
+    if (entries_length % 16 != 0) {
+        return false;
     }
 
-    // Parse entries and options until we consume all data
-    size_t max_iterations = 100; // Prevent infinite loops
-    size_t iteration = 0;
+    // Parse entries (each entry is exactly 16 bytes)
+    size_t entries_end = offset + entries_length;
+    while (offset + 16 <= entries_end) {
+        uint8_t raw_entry_type = data[offset];
 
-    while (offset < 8 + length && offset < data.size() && iteration < max_iterations) {
-        iteration++;
-
-        uint8_t type_byte = data[offset];
-
-        // Check if this is an entry (entries come first in SOME/IP SD)
-        EntryType entry_type = static_cast<EntryType>(type_byte);
-        uint8_t raw_entry_type = static_cast<uint8_t>(entry_type);
-
-        if (raw_entry_type == 0x00 || raw_entry_type == 0x01 ||
-            raw_entry_type == 0x06 || raw_entry_type == 0x07) {
-
-            // This is an entry
-            std::unique_ptr<SdEntry> entry;
-
-            if (raw_entry_type == 0x00 || raw_entry_type == 0x01) {
-                entry = std::make_unique<ServiceEntry>();
-            } else if (raw_entry_type == 0x06 || raw_entry_type == 0x07) {
-                entry = std::make_unique<EventGroupEntry>();
-            }
-
-            if (!entry || !entry->deserialize(data, offset)) {
-                return false; // Failed to parse entry
-            }
-
-            entries_.push_back(std::move(entry));
+        std::unique_ptr<SdEntry> entry;
+        if (raw_entry_type == 0x00 || raw_entry_type == 0x01) {
+            entry = std::make_unique<ServiceEntry>();
+        } else if (raw_entry_type == 0x06 || raw_entry_type == 0x07) {
+            entry = std::make_unique<EventGroupEntry>();
         } else {
-            // This should be an option
-            OptionType option_type = static_cast<OptionType>(type_byte);
-            std::unique_ptr<SdOption> option;
-
-            if (option_type == OptionType::CONFIGURATION) {
-                option = std::make_unique<ConfigurationOption>();
-            } else if (option_type == OptionType::IPV4_ENDPOINT) {
-                option = std::make_unique<IPv4EndpointOption>();
-            } else if (option_type == OptionType::IPV4_MULTICAST) {
-                option = std::make_unique<IPv4MulticastOption>();
-            } else {
-                // Unknown option type - skip with warning (REQ_SD_061_E01)
-                std::cout << "Warning: Unknown SD option type 0x" << std::hex << (int)type_byte
-                          << ", skipping option" << std::endl;
-                if (offset + 4 > data.size()) {
-                    return false;
-                }
-                uint16_t option_length = (data[offset] << 8) | data[offset + 1];
-                if (offset + 4 + option_length > data.size()) {
-                    return false;
-                }
-                offset += 4 + option_length;
-                continue;
-            }
-
-            if (!option || !option->deserialize(data, offset)) {
-                return false; // Failed to parse option
-            }
-
-            options_.push_back(std::move(option));
+            return false;
         }
+
+        if (!entry->deserialize(data, offset)) {
+            return false;
+        }
+        entries_.push_back(std::move(entry));
     }
 
-    // Check if we consumed all expected data
-    if (offset != 8 + length) {
-        return false; // Didn't consume all data or overran
+    // Length of Options Array (4 bytes)
+    if (offset + 4 > data.size()) {
+        return true;  // no options section present
+    }
+    uint32_t options_length = (data[offset] << 24) | (data[offset + 1] << 16) |
+                              (data[offset + 2] << 8) | data[offset + 3];
+    offset += 4;
+
+    if (offset + options_length > data.size()) {
+        return false;
+    }
+
+    // Parse options
+    size_t options_end = offset + options_length;
+    while (offset < options_end) {
+        if (offset + 4 > data.size()) {
+            return false;
+        }
+
+        // Options start with length(2) + type(1) + reserved(1).
+        // Peek at the type byte (offset + 2) to determine the option kind.
+        uint8_t type_byte = data[offset + 2];
+        OptionType option_type = static_cast<OptionType>(type_byte);
+        std::unique_ptr<SdOption> option;
+
+        if (option_type == OptionType::CONFIGURATION) {
+            option = std::make_unique<ConfigurationOption>();
+        } else if (option_type == OptionType::IPV4_ENDPOINT) {
+            option = std::make_unique<IPv4EndpointOption>();
+        } else if (option_type == OptionType::IPV4_MULTICAST) {
+            option = std::make_unique<IPv4MulticastOption>();
+        } else {
+            // Skip unknown option
+            uint16_t option_len = (data[offset] << 8) | data[offset + 1];
+            offset += 4 + option_len;
+            continue;
+        }
+
+        if (!option->deserialize(data, offset)) {
+            return false;
+        }
+        options_.push_back(std::move(option));
     }
 
     return true;
