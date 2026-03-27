@@ -87,6 +87,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: fedora:42
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
