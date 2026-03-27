@@ -69,9 +69,11 @@ jobs:
       - name: Set test suite names in JUnit XML
         run: |
           for dir in test-results-*/; do
-            suite=$(echo "$dir" | sed 's|^test-results-||;s|/$||')
-            for xml in "$dir"*.xml; do
-              [ -f "$xml" ] && sed -i "s/<testsuite name=\"pytest\"/<testsuite name=\"${suite}\"/" "$xml"
+            [ -d "$dir" ] || continue
+            suite="${dir#test-results-}"
+            suite="${suite%/}"
+            find "$dir" -type f -name '*.xml' -print0 | while IFS= read -r -d '' xml; do
+              sed -i "s/<testsuite name=\"pytest\"/<testsuite name=\"${suite}\"/" "$xml"
             done
           done
 
