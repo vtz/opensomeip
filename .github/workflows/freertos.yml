@@ -183,7 +183,15 @@ jobs:
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
-        run: ctest --preset freertos-linux-tests --output-on-failure --timeout 60
+        run: ctest --preset freertos-linux-tests --output-on-failure --timeout 60 --output-junit junit_results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-freertos-memcheck
+          path: build/freertos-linux-tests/junit_results.xml
+          retention-days: 14
 
   renode-cortexm4:
     name: FreeRTOS Cortex-M4 Renode Tests
