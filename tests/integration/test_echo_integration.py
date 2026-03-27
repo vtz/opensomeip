@@ -1,80 +1,104 @@
 """
-Integration Tests for Echo Server/Client
+Integration Tests for Hello-World Server/Client
 
-Tests the complete message flow from client to server and back,
-including serialization, transport, and deserialization.
+Tests the complete message flow from client to server and back using the
+hello_world_server example binary, which listens for SOME/IP REQUEST messages
+on service 0x1000 / method 0x0001 and replies with a greeting payload.
 """
 
 import pytest
-import time
 import struct
 from someip_test_framework import someip_test_scenario, SomeIpEndpoint, SomeIpTestClient
 
+HELLO_SERVICE_ID = 0x1000
+SAY_HELLO_METHOD_ID = 0x0001
+
+MSG_TYPE_REQUEST = 0x00
+MSG_TYPE_RESPONSE = 0x80
+RETURN_CODE_OK = 0x00
+PROTOCOL_VERSION = 0x01
+
+
+def _build_request(payload: bytes, client_id: int = 0xABCD,
+                   session_id: int = 0x0001) -> bytes:
+    """Build a SOME/IP REQUEST message targeting the hello-world service."""
+    header = struct.pack(
+        ">HHIHHBBBB",
+        HELLO_SERVICE_ID,
+        SAY_HELLO_METHOD_ID,
+        8 + len(payload),
+        client_id,
+        session_id,
+        PROTOCOL_VERSION,
+        0x00,               # Interface Version
+        MSG_TYPE_REQUEST,
+        RETURN_CODE_OK,
+    )
+    return header + payload
+
+
+def _parse_response(data: bytes) -> dict:
+    """Parse raw bytes into SOME/IP header fields + payload."""
+    assert len(data) >= 16, f"Response too short ({len(data)} bytes)"
+    svc, method, length, cid, sid, pv, iv, mt, rc = struct.unpack(
+        ">HHIHHBBBB", data[:16],
+    )
+    return {
+        "service_id": svc,
+        "method_id": method,
+        "length": length,
+        "client_id": cid,
+        "session_id": sid,
+        "protocol_version": pv,
+        "interface_version": iv,
+        "message_type": mt,
+        "return_code": rc,
+        "payload": data[16:],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_echo_message_flow(echo_scenario):
     """
-    Test complete echo message flow: client -> server -> client
+    Test complete request/response flow: client -> server -> client.
 
     @tests REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
     @tests REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
     @tests REQ_ARCH_001
     @tests feat_req_someip_538
     @tests feat_req_someip_800
-
-    This tests:
-    - Message serialization on client
-    - UDP transport layer
-    - Message deserialization on server
-    - Server response creation
-    - Response serialization on server
-    - UDP transport back to client
-    - Response deserialization on client
     """
     async with someip_test_scenario(echo_scenario) as scenario:
         client = scenario.clients[0]
 
-        service_id = 0x1111
-        method_id = 0x0001  # Echo method
-        client_id = 0xABCD
-        session_id = 0x0001
+        test_payload = b"Hello from Python test!"
+        message = _build_request(test_payload)
 
-        test_payload = b"Hello SOME/IP World!"
-        payload_length = len(test_payload)
-
-        # SOME/IP header (16 bytes, big-endian)
-        header = struct.pack(">HHIHHBBBB",
-                           service_id,
-                           method_id,
-                           8 + payload_length,  # Length (from Client ID onward)
-                           client_id,
-                           session_id,
-                           0x01,  # Protocol Version
-                           0x00,  # Interface Version
-                           0x00,  # Message Type (REQUEST)
-                           0x00)  # Return Code (E_OK)
-
-        # Combine header and payload
-        message = header + test_payload
-
-        # Send message to server
         assert client.send_message(message), "Failed to send message"
 
-        # Receive echo response
-        response = client.receive_message(timeout=2.0)
+        response = client.receive_message(timeout=3.0)
         assert response is not None, "No response received from server"
 
-        # Verify response matches original message
-        assert response == message, "Echo response doesn't match sent message"
-
-        print(f"✅ Echo test successful: sent {len(message)} bytes, received {len(response)} bytes")
+        resp = _parse_response(response)
+        assert resp["service_id"] == HELLO_SERVICE_ID
+        assert resp["method_id"] == SAY_HELLO_METHOD_ID
+        assert resp["message_type"] == MSG_TYPE_RESPONSE
+        assert resp["return_code"] == RETURN_CODE_OK
+        assert resp["client_id"] == 0xABCD
+        assert resp["session_id"] == 0x0001
+        assert test_payload.decode() in resp["payload"].decode(), \
+            f"Server payload should contain original text, got: {resp['payload']}"
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_echo_multiple_messages(echo_scenario):
-    """Test sending multiple messages in sequence
+    """Test sending multiple messages in sequence.
 
     @tests REQ_TRANSPORT_001a, REQ_TRANSPORT_001b
     @tests REQ_TRANSPORT_004a, REQ_TRANSPORT_004b
@@ -82,145 +106,107 @@ async def test_echo_multiple_messages(echo_scenario):
     async with someip_test_scenario(echo_scenario) as scenario:
         client = scenario.clients[0]
 
-        test_messages = [
+        payloads = [
             b"Message 1",
             b"Message 2 with different content",
-            b"Message 3: " + b"A" * 100,  # Larger message
-            b"Final message"
+            b"Message 3: " + b"A" * 100,
+            b"Final message",
         ]
 
-        for i, payload in enumerate(test_messages):
-            service_id = 0x1111
-            method_id = 0x0001
-            client_id = 0xABCD
-            session_id = i + 1
+        for i, payload in enumerate(payloads):
+            message = _build_request(payload, session_id=i + 1)
 
-            header = struct.pack(">HHIHHBBBB",
-                               service_id,
-                               method_id,
-                               8 + len(payload),
-                               client_id,
-                               session_id,
-                               0x01, 0x00, 0x00, 0x00)
-
-            message = header + payload
-
-            # Send and receive
             assert client.send_message(message), f"Failed to send message {i+1}"
 
-            response = client.receive_message(timeout=1.0)
+            response = client.receive_message(timeout=3.0)
             assert response is not None, f"No response for message {i+1}"
-            assert response == message, f"Response mismatch for message {i+1}"
 
-            print(f"✅ Message {i+1} echoed successfully")
+            resp = _parse_response(response)
+            assert resp["message_type"] == MSG_TYPE_RESPONSE
+            assert resp["session_id"] == i + 1
+            assert payload.decode() in resp["payload"].decode()
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_echo_concurrent_clients(echo_scenario):
-    """Test multiple clients connecting to the same server"""
-    server_endpoint = echo_scenario.clients[0].endpoint
-    echo_scenario.clients.append(SomeIpTestClient(server_endpoint))
-    echo_scenario.clients.append(SomeIpTestClient(server_endpoint))
-
+    """Test multiple clients connecting to the same server."""
     async with someip_test_scenario(echo_scenario) as scenario:
-        clients = scenario.clients
+        server_endpoint = scenario.clients[0].endpoint
+        extra_clients = [SomeIpTestClient(server_endpoint) for _ in range(2)]
+        for c in extra_clients:
+            assert c.connect(), "Failed to connect extra client"
 
-        # Each client sends a unique message
-        test_data = [
-            (clients[0], b"Client 1 message"),
-            (clients[1], b"Client 2 message"),
-            (clients[2], b"Client 3 message")
-        ]
+        all_clients = [scenario.clients[0]] + extra_clients
 
-        for client, payload in test_data:
-            # Create message with unique client ID
-            client_id = hash(payload) & 0xFFFF  # Simple client ID from payload
+        try:
+            for idx, client in enumerate(all_clients):
+                payload = f"Client {idx} message".encode()
+                client_id = 0xA000 + idx
 
-            header = struct.pack(">HHIHHBBBB",
-                               0x1111,      # service_id
-                               0x0001,      # method_id
-                               8 + len(payload),
-                               client_id,
-                               0x0001,      # session_id
-                               0x01, 0x00, 0x00, 0x00)
+                message = _build_request(payload, client_id=client_id)
+                assert client.send_message(message), f"Client {idx} failed to send"
 
-            message = header + payload
+                response = client.receive_message(timeout=3.0)
+                assert response is not None, f"Client {idx} received no response"
 
-            # Send and verify echo
-            assert client.send_message(message), f"Client {client_id} failed to send"
-            response = client.receive_message(timeout=1.0)
-            assert response is not None, f"Client {client_id} received no response"
-            assert response == message, f"Client {client_id} response mismatch"
-
-        print("✅ Concurrent client test successful")
+                resp = _parse_response(response)
+                assert resp["message_type"] == MSG_TYPE_RESPONSE
+                assert resp["client_id"] == client_id
+                assert payload.decode() in resp["payload"].decode()
+        finally:
+            for c in extra_clients:
+                c.disconnect()
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_echo_large_message(echo_scenario):
-    """Test echo with a large message that may require fragmentation"""
+    """Test with a large payload that may require fragmentation."""
     async with someip_test_scenario(echo_scenario) as scenario:
         client = scenario.clients[0]
 
-        # Create a large payload (2KB)
         large_payload = b"Large message: " + b"X" * 2000
+        message = _build_request(large_payload)
 
-        header = struct.pack(">HHIHHBBBB",
-                           0x1111,  # service_id
-                           0x0001,  # method_id
-                           8 + len(large_payload),
-                           0xABCD,  # client_id
-                           0x0001,  # session_id
-                           0x01, 0x00, 0x00, 0x00)
-
-        message = header + large_payload
-
-        # Send large message
         assert client.send_message(message), "Failed to send large message"
 
-        # Receive response
-        response = client.receive_message(timeout=3.0)  # Longer timeout for large message
+        response = client.receive_message(timeout=5.0)
         assert response is not None, "No response for large message"
-        assert response == message, "Large message echo failed"
 
-        print(f"✅ Large message test successful: {len(message)} bytes")
+        resp = _parse_response(response)
+        assert resp["message_type"] == MSG_TYPE_RESPONSE
+        assert resp["return_code"] == RETURN_CODE_OK
+        assert large_payload.decode() in resp["payload"].decode()
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_echo_invalid_message(echo_scenario):
-    """Test server behavior with invalid messages"""
+    """Test server behaviour with invalid messages."""
     async with someip_test_scenario(echo_scenario) as scenario:
         client = scenario.clients[0]
 
-        invalid_message = struct.pack(">HHIHHBBBB",
-                                     0x0000, 0x0000,
-                                     12, 0xABCD, 0x0001,
-                                     0xFF, 0xFF, 0xFF, 0xFF) + b"test"
+        # Wrong service ID — server should ignore
+        bad_header = struct.pack(
+            ">HHIHHBBBB",
+            0xDEAD, 0xBEEF,
+            12, 0xABCD, 0x0001,
+            0x01, 0x00, MSG_TYPE_REQUEST, 0x00,
+        ) + b"test"
 
-        assert client.send_message(invalid_message), "Failed to send invalid message"
-
-        # Server should not respond to invalid messages (or respond with error)
+        assert client.send_message(bad_header), "Failed to send invalid message"
         response = client.receive_message(timeout=1.0)
+        assert response is None, "Server should not respond to unknown service"
 
-        # The current echo server may or may not respond to invalid messages
-        # This test documents the current behavior - adjust based on server implementation
-        if response is not None:
-            print("ℹ️  Server responded to invalid message (this may be expected behavior)")
-        else:
-            print("✅ Server correctly ignored invalid message")
+        # Valid request should still succeed after the bad one
+        valid_payload = b"Valid after invalid"
+        valid_msg = _build_request(valid_payload, session_id=0x0002)
 
-        # Valid message should still work after invalid one
-        valid_payload = b"Valid message after invalid"
-        header = struct.pack(">HHIHHBBBB",
-                           0x1111, 0x0001,
-                           8 + len(valid_payload),
-                           0xABCD, 0x0002,
-                           0x01, 0x00, 0x00, 0x00)
-        valid_message = header + valid_payload
-
-        assert client.send_message(valid_message), "Failed to send valid message after invalid"
-        response = client.receive_message(timeout=1.0)
+        assert client.send_message(valid_msg), "Failed to send valid message"
+        response = client.receive_message(timeout=3.0)
         assert response is not None, "Server not responding after invalid message"
-        assert response == valid_message, "Valid message echo failed"
+
+        resp = _parse_response(response)
+        assert resp["message_type"] == MSG_TYPE_RESPONSE
+        assert valid_payload.decode() in resp["payload"].decode()

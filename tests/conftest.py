@@ -5,6 +5,7 @@ This conftest lives at the tests/ root so pytest discovers it for
 tests/integration/ and tests/system/ regardless of working directory.
 """
 
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -83,17 +84,17 @@ def test_service() -> SomeIpService:
 
 @pytest.fixture
 def echo_service() -> SomeIpService:
-    return SomeIpService(service_id=0x1111, instance_id=0x0001)
+    return SomeIpService(service_id=0x1000, instance_id=0x0001)
 
 
 @pytest.fixture
 def calculator_service() -> SomeIpService:
-    return SomeIpService(service_id=0x2222, instance_id=0x0001)
+    return SomeIpService(service_id=0x2000, instance_id=0x0001)
 
 
 @pytest.fixture
 def temperature_service() -> SomeIpService:
-    return SomeIpService(service_id=0x3333, instance_id=0x0001)
+    return SomeIpService(service_id=0x3000, instance_id=0x0001)
 
 
 # ---------------------------------------------------------------------------
@@ -109,27 +110,27 @@ def _require_executable(build_bin_path: Path, name: str) -> str:
 
 @pytest.fixture(scope="session")
 def echo_server_executable(build_bin_path) -> str:
-    return _require_executable(build_bin_path, "echo_server")
+    return _require_executable(build_bin_path, "hello_world_server")
 
 
 @pytest.fixture(scope="session")
 def echo_client_executable(build_bin_path) -> str:
-    return _require_executable(build_bin_path, "echo_client")
+    return _require_executable(build_bin_path, "hello_world_client")
 
 
 @pytest.fixture(scope="session")
 def rpc_server_executable(build_bin_path) -> str:
-    return _require_executable(build_bin_path, "rpc_calculator_server")
+    return _require_executable(build_bin_path, "method_calls_server")
 
 
 @pytest.fixture(scope="session")
 def rpc_client_executable(build_bin_path) -> str:
-    return _require_executable(build_bin_path, "rpc_calculator_client")
+    return _require_executable(build_bin_path, "method_calls_client")
 
 
 @pytest.fixture(scope="session")
 def sd_server_executable(build_bin_path) -> str:
-    return _require_executable(build_bin_path, "sd_service_server")
+    return _require_executable(build_bin_path, "sd_demo_server")
 
 
 @pytest.fixture(scope="session")
@@ -139,17 +140,17 @@ def sd_client_executable(build_bin_path) -> str:
 
 @pytest.fixture(scope="session")
 def event_publisher_executable(build_bin_path) -> str:
-    return _require_executable(build_bin_path, "event_publisher")
+    return _require_executable(build_bin_path, "events_publisher")
 
 
 @pytest.fixture(scope="session")
 def event_subscriber_executable(build_bin_path) -> str:
-    return _require_executable(build_bin_path, "event_subscriber")
+    return _require_executable(build_bin_path, "events_subscriber")
 
 
 @pytest.fixture(scope="session")
 def tp_example_executable(build_bin_path) -> str:
-    return _require_executable(build_bin_path, "tp_example")
+    return _require_executable(build_bin_path, "large_messages_server")
 
 
 # ---------------------------------------------------------------------------
@@ -158,8 +159,12 @@ def tp_example_executable(build_bin_path) -> str:
 
 @pytest.fixture
 def echo_scenario(echo_server_executable, localhost_endpoint) -> TestScenario:
-    scenario = TestScenario(name="echo_test", description="Basic echo server/client test scenario")
-    scenario.add_process(echo_server_executable, str(localhost_endpoint.port))
+    scenario = TestScenario(name="echo_test", description="Hello-world server integration test")
+    scenario.add_process(
+        echo_server_executable,
+        env={**os.environ, "HELLO_BIND_HOST": "127.0.0.1",
+             "HELLO_BIND_PORT": str(localhost_endpoint.port)},
+    )
     scenario.add_client(localhost_endpoint)
     return scenario
 

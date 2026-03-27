@@ -99,7 +99,7 @@ def temperature_service() -> SomeIpService:
 @pytest.fixture(scope="session")
 def echo_server_executable(build_bin_path) -> str:
     """Path to echo server executable"""
-    exe_path = build_bin_path / "echo_server"
+    exe_path = build_bin_path / "hello_world_server"
     if not exe_path.exists():
         pytest.skip(f"Echo server executable not found: {exe_path}")
     return str(exe_path)
@@ -108,7 +108,7 @@ def echo_server_executable(build_bin_path) -> str:
 @pytest.fixture(scope="session")
 def echo_client_executable(build_bin_path) -> str:
     """Path to echo client executable"""
-    exe_path = build_bin_path / "echo_client"
+    exe_path = build_bin_path / "hello_world_client"
     if not exe_path.exists():
         pytest.skip(f"Echo client executable not found: {exe_path}")
     return str(exe_path)
@@ -117,7 +117,7 @@ def echo_client_executable(build_bin_path) -> str:
 @pytest.fixture(scope="session")
 def rpc_server_executable(build_bin_path) -> str:
     """Path to RPC calculator server executable"""
-    exe_path = build_bin_path / "rpc_calculator_server"
+    exe_path = build_bin_path / "method_calls_server"
     if not exe_path.exists():
         pytest.skip(f"RPC server executable not found: {exe_path}")
     return str(exe_path)
@@ -126,7 +126,7 @@ def rpc_server_executable(build_bin_path) -> str:
 @pytest.fixture(scope="session")
 def rpc_client_executable(build_bin_path) -> str:
     """Path to RPC calculator client executable"""
-    exe_path = build_bin_path / "rpc_calculator_client"
+    exe_path = build_bin_path / "method_calls_client"
     if not exe_path.exists():
         pytest.skip(f"RPC client executable not found: {exe_path}")
     return str(exe_path)
@@ -135,7 +135,7 @@ def rpc_client_executable(build_bin_path) -> str:
 @pytest.fixture(scope="session")
 def sd_server_executable(build_bin_path) -> str:
     """Path to SD service server executable"""
-    exe_path = build_bin_path / "sd_service_server"
+    exe_path = build_bin_path / "sd_demo_server"
     if not exe_path.exists():
         pytest.skip(f"SD server executable not found: {exe_path}")
     return str(exe_path)
@@ -153,7 +153,7 @@ def sd_client_executable(build_bin_path) -> str:
 @pytest.fixture(scope="session")
 def event_publisher_executable(build_bin_path) -> str:
     """Path to event publisher executable"""
-    exe_path = build_bin_path / "event_publisher"
+    exe_path = build_bin_path / "events_publisher"
     if not exe_path.exists():
         pytest.skip(f"Event publisher executable not found: {exe_path}")
     return str(exe_path)
@@ -162,7 +162,7 @@ def event_publisher_executable(build_bin_path) -> str:
 @pytest.fixture(scope="session")
 def event_subscriber_executable(build_bin_path) -> str:
     """Path to event subscriber executable"""
-    exe_path = build_bin_path / "event_subscriber"
+    exe_path = build_bin_path / "events_subscriber"
     if not exe_path.exists():
         pytest.skip(f"Event subscriber executable not found: {exe_path}")
     return str(exe_path)
@@ -171,7 +171,7 @@ def event_subscriber_executable(build_bin_path) -> str:
 @pytest.fixture(scope="session")
 def tp_example_executable(build_bin_path) -> str:
     """Path to TP example executable"""
-    exe_path = build_bin_path / "tp_example"
+    exe_path = build_bin_path / "large_messages_server"
     if not exe_path.exists():
         pytest.skip(f"TP example executable not found: {exe_path}")
     return str(exe_path)
