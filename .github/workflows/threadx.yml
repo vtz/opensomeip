@@ -231,7 +231,7 @@ jobs:
           title: 'ThreadX Test Report'
           summary-report: true
           failed-report: true
-          test-list-report: true
+          suite-folded-report: true
           use-suite-name: true
 
       - name: Create ThreadX Test Check Run

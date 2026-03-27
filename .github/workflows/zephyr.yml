@@ -276,7 +276,7 @@ jobs:
           title: 'Zephyr Test Report'
           summary-report: true
           failed-report: true
-          test-list-report: true
+          suite-folded-report: true
           use-suite-name: true
 
       - name: Create Zephyr Test Check Run
