@@ -256,6 +256,7 @@ def test_echo_performance(echo_server_executable, available_port):
 
     HELLO_SERVICE_ID = 0x1000
     SAY_HELLO_METHOD_ID = 0x0001
+    MSG_TYPE_RESPONSE = 0x80
 
     num_clients = 3
     messages_per_client = 50
@@ -268,6 +269,16 @@ def test_echo_performance(echo_server_executable, available_port):
             0x01, 0x01, 0x00, 0x00,
         ) + payload
 
+    def _is_valid_response(data: bytes, expected_cid: int, expected_sid: int) -> bool:
+        if len(data) < 16:
+            return False
+        svc, method, _length, cid, sid, _pv, _iv, mt, rc = struct.unpack(
+            ">HHIHHBBBB", data[:16],
+        )
+        return (svc == HELLO_SERVICE_ID and method == SAY_HELLO_METHOD_ID
+                and mt == MSG_TYPE_RESPONSE and rc == 0x00
+                and cid == expected_cid and sid == expected_sid)
+
     results_queue: queue.Queue = queue.Queue()
 
     def client_worker(client_id: int, port: int):
@@ -276,16 +287,18 @@ def test_echo_performance(echo_server_executable, available_port):
             sock.settimeout(3.0)
             sock.bind(("127.0.0.1", 0))
 
+            cid = 0xA000 + client_id
             success_count = 0
             start_time = time.time()
 
             for seq in range(messages_per_client):
+                sid = seq + 1
                 payload = f"perf-{client_id}-{seq}".encode()
-                msg = build_request(payload, 0xA000 + client_id, seq + 1)
+                msg = build_request(payload, cid, sid)
                 sock.sendto(msg, ("127.0.0.1", port))
                 try:
                     data, _ = sock.recvfrom(65536)
-                    if len(data) >= 16:
+                    if _is_valid_response(data, cid, sid):
                         success_count += 1
                 except socket.timeout:
                     pass
@@ -321,7 +334,8 @@ def test_echo_performance(echo_server_executable, available_port):
             t.join(timeout=30.0)
 
         total_messages = 0
-        total_time = 0.0
+        wall_time = 0.0
+        total_client_time = 0.0
         errors = []
 
         for _ in range(num_clients):
@@ -330,7 +344,8 @@ def test_echo_performance(echo_server_executable, available_port):
                 errors.append(result["error"])
             else:
                 total_messages += result["messages"]
-                total_time = max(total_time, result["duration"])
+                wall_time = max(wall_time, result["duration"])
+                total_client_time += result["duration"]
 
         server_process.stop()
 
@@ -338,8 +353,8 @@ def test_echo_performance(echo_server_executable, available_port):
             pytest.fail(f"Performance test had errors: {errors}")
 
         assert total_messages > 0, "No successful round-trips"
-        throughput = total_messages / total_time if total_time > 0 else 0
-        avg_latency = (total_time * 1000) / total_messages if total_messages > 0 else 0
+        throughput = total_messages / wall_time if wall_time > 0 else 0
+        avg_latency = (total_client_time * 1000) / total_messages if total_messages > 0 else 0
 
         print(f"Throughput: {throughput:.2f} msg/sec")
         print(f"Avg latency: {avg_latency:.2f} ms")

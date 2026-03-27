@@ -137,7 +137,7 @@ async def test_echo_multiple_messages(echo_scenario):
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_echo_concurrent_clients(echo_scenario):
-    """Test multiple clients connecting to the same server."""
+    """Test multiple clients sending to the same server concurrently."""
     async with someip_test_scenario(echo_scenario) as scenario:
         server_endpoint = scenario.clients[0].endpoint
         extra_clients = [SomeIpTestClient(server_endpoint) for _ in range(2)]
@@ -147,13 +147,15 @@ async def test_echo_concurrent_clients(echo_scenario):
         all_clients = [scenario.clients[0]] + extra_clients
 
         try:
+            messages = []
             for idx, client in enumerate(all_clients):
                 payload = f"Client {idx} message".encode()
                 client_id = 0xA000 + idx
-
                 message = _build_request(payload, client_id=client_id)
                 assert client.send_message(message), f"Client {idx} failed to send"
+                messages.append((idx, client, payload, client_id))
 
+            for idx, client, payload, client_id in messages:
                 response = client.receive_message(timeout=3.0)
                 assert response is not None, f"Client {idx} received no response"
 
@@ -199,7 +201,7 @@ async def test_echo_invalid_message(echo_scenario):
             ">HHIHHBBBB",
             0xDEAD, 0xBEEF,
             12, 0xABCD, 0x0001,
-            0x01, 0x00, MSG_TYPE_REQUEST, 0x00,
+            PROTOCOL_VERSION, INTERFACE_VERSION, MSG_TYPE_REQUEST, RETURN_CODE_OK,
         ) + b"test"
 
         assert client.send_message(bad_header), "Failed to send invalid message"
