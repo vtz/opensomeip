@@ -129,7 +129,7 @@ jobs:
         run: |
           west build -b native_sim zephyr/tests/test_core \
             -d build/ns_tc_asan --pristine auto \
-            -- -DOVERLAY_CONFIG="boards/native_sim_asan.conf"
+            -- -DOVERLAY_CONFIG="$PWD/zephyr/boards/native_sim_asan.conf"
           if timeout 60 build/ns_tc_asan/zephyr/zephyr.exe > /tmp/test_core_asan.log 2>&1; then
             rc=0
           else
@@ -149,7 +149,7 @@ jobs:
         run: |
           west build -b native_sim zephyr/tests/test_transport \
             -d build/ns_tp_asan --pristine auto \
-            -- -DOVERLAY_CONFIG="boards/native_sim_asan.conf"
+            -- -DOVERLAY_CONFIG="$PWD/zephyr/boards/native_sim_asan.conf"
           if timeout 60 build/ns_tp_asan/zephyr/zephyr.exe > /tmp/test_transport_asan.log 2>&1; then
             rc=0
           else
