@@ -59,6 +59,9 @@
 #define configKERNEL_INTERRUPT_PRIORITY           255
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY      191
 
+#define configUSE_MALLOC_FAILED_HOOK             1
+#define configCHECK_FOR_STACK_OVERFLOW           2
+
 #define configASSERT(x)                                                        \
     do {                                                                       \
         if (!(x)) {                                                            \

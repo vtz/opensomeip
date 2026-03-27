@@ -39,6 +39,23 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
+#include <semphr.h>
+
+extern "C" {
+
+void vApplicationMallocFailedHook() {
+    printf("FATAL: FreeRTOS pvPortMalloc failed (heap exhausted)\n");
+    fflush(stdout);
+    abort();
+}
+
+void vApplicationStackOverflowHook(TaskHandle_t, char* task_name) {
+    printf("FATAL: Stack overflow in task '%s'\n", task_name);
+    fflush(stdout);
+    abort();
+}
+
+} // extern "C"
 
 using namespace someip;
 using namespace someip::transport;
@@ -196,6 +213,33 @@ static void test_freertos_memory_pool() {
     CHECK(msg3 != nullptr, "pool_realloc_after_release");
 }
 
+static void test_freertos_heap_watermarks() {
+    printf("\n--- FreeRTOS heap watermark tests ---\n");
+
+    size_t free_before = xPortGetFreeHeapSize();
+    size_t min_ever = xPortGetMinimumEverFreeHeapSize();
+    printf("  Heap free: %zu bytes, min-ever free: %zu bytes\n",
+           free_before, min_ever);
+    CHECK(free_before > 0, "heap_has_free_space");
+    CHECK(min_ever > 0, "heap_min_ever_positive");
+
+    {
+        auto temp_msg = someip::platform::allocate_message();
+        CHECK(temp_msg != nullptr, "watermark_alloc");
+        SemaphoreHandle_t sem = xSemaphoreCreateBinary();
+        CHECK(sem != nullptr, "heap_rtos_alloc");
+        size_t free_during = xPortGetFreeHeapSize();
+        CHECK(free_during < free_before, "heap_decreased_after_alloc");
+        vSemaphoreDelete(sem);
+    }
+
+    size_t free_after = xPortGetFreeHeapSize();
+    CHECK(free_after >= free_before, "heap_restored_after_free");
+
+    printf("  Heap free after cycle: %zu bytes (delta: %zd)\n",
+           free_after, static_cast<ssize_t>(free_after) - static_cast<ssize_t>(free_before));
+}
+
 static void test_task_entry(void*) {
     printf("=== SOME/IP Core Tests on FreeRTOS (POSIX port) ===\n");
 
@@ -206,6 +250,7 @@ static void test_task_entry(void*) {
     test_freertos_threading();
     test_freertos_thread_join();
     test_freertos_memory_pool();
+    test_freertos_heap_watermarks();
 
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);
