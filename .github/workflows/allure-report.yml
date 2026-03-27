@@ -1,0 +1,139 @@
+# Generate and publish Allure Report with historical trends
+#
+# Triggered after the CI workflow completes on main. Downloads all JUnit/GTest
+# XML artifacts, merges them into a single Allure report with trend history
+# persisted on the gh-pages branch, and deploys to /allure/ on GitHub Pages.
+
+name: Allure Report
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: "pages-deploy"
+  cancel-in-progress: false
+
+jobs:
+  allure-report:
+    if: github.event.workflow_run.conclusion != 'cancelled'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download CTest/pytest results from CI
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: test-results-*
+          path: ci-artifacts
+        continue-on-error: true
+
+      - name: Download GTest detailed results from CI
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: gtest-results-*
+          path: ci-artifacts
+        continue-on-error: true
+
+      - name: Collect JUnit XML into Allure results
+        run: |
+          mkdir -p allure-results
+          find ci-artifacts -name '*.xml' -type f | while read -r f; do
+            dir="$(basename "$(dirname "$f")")"
+            base="$(basename "$f")"
+            cp "$f" "allure-results/${dir}__${base}"
+          done
+          count=$(find allure-results -name '*.xml' -type f | wc -l)
+          echo "Collected ${count} result files"
+          if [ "$count" -eq 0 ]; then
+            echo "::warning::No test result XMLs found — report will be empty"
+          fi
+
+      - name: Write environment metadata
+        run: |
+          cat > allure-results/environment.properties <<PROPS
+          Branch=${{ github.event.workflow_run.head_branch }}
+          Commit=${{ github.event.workflow_run.head_sha }}
+          Run=#${{ github.event.workflow_run.run_number }}
+          Event=${{ github.event.workflow_run.event }}
+          Conclusion=${{ github.event.workflow_run.conclusion }}
+          PROPS
+
+      - name: Write Allure categories
+        run: |
+          cat > allure-results/categories.json <<'CATS'
+          [
+            {
+              "name": "Product defects",
+              "matchedStatuses": ["failed"]
+            },
+            {
+              "name": "Test defects",
+              "matchedStatuses": ["broken"]
+            },
+            {
+              "name": "Known issues",
+              "matchedStatuses": ["known"],
+              "flaky": true
+            }
+          ]
+          CATS
+
+      - name: Checkout gh-pages for Allure history
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+        continue-on-error: true
+
+      - name: Restore Allure history
+        run: |
+          if [ -d gh-pages/allure/history ]; then
+            cp -r gh-pages/allure/history allure-results/history
+            echo "Restored history ($(ls allure-results/history/ | wc -l) entries)"
+          else
+            echo "No previous Allure history found (first run)"
+          fi
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Allure CLI
+        run: |
+          ALLURE_VERSION="2.30.0"
+          curl -sL "https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz" \
+            | tar xzf -
+          echo "$PWD/allure-${ALLURE_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Write executor info
+        run: |
+          cat > allure-results/executor.json <<EXEC
+          {
+            "name": "GitHub Actions",
+            "type": "github",
+            "buildName": "CI #${{ github.event.workflow_run.run_number }}",
+            "buildUrl": "${{ github.event.workflow_run.html_url }}",
+            "reportUrl": "https://vtz.github.io/opensomeip/allure/"
+          }
+          EXEC
+
+      - name: Generate Allure report
+        run: allure generate allure-results -o allure-report --clean
+
+      - name: Deploy Allure report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: allure-report
+          destination_dir: allure

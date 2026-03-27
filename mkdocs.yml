@@ -111,6 +111,7 @@ nav:
     - Test Plan: SOMEIP_ACCEPTANCE_TEST_PLAN.md
     - Test Status: TEST_PLAN_STATUS.md
     - Test Reporting: TEST_REPORTING.md
+    - Test Trends (Allure): https://vtz.github.io/opensomeip/allure/
     - Coding Guidelines: CODING_GUIDELINES.md
   - Contributing:
     - How to Contribute: contributing.md
