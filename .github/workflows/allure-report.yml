@@ -44,20 +44,25 @@ jobs:
         continue-on-error: true
 
       - name: Collect JUnit XML into Allure results
+        id: collect
         run: |
           mkdir -p allure-results
-          find ci-artifacts -name '*.xml' -type f | while read -r f; do
-            dir="$(basename "$(dirname "$f")")"
-            base="$(basename "$f")"
-            cp "$f" "allure-results/${dir}__${base}"
-          done
+          if [ -d ci-artifacts ]; then
+            find ci-artifacts -name '*.xml' -type f | while read -r f; do
+              dir="$(basename "$(dirname "$f")")"
+              base="$(basename "$f")"
+              cp "$f" "allure-results/${dir}__${base}"
+            done
+          fi
           count=$(find allure-results -name '*.xml' -type f | wc -l)
           echo "Collected ${count} result files"
           if [ "$count" -eq 0 ]; then
-            echo "::warning::No test result XMLs found — report will be empty"
+            echo "::warning::No test result XMLs found — skipping report generation and deploy"
           fi
+          echo "has_results=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Write environment metadata
+        if: steps.collect.outputs.has_results == 'true'
         run: |
           cat > allure-results/environment.properties <<PROPS
           Branch=${{ github.event.workflow_run.head_branch }}
@@ -68,6 +73,7 @@ jobs:
           PROPS
 
       - name: Write Allure categories
+        if: steps.collect.outputs.has_results == 'true'
         run: |
           cat > allure-results/categories.json <<'CATS'
           [
@@ -78,16 +84,12 @@ jobs:
             {
               "name": "Test defects",
               "matchedStatuses": ["broken"]
-            },
-            {
-              "name": "Known issues",
-              "matchedStatuses": ["known"],
-              "flaky": true
             }
           ]
           CATS
 
       - name: Checkout gh-pages for Allure history
+        if: steps.collect.outputs.has_results == 'true'
         uses: actions/checkout@v4
         with:
           ref: gh-pages
@@ -95,6 +97,7 @@ jobs:
         continue-on-error: true
 
       - name: Restore Allure history
+        if: steps.collect.outputs.has_results == 'true'
         run: |
           if [ -d gh-pages/allure/history ]; then
             cp -r gh-pages/allure/history allure-results/history
@@ -104,12 +107,14 @@ jobs:
           fi
 
       - name: Set up JDK
+        if: steps.collect.outputs.has_results == 'true'
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
       - name: Install Allure CLI
+        if: steps.collect.outputs.has_results == 'true'
         run: |
           ALLURE_VERSION="2.30.0"
           curl -sL "https://github.com/allure-framework/allure2/releases/download/${ALLURE_VERSION}/allure-${ALLURE_VERSION}.tgz" \
@@ -117,6 +122,7 @@ jobs:
           echo "$PWD/allure-${ALLURE_VERSION}/bin" >> "$GITHUB_PATH"
 
       - name: Write executor info
+        if: steps.collect.outputs.has_results == 'true'
         run: |
           cat > allure-results/executor.json <<EXEC
           {
@@ -129,9 +135,11 @@ jobs:
           EXEC
 
       - name: Generate Allure report
+        if: steps.collect.outputs.has_results == 'true'
         run: allure generate allure-results -o allure-report --clean
 
       - name: Deploy Allure report to GitHub Pages
+        if: steps.collect.outputs.has_results == 'true'
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
