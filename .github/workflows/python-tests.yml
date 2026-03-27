@@ -96,6 +96,7 @@ jobs:
           title: 'Python Test Report'
           summary-report: true
           failed-report: true
+          suite-list-report: true
           suite-folded-report: true
           use-suite-name: true
           exit-on-fail: false
