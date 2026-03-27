@@ -95,7 +95,6 @@ jobs:
           report-path: 'ctrf/python-report.json'
           title: 'Python Test Report'
           summary-report: true
-          test-list-report: true
           failed-report: true
           suite-folded-report: true
           use-suite-name: true

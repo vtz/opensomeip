@@ -275,7 +275,6 @@ jobs:
           report-path: 'ctrf/zephyr-report.json'
           title: 'Zephyr Test Report'
           summary-report: true
-          test-list-report: true
           failed-report: true
           suite-folded-report: true
           use-suite-name: true

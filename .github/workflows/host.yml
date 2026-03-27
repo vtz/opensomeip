@@ -283,7 +283,6 @@ jobs:
           report-path: 'ctrf/host-report.json'
           title: 'Host Test Report'
           summary-report: true
-          test-list-report: true
           failed-report: true
           suite-folded-report: true
           use-suite-name: true
