@@ -234,7 +234,11 @@ Result UdpTransport::leave_multicast_group(const std::string& multicast_address)
 
     struct ip_mreq mreq;
     mreq.imr_multiaddr.s_addr = someip_inet_addr(multicast_address.c_str());
-    mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    if (!config_.multicast_interface.empty()) {
+        mreq.imr_interface.s_addr = someip_inet_addr(config_.multicast_interface.c_str());
+    } else {
+        mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+    }
 
     if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
         return Result::NETWORK_ERROR;
