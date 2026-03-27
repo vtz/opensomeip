@@ -339,7 +339,8 @@ def test_echo_performance(echo_server_executable, echo_client_executable, tmp_pa
         throughput = total_messages / total_time if total_time > 0 else 0
         avg_latency = (total_time * 1000) / total_messages if total_messages > 0 else 0
 
-        print(".2f"        print(".2f"
+        print(f"Throughput: {throughput:.2f} msg/sec")
+        print(f"Avg latency: {avg_latency:.2f} ms")
         # Basic performance assertions
         assert throughput > 10, f"Throughput too low: {throughput} msg/sec"
         assert avg_latency < 100, f"Latency too high: {avg_latency} ms"
@@ -364,22 +365,22 @@ def test_someip_message_format_compliance():
     # Test valid message header
     import struct
 
-    # Create a valid SOME/IP header
-    header_data = struct.pack(">LHHHHLHH",
-                            0xFFFFFFFF,  # Magic
-                            16,          # Length
-                            0x1234,      # Service ID
-                            0x5678,      # Method ID
-                            16,          # Length field
-                            0xABCD,      # Client ID
-                            0x0001,      # Session ID
-                            0x0100,      # Protocol + Interface version
-                            0x0000)      # Message type + Return code
-
-    # In a full implementation, this would test the Message class
-    # parsing and validation logic
+    # Create a valid SOME/IP header (16 bytes):
+    #   Service ID (H) | Method ID (H) | Length (I) |
+    #   Client ID (H)  | Session ID (H) |
+    #   Proto Ver (B) | Iface Ver (B) | Msg Type (B) | Return Code (B)
+    header_data = struct.pack(">HHIHHBBBB",
+                            0xFFFF,  # Service ID
+                            0xFFFF,  # Method ID
+                            16,      # Length
+                            0x1234,  # Client ID
+                            0x0001,  # Session ID
+                            0x01,    # Protocol Version
+                            0x00,    # Interface Version
+                            0x00,    # Message Type
+                            0x00)    # Return Code
 
     assert len(header_data) == 16, "Header should be 16 bytes"
-    assert header_data[:4] == b'\xFF\xFF\xFF\xFF', "Magic bytes incorrect"
+    assert header_data[:4] == b'\xFF\xFF\xFF\xFF', "Service/Method ID bytes incorrect"
 
     print("✅ SOME/IP message format compliance test passed")

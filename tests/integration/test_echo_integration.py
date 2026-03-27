@@ -8,7 +8,7 @@ including serialization, transport, and deserialization.
 import pytest
 import time
 import struct
-from someip_test_framework import someip_test_scenario, SomeIpEndpoint
+from someip_test_framework import someip_test_scenario, SomeIpEndpoint, SomeIpTestClient
 
 
 @pytest.mark.integration
@@ -35,28 +35,25 @@ async def test_echo_message_flow(echo_scenario):
     async with someip_test_scenario(echo_scenario) as scenario:
         client = scenario.clients[0]
 
-        # Create a test message (SOME/IP format)
-        # Header: Magic(4), Length(4), ServiceID(2), MethodID(2), ClientID(2), SessionID(2)
         service_id = 0x1111
         method_id = 0x0001  # Echo method
         client_id = 0xABCD
         session_id = 0x0001
 
-        # Test payload
         test_payload = b"Hello SOME/IP World!"
         payload_length = len(test_payload)
 
-        # SOME/IP header (big-endian)
-        header = struct.pack(">LHHHHLHH",
-                           0xFFFFFFFF,  # SOME/IP magic
-                           16 + payload_length,  # Total length
+        # SOME/IP header (16 bytes, big-endian)
+        header = struct.pack(">HHIHHBBBB",
                            service_id,
                            method_id,
-                           16,  # Length field
+                           8 + payload_length,  # Length (from Client ID onward)
                            client_id,
                            session_id,
-                           0x00,  # Protocol version + interface version
-                           0x00)  # Message type + return code
+                           0x01,  # Protocol Version
+                           0x00,  # Interface Version
+                           0x00,  # Message Type (REQUEST)
+                           0x00)  # Return Code (E_OK)
 
         # Combine header and payload
         message = header + test_payload
@@ -93,22 +90,18 @@ async def test_echo_multiple_messages(echo_scenario):
         ]
 
         for i, payload in enumerate(test_messages):
-            # Create SOME/IP message
             service_id = 0x1111
             method_id = 0x0001
             client_id = 0xABCD
-            session_id = i + 1  # Different session for each message
+            session_id = i + 1
 
-            header = struct.pack(">LHHHHLHH",
-                               0xFFFFFFFF,
-                               16 + len(payload),
+            header = struct.pack(">HHIHHBBBB",
                                service_id,
                                method_id,
-                               16,
+                               8 + len(payload),
                                client_id,
                                session_id,
-                               0x00,
-                               0x00)
+                               0x01, 0x00, 0x00, 0x00)
 
             message = header + payload
 
@@ -147,16 +140,13 @@ async def test_echo_concurrent_clients(echo_scenario, available_port):
             # Create message with unique client ID
             client_id = hash(payload) & 0xFFFF  # Simple client ID from payload
 
-            header = struct.pack(">LHHHHLHH",
-                               0xFFFFFFFF,
-                               16 + len(payload),
-                               0x1111,  # service_id
-                               0x0001,  # method_id
-                               16,      # length
+            header = struct.pack(">HHIHHBBBB",
+                               0x1111,      # service_id
+                               0x0001,      # method_id
+                               8 + len(payload),
                                client_id,
-                               0x0001,  # session_id
-                               0x00,    # protocol/interface version
-                               0x00)    # message type/return code
+                               0x0001,      # session_id
+                               0x01, 0x00, 0x00, 0x00)
 
             message = header + payload
 
@@ -179,17 +169,13 @@ async def test_echo_large_message(echo_scenario):
         # Create a large payload (2KB)
         large_payload = b"Large message: " + b"X" * 2000
 
-        # Create SOME/IP message
-        header = struct.pack(">LHHHHLHH",
-                           0xFFFFFFFF,
-                           16 + len(large_payload),
+        header = struct.pack(">HHIHHBBBB",
                            0x1111,  # service_id
                            0x0001,  # method_id
-                           16,      # length
+                           8 + len(large_payload),
                            0xABCD,  # client_id
                            0x0001,  # session_id
-                           0x00,    # protocol/interface version
-                           0x00)    # message type/return code
+                           0x01, 0x00, 0x00, 0x00)
 
         message = header + large_payload
 
@@ -211,8 +197,10 @@ async def test_echo_invalid_message(echo_scenario):
     async with someip_test_scenario(echo_scenario) as scenario:
         client = scenario.clients[0]
 
-        # Send invalid message (wrong magic bytes)
-        invalid_message = struct.pack(">LHHHHLHH", 0x12345678, 20, 0x1111, 0x0001, 16, 0xABCD, 0x0001, 0x00, 0x00) + b"test"
+        invalid_message = struct.pack(">HHIHHBBBB",
+                                     0x0000, 0x0000,
+                                     12, 0xABCD, 0x0001,
+                                     0xFF, 0xFF, 0xFF, 0xFF) + b"test"
 
         assert client.send_message(invalid_message), "Failed to send invalid message"
 
@@ -228,10 +216,11 @@ async def test_echo_invalid_message(echo_scenario):
 
         # Valid message should still work after invalid one
         valid_payload = b"Valid message after invalid"
-        header = struct.pack(">LHHHHLHH",
-                           0xFFFFFFFF,
-                           16 + len(valid_payload),
-                           0x1111, 0x0001, 16, 0xABCD, 0x0002, 0x00, 0x00)
+        header = struct.pack(">HHIHHBBBB",
+                           0x1111, 0x0001,
+                           8 + len(valid_payload),
+                           0xABCD, 0x0002,
+                           0x01, 0x00, 0x00, 0x00)
         valid_message = header + valid_payload
 
         assert client.send_message(valid_message), "Failed to send valid message after invalid"

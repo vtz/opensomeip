@@ -13,6 +13,7 @@ import time
 import signal
 import os
 import tempfile
+import unittest
 from typing import Optional, Dict, List, Any, Tuple
 from dataclasses import dataclass, field
 from contextlib import asynccontextmanager
@@ -205,6 +206,14 @@ class TestScenario:
         client = SomeIpTestClient(endpoint)
         self.clients.append(client)
         return client
+
+
+class SomeIpTestFramework(unittest.TestCase):
+    """Base test class for SOME/IP integration and system tests.
+
+    Extends unittest.TestCase with common setup for tests that verify
+    SOME/IP stack behaviour without requiring running service binaries.
+    """
 
 
 @asynccontextmanager

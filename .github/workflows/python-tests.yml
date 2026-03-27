@@ -36,7 +36,6 @@ jobs:
           --cov-report=xml:coverage.xml
           --cov-report=term-missing
           -k "not performance and not slow"
-        continue-on-error: true
 
       - name: Upload Python test results
         uses: actions/upload-artifact@v4
@@ -82,7 +81,7 @@ jobs:
           files: "**/*junit*.xml"
           check_name: "Python Test Results"
           comment_mode: "off"
-          fail_on: "nothing"
+          fail_on: "test failures"
 
       - name: Convert JUnit XML to CTRF
         if: always()
