@@ -141,13 +141,6 @@ def sd_server_executable(build_bin_path) -> str:
     return str(exe_path)
 
 
-@pytest.fixture(scope="session")
-def sd_client_executable(build_bin_path) -> str:
-    """Path to SD service client executable"""
-    exe_path = build_bin_path / "sd_service_client"
-    if not exe_path.exists():
-        pytest.skip(f"SD client executable not found: {exe_path}")
-    return str(exe_path)
 
 
 @pytest.fixture(scope="session")
@@ -220,7 +213,7 @@ def rpc_scenario(rpc_server_executable, rpc_client_executable, localhost_endpoin
 
 
 @pytest.fixture
-def sd_scenario(sd_server_executable, sd_client_executable, multicast_endpoint, localhost_endpoint) -> TestScenario:
+def sd_scenario(sd_server_executable, multicast_endpoint, localhost_endpoint) -> TestScenario:
     """Scenario with SD server and client"""
     scenario = TestScenario(
         name="sd_test",
@@ -229,9 +222,6 @@ def sd_scenario(sd_server_executable, sd_client_executable, multicast_endpoint, 
 
     # Add SD server (offers services)
     scenario.add_process(sd_server_executable)
-
-    # Add SD client (discovers services)
-    scenario.add_process(sd_client_executable)
 
     return scenario
 
