@@ -195,7 +195,7 @@ static void test_threadx_pool_diagnostics() {
                                           &total_blocks, &first_suspended,
                                           &suspended_count, &next_pool);
     CHECK(status == TX_SUCCESS, "pool_info_query");
-    printf("  Pool '%s': %lu available / %lu total blocks\n",
+    printf("  Pool '%s': %u available / %u total blocks\n",
            name ? name : "(null)", available_blocks, total_blocks);
     CHECK(available_blocks == total_blocks, "all_blocks_available_before_test");
 
@@ -206,17 +206,19 @@ static void test_threadx_pool_diagnostics() {
         CHECK(msg2 != nullptr, "diag_alloc_2");
 
         ULONG avail_during = 0;
-        tx_block_pool_info_get(&message_pool, nullptr, &avail_during,
-                               nullptr, nullptr, nullptr, nullptr);
+        status = tx_block_pool_info_get(&message_pool, nullptr, &avail_during,
+                                        nullptr, nullptr, nullptr, nullptr);
+        CHECK(status == TX_SUCCESS, "pool_info_during_alloc");
         CHECK(avail_during == available_blocks - 2, "blocks_decreased_by_2");
-        printf("  During alloc: %lu available\n", avail_during);
+        printf("  During alloc: %u available\n", avail_during);
     }
 
     ULONG avail_after = 0;
-    tx_block_pool_info_get(&message_pool, nullptr, &avail_after,
-                           nullptr, nullptr, nullptr, nullptr);
+    status = tx_block_pool_info_get(&message_pool, nullptr, &avail_after,
+                                    nullptr, nullptr, nullptr, nullptr);
+    CHECK(status == TX_SUCCESS, "pool_info_after_release");
     CHECK(avail_after == available_blocks, "blocks_restored_after_release");
-    printf("  After release: %lu available (restored)\n", avail_after);
+    printf("  After release: %u available (restored)\n", avail_after);
 }
 
 static TX_THREAD test_thread;
