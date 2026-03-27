@@ -353,14 +353,14 @@ void UdpTransport::receive_loop() {
     std::vector<uint8_t> buffer(config_.receive_buffer_size);
 
     while (running_) {
-        buffer.resize(config_.receive_buffer_size);
         Endpoint sender;
-        Result result = receive_data(buffer, sender);
+        size_t bytes_received = 0;
+        Result result = receive_data(buffer, sender, bytes_received);
 
-        if (result == Result::SUCCESS) {
-            // Try to deserialize message
+        if (result == Result::SUCCESS && bytes_received > 0) {
             MessagePtr message = platform::allocate_message();
-            if (message->deserialize(buffer)) {
+            const uint8_t* begin = buffer.data();
+            if (message->deserialize({begin, begin + bytes_received})) {
                 // Add to queue
                 {
                     platform::ScopedLock lock(queue_mutex_);
@@ -423,9 +423,11 @@ Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint&
 }
 
 /** @implements REQ_TRANSPORT_010 */
-Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender) {
+Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender, size_t& bytes_received) {
     sockaddr_in src_addr;
     socklen_t addr_len = sizeof(src_addr);
+
+    bytes_received = 0;
 
     ssize_t received;
     do {
@@ -449,7 +451,7 @@ Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender) 
     }
 
     sender = sockaddr_to_endpoint(src_addr);
-    data.resize(received);
+    bytes_received = static_cast<size_t>(received);
 
     return Result::SUCCESS;
 }

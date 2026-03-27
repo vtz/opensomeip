@@ -107,7 +107,7 @@ private:
     Result configure_multicast(const Endpoint& endpoint);
     void receive_loop();
     Result send_data(const std::vector<uint8_t>& data, const Endpoint& endpoint);
-    Result receive_data(std::vector<uint8_t>& data, Endpoint& sender);
+    Result receive_data(std::vector<uint8_t>& data, Endpoint& sender, size_t& bytes_received);
     sockaddr_in create_sockaddr(const Endpoint& endpoint) const;
     Endpoint sockaddr_to_endpoint(const sockaddr_in& addr) const;
     bool is_multicast_address(const std::string& address) const;
