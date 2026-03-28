@@ -38,7 +38,7 @@ Headers and static library for developing applications with OpenSOME/IP.
     -DBUILD_TESTS=OFF \
     -DBUILD_EXAMPLES=OFF \
     -DSOMEIP_DEV_TOOLS=OFF \
-    -DENABLE_WERROR=ON
+    -DENABLE_WERROR=OFF
 %cmake_build
 
 %install
