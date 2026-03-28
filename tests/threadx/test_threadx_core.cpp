@@ -35,6 +35,7 @@
 #include "serialization/serializer.h"
 #include "platform/thread.h"
 #include "platform/memory.h"
+#include "platform/threadx/memory_internal.h"
 
 extern "C" {
 #include "tx_api.h"
@@ -175,9 +176,6 @@ static void test_threadx_memory_pool() {
 
 static void test_threadx_pool_diagnostics() {
     printf("\n--- ThreadX block pool diagnostics ---\n");
-
-    extern TX_BLOCK_POOL message_pool;
-    extern bool pool_initialized;
 
     if (!pool_initialized) {
         auto init_msg = someip::platform::allocate_message();

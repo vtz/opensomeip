@@ -16,6 +16,7 @@
  */
 
 #include "platform/memory.h"
+#include "platform/threadx/memory_internal.h"
 
 #include <tx_api.h>
 
