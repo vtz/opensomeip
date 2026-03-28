@@ -1,8 +1,8 @@
 # Investigation: Reducing heap / STL usage for ETL compatibility
 
-**Issue:** [#174](https://github.com/vtz/opensomeip/issues/174)  
-**Scope:** `include/` and `src/` only (excluding `tests/`, `examples/`, and in-tree `*.md` samples under `include/`).  
-**Inventory:** **81** translation units / headers under `include/` + `src/` (`.h`, `.hpp`, `.cpp`).  
+**Issue:** [#174](https://github.com/vtz/opensomeip/issues/174)
+**Scope:** `include/` and `src/` only (excluding `tests/`, `examples/`, and in-tree `*.md` samples under `include/`).
+**Inventory:** **81** translation units / headers under `include/` + `src/` (`.h`, `.hpp`, `.cpp`).
 **Method:** `rg` scans for `std::vector`, `std::string`, `std::unordered_map`, `std::map`, smart pointers, `std::function`, `std::queue`, `new`/`delete`, plus targeted file reads (e.g. `Message`, `TpConfig`, memory backends).
 
 ## Executive summary
@@ -129,7 +129,7 @@ OpenSomeIP is built around **dynamically sized byte buffers** (`std::vector<uint
 | `src/serialization/serializer.cpp` L389+ | deserialize string | **Data** | Wire length | Schema-limited |
 | `src/sd/sd_server.cpp`, `endpoint.cpp`, `event_subscriber.cpp` | parsing, subscription keys | **Mix** | Keys: bounded if format fixed | e.g. `"s:i:g"` **~20** chars |
 
-**ETL:** `etl::string<N>` with **N** per use case (`etl::string<64>` for keys, `etl::string<256>` for config strings).  
+**ETL:** `etl::string<N>` with **N** per use case (`etl::string<64>` for keys, `etl::string<256>` for config strings).
 
 **Verdict:** **Easy wins** for **diagnostic** paths; **moderate** for **API** (`Endpoint` currently exposes `std::string`).
 
@@ -281,10 +281,10 @@ Backed by `std::deque` (typically **heap**). **ETL:** `etl::queue<MessagePtr, N>
 
 ## File index (quick reference)
 
-**`std::vector` (37 files):**  
+**`std::vector` (37 files):**
 `include/e2e/e2e_crc.h`, `e2e_header.h`, `events/event_{publisher,subscriber}.h`, `event_types.h`, `rpc/rpc_{client,server}.h`, `rpc_types.h`, `sd/sd_{client,message,server}.h`, `sd_types.h`, `serialization/serializer.h`, `someip/message.h`, `tp/tp_{manager,reassembler,segmenter,types}.h`, `transport/tcp_transport.h`, `udp_transport.h`, and mirrored `src/**` implementations under `e2e/`, `events/`, `rpc/`, `sd/`, `serialization/`, `someip/`, `tp/`, `transport/`.
 
-**`std::unordered_map` (12 files):**  
+**`std::unordered_map` (12 files):**
 `include/core/session_manager.h`, `e2e/e2e_profile_registry.h`, `tp/tp_{manager,reassembler}.h`, `src/sd/sd_client.cpp`, `rpc/rpc_{server,client}.cpp`, `events/event_{publisher,subscriber}.cpp`, `e2e/e2e_profiles/standard_profile.cpp`, `someip/types.cpp`, `common/result.cpp`.
 
 ---
