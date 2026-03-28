@@ -480,14 +480,12 @@ TEST_F(UdpTransportTest, BasicThreadSafety) {
 // Test resource cleanup
 TEST_F(UdpTransportTest, ResourceCleanup) {
     {
-        UdpTransport transport(local_endpoint);
         TestUdpListener listener;
+        UdpTransport transport(local_endpoint);
         transport.set_listener(&listener);
 
         EXPECT_EQ(transport.start(), Result::SUCCESS);
         EXPECT_TRUE(transport.is_running());
-
-        // Transport goes out of scope, should clean up automatically
     }
 
     // Create another transport on same endpoint to verify cleanup

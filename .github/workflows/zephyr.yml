@@ -125,42 +125,28 @@ jobs:
       - name: Build someip_sd_client
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: west build -b native_sim zephyr/samples/someip_sd_client -d build/ns_sd --pristine auto
-      - name: Build & run test_core (ASan + UBSan)
+      - name: Build & run sanitizer tests (ASan + UBSan)
         run: |
-          west build -b native_sim zephyr/tests/test_core \
-            -d build/ns_tc_asan --pristine auto \
-            -- -DOVERLAY_CONFIG="$PWD/zephyr/boards/native_sim_asan.conf"
-          if timeout 60 build/ns_tc_asan/zephyr/zephyr.exe > /tmp/test_core_asan.log 2>&1; then
-            rc=0
-          else
-            rc=$?
-          fi
-          cat /tmp/test_core_asan.log
-          if [ "$rc" -eq 124 ]; then
-            grep -Eq "=== Results: [0-9]+ passed, 0 failed ===" /tmp/test_core_asan.log || exit 1
-          elif [ "$rc" -ne 0 ]; then
-            exit "$rc"
-          fi
-        env:
-          ZEPHYR_BASE: /tmp/zp/zephyr
-          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
-          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
-      - name: Build & run test_transport (ASan + UBSan)
-        run: |
-          west build -b native_sim zephyr/tests/test_transport \
-            -d build/ns_tp_asan --pristine auto \
-            -- -DOVERLAY_CONFIG="$PWD/zephyr/boards/native_sim_asan.conf"
-          if timeout 60 build/ns_tp_asan/zephyr/zephyr.exe > /tmp/test_transport_asan.log 2>&1; then
-            rc=0
-          else
-            rc=$?
-          fi
-          cat /tmp/test_transport_asan.log
-          if [ "$rc" -eq 124 ]; then
-            grep -Eq "=== Results: [0-9]+ passed, 0 failed ===" /tmp/test_transport_asan.log || exit 1
-          elif [ "$rc" -ne 0 ]; then
-            exit "$rc"
-          fi
+          for spec in test_core:tc test_transport:tp; do
+            t="${spec%%:*}"
+            short="${spec##*:}"
+            out_dir="build/ns_${short}_asan"
+            log="/tmp/${t}_asan.log"
+            west build -b native_sim "zephyr/tests/${t}" \
+              -d "${out_dir}" --pristine auto \
+              -- -DOVERLAY_CONFIG="$PWD/zephyr/boards/native_sim_asan.conf"
+            if timeout 60 "${out_dir}/zephyr/zephyr.exe" > "${log}" 2>&1; then
+              rc=0
+            else
+              rc=$?
+            fi
+            cat "${log}"
+            if [ "$rc" -eq 124 ]; then
+              grep -Eq "=== Results: [0-9]+ passed, 0 failed ===" "${log}" || exit 1
+            elif [ "$rc" -ne 0 ]; then
+              exit "$rc"
+            fi
+          done
         env:
           ZEPHYR_BASE: /tmp/zp/zephyr
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1

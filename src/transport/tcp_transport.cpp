@@ -148,6 +148,7 @@ Result TcpTransport::stop() {
     }
 
     running_ = false;
+    listener_ = nullptr;
 
     // Close connections
     disconnect_internal();

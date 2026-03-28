@@ -101,7 +101,8 @@ jobs:
             {
               "name": "Known issues",
               "matchedStatuses": ["failed", "broken"],
-              "messageRegex": ".*(known (issue|defect|bug)|xfail|XFAIL|DISABLED).*",
+              "messageRegex": "(?i).*(known[\\s_-]?(issue|defect|bug)|xfail|disabled).*",
+              "traceRegex": "(?i).*(known[\\s_-]?(issue|defect|bug)|xfail|disabled).*",
               "flaky": true
             },
             {

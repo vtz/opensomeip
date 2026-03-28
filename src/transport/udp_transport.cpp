@@ -151,6 +151,7 @@ Result UdpTransport::stop() {
     }
 
     running_ = false;
+    listener_ = nullptr;
 
     // Close socket to wake up receive thread
     if (socket_fd_ != SOMEIP_INVALID_SOCKET) {
