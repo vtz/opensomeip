@@ -1,6 +1,6 @@
 # C++17 dependencies vs. C++14 compatibility (opensomeip core)
 
-**Scope:** `include/` and `src/` only (not `tests/` or `examples/`).  
+**Scope:** `include/` and `src/` only (not `tests/` or `examples/`).
 **Related:** GitHub issue [#171](https://github.com/vtz/opensomeip/issues/171).
 
 ## Executive summary
