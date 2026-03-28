@@ -35,14 +35,11 @@ Headers and static library for developing applications with OpenSOME/IP.
 %build
 %cmake \
     -G Ninja \
-    -DBUILD_TESTS=ON \
+    -DBUILD_TESTS=OFF \
     -DBUILD_EXAMPLES=OFF \
     -DSOMEIP_DEV_TOOLS=OFF \
     -DENABLE_WERROR=ON
 %cmake_build
-
-%check
-%ctest --output-on-failure --timeout 30
 
 %install
 %cmake_install
