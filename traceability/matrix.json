@@ -1,5 +1,5 @@
 {
-  "generated": "2026-03-28T03:33:03.429332",
+  "generated": "2026-03-28T03:36:10.239101",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -5550,7 +5550,7 @@
         "CODE_thread_impl_zephyr_32"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -5575,7 +5575,7 @@
         "CODE_thread_impl_zephyr_38"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -5600,7 +5600,7 @@
         "CODE_thread_impl_zephyr_40"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -5714,7 +5714,7 @@
         "CODE_thread_impl_zephyr_57"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -5808,7 +5808,7 @@
         "CODE_thread_impl_zephyr_86"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -5838,7 +5838,7 @@
         "CODE_thread_impl_zephyr_111"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -5866,7 +5866,7 @@
         "CODE_thread_impl_zephyr_117"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -6011,7 +6011,7 @@
         "CODE_thread_impl_zephyr_147"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -6034,7 +6034,7 @@
         "CODE_thread_impl_zephyr_147"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -6058,7 +6058,7 @@
         "CODE_memory_impl_zephyr_17"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -6083,7 +6083,7 @@
         "CODE_memory_impl_zephyr_19"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message",
         "TC_test_pal_threadx_mock_allocate_message",
         "TC_test_pal_zephyr_mock_allocate_message",
@@ -6353,7 +6353,7 @@
         "CODE_thread_impl_freertos_57"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message"
       ]
     },
@@ -6371,7 +6371,7 @@
         "CODE_memory_impl_freertos_25"
       ],
       "tested_by": [
-        "TC_test_freertos_core_7",
+        "TC_test_freertos_core_vApplicationMallocFailedHook",
         "TC_test_pal_freertos_mock_allocate_message"
       ]
     },
@@ -13093,9 +13093,9 @@
     }
   },
   "test_cases": {
-    "TC_test_freertos_core_7": {
-      "id": "TC_test_freertos_core_7",
-      "name": "unknown (tests/freertos/test_freertos_core.cpp:7)",
+    "TC_test_freertos_core_vApplicationMallocFailedHook": {
+      "id": "TC_test_freertos_core_vApplicationMallocFailedHook",
+      "name": "vApplicationMallocFailedHook (tests/freertos/test_freertos_core.cpp:7)",
       "location": "tests/freertos/test_freertos_core.cpp:7",
       "tests": [
         "REQ_PLATFORM_FREERTOS_001",
