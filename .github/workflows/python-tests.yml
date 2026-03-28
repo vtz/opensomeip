@@ -32,6 +32,7 @@ jobs:
           python -m pytest ../integration/ ../system/
           -v --tb=short -ra
           --junitxml=junit_results.xml
+          --alluredir=allure-results
           --cov=someip_test_framework
           --cov-report=xml:coverage.xml
           --cov-report=term-missing
@@ -43,6 +44,14 @@ jobs:
         with:
           name: test-results-python
           path: tests/python/junit_results.xml
+          retention-days: 14
+
+      - name: Upload Allure results (native)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results-python
+          path: tests/python/allure-results/
           retention-days: 14
 
       - name: Upload Python coverage

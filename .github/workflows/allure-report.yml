@@ -43,10 +43,20 @@ jobs:
           path: ci-artifacts
         continue-on-error: true
 
-      - name: Collect JUnit XML into Allure results
+      - name: Download native Allure results from CI
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          pattern: allure-results-*
+          path: ci-allure-native
+        continue-on-error: true
+
+      - name: Collect test results into Allure results
         id: collect
         run: |
           mkdir -p allure-results
+          # Copy JUnit/GTest XML (C++ tests)
           if [ -d ci-artifacts ]; then
             find ci-artifacts -name '*.xml' -type f | while read -r f; do
               dir="$(basename "$(dirname "$f")")"
@@ -54,12 +64,23 @@ jobs:
               cp "$f" "allure-results/${dir}__${base}"
             done
           fi
-          count=$(find allure-results -name '*.xml' -type f | wc -l)
-          echo "Collected ${count} result files"
-          if [ "$count" -eq 0 ]; then
-            echo "::warning::No test result XMLs found — skipping report generation and deploy"
+          # Copy native Allure results (Python tests) — these contain
+          # rich test body, steps, and attachments
+          if [ -d ci-allure-native ]; then
+            find ci-allure-native -type f | while read -r f; do
+              dir="$(basename "$(dirname "$f")")"
+              base="$(basename "$f")"
+              cp "$f" "allure-results/${dir}__${base}"
+            done
           fi
-          echo "has_results=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          xml_count=$(find allure-results -name '*.xml' -type f | wc -l)
+          json_count=$(find allure-results -name '*-result.json' -type f | wc -l)
+          total=$((xml_count + json_count))
+          echo "Collected ${xml_count} XML + ${json_count} native Allure result files"
+          if [ "$total" -eq 0 ]; then
+            echo "::warning::No test results found — skipping report generation and deploy"
+          fi
+          echo "has_results=$([ "$total" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Write environment metadata
         if: steps.collect.outputs.has_results == 'true'
