@@ -7,10 +7,6 @@ upstream_project_url: https://github.com/vtz/opensomeip
 upstream_tag_template: v{version}
 copy_upstream_release_description: true
 
-srpm_build_deps:
-  - cmake
-  - gcc-c++
-
 actions:
   # Packit creates the tarball from git; fix-spec-file updates Version/Release.
   # The archive name must match %autosetup -n %{name}-%{version}.
