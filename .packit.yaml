@@ -15,7 +15,7 @@ actions:
   # Packit creates the tarball from git; fix-spec-file updates Version/Release.
   # The archive name must match %autosetup -n %{name}-%{version}.
   create-archive:
-    - bash -c "tar czf opensomeip-$(cat VERSION).tar.gz --transform 's,^,opensomeip-$(cat VERSION)/,' --exclude=.git --exclude=.github --exclude='*.core' ."
+    - bash -c "git archive --format=tar.gz --prefix=opensomeip-$(cat VERSION)/ HEAD -o opensomeip-$(cat VERSION).tar.gz"
     - bash -c "echo opensomeip-$(cat VERSION).tar.gz"
 
 jobs:
