@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+
+  {% set page_title = (page.title if page else none) | default(config.site_name, true) %}
+  {% set page_desc = (page.meta.description if page and page.meta else none) | default(config.site_description, true) %}
+  {% set page_url = (page.canonical_url if page else none) | default(config.site_url, true) %}
+  {% set raw_image = (page.meta.image if page and page.meta else none) | default("images/social-card.png", true) %}
+  {% if "://" in raw_image %}
+    {% set page_image = raw_image %}
+  {% else %}
+    {% set page_image = config.site_url.rstrip('/') ~ '/' ~ raw_image.lstrip('/') %}
+  {% endif %}
+
+  <meta name="keywords" content="SOME/IP, AUTOSAR, automotive middleware, C++17, embedded systems, service discovery, protocol stack, Zephyr, FreeRTOS, ThreadX">
+  <meta name="author" content="{{ config.site_author }}">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ page_url }}">
+  <meta property="og:title" content="{{ page_title }}">
+  <meta property="og:description" content="{{ page_desc }}">
+  <meta property="og:site_name" content="{{ config.site_name }}">
+  <meta property="og:image" content="{{ page_image }}">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="{{ page_url }}">
+  <meta name="twitter:title" content="{{ page_title }}">
+  <meta name="twitter:description" content="{{ page_desc }}">
+  <meta name="twitter:image" content="{{ page_image }}">
+
+  {% set ld_json = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    "name": config.site_name,
+    "description": config.site_description,
+    "url": config.site_url,
+    "codeRepository": config.repo_url,
+    "programmingLanguage": "C++",
+    "license": "https://www.apache.org/licenses/LICENSE-2.0",
+    "operatingSystem": ["Linux", "macOS", "Zephyr RTOS", "FreeRTOS", "Eclipse ThreadX"],
+    "applicationCategory": "Automotive Middleware",
+    "keywords": ["SOME/IP", "AUTOSAR", "service-oriented architecture", "automotive", "embedded"]
+  } %}
+  <script type="application/ld+json">
+  {{ ld_json | tojson | safe }}
+  </script>
+{% endblock %}

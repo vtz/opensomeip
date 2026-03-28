@@ -1,0 +1,155 @@
+@startuml Service Discovery Sequence
+
+title SOME/IP Service Discovery Sequence
+
+participant "Client Application" as ClientApp
+participant "Service Proxy" as Proxy
+participant "SD Client" as SDClient
+participant "SD Message Handler" as SDHandler
+participant "Transport Layer" as Transport
+participant "Network" as Network
+participant "Transport Layer" as TransportSrv
+participant "SD Message Handler" as SDHandlerSrv
+participant "SD Server" as SDServer
+participant "Service Skeleton" as Skeleton
+participant "Server Application" as ServerApp
+
+== Service Offering Phase ==
+
+ServerApp -> Skeleton: offerService(serviceId, instanceId)
+activate Skeleton
+
+Skeleton -> SDServer: registerService(serviceId, instanceId, endpoint)
+activate SDServer
+
+SDServer -> SDServer: createOfferMessage(serviceId, instanceId, endpoint)
+
+loop Periodic Offering
+    SDServer -> SDHandlerSrv: sendOffer()
+    activate SDHandlerSrv
+
+    SDHandlerSrv -> TransportSrv: sendMulticast(offerMessage)
+    activate TransportSrv
+
+    TransportSrv -> Network: sendMulticastUDP(offerMessage)
+    deactivate TransportSrv
+    deactivate SDHandlerSrv
+end
+
+== Service Finding Phase ==
+
+ClientApp -> Proxy: findService(serviceId)
+activate Proxy
+
+Proxy -> SDClient: startFindService(serviceId)
+activate SDClient
+
+SDClient -> SDHandler: createFindMessage(serviceId)
+activate SDHandler
+
+SDHandler -> Transport: sendMulticast(findMessage)
+activate Transport
+
+Transport -> Network: sendMulticastUDP(findMessage)
+deactivate Transport
+
+Network -> TransportSrv: receiveMulticast(findMessage)
+activate TransportSrv
+
+TransportSrv -> SDHandlerSrv: onMessageReceived(findMessage)
+deactivate TransportSrv
+
+SDHandlerSrv -> SDServer: handleFindRequest(serviceId)
+activate SDServer
+
+SDServer -> SDServer: matchService(serviceId)
+SDServer --> SDHandlerSrv: serviceMatches
+deactivate SDServer
+
+SDHandlerSrv -> SDHandlerSrv: createOfferMessage(matchingServices)
+SDHandlerSrv -> TransportSrv: sendUnicast(offerMessage)
+
+TransportSrv -> Network: sendUDP(offerMessage)
+deactivate SDHandlerSrv
+
+Network -> Transport: receiveUDP(offerMessage)
+activate Transport
+
+Transport -> SDHandler: onMessageReceived(offerMessage)
+deactivate Transport
+
+SDHandler -> SDClient: serviceFound(serviceId, endpoint)
+deactivate SDHandler
+
+SDClient -> Proxy: onServiceFound(endpoint)
+deactivate SDClient
+
+Proxy -> ClientApp: serviceAvailable(endpoint)
+deactivate Proxy
+
+== Subscription Phase ==
+
+ClientApp -> Proxy: subscribeToEvent(serviceId, eventId)
+activate Proxy
+
+Proxy -> SDClient: subscribeEvent(serviceId, eventId)
+activate SDClient
+
+SDClient -> SDHandler: createSubscribeMessage(serviceId, eventId)
+activate SDHandler
+
+SDHandler -> Transport: sendUnicast(subscribeMessage, serverEndpoint)
+activate Transport
+
+Transport -> Network: sendUDP(subscribeMessage)
+deactivate Transport
+
+Network -> TransportSrv: receiveUDP(subscribeMessage)
+activate TransportSrv
+
+TransportSrv -> SDHandlerSrv: onMessageReceived(subscribeMessage)
+deactivate TransportSrv
+
+SDHandlerSrv -> SDServer: handleSubscribe(serviceId, eventId)
+activate SDServer
+
+SDServer -> Skeleton: subscribeEvent(eventId)
+activate Skeleton
+
+Skeleton -> ServerApp: onEventSubscribed(eventId)
+deactivate ServerApp
+deactivate Skeleton
+
+SDServer --> SDHandlerSrv: subscriptionAccepted
+deactivate SDServer
+
+SDHandlerSrv -> SDHandlerSrv: createSubscribeAck()
+SDHandlerSrv -> TransportSrv: sendUnicast(subscribeAck)
+
+TransportSrv -> Network: sendUDP(subscribeAck)
+deactivate SDHandlerSrv
+
+Network -> Transport: receiveUDP(subscribeAck)
+activate Transport
+
+Transport -> SDHandler: onMessageReceived(subscribeAck)
+deactivate Transport
+
+SDHandler -> SDClient: subscriptionConfirmed(eventId)
+deactivate SDHandler
+
+SDClient -> Proxy: eventSubscribed(eventId)
+deactivate SDClient
+
+Proxy -> ClientApp: subscriptionActive(eventId)
+deactivate Proxy
+
+== Cleanup Phase ==
+
+note over ClientApp, ServerApp
+    TTL-based cleanup ensures
+    stale services are removed
+    automatically
+end note
+
+@enduml

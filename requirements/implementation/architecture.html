@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Architecture Requirements &#8212; OpenSOMEIP Requirements</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-data-viewer/jsonview.bundle.css?v=f6ef2277" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/libs/html/datatables.min.css?v=4b4fd840" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_style.css?v=92936fa5" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_toggle.css?v=5c6620df" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_core.css?v=f5b60a78" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_links.css?v=2150a916" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/needstable.css?v=5e1b6797" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/modern.css?v=803738c0" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=d5a60f39" />
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/sphinx-data-viewer/jsonview.bundle.js?v=18cd53c5"></script>
+    <script src="../_static/sphinx-data-viewer/jsonview_loader.js?v=f7ff7e7d"></script>
+    <script src="../_static/sphinx-needs/libs/html/datatables.min.js?v=8a4aee21"></script>
+    <script src="../_static/sphinx-needs/libs/html/datatables_loader.js?v=a2cae175"></script>
+    <script src="../_static/sphinx-needs/libs/html/sphinx_needs_collapse.js?v=dca66431"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Message Header Requirements" href="message_header.html" />
+    <link rel="prev" title="Transport Requirements" href="transport.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="architecture-requirements">
+<h1>Architecture Requirements<a class="headerlink" href="#architecture-requirements" title="Link to this heading">¶</a></h1>
+<p>This section defines architectural requirements for the OpenSOMEIP
+implementation, covering modularity, thread safety, and memory management.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>The OpenSOMEIP architecture is designed with:</p>
+<ol class="arabic simple">
+<li><p>Modular layered architecture</p></li>
+<li><p>Thread-safe operations</p></li>
+<li><p>Safe memory management</p></li>
+<li><p>Clear separation of concerns</p></li>
+</ol>
+</section>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h2>
+<section id="modularity">
+<h3>Modularity<a class="headerlink" href="#modularity" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-4d9a8ea1">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_001">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Modular Architecture</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_ARCH_001" title="REQ_ARCH_001">REQ_ARCH_001</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><span class="needs_dead_link forbidden">feat_req_someip_2</span>, <span class="needs_dead_link forbidden">feat_req_someip_3</span>, <span class="needs_dead_link forbidden">feat_req_someip_4</span>, <span class="needs_dead_link forbidden">feat_req_someip_14</span>, <span class="needs_dead_link forbidden">feat_req_someip_15</span>, <span class="needs_dead_link forbidden">feat_req_someip_697</span></span></span></div>
+<div class="line">satisfied_by: <span class="satisfies"><span><a class="reference internal" href="platform.html#REQ_PAL_MUTEX_LOCK" title="REQ_ARCH_001">REQ_PAL_MUTEX_LOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_UNLOCK" title="REQ_ARCH_001">REQ_PAL_MUTEX_UNLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_TRYLOCK" title="REQ_ARCH_001">REQ_PAL_MUTEX_TRYLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_NONCOPY" title="REQ_ARCH_001">REQ_PAL_MUTEX_NONCOPY</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_WAIT" title="REQ_ARCH_001">REQ_PAL_CV_WAIT</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_WAIT_PRED" title="REQ_ARCH_001">REQ_PAL_CV_WAIT_PRED</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_NOTIFY_ONE" title="REQ_ARCH_001">REQ_PAL_CV_NOTIFY_ONE</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_NOTIFY_ALL" title="REQ_ARCH_001">REQ_PAL_CV_NOTIFY_ALL</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_OWNERSHIP" title="REQ_ARCH_001">REQ_PAL_CV_OWNERSHIP</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_CREATE" title="REQ_ARCH_001">REQ_PAL_THREAD_CREATE</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_JOINABLE" title="REQ_ARCH_001">REQ_PAL_THREAD_JOINABLE</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_JOIN" title="REQ_ARCH_001">REQ_PAL_THREAD_JOIN</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_NONCOPY" title="REQ_ARCH_001">REQ_PAL_THREAD_NONCOPY</a>, <a class="reference internal" href="platform.html#REQ_PAL_LOCK_ACQUIRE" title="REQ_ARCH_001">REQ_PAL_LOCK_ACQUIRE</a>, <a class="reference internal" href="platform.html#REQ_PAL_LOCK_RELEASE" title="REQ_ARCH_001">REQ_PAL_LOCK_RELEASE</a>, <a class="reference internal" href="platform.html#REQ_PAL_LOCK_NONCOPY" title="REQ_ARCH_001">REQ_PAL_LOCK_NONCOPY</a>, <a class="reference internal" href="platform.html#REQ_PAL_SLEEP_DURATION" title="REQ_ARCH_001">REQ_PAL_SLEEP_DURATION</a>, <a class="reference internal" href="platform.html#REQ_PAL_SLEEP_ZERO" title="REQ_ARCH_001">REQ_PAL_SLEEP_ZERO</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_ALLOC" title="REQ_ARCH_001">REQ_PAL_MEM_ALLOC</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_INDEPENDENT" title="REQ_ARCH_001">REQ_PAL_MEM_INDEPENDENT</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_CLOSE" title="REQ_ARCH_001">REQ_PAL_NET_CLOSE</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_SHUTDOWN" title="REQ_ARCH_001">REQ_PAL_NET_SHUTDOWN</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_NONBLOCK" title="REQ_ARCH_001">REQ_PAL_NET_NONBLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_BLOCK" title="REQ_ARCH_001">REQ_PAL_NET_BLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_HTONS" title="REQ_ARCH_001">REQ_PAL_BYTE_HTONS</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_NTOHS" title="REQ_ARCH_001">REQ_PAL_BYTE_NTOHS</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_HTONL" title="REQ_ARCH_001">REQ_PAL_BYTE_HTONL</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_NTOHL" title="REQ_ARCH_001">REQ_PAL_BYTE_NTOHL</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The implementation shall follow a modular layered architecture:</p>
+<ul class="simple">
+<li><p><strong>Core Layer</strong> (<code class="docutils literal notranslate"><span class="pre">someip-common</span></code>): Message structures, serialization</p></li>
+<li><p><strong>Transport Layer</strong> (<code class="docutils literal notranslate"><span class="pre">someip-transport</span></code>): UDP/TCP transports</p></li>
+<li><p><strong>Protocol Layer</strong>: SD, TP, RPC, Events</p></li>
+<li><p><strong>Safety Layer</strong> (<code class="docutils literal notranslate"><span class="pre">someip-e2e</span></code>): E2E protection</p></li>
+</ul>
+<p>Each layer shall:</p>
+<ul class="simple">
+<li><p>Have clearly defined interfaces</p></li>
+<li><p>Depend only on lower layers</p></li>
+<li><p>Be independently testable</p></li>
+<li><p>Be replaceable without affecting other layers</p></li>
+</ul>
+<p><strong>Rationale</strong>: Modularity enables maintainability, testability,
+and selective deployment.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code>, <code class="docutils literal notranslate"><span class="pre">src/CMakeLists.txt</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="thread-safety">
+<h3>Thread Safety<a class="headerlink" href="#thread-safety" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-96de0b81">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_002">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Thread Safety</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_ARCH_002" title="REQ_ARCH_002">REQ_ARCH_002</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span></span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The implementation shall be thread-safe:</p>
+<ul class="simple">
+<li><p>Shared data structures protected by appropriate synchronization</p></li>
+<li><p>Session manager thread-safe for concurrent requests</p></li>
+<li><p>Transport operations safe for multi-threaded use</p></li>
+<li><p>No data races in normal operation</p></li>
+<li><p>Document thread-safety guarantees in API documentation</p></li>
+</ul>
+<p><strong>Rationale</strong>: Automotive applications require concurrent
+operation without data corruption.</p>
+<p><strong>Code Location</strong>: All source files</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="memory-management">
+<h3>Memory Management<a class="headerlink" href="#memory-management" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-55a177fa">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_003">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Safe Memory Management</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_ARCH_003" title="REQ_ARCH_003">REQ_ARCH_003</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfied_by: <span class="satisfies"><span><a class="reference internal" href="platform.html#REQ_PAL_MEM_ALLOC" title="REQ_ARCH_003">REQ_PAL_MEM_ALLOC</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_INDEPENDENT" title="REQ_ARCH_003">REQ_PAL_MEM_INDEPENDENT</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The implementation shall use safe memory management:</p>
+<ul class="simple">
+<li><p>RAII (Resource Acquisition Is Initialization) patterns</p></li>
+<li><p>Smart pointers (<code class="docutils literal notranslate"><span class="pre">std::unique_ptr</span></code>, <code class="docutils literal notranslate"><span class="pre">std::shared_ptr</span></code>)</p></li>
+<li><p>No raw pointer ownership</p></li>
+<li><p>Bounds checking on all array/vector access</p></li>
+<li><p>No memory leaks in normal operation</p></li>
+</ul>
+<p><strong>Rationale</strong>: Memory safety is critical for reliability and
+aligns with safety-oriented design goals.</p>
+<p><strong>Code Location</strong>: All source files</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="error-handling">
+<h3>Error Handling<a class="headerlink" href="#error-handling" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-ddda803f">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_004">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Consistent Error Handling</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_ARCH_004" title="REQ_ARCH_004">REQ_ARCH_004</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span></span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The implementation shall use consistent error handling:</p>
+<ul class="simple">
+<li><p>Return <code class="docutils literal notranslate"><span class="pre">Result</span></code> enum for operation status</p></li>
+<li><p>No exceptions in core protocol code</p></li>
+<li><p>Validate all external inputs</p></li>
+<li><p>Implement safe failure modes</p></li>
+<li><p>Log errors with sufficient context</p></li>
+</ul>
+<p><strong>Rationale</strong>: Consistent error handling improves reliability
+and debuggability.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/common/result.h</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="coding-standards">
+<h3>Coding Standards<a class="headerlink" href="#coding-standards" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-1047356d">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_005">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Coding Standards Compliance</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_ARCH_005" title="REQ_ARCH_005">REQ_ARCH_005</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">medium</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><span class="needs_dead_link forbidden">feat_req_someip_105</span>, <span class="needs_dead_link forbidden">feat_req_someip_109</span>, <span class="needs_dead_link forbidden">feat_req_someip_449</span>, <span class="needs_dead_link forbidden">feat_req_someip_472</span></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The implementation shall follow coding standards:</p>
+<ul class="simple">
+<li><p>C++17 standard</p></li>
+<li><p>Naming conventions per <code class="docutils literal notranslate"><span class="pre">docs/CODING_GUIDELINES.md</span></code></p></li>
+<li><p>Clang-format for consistent formatting</p></li>
+<li><p>Clang-tidy for static analysis</p></li>
+<li><p>Doxygen comments for public APIs</p></li>
+</ul>
+<p><strong>Rationale</strong>: Consistent coding standards improve readability
+and maintainability.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">.clang-format</span></code>, <code class="docutils literal notranslate"><span class="pre">.clang-tidy</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="build-system">
+<h3>Build System<a class="headerlink" href="#build-system" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-855349c8">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_006">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">CMake Build System</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_ARCH_006" title="REQ_ARCH_006">REQ_ARCH_006</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">medium</span></span></div>
+</span></span></div>
+<div class="line"><span></span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The implementation shall use CMake for build configuration:</p>
+<ul class="simple">
+<li><p>CMake 3.20+ required</p></li>
+<li><p>Support for multiple compilers (GCC, Clang, MSVC)</p></li>
+<li><p>Optional features via CMake options</p></li>
+<li><p>Export compile commands for IDE integration</p></li>
+<li><p>Install targets for system installation</p></li>
+</ul>
+<p><strong>Rationale</strong>: CMake provides cross-platform build configuration.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="testing-infrastructure">
+<h3>Testing Infrastructure<a class="headerlink" href="#testing-infrastructure" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-dfca20ab">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_007">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Comprehensive Testing</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_ARCH_007" title="REQ_ARCH_007">REQ_ARCH_007</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span></span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The implementation shall include comprehensive testing:</p>
+<ul class="simple">
+<li><p>Unit tests using Google Test</p></li>
+<li><p>Integration tests using pytest</p></li>
+<li><p>Code coverage reporting</p></li>
+<li><p>Continuous integration via GitHub Actions</p></li>
+<li><p>Test traceability to requirements</p></li>
+</ul>
+<p><strong>Rationale</strong>: Testing ensures correctness and prevents regressions.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">tests/</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="traceability">
+<h2>Traceability<a class="headerlink" href="#traceability" title="Link to this heading">¶</a></h2>
+<section id="implementation-files">
+<h3>Implementation Files<a class="headerlink" href="#implementation-files" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code> - Main build configuration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/CMakeLists.txt</span></code> - Source build configuration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include/common/result.h</span></code> - Error handling</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.clang-format</span></code> - Formatting configuration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.clang-tidy</span></code> - Static analysis configuration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">docs/CODING_GUIDELINES.md</span></code> - Coding standards</p></li>
+</ul>
+</section>
+<section id="test-files">
+<h3>Test Files<a class="headerlink" href="#test-files" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/CMakeLists.txt</span></code> - Test configuration</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/*.cpp</span></code> - Unit tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/integration/*.py</span></code> - Integration tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/system/*.py</span></code> - System tests</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">OpenSOMEIP Requirements</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Requirements</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../spec_references.html">Specification Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="e2e_plugin.html">E2E Plugin Mechanism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transport.html">Transport Requirements</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#traceability">Traceability</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="message_header.html">Message Header Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serialization.html">Serialization Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service_discovery.html">Service Discovery Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transport_protocol.html">Transport Protocol Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="platform.html">Platform Abstraction Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compatibility.html">Compatibility and Migration Requirements</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="transport.html" title="previous chapter">Transport Requirements</a></li>
+      <li>Next: <a href="message_header.html" title="next chapter">Message Header Requirements</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Vinicius Tadeu Zein.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/implementation/architecture.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

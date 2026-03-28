@@ -1,0 +1,2735 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+      
+      
+        <meta name="author" content="Vinicius Tadeu Zein">
+      
+      
+        <link rel="canonical" href="https://vtz.github.io/opensomeip/specification/implementation-verification/">
+      
+      
+        <link rel="prev" href="../implementation-report/">
+      
+      
+        <link rel="next" href="../spec-mapping-report/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Implementation Verification - OpenSOME/IP</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+
+  
+  
+  
+  
+  
+    
+  
+
+  <meta name="keywords" content="SOME/IP, AUTOSAR, automotive middleware, C++17, embedded systems, service discovery, protocol stack, Zephyr, FreeRTOS, ThreadX">
+  <meta name="author" content="Vinicius Tadeu Zein">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vtz.github.io/opensomeip/specification/implementation-verification/">
+  <meta property="og:title" content="Implementation Verification">
+  <meta property="og:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta property="og:site_name" content="OpenSOME/IP">
+  <meta property="og:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://vtz.github.io/opensomeip/specification/implementation-verification/">
+  <meta name="twitter:title" content="Implementation Verification">
+  <meta name="twitter:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta name="twitter:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
+
+  
+  <script type="application/ld+json">
+  {"@context": "https://schema.org", "@type": "SoftwareSourceCode", "applicationCategory": "Automotive Middleware", "codeRepository": "https://github.com/vtz/opensomeip", "description": "Open-source C++17 SOME/IP protocol stack for automotive and embedded systems", "keywords": ["SOME/IP", "AUTOSAR", "service-oriented architecture", "automotive", "embedded"], "license": "https://www.apache.org/licenses/LICENSE-2.0", "name": "OpenSOME/IP", "operatingSystem": ["Linux", "macOS", "Zephyr RTOS", "FreeRTOS", "Eclipse ThreadX"], "programmingLanguage": "C++", "url": "https://vtz.github.io/opensomeip/"}
+  </script>
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#implementation-verification-report" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="OpenSOME/IP" class="md-header__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 14h14l-1.5-4.5h-11zm12.5 5a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5m-11 0A1.5 1.5 0 0 0 8 17.5 1.5 1.5 0 0 0 6.5 16 1.5 1.5 0 0 0 5 17.5 1.5 1.5 0 0 0 6.5 19M18.92 9 21 15v8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8l2.08-6c.2-.58.77-1 1.42-1h11c.65 0 1.22.42 1.42 1M12 0c2.12 0 4.15.86 5.65 2.35l-1.42 1.42A6.02 6.02 0 0 0 12 2c-1.58 0-3.11.65-4.23 1.77L6.36 2.35A8 8 0 0 1 12 0m0 4c1.06 0 2.07.44 2.82 1.18L13.4 6.6c-.37-.37-.87-.6-1.4-.6-.5 0-1.03.23-1.4.6L9.18 5.18C9.93 4.44 10.94 4 12 4"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OpenSOME/IP
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Implementation Verification
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/vtz/opensomeip" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    vtz/opensomeip
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../project-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ZEPHYR_PORT/" class="md-tabs__link">
+          
+  
+  
+  Platforms
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../examples/" class="md-tabs__link">
+          
+  
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-tabs__link">
+          
+  
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Specification
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="OpenSOME/IP" class="md-nav__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 14h14l-1.5-4.5h-11zm12.5 5a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5m-11 0A1.5 1.5 0 0 0 8 17.5 1.5 1.5 0 0 0 6.5 16 1.5 1.5 0 0 0 5 17.5 1.5 1.5 0 0 0 6.5 19M18.92 9 21 15v8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8l2.08-6c.2-.58.77-1 1.42-1h11c.65 0 1.22.42 1.42 1M12 0c2.12 0 4.15.86 5.65 2.35l-1.42 1.42A6.02 6.02 0 0 0 12 2c-1.58 0-3.11.65-4.23 1.77L6.36 2.35A8 8 0 0 1 12 0m0 4c1.06 0 2.07.44 2.82 1.18L13.4 6.6c-.37-.37-.87-.6-1.4-.6-.5 0-1.03.23-1.4.6L9.18 5.18C9.93 4.44 10.94 4 12 4"/></svg>
+
+    </a>
+    OpenSOME/IP
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/vtz/opensomeip" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    vtz/opensomeip
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../BUILD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Instructions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../INTEGRATION_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SETUP_GIT_SUBMODULE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Submodule Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/e2e_protection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    E2E Protection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Platforms
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ZEPHYR_PORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zephyr RTOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FREERTOS_PORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FreeRTOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../THREADX_PORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eclipse ThreadX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PLATFORM_RISK_REGISTER/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk Register
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/sd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/rpc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RPC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/tp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transport Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/events/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/e2e/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    E2E Protection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/serialization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Serialization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Testing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TEST_PLAN_STATUS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../TEST_REPORTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Reporting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://vtz.github.io/opensomeip/allure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Trends (Allure)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CODING_GUIDELINES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Guidelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to Contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specification
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gap-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gap Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../implementation-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Verification
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements-truly-missing-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements Truly Missing Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Requirements Truly Missing Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#error-handling-24-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling (24 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-header-51-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message Header (51 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-70-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other (70 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#serialization-33-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Serialization (33 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-discovery-117-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Service Discovery (117 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transport-protocol-20-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transport Protocol (20 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#immediate-actions-quick-wins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Immediate Actions (Quick Wins)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Required
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../spec-mapping-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spec Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../requirements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../traceability-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Traceability Matrix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#requirements-truly-missing-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements Truly Missing Implementation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Requirements Truly Missing Implementation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#error-handling-24-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error Handling (24 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#message-header-51-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message Header (51 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-70-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other (70 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#serialization-33-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Serialization (33 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-discovery-117-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Service Discovery (117 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transport-protocol-20-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transport Protocol (20 missing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommendations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#immediate-actions-quick-wins" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Immediate Actions (Quick Wins)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Required
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="implementation-verification-report">Implementation Verification Report<a class="headerlink" href="#implementation-verification-report" title="Permanent link">&para;</a></h1>
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Total Requirements</strong>: 649</li>
+<li><strong>Annotated (in code)</strong>: 334</li>
+<li><strong>Missing Annotations (code exists)</strong>: 0</li>
+<li>
+<p><strong>Truly Missing (no code found)</strong>: 315</p>
+</li>
+<li>
+<p><strong>Effective Implementation Rate</strong>: 334/649 (51.5%)</p>
+</li>
+</ul>
+<h2 id="requirements-truly-missing-implementation">Requirements Truly Missing Implementation<a class="headerlink" href="#requirements-truly-missing-implementation" title="Permanent link">&para;</a></h2>
+<p>These requirements have no detected implementation.</p>
+<h3 id="error-handling-24-missing">Error Handling (24 missing)<a class="headerlink" href="#error-handling-24-missing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>REQ_COMPAT_001_E01</strong>: Error - Forward Compatibility Length Clamp → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_003_E01</strong>: Error - Unknown Message Dropped Count → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_010_E01</strong>: Error - Incompatible Major Version → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_020_E01</strong>: Error - Reserved Service ID in Application Message → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_PAL_CV_EXCEPT_E01</strong>: Error - ConditionVariable Exception Safety → <code>include/platform/host/host_condition_variable.h</code></li>
+<li><strong>REQ_PAL_MEM_EXHAUST_E01</strong>: Error - Memory Pool Exhaustion → <code>include/platform/freertos/memory_impl.h</code></li>
+<li><strong>REQ_PAL_MEM_THREADSAFE_E01</strong>: Error - Memory Pool Thread Safety → <code>include/platform/freertos/memory_impl.h</code></li>
+<li><strong>REQ_PAL_MUTEX_UNLOCK_E01</strong>: Error - Mutex Double Unlock → <code>include/platform/freertos/thread_impl.h</code></li>
+<li><strong>REQ_PAL_NET_MODE_E01</strong>: Error - Socket Mode Change Failure → <code>include/platform/posix/net_impl.h</code></li>
+<li><strong>REQ_PAL_THREAD_CREATE_E01</strong>: Error - Thread Creation Failure → <code>include/platform/freertos/thread_impl.h</code></li>
+<li><strong>REQ_PAL_THREAD_DTOR_E01</strong>: Error - Thread Destructor Without Join → <code>include/platform/freertos/thread_impl.h</code></li>
+<li><strong>REQ_TRANSPORT_001_E01</strong>: Error - UDP Send Failure → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_001_E02</strong>: Error - UDP Bind Failure → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_001_E03</strong>: Error - UDP Receive Buffer Too Small → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_002_E01</strong>: Error - TCP Connection Refused → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_002_E02</strong>: Error - TCP Connection Reset → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_002_E03</strong>: Error - TCP Message Framing Error → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_002_E04</strong>: Error - TCP Send on Disconnected Socket → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_003_E01</strong>: Error - TCP Server Socket Exhaustion → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_006_E01</strong>: Error - Endpoint Address Format Invalid → <code>include/transport/endpoint.h</code></li>
+<li><strong>REQ_TRANSPORT_011_E01</strong>: Error - Multicast Join Failure → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_011_E02</strong>: Error - UDP Multicast TTL Configuration → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_014_E01</strong>: Error - Port Already In Use → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_016_E01</strong>: Error - TCP Reconnection Exhaustion → <code>src/transport/tcp_transport.cpp</code></li>
+</ul>
+<h3 id="message-header-51-missing">Message Header (51 missing)<a class="headerlink" href="#message-header-51-missing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>REQ_MSG_010_E01</strong>: Error - Message Length Overflow → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_020_E01</strong>: Error - Request ID All Zeros → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_040_E01</strong>: Error - Interface Version Zero → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_053_E01</strong>: Error - Notification With Non-Zero Return Code → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_054_E01</strong>: Error - Response Message Type for Non-Request → <code>src/rpc/rpc_client.cpp</code></li>
+<li><strong>REQ_MSG_090_E01</strong>: Error - Serialization Output Buffer Full → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_110</strong>: Service Instance ID Support → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_MSG_110_E01</strong>: Error - Invalid Service Instance ID → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_MSG_111</strong>: Service ID Uniqueness → <code>include/someip/types.h</code></li>
+<li><strong>REQ_MSG_112</strong>: Non-SOME/IP Service ID 0xFFFE → <code>include/someip/types.h</code></li>
+<li><strong>REQ_MSG_113</strong>: Eventgroup ID Support → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_MSG_113_E01</strong>: Error - Duplicate Eventgroup ID → <code>include/events/event_types.h</code></li>
+<li><strong>REQ_MSG_114</strong>: Request/Response Header Construction → <code>src/rpc/rpc_client.cpp</code></li>
+<li><strong>REQ_MSG_114_E01</strong>: Error - Response Without Matching Request → <code>src/rpc/rpc_client.cpp</code></li>
+<li><strong>REQ_MSG_114_E02</strong>: Error - Response Timeout → <code>src/rpc/rpc_client.cpp</code></li>
+<li><strong>REQ_MSG_115</strong>: Fire-and-Forget No Response → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_116</strong>: Response IP Address Mapping → <code>src/rpc/rpc_server.cpp</code></li>
+<li><strong>REQ_MSG_117</strong>: Payload Field Extraction → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_117_E01</strong>: Error - Payload Size Exceeds Maximum → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_118</strong>: Session Handling for Request/Response → <code>src/core/session_manager.cpp</code></li>
+<li><strong>REQ_MSG_118_E01</strong>: Error - Session ID Zero in Active Session → <code>src/core/session_manager.cpp</code></li>
+<li><strong>REQ_MSG_119</strong>: Session Handling for Events → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_120</strong>: Client ID Configurable Prefix → <code>src/rpc/rpc_client.cpp</code></li>
+<li><strong>REQ_MSG_120_E01</strong>: Error - Client ID Conflict → <code>src/rpc/rpc_client.cpp</code></li>
+<li><strong>REQ_MSG_121A</strong>: Event Delivery to All Subscribers → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_121B</strong>: Suppress Events to Non-Subscribers → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_121C</strong>: Event Delivery After Unsubscribe → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_121_E01</strong>: Error - Event Publish to No Subscribers → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_121_E02</strong>: Error - Event Publish After Shutdown → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_122</strong>: Selective Event Sending → <code>src/events/event_subscriber.cpp</code></li>
+<li><strong>REQ_MSG_123</strong>: Field Getter Support → <code>src/events/event_subscriber.cpp</code></li>
+<li><strong>REQ_MSG_123_E01</strong>: Error - Field Getter Not Available → <code>src/events/event_subscriber.cpp</code></li>
+<li><strong>REQ_MSG_124</strong>: Field Setter Support → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_124_E01</strong>: Error - Field Setter Validation Failure → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_125</strong>: Field Notifier Support → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_125_E01</strong>: Error - Duplicate Field Notifier Registration → <code>src/events/event_publisher.cpp</code></li>
+<li><strong>REQ_MSG_126</strong>: No Field Without Accessors → <code>include/events/event_publisher.h</code></li>
+<li><strong>REQ_MSG_127</strong>: No Error for Fire-and-Forget → <code>src/rpc/rpc_server.cpp</code></li>
+<li><strong>REQ_MSG_128</strong>: No Error for Events → <code>src/rpc/rpc_server.cpp</code></li>
+<li><strong>REQ_MSG_129</strong>: Error Header Copy → <code>src/rpc/rpc_server.cpp</code></li>
+<li><strong>REQ_MSG_130</strong>: No Error Response to Error Messages → <code>src/rpc/rpc_server.cpp</code></li>
+<li><strong>REQ_MSG_131</strong>: Return Code Configuration → <code>include/someip/types.h</code></li>
+<li><strong>REQ_MSG_132A</strong>: Exception Message Type 0x81 → <code>src/rpc/rpc_server.cpp</code></li>
+<li><strong>REQ_MSG_132B</strong>: Exception Message Payload → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_133A</strong>: Error Check Step 1 - Protocol Version → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_133B</strong>: Error Check Step 2 - Message Type → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_133C</strong>: Error Check Step 3 - Service and Method Validation → <code>src/rpc/rpc_server.cpp</code></li>
+<li><strong>REQ_MSG_134</strong>: Service Instance Port Multiplexing → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_MSG_135</strong>: Error Message Handling → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_MSG_140</strong>: IP Address and Port Mapping → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_MSG_141</strong>: Publish/Subscribe Support → <code>src/events/event_publisher.cpp</code></li>
+</ul>
+<h3 id="other-70-missing">Other (70 missing)<a class="headerlink" href="#other-70-missing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>REQ_COMPAT_001</strong>: Receive Longer Messages Gracefully → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_002</strong>: Default Values for Missing Parameters → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_COMPAT_003</strong>: Drop Unknown Messages → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_004</strong>: Open Service Instance Access → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_005</strong>: FindService Wildcard Minor Version → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_COMPAT_010</strong>: Multi-Version Service Hosting → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_011</strong>: Multi-Version Client Discovery → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_COMPAT_020</strong>: Reserved Service ID Table → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_021</strong>: Reserved Instance ID Table → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_022</strong>: Reserved Method ID and Event ID Table → <code>src/someip/message.cpp</code></li>
+<li><strong>REQ_COMPAT_023</strong>: Reserved Eventgroup ID Table → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_COMPAT_024</strong>: Service 0xFFFF Method IDs → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_COMPAT_030</strong>: Multi-Version Configuration → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_PAL_BYTE_HTONL</strong>: PAL Host-to-Network 32-bit Conversion → <code>include/platform/posix/byteorder_impl.h</code></li>
+<li><strong>REQ_PAL_BYTE_HTONS</strong>: PAL Host-to-Network 16-bit Conversion → <code>include/platform/posix/byteorder_impl.h</code></li>
+<li><strong>REQ_PAL_BYTE_NTOHL</strong>: PAL Network-to-Host 32-bit Conversion → <code>include/platform/posix/byteorder_impl.h</code></li>
+<li><strong>REQ_PAL_BYTE_NTOHS</strong>: PAL Network-to-Host 16-bit Conversion → <code>include/platform/posix/byteorder_impl.h</code></li>
+<li><strong>REQ_PAL_CV_NOTIFY_ALL</strong>: PAL ConditionVariable Notify All → <code>include/platform/host/host_condition_variable.h</code></li>
+<li><strong>REQ_PAL_CV_NOTIFY_ONE</strong>: PAL ConditionVariable Notify One → <code>include/platform/host/host_condition_variable.h</code></li>
+<li><strong>REQ_PAL_CV_OWNERSHIP</strong>: PAL ConditionVariable Mutex Ownership Guarantee → <code>include/platform/host/host_condition_variable.h</code></li>
+<li><strong>REQ_PAL_CV_WAIT</strong>: PAL ConditionVariable Wait → <code>include/platform/host/host_condition_variable.h</code></li>
+<li><strong>REQ_PAL_CV_WAIT_PRED</strong>: PAL ConditionVariable Wait with Predicate → <code>include/platform/host/host_condition_variable.h</code></li>
+<li><strong>REQ_PAL_LOCK_ACQUIRE</strong>: PAL ScopedLock Acquisition on Construction → <code>include/platform/thread.h</code></li>
+<li><strong>REQ_PAL_LOCK_NONCOPY</strong>: PAL ScopedLock Non-Copyable → <code>include/platform/thread.h</code></li>
+<li><strong>REQ_PAL_LOCK_RELEASE</strong>: PAL ScopedLock Release on Destruction → <code>include/platform/thread.h</code></li>
+<li><strong>REQ_PAL_MEM_ALLOC</strong>: PAL Memory Allocation → <code>include/platform/memory.h</code></li>
+<li><strong>REQ_PAL_MEM_INDEPENDENT</strong>: PAL Memory Independence → <code>include/platform/posix/memory_impl.h</code></li>
+<li><strong>REQ_PAL_MUTEX_LOCK</strong>: PAL Mutex Lock → <code>include/platform/posix/thread_impl.h</code></li>
+<li><strong>REQ_PAL_MUTEX_NONCOPY</strong>: PAL Mutex Non-Copyable → <code>include/platform/freertos/thread_impl.h</code></li>
+<li><strong>REQ_PAL_MUTEX_TRYLOCK</strong>: PAL Mutex Try Lock → <code>include/platform/posix/thread_impl.h</code></li>
+<li><strong>REQ_PAL_MUTEX_UNLOCK</strong>: PAL Mutex Unlock → <code>include/platform/posix/thread_impl.h</code></li>
+<li><strong>REQ_PAL_NET_BLOCK</strong>: PAL Socket Set Blocking → <code>include/platform/posix/net_impl.h</code></li>
+<li><strong>REQ_PAL_NET_CLOSE</strong>: PAL Socket Close → <code>include/platform/posix/net_impl.h</code></li>
+<li><strong>REQ_PAL_NET_NONBLOCK</strong>: PAL Socket Set Non-Blocking → <code>include/platform/posix/net_impl.h</code></li>
+<li><strong>REQ_PAL_NET_SHUTDOWN</strong>: PAL Socket Shutdown → <code>include/platform/posix/net_impl.h</code></li>
+<li><strong>REQ_PAL_SLEEP_DURATION</strong>: PAL sleep_for Minimum Duration → <code>include/platform/posix/thread_impl.h</code></li>
+<li><strong>REQ_PAL_SLEEP_ZERO</strong>: PAL sleep_for Zero Duration → <code>include/platform/freertos/thread_impl.h</code></li>
+<li><strong>REQ_PAL_THREAD_CREATE</strong>: PAL Thread Creation → <code>include/platform/posix/thread_impl.h</code></li>
+<li><strong>REQ_PAL_THREAD_JOIN</strong>: PAL Thread Join → <code>include/platform/freertos/thread_impl.h</code></li>
+<li><strong>REQ_PAL_THREAD_JOINABLE</strong>: PAL Thread Joinable Query → <code>include/platform/freertos/thread_impl.h</code></li>
+<li><strong>REQ_PAL_THREAD_NONCOPY</strong>: PAL Thread Non-Copyable → <code>include/platform/freertos/thread_impl.h</code></li>
+<li><strong>REQ_PLATFORM_LWIP_002</strong>: lwIP Byte-Order Backend → <code>include/platform/lwip/byteorder_impl.h</code></li>
+<li><strong>REQ_PLATFORM_POSIX_001</strong>: POSIX/Host Threading Backend</li>
+<li><strong>REQ_PLATFORM_POSIX_002</strong>: POSIX/Host Memory Backend → <code>include/platform/posix/memory_impl.h</code></li>
+<li><strong>REQ_PLATFORM_POSIX_003</strong>: POSIX/Host Networking Backend</li>
+<li><strong>REQ_PLATFORM_POSIX_004</strong>: POSIX/Host Byte-Order Backend → <code>include/platform/posix/byteorder_impl.h</code></li>
+<li><strong>REQ_PLATFORM_WIN32_001</strong>: Win32 Threading Backend → <code>include/platform/win32/thread_impl.h</code></li>
+<li><strong>REQ_PLATFORM_WIN32_002</strong>: Win32 Memory Backend → <code>include/platform/win32/memory_impl.h</code></li>
+<li><strong>REQ_PLATFORM_WIN32_003</strong>: Win32 Networking Backend → <code>include/platform/win32/net_impl.h</code></li>
+<li><strong>REQ_PLATFORM_WIN32_004</strong>: Win32 Byte-Order Backend → <code>include/platform/win32/byteorder_impl.h</code></li>
+<li><strong>REQ_PLATFORM_ZEPHYR_001</strong>: Zephyr Threading Backend</li>
+<li><strong>REQ_PLATFORM_ZEPHYR_002</strong>: Zephyr Memory Pool Backend → <code>include/platform/zephyr/memory_impl.h</code></li>
+<li><strong>REQ_PLATFORM_ZEPHYR_003</strong>: Zephyr Networking Backend</li>
+<li><strong>REQ_PLATFORM_ZEPHYR_004</strong>: Zephyr Byte-Order Backend → <code>include/platform/zephyr/byteorder_impl.h</code></li>
+<li><strong>REQ_TRANSPORT_010</strong>: nPDU Feature Support → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_011</strong>: UDP Multicast Support → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_012</strong>: Multicast Threshold Switching → <code>src/transport/udp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_013</strong>: Internal Message Multiplexing → <code>src/rpc/rpc_server.cpp</code></li>
+<li><strong>REQ_TRANSPORT_014</strong>: Port Configuration → <code>include/transport/udp_transport.h</code></li>
+<li><strong>REQ_TRANSPORT_015</strong>: Ephemeral Port Range → <code>include/transport/endpoint.h</code></li>
+<li><strong>REQ_TRANSPORT_016</strong>: Client-Initiated TCP Connection → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_017</strong>: TCP Connection Sharing → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_018</strong>: TCP Connection Closure → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_019</strong>: TCP Timeout on Connection Loss → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_020</strong>: TCP Magic Cookie Messages → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_021</strong>: Magic Cookie Fallback Heuristic → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_022</strong>: Multiple Service Instance Port Binding → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_TRANSPORT_023</strong>: Client Server Address Resolution → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_TRANSPORT_024</strong>: Unaligned Message Reception → <code>src/transport/tcp_transport.cpp</code></li>
+<li><strong>REQ_TRANSPORT_025</strong>: Magic Cookie Message Format → <code>src/transport/tcp_transport.cpp</code></li>
+</ul>
+<h3 id="serialization-33-missing">Serialization (33 missing)<a class="headerlink" href="#serialization-33-missing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>REQ_SER_010_E01</strong>: Error - Signed Integer Overflow Detection → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_034_E01</strong>: Error - Float NaN Comparison → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_040_E02</strong>: Error - Nested Array Depth Limit → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_042_E01</strong>: Error - Fixed Array Size Mismatch → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_043_E02</strong>: Error - Dynamic Array Length Exceeds Maximum → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_051_E01</strong>: Error - String Length Exceeds Buffer → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_056_E01</strong>: Error - String Embedded Null → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_073_E01</strong>: Error - Deserialization Position Beyond Buffer → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_080_E01</strong>: Error - Alignment Exceeds Buffer → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_080_E02</strong>: Error - Multiple Alignment Overflows → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_090</strong>: Serialize Enumeration Type → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_090_E01</strong>: Error - Enum Value Out of Defined Range → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_091</strong>: Deserialize Undefined Enumeration Values → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_092</strong>: Serialize Bitfield as Basic Type → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_093</strong>: Bitfield Name Definition Support → <code>include/serialization/serializer.h</code></li>
+<li><strong>REQ_SER_094A</strong>: Union Serialize with Type Field → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_094B</strong>: Union Deserialize with Type Dispatch → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_094C</strong>: Union Padding for Uniform Size → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_094_E01</strong>: Error - Union Unknown Type ID → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_094_E02</strong>: Error - Union Data Size Mismatch → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_095</strong>: Union Length Field Configuration → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_096</strong>: Union Type Field Configuration → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_097</strong>: Union Zero-Length Same-Size Constraint → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_098</strong>: Optional Parameter as Array → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_099</strong>: Multidimensional Array Row-Major Order → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_100</strong>: Multidimensional Dynamic Array Length Fields → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_101</strong>: Dynamic Array Length Field Configuration → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_102</strong>: UTF-16 String Support → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_103</strong>: String BOM Validation → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_104</strong>: Fixed-Length String Handling → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_105</strong>: String Encoding Specification → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_106</strong>: Struct Length Field Support → <code>src/serialization/serializer.cpp</code></li>
+<li><strong>REQ_SER_107</strong>: Misaligned Struct Warning → <code>src/serialization/serializer.cpp</code></li>
+</ul>
+<h3 id="service-discovery-117-missing">Service Discovery (117 missing)<a class="headerlink" href="#service-discovery-117-missing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>REQ_SD_001_E02</strong>: Error - SD Entries Length Mismatch → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_010_E02</strong>: Error - SD Reserved Flags → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_030_E01</strong>: Error - SD Entry References No Options → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_044_E01</strong>: Error - SD Entry With Invalid TTL Format → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_060_E02</strong>: Error - SD TTL Zero in Offer → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_070_E01</strong>: Error - SD FindService Timeout → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_080_E01</strong>: Error - SD Subscription Conflict → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_083_E01</strong>: Error - SD Multiple Subscriptions Same Client → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_110</strong>: SD Initial Wait Phase → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_111</strong>: SD Repetition Phase → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_112</strong>: SD Main Phase → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_113</strong>: SD Shutdown Behavior → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_113_E01</strong>: Error - SD Server Offers During Shutdown → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_114</strong>: FindService Entry Processing → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_115</strong>: OfferService Entry Processing → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_115_E01</strong>: Error - SD Offer with Invalid Endpoint → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_115_E02</strong>: Error - SD Duplicate Offer Handling → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_116</strong>: StopOfferService Entry Processing → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_116_E01</strong>: Error - SD Subscription to Unavailable Service → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_116_E02</strong>: Error - SD ACK Timeout → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_117</strong>: SubscribeEventgroup Entry Processing → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_118</strong>: StopSubscribeEventgroup Processing → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_119</strong>: SubscribeEventgroupAck Processing → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_119_E01</strong>: Error - SD Unknown Entry Type → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_120</strong>: SubscribeEventgroupNack Processing → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_120_E01</strong>: Error - SD Option Index Out of Range → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_121</strong>: Load Balancing Option → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_122</strong>: IPv4 SD Endpoint Option → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_123</strong>: IPv6 SD Endpoint Option → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_123_E01</strong>: Error - SD Invalid Multicast Address in Option → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_124</strong>: Option Run Referencing → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_125</strong>: Handling Missing Options → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_126</strong>: Handling Redundant Options → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_127</strong>: Handling Conflicting Options → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_130</strong>: Server Service State Machine → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_131</strong>: Client Service State Machine → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_132</strong>: Eventgroup Subscription State Machine → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_134_E01</strong>: Error - SD Multicast Send Failure → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_140</strong>: Service Endpoint Association → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_141</strong>: Multicast Endpoint Association → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_142</strong>: Initial Event Sending → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_150</strong>: SD Malformed Message Handling → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_151</strong>: SD Invalid Entry Handling → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_152</strong>: SD TTL Expiry Handling → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_160</strong>: SD Multicast Transmission → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_161</strong>: SD Unicast Response → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_170</strong>: SD Session ID Management → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_171</strong>: SD Reboot Detection Response → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_180</strong>: Minor Version Matching → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_200A</strong>: SD Message Structure - Flags and Reserved → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_200B</strong>: SD Entries Array Format → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_200C</strong>: SD Options Array Format → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_201</strong>: SD Transport Requirements → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_202</strong>: SD ECU Internal Interface → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_210</strong>: SD Header Field Parsing → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_211</strong>: SD Session ID Handling → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_212</strong>: SD Reboot Flag Management → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_220</strong>: SD Entry Common Fields → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_221</strong>: SD Service Entry Format → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_222</strong>: SD Eventgroup Entry Format → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_222_E01</strong>: Error - SD TTL Overflow Prevention → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_223</strong>: SD Entry Multiple Entries per Message → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_230</strong>: SD Configuration Option → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_231</strong>: SD Load Balancing Option Format → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_232</strong>: SD IPv4 Endpoint Option Format → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_233</strong>: SD IPv6 Endpoint Option Format → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_234</strong>: SD IPv4 Multicast Option Format → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_235</strong>: SD IPv6 Multicast Option Format → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_236</strong>: SD IPv4 SD Endpoint Option Format → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_240</strong>: SD Option Index and Run Length → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_241</strong>: SD Option Run Processing → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_242</strong>: SD Option Validation → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_243</strong>: SD Endpoint Option Processing → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_250</strong>: SD FindService Message Construction → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_251</strong>: SD FindService Response Behavior → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_260</strong>: SD OfferService Message Construction → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_261</strong>: SD StopOfferService Construction → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_270</strong>: SD SubscribeEventgroup Construction → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_271</strong>: SD Subscription Lifecycle → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_272</strong>: SD SubscribeEventgroupAck Construction → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_273</strong>: SD SubscribeEventgroupNack Construction → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_274</strong>: SD StopSubscribeEventgroup Construction → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_280</strong>: SD Timing Configuration → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_281</strong>: SD Phase Transitions → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_282</strong>: SD Multicast Group Management → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_283</strong>: SD Response Delay Configuration → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_290</strong>: SD Server Endpoint Registration → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_291</strong>: SD Client Endpoint Resolution → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_292</strong>: SD Multicast Endpoint Handling → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_293</strong>: SD Endpoint Validation → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_300</strong>: SD Service Offer Processing → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_301</strong>: SD Service State Tracking → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_302</strong>: SD Subscription State Tracking → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_303</strong>: SD Service Registry Management → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_310</strong>: SD Graceful Shutdown → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_311</strong>: SD Reboot Recovery → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_312</strong>: SD Service Stop Handling → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_320</strong>: SD Non-SOME/IP Service Announcement → <code>src/sd/sd_message.cpp</code></li>
+<li><strong>REQ_SD_330</strong>: SD Initial Event Sending → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_331</strong>: SD Initial Event Requesting → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_340</strong>: SD Error Handling → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_341</strong>: SD Option Conflict Resolution → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_342</strong>: SD Security Considerations → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_343</strong>: SD IPv4 SD Endpoint Processing → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_344</strong>: SD Mandatory Feature Set → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_345</strong>: SD Unicast Flag Processing → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_346</strong>: SD Service State Machine Details → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_347</strong>: SD Subscription Renewal → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_348</strong>: SD Publish/Subscribe Event Flow → <code>src/sd/sd_client.cpp</code></li>
+<li><strong>REQ_SD_349</strong>: SD Duplicate Offer Handling → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_350</strong>: SD Entry Aggregation → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_351</strong>: SD Startup Behavior → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_352</strong>: SD Advanced Reboot Detection → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_353</strong>: SD Service Timeout Handling → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_354</strong>: SD Subscribe Multicast Handling → <code>src/sd/sd_server.cpp</code></li>
+<li><strong>REQ_SD_355</strong>: SD Subscription Server State → <code>include/sd/sd_types.h</code></li>
+<li><strong>REQ_SD_356</strong>: SD Service Registration → <code>include/sd/sd_types.h</code></li>
+</ul>
+<h3 id="transport-protocol-20-missing">Transport Protocol (20 missing)<a class="headerlink" href="#transport-protocol-20-missing" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>REQ_TP_070</strong>: Segment Only Configured Messages → <code>src/tp/tp_segmenter.cpp</code></li>
+<li><strong>REQ_TP_070_E01</strong>: Error - TP Message Type Mismatch → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_070_E02</strong>: Error - TP Segment With Wrong Protocol Version → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_071</strong>: Send Segments in Ascending Order → <code>src/tp/tp_segmenter.cpp</code></li>
+<li><strong>REQ_TP_071_E01</strong>: Error - Invalid TP Offset Alignment → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_071_E02</strong>: Error - TP Zero-Length Segment → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_072</strong>: Uniform Segment Size → <code>src/tp/tp_segmenter.cpp</code></li>
+<li><strong>REQ_TP_072_E01</strong>: Error - Segment Size Exceeds Maximum → <code>src/tp/tp_segmenter.cpp</code></li>
+<li><strong>REQ_TP_073</strong>: No Overlapping or Duplicate Segments → <code>src/tp/tp_segmenter.cpp</code></li>
+<li><strong>REQ_TP_074</strong>: Configured Client IDs for TP → <code>src/tp/tp_segmenter.cpp</code></li>
+<li><strong>REQ_TP_075</strong>: Traffic Shaping for Segments → <code>src/tp/tp_segmenter.cpp</code></li>
+<li><strong>REQ_TP_076</strong>: Session ID Based Reassembly Detection → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_076_E01</strong>: Error - Reassembly Buffer Full → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_076_E02</strong>: Error - TP Reassembly Result Exceeds Maximum Message Size → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_077</strong>: Return Code from Last Segment → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_078</strong>: Clear TP Flag After Reassembly → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_079</strong>: Cancel Reassembly on Resource Exhaustion → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_080</strong>: No Cross-Message Reordering → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_081</strong>: Overlapping Segment Handling → <code>src/tp/tp_reassembler.cpp</code></li>
+<li><strong>REQ_TP_082</strong>: TP Error Handling → <code>src/tp/tp_reassembler.cpp</code></li>
+</ul>
+<h2 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h2>
+<h3 id="immediate-actions-quick-wins">Immediate Actions (Quick Wins)<a class="headerlink" href="#immediate-actions-quick-wins" title="Permanent link">&para;</a></h3>
+<h3 id="implementation-required">Implementation Required<a class="headerlink" href="#implementation-required" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Implement 315 missing requirements</li>
+<li>Error Handling: 24 requirements</li>
+<li>Message Header: 51 requirements</li>
+<li>Other: 70 requirements</li>
+<li>Serialization: 33 requirements</li>
+<li>Service Discovery: 117 requirements</li>
+<li>Transport Protocol: 20 requirements</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../implementation-report/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Implementation Status">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Implementation Status
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../spec-mapping-report/" class="md-footer__link md-footer__link--next" aria-label="Next: Spec Mapping">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Spec Mapping
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025-2026 Vinicius Tadeu Zein &mdash; Apache License 2.0
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/vtz/opensomeip" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

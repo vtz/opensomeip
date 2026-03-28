@@ -1,0 +1,65 @@
+@startuml Component Interaction
+
+title SOME/IP Stack Component Interaction Diagram
+
+participant "Application" as App
+participant "Service Proxy" as Proxy
+participant "RPC Engine" as RPC
+participant "Service Discovery" as SD
+participant "Transport Layer" as Transport
+participant "Network" as Network
+participant "Safety Monitor" as Safety
+
+== Service Discovery Phase ==
+
+App -> Proxy: findService(serviceId)
+Proxy -> SD: startFindService(serviceId)
+SD -> Transport: sendMulticastFind()
+Transport -> Network: UDP Multicast
+Network --> Transport: Service Offers
+Transport --> SD: receiveOffers()
+SD --> Proxy: serviceAvailable(endpoint)
+Proxy --> App: serviceFound(endpoint)
+
+== RPC Communication Phase ==
+
+App -> Proxy: callMethod(methodId, params)
+Proxy -> RPC: createRequest(methodId, params)
+RPC -> Transport: sendMessage(request)
+Transport -> Network: UDP/TCP Message
+
+Network --> Transport: Response Message
+Transport --> RPC: receiveMessage(response)
+RPC -> Proxy: processResponse(result)
+Proxy --> App: methodResult(result)
+
+== Event Subscription Phase ==
+
+App -> Proxy: subscribeEvent(eventId)
+Proxy -> SD: subscribeToEvent(eventId)
+SD -> Transport: sendSubscribeMessage()
+Transport -> Network: Subscribe Message
+
+Network --> Transport: Subscribe ACK
+Transport --> SD: subscriptionConfirmed()
+SD --> Proxy: eventSubscribed()
+Proxy --> App: subscriptionActive()
+
+== Event Notification Phase ==
+
+Network --> Transport: Event Notification
+Transport --> RPC: receiveEvent(eventData)
+RPC -> Proxy: dispatchEvent(eventData)
+Proxy --> App: onEvent(eventData)
+
+== Error Handling ==
+
+Transport -> Safety: transportError()
+Safety -> RPC: initiateRecovery()
+RPC -> Proxy: connectionLost()
+Proxy -> App: onError(error)
+
+Safety -> SD: restartDiscovery()
+SD -> Transport: resendFindMessages()
+
+@enduml

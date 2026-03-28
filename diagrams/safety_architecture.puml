@@ -1,0 +1,117 @@
+@startuml Safety Architecture
+
+title SOME/IP Safety Architecture (ASIL-B)
+
+package "Safety Management" as SafetyMgr {
+    component [Safety Supervisor] as Supervisor
+    component [Fault Detector] as FaultDetector
+    component [Error Handler] as ErrorHandler
+    component [Recovery Manager] as RecoveryMgr
+    component [Diagnostic Monitor] as Diagnostic
+}
+
+package "Fault Containment" as FaultContainment {
+    component [Transport Safety] as TransportSafety
+    component [Protocol Safety] as ProtocolSafety
+    component [Application Safety] as AppSafety
+    component [Resource Safety] as ResourceSafety
+}
+
+package "Error Recovery" as ErrorRecovery {
+    component [Connection Recovery] as ConnRecovery
+    component [Session Recovery] as SessionRecovery
+    component [Service Recovery] as ServiceRecovery
+    component [State Recovery] as StateRecovery
+}
+
+package "Monitoring & Diagnostics" as Monitoring {
+    component [Health Monitor] as HealthMon
+    component [Performance Monitor] as PerfMon
+    component [Error Logger] as ErrorLogger
+    component [Safety Logger] as SafetyLogger
+}
+
+' Safety Management Relationships
+Supervisor --> FaultDetector : monitors
+Supervisor --> RecoveryMgr : triggers
+Supervisor --> Diagnostic : reports
+
+FaultDetector --> ErrorHandler : detects
+ErrorHandler --> RecoveryMgr : handles
+
+' Fault Containment Relationships
+TransportSafety --> FaultDetector : reports
+ProtocolSafety --> FaultDetector : reports
+AppSafety --> FaultDetector : reports
+ResourceSafety --> FaultDetector : reports
+
+' Error Recovery Relationships
+ConnRecovery --> TransportSafety : recovers
+SessionRecovery --> ProtocolSafety : recovers
+ServiceRecovery --> AppSafety : recovers
+StateRecovery --> ResourceSafety : recovers
+
+' Monitoring Relationships
+HealthMon --> Supervisor : health status
+PerfMon --> Supervisor : performance metrics
+ErrorLogger --> SafetyLogger : error events
+Diagnostic --> SafetyLogger : diagnostic data
+
+' Safety Mechanisms
+note right of Supervisor
+    **Safety Supervisor Functions:**
+    - Overall safety state management
+    - Safety goal supervision
+    - ASIL-B compliance monitoring
+    - Safe state transitions
+end note
+
+note right of FaultDetector
+    **Fault Detection:**
+    - Transport layer faults
+    - Protocol violations
+    - Resource exhaustion
+    - Timing violations
+    - Data corruption
+end note
+
+note right of RecoveryMgr
+    **Recovery Strategies:**
+    - Graceful degradation
+    - Automatic reconnection
+    - Service failover
+    - State reconstruction
+    - Safe shutdown
+end note
+
+note right of Diagnostic
+    **Diagnostics:**
+    - Fault injection testing
+    - Error statistics
+    - Performance profiling
+    - Safety metrics
+    - Certification evidence
+end note
+
+' Safety Interfaces
+interface "Safety API" as SafetyAPI
+interface "Diagnostic API" as DiagAPI
+interface "Recovery API" as RecoveryAPI
+
+SafetyMgr ..> SafetyAPI : provides
+Monitoring ..> DiagAPI : provides
+ErrorRecovery ..> RecoveryAPI : provides
+
+' ASIL-B Requirements
+note as ASIL_B_Req
+    **ASIL-B Requirements:**
+    - Single-point fault tolerance
+    - Fault detection and diagnosis
+    - Error recovery mechanisms
+    - Safe state in fault conditions
+    - Independence of safety mechanisms
+end note
+
+ASIL_B_Req .right.> Supervisor
+
+@enduml

@@ -1,0 +1,5597 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+      
+      
+        <meta name="author" content="Vinicius Tadeu Zein">
+      
+      
+        <link rel="canonical" href="https://vtz.github.io/opensomeip/SOMEIP_ACCEPTANCE_TEST_PLAN/">
+      
+      
+        <link rel="prev" href="../examples/">
+      
+      
+        <link rel="next" href="../TEST_PLAN_STATUS/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Test Plan - OpenSOME/IP</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  
+
+  
+  
+  
+  
+  
+    
+  
+
+  <meta name="keywords" content="SOME/IP, AUTOSAR, automotive middleware, C++17, embedded systems, service discovery, protocol stack, Zephyr, FreeRTOS, ThreadX">
+  <meta name="author" content="Vinicius Tadeu Zein">
+
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vtz.github.io/opensomeip/SOMEIP_ACCEPTANCE_TEST_PLAN/">
+  <meta property="og:title" content="Test Plan">
+  <meta property="og:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta property="og:site_name" content="OpenSOME/IP">
+  <meta property="og:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://vtz.github.io/opensomeip/SOMEIP_ACCEPTANCE_TEST_PLAN/">
+  <meta name="twitter:title" content="Test Plan">
+  <meta name="twitter:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta name="twitter:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
+
+  
+  <script type="application/ld+json">
+  {"@context": "https://schema.org", "@type": "SoftwareSourceCode", "applicationCategory": "Automotive Middleware", "codeRepository": "https://github.com/vtz/opensomeip", "description": "Open-source C++17 SOME/IP protocol stack for automotive and embedded systems", "keywords": ["SOME/IP", "AUTOSAR", "service-oriented architecture", "automotive", "embedded"], "license": "https://www.apache.org/licenses/LICENSE-2.0", "name": "OpenSOME/IP", "operatingSystem": ["Linux", "macOS", "Zephyr RTOS", "FreeRTOS", "Eclipse ThreadX"], "programmingLanguage": "C++", "url": "https://vtz.github.io/opensomeip/"}
+  </script>
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#someip-stack-acceptance-test-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OpenSOME/IP" class="md-header__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 14h14l-1.5-4.5h-11zm12.5 5a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5m-11 0A1.5 1.5 0 0 0 8 17.5 1.5 1.5 0 0 0 6.5 16 1.5 1.5 0 0 0 5 17.5 1.5 1.5 0 0 0 6.5 19M18.92 9 21 15v8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8l2.08-6c.2-.58.77-1 1.42-1h11c.65 0 1.22.42 1.42 1M12 0c2.12 0 4.15.86 5.65 2.35l-1.42 1.42A6.02 6.02 0 0 0 12 2c-1.58 0-3.11.65-4.23 1.77L6.36 2.35A8 8 0 0 1 12 0m0 4c1.06 0 2.07.44 2.82 1.18L13.4 6.6c-.37-.37-.87-.6-1.4-.6-.5 0-1.03.23-1.4.6L9.18 5.18C9.93 4.44 10.94 4 12 4"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OpenSOME/IP
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Test Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/vtz/opensomeip" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    vtz/opensomeip
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../project-overview/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../ZEPHYR_PORT/" class="md-tabs__link">
+          
+  
+  
+  Platforms
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../api/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../examples/" class="md-tabs__link">
+          
+  
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Testing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../contributing/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../specification/" class="md-tabs__link">
+          
+  
+  
+  Specification
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OpenSOME/IP" class="md-nav__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 14h14l-1.5-4.5h-11zm12.5 5a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5m-11 0A1.5 1.5 0 0 0 8 17.5 1.5 1.5 0 0 0 6.5 16 1.5 1.5 0 0 0 5 17.5 1.5 1.5 0 0 0 6.5 19M18.92 9 21 15v8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8l2.08-6c.2-.58.77-1 1.42-1h11c.65 0 1.22.42 1.42 1M12 0c2.12 0 4.15.86 5.65 2.35l-1.42 1.42A6.02 6.02 0 0 0 12 2c-1.58 0-3.11.65-4.23 1.77L6.36 2.35A8 8 0 0 1 12 0m0 4c1.06 0 2.07.44 2.82 1.18L13.4 6.6c-.37-.37-.87-.6-1.4-.6-.5 0-1.03.23-1.4.6L9.18 5.18C9.93 4.44 10.94 4 12 4"/></svg>
+
+    </a>
+    OpenSOME/IP
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/vtz/opensomeip" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    vtz/opensomeip
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Instructions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../INTEGRATION_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SETUP_GIT_SUBMODULE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Git Submodule Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/e2e_protection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    E2E Protection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Platforms
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Platforms
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ZEPHYR_PORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Zephyr RTOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FREERTOS_PORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FreeRTOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../THREADX_PORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Eclipse ThreadX
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PLATFORM_RISK_REGISTER/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Risk Register
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/sd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Service Discovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/rpc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RPC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/tp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transport Protocol
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/events/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Events
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/e2e/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    E2E Protection
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/serialization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Serialization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Testing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Plan
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Plan
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#based-on-open-someip-specification-v2025" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Based on Open SOME/IP Specification v2025
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Executive Summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Executive Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-document-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Document Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-acceptance-criteria-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Acceptance Criteria Summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Acceptance Criteria Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-specification-derived-requirements-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Specification-Derived Requirements Categories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-v-model-test-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. V-Model Test Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-level-1-unit-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Level 1: Unit Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Level 1: Unit Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-test-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Test Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.2 Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#421-message-format-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.1 Message Format Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#422-serialization-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.2 Serialization Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#423-session-manager-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.3 Session Manager Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#424-transport-protocol-tp-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.4 Transport Protocol (TP) Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#425-service-discovery-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.5 Service Discovery Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-unit-test-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Unit Test Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-level-2-component-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Level 2: Component Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Level 2: Component Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-test-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Test Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.2 Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#521-message-serializationdeserialization-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.1 Message Serialization/Deserialization Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#522-transport-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.2 Transport Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#523-tp-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.3 TP Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#524-rpc-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.4 RPC Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#525-sd-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.5 SD Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-component-test-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Component Test Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-level-3-integration-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Level 3: Integration Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Level 3: Integration Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-test-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Test Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.2 Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#621-end-to-end-rpc-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2.1 End-to-End RPC Integration Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#622-service-discovery-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2.2 Service Discovery Integration Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#623-event-system-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2.3 Event System Integration Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#624-transport-protocol-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2.4 Transport Protocol Integration Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-integration-test-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Integration Test Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-level-4-system-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Level 4: System Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Level 4: System Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-test-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Test Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7.2 Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#721-protocol-conformance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2.1 Protocol Conformance Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#722-behavior-conformance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2.2 Behavior Conformance Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#723-robustness-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2.3 Robustness Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#724-performance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2.4 Performance Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-system-test-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 System Test Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-level-5-acceptance-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Level 5: Acceptance Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Level 5: Acceptance Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-acceptance-criteria-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 Acceptance Criteria Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8.2 Acceptance Criteria Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#821-protocol-interoperability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.1 Protocol Interoperability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#822-specification-compliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.2 Specification Compliance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#823-functional-completeness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.3 Functional Completeness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#824-quality-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.4 Quality Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#825-documentation-and-traceability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.5 Documentation and Traceability
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-acceptance-test-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 Acceptance Test Execution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8.3 Acceptance Test Execution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#831-pre-acceptance-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3.1 Pre-Acceptance Checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#832-acceptance-test-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3.2 Acceptance Test Procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-test-environment-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Test Environment Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Test Environment Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-hardware-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Hardware Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-software-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 Software Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-network-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 Network Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-test-execution-and-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Test Execution and Reporting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Test Execution and Reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-continuous-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Continuous Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-test-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 Test Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 Reporting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-requirement-traceability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Requirement Traceability
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Requirement Traceability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-specification-to-test-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 Specification to Test Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-gap-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 Gap Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-appendices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Appendices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Appendices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appendix-a-complete-requirement-ids-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix A: Complete Requirement IDs Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#appendix-b-test-data-specifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix B: Test Data Specifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#appendix-c-glossary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix C: Glossary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#document-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document Control
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TEST_PLAN_STATUS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TEST_REPORTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Reporting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://vtz.github.io/opensomeip/allure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Trends (Allure)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CODING_GUIDELINES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Guidelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How to Contribute
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specification
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specification
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/gap-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gap Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/implementation-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Status
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/implementation-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/spec-mapping-report/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spec Mapping
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/requirements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../specification/traceability-matrix/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Traceability Matrix
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#based-on-open-someip-specification-v2025" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Based on Open SOME/IP Specification v2025
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Executive Summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Executive Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-document-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 Document Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 Scope
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-acceptance-criteria-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Acceptance Criteria Summary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Acceptance Criteria Summary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-specification-derived-requirements-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Specification-Derived Requirements Categories
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-v-model-test-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. V-Model Test Strategy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-level-1-unit-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Level 1: Unit Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Level 1: Unit Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-test-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Test Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4.2 Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#421-message-format-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.1 Message Format Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#422-serialization-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.2 Serialization Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#423-session-manager-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.3 Session Manager Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#424-transport-protocol-tp-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.4 Transport Protocol (TP) Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#425-service-discovery-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2.5 Service Discovery Unit Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-unit-test-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 Unit Test Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-level-2-component-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Level 2: Component Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Level 2: Component Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-test-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Test Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.2 Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#521-message-serializationdeserialization-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.1 Message Serialization/Deserialization Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#522-transport-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.2 Transport Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#523-tp-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.3 TP Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#524-rpc-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.4 RPC Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#525-sd-component-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2.5 SD Component Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-component-test-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Component Test Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-level-3-integration-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Level 3: Integration Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Level 3: Integration Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-test-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Test Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6.2 Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#621-end-to-end-rpc-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2.1 End-to-End RPC Integration Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#622-service-discovery-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2.2 Service Discovery Integration Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#623-event-system-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2.3 Event System Integration Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#624-transport-protocol-integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2.4 Transport Protocol Integration Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-integration-test-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Integration Test Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-level-4-system-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Level 4: System Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Level 4: System Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-test-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Test Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7.2 Test Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#721-protocol-conformance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2.1 Protocol Conformance Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#722-behavior-conformance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2.2 Behavior Conformance Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#723-robustness-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2.3 Robustness Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#724-performance-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2.4 Performance Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-system-test-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 System Test Implementation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-level-5-acceptance-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Level 5: Acceptance Testing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Level 5: Acceptance Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 Purpose
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82-acceptance-criteria-categories" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 Acceptance Criteria Categories
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8.2 Acceptance Criteria Categories">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#821-protocol-interoperability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.1 Protocol Interoperability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#822-specification-compliance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.2 Specification Compliance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#823-functional-completeness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.3 Functional Completeness
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#824-quality-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.4 Quality Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#825-documentation-and-traceability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2.5 Documentation and Traceability
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-acceptance-test-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 Acceptance Test Execution
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8.3 Acceptance Test Execution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#831-pre-acceptance-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3.1 Pre-Acceptance Checklist
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#832-acceptance-test-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3.2 Acceptance Test Procedure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-test-environment-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Test Environment Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. Test Environment Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-hardware-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 Hardware Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-software-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 Software Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-network-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 Network Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-test-execution-and-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Test Execution and Reporting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Test Execution and Reporting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-continuous-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Continuous Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-test-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 Test Commands
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-reporting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 Reporting
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-requirement-traceability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Requirement Traceability
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Requirement Traceability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111-specification-to-test-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 Specification to Test Mapping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112-gap-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 Gap Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-appendices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Appendices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. Appendices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appendix-a-complete-requirement-ids-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix A: Complete Requirement IDs Reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#appendix-b-test-data-specifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix B: Test Data Specifications
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#appendix-c-glossary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix C: Glossary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#document-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Document Control
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<!--
+  Copyright (c) 2025 Vinicius Tadeu Zein
+
+  See the NOTICE file(s) distributed with this work for additional
+  information regarding copyright ownership.
+
+  This program and the accompanying materials are made available under the
+  terms of the Apache License Version 2.0 which is available at
+  https://www.apache.org/licenses/LICENSE-2.0
+
+  SPDX-License-Identifier: Apache-2.0
+-->
+
+<h1 id="someip-stack-acceptance-test-plan">SOME/IP Stack Acceptance Test Plan<a class="headerlink" href="#someip-stack-acceptance-test-plan" title="Permanent link">&para;</a></h1>
+<h2 id="based-on-open-someip-specification-v2025">Based on Open SOME/IP Specification v2025<a class="headerlink" href="#based-on-open-someip-specification-v2025" title="Permanent link">&para;</a></h2>
+<hr />
+<h2 id="1-executive-summary">1. Executive Summary<a class="headerlink" href="#1-executive-summary" title="Permanent link">&para;</a></h2>
+<p>This document defines the acceptance criteria and comprehensive test strategy for validating the SOME/IP stack implementation against the Open SOME/IP Specification. The test plan follows the V-Model development methodology, ensuring traceability from requirements to acceptance testing.</p>
+<h3 id="11-document-purpose">1.1 Document Purpose<a class="headerlink" href="#11-document-purpose" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Define acceptance criteria derived from the Open SOME/IP Specification</li>
+<li>Establish a V-Model aligned test strategy</li>
+<li>Provide complete test coverage mapping</li>
+<li>Enable conformance verification against industry standards</li>
+</ul>
+<h3 id="12-scope">1.2 Scope<a class="headerlink" href="#12-scope" title="Permanent link">&para;</a></h3>
+<p>This test plan covers:
+- <strong>SOME/IP RPC Protocol</strong> (someip-rpc.rst)
+- <strong>SOME/IP Service Discovery</strong> (someip-sd.rst)
+- <strong>SOME/IP Transport Protocol</strong> (someip-tp.rst)
+- <strong>Reserved Identifiers</strong> (someip-ids.rst)</p>
+<hr />
+<h2 id="2-acceptance-criteria-summary">2. Acceptance Criteria Summary<a class="headerlink" href="#2-acceptance-criteria-summary" title="Permanent link">&para;</a></h2>
+<h3 id="21-specification-derived-requirements-categories">2.1 Specification-Derived Requirements Categories<a class="headerlink" href="#21-specification-derived-requirements-categories" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Requirement Count</th>
+<th>Priority</th>
+<th>Compliance Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Message Format</strong></td>
+<td>78</td>
+<td>CRITICAL</td>
+<td>100%</td>
+</tr>
+<tr>
+<td><strong>Serialization</strong></td>
+<td>65</td>
+<td>CRITICAL</td>
+<td>100%</td>
+</tr>
+<tr>
+<td><strong>Transport Bindings (UDP/TCP)</strong></td>
+<td>42</td>
+<td>CRITICAL</td>
+<td>100%</td>
+</tr>
+<tr>
+<td><strong>RPC Protocol</strong></td>
+<td>48</td>
+<td>CRITICAL</td>
+<td>100%</td>
+</tr>
+<tr>
+<td><strong>Service Discovery (SD)</strong></td>
+<td>156</td>
+<td>HIGH</td>
+<td>95%</td>
+</tr>
+<tr>
+<td><strong>Transport Protocol (TP)</strong></td>
+<td>37</td>
+<td>HIGH</td>
+<td>100%</td>
+</tr>
+<tr>
+<td><strong>Error Handling</strong></td>
+<td>28</td>
+<td>HIGH</td>
+<td>100%</td>
+</tr>
+<tr>
+<td><strong>Session Management</strong></td>
+<td>15</td>
+<td>HIGH</td>
+<td>100%</td>
+</tr>
+<tr>
+<td><strong>Reserved IDs</strong></td>
+<td>12</td>
+<td>MEDIUM</td>
+<td>100%</td>
+</tr>
+<tr>
+<td><strong>E2E Protection</strong></td>
+<td>6</td>
+<td>OPTIONAL</td>
+<td>0% (future)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total Requirements</strong>: ~487 (422 core + 65 informational)</p>
+<hr />
+<h2 id="3-v-model-test-strategy">3. V-Model Test Strategy<a class="headerlink" href="#3-v-model-test-strategy" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>┌─────────────────────────────────────────────────────────────────────────────┐
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>│                              V-MODEL TEST STRATEGY                          │
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├─────────────────────────────────────────────────────────────────────────────┤
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│                                                                             │
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│  REQUIREMENTS                                         ACCEPTANCE TESTING    │
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│  ANALYSIS        ────────────────────────────────►    (Level 5)            │
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│  ▼                                                                          │
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│  System          ────────────────────────────►       System Testing        │
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│  Design                                               (Level 4)            │
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│  ▼                                                                          │
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│  Architecture    ────────────────────────►           Integration Testing   │
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│  Design                                               (Level 3)            │
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  ▼                                                                          │
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  Module          ────────────────────►               Component Testing     │
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  Design                                               (Level 2)            │
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  ▼                                                                          │
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│  Coding          ────────────────►                   Unit Testing          │
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│                                                       (Level 1)            │
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│                                                                             │
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>└─────────────────────────────────────────────────────────────────────────────┘
+</span></code></pre></div>
+<hr />
+<h2 id="4-level-1-unit-testing">4. Level 1: Unit Testing<a class="headerlink" href="#4-level-1-unit-testing" title="Permanent link">&para;</a></h2>
+<h3 id="41-purpose">4.1 Purpose<a class="headerlink" href="#41-purpose" title="Permanent link">&para;</a></h3>
+<p>Verify individual functions, classes, and methods work correctly in isolation.</p>
+<h3 id="42-test-categories">4.2 Test Categories<a class="headerlink" href="#42-test-categories" title="Permanent link">&para;</a></h3>
+<h4 id="421-message-format-unit-tests">4.2.1 Message Format Unit Tests<a class="headerlink" href="#421-message-format-unit-tests" title="Permanent link">&para;</a></h4>
+<p><strong>Requirement References</strong>: feat_req_someip_44 - feat_req_someip_103</p>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Specification Ref</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UT-MSG-001</td>
+<td>Message ID Structure</td>
+<td>feat_req_someip_56</td>
+<td>Message ID correctly encodes Service ID (16-bit) + Method ID (16-bit)</td>
+</tr>
+<tr>
+<td>UT-MSG-002</td>
+<td>Length Field</td>
+<td>feat_req_someip_77</td>
+<td>Length field (32-bit) = 8 + payload_length</td>
+</tr>
+<tr>
+<td>UT-MSG-003</td>
+<td>Request ID Structure</td>
+<td>feat_req_someip_83</td>
+<td>Request ID = Client ID (16-bit) + Session ID (16-bit)</td>
+</tr>
+<tr>
+<td>UT-MSG-004</td>
+<td>Protocol Version</td>
+<td>feat_req_someip_90</td>
+<td>Protocol Version = 0x01</td>
+</tr>
+<tr>
+<td>UT-MSG-005</td>
+<td>Interface Version</td>
+<td>feat_req_someip_92</td>
+<td>Interface Version = configured value (8-bit)</td>
+</tr>
+<tr>
+<td>UT-MSG-006</td>
+<td>Message Type Values</td>
+<td>feat_req_someip_95</td>
+<td>All message types (0x00-0x02, 0x80-0x81, 0x20+) valid</td>
+</tr>
+<tr>
+<td>UT-MSG-007</td>
+<td>Return Code Values</td>
+<td>feat_req_someip_144</td>
+<td>All return codes (0x00-0x0a) properly encoded</td>
+</tr>
+<tr>
+<td>UT-MSG-008</td>
+<td>TP Flag in Message Type</td>
+<td>feat_req_someip_761</td>
+<td>TP flag (0x20) set correctly for segmented messages</td>
+</tr>
+<tr>
+<td>UT-MSG-009</td>
+<td>Minimum Length Validation</td>
+<td>feat_req_someip_798</td>
+<td>Messages with length &lt; 8 bytes rejected</td>
+</tr>
+<tr>
+<td>UT-MSG-010</td>
+<td>Header Byte Order</td>
+<td>feat_req_someip_42</td>
+<td>All header fields in big-endian (network byte order)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="422-serialization-unit-tests">4.2.2 Serialization Unit Tests<a class="headerlink" href="#422-serialization-unit-tests" title="Permanent link">&para;</a></h4>
+<p><strong>Requirement References</strong>: feat_req_someip_167 - feat_req_someip_299</p>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Specification Ref</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UT-SER-001</td>
+<td>Boolean Serialization</td>
+<td>feat_req_someip_172</td>
+<td>Boolean: 8-bit, 0=FALSE, 1=TRUE</td>
+</tr>
+<tr>
+<td>UT-SER-002</td>
+<td>uint8 Serialization</td>
+<td>feat_req_someip_172</td>
+<td>uint8 correctly serialized</td>
+</tr>
+<tr>
+<td>UT-SER-003</td>
+<td>uint16 Big-Endian</td>
+<td>feat_req_someip_172, feat_req_someip_42</td>
+<td>uint16 in network byte order</td>
+</tr>
+<tr>
+<td>UT-SER-004</td>
+<td>uint32 Big-Endian</td>
+<td>feat_req_someip_172</td>
+<td>uint32 in network byte order</td>
+</tr>
+<tr>
+<td>UT-SER-005</td>
+<td>uint64 Big-Endian</td>
+<td>feat_req_someip_623</td>
+<td>uint64 in network byte order</td>
+</tr>
+<tr>
+<td>UT-SER-006</td>
+<td>sint8/16/32/64 Serialization</td>
+<td>feat_req_someip_172</td>
+<td>Signed integers correctly serialized</td>
+</tr>
+<tr>
+<td>UT-SER-007</td>
+<td>float32 IEEE 754</td>
+<td>feat_req_someip_172</td>
+<td>IEEE 754 binary32 format</td>
+</tr>
+<tr>
+<td>UT-SER-008</td>
+<td>float64 IEEE 754</td>
+<td>feat_req_someip_172</td>
+<td>IEEE 754 binary64 format</td>
+</tr>
+<tr>
+<td>UT-SER-009</td>
+<td>Fixed-Length String</td>
+<td>feat_req_someip_233</td>
+<td>Unicode + BOM + null termination</td>
+</tr>
+<tr>
+<td>UT-SER-010</td>
+<td>Dynamic-Length String</td>
+<td>feat_req_someip_237</td>
+<td>Length field + BOM + null termination</td>
+</tr>
+<tr>
+<td>UT-SER-011</td>
+<td>Fixed-Length Array</td>
+<td>feat_req_someip_241</td>
+<td>Exact n elements serialized</td>
+</tr>
+<tr>
+<td>UT-SER-012</td>
+<td>Dynamic-Length Array</td>
+<td>feat_req_someip_254</td>
+<td>Length field + elements</td>
+</tr>
+<tr>
+<td>UT-SER-013</td>
+<td>Struct Serialization</td>
+<td>feat_req_someip_230</td>
+<td>Sequential serialization, no auto-padding</td>
+</tr>
+<tr>
+<td>UT-SER-014</td>
+<td>Struct with Length Field</td>
+<td>feat_req_someip_600</td>
+<td>Optional 8/16/32-bit length prefix</td>
+</tr>
+<tr>
+<td>UT-SER-015</td>
+<td>Enumeration Types</td>
+<td>feat_req_someip_651</td>
+<td>Based on uint8/16/32/64</td>
+</tr>
+<tr>
+<td>UT-SER-016</td>
+<td>Bitfield Types</td>
+<td>feat_req_someip_689</td>
+<td>As uint8/16/32</td>
+</tr>
+<tr>
+<td>UT-SER-017</td>
+<td>Union/Variant</td>
+<td>feat_req_someip_263</td>
+<td>Length + Type + Element serialization</td>
+</tr>
+<tr>
+<td>UT-SER-018</td>
+<td>Alignment Calculation</td>
+<td>feat_req_someip_711</td>
+<td>Alignment from message start</td>
+</tr>
+<tr>
+<td>UT-SER-019</td>
+<td>UTF-8 String BOM</td>
+<td>feat_req_someip_662</td>
+<td>BOM required, counts toward length</td>
+</tr>
+<tr>
+<td>UT-SER-020</td>
+<td>UTF-16 LE/BE Support</td>
+<td>feat_req_someip_234</td>
+<td>UTF-16 BE/LE with proper termination</td>
+</tr>
+</tbody>
+</table>
+<h4 id="423-session-manager-unit-tests">4.2.3 Session Manager Unit Tests<a class="headerlink" href="#423-session-manager-unit-tests" title="Permanent link">&para;</a></h4>
+<p><strong>Requirement References</strong>: feat_req_someip_79 - feat_req_someip_88</p>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Specification Ref</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UT-SES-001</td>
+<td>Session ID Generation</td>
+<td>feat_req_someip_88</td>
+<td>Unique per client call</td>
+</tr>
+<tr>
+<td>UT-SES-002</td>
+<td>Session ID Starting Value</td>
+<td>feat_req_someip_649</td>
+<td>Starts at 0x0001 when used</td>
+</tr>
+<tr>
+<td>UT-SES-003</td>
+<td>Session ID Wrap-Around</td>
+<td>feat_req_someip_677</td>
+<td>Wraps from 0xFFFF to 0x0001</td>
+</tr>
+<tr>
+<td>UT-SES-004</td>
+<td>Session ID Disabled</td>
+<td>feat_req_someip_700</td>
+<td>Set to 0x0000 when not used</td>
+</tr>
+<tr>
+<td>UT-SES-005</td>
+<td>Request/Response Correlation</td>
+<td>feat_req_someip_79</td>
+<td>Server copies Request ID to response</td>
+</tr>
+<tr>
+<td>UT-SES-006</td>
+<td>Client ID Uniqueness</td>
+<td>feat_req_someip_699</td>
+<td>Unique per client within ECU</td>
+</tr>
+<tr>
+<td>UT-SES-007</td>
+<td>Concurrent Session Support</td>
+<td>feat_req_someip_79</td>
+<td>Multiple outstanding requests</td>
+</tr>
+</tbody>
+</table>
+<h4 id="424-transport-protocol-tp-unit-tests">4.2.4 Transport Protocol (TP) Unit Tests<a class="headerlink" href="#424-transport-protocol-tp-unit-tests" title="Permanent link">&para;</a></h4>
+<p><strong>Requirement References</strong>: feat_req_someiptp_759 - feat_req_someiptp_820</p>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Specification Ref</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UT-TP-001</td>
+<td>TP Header Structure</td>
+<td>feat_req_someiptp_766</td>
+<td>Offset[28] + Reserved[3] + MoreSegments[1]</td>
+</tr>
+<tr>
+<td>UT-TP-002</td>
+<td>Offset Field Encoding</td>
+<td>feat_req_someiptp_768</td>
+<td>Upper 28 bits, 16-byte aligned</td>
+</tr>
+<tr>
+<td>UT-TP-003</td>
+<td>More Segments Flag</td>
+<td>feat_req_someiptp_770</td>
+<td>1 for non-last, 0 for last segment</td>
+</tr>
+<tr>
+<td>UT-TP-004</td>
+<td>Session ID per Original</td>
+<td>feat_req_someiptp_763</td>
+<td>Same Session ID across all segments</td>
+</tr>
+<tr>
+<td>UT-TP-005</td>
+<td>Segment Size Limit</td>
+<td>feat_req_someiptp_773</td>
+<td>Max 1392 bytes (87*16) for alignment</td>
+</tr>
+<tr>
+<td>UT-TP-006</td>
+<td>Segment Length Multiple</td>
+<td>feat_req_someiptp_772</td>
+<td>All but last segment: length % 16 == 0</td>
+</tr>
+<tr>
+<td>UT-TP-007</td>
+<td>TP Flag Setting</td>
+<td>feat_req_someiptp_765</td>
+<td>Message Type has TP flag (0x20) set</td>
+</tr>
+<tr>
+<td>UT-TP-008</td>
+<td>Header Preservation</td>
+<td>feat_req_someiptp_774</td>
+<td>Message ID, Request ID preserved</td>
+</tr>
+<tr>
+<td>UT-TP-009</td>
+<td>Ascending Order Send</td>
+<td>feat_req_someiptp_777</td>
+<td>Sender sends in ascending order</td>
+</tr>
+<tr>
+<td>UT-TP-010</td>
+<td>No Overlapping Segments</td>
+<td>feat_req_someiptp_780</td>
+<td>No overlaps or duplicates from sender</td>
+</tr>
+<tr>
+<td>UT-TP-011</td>
+<td>Reassembly Buffer Match</td>
+<td>feat_req_someiptp_781</td>
+<td>Match by configured values + Request ID</td>
+</tr>
+<tr>
+<td>UT-TP-012</td>
+<td>Session ID Change Detection</td>
+<td>feat_req_someiptp_793</td>
+<td>New Session ID starts new reassembly</td>
+</tr>
+<tr>
+<td>UT-TP-013</td>
+<td>Error Detection</td>
+<td>feat_req_someiptp_792</td>
+<td>Handle obvious errors gracefully</td>
+</tr>
+</tbody>
+</table>
+<h4 id="425-service-discovery-unit-tests">4.2.5 Service Discovery Unit Tests<a class="headerlink" href="#425-service-discovery-unit-tests" title="Permanent link">&para;</a></h4>
+<p><strong>Requirement References</strong>: feat_req_someipsd_1 - feat_req_someipsd_900</p>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Specification Ref</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UT-SD-001</td>
+<td>SD Service ID</td>
+<td>feat_req_someipsd_26</td>
+<td>Service ID = 0xFFFF</td>
+</tr>
+<tr>
+<td>UT-SD-002</td>
+<td>SD Method ID</td>
+<td>feat_req_someipsd_26</td>
+<td>Method ID = 0x8100</td>
+</tr>
+<tr>
+<td>UT-SD-003</td>
+<td>SD Message Type</td>
+<td>feat_req_someipsd_26</td>
+<td>Message Type = NOTIFICATION (0x02)</td>
+</tr>
+<tr>
+<td>UT-SD-004</td>
+<td>SD Session ID Increment</td>
+<td>feat_req_someipsd_26</td>
+<td>Incremented per message</td>
+</tr>
+<tr>
+<td>UT-SD-005</td>
+<td>SD Session ID Starting</td>
+<td>feat_req_someipsd_26</td>
+<td>Starts at 1, wraps to 1</td>
+</tr>
+<tr>
+<td>UT-SD-006</td>
+<td>Reboot Flag Logic</td>
+<td>feat_req_someipsd_41</td>
+<td>Set until Session ID wraps</td>
+</tr>
+<tr>
+<td>UT-SD-007</td>
+<td>Unicast Flag</td>
+<td>feat_req_someipsd_100</td>
+<td>Always set to 1</td>
+</tr>
+<tr>
+<td>UT-SD-008</td>
+<td>Entry Types Encoding</td>
+<td>feat_req_someipsd_46</td>
+<td>Service (16B) and Eventgroup (16B)</td>
+</tr>
+<tr>
+<td>UT-SD-009</td>
+<td>FindService Entry</td>
+<td>feat_req_someipsd_238</td>
+<td>Type=0x00, fields correct</td>
+</tr>
+<tr>
+<td>UT-SD-010</td>
+<td>OfferService Entry</td>
+<td>feat_req_someipsd_252</td>
+<td>Type=0x01, with Endpoint Options</td>
+</tr>
+<tr>
+<td>UT-SD-011</td>
+<td>StopOfferService Entry</td>
+<td>feat_req_someipsd_261</td>
+<td>TTL=0</td>
+</tr>
+<tr>
+<td>UT-SD-012</td>
+<td>SubscribeEventgroup</td>
+<td>feat_req_someipsd_321</td>
+<td>Type=0x06, with Endpoint Options</td>
+</tr>
+<tr>
+<td>UT-SD-013</td>
+<td>StopSubscribeEventgroup</td>
+<td>feat_req_someipsd_332</td>
+<td>TTL=0</td>
+</tr>
+<tr>
+<td>UT-SD-014</td>
+<td>SubscribeEventgroupAck</td>
+<td>feat_req_someipsd_613</td>
+<td>Type=0x07, mirrors subscribe</td>
+</tr>
+<tr>
+<td>UT-SD-015</td>
+<td>SubscribeEventgroupNack</td>
+<td>feat_req_someipsd_618</td>
+<td>Type=0x07, TTL=0</td>
+</tr>
+<tr>
+<td>UT-SD-016</td>
+<td>IPv4 Endpoint Option</td>
+<td>feat_req_someipsd_127</td>
+<td>Type=0x04, 12 bytes</td>
+</tr>
+<tr>
+<td>UT-SD-017</td>
+<td>IPv4 Multicast Option</td>
+<td>feat_req_someipsd_723</td>
+<td>Type=0x14, 12 bytes</td>
+</tr>
+<tr>
+<td>UT-SD-018</td>
+<td>Configuration Option</td>
+<td>feat_req_someipsd_149</td>
+<td>DNS-SD format strings</td>
+</tr>
+<tr>
+<td>UT-SD-019</td>
+<td>Option Referencing</td>
+<td>feat_req_someipsd_336</td>
+<td>Correct index and count</td>
+</tr>
+<tr>
+<td>UT-SD-020</td>
+<td>Entries Processing Order</td>
+<td>feat_req_someipsd_862</td>
+<td>Exact arrival order</td>
+</tr>
+</tbody>
+</table>
+<h3 id="43-unit-test-implementation">4.3 Unit Test Implementation<a class="headerlink" href="#43-unit-test-implementation" title="Permanent link">&para;</a></h3>
+<p><strong>Location</strong>: <code>tests/test_*.cpp</code>
+<strong>Framework</strong>: Google Test (gtest)
+<strong>Coverage Target</strong>: ≥95% line coverage</p>
+<hr />
+<h2 id="5-level-2-component-testing">5. Level 2: Component Testing<a class="headerlink" href="#5-level-2-component-testing" title="Permanent link">&para;</a></h2>
+<h3 id="51-purpose">5.1 Purpose<a class="headerlink" href="#51-purpose" title="Permanent link">&para;</a></h3>
+<p>Verify integrated behavior of related modules (e.g., Serializer + Message).</p>
+<h3 id="52-test-categories">5.2 Test Categories<a class="headerlink" href="#52-test-categories" title="Permanent link">&para;</a></h3>
+<h4 id="521-message-serializationdeserialization-component-tests">5.2.1 Message Serialization/Deserialization Component Tests<a class="headerlink" href="#521-message-serializationdeserialization-component-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Components</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CT-MSG-001</td>
+<td>Full Message Round-Trip</td>
+<td>Message + Serializer</td>
+<td>Serialize → Deserialize preserves all fields</td>
+</tr>
+<tr>
+<td>CT-MSG-002</td>
+<td>Request Message Creation</td>
+<td>Message + Serializer</td>
+<td>Valid REQUEST with correct header</td>
+</tr>
+<tr>
+<td>CT-MSG-003</td>
+<td>Response Message Creation</td>
+<td>Message + Serializer</td>
+<td>Matching Response to Request</td>
+</tr>
+<tr>
+<td>CT-MSG-004</td>
+<td>Error Response Creation</td>
+<td>Message + Serializer</td>
+<td>ERROR type with return code</td>
+</tr>
+<tr>
+<td>CT-MSG-005</td>
+<td>Notification Message</td>
+<td>Message + Serializer</td>
+<td>NOTIFICATION with Event ID</td>
+</tr>
+<tr>
+<td>CT-MSG-006</td>
+<td>Fire&amp;Forget Message</td>
+<td>Message + Serializer</td>
+<td>REQUEST_NO_RETURN type</td>
+</tr>
+<tr>
+<td>CT-MSG-007</td>
+<td>Complex Payload Serialization</td>
+<td>Serializer + All Types</td>
+<td>Nested structs, arrays, unions</td>
+</tr>
+</tbody>
+</table>
+<h4 id="522-transport-component-tests">5.2.2 Transport Component Tests<a class="headerlink" href="#522-transport-component-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Components</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CT-UDP-001</td>
+<td>UDP Socket Creation</td>
+<td>UdpTransport</td>
+<td>Bind to configured port</td>
+</tr>
+<tr>
+<td>CT-UDP-002</td>
+<td>UDP Message Send</td>
+<td>UdpTransport + Message</td>
+<td>Single message transmission</td>
+</tr>
+<tr>
+<td>CT-UDP-003</td>
+<td>UDP Message Receive</td>
+<td>UdpTransport + Deserializer</td>
+<td>Proper message parsing</td>
+</tr>
+<tr>
+<td>CT-UDP-004</td>
+<td>UDP Multicast Join</td>
+<td>UdpTransport</td>
+<td>Join multicast group</td>
+</tr>
+<tr>
+<td>CT-UDP-005</td>
+<td>UDP Multicast Receive</td>
+<td>UdpTransport</td>
+<td>Receive multicast messages</td>
+</tr>
+<tr>
+<td>CT-TCP-001</td>
+<td>TCP Connection Establish</td>
+<td>TcpTransport</td>
+<td>Client connects to server</td>
+</tr>
+<tr>
+<td>CT-TCP-002</td>
+<td>TCP Message Streaming</td>
+<td>TcpTransport + Message</td>
+<td>Multiple messages on stream</td>
+</tr>
+<tr>
+<td>CT-TCP-003</td>
+<td>TCP Magic Cookie</td>
+<td>TcpTransport</td>
+<td>Resync markers per segment</td>
+</tr>
+<tr>
+<td>CT-TCP-004</td>
+<td>TCP Nagle Disabled</td>
+<td>TcpTransport</td>
+<td>TCP_NODELAY set (feat_req_someip_325)</td>
+</tr>
+<tr>
+<td>CT-TCP-005</td>
+<td>TCP Connection Recovery</td>
+<td>TcpTransport</td>
+<td>Client reconnects on failure</td>
+</tr>
+</tbody>
+</table>
+<h4 id="523-tp-component-tests">5.2.3 TP Component Tests<a class="headerlink" href="#523-tp-component-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Components</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CT-TP-001</td>
+<td>Large Message Segmentation</td>
+<td>TpSegmenter</td>
+<td>Correct segment boundaries</td>
+</tr>
+<tr>
+<td>CT-TP-002</td>
+<td>Full Message Reassembly</td>
+<td>TpReassembler</td>
+<td>Original message restored</td>
+</tr>
+<tr>
+<td>CT-TP-003</td>
+<td>Out-of-Order Handling</td>
+<td>TpReassembler</td>
+<td>Reorder distance ≤ 3</td>
+</tr>
+<tr>
+<td>CT-TP-004</td>
+<td>Missing Segment Detection</td>
+<td>TpReassembler</td>
+<td>Timeout/cancellation</td>
+</tr>
+<tr>
+<td>CT-TP-005</td>
+<td>Duplicate Segment Handling</td>
+<td>TpReassembler</td>
+<td>Overwrite with first received</td>
+</tr>
+<tr>
+<td>CT-TP-006</td>
+<td>Session ID Change</td>
+<td>TpReassembler</td>
+<td>Start new reassembly</td>
+</tr>
+</tbody>
+</table>
+<h4 id="524-rpc-component-tests">5.2.4 RPC Component Tests<a class="headerlink" href="#524-rpc-component-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Components</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CT-RPC-001</td>
+<td>Method Registration</td>
+<td>RpcServer + RpcClient</td>
+<td>Method dispatched correctly</td>
+</tr>
+<tr>
+<td>CT-RPC-002</td>
+<td>Request/Response Flow</td>
+<td>RpcServer + RpcClient</td>
+<td>Matching Request ID</td>
+</tr>
+<tr>
+<td>CT-RPC-003</td>
+<td>Fire&amp;Forget Method</td>
+<td>RpcClient</td>
+<td>No response expected</td>
+</tr>
+<tr>
+<td>CT-RPC-004</td>
+<td>Getter Call</td>
+<td>RpcClient</td>
+<td>Empty request, value response</td>
+</tr>
+<tr>
+<td>CT-RPC-005</td>
+<td>Setter Call</td>
+<td>RpcClient</td>
+<td>Value request, ack response</td>
+</tr>
+<tr>
+<td>CT-RPC-006</td>
+<td>Error Response</td>
+<td>RpcServer</td>
+<td>Correct return code handling</td>
+</tr>
+<tr>
+<td>CT-RPC-007</td>
+<td>Timeout Handling</td>
+<td>RpcClient</td>
+<td>E_TIMEOUT on no response</td>
+</tr>
+</tbody>
+</table>
+<h4 id="525-sd-component-tests">5.2.5 SD Component Tests<a class="headerlink" href="#525-sd-component-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Components</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CT-SD-001</td>
+<td>FindService Processing</td>
+<td>SdClient + SdServer</td>
+<td>OfferService response</td>
+</tr>
+<tr>
+<td>CT-SD-002</td>
+<td>OfferService Broadcast</td>
+<td>SdServer</td>
+<td>Multicast + options</td>
+</tr>
+<tr>
+<td>CT-SD-003</td>
+<td>Service Discovery Flow</td>
+<td>SdClient + SdServer</td>
+<td>Find → Offer complete</td>
+</tr>
+<tr>
+<td>CT-SD-004</td>
+<td>Eventgroup Subscribe</td>
+<td>SdClient + SdServer</td>
+<td>Subscribe → Ack flow</td>
+</tr>
+<tr>
+<td>CT-SD-005</td>
+<td>Subscription Refresh</td>
+<td>SdClient</td>
+<td>Before TTL expiry</td>
+</tr>
+<tr>
+<td>CT-SD-006</td>
+<td>StopOfferService</td>
+<td>SdServer</td>
+<td>Service goes down</td>
+</tr>
+<tr>
+<td>CT-SD-007</td>
+<td>Reboot Detection</td>
+<td>SdClient</td>
+<td>Reboot flag + Session ID logic</td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-component-test-implementation">5.3 Component Test Implementation<a class="headerlink" href="#53-component-test-implementation" title="Permanent link">&para;</a></h3>
+<p><strong>Location</strong>: <code>tests/integration/</code> and enhanced unit tests
+<strong>Framework</strong>: Google Test + Python pytest
+<strong>Coverage Target</strong>: All module interfaces tested</p>
+<hr />
+<h2 id="6-level-3-integration-testing">6. Level 3: Integration Testing<a class="headerlink" href="#6-level-3-integration-testing" title="Permanent link">&para;</a></h2>
+<h3 id="61-purpose">6.1 Purpose<a class="headerlink" href="#61-purpose" title="Permanent link">&para;</a></h3>
+<p>Verify complete subsystems work together correctly.</p>
+<h3 id="62-test-categories">6.2 Test Categories<a class="headerlink" href="#62-test-categories" title="Permanent link">&para;</a></h3>
+<h4 id="621-end-to-end-rpc-integration-tests">6.2.1 End-to-End RPC Integration Tests<a class="headerlink" href="#621-end-to-end-rpc-integration-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Subsystems</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IT-RPC-001</td>
+<td>Echo Service E2E</td>
+<td>Client + Server + Transport</td>
+<td>Request echoed back correctly</td>
+</tr>
+<tr>
+<td>IT-RPC-002</td>
+<td>Calculator Service</td>
+<td>Client + Server + Serialization</td>
+<td>Correct arithmetic results</td>
+</tr>
+<tr>
+<td>IT-RPC-003</td>
+<td>Multiple Clients</td>
+<td>Multiple Clients + Server</td>
+<td>Concurrent handling</td>
+</tr>
+<tr>
+<td>IT-RPC-004</td>
+<td>Large Payload via TCP</td>
+<td>Client + Server + TCP</td>
+<td>&gt;1400 byte payload</td>
+</tr>
+<tr>
+<td>IT-RPC-005</td>
+<td>Large Payload via TP</td>
+<td>Client + Server + TP + UDP</td>
+<td>Segmentation/reassembly</td>
+</tr>
+<tr>
+<td>IT-RPC-006</td>
+<td>Mixed UDP/TCP</td>
+<td>Client + Server</td>
+<td>Protocol selection</td>
+</tr>
+<tr>
+<td>IT-RPC-007</td>
+<td>Service Instance Routing</td>
+<td>Multiple Instances</td>
+<td>Port-based dispatch</td>
+</tr>
+</tbody>
+</table>
+<h4 id="622-service-discovery-integration-tests">6.2.2 Service Discovery Integration Tests<a class="headerlink" href="#622-service-discovery-integration-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Subsystems</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IT-SD-001</td>
+<td>Full Discovery Cycle</td>
+<td>SdClient + SdServer + Network</td>
+<td>Find → Offer → Use</td>
+</tr>
+<tr>
+<td>IT-SD-002</td>
+<td>Multiple Services Discovery</td>
+<td>Multiple SdServers</td>
+<td>All discovered</td>
+</tr>
+<tr>
+<td>IT-SD-003</td>
+<td>Service Timeout</td>
+<td>SdClient + SdServer</td>
+<td>TTL expiry detected</td>
+</tr>
+<tr>
+<td>IT-SD-004</td>
+<td>Dynamic Service Start</td>
+<td>SdServer + SdClient</td>
+<td>Late service discovered</td>
+</tr>
+<tr>
+<td>IT-SD-005</td>
+<td>Eventgroup Subscription</td>
+<td>SdClient + EventPublisher</td>
+<td>Events received after subscribe</td>
+</tr>
+<tr>
+<td>IT-SD-006</td>
+<td>Multicast Events</td>
+<td>Multiple SdClients</td>
+<td>All subscribers receive</td>
+</tr>
+<tr>
+<td>IT-SD-007</td>
+<td>Initial Events on Subscribe</td>
+<td>SdServer + Fields</td>
+<td>Field value on subscribe</td>
+</tr>
+</tbody>
+</table>
+<h4 id="623-event-system-integration-tests">6.2.3 Event System Integration Tests<a class="headerlink" href="#623-event-system-integration-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Subsystems</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IT-EVT-001</td>
+<td>Event Publish/Subscribe</td>
+<td>Publisher + Subscriber + SD</td>
+<td>Events received</td>
+</tr>
+<tr>
+<td>IT-EVT-002</td>
+<td>Multiple Eventgroups</td>
+<td>Publisher + Multiple Subscribers</td>
+<td>Correct dispatch</td>
+</tr>
+<tr>
+<td>IT-EVT-003</td>
+<td>Event Filtering</td>
+<td>Publisher + Selective Clients</td>
+<td>Only subscribed receive</td>
+</tr>
+<tr>
+<td>IT-EVT-004</td>
+<td>Field Notifier</td>
+<td>Field + Notifier + Subscribers</td>
+<td>On-change notifications</td>
+</tr>
+<tr>
+<td>IT-EVT-005</td>
+<td>Cyclic Events</td>
+<td>Publisher + Timer</td>
+<td>Regular event sending</td>
+</tr>
+<tr>
+<td>IT-EVT-006</td>
+<td>Multicast Threshold</td>
+<td>Publisher + Many Subscribers</td>
+<td>Switch to multicast</td>
+</tr>
+</tbody>
+</table>
+<h4 id="624-transport-protocol-integration-tests">6.2.4 Transport Protocol Integration Tests<a class="headerlink" href="#624-transport-protocol-integration-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Subsystems</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IT-TP-001</td>
+<td>128KB Message via TP</td>
+<td>TP + UDP + App</td>
+<td>Complete transfer</td>
+</tr>
+<tr>
+<td>IT-TP-002</td>
+<td>TP with Packet Loss</td>
+<td>TP + Lossy Network</td>
+<td>Timeout/retry behavior</td>
+</tr>
+<tr>
+<td>IT-TP-003</td>
+<td>TP Session Interleaving</td>
+<td>TP + Multiple Clients</td>
+<td>Correct reassembly</td>
+</tr>
+<tr>
+<td>IT-TP-004</td>
+<td>TP Traffic Shaping</td>
+<td>TP + Rate Limiter</td>
+<td>Burst control</td>
+</tr>
+</tbody>
+</table>
+<h3 id="63-integration-test-implementation">6.3 Integration Test Implementation<a class="headerlink" href="#63-integration-test-implementation" title="Permanent link">&para;</a></h3>
+<p><strong>Location</strong>: <code>tests/integration/</code>, <code>tests/system/</code>
+<strong>Framework</strong>: Python pytest + C++ integration
+<strong>Coverage Target</strong>: All inter-module interfaces tested</p>
+<hr />
+<h2 id="7-level-4-system-testing">7. Level 4: System Testing<a class="headerlink" href="#7-level-4-system-testing" title="Permanent link">&para;</a></h2>
+<h3 id="71-purpose">7.1 Purpose<a class="headerlink" href="#71-purpose" title="Permanent link">&para;</a></h3>
+<p>Validate complete system behavior against requirements.</p>
+<h3 id="72-test-categories">7.2 Test Categories<a class="headerlink" href="#72-test-categories" title="Permanent link">&para;</a></h3>
+<h4 id="721-protocol-conformance-tests">7.2.1 Protocol Conformance Tests<a class="headerlink" href="#721-protocol-conformance-tests" title="Permanent link">&para;</a></h4>
+<p><strong>Specification References</strong>: Complete someip-rpc.rst, someip-sd.rst, someip-tp.rst</p>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Specification Section</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ST-CONF-001</td>
+<td>Header Format Compliance</td>
+<td>feat_req_someip_45</td>
+<td>All header fields per spec</td>
+</tr>
+<tr>
+<td>ST-CONF-002</td>
+<td>Big-Endian Verification</td>
+<td>feat_req_someip_42</td>
+<td>Network byte order</td>
+</tr>
+<tr>
+<td>ST-CONF-003</td>
+<td>Message Type Compliance</td>
+<td>feat_req_someip_95</td>
+<td>All types per table</td>
+</tr>
+<tr>
+<td>ST-CONF-004</td>
+<td>Return Code Compliance</td>
+<td>feat_req_someip_371</td>
+<td>All codes per table</td>
+</tr>
+<tr>
+<td>ST-CONF-005</td>
+<td>SD Format Compliance</td>
+<td>feat_req_someipsd_205</td>
+<td>SD header + entries + options</td>
+</tr>
+<tr>
+<td>ST-CONF-006</td>
+<td>TP Format Compliance</td>
+<td>feat_req_someiptp_832</td>
+<td>TP header format</td>
+</tr>
+<tr>
+<td>ST-CONF-007</td>
+<td>Reserved ID Handling</td>
+<td>feat_req_someipids_*</td>
+<td>Reserved values respected</td>
+</tr>
+</tbody>
+</table>
+<h4 id="722-behavior-conformance-tests">7.2.2 Behavior Conformance Tests<a class="headerlink" href="#722-behavior-conformance-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Specification Section</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ST-BEH-001</td>
+<td>Request/Response Pattern</td>
+<td>feat_req_someip_329</td>
+<td>Header construction per spec</td>
+</tr>
+<tr>
+<td>ST-BEH-002</td>
+<td>Fire&amp;Forget Pattern</td>
+<td>feat_req_someip_345</td>
+<td>No response, correct type</td>
+</tr>
+<tr>
+<td>ST-BEH-003</td>
+<td>Event Pattern</td>
+<td>feat_req_someip_354</td>
+<td>Replication handling</td>
+</tr>
+<tr>
+<td>ST-BEH-004</td>
+<td>Field Getter/Setter</td>
+<td>feat_req_someip_631-635</td>
+<td>Correct payloads</td>
+</tr>
+<tr>
+<td>ST-BEH-005</td>
+<td>Error Processing Flow</td>
+<td>feat_req_someip_718</td>
+<td>Error check order</td>
+</tr>
+<tr>
+<td>ST-BEH-006</td>
+<td>SD Startup Phases</td>
+<td>feat_req_someipsd_68</td>
+<td>Initial/Repetition/Main</td>
+</tr>
+<tr>
+<td>ST-BEH-007</td>
+<td>SD Timing Parameters</td>
+<td>feat_req_someipsd_62-65</td>
+<td>INITIAL_DELAY randomization</td>
+</tr>
+</tbody>
+</table>
+<h4 id="723-robustness-tests">7.2.3 Robustness Tests<a class="headerlink" href="#723-robustness-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Requirement</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ST-ROB-001</td>
+<td>Malformed Message Handling</td>
+<td>feat_req_someip_721</td>
+<td>E_MALFORMED_MESSAGE</td>
+</tr>
+<tr>
+<td>ST-ROB-002</td>
+<td>Unknown Service Response</td>
+<td>feat_req_someip_816</td>
+<td>E_UNKNOWN_SERVICE (optional)</td>
+</tr>
+<tr>
+<td>ST-ROB-003</td>
+<td>Unknown Method Response</td>
+<td>feat_req_someip_816</td>
+<td>E_UNKNOWN_METHOD (optional)</td>
+</tr>
+<tr>
+<td>ST-ROB-004</td>
+<td>Protocol Version Mismatch</td>
+<td>feat_req_someip_703</td>
+<td>Correct version in response</td>
+</tr>
+<tr>
+<td>ST-ROB-005</td>
+<td>Interface Version Mismatch</td>
+<td>feat_req_someip_92</td>
+<td>E_WRONG_INTERFACE_VERSION</td>
+</tr>
+<tr>
+<td>ST-ROB-006</td>
+<td>Invalid Length Handling</td>
+<td>feat_req_someip_798</td>
+<td>Ignore if length &lt; 8</td>
+</tr>
+<tr>
+<td>ST-ROB-007</td>
+<td>TP Error Recovery</td>
+<td>feat_req_someiptp_792</td>
+<td>Buffer overflow prevented</td>
+</tr>
+<tr>
+<td>ST-ROB-008</td>
+<td>SD Invalid Option</td>
+<td>feat_req_someipsd_1142</td>
+<td>Unknown option ignored</td>
+</tr>
+<tr>
+<td>ST-ROB-009</td>
+<td>SD Conflicting Options</td>
+<td>feat_req_someipsd_1144</td>
+<td>Entry rejected/ignored</td>
+</tr>
+</tbody>
+</table>
+<h4 id="724-performance-tests">7.2.4 Performance Tests<a class="headerlink" href="#724-performance-tests" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>Test ID</th>
+<th>Test Case</th>
+<th>Metric</th>
+<th>Acceptance Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ST-PERF-001</td>
+<td>Message Throughput</td>
+<td>Messages/sec</td>
+<td>≥10,000 msg/s</td>
+</tr>
+<tr>
+<td>ST-PERF-002</td>
+<td>Serialization Latency</td>
+<td>μs/message</td>
+<td>≤100 μs</td>
+</tr>
+<tr>
+<td>ST-PERF-003</td>
+<td>Request/Response Latency</td>
+<td>Round-trip time</td>
+<td>≤5 ms (localhost)</td>
+</tr>
+<tr>
+<td>ST-PERF-004</td>
+<td>SD Discovery Time</td>
+<td>Time to discover</td>
+<td>≤INITIAL_DELAY + margin</td>
+</tr>
+<tr>
+<td>ST-PERF-005</td>
+<td>TP Reassembly Rate</td>
+<td>MB/s</td>
+<td>≥10 MB/s</td>
+</tr>
+<tr>
+<td>ST-PERF-006</td>
+<td>Concurrent Connections</td>
+<td>Connection count</td>
+<td>≥100 simultaneous</td>
+</tr>
+<tr>
+<td>ST-PERF-007</td>
+<td>Memory Usage</td>
+<td>Bytes/connection</td>
+<td>≤1 MB</td>
+</tr>
+<tr>
+<td>ST-PERF-008</td>
+<td>CPU Utilization</td>
+<td>% under load</td>
+<td>≤50% single core</td>
+</tr>
+</tbody>
+</table>
+<h3 id="73-system-test-implementation">7.3 System Test Implementation<a class="headerlink" href="#73-system-test-implementation" title="Permanent link">&para;</a></h3>
+<p><strong>Location</strong>: <code>tests/system/</code>, <code>tests/specification_test.py</code>
+<strong>Framework</strong>: Python pytest + custom harness
+<strong>Coverage Target</strong>: All specification requirements covered</p>
+<hr />
+<h2 id="8-level-5-acceptance-testing">8. Level 5: Acceptance Testing<a class="headerlink" href="#8-level-5-acceptance-testing" title="Permanent link">&para;</a></h2>
+<h3 id="81-purpose">8.1 Purpose<a class="headerlink" href="#81-purpose" title="Permanent link">&para;</a></h3>
+<p>Final validation that the implementation meets all stakeholder requirements.</p>
+<h3 id="82-acceptance-criteria-categories">8.2 Acceptance Criteria Categories<a class="headerlink" href="#82-acceptance-criteria-categories" title="Permanent link">&para;</a></h3>
+<h4 id="821-protocol-interoperability">8.2.1 Protocol Interoperability<a class="headerlink" href="#821-protocol-interoperability" title="Permanent link">&para;</a></h4>
+<p><strong>Objective</strong>: Implementation can communicate with other SOME/IP stacks</p>
+<table>
+<thead>
+<tr>
+<th>Criteria ID</th>
+<th>Acceptance Criteria</th>
+<th>Validation Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AC-INT-001</td>
+<td>Messages parseable by third-party tools (Wireshark)</td>
+<td>Manual verification</td>
+</tr>
+<tr>
+<td>AC-INT-002</td>
+<td>Interoperable with reference implementation</td>
+<td>Cross-stack testing</td>
+</tr>
+<tr>
+<td>AC-INT-003</td>
+<td>SD messages understood by other SD implementations</td>
+<td>Cross-vendor testing</td>
+</tr>
+<tr>
+<td>AC-INT-004</td>
+<td>TP segmented messages correctly reassembled by others</td>
+<td>Cross-vendor testing</td>
+</tr>
+</tbody>
+</table>
+<h4 id="822-specification-compliance">8.2.2 Specification Compliance<a class="headerlink" href="#822-specification-compliance" title="Permanent link">&para;</a></h4>
+<p><strong>Objective</strong>: 100% compliance with mandatory requirements</p>
+<table>
+<thead>
+<tr>
+<th>Criteria ID</th>
+<th>Acceptance Criteria</th>
+<th>Validation Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AC-SPEC-001</td>
+<td>All CRITICAL requirements implemented</td>
+<td>Traceability matrix</td>
+</tr>
+<tr>
+<td>AC-SPEC-002</td>
+<td>All HIGH requirements implemented</td>
+<td>Traceability matrix</td>
+</tr>
+<tr>
+<td>AC-SPEC-003</td>
+<td>Message format byte-exact to specification</td>
+<td>Bit-level comparison</td>
+</tr>
+<tr>
+<td>AC-SPEC-004</td>
+<td>SD behavior matches specification state machines</td>
+<td>Behavioral testing</td>
+</tr>
+<tr>
+<td>AC-SPEC-005</td>
+<td>TP handling matches specification algorithms</td>
+<td>Algorithmic testing</td>
+</tr>
+</tbody>
+</table>
+<h4 id="823-functional-completeness">8.2.3 Functional Completeness<a class="headerlink" href="#823-functional-completeness" title="Permanent link">&para;</a></h4>
+<p><strong>Objective</strong>: All specified features work correctly</p>
+<table>
+<thead>
+<tr>
+<th>Criteria ID</th>
+<th>Acceptance Criteria</th>
+<th>Validation Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AC-FUNC-001</td>
+<td>Request/Response RPC operational</td>
+<td>Integration test</td>
+</tr>
+<tr>
+<td>AC-FUNC-002</td>
+<td>Fire&amp;Forget RPC operational</td>
+<td>Integration test</td>
+</tr>
+<tr>
+<td>AC-FUNC-003</td>
+<td>Events/Notifications operational</td>
+<td>Integration test</td>
+</tr>
+<tr>
+<td>AC-FUNC-004</td>
+<td>Fields (getter/setter/notifier) operational</td>
+<td>Integration test</td>
+</tr>
+<tr>
+<td>AC-FUNC-005</td>
+<td>Service Discovery operational</td>
+<td>Integration test</td>
+</tr>
+<tr>
+<td>AC-FUNC-006</td>
+<td>TP segmentation/reassembly operational</td>
+<td>Integration test</td>
+</tr>
+<tr>
+<td>AC-FUNC-007</td>
+<td>UDP transport operational</td>
+<td>Integration test</td>
+</tr>
+<tr>
+<td>AC-FUNC-008</td>
+<td>TCP transport operational</td>
+<td>Integration test</td>
+</tr>
+</tbody>
+</table>
+<h4 id="824-quality-attributes">8.2.4 Quality Attributes<a class="headerlink" href="#824-quality-attributes" title="Permanent link">&para;</a></h4>
+<p><strong>Objective</strong>: Non-functional requirements met</p>
+<table>
+<thead>
+<tr>
+<th>Criteria ID</th>
+<th>Acceptance Criteria</th>
+<th>Validation Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AC-QUAL-001</td>
+<td>No memory leaks under sustained operation</td>
+<td>Valgrind/ASAN</td>
+</tr>
+<tr>
+<td>AC-QUAL-002</td>
+<td>No crashes under malformed input</td>
+<td>Fuzz testing</td>
+</tr>
+<tr>
+<td>AC-QUAL-003</td>
+<td>Thread-safe operation</td>
+<td>Concurrent testing</td>
+</tr>
+<tr>
+<td>AC-QUAL-004</td>
+<td>Deterministic behavior</td>
+<td>Repeated testing</td>
+</tr>
+<tr>
+<td>AC-QUAL-005</td>
+<td>Graceful degradation under overload</td>
+<td>Stress testing</td>
+</tr>
+</tbody>
+</table>
+<h4 id="825-documentation-and-traceability">8.2.5 Documentation and Traceability<a class="headerlink" href="#825-documentation-and-traceability" title="Permanent link">&para;</a></h4>
+<p><strong>Objective</strong>: Complete documentation and requirement coverage</p>
+<table>
+<thead>
+<tr>
+<th>Criteria ID</th>
+<th>Acceptance Criteria</th>
+<th>Validation Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AC-DOC-001</td>
+<td>All APIs documented</td>
+<td>Documentation review</td>
+</tr>
+<tr>
+<td>AC-DOC-002</td>
+<td>All requirements traced to tests</td>
+<td>Traceability matrix</td>
+</tr>
+<tr>
+<td>AC-DOC-003</td>
+<td>Test results documented</td>
+<td>Test reports</td>
+</tr>
+<tr>
+<td>AC-DOC-004</td>
+<td>Known limitations documented</td>
+<td>Release notes</td>
+</tr>
+</tbody>
+</table>
+<h3 id="83-acceptance-test-execution">8.3 Acceptance Test Execution<a class="headerlink" href="#83-acceptance-test-execution" title="Permanent link">&para;</a></h3>
+<h4 id="831-pre-acceptance-checklist">8.3.1 Pre-Acceptance Checklist<a class="headerlink" href="#831-pre-acceptance-checklist" title="Permanent link">&para;</a></h4>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> All Level 1-4 tests pass</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Code coverage ≥90%</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> No critical or high severity defects open</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> All documentation complete</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Traceability matrix updated</li>
+</ul>
+<h4 id="832-acceptance-test-procedure">8.3.2 Acceptance Test Procedure<a class="headerlink" href="#832-acceptance-test-procedure" title="Permanent link">&para;</a></h4>
+<ol>
+<li><strong>Protocol Conformance Verification</strong></li>
+<li>Run conformance test suite</li>
+<li>Verify Wireshark dissection</li>
+<li>
+<p>Generate compliance report</p>
+</li>
+<li>
+<p><strong>Functional Acceptance</strong></p>
+</li>
+<li>Execute all integration tests</li>
+<li>Verify all use cases</li>
+<li>
+<p>Document results</p>
+</li>
+<li>
+<p><strong>Performance Acceptance</strong></p>
+</li>
+<li>Run performance benchmarks</li>
+<li>Verify against thresholds</li>
+<li>
+<p>Document metrics</p>
+</li>
+<li>
+<p><strong>Quality Acceptance</strong></p>
+</li>
+<li>Run static analysis</li>
+<li>Execute memory checks</li>
+<li>
+<p>Complete fuzz testing</p>
+</li>
+<li>
+<p><strong>Final Sign-Off</strong></p>
+</li>
+<li>Review all results</li>
+<li>Document deviations</li>
+<li>Obtain stakeholder approval</li>
+</ol>
+<hr />
+<h2 id="9-test-environment-requirements">9. Test Environment Requirements<a class="headerlink" href="#9-test-environment-requirements" title="Permanent link">&para;</a></h2>
+<h3 id="91-hardware-requirements">9.1 Hardware Requirements<a class="headerlink" href="#91-hardware-requirements" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Multi-core CPU (≥4 cores) for concurrent testing</li>
+<li>≥8 GB RAM for large message testing</li>
+<li>Network interface with multicast support</li>
+<li>Optional: Multiple network interfaces for multi-ECU simulation</li>
+</ul>
+<h3 id="92-software-requirements">9.2 Software Requirements<a class="headerlink" href="#92-software-requirements" title="Permanent link">&para;</a></h3>
+<ul>
+<li>C++17 compatible compiler</li>
+<li>CMake ≥3.14</li>
+<li>Python ≥3.8</li>
+<li>Google Test framework</li>
+<li>pytest + pytest-cov</li>
+<li>Wireshark (for protocol verification)</li>
+<li>Valgrind/AddressSanitizer (for memory testing)</li>
+</ul>
+<h3 id="93-network-configuration">9.3 Network Configuration<a class="headerlink" href="#93-network-configuration" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Loopback interface for local testing</li>
+<li>Multicast routing enabled</li>
+<li>Configurable firewall for port access</li>
+<li>Network simulation tools (optional)</li>
+</ul>
+<hr />
+<h2 id="10-test-execution-and-reporting">10. Test Execution and Reporting<a class="headerlink" href="#10-test-execution-and-reporting" title="Permanent link">&para;</a></h2>
+<h3 id="101-continuous-integration">10.1 Continuous Integration<a class="headerlink" href="#101-continuous-integration" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Example CI Pipeline</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">stages</span><span class="p">:</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">build</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unit-test</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">component-test</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">integration-test</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system-test</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acceptance-check</span>
+</span></code></pre></div>
+<h3 id="102-test-commands">10.2 Test Commands<a class="headerlink" href="#102-test-commands" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Level 1: Unit Tests</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">cd</span><span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>ctest<span class="w"> </span>--output-on-failure
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Level 2: Component Tests</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>python<span class="w"> </span>tests/run_tests.py<span class="w"> </span>--component-only
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Level 3: Integration Tests</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>python<span class="w"> </span>tests/run_tests.py<span class="w"> </span>--integration-only
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Level 4: System Tests</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>python<span class="w"> </span>tests/run_tests.py<span class="w"> </span>--specification-only<span class="w"> </span>--conformance-only
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># Level 5: Acceptance Tests</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>python<span class="w"> </span>tests/run_tests.py<span class="w"> </span>--all<span class="w"> </span>--generate-coverage-report
+</span></code></pre></div>
+<h3 id="103-reporting">10.3 Reporting<a class="headerlink" href="#103-reporting" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Test Results</strong>: JUnit XML format</li>
+<li><strong>Coverage Reports</strong>: HTML + LCOV format</li>
+<li><strong>Traceability Reports</strong>: Markdown + CSV</li>
+<li><strong>Compliance Reports</strong>: Per-requirement status</li>
+</ul>
+<hr />
+<h2 id="11-requirement-traceability">11. Requirement Traceability<a class="headerlink" href="#11-requirement-traceability" title="Permanent link">&para;</a></h2>
+<h3 id="111-specification-to-test-mapping">11.1 Specification to Test Mapping<a class="headerlink" href="#111-specification-to-test-mapping" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Specification Section</th>
+<th>Requirement Range</th>
+<th>Test Suites</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Message Format</td>
+<td>feat_req_someip_29-164</td>
+<td>UT-MSG-<em>, CT-MSG-</em>, ST-CONF-*</td>
+</tr>
+<tr>
+<td>Serialization</td>
+<td>feat_req_someip_167-299</td>
+<td>UT-SER-<em>, CT-MSG-</em></td>
+</tr>
+<tr>
+<td>Transport Bindings</td>
+<td>feat_req_someip_315-449</td>
+<td>CT-UDP-<em>, CT-TCP-</em>, IT-RPC-*</td>
+</tr>
+<tr>
+<td>RPC Protocol</td>
+<td>feat_req_someip_313-443</td>
+<td>CT-RPC-<em>, IT-RPC-</em></td>
+</tr>
+<tr>
+<td>Service Discovery</td>
+<td>feat_req_someipsd_1-900</td>
+<td>UT-SD-<em>, CT-SD-</em>, IT-SD-*</td>
+</tr>
+<tr>
+<td>Transport Protocol</td>
+<td>feat_req_someiptp_759-820</td>
+<td>UT-TP-<em>, CT-TP-</em>, IT-TP-*</td>
+</tr>
+<tr>
+<td>Error Handling</td>
+<td>feat_req_someip_364-443</td>
+<td>ST-ROB-*</td>
+</tr>
+<tr>
+<td>Reserved IDs</td>
+<td>feat_req_someipids_504-875</td>
+<td>ST-CONF-007</td>
+</tr>
+</tbody>
+</table>
+<h3 id="112-gap-analysis">11.2 Gap Analysis<a class="headerlink" href="#112-gap-analysis" title="Permanent link">&para;</a></h3>
+<p>Current implementation gaps requiring future work:
+- <strong>E2E Protection</strong>: Not implemented (feat_req_someip_102-103)
+- <strong>IPv6 Support</strong>: Limited (feat_req_someipsd_140-164)
+- <strong>Load Balancing Option</strong>: Informational only (feat_req_someipsd_145-175)</p>
+<hr />
+<h2 id="12-appendices">12. Appendices<a class="headerlink" href="#12-appendices" title="Permanent link">&para;</a></h2>
+<h3 id="appendix-a-complete-requirement-ids-reference">Appendix A: Complete Requirement IDs Reference<a class="headerlink" href="#appendix-a-complete-requirement-ids-reference" title="Permanent link">&para;</a></h3>
+<p>See <code>TRACEABILITY_MATRIX.md</code> for full requirement mapping.</p>
+<h3 id="appendix-b-test-data-specifications">Appendix B: Test Data Specifications<a class="headerlink" href="#appendix-b-test-data-specifications" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Valid message examples</li>
+<li>Boundary condition data</li>
+<li>Malformed message examples</li>
+<li>Large payload test data</li>
+</ul>
+<h3 id="appendix-c-glossary">Appendix C: Glossary<a class="headerlink" href="#appendix-c-glossary" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>ECU</strong>: Electronic Control Unit</li>
+<li><strong>SD</strong>: Service Discovery</li>
+<li><strong>TP</strong>: Transport Protocol</li>
+<li><strong>RPC</strong>: Remote Procedure Call</li>
+<li><strong>TTL</strong>: Time To Live</li>
+<li><strong>BOM</strong>: Byte Order Mark</li>
+</ul>
+<hr />
+<h2 id="document-control">Document Control<a class="headerlink" href="#document-control" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Author</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>2025-12-13</td>
+<td>Test Team</td>
+<td>Initial version based on Open SOME/IP Specification</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>This test plan ensures comprehensive validation of the SOME/IP stack implementation against the Open SOME/IP Specification, following industry-standard V-Model methodology.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../examples/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Overview
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../TEST_PLAN_STATUS/" class="md-footer__link md-footer__link--next" aria-label="Next: Test Status">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Test Status
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025-2026 Vinicius Tadeu Zein &mdash; Apache License 2.0
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/vtz/opensomeip" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

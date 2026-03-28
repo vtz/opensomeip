@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>OpenSOMEIP Requirements &#8212; OpenSOMEIP Requirements</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-data-viewer/jsonview.bundle.css?v=f6ef2277" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-needs/libs/html/datatables.min.css?v=4b4fd840" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-needs/common_css/need_style.css?v=92936fa5" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-needs/common_css/need_toggle.css?v=5c6620df" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-needs/common_css/need_core.css?v=f5b60a78" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-needs/common_css/need_links.css?v=2150a916" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-needs/common_css/needstable.css?v=5e1b6797" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-needs/modern.css?v=803738c0" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=d5a60f39" />
+    <script src="_static/jquery.js?v=5d32c60e"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/sphinx-data-viewer/jsonview.bundle.js?v=18cd53c5"></script>
+    <script src="_static/sphinx-data-viewer/jsonview_loader.js?v=f7ff7e7d"></script>
+    <script src="_static/sphinx-needs/libs/html/datatables.min.js?v=8a4aee21"></script>
+    <script src="_static/sphinx-needs/libs/html/datatables_loader.js?v=a2cae175"></script>
+    <script src="_static/sphinx-needs/libs/html/sphinx_needs_collapse.js?v=dca66431"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Specification Requirements" href="spec_references.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="opensomeip-requirements">
+<h1>OpenSOMEIP Requirements<a class="headerlink" href="#opensomeip-requirements" title="Link to this heading">¶</a></h1>
+<p>This documentation defines the requirements for the OpenSOMEIP implementation.
+Requirements are traced to the Open SOME/IP Specification and linked to code
+and test cases for full bidirectional traceability.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>The OpenSOMEIP requirements are organized into the following categories:</p>
+<ol class="arabic simple">
+<li><p><strong>Specification Requirements</strong>: Imported from the Open SOME/IP Specification</p></li>
+<li><p><strong>Implementation Requirements</strong>: OpenSOMEIP-specific requirements that satisfy spec requirements</p></li>
+<li><p><strong>Test Cases</strong>: Test coverage mapped to requirements</p></li>
+<li><p><strong>Code References</strong>: Code locations implementing requirements</p></li>
+</ol>
+</section>
+<section id="traceability-model">
+<h2>Traceability Model<a class="headerlink" href="#traceability-model" title="Link to this heading">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>open-someip-spec Requirements (feat_req_someip_*)
+  ↓ satisfies
+OpenSOMEIP Requirements (REQ_*)
+  ↓ implements
+Code Locations (src/**/*.cpp, include/**/*.h)
+  ↓ tested_by
+Test Cases (tests/**/*.cpp, tests/**/*.py)
+</pre></div>
+</div>
+</section>
+<section id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Link to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Requirements</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="spec_references.html">Specification Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spec_references.html#key-specification-requirements">Key Specification Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spec_references.html#imported-requirements">Imported Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spec_references.html#viewing-imported-requirements">Viewing Imported Requirements</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/e2e_plugin.html">E2E Plugin Mechanism</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="implementation/e2e_plugin.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/e2e_plugin.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/e2e_plugin.html#traceability">Traceability</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/transport.html">Transport Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport.html#transport-protocol-binding">Transport Protocol Binding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport.html#tcp-connection-management">TCP Connection Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport.html#magic-cookie-support">Magic Cookie Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport.html#service-instance-binding">Service Instance Binding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport.html#magic-cookie-details">Magic Cookie Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport.html#traceability">Traceability</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/architecture.html">Architecture Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="implementation/architecture.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/architecture.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/architecture.html#traceability">Traceability</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/message_header.html">Message Header Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#message-id-parsing">Message ID Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#length-field-parsing">Length Field Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#request-id-parsing">Request ID Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#protocol-version-parsing">Protocol Version Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#interface-version-parsing">Interface Version Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#message-type-parsing">Message Type Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#return-code-parsing">Return Code Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#endianness-requirements">Endianness Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#header-validation-composite-requirements">Header Validation Composite Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#identifier-ranges">Identifier Ranges</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#rpc-communication-patterns">RPC Communication Patterns</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#event-and-field-support">Event and Field Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#error-handling-extensions">Error Handling Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#header-informational-references">Header Informational References</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/message_header.html#traceability">Traceability</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/serialization.html">Serialization Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#primitive-type-serialization">Primitive Type Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#boolean-type-serialization">Boolean Type Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#floating-point-serialization">Floating Point Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#array-serialization">Array Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#string-serialization">String Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#struct-serialization">Struct Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#buffer-management">Buffer Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#alignment-support">Alignment Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#enumeration-serialization">Enumeration Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#bitfield-serialization">Bitfield Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#union-variant-serialization">Union/Variant Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#optional-parameter-serialization">Optional Parameter Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#multidimensional-array-serialization">Multidimensional Array Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#advanced-string-serialization">Advanced String Serialization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#struct-length-field">Struct Length Field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#serialization-warnings">Serialization Warnings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/serialization.html#traceability">Traceability</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/service_discovery.html">Service Discovery Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-message-format">SD Message Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#entry-parsing">Entry Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#ttl-processing">TTL Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#reboot-detection">Reboot Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#options-parsing">Options Parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#service-state-machine">Service State Machine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#subscription-management">Subscription Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#timing-and-repetition">Timing and Repetition</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-communication-phases">SD Communication Phases</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-entry-processing">SD Entry Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-option-handling">SD Option Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-state-machines">SD State Machines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-endpoint-handling">SD Endpoint Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-error-handling">SD Error Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-multicast-communication">SD Multicast Communication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-session-handling">SD Session Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-minor-version-handling">SD Minor Version Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-general-message-format">SD General Message Format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-header-details">SD Header Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-entry-format-details">SD Entry Format Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-option-format-details">SD Option Format Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-option-referencing-details">SD Option Referencing Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-findservice-message-details">SD FindService Message Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-offerservice-message-details">SD OfferService Message Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-subscribeeventgroup-message-details">SD SubscribeEventgroup Message Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-communication-behavior-details">SD Communication Behavior Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-endpoint-handling-details">SD Endpoint Handling Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-service-registration-and-discovery">SD Service Registration and Discovery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-shutdown-and-recovery">SD Shutdown and Recovery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-non-some-ip-protocol-support">SD Non-SOME/IP Protocol Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-initial-event-handling">SD Initial Event Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#sd-advanced-features">SD Advanced Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/service_discovery.html#traceability">Traceability</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/transport_protocol.html">Transport Protocol Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#segmentation-requirements">Segmentation Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#tp-header-requirements">TP Header Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#reassembly-requirements">Reassembly Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#timeout-handling">Timeout Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#statistics-and-monitoring">Statistics and Monitoring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#sender-behavior">Sender Behavior</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#receiver-behavior-extensions">Receiver Behavior Extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#tp-informational-references">TP Informational References</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/transport_protocol.html#traceability">Traceability</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/platform.html">Platform Abstraction Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="implementation/platform.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/platform.html#pal-architecture">PAL Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/platform.html#pal-interface-contracts">PAL Interface Contracts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/platform.html#platform-backends">Platform Backends</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/compatibility.html">Compatibility and Migration Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="implementation/compatibility.html#forward-compatibility">Forward Compatibility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/compatibility.html#multi-version-service-support">Multi-Version Service Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/compatibility.html#reserved-identifier-handling">Reserved Identifier Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/compatibility.html#compatibility-informational">Compatibility Informational</a></li>
+<li class="toctree-l2"><a class="reference internal" href="implementation/compatibility.html#traceability">Traceability</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+<li><p><span class="xref std std-ref">needsindex</span></p></li>
+</ul>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">OpenSOMEIP Requirements</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Requirements</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="spec_references.html">Specification Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/e2e_plugin.html">E2E Plugin Mechanism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/transport.html">Transport Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/architecture.html">Architecture Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/message_header.html">Message Header Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/serialization.html">Serialization Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/service_discovery.html">Service Discovery Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/transport_protocol.html">Transport Protocol Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/platform.html">Platform Abstraction Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="implementation/compatibility.html">Compatibility and Migration Requirements</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="spec_references.html" title="next chapter">Specification Requirements</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Vinicius Tadeu Zein.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,4 @@
+# Sphinx documentation dependencies for OpenSOMEIP requirements
+sphinx>=7.0.0
+sphinx-needs>=5.0.0
+sphinxcontrib-plantuml>=0.30
