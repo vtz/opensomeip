@@ -49,7 +49,7 @@ Result EventDrivenUdpTransport::send_message(const Message& message, const Endpo
         return Result::BUFFER_OVERFLOW;
     }
     if (config_.max_message_size > 0 && data.size() > config_.max_message_size) {
-        // Same policy as UdpTransport: warn path reserved for TP segmentation
+        return Result::BUFFER_OVERFLOW;
     }
 
     return adapter_.send(data, endpoint);
@@ -137,7 +137,7 @@ Result EventDrivenUdpTransport::stop() {
 }
 
 bool EventDrivenUdpTransport::is_running() const {
-    return running_;
+    return running_.load();
 }
 
 Result EventDrivenUdpTransport::join_multicast_group(const std::string& multicast_address) {

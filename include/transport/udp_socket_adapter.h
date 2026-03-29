@@ -75,6 +75,10 @@ public:
      *
      * The adapter must invoke the callback for each received datagram from the
      * integrator's event loop or I/O thread.
+     *
+     * Quiescence guarantee: after set_receive_callback(nullptr) returns, the
+     * adapter must not invoke any previously registered callback. Implementations
+     * must ensure no in-flight callback is executing when the setter returns.
      */
     virtual void set_receive_callback(UdpReceiveCallback callback) = 0;
 

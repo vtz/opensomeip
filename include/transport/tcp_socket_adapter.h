@@ -75,6 +75,12 @@ public:
      */
     [[nodiscard]] virtual Result send(const std::vector<uint8_t>& data) = 0;
 
+    /**
+     * Quiescence guarantee: after any set_*_callback(nullptr) returns, the
+     * adapter must not invoke that previously registered callback.
+     * Implementations must ensure no in-flight callback is executing when
+     * the setter returns.
+     */
     virtual void set_receive_callback(TcpReceiveCallback callback) = 0;
     virtual void set_connected_callback(TcpConnectedCallback callback) = 0;
     virtual void set_disconnected_callback(TcpDisconnectedCallback callback) = 0;
