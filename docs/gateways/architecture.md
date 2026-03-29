@@ -156,7 +156,7 @@ service_mappings:
 
 Each gateway is an independent CMake target:
 
-```
+```text
 opensomeip-gateways/
 ├── CMakeLists.txt              # Root: options, GTest, subdirectories
 ├── common/                     # opensomeip-gateway-common library

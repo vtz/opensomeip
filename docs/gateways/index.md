@@ -92,7 +92,7 @@ Every gateway integrates with the opensomeip core stack through these APIs:
 | API | Header | Usage |
 |-----|--------|-------|
 | [Message](../api/index.md) | `someip/message.h` | SOME/IP message creation, serialization |
-| [Transport](../api/index.md) | `transport/udp_transport.h` | UDP listener for inbound SOME/IP |
+| [Transport](../api/index.md#udp-transport) | `transport/udp_transport.h` | UDP listener for inbound SOME/IP |
 | [Events](../api/events.md) | `events/event_publisher.h` | Publish SOME/IP events toward the network |
 | [Events](../api/events.md) | `events/event_subscriber.h` | Subscribe to SOME/IP event groups |
 | [RPC](../api/rpc.md) | `rpc/rpc_client.h` | Send SOME/IP method calls |

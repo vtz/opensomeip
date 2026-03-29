@@ -71,7 +71,7 @@ The gateway links against the core stack in the same way as other gateways: UDP 
 | API | Header | Role in this gateway |
 |-----|--------|----------------------|
 | [Message](../api/index.md) | `someip/message.h` | Parse and build SOME/IP messages at the bridge boundary. |
-| [UDP transport](../api/index.md) | `transport/udp_transport.h`, `transport/endpoint.h` | Optional SOME/IP UDP listener and reply routing. |
+| [UDP transport](../api/index.md#udp-transport) | `transport/udp_transport.h`, `transport/endpoint.h` | Optional SOME/IP UDP listener and reply routing. |
 | [Events](../api/events.md) | `events/event_publisher.h`, `events/event_subscriber.h` | Publish/subscribe SOME/IP event groups when enabled. |
 | [RPC](../api/rpc.md) | `rpc/rpc_client.h`, `rpc/rpc_server.h` | Method calls and server-side handling toward the SOME/IP network. |
 | [Service discovery](../api/sd.md) | `sd/sd_client.h`, `sd/sd_server.h` | SD integration alongside liveliness bridging. |

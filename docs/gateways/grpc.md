@@ -100,6 +100,7 @@ Mappings are implemented in `GrpcTranslator` (`grpc_translator.cpp`). Unknown SO
 | [`someip::events::EventSubscriber`](../api/events.md) | Subscribe to event groups feeding streams. |
 | [`someip::sd::SdClient`](../api/sd.md) / [`SdServer`](../api/sd.md) | Optional discovery client/server. |
 | [`someip::e2e::E2EProtection`](../api/e2e.md) | Optional E2E bridge when enabled in config. |
+| [`Serialization`](../api/serialization.md) | Payload helpers for message encoding/decoding. |
 
 ## Configuration reference (YAML)
 

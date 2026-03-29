@@ -24,6 +24,13 @@ The core protocol types live in `include/someip/`:
 - **`message.h`** -- `Message` class with header fields, payload, and serialization
 - **`types.h`** -- `MessageId`, `RequestId`, `MessageType`, `ReturnCode`, and other protocol constants
 
+## UDP Transport
+
+The transport layer in `include/transport/`:
+
+- **`udp_transport.h`** -- `UdpTransport` for sending and receiving SOME/IP messages over UDP
+- **`endpoint.h`** -- `Endpoint` representing a network address and port pair
+
 ## Common Utilities
 
 Shared utilities in `include/common/`:

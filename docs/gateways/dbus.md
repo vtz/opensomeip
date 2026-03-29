@@ -94,7 +94,7 @@ Used for documentation comments and `build_signature_from_someip_types`. Unknown
 | API | Header | Role in this gateway |
 |-----|--------|----------------------|
 | [Message](../api/index.md) | `someip/message.h` | Core SOME/IP message type at the boundary. |
-| [UDP transport](../api/index.md) | `transport/udp_transport.h`, `transport/endpoint.h` | Optional `enable_someip_udp_bridge`. |
+| [UDP transport](../api/index.md#udp-transport) | `transport/udp_transport.h`, `transport/endpoint.h` | Optional `enable_someip_udp_bridge`. |
 | [Events](../api/events.md) | `events/event_publisher.h`, `events/event_subscriber.h` | Event path integration. |
 | [RPC](../api/rpc.md) | `rpc/rpc_client.h`, `rpc/rpc_server.h` | Attach client/server for SOME/IP RPC. |
 | [Service discovery](../api/sd.md) | `sd/sd_client.h`, `sd/sd_server.h` | Optional SD lifecycle. |

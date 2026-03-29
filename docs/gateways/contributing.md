@@ -6,7 +6,7 @@ This guide walks through creating a new protocol gateway for the opensomeip-gate
 
 Create the gateway directory with this layout:
 
-```
+```text
 gateway-{protocol}/
 ├── CMakeLists.txt
 ├── README.md
@@ -242,7 +242,7 @@ Create a realistic example that demonstrates key bridging scenarios (pub/sub, RP
 
 All `.h` and `.cpp` files must start with:
 
-```
+```text
 /********************************************************************************
  * Copyright (c) 2025 Vinicius Tadeu Zein
  *

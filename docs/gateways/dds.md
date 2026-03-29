@@ -73,7 +73,7 @@ flowchart LR
 
 `DdsTranslator::build_dds_topic` produces hierarchical topic names:
 
-```
+```text
 opensomeip/svc/0x6001/inst/0x0001/event/0x8001
 opensomeip/svc/0x6001/inst/0x0001/method/0x0001
 ```
@@ -101,7 +101,7 @@ module vehicle {
 | API | Header | Usage |
 |-----|--------|-------|
 | [Message](../api/index.md) | `someip/message.h` | Construct / inspect SOME/IP messages |
-| [Transport](../api/index.md) | `transport/udp_transport.h` | UDP listener for inbound SOME/IP |
+| [Transport](../api/index.md#udp-transport) | `transport/udp_transport.h` | UDP listener for inbound SOME/IP |
 | [Events](../api/events.md) | `events/event_publisher.h` | Publish SOME/IP events |
 | [Events](../api/events.md) | `events/event_subscriber.h` | Subscribe to event groups |
 | [RPC](../api/rpc.md) | `rpc/rpc_client.h` | Forward DDS commands as SOME/IP RPC |

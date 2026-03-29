@@ -10,7 +10,7 @@ The protocol gateways target Linux-class host systems where external protocol SD
 | Ubuntu (latest) | x86_64 | Clang | :white_check_mark: | |
 | Fedora 42 | x86_64 | GCC | :white_check_mark: | Container-based CI |
 | Fedora 42 | x86_64 | Clang | :white_check_mark: | |
-| macOS (latest) | arm64 (Apple Silicon) | AppleClang | :white_check_mark: | CI + local dev verified |
+| macOS (latest) | arm64 (Apple Silicon) | AppleClang | | Local dev verified |
 
 ## CI Pipeline
 
@@ -18,19 +18,16 @@ The protocol gateways target Linux-class host systems where external protocol SD
 graph LR
     PR[Push / PR] --> Ubuntu["Ubuntu (GCC + Clang)"]
     PR --> Fedora["Fedora 42 (GCC + Clang)"]
-    PR --> macOS[macOS AppleClang]
     PR --> Cov[Coverage]
     PR --> San["Sanitizers (ASan + UBSan)"]
 
     Ubuntu --> Tests1[Build + Test]
     Fedora --> Tests2[Build + Test]
-    macOS --> Tests3[Build + Test]
     Cov --> Report[gcovr Report]
     San --> |GCC + Clang| Tests4[Test under Sanitizers]
 
     Tests1 --> Pub[Publish Results]
     Tests2 --> Pub
-    Tests3 --> Pub
     Tests4 --> Pub
 ```
 
@@ -38,7 +35,6 @@ graph LR
 |-----|----------|-----------|---------|
 | Build | Ubuntu | GCC, Clang | Build + test all gateway libraries and tests |
 | Build (Fedora) | Fedora 42 | GCC, Clang | Fedora container build + test |
-| macOS | macOS | AppleClang | macOS native build + test |
 | Coverage | Ubuntu | GCC | Code coverage via gcovr |
 | Sanitizers | Ubuntu | GCC, Clang | AddressSanitizer + UndefinedBehaviorSanitizer |
 
@@ -59,10 +55,15 @@ with the real libraries linked.
 | DDS | CycloneDDS | `cyclonedds-dev` | `cyclonedds-devel` |
 
 !!! tip "Building a gateway locally"
+    Gateway CMake options like `-DBUILD_GATEWAY_MQTT=ON` are defined in the
+    [opensomeip-gateways](https://github.com/vtz/opensomeip-gateways) repository,
+    not in the core opensomeip repo.
 
     ```bash
     # Example: MQTT gateway with Paho on Ubuntu
     sudo apt install libpaho-mqtt-dev libpaho-mqttpp-dev
+    git clone https://github.com/vtz/opensomeip-gateways.git
+    cd opensomeip-gateways
     cmake -B build -DBUILD_GATEWAY_MQTT=ON
     cmake --build build
     ctest --test-dir build --output-on-failure
