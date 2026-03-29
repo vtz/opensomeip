@@ -54,13 +54,33 @@ public:
         return cv_.wait_for(lock, timeout, [this]() { return error_count_ > 0; });
     }
 
-    std::vector<std::pair<MessagePtr, Endpoint>> received_messages_;
+    size_t message_count() const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.size();
+    }
+
+    Endpoint message_sender(size_t index) const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.at(index).second;
+    }
+
+    uint16_t message_service_id(size_t index) const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.at(index).first->get_service_id();
+    }
+
+    uint16_t message_method_id(size_t index) const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.at(index).first->get_method_id();
+    }
+
     std::atomic<Result> last_error_{Result::SUCCESS};
     std::atomic<int> error_count_{0};
 
 private:
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
     std::condition_variable cv_;
+    std::vector<std::pair<MessagePtr, Endpoint>> received_messages_;
 };
 
 class MockUdpAdapter : public IUdpSocketAdapter {
@@ -206,9 +226,9 @@ TEST(EventDrivenUdpTransport, ReceiveCallbackNotifiesListener) {
     adapter.inject_receive(raw, sender);
 
     ASSERT_TRUE(listener.wait_for_message());
-    ASSERT_EQ(listener.received_messages_.size(), 1u);
-    EXPECT_EQ(listener.received_messages_[0].second, sender);
-    EXPECT_EQ(listener.received_messages_[0].first->get_service_id(), sent.get_service_id());
+    ASSERT_EQ(listener.message_count(), 1u);
+    EXPECT_EQ(listener.message_sender(0), sender);
+    EXPECT_EQ(listener.message_service_id(0), sent.get_service_id());
 
     MessagePtr queued = transport.receive_message();
     ASSERT_NE(queued, nullptr);

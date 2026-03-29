@@ -70,7 +70,7 @@ struct UdpTransportConfig {
  * - Blocking mode (default): More efficient, eliminates busy loops
  * - Non-blocking mode: Allows integration with event loops/polling
  */
-class UdpTransport : public ITransport {
+class UdpTransport : public ITransport, public IMulticastTransport {
 public:
     /**
      * @brief Constructor
