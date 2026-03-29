@@ -105,11 +105,14 @@ nav:
       - SOME/IP ↔ D-Bus: gateways/dbus.md
     - Tier 3:
       - SOME/IP ↔ DDS: gateways/dds.md
+    - Supported Platforms: gateways/supported-platforms.md
     - Adding a Gateway: gateways/contributing.md
   - Platforms:
+    - Supported Platforms & Architectures: supported-platforms.md
     - Zephyr RTOS: ZEPHYR_PORT.md
     - FreeRTOS: FREERTOS_PORT.md
     - Eclipse ThreadX: THREADX_PORT.md
+    - Cross-Compilation: cross-compilation.md
     - Risk Register: PLATFORM_RISK_REGISTER.md
   - API Reference:
     - Overview: api/index.md
