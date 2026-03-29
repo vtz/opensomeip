@@ -496,8 +496,7 @@ private:
     }
 
     void leave_multicast_group() {
-        transport_.leave_multicast_group(config_.multicast_address);
-    }
+        (void)transport_.leave_multicast_group(config_.multicast_address);
     }
 
     /** @implements REQ_SD_116_E01, REQ_SD_119, REQ_SD_120, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_311, REQ_SD_331 */
