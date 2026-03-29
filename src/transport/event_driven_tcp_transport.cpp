@@ -129,7 +129,7 @@ Endpoint EventDrivenTcpTransport::get_local_endpoint() const {
 }
 
 void EventDrivenTcpTransport::set_listener(ITransportListener* listener) {
-    listener_ = listener;
+    listener_.store(listener, std::memory_order_release);
 }
 
 Result EventDrivenTcpTransport::start() {
@@ -149,7 +149,8 @@ Result EventDrivenTcpTransport::start() {
 }
 
 Result EventDrivenTcpTransport::stop() {
-    listener_ = nullptr;
+    running_ = false;
+    listener_.store(nullptr, std::memory_order_release);
 
     adapter_.set_receive_callback(nullptr);
     adapter_.set_connected_callback(nullptr);
@@ -158,16 +159,15 @@ Result EventDrivenTcpTransport::stop() {
     adapter_.close();
     initialized_ = false;
     server_mode_ = false;
-    receive_buffer_.clear();
 
     {
         platform::ScopedLock lock(queue_mutex_);
+        receive_buffer_.clear();
         while (!message_queue_.empty()) {
             message_queue_.pop();
         }
     }
 
-    running_ = false;
     return Result::SUCCESS;
 }
 
@@ -191,9 +191,10 @@ void EventDrivenTcpTransport::on_adapter_receive(const std::vector<uint8_t>& dat
         }
     }
 
+    auto* cb = listener_.load(std::memory_order_acquire);
     for (const MessagePtr& m : delivered) {
-        if (listener_) {
-            listener_->on_message_received(m, connection_remote_);
+        if (cb) {
+            cb->on_message_received(m, connection_remote_);
         }
     }
 }
@@ -203,17 +204,22 @@ void EventDrivenTcpTransport::on_adapter_connected(const Endpoint& remote) {
         return;
     }
     connection_remote_ = remote;
-    if (listener_) {
-        listener_->on_connection_established(remote);
+    auto* cb = listener_.load(std::memory_order_acquire);
+    if (cb) {
+        cb->on_connection_established(remote);
     }
 }
 
 void EventDrivenTcpTransport::on_adapter_disconnected() {
-    receive_buffer_.clear();
     Endpoint lost = connection_remote_;
     initialized_ = false;
-    if (listener_) {
-        listener_->on_connection_lost(lost);
+    {
+        platform::ScopedLock lock(queue_mutex_);
+        receive_buffer_.clear();
+    }
+    auto* cb = listener_.load(std::memory_order_acquire);
+    if (cb) {
+        cb->on_connection_lost(lost);
     }
 }
 

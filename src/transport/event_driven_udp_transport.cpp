@@ -94,7 +94,7 @@ Endpoint EventDrivenUdpTransport::get_local_endpoint() const {
 }
 
 void EventDrivenUdpTransport::set_listener(ITransportListener* listener) {
-    listener_ = listener;
+    listener_.store(listener, std::memory_order_release);
 }
 
 Result EventDrivenUdpTransport::start() {
@@ -124,7 +124,7 @@ Result EventDrivenUdpTransport::stop() {
     }
 
     running_ = false;
-    listener_ = nullptr;
+    listener_.store(nullptr, std::memory_order_release);
     adapter_.set_receive_callback(nullptr);
     adapter_.close();
     opened_ = false;
@@ -161,9 +161,17 @@ void EventDrivenUdpTransport::on_adapter_receive(const std::vector<uint8_t>& dat
     }
 
     MessagePtr message = platform::allocate_message();
+    if (!message) {
+        auto* cb = listener_.load(std::memory_order_acquire);
+        if (cb) {
+            cb->on_error(Result::OUT_OF_MEMORY);
+        }
+        return;
+    }
     if (!message->deserialize(data)) {
-        if (listener_) {
-            listener_->on_error(Result::INVALID_MESSAGE);
+        auto* cb = listener_.load(std::memory_order_acquire);
+        if (cb) {
+            cb->on_error(Result::INVALID_MESSAGE);
         }
         return;
     }
@@ -173,8 +181,9 @@ void EventDrivenUdpTransport::on_adapter_receive(const std::vector<uint8_t>& dat
         receive_queue_.push(message);
     }
 
-    if (listener_) {
-        listener_->on_message_received(message, sender);
+    auto* cb = listener_.load(std::memory_order_acquire);
+    if (cb) {
+        cb->on_message_received(message, sender);
     }
 }
 

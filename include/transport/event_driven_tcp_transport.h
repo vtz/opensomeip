@@ -33,6 +33,11 @@ struct EventDrivenTcpTransportConfig {
 
 /**
  * @brief ITransport implementation driven by an ITcpSocketAdapter.
+ *
+ * Unlike EventDrivenUdpTransport, TCP requires explicit lifecycle steps
+ * that are not part of the ITransport interface. Callers must use the
+ * concrete type to call initialize(), and optionally enable_server_mode()
+ * / try_accept_connection() for server-side usage, before calling start().
  */
 class EventDrivenTcpTransport : public ITransport {
 public:
@@ -44,13 +49,15 @@ public:
     EventDrivenTcpTransport(const EventDrivenTcpTransport&) = delete;
     EventDrivenTcpTransport& operator=(const EventDrivenTcpTransport&) = delete;
 
+    /** @brief Concrete-type-only: bind the adapter to a local endpoint. */
     [[nodiscard]] Result initialize(const Endpoint& local_endpoint);
 
+    /** @brief Concrete-type-only: switch to server mode after initialize(). */
     [[nodiscard]] Result enable_server_mode(int backlog = 5);
 
     /**
-     * @brief Non-blocking accept attempt (server mode). Adapter should invoke
-     *        connected/disconnected callbacks when the connection is ready or lost.
+     * @brief Concrete-type-only: non-blocking accept (server mode).
+     *        Adapter invokes connected/disconnected callbacks on completion.
      */
     [[nodiscard]] Result try_accept_connection(Endpoint& remote_out);
 
@@ -75,11 +82,11 @@ private:
     EventDrivenTcpTransportConfig config_;
     Endpoint local_endpoint_;
     Endpoint connection_remote_;
-    ITransportListener* listener_{nullptr};
+    std::atomic<ITransportListener*> listener_{nullptr};
 
     std::atomic<bool> running_{false};
     std::atomic<bool> initialized_{false};
-    bool server_mode_{false};
+    std::atomic<bool> server_mode_{false};
 
     std::vector<uint8_t> receive_buffer_;
     std::queue<std::pair<MessagePtr, Endpoint>> message_queue_;
