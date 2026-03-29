@@ -174,7 +174,7 @@ Result EventDrivenTcpTransport::stop() {
 }
 
 bool EventDrivenTcpTransport::is_running() const {
-    return running_;
+    return running_.load();
 }
 
 void EventDrivenTcpTransport::on_adapter_receive(const std::vector<uint8_t>& data) {
@@ -213,6 +213,9 @@ void EventDrivenTcpTransport::on_adapter_connected(const Endpoint& remote) {
 }
 
 void EventDrivenTcpTransport::on_adapter_disconnected() {
+    if (!running_.load()) {
+        return;
+    }
     Endpoint lost = connection_remote_;
     {
         platform::ScopedLock lock(queue_mutex_);
@@ -225,58 +228,59 @@ void EventDrivenTcpTransport::on_adapter_disconnected() {
 }
 
 bool EventDrivenTcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message) {
-    if (buffer.size() > config_.max_receive_buffer) {
-        buffer.clear();
-        return false;
-    }
-
-    if (buffer.size() < SOMEIP_HEADER_SIZE) {
-        return false;
-    }
-
-    uint32_t length_from_client_id =
-        (static_cast<uint32_t>(buffer[4]) << 24) | (static_cast<uint32_t>(buffer[5]) << 16) |
-        (static_cast<uint32_t>(buffer[6]) << 8) | static_cast<uint32_t>(buffer[7]);
-
-    if (length_from_client_id < 8 || length_from_client_id > MAX_MESSAGE_SIZE) {
-        size_t search_start = 1;
-        bool found_valid_header = false;
-
-        while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
-            uint32_t candidate_length =
-                (static_cast<uint32_t>(buffer[search_start + 4]) << 24) |
-                (static_cast<uint32_t>(buffer[search_start + 5]) << 16) |
-                (static_cast<uint32_t>(buffer[search_start + 6]) << 8) |
-                static_cast<uint32_t>(buffer[search_start + 7]);
-            if (candidate_length >= 8 && candidate_length <= MAX_MESSAGE_SIZE) {
-                buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
-                found_valid_header = true;
-                break;
-            }
-            ++search_start;
-        }
-
-        if (!found_valid_header) {
+    for (;;) {
+        if (buffer.size() > config_.max_receive_buffer) {
             buffer.clear();
+            return false;
         }
-        return false;
+
+        if (buffer.size() < SOMEIP_HEADER_SIZE) {
+            return false;
+        }
+
+        uint32_t length_from_client_id =
+            (static_cast<uint32_t>(buffer[4]) << 24) | (static_cast<uint32_t>(buffer[5]) << 16) |
+            (static_cast<uint32_t>(buffer[6]) << 8) | static_cast<uint32_t>(buffer[7]);
+
+        if (length_from_client_id < 8 || length_from_client_id > MAX_MESSAGE_SIZE) {
+            size_t search_start = 1;
+            bool found_valid_header = false;
+
+            while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
+                uint32_t candidate_length =
+                    (static_cast<uint32_t>(buffer[search_start + 4]) << 24) |
+                    (static_cast<uint32_t>(buffer[search_start + 5]) << 16) |
+                    (static_cast<uint32_t>(buffer[search_start + 6]) << 8) |
+                    static_cast<uint32_t>(buffer[search_start + 7]);
+                if (candidate_length >= 8 && candidate_length <= MAX_MESSAGE_SIZE) {
+                    buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
+                    found_valid_header = true;
+                    break;
+                }
+                ++search_start;
+            }
+
+            if (!found_valid_header) {
+                buffer.clear();
+                return false;
+            }
+            continue;
+        }
+
+        size_t total_message_size = 8 + length_from_client_id;
+
+        if (buffer.size() < total_message_size) {
+            return false;
+        }
+
+        std::vector<uint8_t> message_data(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size));
+        buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size));
+
+        message = platform::allocate_message();
+        if (message && message->deserialize(message_data)) {
+            return true;
+        }
     }
-
-    size_t total_message_size = 8 + length_from_client_id;
-
-    if (buffer.size() < total_message_size) {
-        return false;
-    }
-
-    std::vector<uint8_t> message_data(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size));
-    buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size));
-
-    message = platform::allocate_message();
-    if (message && message->deserialize(message_data)) {
-        return true;
-    }
-
-    return false;
 }
 
 } // namespace transport
