@@ -69,7 +69,7 @@ private:
     EventDrivenUdpTransportConfig config_;
     std::atomic<bool> running_{false};
     std::atomic<bool> opened_{false};
-    ITransportListener* listener_{nullptr};
+    std::atomic<ITransportListener*> listener_{nullptr};
 
     std::queue<MessagePtr> receive_queue_;
     platform::Mutex queue_mutex_;
