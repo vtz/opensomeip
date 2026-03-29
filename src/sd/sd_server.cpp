@@ -13,6 +13,7 @@
 
 #include "sd/sd_server.h"
 #include "sd/sd_message.h"
+#include "transport/multicast_transport.h"
 #include "transport/udp_transport.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
@@ -265,18 +266,18 @@ private:
     };
 
     bool join_multicast_group() {
-        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
-        if (!udp_transport) {
+        auto multicast = std::dynamic_pointer_cast<transport::IMulticastTransport>(transport_);
+        if (!multicast) {
             return false;
         }
 
-        return udp_transport->join_multicast_group(config_.multicast_address) == Result::SUCCESS;
+        return multicast->join_multicast_group(config_.multicast_address) == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
-        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
-        if (udp_transport) {
-            udp_transport->leave_multicast_group(config_.multicast_address);
+        auto multicast = std::dynamic_pointer_cast<transport::IMulticastTransport>(transport_);
+        if (multicast) {
+            multicast->leave_multicast_group(config_.multicast_address);
         }
     }
 
