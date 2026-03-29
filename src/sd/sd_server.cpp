@@ -277,7 +277,7 @@ private:
     void leave_multicast_group() {
         auto multicast = std::dynamic_pointer_cast<transport::IMulticastTransport>(transport_);
         if (multicast) {
-            multicast->leave_multicast_group(config_.multicast_address);
+            (void)multicast->leave_multicast_group(config_.multicast_address);
         }
     }
 
