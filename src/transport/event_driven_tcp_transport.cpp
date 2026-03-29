@@ -112,7 +112,10 @@ Result EventDrivenTcpTransport::disconnect() {
         return Result::SUCCESS;
     }
     adapter_.close();
-    receive_buffer_.clear();
+    {
+        platform::ScopedLock lock(queue_mutex_);
+        receive_buffer_.clear();
+    }
     initialized_ = false;
     return Result::SUCCESS;
 }
@@ -150,7 +153,6 @@ Result EventDrivenTcpTransport::start() {
 
 Result EventDrivenTcpTransport::stop() {
     running_ = false;
-    listener_.store(nullptr, std::memory_order_release);
 
     adapter_.set_receive_callback(nullptr);
     adapter_.set_connected_callback(nullptr);
@@ -212,7 +214,6 @@ void EventDrivenTcpTransport::on_adapter_connected(const Endpoint& remote) {
 
 void EventDrivenTcpTransport::on_adapter_disconnected() {
     Endpoint lost = connection_remote_;
-    initialized_ = false;
     {
         platform::ScopedLock lock(queue_mutex_);
         receive_buffer_.clear();
@@ -238,20 +239,21 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(std::vector<uint8_t>& bu
         (static_cast<uint32_t>(buffer[6]) << 8) | static_cast<uint32_t>(buffer[7]);
 
     if (length_from_client_id < 8 || length_from_client_id > MAX_MESSAGE_SIZE) {
-        size_t search_start = SOMEIP_HEADER_SIZE;
+        size_t search_start = 1;
         bool found_valid_header = false;
 
         while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
-            uint32_t potential_msg_id = (static_cast<uint32_t>(buffer[search_start]) << 24) |
-                                        (static_cast<uint32_t>(buffer[search_start + 1]) << 16) |
-                                        (static_cast<uint32_t>(buffer[search_start + 2]) << 8) |
-                                        static_cast<uint32_t>(buffer[search_start + 3]);
-            if (potential_msg_id != 0) {
+            uint32_t candidate_length =
+                (static_cast<uint32_t>(buffer[search_start + 4]) << 24) |
+                (static_cast<uint32_t>(buffer[search_start + 5]) << 16) |
+                (static_cast<uint32_t>(buffer[search_start + 6]) << 8) |
+                static_cast<uint32_t>(buffer[search_start + 7]);
+            if (candidate_length >= 8 && candidate_length <= MAX_MESSAGE_SIZE) {
                 buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
                 found_valid_header = true;
                 break;
             }
-            search_start++;
+            ++search_start;
         }
 
         if (!found_valid_header) {
