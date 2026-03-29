@@ -42,31 +42,30 @@ graph LR
 | Coverage | Ubuntu | GCC | Code coverage via gcovr |
 | Sanitizers | Ubuntu | GCC, Clang | AddressSanitizer + UndefinedBehaviorSanitizer |
 
-## Gateway Build Availability
+## Gateway SDK Dependencies
 
-Gateways gracefully degrade when their external SDK is not installed. The translator
-and configuration code still compiles and tests run, but runtime gateway functionality
-is unavailable until the SDK is linked.
+CI installs all required SDKs from system packages and builds every gateway
+with the real libraries linked.
 
-| Gateway | External SDK | Required? | Stub Build Without SDK |
-|---------|-------------|-----------|------------------------|
-| common | None | — | Always builds |
-| iceoryx2 | iceoryx2-cxx | Optional | :white_check_mark: |
-| MQTT | PahoMqttCpp | Optional | :white_check_mark: |
-| gRPC | gRPC + Protobuf | Optional | :white_check_mark: |
-| ROS2 | rclcpp + std_msgs | Optional | :white_check_mark: |
-| D-Bus | libsystemd | Optional | :white_check_mark: |
-| Zenoh | zenohc | Required | :x: |
-| DDS | CycloneDDS | Required | :x: |
+| Gateway | External SDK | CI Package (Ubuntu) | CI Package (Fedora) |
+|---------|-------------|---------------------|---------------------|
+| common | None | — | — |
+| iceoryx2 | iceoryx2-cxx | Not packaged (inprocess sim) | Not packaged (inprocess sim) |
+| MQTT | Paho MQTT C++ | `libpaho-mqttpp-dev` | `paho-mqtt-cpp-devel` |
+| gRPC | gRPC + Protobuf | `libgrpc++-dev` | `grpc-devel` |
+| ROS2 | rclcpp + std_msgs | Not packaged (callback mode) | Not packaged (callback mode) |
+| D-Bus | libsystemd | `libsystemd-dev` | `systemd-devel` |
+| Zenoh | zenohc | Not packaged | Not packaged |
+| DDS | CycloneDDS | `cyclonedds-dev` | `cyclonedds-devel` |
 
-!!! tip "Building with full SDK support"
-    To build a gateway with full runtime functionality, install the SDK first:
+!!! tip "Building a gateway locally"
 
     ```bash
-    # Example: MQTT gateway with Paho
-    sudo apt install libpaho-mqttpp-dev
+    # Example: MQTT gateway with Paho on Ubuntu
+    sudo apt install libpaho-mqtt-dev libpaho-mqttpp-dev
     cmake -B build -DBUILD_GATEWAY_MQTT=ON
     cmake --build build
+    ctest --test-dir build --output-on-failure
     ```
 
 ## Compiler Requirements
