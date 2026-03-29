@@ -238,11 +238,11 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(std::vector<uint8_t>& bu
             return false;
         }
 
-        uint32_t length_from_client_id =
+        uint32_t message_length =
             (static_cast<uint32_t>(buffer[4]) << 24) | (static_cast<uint32_t>(buffer[5]) << 16) |
             (static_cast<uint32_t>(buffer[6]) << 8) | static_cast<uint32_t>(buffer[7]);
 
-        if (length_from_client_id < 8 || length_from_client_id > MAX_MESSAGE_SIZE) {
+        if (message_length < 8 || message_length > MAX_MESSAGE_SIZE) {
             size_t search_start = 1;
             bool found_valid_header = false;
 
@@ -267,7 +267,7 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(std::vector<uint8_t>& bu
             continue;
         }
 
-        size_t total_message_size = 8 + length_from_client_id;
+        size_t total_message_size = 8 + message_length;
 
         if (buffer.size() < total_message_size) {
             return false;
