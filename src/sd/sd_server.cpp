@@ -378,6 +378,7 @@ private:
     void leave_multicast_group() {
         transport_.leave_multicast_group(config_.multicast_address);
     }
+    }
 
     /** @implements REQ_SD_250, REQ_SD_251, REQ_SD_260 */
     void start_offer_timer() {

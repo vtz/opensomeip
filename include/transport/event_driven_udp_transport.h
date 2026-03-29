@@ -15,6 +15,7 @@
 #define SOMEIP_TRANSPORT_EVENT_DRIVEN_UDP_TRANSPORT_H
 
 #include "transport/transport.h"
+#include "transport/multicast_transport.h"
 #include "transport/udp_socket_adapter.h"
 #include "platform/thread.h"
 #include <atomic>
@@ -35,7 +36,7 @@ struct EventDrivenUdpTransportConfig {
 /**
  * @brief ITransport implementation driven by an IUdpSocketAdapter.
  */
-class EventDrivenUdpTransport : public ITransport {
+class EventDrivenUdpTransport : public ITransport, public IMulticastTransport {
 public:
     explicit EventDrivenUdpTransport(IUdpSocketAdapter& adapter,
                                    const Endpoint& local_endpoint,
@@ -45,6 +46,9 @@ public:
 
     EventDrivenUdpTransport(const EventDrivenUdpTransport&) = delete;
     EventDrivenUdpTransport& operator=(const EventDrivenUdpTransport&) = delete;
+
+    /** @brief Check whether the transport was constructed with a valid endpoint. */
+    [[nodiscard]] bool is_valid() const { return local_endpoint_.is_valid(); }
 
     [[nodiscard]] Result send_message(const Message& message, const Endpoint& endpoint) override;
     MessagePtr receive_message() override;
@@ -57,8 +61,8 @@ public:
     Result stop() override;
     bool is_running() const override;
 
-    Result join_multicast_group(const std::string& multicast_address);
-    Result leave_multicast_group(const std::string& multicast_address);
+    Result join_multicast_group(const std::string& multicast_address) override;
+    Result leave_multicast_group(const std::string& multicast_address) override;
 
 private:
     void on_adapter_receive(const std::vector<uint8_t>& data, const Endpoint& sender);
