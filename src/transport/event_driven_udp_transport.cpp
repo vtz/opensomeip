@@ -124,7 +124,6 @@ Result EventDrivenUdpTransport::stop() {
     }
 
     running_ = false;
-    listener_.store(nullptr, std::memory_order_release);
     adapter_.set_receive_callback(nullptr);
     adapter_.close();
     opened_ = false;
