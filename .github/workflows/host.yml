@@ -84,12 +84,71 @@ jobs:
 
   build-fedora:
     name: Fedora 42 (${{ matrix.c_compiler }})
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     container:
       image: fedora:42
       credentials:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        c_compiler: [gcc, clang]
+        include:
+          - c_compiler: gcc
+            cpp_compiler: g++
+          - c_compiler: clang
+            cpp_compiler: clang++
+
+    steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            gcc gcc-c++ clang cmake ninja-build git
+
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: >
+          cmake -G Ninja -B build
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_BUILD_TYPE=Release
+          -DENABLE_WERROR=ON
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        working-directory: build
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/gtest_results"
+          export GTEST_OUTPUT="xml:$GITHUB_WORKSPACE/gtest_results/"
+          ctest --build-config Release --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-host-fedora42-${{ matrix.c_compiler }}
+          path: build/junit_results.xml
+          retention-days: 14
+
+      - name: Upload GTest detailed results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtest-results-host-fedora42-${{ matrix.c_compiler }}
+          path: ${{ github.workspace }}/gtest_results/
+          retention-days: 14
+
+  build-fedora-fork:
+    name: Fedora 42 (${{ matrix.c_compiler }})
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:42
     strategy:
       fail-fast: false
       matrix:
@@ -288,7 +347,7 @@ jobs:
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [build, build-fedora, coverage, sanitizers]
+    needs: [build, build-fedora, build-fedora-fork, coverage, sanitizers]
     if: always()
     permissions:
       checks: write
