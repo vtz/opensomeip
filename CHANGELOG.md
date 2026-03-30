@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.4] - 2026-03-30
+
+### Added
+
+- **RPM Packaging**: Automated RPM builds via Packit for Fedora Copr on PRs and releases (#135)
+- **Gateway Documentation**: Comprehensive gateway docs with platform/architecture coverage (#179)
+- **Pre-PR Test Runner**: Cross-platform test runner scripts for local validation before submitting PRs (#148)
+- **Allure Reporting**: Integrated Allure for rich test reports with historical trends (#141, #155)
+- **Renode Hardware Simulation**: Enabled Renode testing for Zephyr, FreeRTOS, and ThreadX targets (#107)
+- **MkDocs Project Site**: Documentation site with SEO configuration for GitHub Pages discoverability (#62, #103, #108)
+- **Lightweight Integration**: `SOMEIP_DEV_TOOLS` CMake option to skip dev-tool discovery (#113)
+- **MC/DC Test Coverage**: Increased code coverage with meaningful tests and MC/DC analysis (#117)
+
+### Fixed
+
+- **Transport Robustness**: Retry `EINTR` in UDP and TCP `send_data()`/`receive_data()` (#83, #86); check `someip_getsockopt()` return before trusting `SO_ERROR` (#85); correct TCP keepalive socket option setup (#84)
+- **Windows/MSVC Portability**: Portable `someip_socket_t` handles (#88), `NOGDI` compile definition (#67), `in_addr_t` typedef (#80), MSVC socket macros (#70), E2E false-positive deserialization (#65)
+- **Test Reliability**: Resolve use-after-destroy race in `UdpTransportTest` (#167); replace fixed sleeps with readiness synchronization (#89); add null guards (#124); fix events example API (#150)
+- **RPM Packaging**: Use `git archive` instead of `tar` to prevent build failures; remove unnecessary `srpm_build_deps` (#157)
+- **CI Stability**: Pin Zephyr to v4.3.0 for SDK 0.17.0 compatibility (#98); resolve Python e2e/system test failures (#143); fix JUnit XML discovery (#140)
+
+### Changed
+
+- **Build Consolidation**: Merged per-layer libraries into single `libopensomeip` static target (#126)
+- **CI Architecture**: Consolidated workflows into single parent workflow for unified artifacts (#125); added ASan/UBSan to host workflow (#128); added Windows (MSVC) and Fedora 42 to build matrix (#64, #90)
+- **CI Reporting**: Moved reports from PR comments to Job Summaries and Checks tab (#111); adopted `ctrf-io/github-test-reporter` (#133)
+- **Performance**: Avoid per-packet `memset` in `UdpTransport::receive_loop` (#149)
+- **Cross-Compilation**: Refactored cross-compilation build presets and toolchain support (#100)
+
 ## [0.0.3] - 2026-03-09
 
 ### Added
@@ -116,6 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.0.4]: https://github.com/vtz/opensomeip/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/vtz/opensomeip/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/vtz/opensomeip/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/vtz/opensomeip/releases/tag/v0.0.1
