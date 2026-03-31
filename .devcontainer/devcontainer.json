@@ -1,5 +1,5 @@
 {
-  "name": "opensomeip on S-CORE devcontainer",
+  "name": "opensomeip devcontainer",
   "image": "ghcr.io/eclipse-score/devcontainer:v1.2.0",
   "remoteUser": "vscode",
 
