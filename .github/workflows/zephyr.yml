@@ -50,8 +50,73 @@ jobs:
           path: ${{ github.workspace }}/gtest_results/
           retention-days: 14
 
+  zephyr-setup:
+    name: Zephyr environment (cache + artifact)
+    runs-on: ubuntu-latest
+    container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Zephyr workspace and SDK
+        id: zephyr-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            /tmp/zp
+            /opt/zephyr-sdk-0.17.0
+          key: zephyr-env-v4.3.0-sdk0.17.0-ci0.27.4-${{ hashFiles('zephyr/**/CMakeLists.txt', 'zephyr/**/prj.conf') }}
+          restore-keys: |
+            zephyr-env-v4.3.0-sdk0.17.0-ci0.27.4-
+
+      - name: Install Python 3.12
+        if: steps.zephyr-cache.outputs.cache-hit != 'true'
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq software-properties-common > /dev/null
+          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
+          apt-get update -qq
+          apt-get install -y -qq python3.12 python3.12-venv > /dev/null
+          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
+          python3.12 -m ensurepip --upgrade
+          python3.12 -m pip install --upgrade pip
+
+      - name: Install Zephyr SDK and ARM toolchain
+        if: steps.zephyr-cache.outputs.cache-hit != 'true'
+        run: |
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
+          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
+          tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
+          /opt/zephyr-sdk-0.17.0/setup.sh -c
+
+      - name: Init Zephyr
+        if: steps.zephyr-cache.outputs.cache-hit != 'true'
+        run: |
+          python3.12 -m pip install jsonschema west
+          west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
+          west update --narrow -o=--depth=1 && west zephyr-export
+          python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
+      - name: Package Zephyr environment
+        run: |
+          rm -rf /tmp/zephyr-env-staging
+          mkdir -p /tmp/zephyr-env-staging
+          cp -a /tmp/zp /tmp/zephyr-env-staging/zp
+          cp -a /opt/zephyr-sdk-0.17.0 /tmp/zephyr-env-staging/zephyr-sdk-0.17.0
+          cd /tmp/zephyr-env-staging && tar czf /tmp/zephyr-env.tar.gz .
+
+      - name: Upload Zephyr environment
+        uses: actions/upload-artifact@v4
+        with:
+          name: zephyr-env
+          path: /tmp/zephyr-env.tar.gz
+          retention-days: 1
+
   zephyr-native-sim:
     name: Zephyr native_sim
+    needs: [zephyr-setup]
     runs-on: ubuntu-latest
     container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
     env:
@@ -82,17 +147,23 @@ jobs:
           update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
           python3.12 -m ensurepip --upgrade
           python3.12 -m pip install --upgrade pip
-      - name: Install Zephyr SDK
+
+      - name: Download Zephyr environment
+        uses: actions/download-artifact@v4
+        with:
+          name: zephyr-env
+
+      - name: Extract Zephyr environment
         run: |
-          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
-          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
+          rm -rf /tmp/zp /opt/zephyr-sdk-0.17.0
+          tarball=$(find "${GITHUB_WORKSPACE:-.}" -name zephyr-env.tar.gz -print -quit)
+          [ -n "$tarball" ] || { echo "zephyr-env.tar.gz not found"; exit 1; }
+          tar xzf "$tarball" -C /tmp
+          mv /tmp/zephyr-sdk-0.17.0 /opt/
           /opt/zephyr-sdk-0.17.0/setup.sh -c
-      - name: Init Zephyr
-        run: |
           python3.12 -m pip install jsonschema west
-          west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
-          west update --narrow -o=--depth=1 && west zephyr-export
           python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
       - name: Build & run test_core
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
@@ -188,6 +259,7 @@ jobs:
 
   zephyr-s32k344-build:
     name: Zephyr S32K344 cross-compile
+    needs: [zephyr-setup]
     runs-on: ubuntu-latest
     container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
     env:
@@ -218,19 +290,23 @@ jobs:
           update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
           python3.12 -m ensurepip --upgrade
           python3.12 -m pip install --upgrade pip
-      - name: Install Zephyr SDK
+
+      - name: Download Zephyr environment
+        uses: actions/download-artifact@v4
+        with:
+          name: zephyr-env
+
+      - name: Extract Zephyr environment
         run: |
-          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
-          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
-          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
-          tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
+          rm -rf /tmp/zp /opt/zephyr-sdk-0.17.0
+          tarball=$(find "${GITHUB_WORKSPACE:-.}" -name zephyr-env.tar.gz -print -quit)
+          [ -n "$tarball" ] || { echo "zephyr-env.tar.gz not found"; exit 1; }
+          tar xzf "$tarball" -C /tmp
+          mv /tmp/zephyr-sdk-0.17.0 /opt/
           /opt/zephyr-sdk-0.17.0/setup.sh -c
-      - name: Init Zephyr
-        run: |
           python3.12 -m pip install jsonschema west
-          west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
-          west update --narrow -o=--depth=1 && west zephyr-export
           python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
       - name: Build hello_s32k (mr_canhubk3)
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: >
@@ -239,6 +315,7 @@ jobs:
 
   zephyr-renode-s32k388:
     name: Zephyr S32K388 Renode Tests
+    needs: [zephyr-setup]
     runs-on: ubuntu-latest
     container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
     env:
@@ -270,13 +347,23 @@ jobs:
           update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
           python3.12 -m ensurepip --upgrade
           python3.12 -m pip install --upgrade pip
-      - name: Install Zephyr SDK (ARM toolchain)
+
+      - name: Download Zephyr environment
+        uses: actions/download-artifact@v4
+        with:
+          name: zephyr-env
+
+      - name: Extract Zephyr environment
         run: |
-          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
-          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
-          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
-          tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
+          rm -rf /tmp/zp /opt/zephyr-sdk-0.17.0
+          tarball=$(find "${GITHUB_WORKSPACE:-.}" -name zephyr-env.tar.gz -print -quit)
+          [ -n "$tarball" ] || { echo "zephyr-env.tar.gz not found"; exit 1; }
+          tar xzf "$tarball" -C /tmp
+          mv /tmp/zephyr-sdk-0.17.0 /opt/
           /opt/zephyr-sdk-0.17.0/setup.sh -c
+          python3.12 -m pip install jsonschema west
+          python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
       - name: Cache Renode
         id: renode-cache
         uses: actions/cache@v4
@@ -293,12 +380,7 @@ jobs:
 
       - name: Add Renode to PATH
         run: ln -sf /opt/renode/renode /usr/local/bin/renode
-      - name: Init Zephyr
-        run: |
-          python3.12 -m pip install jsonschema west
-          west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
-          west update --narrow -o=--depth=1 && west zephyr-export
-          python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
       - name: Build & run test_core on Renode
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
