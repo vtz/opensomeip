@@ -1,5 +1,5 @@
 """
-Pytest configuration and fixtures for SOME/IP testing
+Pytest configuration and fixtures for SOME/IP testing.
 """
 
 import pytest
