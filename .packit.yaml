@@ -15,11 +15,8 @@ actions:
     - bash -c "echo opensomeip-$(cat VERSION).tar.gz"
 
 jobs:
-  # Build RPM on every pull request (validates spec before merge).
-  - job: copr_build
-    trigger: pull_request
-    targets:
-      - fedora-all
+  # PR RPM validation is handled by GitHub Actions (.github/workflows/rpm-build.yml)
+  # with path-based filtering via ci.yml — Packit does not support path filters.
 
   # Publish to Copr on GitHub Release (triggered by v* tag).
   - job: copr_build

@@ -34,6 +34,7 @@ jobs:
       zephyr: ${{ steps.filter.outputs.zephyr }}
       python: ${{ steps.filter.outputs.python }}
       requirements: ${{ steps.filter.outputs.requirements }}
+      rpm: ${{ steps.filter.outputs.rpm }}
       infra_only: ${{ steps.filter.outputs.infra_only }}
     steps:
       - uses: actions/checkout@v4
@@ -140,6 +141,10 @@ jobs:
               - 'scripts/check_traceability_freshness.py'
               - 'open-someip-spec/**'
               - '.github/workflows/requirements-validation.yml'
+            rpm:
+              - 'packaging/**'
+              - '.packit.yaml'
+              - '.github/workflows/rpm-build.yml'
             infra_only:
               - '.devcontainer/**'
               - '.clang-format'
@@ -153,7 +158,6 @@ jobs:
               - 'ruff.toml'
               - 'mkdocs.yml'
               - 'tools/**'
-              - 'packaging/**'
               - 'docker-compose.dev.yml'
               - 'docker-compose.zephyr.yml'
               - 'Dockerfile*'
@@ -185,6 +189,7 @@ jobs:
           ZEPHYR: ${{ steps.filter.outputs.zephyr }}
           PYTHON: ${{ steps.filter.outputs.python }}
           REQUIREMENTS: ${{ steps.filter.outputs.requirements }}
+          RPM: ${{ steps.filter.outputs.rpm }}
           INFRA_ONLY: ${{ steps.filter.outputs.infra_only }}
         run: |
           echo "Path filter results:"
@@ -195,6 +200,7 @@ jobs:
           echo "  zephyr=$ZEPHYR"
           echo "  python=$PYTHON"
           echo "  requirements=$REQUIREMENTS"
+          echo "  rpm=$RPM"
           echo "  infra_only=$INFRA_ONLY"
 
           if [[ "$SHARED" == "false" && \
@@ -204,6 +210,7 @@ jobs:
                 "$ZEPHYR" == "false" && \
                 "$PYTHON" == "false" && \
                 "$REQUIREMENTS" == "false" && \
+                "$RPM" == "false" && \
                 "$INFRA_ONLY" == "false" ]]; then
             echo ""
             echo "::error::Changed files do not match any path filter category."
@@ -264,6 +271,16 @@ jobs:
     needs: changes
     if: needs.changes.outputs.requirements == 'true'
     uses: ./.github/workflows/requirements-validation.yml
+    permissions:
+      contents: read
+    secrets: inherit
+
+  rpm:
+    needs: changes
+    if: >-
+      needs.changes.outputs.shared == 'true' ||
+      needs.changes.outputs.rpm == 'true'
+    uses: ./.github/workflows/rpm-build.yml
     permissions:
       contents: read
     secrets: inherit
