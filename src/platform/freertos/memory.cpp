@@ -94,5 +94,5 @@ void release_message(Message* msg) {
     }
 }
 
-} // namespace platform
-} // namespace someip
+}  // namespace platform
+}  // namespace someip
