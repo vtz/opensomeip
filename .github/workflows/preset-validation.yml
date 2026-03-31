@@ -45,6 +45,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-${{ matrix.preset }}-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/${{ matrix.preset }}/_deps
+          key: fetchcontent-${{ runner.os }}-${{ matrix.preset }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-${{ runner.os }}-${{ matrix.preset }}-
+
       - name: Configure (${{ matrix.preset }})
         run: >
           cmake --preset ${{ matrix.preset }}
@@ -76,6 +84,14 @@ jobs:
           key: ccache-${{ runner.os }}-${{ matrix.preset }}-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-${{ matrix.preset }}-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/${{ matrix.preset }}/_deps
+          key: fetchcontent-${{ runner.os }}-${{ matrix.preset }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-${{ runner.os }}-${{ matrix.preset }}-
 
       - name: Configure (${{ matrix.preset }})
         run: >
@@ -110,6 +126,14 @@ jobs:
           key: ccache-${{ runner.os }}-${{ matrix.preset }}-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-${{ matrix.preset }}-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/${{ matrix.preset }}/_deps
+          key: fetchcontent-${{ runner.os }}-${{ matrix.preset }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-${{ runner.os }}-${{ matrix.preset }}-
 
       - name: Configure (${{ matrix.preset }})
         run: >

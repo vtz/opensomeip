@@ -25,6 +25,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-freertos-compile-check-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/freertos-compile-check/_deps
+          key: fetchcontent-freertos-compile-check-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-freertos-compile-check-
+
       - name: Configure (freertos-compile-check preset)
         run: >
           cmake --preset freertos-compile-check
@@ -52,6 +60,14 @@ jobs:
           key: ccache-${{ runner.os }}-freertos-cortexm4-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-freertos-cortexm4-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/freertos-cortexm4/_deps
+          key: fetchcontent-freertos-cortexm4-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-freertos-cortexm4-
 
       - name: Configure (freertos-cortexm4 preset)
         run: >
@@ -86,6 +102,14 @@ jobs:
           key: ccache-Linux-fedora-freertos-compile-check-${{ github.sha }}
           restore-keys: |
             ccache-Linux-fedora-freertos-compile-check-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/freertos-compile-check/_deps
+          key: fetchcontent-fedora42-freertos-compile-check-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-fedora42-freertos-compile-check-
 
       - name: Configure (freertos-compile-check preset)
         run: >
@@ -133,6 +157,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-freertos-linux-tests-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/freertos-linux-tests/_deps
+          key: fetchcontent-freertos-linux-tests-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-freertos-linux-tests-
+
       - name: Configure (freertos-linux-tests preset)
         run: >
           cmake --preset freertos-linux-tests
@@ -177,6 +209,14 @@ jobs:
           key: ccache-Linux-fedora-freertos-runtime-tests-Release-${{ github.sha }}
           restore-keys: |
             ccache-Linux-fedora-freertos-runtime-tests-Release-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build_freertos_rt/_deps
+          key: fetchcontent-fedora42-freertos-runtime-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-fedora42-freertos-runtime-
 
       - name: Build & run FreeRTOS POSIX port tests
         run: |
@@ -247,6 +287,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-freertos-coverage-Debug-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build_freertos_cov/_deps
+          key: fetchcontent-freertos-coverage-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-freertos-coverage-
+
       - name: Install coverage tools
         run: |
           sudo apt-get update -qq
@@ -306,6 +354,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-freertos-memory-checks-Debug-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/freertos-linux-tests/_deps
+          key: fetchcontent-freertos-memcheck-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-freertos-memcheck-
+
       - name: Configure (Debug + sanitizers)
         run: >
           cmake --preset freertos-linux-tests
@@ -356,6 +412,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/freertos-cortexm4-renode/_deps
+          key: fetchcontent-freertos-renode-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-freertos-renode-
 
       - name: Cache Renode
         id: renode-cache

@@ -50,6 +50,14 @@ jobs:
         run: |
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.strings.outputs.build-output-dir }}/_deps
+          key: fetchcontent-${{ runner.os }}-${{ matrix.c_compiler }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-${{ runner.os }}-${{ matrix.c_compiler }}-
+
       - name: Configure CMake (MSVC)
         if: matrix.c_compiler == 'cl'
         run: >
@@ -131,6 +139,14 @@ jobs:
           key: ccache-Linux-${{ matrix.c_compiler }}-Release-${{ github.sha }}
           restore-keys: |
             ccache-Linux-${{ matrix.c_compiler }}-Release-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: fetchcontent-fedora42-${{ matrix.c_compiler }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-fedora42-${{ matrix.c_compiler }}-
 
       - name: Configure CMake
         run: >
@@ -246,6 +262,14 @@ jobs:
           key: ccache-${{ runner.os }}-gcc-Debug-coverage-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-gcc-Debug-coverage-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: fetchcontent-${{ runner.os }}-coverage-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-${{ runner.os }}-coverage-
 
       - name: Install coverage tools
         run: |
@@ -365,6 +389,14 @@ jobs:
           key: ccache-${{ runner.os }}-sanitizers-${{ matrix.c_compiler }}-Debug-${{ github.sha }}
           restore-keys: |
             ccache-${{ runner.os }}-sanitizers-${{ matrix.c_compiler }}-Debug-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: fetchcontent-${{ runner.os }}-sanitizers-${{ matrix.c_compiler }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-${{ runner.os }}-sanitizers-${{ matrix.c_compiler }}-
 
       - name: Configure CMake (Debug + Sanitizers)
         run: >

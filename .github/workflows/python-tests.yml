@@ -24,6 +24,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-gcc-Release-python-tests-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: fetchcontent-python-tests-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-python-tests-
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
