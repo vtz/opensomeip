@@ -2302,15 +2302,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#004-2026-03-30" class="md-nav__link">
+  <a href="#005-2026-03-31" class="md-nav__link">
     <span class="md-ellipsis">
       
-        0.0.4 - 2026-03-30
+        [0.0.5] - 2026-03-31
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="0.0.4 - 2026-03-30">
+    <nav class="md-nav" aria-label="[0.0.5] - 2026-03-31">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2348,6 +2348,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#004-2026-03-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.0.4 - 2026-03-30
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2779,15 +2790,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#004-2026-03-30" class="md-nav__link">
+  <a href="#005-2026-03-31" class="md-nav__link">
     <span class="md-ellipsis">
       
-        0.0.4 - 2026-03-30
+        [0.0.5] - 2026-03-31
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="0.0.4 - 2026-03-30">
+    <nav class="md-nav" aria-label="[0.0.5] - 2026-03-31">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2825,6 +2836,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#004-2026-03-30" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0.0.4 - 2026-03-30
+      
+    </span>
+  </a>
   
 </li>
       
@@ -2980,7 +3002,8 @@
 <p>All notable changes to this project will be documented in this file.</p>
 <p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
-<h2 id="004-2026-03-30"><a href="https://github.com/vtz/opensomeip/compare/v0.0.3...v0.0.4">0.0.4</a> - 2026-03-30<a class="headerlink" href="#004-2026-03-30" title="Permanent link">&para;</a></h2>
+<h2 id="005-2026-03-31">[0.0.5] - 2026-03-31<a class="headerlink" href="#005-2026-03-31" title="Permanent link">&para;</a></h2>
+<p>This release supersedes v0.0.4 as the first published Fedora Copr package.</p>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>RPM Packaging</strong>: Automated RPM builds via Packit for Fedora Copr on PRs and releases (#135)</li>
@@ -2994,6 +3017,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 </ul>
 <h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>RPM Packaging</strong>: Correct Copr project owner in Packit configuration (#186)</li>
 <li><strong>Transport Robustness</strong>: Retry <code>EINTR</code> in UDP and TCP <code>send_data()</code>/<code>receive_data()</code> (#83, #86); check <code>someip_getsockopt()</code> return before trusting <code>SO_ERROR</code> (#85); correct TCP keepalive socket option setup (#84)</li>
 <li><strong>Windows/MSVC Portability</strong>: Portable <code>someip_socket_t</code> handles (#88), <code>NOGDI</code> compile definition (#67), <code>in_addr_t</code> typedef (#80), MSVC socket macros (#70), E2E false-positive deserialization (#65)</li>
 <li><strong>Test Reliability</strong>: Resolve use-after-destroy race in <code>UdpTransportTest</code> (#167); replace fixed sleeps with readiness synchronization (#89); add null guards (#124); fix events example API (#150)</li>
@@ -3008,6 +3032,8 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li><strong>Performance</strong>: Avoid per-packet <code>memset</code> in <code>UdpTransport::receive_loop</code> (#149)</li>
 <li><strong>Cross-Compilation</strong>: Refactored cross-compilation build presets and toolchain support (#100)</li>
 </ul>
+<h2 id="004-2026-03-30"><a href="https://github.com/vtz/opensomeip/compare/v0.0.3...v0.0.4">0.0.4</a> - 2026-03-30<a class="headerlink" href="#004-2026-03-30" title="Permanent link">&para;</a></h2>
+<p><em>Superseded by v0.0.5 — Copr packages were not published for this release.</em></p>
 <h2 id="003-2026-03-09"><a href="https://github.com/vtz/opensomeip/compare/v0.0.2...v0.0.3">0.0.3</a> - 2026-03-09<a class="headerlink" href="#003-2026-03-09" title="Permanent link">&para;</a></h2>
 <h3 id="added_1">Added<a class="headerlink" href="#added_1" title="Permanent link">&para;</a></h3>
 <ul>
