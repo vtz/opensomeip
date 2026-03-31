@@ -28,6 +28,7 @@ jobs:
 
       - name: Create source archive
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           VERSION=$(cat VERSION)
           mkdir -p ~/rpmbuild/SOURCES
           git archive --format=tar.gz --prefix=opensomeip-${VERSION}/ HEAD \
