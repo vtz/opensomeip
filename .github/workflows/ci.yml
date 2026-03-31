@@ -21,7 +21,200 @@ permissions:
   checks: write
 
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      shared: ${{ steps.filter.outputs.shared }}
+      host: ${{ steps.filter.outputs.host }}
+      freertos: ${{ steps.filter.outputs.freertos }}
+      threadx: ${{ steps.filter.outputs.threadx }}
+      zephyr: ${{ steps.filter.outputs.zephyr }}
+      python: ${{ steps.filter.outputs.python }}
+      requirements: ${{ steps.filter.outputs.requirements }}
+      infra_only: ${{ steps.filter.outputs.infra_only }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
+        id: filter
+        with:
+          filters: |
+            shared:
+              - 'src/common/**'
+              - 'src/core/**'
+              - 'src/someip/**'
+              - 'src/serialization/**'
+              - 'src/transport/**'
+              - 'src/e2e/**'
+              - 'src/rpc/**'
+              - 'src/sd/**'
+              - 'src/events/**'
+              - 'src/tp/**'
+              - 'src/CMakeLists.txt'
+              - 'include/common/**'
+              - 'include/core/**'
+              - 'include/someip/**'
+              - 'include/serialization/**'
+              - 'include/transport/**'
+              - 'include/e2e/**'
+              - 'include/rpc/**'
+              - 'include/sd/**'
+              - 'include/events/**'
+              - 'include/tp/**'
+              - 'include/platform/thread.h'
+              - 'include/platform/memory.h'
+              - 'include/platform/net.h'
+              - 'include/platform/byteorder.h'
+              - 'include/platform/host/**'
+              - 'CMakeLists.txt'
+              - 'CMakePresets.json'
+              - 'cmake/**'
+              - 'VERSION'
+              - '.github/workflows/ci.yml'
+            host:
+              - 'include/platform/posix/**'
+              - 'include/platform/win32/**'
+              - 'tests/CMakeLists.txt'
+              - 'tests/*.cpp'
+              - 'tests/mocks/**'
+              - 'tests/fakes/**'
+              - 'tests/pal_conformance_tests.inc'
+              - 'Makefile'
+              - 'examples/**'
+              - '.github/workflows/host.yml'
+              - 'scripts/clean_build.sh'
+              - 'scripts/verify_build.sh'
+            freertos:
+              - 'src/platform/freertos/**'
+              - 'include/platform/freertos/**'
+              - 'include/platform/lwip/**'
+              - 'tests/freertos/**'
+              - 'bsp/**'
+              - 'renode/**'
+              - '.github/workflows/freertos.yml'
+              - 'scripts/run_freertos_renode_test.sh'
+              - 'scripts/run_renode_test.sh'
+            threadx:
+              - 'src/platform/threadx/**'
+              - 'include/platform/threadx/**'
+              - 'include/platform/lwip/**'
+              - 'tests/threadx/**'
+              - 'bsp/**'
+              - 'renode/**'
+              - '.github/workflows/threadx.yml'
+              - 'scripts/run_threadx_renode_test.sh'
+              - 'scripts/run_renode_test.sh'
+            zephyr:
+              - 'src/platform/zephyr/**'
+              - 'include/platform/zephyr/**'
+              - 'include/platform/posix/**'
+              - 'zephyr/**'
+              - '.github/workflows/zephyr.yml'
+              - 'scripts/run_zephyr_tests.sh'
+              - 'scripts/zephyr_build.sh'
+              - 'scripts/zephyr_to_junit.py'
+            python:
+              - 'tests/python/**'
+              - 'tests/integration/**'
+              - 'tests/system/**'
+              - 'tests/*.py'
+              - 'tests/requirements.txt'
+              - 'requirements-dev.txt'
+              - '.github/workflows/python-tests.yml'
+            requirements:
+              - 'src/**'
+              - 'include/**'
+              - 'tests/**'
+              - 'scripts/check_requirement_ids.py'
+              - 'scripts/check_test_annotations.py'
+              - 'scripts/extract_code_requirements.py'
+              - 'scripts/extract_someip_rpc_requirements.py'
+              - 'scripts/validate_requirements.py'
+              - 'scripts/generate_traceability_matrix.py'
+              - 'scripts/check_spec_requirements.py'
+              - 'scripts/verify_implementation_status.py'
+              - 'scripts/generate_implementation_report.py'
+              - 'scripts/generate_requirement_diff.py'
+              - 'scripts/check_traceability_freshness.py'
+              - 'open-someip-spec/**'
+              - '.github/workflows/requirements-validation.yml'
+            infra_only:
+              - '.devcontainer/**'
+              - '.clang-format'
+              - '.clang-tidy'
+              - '.dockerignore'
+              - '.editorconfig'
+              - '.gitignore'
+              - '.gitmodules'
+              - '.pre-commit-config.yaml'
+              - '.packit.yaml'
+              - 'ruff.toml'
+              - 'mkdocs.yml'
+              - 'tools/**'
+              - 'packaging/**'
+              - 'docker-compose.dev.yml'
+              - 'docker-compose.zephyr.yml'
+              - 'Dockerfile*'
+              - 'scripts/install_dev_tools.sh'
+              - 'scripts/add_copyright_headers.sh'
+              - 'scripts/bump_version.sh'
+              - 'scripts/bump_submodule.sh'
+              - 'scripts/prepare_site.sh'
+              - 'scripts/run_pre_pr_tests.sh'
+              - 'scripts/run_pre_pr_tests.ps1'
+              - 'scripts/run_sd_demo.sh'
+              - 'scripts/run_client_server_test.sh'
+              - 'scripts/run_clang_tidy.sh'
+              - 'scripts/fix_clang_tidy_issues.sh'
+              - 'scripts/setup_deps.sh'
+              - 'scripts/test_in_docker.sh'
+              - 'scripts/run_tests.py'
+              - 'scripts/README.md'
+              - 'CHANGELOG.md'
+              - 'CONTRIBUTING.md'
+              - '.github/**'
+
+      - name: Fail-safe — reject uncategorized paths
+        env:
+          SHARED: ${{ steps.filter.outputs.shared }}
+          HOST: ${{ steps.filter.outputs.host }}
+          FREERTOS: ${{ steps.filter.outputs.freertos }}
+          THREADX: ${{ steps.filter.outputs.threadx }}
+          ZEPHYR: ${{ steps.filter.outputs.zephyr }}
+          PYTHON: ${{ steps.filter.outputs.python }}
+          REQUIREMENTS: ${{ steps.filter.outputs.requirements }}
+          INFRA_ONLY: ${{ steps.filter.outputs.infra_only }}
+        run: |
+          echo "Path filter results:"
+          echo "  shared=$SHARED"
+          echo "  host=$HOST"
+          echo "  freertos=$FREERTOS"
+          echo "  threadx=$THREADX"
+          echo "  zephyr=$ZEPHYR"
+          echo "  python=$PYTHON"
+          echo "  requirements=$REQUIREMENTS"
+          echo "  infra_only=$INFRA_ONLY"
+
+          if [[ "$SHARED" == "false" && \
+                "$HOST" == "false" && \
+                "$FREERTOS" == "false" && \
+                "$THREADX" == "false" && \
+                "$ZEPHYR" == "false" && \
+                "$PYTHON" == "false" && \
+                "$REQUIREMENTS" == "false" && \
+                "$INFRA_ONLY" == "false" ]]; then
+            echo ""
+            echo "::error::Changed files do not match any path filter category."
+            echo "::error::This means new or moved files are not categorized in ci.yml."
+            echo "::error::Update the path filters in the 'changes' job to include the new paths."
+            exit 1
+          fi
+
   host:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.host == 'true'
     uses: ./.github/workflows/host.yml
     permissions:
       contents: read
@@ -29,6 +222,8 @@ jobs:
     secrets: inherit
 
   freertos:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.freertos == 'true'
     uses: ./.github/workflows/freertos.yml
     permissions:
       contents: read
@@ -36,6 +231,8 @@ jobs:
     secrets: inherit
 
   threadx:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.threadx == 'true'
     uses: ./.github/workflows/threadx.yml
     permissions:
       contents: read
@@ -43,6 +240,8 @@ jobs:
     secrets: inherit
 
   zephyr:
+    needs: changes
+    if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.zephyr == 'true'
     uses: ./.github/workflows/zephyr.yml
     permissions:
       contents: read
@@ -50,6 +249,11 @@ jobs:
     secrets: inherit
 
   python:
+    needs: changes
+    if: >-
+      needs.changes.outputs.shared == 'true' ||
+      needs.changes.outputs.host == 'true' ||
+      needs.changes.outputs.python == 'true'
     uses: ./.github/workflows/python-tests.yml
     permissions:
       contents: read
@@ -57,6 +261,8 @@ jobs:
     secrets: inherit
 
   requirements:
+    needs: changes
+    if: needs.changes.outputs.requirements == 'true'
     uses: ./.github/workflows/requirements-validation.yml
     permissions:
       contents: read
