@@ -12,10 +12,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-zephyr-host-build-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-zephyr-host-build-
+
       - name: Build & Test
         run: |
-          cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF -DSAFETY_LEVEL=NONE
-          cmake --build build -j$(nproc)
+          cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF -DSAFETY_LEVEL=NONE \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build build -j"$(nproc)"
           mkdir -p "$GITHUB_WORKSPACE/gtest_results"
           export GTEST_OUTPUT="xml:$GITHUB_WORKSPACE/gtest_results/"
           cd build && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
@@ -44,6 +58,20 @@ jobs:
       ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-zephyr-native-sim-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-zephyr-native-sim-
+
       - name: Install Python 3.12
         run: |
           apt-get update -qq
@@ -68,7 +96,8 @@ jobs:
       - name: Build & run test_core
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
-          west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto
+          west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto -- \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           if timeout 30 build/ns_tc/zephyr/zephyr.exe > /tmp/test_core.log 2>&1; then
             rc=0
           else
@@ -86,7 +115,8 @@ jobs:
       - name: Build & run test_transport
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
-          west build -b native_sim zephyr/tests/test_transport -d build/ns_tp --pristine auto
+          west build -b native_sim zephyr/tests/test_transport -d build/ns_tp --pristine auto -- \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           if timeout 30 build/ns_tp/zephyr/zephyr.exe > /tmp/test_transport.log 2>&1; then
             rc=0
           else
@@ -111,7 +141,8 @@ jobs:
       - name: Build & run someip_echo
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
-          west build -b native_sim zephyr/samples/someip_echo -d build/ns_echo --pristine auto
+          west build -b native_sim zephyr/samples/someip_echo -d build/ns_echo --pristine auto -- \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           # someip_echo is a sample that may run continuously.
           # Accept timeout exit code 124, but fail on any other non-zero code.
           if timeout 30 build/ns_echo/zephyr/zephyr.exe; then
@@ -124,7 +155,9 @@ jobs:
           fi
       - name: Build someip_sd_client
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
-        run: west build -b native_sim zephyr/samples/someip_sd_client -d build/ns_sd --pristine auto
+        run: >
+          west build -b native_sim zephyr/samples/someip_sd_client -d build/ns_sd --pristine auto --
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build & run sanitizer tests (ASan + UBSan)
         run: |
           for spec in test_core:tc test_transport:tp; do
@@ -134,7 +167,8 @@ jobs:
             log="/tmp/${t}_asan.log"
             west build -b native_sim "zephyr/tests/${t}" \
               -d "${out_dir}" --pristine auto \
-              -- -DOVERLAY_CONFIG="$PWD/zephyr/boards/native_sim_asan.conf"
+              -- -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+              -DOVERLAY_CONFIG="$PWD/zephyr/boards/native_sim_asan.conf"
             if timeout 60 "${out_dir}/zephyr/zephyr.exe" > "${log}" 2>&1; then
               rc=0
             else
@@ -160,6 +194,20 @@ jobs:
       ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-zephyr-s32k344-build-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-zephyr-s32k344-build-
+
       - name: Install Python 3.12
         run: |
           apt-get update -qq
@@ -185,7 +233,9 @@ jobs:
           python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
       - name: Build hello_s32k (mr_canhubk3)
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
-        run: west build -b mr_canhubk3 zephyr/samples/hello_s32k -d build/s32k344
+        run: >
+          west build -b mr_canhubk3 zephyr/samples/hello_s32k -d build/s32k344 --
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
   zephyr-renode-s32k388:
     name: Zephyr S32K388 Renode Tests
@@ -196,6 +246,20 @@ jobs:
       RENODE_VERSION: "1.15.3"
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-zephyr-renode-s32k388-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-zephyr-renode-s32k388-
+
       - name: Install Python 3.12
         run: |
           apt-get update -qq

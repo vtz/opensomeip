@@ -14,8 +14,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-freertos-compile-check-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-freertos-compile-check-
+
       - name: Configure (freertos-compile-check preset)
-        run: cmake --preset freertos-compile-check
+        run: >
+          cmake --preset freertos-compile-check
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build --preset freertos-compile-check
@@ -29,10 +43,21 @@ jobs:
       - name: Install ARM toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-freertos-cortexm4-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-freertos-cortexm4-
 
       - name: Configure (freertos-cortexm4 preset)
-        run: cmake --preset freertos-cortexm4
+        run: >
+          cmake --preset freertos-cortexm4
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build --preset freertos-cortexm4
@@ -50,12 +75,23 @@ jobs:
       - name: Install build dependencies
         run: |
           dnf install -y --setopt=install_weak_deps=False \
-            gcc gcc-c++ cmake ninja-build git
+            gcc gcc-c++ cmake ninja-build git ccache
 
       - uses: actions/checkout@v4
 
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-Linux-fedora-freertos-compile-check-${{ github.sha }}
+          restore-keys: |
+            ccache-Linux-fedora-freertos-compile-check-
+
       - name: Configure (freertos-compile-check preset)
-        run: cmake --preset freertos-compile-check
+        run: >
+          cmake --preset freertos-compile-check
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build --preset freertos-compile-check
@@ -86,8 +122,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-freertos-linux-tests-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-freertos-linux-tests-
+
       - name: Configure (freertos-linux-tests preset)
-        run: cmake --preset freertos-linux-tests
+        run: >
+          cmake --preset freertos-linux-tests
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Build
         run: cmake --build --preset freertos-linux-tests
@@ -116,9 +166,17 @@ jobs:
       - name: Install build dependencies
         run: |
           dnf install -y --setopt=install_weak_deps=False \
-            gcc gcc-c++ cmake ninja-build git
+            gcc gcc-c++ cmake ninja-build git ccache
 
       - uses: actions/checkout@v4
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-Linux-fedora-freertos-runtime-tests-Release-${{ github.sha }}
+          restore-keys: |
+            ccache-Linux-fedora-freertos-runtime-tests-Release-
 
       - name: Build & run FreeRTOS POSIX port tests
         run: |
@@ -126,7 +184,9 @@ jobs:
             -DSOMEIP_FREERTOS_LINUX_TESTS=ON \
             -DBUILD_TESTS=OFF \
             -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build build_freertos_rt --config Release
           cd build_freertos_rt && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
@@ -176,6 +236,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-freertos-coverage-Debug-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-freertos-coverage-Debug-
+
       - name: Install coverage tools
         run: |
           sudo apt-get update -qq
@@ -188,6 +259,8 @@ jobs:
             -DBUILD_TESTS=OFF \
             -DBUILD_EXAMPLES=OFF \
             -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
             -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage" \
             -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
@@ -222,9 +295,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-freertos-memory-checks-Debug-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-freertos-memory-checks-Debug-
+
       - name: Configure (Debug + sanitizers)
         run: >
           cmake --preset freertos-linux-tests
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           -DCMAKE_BUILD_TYPE=Debug
           -DCMAKE_CXX_FLAGS_DEBUG="-fsanitize=address,undefined -fno-omit-frame-pointer"
           -DCMAKE_C_FLAGS_DEBUG="-fsanitize=address,undefined -fno-omit-frame-pointer"
@@ -255,6 +341,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-freertos-renode-cortexm4-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-freertos-renode-cortexm4-
+
       - name: Install ARM toolchain
         run: |
           sudo apt-get update
@@ -269,7 +366,12 @@ jobs:
 
       - name: Build & run FreeRTOS tests on Renode
         run: |
+          cmake --preset freertos-cortexm4-renode -S "$GITHUB_WORKSPACE" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build "$GITHUB_WORKSPACE/build/freertos-cortexm4-renode" -j"$(nproc)"
           ./scripts/run_freertos_renode_test.sh \
+            --skip-build \
             --timeout 60 \
             --junit-output /tmp/freertos_renode_junit.xml
 

@@ -13,6 +13,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-gcc-Release-python-tests-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-gcc-Release-python-tests-
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -23,7 +34,9 @@ jobs:
 
       - name: Build C++ project
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build build --config Release
 
       - name: Run Python integration tests
