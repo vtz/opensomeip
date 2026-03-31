@@ -98,6 +98,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache ARM toolchain apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-arm-toolchain-${{ runner.os }}
+
       - name: Install ARM toolchain
         run: |
           sudo apt-get update
