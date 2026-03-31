@@ -25,6 +25,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-threadx-compile-check-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/threadx-compile-check/_deps
+          key: fetchcontent-threadx-compile-check-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-threadx-compile-check-
+
       - name: Configure (threadx-compile-check preset)
         run: >
           cmake --preset threadx-compile-check
@@ -59,6 +67,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-threadx-cortexm4-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/threadx-cortexm4/_deps
+          key: fetchcontent-threadx-cortexm4-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-threadx-cortexm4-
+
       - name: Configure (threadx-cortexm4 preset)
         run: >
           cmake --preset threadx-cortexm4
@@ -92,6 +108,14 @@ jobs:
           key: ccache-Linux-fedora-threadx-compile-check-${{ github.sha }}
           restore-keys: |
             ccache-Linux-fedora-threadx-compile-check-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/threadx-compile-check/_deps
+          key: fetchcontent-fedora42-threadx-compile-check-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-fedora42-threadx-compile-check-
 
       - name: Configure (threadx-compile-check preset)
         run: >
@@ -139,6 +163,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-threadx-linux-tests-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/threadx-linux-tests/_deps
+          key: fetchcontent-threadx-linux-tests-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-threadx-linux-tests-
+
       - name: Configure (threadx-linux-tests preset)
         run: >
           cmake --preset threadx-linux-tests
@@ -183,6 +215,14 @@ jobs:
           key: ccache-Linux-fedora-threadx-runtime-tests-Release-${{ github.sha }}
           restore-keys: |
             ccache-Linux-fedora-threadx-runtime-tests-Release-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build_threadx_rt/_deps
+          key: fetchcontent-fedora42-threadx-runtime-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-fedora42-threadx-runtime-
 
       - name: Build & run ThreadX Linux port tests
         run: |
@@ -253,6 +293,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-threadx-coverage-Debug-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build_threadx_cov/_deps
+          key: fetchcontent-threadx-coverage-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-threadx-coverage-
+
       - name: Install coverage tools
         run: |
           sudo apt-get update -qq
@@ -312,6 +360,14 @@ jobs:
           restore-keys: |
             ccache-${{ runner.os }}-threadx-memory-checks-Debug-
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/threadx-linux-tests/_deps
+          key: fetchcontent-threadx-memcheck-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-threadx-memcheck-
+
       - name: Configure (Debug + sanitizers)
         run: >
           cmake --preset threadx-linux-tests
@@ -368,6 +424,14 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/threadx-cortexm4-renode/_deps
+          key: fetchcontent-threadx-renode-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-threadx-renode-
 
       - name: Cache Renode
         id: renode-cache

@@ -58,6 +58,14 @@ jobs:
           mkdir -p coverity_tool
           tar xzf coverity_tool.tgz --strip-components=1 -C coverity_tool
 
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: fetchcontent-coverity-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-coverity-
+
       - name: Configure CMake
         run: >
           cmake -B build
