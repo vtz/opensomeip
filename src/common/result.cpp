@@ -50,4 +50,4 @@ std::string to_string(Result result) {
     return (it != result_strings.end()) ? it->second : "UNKNOWN_RESULT";
 }
 
-} // namespace someip
+}  // namespace someip
