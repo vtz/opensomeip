@@ -27,9 +27,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install ARM toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: gcc-arm-none-eabi libnewlib-arm-none-eabi
+          version: 1.0
 
       - name: Configure (threadx-cortexm4 preset)
         run: cmake --preset threadx-cortexm4
@@ -202,16 +203,27 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install ARM toolchain
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: gcc-arm-none-eabi libnewlib-arm-none-eabi
+          version: 1.0
+
+      - name: Cache Renode
+        id: renode-cache
+        uses: actions/cache@v4
+        with:
+          path: /opt/renode
+          key: renode-${{ env.RENODE_VERSION }}-linux
 
       - name: Install Renode
+        if: steps.renode-cache.outputs.cache-hit != 'true'
         run: |
           wget -q "https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz"
           sudo mkdir -p /opt/renode
           sudo tar xzf "renode-${RENODE_VERSION}.linux-portable.tar.gz" -C /opt/renode --strip-components=1
-          sudo ln -s /opt/renode/renode /usr/local/bin/renode
+
+      - name: Add Renode to PATH
+        run: sudo ln -sf /opt/renode/renode /usr/local/bin/renode
 
       - name: Build & run ThreadX tests on Renode
         run: |
