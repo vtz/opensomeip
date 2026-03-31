@@ -18,6 +18,13 @@ jobs:
   # PR RPM validation is handled by GitHub Actions (.github/workflows/rpm-build.yml)
   # with path-based filtering via ci.yml — Packit does not support path filters.
 
+  # Build on every push to main (validates RPM continuously, provides latest builds).
+  - job: copr_build
+    trigger: commit
+    branch: main
+    targets:
+      - fedora-all
+
   # Publish to Copr on GitHub Release (triggered by v* tag).
   - job: copr_build
     trigger: release
