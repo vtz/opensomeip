@@ -88,7 +88,12 @@ echo "  Timeout: ${TIMEOUT}s"
 
 # --- Build ---
 echo "  Building..."
+CCACHE_CMAKE=()
+if command -v ccache >/dev/null 2>&1; then
+  CCACHE_CMAKE=(-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache)
+fi
 west build -b "$BOARD" "$APP_DIR" -d "$BUILD_DIR" --pristine auto -- \
+    "${CCACHE_CMAKE[@]}" \
     -DBOARD_ROOT="$ZEPHYR_DIR" \
     -DSOC_ROOT="$ZEPHYR_DIR" 2>&1
 

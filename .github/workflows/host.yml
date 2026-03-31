@@ -31,6 +31,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install ccache
+        if: matrix.c_compiler != 'cl'
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        if: matrix.c_compiler != 'cl'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}-
+
       - name: Set reusable strings
         id: strings
         shell: bash
@@ -51,6 +64,8 @@ jobs:
           cmake -B ${{ steps.strings.outputs.build-output-dir }}
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DENABLE_WERROR=ON
           -S ${{ github.workspace }}
@@ -104,15 +119,25 @@ jobs:
       - name: Install build dependencies
         run: |
           dnf install -y --setopt=install_weak_deps=False \
-            gcc gcc-c++ clang cmake ninja-build git
+            gcc gcc-c++ clang cmake ninja-build git ccache
 
       - uses: actions/checkout@v4
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-Linux-${{ matrix.c_compiler }}-Release-${{ github.sha }}
+          restore-keys: |
+            ccache-Linux-${{ matrix.c_compiler }}-Release-
 
       - name: Configure CMake
         run: >
           cmake -G Ninja -B build
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           -DCMAKE_BUILD_TYPE=Release
           -DENABLE_WERROR=ON
 
@@ -152,6 +177,17 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-gcc-Debug-coverage-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-gcc-Debug-coverage-
+
       - name: Install coverage tools
         run: |
           sudo apt-get update
@@ -162,6 +198,8 @@ jobs:
           cmake -B build
           -DCMAKE_CXX_COMPILER=g++
           -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           -DCMAKE_BUILD_TYPE=Debug
           -DCMAKE_CXX_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
           -DCMAKE_C_FLAGS="--coverage -fprofile-arcs -ftest-coverage"
@@ -258,11 +296,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-sanitizers-${{ matrix.c_compiler }}-Debug-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-sanitizers-${{ matrix.c_compiler }}-Debug-
+
       - name: Configure CMake (Debug + Sanitizers)
         run: >
           cmake -B build
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           -DCMAKE_BUILD_TYPE=Debug
           -DSAFETY_LEVEL=ASIL_B
           -DENABLE_WERROR=ON
