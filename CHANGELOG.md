@@ -5,7 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.4] - 2026-03-30
+## [0.0.5] - 2026-03-31
+
+This release supersedes v0.0.4 as the first published Fedora Copr package.
 
 ### Added
 
@@ -20,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **RPM Packaging**: Correct Copr project owner in Packit configuration (#186)
 - **Transport Robustness**: Retry `EINTR` in UDP and TCP `send_data()`/`receive_data()` (#83, #86); check `someip_getsockopt()` return before trusting `SO_ERROR` (#85); correct TCP keepalive socket option setup (#84)
 - **Windows/MSVC Portability**: Portable `someip_socket_t` handles (#88), `NOGDI` compile definition (#67), `in_addr_t` typedef (#80), MSVC socket macros (#70), E2E false-positive deserialization (#65)
 - **Test Reliability**: Resolve use-after-destroy race in `UdpTransportTest` (#167); replace fixed sleeps with readiness synchronization (#89); add null guards (#124); fix events example API (#150)
@@ -33,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **CI Reporting**: Moved reports from PR comments to Job Summaries and Checks tab (#111); adopted `ctrf-io/github-test-reporter` (#133)
 - **Performance**: Avoid per-packet `memset` in `UdpTransport::receive_loop` (#149)
 - **Cross-Compilation**: Refactored cross-compilation build presets and toolchain support (#100)
+
+## [0.0.4] - 2026-03-30
+
+_Superseded by v0.0.5 — Copr packages were not published for this release._
 
 ## [0.0.3] - 2026-03-09
 
