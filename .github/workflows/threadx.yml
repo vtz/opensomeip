@@ -27,10 +27,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install ARM toolchain
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: gcc-arm-none-eabi libnewlib-arm-none-eabi
-          version: 1.0
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
 
       - name: Configure (threadx-cortexm4 preset)
         run: cmake --preset threadx-cortexm4
@@ -203,10 +202,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install ARM toolchain
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: gcc-arm-none-eabi libnewlib-arm-none-eabi
-          version: 1.0
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
 
       - name: Cache Renode
         id: renode-cache
