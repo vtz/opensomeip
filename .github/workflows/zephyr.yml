@@ -277,12 +277,22 @@ jobs:
           tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
           tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
           /opt/zephyr-sdk-0.17.0/setup.sh -c
+      - name: Cache Renode
+        id: renode-cache
+        uses: actions/cache@v4
+        with:
+          path: /opt/renode
+          key: renode-${{ env.RENODE_VERSION }}-linux
+
       - name: Install Renode
+        if: steps.renode-cache.outputs.cache-hit != 'true'
         run: |
           wget -q "https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz"
           mkdir -p /opt/renode
           tar xzf "renode-${RENODE_VERSION}.linux-portable.tar.gz" -C /opt/renode --strip-components=1
-          ln -s /opt/renode/renode /usr/local/bin/renode
+
+      - name: Add Renode to PATH
+        run: ln -sf /opt/renode/renode /usr/local/bin/renode
       - name: Init Zephyr
         run: |
           python3.12 -m pip install jsonschema west
