@@ -24,7 +24,7 @@ jobs:
   # Publish to Copr on GitHub Release (triggered by v* tag).
   - job: copr_build
     trigger: release
-    owner: vtz
+    owner: vtzein
     project: opensomeip
     targets:
       - fedora-all
