@@ -23,17 +23,15 @@ Linux systems.
 %package        devel
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
-Provides:       %{name}-static = %{version}-%{release}
 
 %description    devel
-Headers, static library, and shared-library symlink for developing
-applications with OpenSOME/IP.
+Headers and shared-library symlink for developing applications with
+OpenSOME/IP.
 
 %prep
 %autosetup -n %{name}-%{version}
 
 %build
-# Build shared library (installed via %cmake_install)
 %cmake \
     -G Ninja \
     -DBUILD_SHARED_LIBS:BOOL=ON \
@@ -43,19 +41,8 @@ applications with OpenSOME/IP.
     -DENABLE_WERROR=OFF
 %cmake_build
 
-# Build static library in a separate directory
-cmake -B build-static -G Ninja \
-    -DCMAKE_INSTALL_PREFIX=%{_prefix} \
-    -DBUILD_SHARED_LIBS:BOOL=OFF \
-    -DBUILD_TESTS=OFF \
-    -DBUILD_EXAMPLES=OFF \
-    -DSOMEIP_DEV_TOOLS=OFF \
-    -DENABLE_WERROR=OFF
-cmake --build build-static %{?_smp_mflags}
-
 %install
 %cmake_install
-install -Dpm 0644 build-static/lib/libopensomeip.a %{buildroot}%{_libdir}/libopensomeip.a
 
 %files
 %license LICENSE
@@ -64,5 +51,4 @@ install -Dpm 0644 build-static/lib/libopensomeip.a %{buildroot}%{_libdir}/libope
 %files devel
 %doc README.md CHANGELOG.md
 %{_includedir}/someip/
-%{_libdir}/libopensomeip.a
 %{_libdir}/libopensomeip.so
