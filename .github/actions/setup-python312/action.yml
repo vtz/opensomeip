@@ -16,11 +16,18 @@ runs:
     - name: Install Python ${{ inputs.python-version }}
       shell: bash
       run: |
+        PY_VER='${{ inputs.python-version }}'
+        if [[ ! "$PY_VER" =~ ^[0-9]+\.[0-9]+$ ]]; then
+          echo "Invalid python-version: $PY_VER (expected major.minor, e.g. 3.12)" >&2
+          exit 1
+        fi
+        PY_BIN="/usr/bin/python${PY_VER}"
+
         apt-get update -qq
         apt-get install -y -qq software-properties-common > /dev/null
         add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
         apt-get update -qq
-        apt-get install -y -qq python${{ inputs.python-version }} python${{ inputs.python-version }}-venv > /dev/null
-        update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${{ inputs.python-version }} 2
-        python${{ inputs.python-version }} -m ensurepip --upgrade
-        python${{ inputs.python-version }} -m pip install --upgrade pip
+        apt-get install -y -qq "python${PY_VER}" "python${PY_VER}-venv" > /dev/null
+        update-alternatives --install /usr/bin/python3 python3 "${PY_BIN}" 2
+        "${PY_BIN}" -m ensurepip --upgrade
+        "${PY_BIN}" -m pip install --upgrade pip
