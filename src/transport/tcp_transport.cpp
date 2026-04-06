@@ -122,7 +122,7 @@ Endpoint TcpTransport::get_local_endpoint() const {
 }
 
 void TcpTransport::set_listener(ITransportListener* listener) {
-    listener_ = listener;
+    listener_.store(listener, std::memory_order_release);
 }
 
 Result TcpTransport::start() {
@@ -148,7 +148,7 @@ Result TcpTransport::stop() {
     }
 
     running_ = false;
-    listener_ = nullptr;
+    listener_.store(nullptr, std::memory_order_release);
 
     // Close connections
     disconnect_internal();
@@ -310,8 +310,8 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         connection_.state = TcpConnectionState::CONNECTED;
         connection_.update_activity();
 
-        if (listener_) {
-            listener_->on_connection_established(endpoint);
+        if (auto* l = listener_.load(std::memory_order_acquire)) {
+            l->on_connection_established(endpoint);
         }
 
         return Result::SUCCESS;
@@ -336,8 +336,8 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
                 connection_.state = TcpConnectionState::CONNECTED;
                 connection_.update_activity();
 
-                if (listener_) {
-                    listener_->on_connection_established(endpoint);
+                if (auto* l = listener_.load(std::memory_order_acquire)) {
+                    l->on_connection_established(endpoint);
                 }
 
                 return Result::SUCCESS;
@@ -370,8 +370,8 @@ void TcpTransport::disconnect_internal() {
             active_connections_.fetch_sub(1);
         }
 
-        if (listener_) {
-            listener_->on_connection_lost(connection_.remote_endpoint);
+        if (auto* l = listener_.load(std::memory_order_acquire)) {
+            l->on_connection_lost(connection_.remote_endpoint);
         }
     }
 }
@@ -399,8 +399,8 @@ void TcpTransport::receive_loop() {
                         connection_.remote_endpoint = Endpoint("127.0.0.1", 0, TransportProtocol::TCP); // Would need to get actual client address
                         active_connections_.fetch_add(1);
 
-                        if (listener_) {
-                            listener_->on_connection_established(connection_.remote_endpoint);
+                        if (auto* l = listener_.load(std::memory_order_acquire)) {
+                            l->on_connection_established(connection_.remote_endpoint);
                         }
                     } else {
                         // Already have a connection, close this one
@@ -426,8 +426,8 @@ void TcpTransport::receive_loop() {
                 message_queue_.push({message, connection_.remote_endpoint});
                 connection_.update_activity();
 
-                if (listener_) {
-                    listener_->on_message_received(message, connection_.remote_endpoint);
+                if (auto* l = listener_.load(std::memory_order_acquire)) {
+                    l->on_message_received(message, connection_.remote_endpoint);
                 }
             } else {
                 // Failed to parse message from buffer
@@ -436,8 +436,8 @@ void TcpTransport::receive_loop() {
             // Connection error
             disconnect_internal();
 
-            if (listener_) {
-                listener_->on_error(result);
+            if (auto* l = listener_.load(std::memory_order_acquire)) {
+                l->on_error(result);
             }
         }
 

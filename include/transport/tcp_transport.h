@@ -186,7 +186,7 @@ private:
     TcpTransportConfig config_;
     Endpoint local_endpoint_;
     TcpConnection connection_;
-    ITransportListener* listener_{nullptr};
+    std::atomic<ITransportListener*> listener_{nullptr};
 
     std::atomic<bool> running_{false};
     std::unique_ptr<platform::Thread> receive_thread_;
