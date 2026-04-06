@@ -86,15 +86,7 @@ jobs:
 
       - name: Install Python 3.12
         if: steps.zephyr-cache.outputs.cache-hit != 'true'
-        run: |
-          apt-get update -qq
-          apt-get install -y -qq software-properties-common > /dev/null
-          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
-          apt-get update -qq
-          apt-get install -y -qq python3.12 python3.12-venv > /dev/null
-          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
-          python3.12 -m ensurepip --upgrade
-          python3.12 -m pip install --upgrade pip
+        uses: ./.github/actions/setup-python312
 
       - name: Install Zephyr SDK and ARM toolchain
         if: steps.zephyr-cache.outputs.cache-hit != 'true'
@@ -152,15 +144,7 @@ jobs:
             ccache-${{ runner.os }}-zephyr-native-sim-
 
       - name: Install Python 3.12
-        run: |
-          apt-get update -qq
-          apt-get install -y -qq software-properties-common > /dev/null
-          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
-          apt-get update -qq
-          apt-get install -y -qq python3.12 python3.12-venv > /dev/null
-          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
-          python3.12 -m ensurepip --upgrade
-          python3.12 -m pip install --upgrade pip
+        uses: ./.github/actions/setup-python312
 
       - name: Download Zephyr environment
         uses: actions/download-artifact@v4
@@ -295,15 +279,7 @@ jobs:
             ccache-${{ runner.os }}-zephyr-s32k344-build-
 
       - name: Install Python 3.12
-        run: |
-          apt-get update -qq
-          apt-get install -y -qq software-properties-common > /dev/null
-          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
-          apt-get update -qq
-          apt-get install -y -qq python3.12 python3.12-venv > /dev/null
-          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
-          python3.12 -m ensurepip --upgrade
-          python3.12 -m pip install --upgrade pip
+        uses: ./.github/actions/setup-python312
 
       - name: Download Zephyr environment
         uses: actions/download-artifact@v4
@@ -353,15 +329,7 @@ jobs:
             ccache-${{ runner.os }}-zephyr-renode-s32k388-
 
       - name: Install Python 3.12
-        run: |
-          apt-get update -qq
-          apt-get install -y -qq software-properties-common > /dev/null
-          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
-          apt-get update -qq
-          apt-get install -y -qq python3.12 python3.12-venv > /dev/null
-          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
-          python3.12 -m ensurepip --upgrade
-          python3.12 -m pip install --upgrade pip
+        uses: ./.github/actions/setup-python312
 
       - name: Download Zephyr environment
         uses: actions/download-artifact@v4
