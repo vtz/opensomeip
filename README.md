@@ -54,7 +54,7 @@ OpenSOME/IP provides a complete, standards-compliant C++ implementation of the S
 
 ## Version
 
-**Current Version**: 0.0.4
+**Current Version**: 0.0.5
 
 This project uses [Semantic Versioning](https://semver.org/). See [VERSION.md](VERSION.md) for details on version management.
 
