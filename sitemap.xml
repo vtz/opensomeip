@@ -2,198 +2,198 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://vtz.github.io/opensomeip/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/BUILD/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/CODING_GUIDELINES/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/E2E_IMPLEMENTATION_REVIEW/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/FREERTOS_PORT/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/GATEWAY_REQUIREMENTS/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/INTEGRATION_GUIDE/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/PLATFORM_RISK_REGISTER/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/SETUP_GIT_SUBMODULE/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/SOMEIP_ACCEPTANCE_TEST_PLAN/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/TEST_PLAN_STATUS/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/TEST_REPORTING/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/THREADX_PORT/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/ZEPHYR_PORT/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/changelog/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/contributing/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/cross-compilation/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/getting-started/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/project-overview/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/supported-platforms/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/api/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/api/e2e/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/api/events/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/api/rpc/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/api/sd/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/api/serialization/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/api/tp/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/architecture/e2e_protection/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/examples/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/architecture/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/contributing/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/dbus/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/dds/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/grpc/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/iceoryx2/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/mqtt/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/ros2/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/supported-platforms/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/gateways/zenoh/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/requirements/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/requirements/TRACEABILITY_GUIDE/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/specification/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/specification/gap-analysis/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/specification/implementation-report/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/specification/implementation-verification/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/specification/requirements/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/specification/spec-mapping-report/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/specification/traceability-matrix/</loc>
-         <lastmod>2026-03-31</lastmod>
+         <lastmod>2026-04-06</lastmod>
     </url>
 </urlset>
