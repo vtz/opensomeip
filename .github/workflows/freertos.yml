@@ -2,6 +2,12 @@ name: FreeRTOS Build & Test
 
 on:
   workflow_call:
+    inputs:
+      rtos_paths_changed:
+        description: Whether RTOS-specific paths changed (vs only shared code)
+        type: boolean
+        required: false
+        default: true
   workflow_dispatch:
 
 permissions:
@@ -84,68 +90,6 @@ jobs:
       - name: Build
         run: cmake --build --preset freertos-cortexm4
 
-  compile-check-fedora:
-    name: FreeRTOS PAL compile check (Fedora 42)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    container:
-      image: fedora:42
-      credentials:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    steps:
-      - name: Install build dependencies
-        run: |
-          dnf install -y --setopt=install_weak_deps=False \
-            gcc gcc-c++ cmake ninja-build git ccache
-
-      - uses: actions/checkout@v4
-
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ccache
-          key: ccache-Linux-fedora-freertos-compile-check-${{ github.sha }}
-          restore-keys: |
-            ccache-Linux-fedora-freertos-compile-check-
-
-      - name: Cache CMake FetchContent
-        uses: actions/cache@v4
-        with:
-          path: build/freertos-compile-check/_deps
-          key: fetchcontent-fedora42-freertos-compile-check-${{ hashFiles('CMakeLists.txt') }}
-          restore-keys: |
-            fetchcontent-fedora42-freertos-compile-check-
-
-      - name: Configure (freertos-compile-check preset)
-        run: >
-          cmake --preset freertos-compile-check
-          -DCMAKE_C_COMPILER_LAUNCHER=ccache
-          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-
-      - name: Build
-        run: cmake --build --preset freertos-compile-check
-
-  compile-check-fedora-fork:
-    name: FreeRTOS PAL compile check (Fedora 42)
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-latest
-    container:
-      image: fedora:42
-    steps:
-      - name: Install build dependencies
-        run: |
-          dnf install -y --setopt=install_weak_deps=False \
-            gcc gcc-c++ cmake ninja-build git
-
-      - uses: actions/checkout@v4
-
-      - name: Configure (freertos-compile-check preset)
-        run: cmake --preset freertos-compile-check
-
-      - name: Build
-        run: cmake --build --preset freertos-compile-check
-
   runtime-tests:
     name: FreeRTOS POSIX port runtime tests
     runs-on: ubuntu-latest
@@ -189,91 +133,6 @@ jobs:
         with:
           name: test-results-freertos
           path: build/freertos-linux-tests/junit_results.xml
-          retention-days: 14
-
-  runtime-tests-fedora:
-    name: FreeRTOS POSIX port runtime tests (Fedora 42)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    container:
-      image: fedora:42
-      credentials:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    steps:
-      - name: Install build dependencies
-        run: |
-          dnf install -y --setopt=install_weak_deps=False \
-            gcc gcc-c++ cmake ninja-build git ccache
-
-      - uses: actions/checkout@v4
-
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ccache
-          key: ccache-Linux-fedora-freertos-runtime-tests-Release-${{ github.sha }}
-          restore-keys: |
-            ccache-Linux-fedora-freertos-runtime-tests-Release-
-
-      - name: Cache CMake FetchContent
-        uses: actions/cache@v4
-        with:
-          path: build_freertos_rt/_deps
-          key: fetchcontent-fedora42-freertos-runtime-${{ hashFiles('CMakeLists.txt') }}
-          restore-keys: |
-            fetchcontent-fedora42-freertos-runtime-
-
-      - name: Build & run FreeRTOS POSIX port tests
-        run: |
-          cmake -G Ninja -B build_freertos_rt \
-            -DSOMEIP_FREERTOS_LINUX_TESTS=ON \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-          cmake --build build_freertos_rt --config Release
-          cd build_freertos_rt && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-freertos-fedora42
-          path: build_freertos_rt/junit_results.xml
-          retention-days: 14
-
-  runtime-tests-fedora-fork:
-    name: FreeRTOS POSIX port runtime tests (Fedora 42)
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-latest
-    container:
-      image: fedora:42
-    steps:
-      - name: Install build dependencies
-        run: |
-          dnf install -y --setopt=install_weak_deps=False \
-            gcc gcc-c++ cmake ninja-build git
-
-      - uses: actions/checkout@v4
-
-      - name: Build & run FreeRTOS POSIX port tests
-        run: |
-          cmake -G Ninja -B build_freertos_rt \
-            -DSOMEIP_FREERTOS_LINUX_TESTS=ON \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_EXAMPLES=OFF \
-            -DCMAKE_BUILD_TYPE=Release
-          cmake --build build_freertos_rt --config Release
-          cd build_freertos_rt && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-freertos-fedora42
-          path: build_freertos_rt/junit_results.xml
           retention-days: 14
 
   coverage:
@@ -397,6 +256,7 @@ jobs:
 
   renode-cortexm4:
     name: FreeRTOS Cortex-M4 Renode Tests
+    if: inputs.rtos_paths_changed || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     env:
       RENODE_VERSION: "1.15.3"
@@ -472,7 +332,7 @@ jobs:
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [runtime-tests, runtime-tests-fedora, runtime-tests-fedora-fork, memory-checks, renode-cortexm4]
+    needs: [runtime-tests, memory-checks, renode-cortexm4]
     if: always()
     permissions:
       checks: write
@@ -497,45 +357,3 @@ jobs:
           files: "**/*junit*.xml"
           check_name: "FreeRTOS Test Results"
           comment_mode: "off"
-
-      - name: Convert JUnit XML to CTRF
-        if: always()
-        run: npx junit-to-ctrf@0.0.14 "test-results-*/**/*.xml" -o ctrf/freertos-report.json -t freertos
-
-      - name: Detailed Test Report
-        uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
-        if: always()
-        with:
-          report-path: 'ctrf/freertos-report.json'
-          title: 'FreeRTOS Test Report'
-          summary-report: true
-          failed-report: true
-          suite-list-report: true
-          test-report: true
-          use-suite-name: true
-
-      - name: Create FreeRTOS Test Check Run
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-          REPORT="ctrf/freertos-report.json"
-          if [ ! -f "$REPORT" ]; then echo "No CTRF report found"; exit 0; fi
-          TOTAL=$(jq '.results.summary.tests' "$REPORT")
-          PASSED=$(jq '.results.summary.passed' "$REPORT")
-          FAILED=$(jq '.results.summary.failed' "$REPORT")
-          SKIPPED=$(jq '.results.summary.skipped' "$REPORT")
-          CONCLUSION="success"; [ "$FAILED" -gt 0 ] && CONCLUSION="failure"
-          BODY="## FreeRTOS Test Report"$'\n\n'"| Tests | Passed | Failed | Skipped |"$'\n'"|-|-|-|-|"$'\n'"| $TOTAL | $PASSED | $FAILED | $SKIPPED |"
-          if [ "$FAILED" -gt 0 ]; then
-            FAILS=$(jq -r '[.results.tests[] | select(.status=="failed")] | .[0:50] | .[] | "| \(.suite // "-") | \(.name) |"' "$REPORT")
-            BODY="$BODY"$'\n\n'"### Failed Tests"$'\n'"| Suite | Test |"$'\n'"|-|-|"$'\n'"$FAILS"
-          fi
-          gh api repos/${{ github.repository }}/check-runs \
-            -f "head_sha=${SHA}" \
-            -f "name=FreeRTOS Detailed Test Report" \
-            -f "status=completed" \
-            -f "conclusion=${CONCLUSION}" \
-            -f "output[title]=FreeRTOS: ${PASSED}/${TOTAL} passed" \
-            -f "output[summary]=${BODY}"

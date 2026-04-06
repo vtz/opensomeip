@@ -232,6 +232,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.freertos == 'true'
     uses: ./.github/workflows/freertos.yml
+    with:
+      rtos_paths_changed: ${{ needs.changes.outputs.freertos == 'true' }}
     permissions:
       contents: read
       checks: write
@@ -241,6 +243,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.threadx == 'true'
     uses: ./.github/workflows/threadx.yml
+    with:
+      rtos_paths_changed: ${{ needs.changes.outputs.threadx == 'true' }}
     permissions:
       contents: read
       checks: write
@@ -250,6 +254,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.shared == 'true' || needs.changes.outputs.zephyr == 'true'
     uses: ./.github/workflows/zephyr.yml
+    with:
+      rtos_paths_changed: ${{ needs.changes.outputs.zephyr == 'true' }}
     permissions:
       contents: read
       checks: write

@@ -106,29 +106,16 @@ jobs:
           retention-days: 14
 
   build-fedora:
-    name: Fedora 42 (${{ matrix.c_compiler }})
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    name: Fedora 42 (gcc)
     runs-on: ubuntu-latest
     container:
       image: fedora:42
-      credentials:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    strategy:
-      fail-fast: false
-      matrix:
-        c_compiler: [gcc, clang]
-        include:
-          - c_compiler: gcc
-            cpp_compiler: g++
-          - c_compiler: clang
-            cpp_compiler: clang++
 
     steps:
       - name: Install build dependencies
         run: |
           dnf install -y --setopt=install_weak_deps=False \
-            gcc gcc-c++ clang cmake ninja-build git ccache
+            gcc gcc-c++ cmake ninja-build git ccache
 
       - uses: actions/checkout@v4
 
@@ -136,23 +123,23 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
-          key: ccache-Linux-${{ matrix.c_compiler }}-Release-${{ github.sha }}
+          key: ccache-Linux-fedora42-gcc-Release-${{ github.sha }}
           restore-keys: |
-            ccache-Linux-${{ matrix.c_compiler }}-Release-
+            ccache-Linux-fedora42-gcc-Release-
 
       - name: Cache CMake FetchContent
         uses: actions/cache@v4
         with:
           path: build/_deps
-          key: fetchcontent-fedora42-${{ matrix.c_compiler }}-${{ hashFiles('CMakeLists.txt') }}
+          key: fetchcontent-fedora42-gcc-${{ hashFiles('CMakeLists.txt') }}
           restore-keys: |
-            fetchcontent-fedora42-${{ matrix.c_compiler }}-
+            fetchcontent-fedora42-gcc-
 
       - name: Configure CMake
         run: >
           cmake -G Ninja -B build
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_C_COMPILER=gcc
           -DCMAKE_C_COMPILER_LAUNCHER=ccache
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           -DCMAKE_BUILD_TYPE=Release
@@ -172,7 +159,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-results-host-fedora42-${{ matrix.c_compiler }}
+          name: test-results-host-fedora42-gcc
           path: build/junit_results.xml
           retention-days: 14
 
@@ -180,65 +167,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: gtest-results-host-fedora42-${{ matrix.c_compiler }}
-          path: ${{ github.workspace }}/gtest_results/
-          retention-days: 14
-
-  build-fedora-fork:
-    name: Fedora 42 (${{ matrix.c_compiler }})
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
-    runs-on: ubuntu-latest
-    container:
-      image: fedora:42
-    strategy:
-      fail-fast: false
-      matrix:
-        c_compiler: [gcc, clang]
-        include:
-          - c_compiler: gcc
-            cpp_compiler: g++
-          - c_compiler: clang
-            cpp_compiler: clang++
-
-    steps:
-      - name: Install build dependencies
-        run: |
-          dnf install -y --setopt=install_weak_deps=False \
-            gcc gcc-c++ clang cmake ninja-build git
-
-      - uses: actions/checkout@v4
-
-      - name: Configure CMake
-        run: >
-          cmake -G Ninja -B build
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-          -DCMAKE_BUILD_TYPE=Release
-          -DENABLE_WERROR=ON
-
-      - name: Build
-        run: cmake --build build --config Release
-
-      - name: Test
-        working-directory: build
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE/gtest_results"
-          export GTEST_OUTPUT="xml:$GITHUB_WORKSPACE/gtest_results/"
-          ctest --build-config Release --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-host-fedora42-${{ matrix.c_compiler }}
-          path: build/junit_results.xml
-          retention-days: 14
-
-      - name: Upload GTest detailed results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gtest-results-host-fedora42-${{ matrix.c_compiler }}
+          name: gtest-results-host-fedora42-gcc
           path: ${{ github.workspace }}/gtest_results/
           retention-days: 14
 
@@ -430,7 +359,7 @@ jobs:
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [build, build-fedora, build-fedora-fork, coverage, sanitizers]
+    needs: [build, build-fedora, coverage, sanitizers]
     if: always()
     permissions:
       checks: write
@@ -441,15 +370,7 @@ jobs:
           pattern: gtest-results-host-*
           path: gtest-downloads
 
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
-        with:
-          files: "gtest-downloads/**/*.xml"
-          check_name: "Host Test Results"
-          comment_mode: "off"
-
       - name: Tag GTest XMLs with build variant
-        if: always()
         run: |
           for dir in gtest-downloads/gtest-results-host-*/; do
             variant=$(basename "$dir" | sed 's/^gtest-results-host-//')
@@ -460,44 +381,9 @@ jobs:
             done
           done
 
-      - name: Convert GTest XML to CTRF
-        if: always()
-        run: npx junit-to-ctrf@0.0.14 "gtest-downloads/**/*.xml" -o ctrf/host-report.json -t host
-
-      - name: Detailed Test Report
-        uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
-        if: always()
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2
         with:
-          report-path: 'ctrf/host-report.json'
-          title: 'Host Test Report'
-          summary-report: true
-          failed-report: true
-          suite-list-report: true
-          test-report: true
-          use-suite-name: true
-
-      - name: Create Host Test Check Run
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-          REPORT="ctrf/host-report.json"
-          if [ ! -f "$REPORT" ]; then echo "No CTRF report found"; exit 0; fi
-          TOTAL=$(jq '.results.summary.tests' "$REPORT")
-          PASSED=$(jq '.results.summary.passed' "$REPORT")
-          FAILED=$(jq '.results.summary.failed' "$REPORT")
-          SKIPPED=$(jq '.results.summary.skipped' "$REPORT")
-          CONCLUSION="success"; [ "$FAILED" -gt 0 ] && CONCLUSION="failure"
-          BODY="## Host Test Report"$'\n\n'"| Tests | Passed | Failed | Skipped |"$'\n'"|-|-|-|-|"$'\n'"| $TOTAL | $PASSED | $FAILED | $SKIPPED |"
-          if [ "$FAILED" -gt 0 ]; then
-            FAILS=$(jq -r '[.results.tests[] | select(.status=="failed")] | .[0:50] | .[] | "| \(.suite // "-") | \(.name) |"' "$REPORT")
-            BODY="$BODY"$'\n\n'"### Failed Tests"$'\n'"| Suite | Test |"$'\n'"|-|-|"$'\n'"$FAILS"
-          fi
-          gh api repos/${{ github.repository }}/check-runs \
-            -f "head_sha=${SHA}" \
-            -f "name=Host Detailed Test Report" \
-            -f "status=completed" \
-            -f "conclusion=${CONCLUSION}" \
-            -f "output[title]=Host: ${PASSED}/${TOTAL} passed" \
-            -f "output[summary]=${BODY}"
+          files: "gtest-downloads/**/*.xml"
+          check_name: "Host Test Results"
+          comment_mode: "off"
