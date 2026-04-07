@@ -13,8 +13,6 @@ BuildRequires:  cmake >= 3.20
 BuildRequires:  gcc-c++
 BuildRequires:  ninja-build
 
-%global debug_package %{nil}
-
 %description
 OpenSOME/IP is a portable, standards-compliant C++17 implementation of
 SOME/IP (Scalable service-Oriented MiddlewarE over IP). It provides
@@ -24,10 +22,11 @@ Linux systems.
 
 %package        devel
 Summary:        Development files for %{name}
-Provides:       %{name}-static = %{version}-%{release}
+Requires:       %{name}%{?_isa} = %{version}-%{release}
 
 %description    devel
-Headers and static library for developing applications with OpenSOME/IP.
+Headers and shared-library symlink for developing applications with
+OpenSOME/IP.
 
 %prep
 %autosetup -n %{name}-%{version}
@@ -35,6 +34,7 @@ Headers and static library for developing applications with OpenSOME/IP.
 %build
 %cmake \
     -G Ninja \
+    -DBUILD_SHARED_LIBS:BOOL=ON \
     -DBUILD_TESTS=OFF \
     -DBUILD_EXAMPLES=OFF \
     -DSOMEIP_DEV_TOOLS=OFF \
@@ -44,8 +44,11 @@ Headers and static library for developing applications with OpenSOME/IP.
 %install
 %cmake_install
 
-%files devel
+%files
 %license LICENSE
+%{_libdir}/libopensomeip.so.*
+
+%files devel
 %doc README.md CHANGELOG.md
 %{_includedir}/someip/
-%{_libdir}/libopensomeip.a
+%{_libdir}/libopensomeip.so

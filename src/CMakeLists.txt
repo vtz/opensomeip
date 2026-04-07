@@ -48,8 +48,8 @@ else()
     set(SOMEIP_NET_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/posix)
 endif()
 
-# Single consolidated library target
-add_library(opensomeip STATIC ${OPENSOMEIP_SOURCES})
+# Library type follows BUILD_SHARED_LIBS (default: STATIC)
+add_library(opensomeip ${OPENSOMEIP_SOURCES})
 target_include_directories(opensomeip PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${SOMEIP_THREADING_IMPL_DIR}
@@ -106,8 +106,17 @@ if(WIN32)
     target_compile_definitions(opensomeip PRIVATE NOGDI WIN32_LEAN_AND_MEAN NOMINMAX)
 endif()
 
-# Set library properties
+# Set library properties for proper soname versioning
 set_target_properties(opensomeip PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
+    POSITION_INDEPENDENT_CODE ON
 )
+
+# Symbol visibility for shared builds: hide by default, export explicitly
+if(BUILD_SHARED_LIBS)
+    set_target_properties(opensomeip PROPERTIES
+        CXX_VISIBILITY_PRESET hidden
+        VISIBILITY_INLINES_HIDDEN ON
+    )
+endif()
