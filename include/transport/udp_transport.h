@@ -90,7 +90,7 @@ private:
     someip_socket_t socket_fd_{SOMEIP_INVALID_SOCKET};
     std::atomic<bool> running_;
     std::unique_ptr<platform::Thread> receive_thread_;
-    ITransportListener* listener_{nullptr};
+    std::atomic<ITransportListener*> listener_{nullptr};
 
     std::queue<MessagePtr> receive_queue_;
     platform::Mutex queue_mutex_;

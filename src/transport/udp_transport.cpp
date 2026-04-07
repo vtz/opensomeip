@@ -116,7 +116,7 @@ Endpoint UdpTransport::get_local_endpoint() const {
 }
 
 void UdpTransport::set_listener(ITransportListener* listener) {
-    listener_ = listener;
+    listener_.store(listener, std::memory_order_release);
 }
 
 /** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_021, REQ_TRANSPORT_022, REQ_TRANSPORT_023 */
@@ -150,8 +150,8 @@ Result UdpTransport::stop() {
         return Result::SUCCESS;
     }
 
-    running_ = false;
-    listener_ = nullptr;
+    running_.store(false, std::memory_order_release);
+    listener_.store(nullptr, std::memory_order_release);
 
     // Close socket to wake up receive thread
     if (socket_fd_ != SOMEIP_INVALID_SOCKET) {
@@ -369,9 +369,8 @@ void UdpTransport::receive_loop() {
                 }
                 queue_cv_.notify_one();
 
-                // Notify listener with sender information
-                if (listener_) {
-                    listener_->on_message_received(message, sender);
+                if (auto* l = listener_.load(std::memory_order_acquire)) {
+                    l->on_message_received(message, sender);
                 }
             }
         } else if (result == Result::NOT_CONNECTED) {
@@ -382,9 +381,8 @@ void UdpTransport::receive_loop() {
             // Small delay to prevent tight polling loop
             platform::this_thread::sleep_for(std::chrono::milliseconds(10));
         } else {
-            // Network or other error, notify listener
-            if (listener_) {
-                listener_->on_error(result);
+            if (auto* l = listener_.load(std::memory_order_acquire)) {
+                l->on_error(result);
             }
 
             if (!config_.blocking) {
