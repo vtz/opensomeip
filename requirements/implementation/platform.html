@@ -68,7 +68,7 @@ header selected at build time via CMake include-path configuration.</p>
 </section>
 <section id="pal-architecture">
 <h2>PAL Architecture<a class="headerlink" href="#pal-architecture" title="Link to this heading">¶</a></h2>
-<div class="need_container docutils container" id="SNCB-33479d22">
+<div class="need_container docutils container" id="SNCB-0a606463">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_ARCH_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -108,7 +108,7 @@ the platform layer extensible for future backends.</p>
 <h2>PAL Interface Contracts<a class="headerlink" href="#pal-interface-contracts" title="Link to this heading">¶</a></h2>
 <section id="mutex-interface">
 <h3>Mutex Interface<a class="headerlink" href="#mutex-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-c2b652c9">
+<div class="need_container docutils container" id="SNCB-3e0bf68a">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_MUTEX_LOCK">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -140,7 +140,7 @@ primitive used by SD, TP, and transport layers.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-feccabba">
+<div class="need_container docutils container" id="SNCB-a6005462">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_MUTEX_UNLOCK">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -170,7 +170,7 @@ allowing other threads blocked on <code class="docutils literal notranslate"><sp
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-c9b8e262">
+<div class="need_container docutils container" id="SNCB-a8a1d37d">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_MUTEX_TRYLOCK">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -202,7 +202,7 @@ patterns and diagnostic probes.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e6e8d954">
+<div class="need_container docutils container" id="SNCB-726afe01">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_MUTEX_NONCOPY">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -230,7 +230,7 @@ would create dangling or aliased handles.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-1d4d5471">
+<div class="need_container docutils container" id="SNCB-1f9cf1a2">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_MUTEX_UNLOCK_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -262,7 +262,7 @@ xSemaphoreGive returns pdFAIL; Zephyr: k_mutex_unlock returns -EPERM).</p>
 </section>
 <section id="conditionvariable-interface">
 <h3>ConditionVariable Interface<a class="headerlink" href="#conditionvariable-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-21e3f15b">
+<div class="need_container docutils container" id="SNCB-68454720">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_CV_WAIT">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -293,7 +293,7 @@ for producer/consumer patterns in SD and event delivery.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-4800babc">
+<div class="need_container docutils container" id="SNCB-c7315f6b">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_CV_WAIT_PRED">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -324,7 +324,7 @@ the API level.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-704a6549">
+<div class="need_container docutils container" id="SNCB-d5394155">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_CV_NOTIFY_ONE">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -355,7 +355,7 @@ message dispatch.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-386ab3cb">
+<div class="need_container docutils container" id="SNCB-3789915b">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_CV_NOTIFY_ALL">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -385,7 +385,7 @@ all worker threads must unblock.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-975ec714">
+<div class="need_container docutils container" id="SNCB-a854c953">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_CV_OWNERSHIP">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -414,7 +414,7 @@ are extremely hard to diagnose.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-681393bf">
+<div class="need_container docutils container" id="SNCB-b5e89a92">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_CV_EXCEPT_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -444,7 +444,7 @@ leading to data races.</p>
 </section>
 <section id="thread-interface">
 <h3>Thread Interface<a class="headerlink" href="#thread-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-bc1a14a9">
+<div class="need_container docutils container" id="SNCB-79fa7239">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_THREAD_CREATE">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -475,7 +475,7 @@ simplify worker-thread creation in SD and transport layers.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-4c91912f">
+<div class="need_container docutils container" id="SNCB-de4a50d2">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_THREAD_JOINABLE">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -504,7 +504,7 @@ avoid double-join errors.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-6c5cb048">
+<div class="need_container docutils container" id="SNCB-75cefe7a">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_THREAD_JOIN">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -534,7 +534,7 @@ in transport and SD layers.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-31addf5e">
+<div class="need_container docutils container" id="SNCB-8f161d36">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_THREAD_NONCOPY">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -561,7 +561,7 @@ would create invalid aliases.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-d5643730">
+<div class="need_container docutils container" id="SNCB-0dc7b36e">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_THREAD_CREATE_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -591,7 +591,7 @@ in the constructor error path.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-fb036a63">
+<div class="need_container docutils container" id="SNCB-644abccc">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_THREAD_DTOR_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -623,7 +623,7 @@ and free context.</p>
 </section>
 <section id="scopedlock-interface">
 <h3>ScopedLock Interface<a class="headerlink" href="#scopedlock-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-6e0d47fe">
+<div class="need_container docutils container" id="SNCB-d2874c11">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_LOCK_ACQUIRE">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -651,7 +651,7 @@ critical section begins at the point of declaration.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-a6a90d2a">
+<div class="need_container docutils container" id="SNCB-5fe7738a">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_LOCK_RELEASE">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -679,7 +679,7 @@ early returns and exceptions.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-3e537775">
+<div class="need_container docutils container" id="SNCB-9c4f42c9">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_LOCK_NONCOPY">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -708,7 +708,7 @@ destruction.</p>
 </section>
 <section id="sleep-for-interface">
 <h3>sleep_for Interface<a class="headerlink" href="#sleep-for-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-f49c9a20">
+<div class="need_container docutils container" id="SNCB-12177ab0">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_SLEEP_DURATION">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -739,7 +739,7 @@ providing a minimum delay guarantee.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e8ab426c">
+<div class="need_container docutils container" id="SNCB-0dbfdbec">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_SLEEP_ZERO">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -771,7 +771,7 @@ durations are zero or negative.</p>
 </section>
 <section id="memory-interface">
 <h3>Memory Interface<a class="headerlink" href="#memory-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-a18386e9">
+<div class="need_container docutils container" id="SNCB-61bb3c27">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_MEM_ALLOC">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -804,7 +804,7 @@ memory strategy (heap vs. pool).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-3b6d3a78">
+<div class="need_container docutils container" id="SNCB-726e40bd">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_MEM_INDEPENDENT">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -833,7 +833,7 @@ objects would cause data corruption.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-ad8feace">
+<div class="need_container docutils container" id="SNCB-6cc7cb89">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_MEM_EXHAUST_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -863,7 +863,7 @@ exhaustion gracefully.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-5cd1b205">
+<div class="need_container docutils container" id="SNCB-b6d26a19">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_MEM_THREADSAFE_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -896,7 +896,7 @@ threads.</p>
 </section>
 <section id="networking-interface">
 <h3>Networking Interface<a class="headerlink" href="#networking-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-b034f90a">
+<div class="need_container docutils container" id="SNCB-b7c6e95d">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_NET_CLOSE">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -927,7 +927,7 @@ release the associated OS resources.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-a77b3e09">
+<div class="need_container docutils container" id="SNCB-979859b0">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_NET_SHUTDOWN">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -958,7 +958,7 @@ close.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-f1e379d2">
+<div class="need_container docutils container" id="SNCB-8fdcd39d">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_NET_NONBLOCK">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -988,7 +988,7 @@ receive loops.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-5479f84b">
+<div class="need_container docutils container" id="SNCB-f8432a80">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_NET_BLOCK">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1018,7 +1018,7 @@ mode with timeout.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-781f9473">
+<div class="need_container docutils container" id="SNCB-7ed318c2">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_NET_MODE_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1050,7 +1050,7 @@ invalid socket states.</p>
 </section>
 <section id="byte-order-interface">
 <h3>Byte-Order Interface<a class="headerlink" href="#byte-order-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-c08e81d3">
+<div class="need_container docutils container" id="SNCB-df1780f8">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_BYTE_HTONS">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1081,7 +1081,7 @@ to network byte order (big-endian).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-503c0ef6">
+<div class="need_container docutils container" id="SNCB-a1b91299">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_BYTE_NTOHS">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1112,7 +1112,7 @@ wire-format 16-bit fields to host order.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e291a170">
+<div class="need_container docutils container" id="SNCB-f2f24348">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_BYTE_HTONL">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1143,7 +1143,7 @@ big-endian values.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-9cb808e6">
+<div class="need_container docutils container" id="SNCB-085e9b58">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PAL_BYTE_NTOHL">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1180,7 +1180,7 @@ wire-format 32-bit fields to host order.</p>
 <h2>Platform Backends<a class="headerlink" href="#platform-backends" title="Link to this heading">¶</a></h2>
 <section id="posix-host-backend">
 <h3>POSIX/Host Backend<a class="headerlink" href="#posix-host-backend" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-b4f88067">
+<div class="need_container docutils container" id="SNCB-9b9cb2b9">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_POSIX_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1215,7 +1215,7 @@ standard library types provide zero-overhead abstractions.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-05d0b90a">
+<div class="need_container docutils container" id="SNCB-122c9d4d">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_POSIX_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1242,7 +1242,7 @@ no pool is needed.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-4496e2d4">
+<div class="need_container docutils container" id="SNCB-8ae2cc68">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_POSIX_003">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1275,7 +1275,7 @@ and portable helpers:</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-577b5068">
+<div class="need_container docutils container" id="SNCB-ed5b0d29">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_POSIX_004">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1310,7 +1310,7 @@ functions:</p>
 </section>
 <section id="freertos-backend">
 <h3>FreeRTOS Backend<a class="headerlink" href="#freertos-backend" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-7d62a3fe">
+<div class="need_container docutils container" id="SNCB-df4cb59b">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_FREERTOS_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1342,7 +1342,7 @@ automotive embedded systems.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-d30524de">
+<div class="need_container docutils container" id="SNCB-7e41e736">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_FREERTOS_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1379,7 +1379,7 @@ without heap fragmentation.</p>
 </section>
 <section id="threadx-backend">
 <h3>ThreadX Backend<a class="headerlink" href="#threadx-backend" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-727555cb">
+<div class="need_container docutils container" id="SNCB-f51fe693">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_THREADX_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1411,7 +1411,7 @@ industrial embedded systems.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-a3e28c26">
+<div class="need_container docutils container" id="SNCB-4aa4be25">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_THREADX_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1448,7 +1448,7 @@ without heap fragmentation.</p>
 </section>
 <section id="lwip-backend">
 <h3>lwIP Backend<a class="headerlink" href="#lwip-backend" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-190c8b73">
+<div class="need_container docutils container" id="SNCB-1a9b173d">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_LWIP_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1482,7 +1482,7 @@ ThreadX on microcontrollers.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-430ccb2d">
+<div class="need_container docutils container" id="SNCB-3c374bd1">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_LWIP_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1512,7 +1512,7 @@ the target architecture.</p>
 </section>
 <section id="zephyr-backend">
 <h3>Zephyr Backend<a class="headerlink" href="#zephyr-backend" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-487e22b8">
+<div class="need_container docutils container" id="SNCB-e0849b4a">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_ZEPHYR_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1549,7 +1549,7 @@ support used in OpenSOMEIP CI.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e0e0da22">
+<div class="need_container docutils container" id="SNCB-64f1e504">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_ZEPHYR_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1577,7 +1577,7 @@ deterministic embedded allocation.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-07a8e0b5">
+<div class="need_container docutils container" id="SNCB-51a7134b">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_ZEPHYR_003">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1612,7 +1612,7 @@ explicit macros restore portability.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b492729f">
+<div class="need_container docutils container" id="SNCB-40dda061">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_ZEPHYR_004">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1641,7 +1641,7 @@ explicit macros restore portability.</p>
 </section>
 <section id="win32-backend">
 <h3>Win32 Backend<a class="headerlink" href="#win32-backend" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-1621c0b8">
+<div class="need_container docutils container" id="SNCB-f7b50ca1">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_WIN32_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1674,7 +1674,7 @@ C++ standard library types (identical to POSIX/host):</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-6cfb56de">
+<div class="need_container docutils container" id="SNCB-9778f3f7">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_WIN32_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1700,7 +1700,7 @@ C++ standard library types (identical to POSIX/host):</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-06592269">
+<div class="need_container docutils container" id="SNCB-af304cb2">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_WIN32_003">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1731,7 +1731,7 @@ C++ standard library types (identical to POSIX/host):</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b5111ad0">
+<div class="need_container docutils container" id="SNCB-ff023dea">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_PLATFORM_WIN32_004">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
