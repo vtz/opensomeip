@@ -8,6 +8,8 @@ upstream_tag_template: v{version}
 copy_upstream_release_description: true
 
 actions:
+  get-current-version:
+    - bash -c "cat VERSION"
   # Packit creates the tarball from git; fix-spec-file updates Version/Release.
   # The archive name must match %autosetup -n %{name}-%{version}.
   create-archive:

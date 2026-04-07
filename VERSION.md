@@ -14,35 +14,58 @@ This project follows [Semantic Versioning](https://semver.org/) with the format 
 - **MINOR**: New features that are backward compatible
 - **PATCH**: Bug fixes that are backward compatible
 
-## Version File
+## Single Source of Truth
 
-The project version is maintained in a simple text file:
+The `VERSION` file at the project root is the single source of truth. All other
+version references are derived from it—either dynamically at build time or
+updated by `bump_version.sh`.
 
-```
-VERSION
-```
-
-This file contains only the version string (e.g., `0.0.1`).
+| File | How it gets the version |
+|------|------------------------|
+| `VERSION` | **Source of truth** — plain text, e.g. `0.0.5` |
+| `CMakeLists.txt` | `file(READ ... VERSION)` — reads at configure time |
+| `.packit.yaml` | `get-current-version: cat VERSION` — read by Packit |
+| `packaging/opensomeip.spec` | Updated by `bump_version.sh` |
+| `README.md` | Updated by `bump_version.sh` |
+| `CHANGELOG.md` | Scaffolded by `bump_version.sh` |
 
 ## Version Management Scripts
 
 ### bump_version.sh
 
-Bump the project version following semantic versioning rules:
+Bump the project version following semantic versioning rules. This script
+updates **all** version-bearing files in a single command:
 
 ```bash
-# Bump patch version (0.0.1 -> 0.0.2)
+# Bump patch version (0.0.5 -> 0.0.6)
 ./scripts/bump_version.sh patch
 
-# Bump minor version (0.0.1 -> 0.1.0)
+# Bump minor version (0.0.5 -> 0.1.0)
 ./scripts/bump_version.sh minor
 
-# Bump major version (0.0.1 -> 1.0.0)
+# Bump major version (0.0.5 -> 1.0.0)
 ./scripts/bump_version.sh major
 
 # Set specific version
 ./scripts/bump_version.sh 2.1.3
 ```
+
+Files updated automatically:
+- `VERSION`
+- `packaging/opensomeip.spec` (Version + Release reset)
+- `README.md` (**Current Version** line)
+- `CHANGELOG.md` (scaffolded section header + comparison link)
+
+### check_version_consistency.sh
+
+CI guard that verifies all version references match `VERSION`:
+
+```bash
+./scripts/check_version_consistency.sh
+```
+
+Exits non-zero if any file is out of sync. Run this in CI to catch drift before
+it reaches `main`.
 
 ### bump_submodule.sh
 
