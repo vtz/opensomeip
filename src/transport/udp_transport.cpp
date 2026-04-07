@@ -150,7 +150,7 @@ Result UdpTransport::stop() {
         return Result::SUCCESS;
     }
 
-    running_ = false;
+    running_.store(false, std::memory_order_release);
     listener_.store(nullptr, std::memory_order_release);
 
     // Close socket to wake up receive thread

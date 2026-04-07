@@ -147,7 +147,7 @@ Result TcpTransport::stop() {
         return Result::SUCCESS;
     }
 
-    running_ = false;
+    running_.store(false, std::memory_order_release);
     listener_.store(nullptr, std::memory_order_release);
 
     // Close connections
@@ -433,12 +433,7 @@ void TcpTransport::receive_loop() {
                 // Failed to parse message from buffer
             }
         } else if (result != Result::SUCCESS) {
-            // Connection error
             disconnect_internal();
-
-            if (auto* l = listener_.load(std::memory_order_acquire)) {
-                l->on_error(result);
-            }
         }
 
         platform::this_thread::sleep_for(std::chrono::milliseconds(10));
