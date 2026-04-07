@@ -7,8 +7,8 @@
 /**
  * Shared serializer tests for RTOS and Zephyr test suites.
  *
- * Covers uint8/16/32/64 roundtrips, string serialization, array
- * serialization, and buffer boundary checks — the platform-independent
+ * Covers uint8/16/32/64 roundtrips, string serialization,
+ * and buffer boundary checks — the platform-independent
  * subset of the host test_serialization.cpp suite.
  *
  * Requires:  CHECK(cond, name)  macro defined before inclusion.
@@ -18,6 +18,8 @@
 #define SOMEIP_TEST_SERIALIZER_COMMON_INC
 
 #include "serialization/serializer.h"
+#include <cstdio>
+#include <string>
 #include <vector>
 
 static void test_serializer() {

@@ -15,7 +15,7 @@
  *   - CRC corruption detection
  *
  * Requires:  CHECK(cond, name)  macro defined before inclusion.
- *            initialize_basic_profile() must be called before test_e2e().
+ *            test_e2e() calls initialize_basic_profile() internally.
  */
 
 #ifndef SOMEIP_TEST_E2E_COMMON_INC

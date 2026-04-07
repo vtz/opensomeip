@@ -8,7 +8,7 @@
  * Shared message tests for RTOS and Zephyr test suites.
  *
  * Requires:  CHECK(cond, name)  macro defined before inclusion.
- * Includes:  someip/message.h, someip/types.h, transport/endpoint.h
+ * Includes:  someip/message.h, someip/types.h
  */
 
 #ifndef SOMEIP_TEST_MESSAGE_COMMON_INC

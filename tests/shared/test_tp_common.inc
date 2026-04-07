@@ -179,8 +179,6 @@ static void test_tp() {
             }
         }
         CHECK(aligned, "tp_segments_16byte_aligned");
-
-        segmenter.shutdown();
     }
 
     // Invalid segment: offset + length > message_length
@@ -215,8 +213,6 @@ static void test_tp() {
         TpResult result = segmenter.segment_message(msg, segments);
         CHECK(result == TpResult::MESSAGE_TOO_LARGE, "tp_too_large_rejected");
         CHECK(segments.empty(), "tp_too_large_no_segments");
-
-        segmenter.shutdown();
     }
 
     // Statistics tracking
