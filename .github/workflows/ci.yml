@@ -73,6 +73,7 @@ jobs:
               - 'CMakePresets.json'
               - 'cmake/**'
               - 'VERSION'
+              - 'tests/shared/**'
               - '.github/workflows/ci.yml'
             host:
               - 'include/platform/posix/**'

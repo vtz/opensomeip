@@ -5,6 +5,7 @@ add_executable(test_freertos_core test_freertos_core.cpp)
 
 target_include_directories(test_freertos_core PRIVATE
     ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}
     ${SOMEIP_THREADING_IMPL_DIR}
     ${SOMEIP_NET_IMPL_DIR}
 )
@@ -13,6 +14,8 @@ target_link_libraries(test_freertos_core PRIVATE
     someip-core
     someip-serialization
     someip-transport
+    someip-e2e
+    someip-tp
 )
 
 add_test(NAME FreeRTOSCoreTest COMMAND test_freertos_core)

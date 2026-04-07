@@ -345,12 +345,15 @@ if(SOMEIP_FREERTOS_RENODE_TESTS)
     add_executable(test_freertos_renode tests/freertos/test_freertos_core.cpp)
     target_include_directories(test_freertos_renode PRIVATE
         ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode
     )
     target_link_libraries(test_freertos_renode PRIVATE
         someip-core
         someip-serialization
         someip-transport
+        someip-e2e
+        someip-tp
         stm32f407_bsp
     )
     target_link_options(test_freertos_renode PRIVATE
@@ -372,6 +375,7 @@ if(SOMEIP_THREADX_RENODE_TESTS)
     add_executable(test_threadx_renode tests/threadx/test_threadx_core.cpp)
     target_include_directories(test_threadx_renode PRIVATE
         ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}
         ${PROJECT_SOURCE_DIR}/bsp/stm32f407_renode
     )
     target_sources(test_threadx_renode PRIVATE
@@ -382,6 +386,8 @@ if(SOMEIP_THREADX_RENODE_TESTS)
         someip-core
         someip-serialization
         someip-transport
+        someip-e2e
+        someip-tp
         stm32f407_bsp
     )
     target_link_options(test_threadx_renode PRIVATE
