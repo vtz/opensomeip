@@ -27,6 +27,37 @@ This document defines the acceptance criteria and comprehensive test strategy fo
 - Provide complete test coverage mapping
 - Enable conformance verification against industry standards
 
+```mermaid
+graph LR
+    REQ["Requirements Analysis<br/>Open SOME/IP Specification"] --> SYS["System Design<br/>Architecture Definition"]
+    SYS --> ARCH["Architecture Design<br/>Module Structure"]
+    ARCH --> MOD["Module Design<br/>Component Specs"]
+    MOD --> CODE["Coding<br/>Implementation"]
+
+    CODE --> UT["Unit Testing<br/>Level 1"]
+    UT --> CT["Component Testing<br/>Level 2"]
+    CT --> IT["Integration Testing<br/>Level 3"]
+    IT --> ST["System Testing<br/>Level 4"]
+    ST --> AT["Acceptance Testing<br/>Level 5"]
+
+    REQ -.- AT
+    SYS -.- ST
+    ARCH -.- IT
+    MOD -.- CT
+    CODE -.- UT
+
+    style REQ fill:#e3f2fd,color:#333,stroke:#1565c0
+    style SYS fill:#e8f5e9,color:#333,stroke:#2e7d32
+    style ARCH fill:#fff9c4,color:#333,stroke:#f9a825
+    style MOD fill:#ffecb3,color:#333,stroke:#ff8f00
+    style CODE fill:#ffe0b2,color:#333,stroke:#e65100
+    style UT fill:#ffebee,color:#333,stroke:#c62828
+    style CT fill:#fce4ec,color:#333,stroke:#ad1457
+    style IT fill:#f3e5f5,color:#333,stroke:#6a1b9a
+    style ST fill:#e8eaf6,color:#333,stroke:#283593
+    style AT fill:#e3f2fd,color:#333,stroke:#1565c0
+```
+
 ### 1.2 Scope
 This test plan covers:
 - **SOME/IP RPC Protocol** (someip-rpc.rst)

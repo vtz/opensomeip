@@ -9,6 +9,86 @@ The RPC layer provides high-level interfaces for making method calls between SOM
 
 ## Architecture
 
+```mermaid
+sequenceDiagram
+    title SOME/IP RPC Call Sequence
+    participant ClientApp as "Client Application"
+    participant Proxy as "Service Proxy"
+    participant RPCClient as "RPC Client"
+    participant SessionMgr as "Session Manager"
+    participant Serializer
+    participant TransportC as "Transport (Client)"
+    participant Network
+    participant TransportS as "Transport (Server)"
+    participant Deserializer
+    participant RPCServer as "RPC Server"
+    participant Skeleton as "Service Skeleton"
+    participant ServerApp as "Server Application"
+    rect rgb(230, 240, 255)
+        ClientApp->>Proxy: callMethod(methodId, parameters)
+        activate Proxy
+        Proxy->>RPCClient: createRequest(methodId, parameters)
+        activate RPCClient
+        RPCClient->>SessionMgr: getSessionId(clientId)
+        activate SessionMgr
+        SessionMgr-->>RPCClient: sessionId
+        deactivate SessionMgr
+        RPCClient->>Serializer: serialize(parameters)
+        activate Serializer
+        Serializer-->>RPCClient: serializedData
+        deactivate Serializer
+        RPCClient->>RPCClient: createMessage(REQUEST, methodId, sessionId, serializedData)
+        RPCClient-->>Proxy: requestMessage
+        deactivate RPCClient
+        Proxy->>TransportC: sendMessage(requestMessage, endpoint)
+        activate TransportC
+        TransportC->>Network: sendUDP(requestMessage)
+        deactivate TransportC
+        Network->>TransportS: receiveUDP(requestMessage)
+        activate TransportS
+        TransportS->>RPCServer: onMessageReceived(requestMessage)
+        activate RPCServer
+        RPCServer->>Deserializer: deserialize(requestMessage.payload)
+        activate Deserializer
+        Deserializer-->>RPCServer: parameters
+        deactivate Deserializer
+        RPCServer->>Skeleton: dispatchMethod(methodId, parameters)
+        activate Skeleton
+        Skeleton->>ServerApp: invokeMethod(methodId, parameters)
+        activate ServerApp
+    end
+    rect rgb(255, 245, 230)
+        ServerApp->>ServerApp: processRequest(parameters)
+        ServerApp-->>Skeleton: result
+        deactivate ServerApp
+        Skeleton->>RPCServer: methodResponse(result)
+        deactivate Skeleton
+    end
+    rect rgb(230, 255, 240)
+        RPCServer->>Serializer: serialize(result)
+        activate Serializer
+        Serializer-->>RPCServer: serializedResult
+        deactivate Serializer
+        RPCServer->>RPCServer: createMessage(RESPONSE, methodId, sessionId, serializedResult)
+        RPCServer->>TransportS: sendMessage(responseMessage, clientEndpoint)
+        TransportS->>Network: sendUDP(responseMessage)
+        deactivate TransportS
+        Network->>TransportC: receiveUDP(responseMessage)
+        activate TransportC
+        TransportC->>RPCClient: onMessageReceived(responseMessage)
+        deactivate TransportC
+        activate RPCClient
+        RPCClient->>Deserializer: deserialize(responseMessage.payload)
+        activate Deserializer
+        Deserializer-->>RPCClient: result
+        deactivate Deserializer
+        RPCClient-->>Proxy: onResponse(methodId, result)
+        deactivate RPCClient
+        Proxy->>ClientApp: methodResult(result)
+        deactivate Proxy
+    end
+```
+
 ### Components
 
 #### RpcClient

@@ -21,6 +21,9 @@ graph TD
     TP --> TRANS
     TRANS --> CORE[Core Layer]
     CORE --> SER[Serialization]
+    TRANS -.-> PAL[Platform Abstraction Layer]
+    SD -.-> PAL
+    TP -.-> PAL
 
     style APP fill:#7c4dff,color:#fff,stroke:none
     style RPC fill:#536dfe,color:#fff,stroke:none
@@ -30,6 +33,7 @@ graph TD
     style TRANS fill:#40c4ff,color:#000,stroke:none
     style CORE fill:#18ffff,color:#000,stroke:none
     style SER fill:#18ffff,color:#000,stroke:none
+    style PAL fill:#69f0ae,color:#000,stroke:none
 ```
 
 ## Layer Details
@@ -92,6 +96,121 @@ Publish/subscribe communication:
 - Event subscriber for consuming notifications
 - Integration with Service Discovery for subscriptions
 
+### Platform Abstraction Layer (`platform`)
+
+The PAL provides a stable, portable interface between the protocol stack and the
+underlying operating system or RTOS. Rather than exposing individual headers, the
+PAL is organized into four functional domains:
+
+```mermaid
+graph TB
+    subgraph STACK["SOME/IP Protocol Stack"]
+        direction LR
+        T["Transport"]
+        SD_S["Service Discovery"]
+        TP_S["Transport Protocol"]
+        CS["Core & Serialization"]
+    end
+
+    subgraph PAL_LAYER["Platform Abstraction Layer"]
+        direction LR
+        RT["Runtime<br/>Threading & Synchronization"]
+        CM["Communication<br/>Socket API & Network I/O"]
+        MM["Memory<br/>Message Allocation"]
+        DE["Data Encoding<br/>Byte-Order Conversion"]
+    end
+
+    subgraph BE["Platform Backends — compile-time selection via CMake"]
+        subgraph RTB["Runtime & Memory"]
+            direction LR
+            P1["POSIX"]
+            W1["Win32"]
+            FR["FreeRTOS"]
+            TX["ThreadX"]
+            ZR["Zephyr"]
+        end
+        subgraph CMB["Communication & Data Encoding"]
+            direction LR
+            P2["BSD Sockets"]
+            W2["Winsock"]
+            LW["lwIP"]
+            ZS["Zephyr Sockets"]
+        end
+    end
+
+    STACK --> PAL_LAYER
+    PAL_LAYER --> BE
+
+    style STACK fill:#536dfe,color:#fff,stroke:none
+    style PAL_LAYER fill:#00897b,color:#fff,stroke:none
+    style RTB fill:#e8f5e9,color:#333,stroke:#81c784
+    style CMB fill:#e3f2fd,color:#333,stroke:#64b5f6
+```
+
+The two backend groups -- **Runtime & Memory** and **Communication & Data Encoding** --
+are selected independently at build time through CMake include-path variables
+(`SOMEIP_THREADING_IMPL_DIR` and `SOMEIP_NET_IMPL_DIR`).
+This enables combinations such as FreeRTOS threading with lwIP networking.
+No `#ifdef` guards appear in the public PAL headers; the build system resolves the
+active backend entirely through the include path.
+
+| Domain | Responsibility |
+|--------|---------------|
+| **Runtime** | `Mutex`, `Thread`, `ConditionVariable`, `ScopedLock`, `sleep_for` |
+| **Communication** | `someip_socket`, `someip_bind`, `someip_send`, `someip_recv`, multicast |
+| **Memory** | `allocate_message()` -- `std::make_shared` on host, static pools on RTOS |
+| **Data Encoding** | `someip_htons`, `someip_ntohs`, `someip_htonl`, `someip_ntohl` |
+
+### Component Interaction
+
+The following sequence shows the typical interaction flow for service discovery, RPC communication, and event subscription:
+
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant Proxy as Service Proxy
+    participant RPC as RPC Engine
+    participant SD as Service Discovery
+    participant Transport as Transport Layer
+    participant Net as Network
+
+    rect rgb(232, 245, 233)
+        Note over App, Net: Service Discovery Phase
+        App->>Proxy: findService(serviceId)
+        Proxy->>SD: startFindService(serviceId)
+        SD->>Transport: sendMulticastFind()
+        Transport->>Net: UDP Multicast
+        Net-->>Transport: Service Offers
+        Transport-->>SD: receiveOffers()
+        SD-->>Proxy: serviceAvailable(endpoint)
+        Proxy-->>App: serviceFound(endpoint)
+    end
+
+    rect rgb(227, 242, 253)
+        Note over App, Net: RPC Communication Phase
+        App->>Proxy: callMethod(methodId, params)
+        Proxy->>RPC: createRequest(methodId, params)
+        RPC->>Transport: sendMessage(request)
+        Transport->>Net: UDP/TCP Message
+        Net-->>Transport: Response Message
+        Transport-->>RPC: receiveMessage(response)
+        RPC-->>Proxy: processResponse(result)
+        Proxy-->>App: methodResult(result)
+    end
+
+    rect rgb(243, 229, 245)
+        Note over App, Net: Event Subscription Phase
+        App->>Proxy: subscribeEvent(eventId)
+        Proxy->>SD: subscribeToEvent(eventId)
+        SD->>Transport: sendSubscribeMessage()
+        Transport->>Net: Subscribe Message
+        Net-->>Transport: Subscribe ACK
+        Transport-->>SD: subscriptionConfirmed()
+        SD-->>Proxy: eventSubscribed()
+        Proxy-->>App: subscriptionActive()
+    end
+```
+
 ## Key Design Decisions
 
 ### Modern C++17
@@ -115,15 +234,18 @@ While not safety-certified, the design follows patterns that support functional 
 
 ### Platform Abstraction
 
-A clean PAL enables porting to new platforms:
+A clean PAL enables porting to new platforms with minimal effort.
+See [Platform Abstraction Layer](#platform-abstraction-layer-platform) above for the
+full architecture diagram.
 
-| Platform | Transport | Threading | Status |
-|----------|-----------|-----------|--------|
-| POSIX / Linux | BSD sockets | pthreads | Stable |
-| macOS | BSD sockets | pthreads | Stable |
-| Zephyr RTOS | Zephyr sockets | Zephyr threads | Stable |
-| FreeRTOS | lwIP | FreeRTOS tasks | Stable |
-| Eclipse ThreadX | lwIP | ThreadX threads | Stable |
+| Platform | Communication | Runtime | Status |
+|----------|--------------|---------|--------|
+| POSIX / Linux | BSD sockets | std::thread / std::mutex | Stable |
+| macOS | BSD sockets | std::thread / std::mutex | Stable |
+| Windows | Winsock | C++11 threading | Stable |
+| Zephyr RTOS | Zephyr sockets | k_thread / k_mutex | Stable |
+| FreeRTOS | lwIP | xTaskCreate / xSemaphore | Stable |
+| Eclipse ThreadX | lwIP | tx_thread / TX_MUTEX | Stable |
 
 ## Project Structure
 

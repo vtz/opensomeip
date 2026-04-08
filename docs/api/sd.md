@@ -9,6 +9,130 @@ The Service Discovery layer implements the SOME/IP-SD protocol, enabling dynamic
 
 ## Architecture
 
+The diagrams below trace the main SOME/IP-SD interactions between client and server stacks across offering, discovery, and event subscription. Client-side and server-side transport and SD handlers are shown separately because each host runs its own instances.
+
+```mermaid
+sequenceDiagram
+    participant CA as Client Application
+    participant Proxy as Service Proxy
+    participant SDC as SD Client
+    participant SDHc as "SD Handler (Client)"
+    participant TC as "Transport (Client)"
+    participant Net as Network
+    participant TS as "Transport (Server)"
+    participant SDHs as "SD Handler (Server)"
+    participant SDS as SD Server
+    participant Skel as Service Skeleton
+    participant SA as Server Application
+
+    rect rgb(230, 240, 255)
+        Note over SA, Net: Service offering phase
+        SA->>Skel: offerService(serviceId, instanceId)
+        activate Skel
+        Skel->>SDS: registerService(serviceId, instanceId, endpoint)
+        activate SDS
+        SDS->>SDS: createOfferMessage(serviceId, instanceId, endpoint)
+        loop Periodic offering
+            SDS->>SDHs: sendOffer()
+            activate SDHs
+            SDHs->>TS: sendMulticast(offerMessage)
+            activate TS
+            TS->>Net: sendMulticastUDP(offerMessage)
+            deactivate TS
+            deactivate SDHs
+        end
+        deactivate SDS
+        deactivate Skel
+    end
+
+    rect rgb(240, 255, 240)
+        Note over CA, Net: Service finding phase
+        CA->>Proxy: findService(serviceId)
+        activate Proxy
+        Proxy->>SDC: startFindService(serviceId)
+        activate SDC
+        SDC->>SDHc: createFindMessage(serviceId)
+        activate SDHc
+        SDHc->>TC: sendMulticast(findMessage)
+        activate TC
+        TC->>Net: sendMulticastUDP(findMessage)
+        deactivate TC
+        Net->>TS: receiveMulticast(findMessage)
+        activate TS
+        TS->>SDHs: onMessageReceived(findMessage)
+        deactivate TS
+        activate SDHs
+        SDHs->>SDS: handleFindRequest(serviceId)
+        activate SDS
+        SDS->>SDS: matchService(serviceId)
+        SDS-->>SDHs: serviceMatches
+        deactivate SDS
+        SDHs->>SDHs: createOfferMessage(matchingServices)
+        SDHs->>TS: sendUnicast(offerMessage)
+        activate TS
+        TS->>Net: sendUDP(offerMessage)
+        deactivate TS
+        deactivate SDHs
+        Net->>TC: receiveUDP(offerMessage)
+        activate TC
+        TC->>SDHc: onMessageReceived(offerMessage)
+        deactivate TC
+        SDHc->>SDC: serviceFound(serviceId, endpoint)
+        deactivate SDHc
+        SDC->>Proxy: onServiceFound(endpoint)
+        deactivate SDC
+        Proxy->>CA: serviceAvailable(endpoint)
+        deactivate Proxy
+    end
+
+    rect rgb(255, 245, 230)
+        Note over CA, Net: Subscription phase
+        CA->>Proxy: subscribeToEvent(serviceId, eventId)
+        activate Proxy
+        Proxy->>SDC: subscribeEvent(serviceId, eventId)
+        activate SDC
+        SDC->>SDHc: createSubscribeMessage(serviceId, eventId)
+        activate SDHc
+        SDHc->>TC: sendUnicast(subscribeMessage, serverEndpoint)
+        activate TC
+        TC->>Net: sendUDP(subscribeMessage)
+        deactivate TC
+        Net->>TS: receiveUDP(subscribeMessage)
+        activate TS
+        TS->>SDHs: onMessageReceived(subscribeMessage)
+        deactivate TS
+        activate SDHs
+        SDHs->>SDS: handleSubscribe(serviceId, eventId)
+        activate SDS
+        SDS->>Skel: subscribeEvent(eventId)
+        activate Skel
+        Skel->>SA: onEventSubscribed(eventId)
+        deactivate Skel
+        SDS-->>SDHs: subscriptionAccepted
+        deactivate SDS
+        SDHs->>SDHs: createSubscribeAck()
+        SDHs->>TS: sendUnicast(subscribeAck)
+        activate TS
+        TS->>Net: sendUDP(subscribeAck)
+        deactivate TS
+        deactivate SDHs
+        Net->>TC: receiveUDP(subscribeAck)
+        activate TC
+        TC->>SDHc: onMessageReceived(subscribeAck)
+        deactivate TC
+        SDHc->>SDC: subscriptionConfirmed(eventId)
+        deactivate SDHc
+        SDC->>Proxy: eventSubscribed(eventId)
+        deactivate SDC
+        Proxy->>CA: subscriptionActive(eventId)
+        deactivate Proxy
+    end
+
+    rect rgb(245, 245, 245)
+        Note over CA, SA: TTL-based cleanup ensures stale services are removed automatically
+    end
+```
+
 ### Components
 
 #### SdClient
