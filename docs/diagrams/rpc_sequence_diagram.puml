@@ -1,0 +1,112 @@
+@startuml RPC Sequence Diagram
+
+title SOME/IP RPC Call Sequence
+
+participant "Client Application" as ClientApp
+participant "Service Proxy" as Proxy
+participant "RPC Engine" as RPC
+participant "Session Manager" as SessionMgr
+participant "Serializer" as Serializer
+participant "Transport Layer" as Transport
+participant "Network" as Network
+participant "Transport Layer" as TransportSrv
+participant "Deserializer" as Deserializer
+participant "RPC Engine" as RPCSrv
+participant "Service Skeleton" as Skeleton
+participant "Server Application" as ServerApp
+
+== Request Phase ==
+
+ClientApp -> Proxy: callMethod(methodId, parameters)
+activate Proxy
+
+Proxy -> RPC: createRequest(methodId, parameters)
+activate RPC
+
+RPC -> SessionMgr: getSessionId(clientId)
+activate SessionMgr
+SessionMgr --> RPC: sessionId
+deactivate SessionMgr
+
+RPC -> Serializer: serialize(parameters)
+activate Serializer
+Serializer --> RPC: serializedData
+deactivate Serializer
+
+RPC -> RPC: createMessage(REQUEST, methodId, sessionId, serializedData)
+RPC --> Proxy: requestMessage
+deactivate RPC
+
+Proxy -> Transport: sendMessage(requestMessage, endpoint)
+activate Transport
+
+Transport -> Network: sendUDP(requestMessage)
+deactivate Transport
+
+Network -> TransportSrv: receiveUDP(requestMessage)
+activate TransportSrv
+
+TransportSrv -> RPCSrv: onMessageReceived(requestMessage)
+activate RPCSrv
+
+RPCSrv -> Deserializer: deserialize(requestMessage.payload)
+activate Deserializer
+Deserializer --> RPCSrv: parameters
+deactivate Deserializer
+
+RPCSrv -> Skeleton: dispatchMethod(methodId, parameters)
+activate Skeleton
+
+Skeleton -> ServerApp: invokeMethod(methodId, parameters)
+activate ServerApp
+
+== Processing Phase ==
+
+ServerApp -> ServerApp: processRequest(parameters)
+ServerApp --> Skeleton: result
+deactivate ServerApp
+
+Skeleton -> RPCSrv: methodResponse(result)
+deactivate Skeleton
+
+== Response Phase ==
+
+RPCSrv -> Serializer: serialize(result)
+activate Serializer
+Serializer --> RPCSrv: serializedResult
+deactivate Serializer
+
+RPCSrv -> RPCSrv: createMessage(RESPONSE, methodId, sessionId, serializedResult)
+RPCSrv -> TransportSrv: sendMessage(responseMessage, clientEndpoint)
+
+TransportSrv -> Network: sendUDP(responseMessage)
+deactivate TransportSrv
+
+Network -> Transport: receiveUDP(responseMessage)
+activate Transport
+
+Transport -> RPC: onMessageReceived(responseMessage)
+deactivate Transport
+
+RPC -> Deserializer: deserialize(responseMessage.payload)
+activate Deserializer
+Deserializer --> RPC: result
+deactivate Deserializer
+
+RPC -> Proxy: onResponse(methodId, result)
+deactivate RPC
+
+Proxy -> ClientApp: methodResult(result)
+deactivate Proxy
+
+== Error Handling ==
+
+note over ClientApp, ServerApp
+    Error scenarios:
+    - Network timeout
+    - Service unavailable
+    - Invalid parameters
+    - Server error
+end note
+
+@enduml
