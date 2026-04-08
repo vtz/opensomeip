@@ -13,58 +13,7 @@ End-to-End (E2E) protection provides data integrity, sequence validation, and fr
 
 ### Safety Architecture
 
-```mermaid
-graph TB
-    subgraph SM["Safety Management"]
-        SUP["Safety Supervisor"]
-        FD["Fault Detector"]
-        EH["Error Handler"]
-        RM["Recovery Manager"]
-    end
-
-    subgraph FC["Fault Containment"]
-        TS["Transport Safety"]
-        PS["Protocol Safety"]
-        AS["Application Safety"]
-        RS["Resource Safety"]
-    end
-
-    subgraph ER["Error Recovery"]
-        CR["Connection Recovery"]
-        SR["Session Recovery"]
-        SVR["Service Recovery"]
-        STR["State Recovery"]
-    end
-
-    subgraph MON["Monitoring"]
-        HM["Health Monitor"]
-        PM["Performance Monitor"]
-        EL["Error Logger"]
-    end
-
-    SUP --> FD
-    SUP --> RM
-    FD --> EH
-    EH --> RM
-
-    TS --> FD
-    PS --> FD
-    AS --> FD
-    RS --> FD
-
-    CR --> TS
-    SR --> PS
-    SVR --> AS
-    STR --> RS
-
-    HM --> SUP
-    PM --> SUP
-
-    style SM fill:#ffebee,color:#333,stroke:#c62828
-    style FC fill:#fff3e0,color:#333,stroke:#e65100
-    style ER fill:#e8f5e9,color:#333,stroke:#2e7d32
-    style MON fill:#e3f2fd,color:#333,stroke:#1565c0
-```
+![Safety Architecture](../diagrams/svg/safety_architecture.svg)
 
 ### Component Structure
 

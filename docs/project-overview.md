@@ -9,32 +9,7 @@ Each layer can be used independently or composed into a full-stack SOME/IP solut
 
 ## Layered Architecture
 
-```mermaid
-graph TD
-    APP[Application Layer] --> RPC[RPC Layer]
-    APP --> EVT[Events Layer]
-    RPC --> SD[Service Discovery]
-    EVT --> SD
-    RPC --> TP[Transport Protocol]
-    EVT --> TP
-    SD --> TRANS[Transport Layer]
-    TP --> TRANS
-    TRANS --> CORE[Core Layer]
-    CORE --> SER[Serialization]
-    TRANS -.-> PAL[Platform Abstraction Layer]
-    SD -.-> PAL
-    TP -.-> PAL
-
-    style APP fill:#7c4dff,color:#fff,stroke:none
-    style RPC fill:#536dfe,color:#fff,stroke:none
-    style EVT fill:#536dfe,color:#fff,stroke:none
-    style SD fill:#448aff,color:#fff,stroke:none
-    style TP fill:#448aff,color:#fff,stroke:none
-    style TRANS fill:#40c4ff,color:#000,stroke:none
-    style CORE fill:#18ffff,color:#000,stroke:none
-    style SER fill:#18ffff,color:#000,stroke:none
-    style PAL fill:#69f0ae,color:#000,stroke:none
-```
+![Layered Architecture](diagrams/svg/layered_architecture.svg)
 
 ## Layer Details
 
@@ -102,50 +77,7 @@ The PAL provides a stable, portable interface between the protocol stack and the
 underlying operating system or RTOS. Rather than exposing individual headers, the
 PAL is organized into four functional domains:
 
-```mermaid
-graph TB
-    subgraph STACK["SOME/IP Protocol Stack"]
-        direction LR
-        T["Transport"]
-        SD_S["Service Discovery"]
-        TP_S["Transport Protocol"]
-        CS["Core & Serialization"]
-    end
-
-    subgraph PAL_LAYER["Platform Abstraction Layer"]
-        direction LR
-        RT["Runtime<br/>Threading & Synchronization"]
-        CM["Communication<br/>Socket API & Network I/O"]
-        MM["Memory<br/>Message Allocation"]
-        DE["Data Encoding<br/>Byte-Order Conversion"]
-    end
-
-    subgraph BE["Platform Backends — compile-time selection via CMake"]
-        subgraph RTB["Runtime & Memory"]
-            direction LR
-            P1["POSIX"]
-            W1["Win32"]
-            FR["FreeRTOS"]
-            TX["ThreadX"]
-            ZR["Zephyr"]
-        end
-        subgraph CMB["Communication & Data Encoding"]
-            direction LR
-            P2["BSD Sockets"]
-            W2["Winsock"]
-            LW["lwIP"]
-            ZS["Zephyr Sockets"]
-        end
-    end
-
-    STACK --> PAL_LAYER
-    PAL_LAYER --> BE
-
-    style STACK fill:#536dfe,color:#fff,stroke:none
-    style PAL_LAYER fill:#00897b,color:#fff,stroke:none
-    style RTB fill:#e8f5e9,color:#333,stroke:#81c784
-    style CMB fill:#e3f2fd,color:#333,stroke:#64b5f6
-```
+![Platform Abstraction Layer](diagrams/svg/pal_architecture.svg)
 
 The two backend groups -- **Runtime & Memory** and **Communication & Data Encoding** --
 are selected independently at build time through CMake include-path variables
@@ -165,51 +97,7 @@ active backend entirely through the include path.
 
 The following sequence shows the typical interaction flow for service discovery, RPC communication, and event subscription:
 
-```mermaid
-sequenceDiagram
-    participant App as Application
-    participant Proxy as Service Proxy
-    participant RPC as RPC Engine
-    participant SD as Service Discovery
-    participant Transport as Transport Layer
-    participant Net as Network
-
-    rect rgb(232, 245, 233)
-        Note over App, Net: Service Discovery Phase
-        App->>Proxy: findService(serviceId)
-        Proxy->>SD: startFindService(serviceId)
-        SD->>Transport: sendMulticastFind()
-        Transport->>Net: UDP Multicast
-        Net-->>Transport: Service Offers
-        Transport-->>SD: receiveOffers()
-        SD-->>Proxy: serviceAvailable(endpoint)
-        Proxy-->>App: serviceFound(endpoint)
-    end
-
-    rect rgb(227, 242, 253)
-        Note over App, Net: RPC Communication Phase
-        App->>Proxy: callMethod(methodId, params)
-        Proxy->>RPC: createRequest(methodId, params)
-        RPC->>Transport: sendMessage(request)
-        Transport->>Net: UDP/TCP Message
-        Net-->>Transport: Response Message
-        Transport-->>RPC: receiveMessage(response)
-        RPC-->>Proxy: processResponse(result)
-        Proxy-->>App: methodResult(result)
-    end
-
-    rect rgb(243, 229, 245)
-        Note over App, Net: Event Subscription Phase
-        App->>Proxy: subscribeEvent(eventId)
-        Proxy->>SD: subscribeToEvent(eventId)
-        SD->>Transport: sendSubscribeMessage()
-        Transport->>Net: Subscribe Message
-        Net-->>Transport: Subscribe ACK
-        Transport-->>SD: subscriptionConfirmed()
-        SD-->>Proxy: eventSubscribed()
-        Proxy-->>App: subscriptionActive()
-    end
-```
+![Component Interaction](diagrams/svg/component_interaction.svg)
 
 ## Key Design Decisions
 

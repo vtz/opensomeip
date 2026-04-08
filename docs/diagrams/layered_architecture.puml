@@ -1,0 +1,37 @@
+@startuml Layered Architecture
+
+title OpenSOME/IP Layered Architecture
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 10
+
+skinparam rectangle {
+    RoundCorner 10
+}
+
+rectangle "Application Layer" as APP #7c4dff;text:white
+rectangle "RPC Layer" as RPC #536dfe;text:white
+rectangle "Events Layer" as EVT #536dfe;text:white
+rectangle "Service Discovery" as SD #448aff;text:white
+rectangle "Transport Protocol" as TP #448aff;text:white
+rectangle "Transport Layer" as TRANS #40c4ff
+rectangle "Core Layer" as CORE #18ffff
+rectangle "Serialization" as SER #18ffff
+rectangle "Platform Abstraction Layer" as PAL #69f0ae
+
+APP --> RPC
+APP --> EVT
+RPC --> SD
+EVT --> SD
+RPC --> TP
+EVT --> TP
+SD --> TRANS
+TP --> TRANS
+TRANS --> CORE
+CORE --> SER
+TRANS ..> PAL
+SD ..> PAL
+TP ..> PAL
+
+@enduml

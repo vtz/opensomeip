@@ -38,16 +38,16 @@ package "Safety Layer" as Safety {
 }
 
 package "Platform Abstraction Layer" as PAL {
-    component [thread.h] as ThreadH
-    component [memory.h] as MemoryH
-    component [net.h] as NetH
-    component [byteorder.h] as ByteorderH
+    component [Runtime] as RT
+    component [Communication] as CM
+    component [Memory] as MM
+    component [Data Encoding] as DE
 
     note right of PAL
-        Public headers contain only
-        common code + #include "*_impl.h".
-        CMake selects the backend via
-        include-path (-I) at build time.
+        Organized into four functional
+        domains. CMake selects backends
+        via include-path at build time.
+        No #ifdef in public headers.
     end note
 }
 
@@ -99,28 +99,28 @@ Transport --> FaultMon : Transport Faults
 Core --> RecoveryMgr : Error Recovery
 
 ' Transport and Core to PAL
-Transport --> ThreadH : platform::Thread\nplatform::Mutex
-Transport --> NetH : Sockets
-Transport --> MemoryH : allocate_message()
-Core --> ThreadH : platform::Mutex
-Core --> ByteorderH : someip_htons()
+Transport --> RT : Threading &\nSynchronization
+Transport --> CM : Socket API
+Transport --> MM : allocate_message()
+Core --> RT : Synchronization
+Core --> DE : Byte-Order
 
 ' PAL to Backends (one backend active at build time)
-ThreadH ..> POSIX_Thread
-ThreadH ..> Zephyr_Thread
-ThreadH ..> FreeRTOS_Thread
-ThreadH ..> ThreadX_Thread
-NetH ..> POSIX_Net
-NetH ..> Zephyr_Net
-NetH ..> FreeRTOS_Net
-NetH ..> ThreadX_Net
-MemoryH ..> POSIX_Mem
-MemoryH ..> Zephyr_Mem
-MemoryH ..> FreeRTOS_Mem
-MemoryH ..> ThreadX_Mem
+RT ..> POSIX_Thread
+RT ..> Zephyr_Thread
+RT ..> FreeRTOS_Thread
+RT ..> ThreadX_Thread
+CM ..> POSIX_Net
+CM ..> Zephyr_Net
+CM ..> FreeRTOS_Net
+CM ..> ThreadX_Net
+MM ..> POSIX_Mem
+MM ..> Zephyr_Mem
+MM ..> FreeRTOS_Mem
+MM ..> ThreadX_Mem
 
 ' Safety to Infrastructure
-SafetyMgr --> ThreadH : Thread Safety
+SafetyMgr --> RT : Thread Safety
 
 note right of Transport
     Transport uses only
