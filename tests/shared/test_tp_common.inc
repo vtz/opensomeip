@@ -67,7 +67,7 @@ static void test_tp() {
     // Multi-segment: large payload gets split
     {
         TpManager manager(config);
-        manager.initialize();
+        CHECK(manager.initialize(), "tp_multi_manager_init");
 
         Message msg(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                     MessageType::REQUEST, ReturnCode::E_OK);
@@ -87,28 +87,29 @@ static void test_tp() {
             segments.push_back(seg);
         }
 
-        CHECK(segments.size() > 1, "tp_multiple_segments");
-        CHECK(segments.front().header.message_type == TpMessageType::FIRST_SEGMENT,
-              "tp_first_segment_type");
-        CHECK(segments.back().header.message_type == TpMessageType::LAST_SEGMENT,
-              "tp_last_segment_type");
+        const bool has_multiple = segments.size() > 1;
+        CHECK(has_multiple, "tp_multiple_segments");
+        if (has_multiple) {
+            CHECK(segments.front().header.message_type == TpMessageType::FIRST_SEGMENT,
+                  "tp_first_segment_type");
+            CHECK(segments.back().header.message_type == TpMessageType::LAST_SEGMENT,
+                  "tp_last_segment_type");
 
-        // All segments share the same sequence number
-        uint8_t seq = segments[0].header.sequence_number;
-        bool seq_ok = true;
-        for (const auto& s : segments) {
-            if (s.header.sequence_number != seq) { seq_ok = false; break; }
-        }
-        CHECK(seq_ok, "tp_same_sequence_number");
-
-        // Middle segments are CONSECUTIVE
-        bool mid_ok = true;
-        for (size_t i = 1; i < segments.size() - 1; ++i) {
-            if (segments[i].header.message_type != TpMessageType::CONSECUTIVE_SEGMENT) {
-                mid_ok = false; break;
+            uint8_t seq = segments[0].header.sequence_number;
+            bool seq_ok = true;
+            for (const auto& s : segments) {
+                if (s.header.sequence_number != seq) { seq_ok = false; break; }
             }
+            CHECK(seq_ok, "tp_same_sequence_number");
+
+            bool mid_ok = true;
+            for (size_t i = 1; i + 1 < segments.size(); ++i) {
+                if (segments[i].header.message_type != TpMessageType::CONSECUTIVE_SEGMENT) {
+                    mid_ok = false; break;
+                }
+            }
+            CHECK(mid_ok, "tp_middle_segments_consecutive");
         }
-        CHECK(mid_ok, "tp_middle_segments_consecutive");
 
         manager.shutdown();
     }
@@ -116,7 +117,7 @@ static void test_tp() {
     // Reassembly roundtrip: segment → reassemble → verify payload
     {
         TpManager manager(config);
-        manager.initialize();
+        CHECK(manager.initialize(), "tp_reassembly_manager_init");
 
         Message original(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                          MessageType::REQUEST, ReturnCode::E_OK);
@@ -124,7 +125,8 @@ static void test_tp() {
         original.set_payload(original_payload);
 
         uint32_t transfer_id;
-        manager.segment_message(original, transfer_id);
+        TpResult seg_result = manager.segment_message(original, transfer_id);
+        CHECK(seg_result == TpResult::SUCCESS, "tp_reassembly_segment_ok");
 
         std::vector<TpSegment> segments;
         TpSegment seg;
@@ -167,18 +169,21 @@ static void test_tp() {
         std::vector<TpSegment> segments;
         TpResult result = segmenter.segment_message(msg, segments);
         CHECK(result == TpResult::SUCCESS, "tp_alignment_segment_ok");
-        CHECK(segments.size() > 1, "tp_alignment_multi");
 
-        bool aligned = true;
-        for (size_t i = 0; i < segments.size() - 1; ++i) {
-            size_t sz = segments[i].payload.size();
-            if (i == 0) {
-                if ((sz - 16) % 16 != 0) { aligned = false; break; }
-            } else {
-                if (sz % 16 != 0) { aligned = false; break; }
+        const bool align_multi = segments.size() > 1;
+        CHECK(align_multi, "tp_alignment_multi");
+        if (align_multi) {
+            bool aligned = true;
+            for (size_t i = 0; i + 1 < segments.size(); ++i) {
+                size_t sz = segments[i].payload.size();
+                if (i == 0) {
+                    if ((sz - 16) % 16 != 0) { aligned = false; break; }
+                } else {
+                    if (sz % 16 != 0) { aligned = false; break; }
+                }
             }
+            CHECK(aligned, "tp_segments_16byte_aligned");
         }
-        CHECK(aligned, "tp_segments_16byte_aligned");
     }
 
     // Invalid segment: offset + length > message_length
@@ -218,14 +223,15 @@ static void test_tp() {
     // Statistics tracking
     {
         TpManager manager(config);
-        manager.initialize();
+        CHECK(manager.initialize(), "tp_stats_manager_init");
 
         Message msg(MessageId(0x1111, 0x2222), RequestId(0x3333, 0x4444),
                     MessageType::REQUEST, ReturnCode::E_OK);
         msg.set_payload(std::vector<uint8_t>(800, 0x55));
 
         uint32_t transfer_id;
-        manager.segment_message(msg, transfer_id);
+        TpResult seg_result = manager.segment_message(msg, transfer_id);
+        CHECK(seg_result == TpResult::SUCCESS, "tp_stats_segment_ok");
 
         TpSegment seg;
         int count = 0;
@@ -245,7 +251,7 @@ static void test_tp() {
     // Invalid transfer ID
     {
         TpManager manager(config);
-        manager.initialize();
+        CHECK(manager.initialize(), "tp_invalid_xfer_manager_init");
 
         TpSegment seg;
         CHECK(manager.get_next_segment(99999, seg) == TpResult::INVALID_SEGMENT,

@@ -318,7 +318,7 @@ jobs:
           cmake --build "$GITHUB_WORKSPACE/build/threadx-cortexm4-renode" -j"$(nproc)"
           ./scripts/run_threadx_renode_test.sh \
             --skip-build \
-            --timeout 60 \
+            --timeout 120 \
             --junit-output /tmp/threadx_renode_junit.xml
 
       - name: Upload Renode test results

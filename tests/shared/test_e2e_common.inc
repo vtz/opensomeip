@@ -181,17 +181,20 @@ static void test_e2e() {
         config.enable_freshness = false;
         config.crc_type = 1;
 
-        protection.protect(msg, config);
+        Result setup = protection.protect(msg, config);
+        CHECK(setup == Result::SUCCESS, "e2e_corrupt_setup_protect_success");
 
         auto header_opt = msg.get_e2e_header();
-        if (header_opt.has_value()) {
+        CHECK(header_opt.has_value(), "e2e_corrupt_setup_header_present");
+
+        if (setup == Result::SUCCESS && header_opt.has_value()) {
             E2EHeader corrupted = header_opt.value();
             corrupted.crc = 0xDEADBEEF;
             msg.set_e2e_header(corrupted);
-        }
 
-        Result result = protection.validate(msg, config);
-        CHECK(result != Result::SUCCESS, "e2e_corrupted_crc_rejected");
+            Result result = protection.validate(msg, config);
+            CHECK(result != Result::SUCCESS, "e2e_corrupted_crc_rejected");
+        }
     }
 
     // Validate without header fails
