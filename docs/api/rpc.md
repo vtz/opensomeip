@@ -42,9 +42,9 @@ sequenceDiagram
         deactivate RPCClient
         Proxy->>TransportC: sendMessage(requestMessage, endpoint)
         activate TransportC
-        TransportC->>Network: sendUDP(requestMessage)
+        TransportC->>Network: send(requestMessage)
         deactivate TransportC
-        Network->>TransportS: receiveUDP(requestMessage)
+        Network->>TransportS: receive(requestMessage)
         activate TransportS
         TransportS->>RPCServer: onMessageReceived(requestMessage)
         activate RPCServer
@@ -71,9 +71,9 @@ sequenceDiagram
         deactivate Serializer
         RPCServer->>RPCServer: createMessage(RESPONSE, methodId, sessionId, serializedResult)
         RPCServer->>TransportS: sendMessage(responseMessage, clientEndpoint)
-        TransportS->>Network: sendUDP(responseMessage)
+        TransportS->>Network: send(responseMessage)
         deactivate TransportS
-        Network->>TransportC: receiveUDP(responseMessage)
+        Network->>TransportC: receive(responseMessage)
         activate TransportC
         TransportC->>RPCClient: onMessageReceived(responseMessage)
         deactivate TransportC

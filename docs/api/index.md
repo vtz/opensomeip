@@ -83,41 +83,49 @@ target_link_libraries(your_target
 ```mermaid
 classDiagram
   class Message {
-    +MessageId messageId
+    +MessageId message_id
     +uint32_t length
-    +RequestId requestId
-    +uint8_t protocolVersion
-    +uint8_t interfaceVersion
-    +MessageType messageType
-    +ReturnCode returnCode
+    +RequestId request_id
+    +uint8_t protocol_version
+    +uint8_t interface_version
+    +MessageType message_type
+    +ReturnCode return_code
     +vector~uint8_t~ payload
     +serialize()
     +deserialize()
-    +getServiceId()
-    +isRequest()
-    +isResponse()
+    +get_service_id()
+    +is_request()
+    +is_response()
   }
   class MessageId {
-    +uint16_t serviceId
-    +uint16_t methodId
-    +getServiceId()
-    +getMethodId()
-    +toUint32()
+    <<struct>>
+    +uint16_t service_id
+    +uint16_t method_id
+    +get_service_id()
+    +get_method_id()
+    +to_uint32()
   }
   class RequestId {
-    +uint16_t clientId
-    +uint16_t sessionId
-    +getClientId()
-    +getSessionId()
-    +toUint32()
+    <<struct>>
+    +uint16_t client_id
+    +uint16_t session_id
+    +get_client_id()
+    +get_session_id()
+    +to_uint32()
   }
   class MessageType {
     <<enumeration>>
     REQUEST
     REQUEST_NO_RETURN
     NOTIFICATION
+    REQUEST_ACK
     RESPONSE
     ERROR
+    RESPONSE_ACK
+    ERROR_ACK
+    TP_REQUEST
+    TP_REQUEST_NO_RETURN
+    TP_NOTIFICATION
   }
   class ReturnCode {
     <<enumeration>>
@@ -126,6 +134,7 @@ classDiagram
     E_UNKNOWN_SERVICE
     E_UNKNOWN_METHOD
     E_NOT_READY
+    E_NOT_REACHABLE
     E_TIMEOUT
   }
   class SessionManager {
@@ -136,15 +145,15 @@ classDiagram
     +cleanup_expired_sessions()
   }
   class Serializer {
-    +serializeUint8()
-    +serializeUint16()
-    +serializeString()
-    +getBuffer()
+    +serialize_uint8()
+    +serialize_uint16()
+    +serialize_string()
+    +get_buffer()
   }
   class Deserializer {
-    +deserializeUint8()
-    +deserializeUint16()
-    +deserializeString()
+    +deserialize_uint8()
+    +deserialize_uint16()
+    +deserialize_string()
   }
   Message *-- MessageId
   Message *-- RequestId
