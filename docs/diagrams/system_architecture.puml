@@ -118,6 +118,10 @@ MM ..> POSIX_Mem
 MM ..> Zephyr_Mem
 MM ..> FreeRTOS_Mem
 MM ..> ThreadX_Mem
+DE ..> POSIX_Net
+DE ..> Zephyr_Net
+DE ..> FreeRTOS_Net
+DE ..> ThreadX_Net
 
 ' Safety to Infrastructure
 SafetyMgr --> RT : Thread Safety
