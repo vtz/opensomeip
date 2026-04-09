@@ -9,6 +9,8 @@ The Service Discovery layer implements the SOME/IP-SD protocol, enabling dynamic
 
 ## Architecture
 
+![SOME/IP-SD Sequence](../diagrams/svg/sd_sequence_diagram.svg)
+
 ### Components
 
 #### SdClient

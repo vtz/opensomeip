@@ -27,6 +27,8 @@ This document defines the acceptance criteria and comprehensive test strategy fo
 - Provide complete test coverage mapping
 - Enable conformance verification against industry standards
 
+![V-Model Test Strategy](diagrams/svg/v_model_test_strategy.svg)
+
 ### 1.2 Scope
 This test plan covers:
 - **SOME/IP RPC Protocol** (someip-rpc.rst)

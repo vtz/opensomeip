@@ -11,6 +11,10 @@ End-to-End (E2E) protection provides data integrity, sequence validation, and fr
 
 ## Architecture
 
+### Safety Architecture
+
+![Safety Architecture](../diagrams/svg/safety_architecture.svg)
+
 ### Component Structure
 
 ```

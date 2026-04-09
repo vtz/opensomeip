@@ -1,0 +1,69 @@
+@startuml PAL Architecture
+
+title Platform Abstraction Layer (PAL)
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 10
+
+skinparam package {
+    BackgroundColor #F5F5F5
+    BorderColor #9E9E9E
+}
+
+skinparam component {
+    BackgroundColor #E3F2FD
+    BorderColor #1565C0
+}
+
+package "SOME/IP Protocol Stack" as STACK #E8EAF6 {
+    component [Transport] as T
+    component [Service\nDiscovery] as SD
+    component [Transport\nProtocol] as TP
+    component [Core &\nSerialization] as CS
+}
+
+package "Platform Abstraction Layer" as PAL #E0F2F1 {
+    component [Runtime\nThreading & Synchronization] as RT
+    component [Communication\nSocket API & Network I/O] as CM
+    component [Memory\nMessage Allocation] as MM
+    component [Data Encoding\nByte-Order Conversion] as DE
+
+    note as PAL_NOTE
+        Public dispatch headers contain
+        only common code and
+        #include "*_impl.h".
+        CMake selects the backend via
+        include-path at build time.
+        No #ifdef in public headers.
+    end note
+}
+
+package "Platform Backends" as BE #FFF3E0 {
+    package "Runtime & Memory\n(SOMEIP_THREADING_IMPL_DIR)" as RTB #E8F5E9 {
+        component [POSIX\nstd::thread / std::mutex\nstd::make_shared] as P1
+        component [Win32\nC++11 threading\nstd::make_shared] as W1
+        component [FreeRTOS\nxTaskCreate / xSemaphore\nstatic pool] as FR
+        component [ThreadX\ntx_thread / TX_MUTEX\nTX_BLOCK_POOL] as TX
+        component [Zephyr\nk_thread / k_mutex\nk_mem_slab] as ZR
+    }
+    package "Communication & Data Encoding\n(SOMEIP_NET_IMPL_DIR)" as CMB #E3F2FD {
+        component [BSD Sockets\nPOSIX] as P2
+        component [Winsock\nWin32] as W2
+        component [lwIP\nFreeRTOS / ThreadX] as LW
+        component [Zephyr Sockets\nzsock API] as ZS
+    }
+}
+
+STACK -down-> PAL
+PAL -down-> BE
+
+note right of BE
+    Only one backend per group
+    is active per build.
+    The two groups are selected
+    independently, enabling e.g.
+    FreeRTOS threads + lwIP sockets.
+end note
+
+@enduml

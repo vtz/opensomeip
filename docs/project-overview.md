@@ -9,28 +9,7 @@ Each layer can be used independently or composed into a full-stack SOME/IP solut
 
 ## Layered Architecture
 
-```mermaid
-graph TD
-    APP[Application Layer] --> RPC[RPC Layer]
-    APP --> EVT[Events Layer]
-    RPC --> SD[Service Discovery]
-    EVT --> SD
-    RPC --> TP[Transport Protocol]
-    EVT --> TP
-    SD --> TRANS[Transport Layer]
-    TP --> TRANS
-    TRANS --> CORE[Core Layer]
-    CORE --> SER[Serialization]
-
-    style APP fill:#7c4dff,color:#fff,stroke:none
-    style RPC fill:#536dfe,color:#fff,stroke:none
-    style EVT fill:#536dfe,color:#fff,stroke:none
-    style SD fill:#448aff,color:#fff,stroke:none
-    style TP fill:#448aff,color:#fff,stroke:none
-    style TRANS fill:#40c4ff,color:#000,stroke:none
-    style CORE fill:#18ffff,color:#000,stroke:none
-    style SER fill:#18ffff,color:#000,stroke:none
-```
+![Layered Architecture](diagrams/svg/layered_architecture.svg)
 
 ## Layer Details
 
@@ -92,6 +71,34 @@ Publish/subscribe communication:
 - Event subscriber for consuming notifications
 - Integration with Service Discovery for subscriptions
 
+### Platform Abstraction Layer (`platform`)
+
+The PAL provides a stable, portable interface between the protocol stack and the
+underlying operating system or RTOS. Rather than exposing individual headers, the
+PAL is organized into four functional domains:
+
+![Platform Abstraction Layer](diagrams/svg/pal_architecture.svg)
+
+The two backend groups -- **Runtime & Memory** and **Communication & Data Encoding** --
+are selected independently at build time through CMake include-path variables
+(`SOMEIP_THREADING_IMPL_DIR` and `SOMEIP_NET_IMPL_DIR`).
+This enables combinations such as FreeRTOS threading with lwIP networking.
+No `#ifdef` guards appear in the public PAL headers; the build system resolves the
+active backend entirely through the include path.
+
+| Domain | Responsibility |
+|--------|---------------|
+| **Runtime** | `Mutex`, `Thread`, `ConditionVariable`, `ScopedLock`, `sleep_for` |
+| **Communication** | `someip_socket`, `someip_bind`, `someip_send`, `someip_recv`, multicast |
+| **Memory** | `allocate_message()` -- `std::make_shared` on host, static pools on RTOS |
+| **Data Encoding** | `someip_htons`, `someip_ntohs`, `someip_htonl`, `someip_ntohl` |
+
+### Component Interaction
+
+The following sequence shows the typical interaction flow for service discovery, RPC communication, and event subscription:
+
+![Component Interaction](diagrams/svg/component_interaction.svg)
+
 ## Key Design Decisions
 
 ### Modern C++17
@@ -115,15 +122,18 @@ While not safety-certified, the design follows patterns that support functional 
 
 ### Platform Abstraction
 
-A clean PAL enables porting to new platforms:
+A clean PAL enables porting to new platforms with minimal effort.
+See [Platform Abstraction Layer](#platform-abstraction-layer-platform) above for the
+full architecture diagram.
 
-| Platform | Transport | Threading | Status |
-|----------|-----------|-----------|--------|
-| POSIX / Linux | BSD sockets | pthreads | Stable |
-| macOS | BSD sockets | pthreads | Stable |
-| Zephyr RTOS | Zephyr sockets | Zephyr threads | Stable |
-| FreeRTOS | lwIP | FreeRTOS tasks | Stable |
-| Eclipse ThreadX | lwIP | ThreadX threads | Stable |
+| Platform | Communication | Runtime | Status |
+|----------|--------------|---------|--------|
+| POSIX / Linux | BSD sockets | std::thread / std::mutex | Stable |
+| macOS | BSD sockets | std::thread / std::mutex | Stable |
+| Windows | Winsock | C++11 threading | Stable |
+| Zephyr RTOS | Zephyr sockets | k_thread / k_mutex | Stable |
+| FreeRTOS | lwIP | xTaskCreate / xSemaphore | Stable |
+| Eclipse ThreadX | lwIP | tx_thread / TX_MUTEX | Stable |
 
 ## Project Structure
 

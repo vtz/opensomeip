@@ -126,3 +126,9 @@ To add support for a new RTOS or CPU architecture:
 4. Add a CI workflow in `.github/workflows/`
 5. Document the port in `docs/`
 6. Add an entry to this table
+
+## Deployment Architecture
+
+The following diagram illustrates a typical automotive deployment with multiple ECUs communicating via SOME/IP over an Ethernet backbone:
+
+![Deployment Architecture](diagrams/svg/deployment_architecture.svg)

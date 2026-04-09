@@ -77,3 +77,11 @@ target_link_libraries(your_target
   someip-events      # if using Events
 )
 ```
+
+## Core Class Diagram
+
+![Core Classes](../diagrams/svg/core_class_diagram.svg)
+
+## Transport Class Diagram
+
+![Transport Classes](../diagrams/svg/transport_class_diagram.svg)
