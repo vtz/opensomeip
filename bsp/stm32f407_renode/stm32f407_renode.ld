@@ -86,6 +86,8 @@ SECTIONS
         _sdata = .;
         *(.data)
         *(.data*)
+        *(.got)
+        *(.got.plt)
         . = ALIGN(4);
         _edata = .;
     } > SRAM AT> FLASH

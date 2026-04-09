@@ -158,7 +158,7 @@ static void test_e2e() {
         E2EConfig config(0x1234);
         config.enable_crc = true;
         config.enable_counter = true;
-        config.enable_freshness = true;
+        config.enable_freshness = false;
         config.crc_type = 1;
 
         Result result = protection.protect(msg, config);

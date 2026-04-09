@@ -368,7 +368,7 @@ jobs:
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
           ./scripts/run_renode_test.sh test_core \
-            --timeout 120 \
+            --timeout 60 \
             --junit-output /tmp/renode_test_core_junit.xml
       - name: Upload Renode test results
         uses: actions/upload-artifact@v4

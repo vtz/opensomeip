@@ -318,7 +318,7 @@ jobs:
           cmake --build "$GITHUB_WORKSPACE/build/freertos-cortexm4-renode" -j"$(nproc)"
           ./scripts/run_freertos_renode_test.sh \
             --skip-build \
-            --timeout 120 \
+            --timeout 60 \
             --junit-output /tmp/freertos_renode_junit.xml
 
       - name: Upload Renode test results
