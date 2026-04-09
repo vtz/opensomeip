@@ -925,6 +925,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#platform-abstraction-layer-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Abstraction Layer (platform)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Interaction
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2877,6 +2899,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#platform-abstraction-layer-platform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Platform Abstraction Layer (platform)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-interaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Component Interaction
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2978,26 +3022,7 @@
 <p>OpenSOME/IP follows a modular, layered architecture with clear separation of concerns.
 Each layer can be used independently or composed into a full-stack SOME/IP solution.</p>
 <h2 id="layered-architecture">Layered Architecture<a class="headerlink" href="#layered-architecture" title="Permanent link">&para;</a></h2>
-<pre class="mermaid"><code>graph TD
-    APP[Application Layer] --&gt; RPC[RPC Layer]
-    APP --&gt; EVT[Events Layer]
-    RPC --&gt; SD[Service Discovery]
-    EVT --&gt; SD
-    RPC --&gt; TP[Transport Protocol]
-    EVT --&gt; TP
-    SD --&gt; TRANS[Transport Layer]
-    TP --&gt; TRANS
-    TRANS --&gt; CORE[Core Layer]
-    CORE --&gt; SER[Serialization]
-
-    style APP fill:#7c4dff,color:#fff,stroke:none
-    style RPC fill:#536dfe,color:#fff,stroke:none
-    style EVT fill:#536dfe,color:#fff,stroke:none
-    style SD fill:#448aff,color:#fff,stroke:none
-    style TP fill:#448aff,color:#fff,stroke:none
-    style TRANS fill:#40c4ff,color:#000,stroke:none
-    style CORE fill:#18ffff,color:#000,stroke:none
-    style SER fill:#18ffff,color:#000,stroke:none</code></pre>
+<p><img alt="Layered Architecture" src="diagrams/svg/layered_architecture.svg" /></p>
 <h2 id="layer-details">Layer Details<a class="headerlink" href="#layer-details" title="Permanent link">&para;</a></h2>
 <h3 id="core-someip-core">Core (<code>someip-core</code>)<a class="headerlink" href="#core-someip-core" title="Permanent link">&para;</a></h3>
 <p>The foundation of the stack providing:</p>
@@ -3050,6 +3075,46 @@ Each layer can be used independently or composed into a full-stack SOME/IP solut
 <li>Event subscriber for consuming notifications</li>
 <li>Integration with Service Discovery for subscriptions</li>
 </ul>
+<h3 id="platform-abstraction-layer-platform">Platform Abstraction Layer (<code>platform</code>)<a class="headerlink" href="#platform-abstraction-layer-platform" title="Permanent link">&para;</a></h3>
+<p>The PAL provides a stable, portable interface between the protocol stack and the
+underlying operating system or RTOS. Rather than exposing individual headers, the
+PAL is organized into four functional domains:</p>
+<p><img alt="Platform Abstraction Layer" src="diagrams/svg/pal_architecture.svg" /></p>
+<p>The two backend groups -- <strong>Runtime &amp; Memory</strong> and <strong>Communication &amp; Data Encoding</strong> --
+are selected independently at build time through CMake include-path variables
+(<code>SOMEIP_THREADING_IMPL_DIR</code> and <code>SOMEIP_NET_IMPL_DIR</code>).
+This enables combinations such as FreeRTOS threading with lwIP networking.
+No <code>#ifdef</code> guards appear in the public PAL headers; the build system resolves the
+active backend entirely through the include path.</p>
+<table>
+<thead>
+<tr>
+<th>Domain</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Runtime</strong></td>
+<td><code>Mutex</code>, <code>Thread</code>, <code>ConditionVariable</code>, <code>ScopedLock</code>, <code>sleep_for</code></td>
+</tr>
+<tr>
+<td><strong>Communication</strong></td>
+<td><code>someip_socket</code>, <code>someip_bind</code>, <code>someip_send</code>, <code>someip_recv</code>, multicast</td>
+</tr>
+<tr>
+<td><strong>Memory</strong></td>
+<td><code>allocate_message()</code> -- <code>std::make_shared</code> on host, static pools on RTOS</td>
+</tr>
+<tr>
+<td><strong>Data Encoding</strong></td>
+<td><code>someip_htons</code>, <code>someip_ntohs</code>, <code>someip_htonl</code>, <code>someip_ntohl</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="component-interaction">Component Interaction<a class="headerlink" href="#component-interaction" title="Permanent link">&para;</a></h3>
+<p>The following sequence shows the typical interaction flow for service discovery, RPC communication, and event subscription:</p>
+<p><img alt="Component Interaction" src="diagrams/svg/component_interaction.svg" /></p>
 <h2 id="key-design-decisions">Key Design Decisions<a class="headerlink" href="#key-design-decisions" title="Permanent link">&para;</a></h2>
 <h3 id="modern-c17">Modern C++17<a class="headerlink" href="#modern-c17" title="Permanent link">&para;</a></h3>
 <p>The codebase uses C++17 throughout with no legacy dependencies:</p>
@@ -3069,13 +3134,15 @@ Each layer can be used independently or composed into a full-stack SOME/IP solut
 <li><strong>Bounds checking</strong> on all buffer operations</li>
 </ul>
 <h3 id="platform-abstraction">Platform Abstraction<a class="headerlink" href="#platform-abstraction" title="Permanent link">&para;</a></h3>
-<p>A clean PAL enables porting to new platforms:</p>
+<p>A clean PAL enables porting to new platforms with minimal effort.
+See <a href="#platform-abstraction-layer-platform">Platform Abstraction Layer</a> above for the
+full architecture diagram.</p>
 <table>
 <thead>
 <tr>
 <th>Platform</th>
-<th>Transport</th>
-<th>Threading</th>
+<th>Communication</th>
+<th>Runtime</th>
 <th>Status</th>
 </tr>
 </thead>
@@ -3083,31 +3150,37 @@ Each layer can be used independently or composed into a full-stack SOME/IP solut
 <tr>
 <td>POSIX / Linux</td>
 <td>BSD sockets</td>
-<td>pthreads</td>
+<td>std::thread / std::mutex</td>
 <td>Stable</td>
 </tr>
 <tr>
 <td>macOS</td>
 <td>BSD sockets</td>
-<td>pthreads</td>
+<td>std::thread / std::mutex</td>
+<td>Stable</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>Winsock</td>
+<td>C++11 threading</td>
 <td>Stable</td>
 </tr>
 <tr>
 <td>Zephyr RTOS</td>
 <td>Zephyr sockets</td>
-<td>Zephyr threads</td>
+<td>k_thread / k_mutex</td>
 <td>Stable</td>
 </tr>
 <tr>
 <td>FreeRTOS</td>
 <td>lwIP</td>
-<td>FreeRTOS tasks</td>
+<td>xTaskCreate / xSemaphore</td>
 <td>Stable</td>
 </tr>
 <tr>
 <td>Eclipse ThreadX</td>
 <td>lwIP</td>
-<td>ThreadX threads</td>
+<td>tx_thread / TX_MUTEX</td>
 <td>Stable</td>
 </tr>
 </tbody>
