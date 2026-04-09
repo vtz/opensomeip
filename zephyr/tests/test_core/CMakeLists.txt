@@ -7,3 +7,4 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(test_core)
 
 target_sources(app PRIVATE src/main.cpp)
+target_include_directories(app PRIVATE ${SOMEIP_ROOT})

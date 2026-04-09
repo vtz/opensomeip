@@ -57,7 +57,6 @@ config SOMEIP_E2E
 config SOMEIP_TP
 	bool "Transport Protocol (segmentation)"
 	default y
-	depends on SOMEIP_TRANSPORT_UDP || SOMEIP_TRANSPORT_TCP
 	help
 	  Enable SOME/IP-TP message segmentation and reassembly.
 

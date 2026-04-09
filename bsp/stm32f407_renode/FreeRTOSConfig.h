@@ -45,6 +45,9 @@
 
 #define configUSE_TIMERS                         1
 
+#define configCHECK_FOR_STACK_OVERFLOW            2
+#define configUSE_MALLOC_FAILED_HOOK             1
+
 /* Cortex-M4 specific (no FPU -- Renode's stm32f4 platform uses cortex-m4) */
 #define configCPU_CLOCK_HZ                       ((uint32_t)168000000)
 #define configPRIO_BITS                          4
