@@ -29,6 +29,7 @@
 #include "e2e/e2e_profiles/standard_profile.h"
 #include "someip/message.h"
 #include "common/result.h"
+#include <cstdio>
 #include <vector>
 
 static void test_e2e() {

@@ -26,6 +26,7 @@
 #include "tp/tp_segmenter.h"
 #include "tp/tp_reassembler.h"
 #include "someip/message.h"
+#include <cstdio>
 #include <vector>
 
 static void test_tp() {
@@ -177,7 +178,7 @@ static void test_tp() {
             for (size_t i = 0; i + 1 < segments.size(); ++i) {
                 size_t sz = segments[i].payload.size();
                 if (i == 0) {
-                    if ((sz - 16) % 16 != 0) { aligned = false; break; }
+                    if (sz < 16 || (sz - 16) % 16 != 0) { aligned = false; break; }
                 } else {
                     if (sz % 16 != 0) { aligned = false; break; }
                 }
