@@ -14,16 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install clang-tidy
+      - name: Install clang-tidy-18
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends clang clang-tidy
+          sudo apt-get install -y --no-install-recommends clang-18 clang-tidy-18
 
       - name: Configure CMake
         run: >
           cmake -B build
-          -DCMAKE_CXX_COMPILER=clang++
-          -DCMAKE_C_COMPILER=clang
+          -DCMAKE_CXX_COMPILER=clang++-18
+          -DCMAKE_C_COMPILER=clang-18
           -DCMAKE_BUILD_TYPE=Release
           -DBUILD_TESTS=OFF
           -DBUILD_EXAMPLES=OFF
@@ -33,7 +33,7 @@ jobs:
         run: |
           chmod +x scripts/run_clang_tidy.sh
           scripts/run_clang_tidy.sh \
-            "$(command -v clang-tidy)" \
+            "$(command -v clang-tidy-18)" \
             .clang-tidy \
             build \
             . \
