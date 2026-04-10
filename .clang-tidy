@@ -1,22 +1,65 @@
+# MISRA C++–aligned clang-tidy configuration
+#
+# This configuration enables checks that approximate MISRA C++ 2023 guidelines
+# as closely as clang-tidy allows.  Full MISRA compliance requires commercial
+# tools (Polyspace, LDRA, QA·C++); this file covers what open-source tooling
+# can enforce.
+#
+# Check-to-MISRA mapping is maintained in docs/CODING_GUIDELINES.md.
+#
+# See also: https://clang.llvm.org/extra/clang-tidy/checks/list.html
 ---
 Checks: >
   clang-analyzer-*,
+  bugprone-*,
+  cert-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  hicpp-*,
+  misc-*,
+  modernize-avoid-bind,
+  modernize-avoid-c-arrays,
+  modernize-concat-nested-namespaces,
+  modernize-deprecated-headers,
+  modernize-loop-convert,
+  modernize-use-auto,
   modernize-use-default-member-init,
+  modernize-use-emplace,
   modernize-use-equals-default,
+  modernize-use-nullptr,
+  modernize-use-override,
   modernize-use-scoped-lock,
+  performance-*,
   readability-braces-around-statements,
-  readability-simplify-boolean-expr,
+  readability-identifier-naming,
+  readability-implicit-bool-conversion,
+  readability-inconsistent-declaration-parameter-name,
+  readability-qualified-auto,
+  readability-redundant-control-flow,
   readability-redundant-member-init,
-  performance-avoid-endl,
+  readability-redundant-string-cstr,
+  readability-simplify-boolean-expr,
+  readability-static-accessed-through-instance,
+  readability-string-compare,
+  -bugprone-easily-swappable-parameters,
+  -cert-err58-cpp,
   -clang-diagnostic-*,
-  -performance-enum-size,
-  -modernize-use-trailing-return-type,
-  -readability-magic-numbers,
-  -readability-identifier-length,
-  -modernize-use-nodiscard,
-  -readability-function-cognitive-complexity,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -hicpp-no-assembler,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
   -modernize-return-braced-init-list,
-  -modernize-use-equals-delete
+  -modernize-use-equals-delete,
+  -modernize-use-nodiscard,
+  -modernize-use-trailing-return-type,
+  -performance-enum-size,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-magic-numbers
 
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'

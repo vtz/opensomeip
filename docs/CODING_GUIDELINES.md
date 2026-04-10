@@ -264,13 +264,71 @@ uint32_t be_length = htonl(length_);
 
 ### Static Analysis
 
-- **clang-tidy**: Code quality and style checking
+- **clang-tidy**: MISRA C++–aligned static analysis with CI quality gate
 - **cppcheck**: Static analysis for bugs and vulnerabilities
 - **clang-format**: Automatic code formatting
+- **Coverity**: Scheduled deep analysis on `main`
+
+### clang-tidy Quality Gate
+
+Every pull request that touches safety-relevant sources (`src/`, `include/`)
+is checked by a **mandatory** clang-tidy CI job.  The check configuration
+approximates MISRA C++ 2023 guidelines using the following check families:
+
+| Check family | MISRA alignment |
+|---|---|
+| `clang-analyzer-*` | Control-flow, null-pointer, memory safety |
+| `bugprone-*` | Undefined behaviour, implicit conversions, macro side-effects |
+| `cert-*` | CERT C++ rules (heavy MISRA overlap) |
+| `cppcoreguidelines-*` | Slicing, type-safety, ownership |
+| `hicpp-*` | High Integrity C++ (closest MISRA proxy) |
+| `misc-*` | Miscellaneous correctness |
+| `concurrency-*` | Thread-safety |
+| Selected `modernize-*` | Nullptr, override, scoped-lock, etc. |
+| Selected `readability-*` | Braces, naming, bool conversions |
+| `performance-*` | Unnecessary copies, endl, move semantics |
+
+The full check list lives in `.clang-tidy` at the repository root.
+
+#### Ratchet mechanism
+
+A threshold file (`clang-tidy-baseline.txt`) records the maximum allowed
+violation count.  CI compares the actual count against this threshold:
+
+- **More violations than the threshold** → PR is blocked.
+- **Fewer violations** → CI passes and suggests lowering the threshold.
+
+After all violations are resolved (tracked in GitHub issue #222) the
+threshold will be removed and `WarningsAsErrors: '*'` will be enabled.
+
+#### Running locally
+
+```bash
+# Configure (only needed once)
+cmake -B build
+
+# Run clang-tidy with the same checks CI uses
+cmake --build build --target tidy
+
+# Run with quality-gate comparison
+scripts/run_clang_tidy.sh \
+  "$(command -v clang-tidy)" .clang-tidy build . \
+  --quality-gate clang-tidy-baseline.txt
+```
+
+#### Suppressing a finding
+
+Use an inline `NOLINT` comment with the **check name** and a justification:
+
+```cpp
+auto* ptr = reinterpret_cast<uint8_t*>(buf);  // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast) byte-level protocol parsing
+```
+
+Bare `NOLINT` without a check name or reason is **not** acceptable.
 
 ### Build Integration
 
-- **CMake**: Integrated checking in build process
+- **CMake**: Integrated checking in build process (`tidy`, `format` targets)
 - **Pre-commit Hooks**: Automatic checking before commits
 - **CI/CD**: Automated checking in CI pipelines
 
@@ -287,27 +345,14 @@ TabWidth: 4
 UseTab: Never
 ```
 
-#### clang-tidy Configuration (.clang-tidy)
-
-```yaml
-Checks: >
-  clang-diagnostic-*,
-  clang-analyzer-*,
-  modernize-*,
-  readability-*,
-  performance-*,
-  -modernize-use-trailing-return-type,
-  -readability-magic-numbers
-
-WarningsAsErrors: ''
-HeaderFilterRegex: '.*'
-AnalyzeTemporaryDtors: false
-```
+The full clang-tidy configuration is maintained in `.clang-tidy` at the
+repository root.  Do not duplicate it here — see the file directly for the
+authoritative check list and options.
 
 ### Enforcement
 
+- **clang-tidy CI gate**: Mandatory green check on every PR (see above)
 - **Pre-commit**: Automatic formatting and checking
-- **CI Checks**: Fail builds on style violations
 - **Code Reviews**: Manual review for complex changes
 - **Documentation**: Keep guidelines synchronized
 
@@ -317,10 +362,10 @@ AnalyzeTemporaryDtors: false
 
 ```bash
 # Format code
-find src/ include/ -name "*.cpp" -o -name "*.h" | xargs clang-format -i
+cmake --build build --target format
 
-# Check style
-clang-tidy src/**/*.cpp include/**/*.h -- -I include
+# Run clang-tidy (same checks as CI)
+cmake --build build --target tidy
 
 # Static analysis
 cppcheck --enable=all --std=c++17 --language=c++ \
