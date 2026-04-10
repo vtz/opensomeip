@@ -50,6 +50,8 @@ Checks: >
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-type-reinterpret-cast,
   -hicpp-no-assembler,
+  -hicpp-signed-bitwise,
+  -misc-include-cleaner,
   -misc-no-recursion,
   -misc-non-private-member-variables-in-classes,
   -modernize-return-braced-init-list,
