@@ -235,6 +235,9 @@ jobs:
     needs: changes
     if: >-
       needs.changes.outputs.shared == 'true' ||
+      needs.changes.outputs.freertos == 'true' ||
+      needs.changes.outputs.threadx == 'true' ||
+      needs.changes.outputs.zephyr == 'true' ||
       needs.changes.outputs.clang_tidy == 'true'
     uses: ./.github/workflows/clang-tidy.yml
     permissions:

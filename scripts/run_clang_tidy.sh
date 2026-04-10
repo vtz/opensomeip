@@ -11,10 +11,15 @@
 #
 # When --quality-gate is given the script compares the violation count against
 # the threshold stored in <baseline-file> and exits non-zero if the count
-# exceeds it.  A SARIF report is written to <build-dir>/clang-tidy-results.sarif
-# when the tool supports it.
+# exceeds it.
 
 set -euo pipefail
+
+# ── Argument validation ───────────────────────────────────────────────────────
+if [[ $# -lt 4 ]]; then
+    echo "Usage: $0 <clang-tidy> <config-file> <build-dir> <source-dir> [--quality-gate <baseline-file>]" >&2
+    exit 1
+fi
 
 CLANG_TIDY_EXE="$1"
 CONFIG_FILE="$2"
@@ -27,6 +32,10 @@ shift 4
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --quality-gate)
+            if [[ $# -lt 2 ]]; then
+                echo "Error: --quality-gate requires a baseline file argument" >&2
+                exit 1
+            fi
             QUALITY_GATE=true
             BASELINE_FILE="$2"
             shift 2
@@ -46,6 +55,17 @@ if [[ ! -d "$BUILD_DIR" ]]; then
     echo "Error: Build directory $BUILD_DIR not found" >&2
     exit 1
 fi
+if [[ ! -d "$SOURCE_DIR/src" ]]; then
+    echo "Error: Source directory $SOURCE_DIR/src not found" >&2
+    exit 1
+fi
+
+# Collect source files up front so we can detect an empty set.
+mapfile -t SOURCE_FILES < <(find "$SOURCE_DIR/src" -name "*.cpp" | sort)
+if [[ ${#SOURCE_FILES[@]} -eq 0 ]]; then
+    echo "Error: No .cpp files found under $SOURCE_DIR/src" >&2
+    exit 1
+fi
 
 REPORT_FILE="$BUILD_DIR/clang-tidy-report.txt"
 
@@ -53,20 +73,25 @@ REPORT_FILE="$BUILD_DIR/clang-tidy-report.txt"
 EXTRA_ARGS=()
 case "$(uname -s)" in
     Darwin)
-        SDK_PATH=$(xcrun --show-sdk-path 2>/dev/null || true)
-        if [[ -n "$SDK_PATH" ]]; then
-            EXTRA_ARGS+=(--extra-arg=-isystem"${SDK_PATH}/usr/include/c++/v1")
+        CLANGXX=$(xcrun --find clang++ 2>/dev/null || true)
+        if [[ -n "$CLANGXX" ]]; then
+            RESOURCE_DIR=$("$CLANGXX" -print-resource-dir 2>/dev/null || true)
+            SDK_PATH=$(xcrun --show-sdk-path 2>/dev/null || true)
 
-            CLANG_RESOURCE=$(find /Applications/Xcode.app/Contents/Developer/Toolchains \
-                -path "*/lib/clang/*/include" -maxdepth 6 2>/dev/null | head -1 || true)
-            [[ -n "$CLANG_RESOURCE" ]] && EXTRA_ARGS+=(--extra-arg=-isystem"${CLANG_RESOURCE}")
-
-            EXTRA_ARGS+=(--extra-arg=-isystem"${SDK_PATH}/usr/include")
+            if [[ -n "$RESOURCE_DIR" && -d "$RESOURCE_DIR/include" ]]; then
+                EXTRA_ARGS+=(--extra-arg=-isystem"${RESOURCE_DIR}/include")
+            fi
+            if [[ -n "$SDK_PATH" ]]; then
+                [[ -d "${SDK_PATH}/usr/include/c++/v1" ]] && \
+                    EXTRA_ARGS+=(--extra-arg=-isystem"${SDK_PATH}/usr/include/c++/v1")
+                [[ -d "${SDK_PATH}/usr/include" ]] && \
+                    EXTRA_ARGS+=(--extra-arg=-isystem"${SDK_PATH}/usr/include")
+            fi
         fi
         ;;
 esac
 
-echo "Running clang-tidy on source files..."
+echo "Running clang-tidy on ${#SOURCE_FILES[@]} source files..."
 echo "Platform: $(uname -s)"
 echo "Report:   $REPORT_FILE"
 echo ""
@@ -84,13 +109,22 @@ TOTAL_WARNINGS=0
 TOTAL_ERRORS=0
 FILES_WITH_ISSUES=0
 
-while IFS= read -r file; do
+for file in "${SOURCE_FILES[@]}"; do
     echo "Processing $file"
 
+    EXIT_CODE=0
     OUTPUT=$("$CLANG_TIDY_EXE" \
         -p "$BUILD_DIR" \
         ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} \
-        "$file" 2>&1) || true
+        "$file" 2>&1) || EXIT_CODE=$?
+
+    # clang-tidy exits 0 (clean) or 1 (warnings found); anything else is a
+    # tool-level failure that should abort the run.
+    if (( EXIT_CODE > 1 )); then
+        echo "Error: clang-tidy failed on $file with exit code $EXIT_CODE" >&2
+        echo "$OUTPUT" >&2
+        exit "$EXIT_CODE"
+    fi
 
     FILE_WARNINGS=$(echo "$OUTPUT" | grep -c "warning:" || true)
     FILE_ERRORS=$(echo "$OUTPUT"   | grep -c "error:"   || true)
@@ -110,7 +144,7 @@ while IFS= read -r file; do
             echo ""
         } >> "$REPORT_FILE"
     fi
-done < <(find "$SOURCE_DIR/src" -name "*.cpp" 2>/dev/null | sort)
+done
 
 TOTAL=$((TOTAL_WARNINGS + TOTAL_ERRORS))
 
