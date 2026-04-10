@@ -149,6 +149,7 @@ jobs:
               - '.github/workflows/rpm-build.yml'
             clang_tidy:
               - '.clang-tidy'
+              - 'src/platform/.clang-tidy'
               - 'clang-tidy-baseline.txt'
               - 'scripts/run_clang_tidy.sh'
               - '.github/workflows/clang-tidy.yml'
