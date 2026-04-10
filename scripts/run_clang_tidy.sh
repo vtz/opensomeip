@@ -4,6 +4,11 @@
 # Usage:
 #   ./run_clang_tidy.sh <clang-tidy> <config-file> <build-dir> <source-dir> [--quality-gate <baseline-file>]
 #
+# <config-file> is validated for existence but NOT passed to clang-tidy via
+# --config-file.  Instead, clang-tidy discovers .clang-tidy files by walking
+# up from each source file's directory, which allows per-directory overrides
+# (e.g. src/platform/.clang-tidy for PAL-specific check tuning).
+#
 # When --quality-gate is given the script compares the violation count against
 # the threshold stored in <baseline-file> and exits non-zero if the count
 # exceeds it.  A SARIF report is written to <build-dir>/clang-tidy-results.sarif
@@ -83,7 +88,6 @@ while IFS= read -r file; do
     echo "Processing $file"
 
     OUTPUT=$("$CLANG_TIDY_EXE" \
-        --config-file="$CONFIG_FILE" \
         -p "$BUILD_DIR" \
         ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"} \
         "$file" 2>&1) || true
