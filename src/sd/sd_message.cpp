@@ -18,8 +18,7 @@
 #include <algorithm>
 #include <iostream>
 
-namespace someip {
-namespace sd {
+namespace someip::sd {
 
 /**
  * @brief Service Discovery message serialization
@@ -235,7 +234,7 @@ std::vector<uint8_t> IPv4EndpointOption::serialize() const {
     data.push_back(network_port & 0xFF);
 
     // Update length (8 bytes of data after the option header)
-    uint16_t length = 8;
+    uint16_t const length = 8;
     data[0] = (length >> 8) & 0xFF;
     data[1] = length & 0xFF;
 
@@ -282,7 +281,7 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
 }
 
 void IPv4EndpointOption::set_ipv4_address_from_string(const std::string& ip_address) {
-    struct in_addr addr;
+    struct in_addr addr{};
     if (someip_inet_pton(AF_INET, ip_address.c_str(), &addr) == 1) {
         ipv4_address_ = addr.s_addr;
     } else {
@@ -292,7 +291,7 @@ void IPv4EndpointOption::set_ipv4_address_from_string(const std::string& ip_addr
 
 std::string IPv4EndpointOption::get_ipv4_address_string() const {
     char buffer[INET_ADDRSTRLEN];
-    struct in_addr addr;
+    struct in_addr addr{};
     addr.s_addr = ipv4_address_;  // Already in network byte order
     someip_inet_ntop(AF_INET, &addr, buffer, sizeof(buffer));
     return buffer;
@@ -317,7 +316,7 @@ std::vector<uint8_t> IPv4MulticastOption::serialize() const {
     data.push_back(port_ & 0xFF);
 
     // Update length (7 bytes: 4 address + 1 reserved + 2 port)
-    uint16_t length = 7;
+    uint16_t const length = 7;
     data[2] = (length >> 8) & 0xFF;
     data[3] = length & 0xFF;
 
@@ -390,7 +389,8 @@ bool ConfigurationOption::deserialize(const std::vector<uint8_t>& data, size_t& 
     }
 
     // Extract configuration string
-    config_string_.assign(data.begin() + offset, data.begin() + offset + length_);
+    auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
+    config_string_.assign(first, first + static_cast<std::ptrdiff_t>(length_));
     offset += length_;
 
     return true;
@@ -490,7 +490,7 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     }
 
     // Parse entries (each entry is exactly 16 bytes)
-    size_t entries_end = offset + entries_length;
+    size_t const entries_end = offset + entries_length;
     while (offset + 16 <= entries_end) {
         uint8_t raw_entry_type = data[offset];
 
@@ -522,7 +522,7 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     }
 
     // Parse options
-    size_t options_end = offset + options_length;
+    size_t const options_end = offset + options_length;
     while (offset < options_end) {
         if (offset + 4 > data.size()) {
             return false;
@@ -531,7 +531,7 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
         // Options start with length(2) + type(1) + reserved(1).
         // Peek at the type byte (offset + 2) to determine the option kind.
         uint8_t type_byte = data[offset + 2];
-        OptionType option_type = static_cast<OptionType>(type_byte);
+        OptionType const option_type = static_cast<OptionType>(type_byte);
         std::unique_ptr<SdOption> option;
 
         if (option_type == OptionType::CONFIGURATION) {
@@ -556,5 +556,4 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     return true;
 }
 
-} // namespace sd
-} // namespace someip
+}  // namespace someip::sd

@@ -20,8 +20,7 @@
 #include <unordered_map>
 #include "platform/thread.h"
 
-namespace someip {
-namespace tp {
+namespace someip::tp {
 
 /**
  * @brief Forward declarations
@@ -185,7 +184,6 @@ private:
     void update_statistics(const TpSegment& segment, bool sent);
 };
 
-} // namespace tp
-} // namespace someip
+}  // namespace someip::tp
 
 #endif // SOMEIP_TP_MANAGER_H

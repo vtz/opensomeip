@@ -37,7 +37,9 @@ static TX_MUTEX pool_guard;
 bool pool_initialized = false;
 
 static void ensure_pool_init() {
-    if (pool_initialized) return;
+    if (pool_initialized) {
+        return;
+    }
 
     static bool guard_created = false;
     if (!guard_created) {
@@ -58,8 +60,7 @@ static void ensure_pool_init() {
     tx_mutex_put(&pool_guard);
 }
 
-namespace someip {
-namespace platform {
+namespace someip::platform {
 
 /** @implements REQ_PLATFORM_THREADX_002 */
 MessagePtr allocate_message() {
@@ -78,11 +79,12 @@ MessagePtr allocate_message() {
 }
 
 void release_message(Message* msg) {
-    if (!msg) return;
+    if (!msg) {
+        return;
+    }
 
     msg->~Message();
     tx_block_release(static_cast<void*>(msg));
 }
 
-} // namespace platform
-} // namespace someip
+}  // namespace someip::platform

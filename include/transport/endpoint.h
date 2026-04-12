@@ -17,8 +17,7 @@
 #include <string>
 #include <cstdint>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief Transport protocol types
@@ -118,7 +117,6 @@ extern const Endpoint SOMEIP_SD_MULTICAST_ENDPOINT;
 extern const Endpoint SOMEIP_DEFAULT_UDP_ENDPOINT;
 extern const Endpoint SOMEIP_DEFAULT_TCP_ENDPOINT;
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
 #endif // SOMEIP_TRANSPORT_ENDPOINT_H

@@ -15,8 +15,7 @@
 #include "platform/byteorder.h"
 #include <cstring>
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief Serialize E2E header to byte vector
@@ -60,22 +59,22 @@ bool E2EHeader::deserialize(const std::vector<uint8_t>& data, size_t offset) {
         return false;
     }
 
-    uint32_t crc_be;
+    uint32_t crc_be = 0;
     std::memcpy(&crc_be, &data[offset], sizeof(uint32_t));
     crc = someip_ntohl(crc_be);
     offset += sizeof(uint32_t);
 
-    uint32_t counter_be;
+    uint32_t counter_be = 0;
     std::memcpy(&counter_be, &data[offset], sizeof(uint32_t));
     counter = someip_ntohl(counter_be);
     offset += sizeof(uint32_t);
 
-    uint16_t data_id_be;
+    uint16_t data_id_be = 0;
     std::memcpy(&data_id_be, &data[offset], sizeof(uint16_t));
     data_id = someip_ntohs(data_id_be);
     offset += sizeof(uint16_t);
 
-    uint16_t freshness_be;
+    uint16_t freshness_be = 0;
     std::memcpy(&freshness_be, &data[offset], sizeof(uint16_t));
     freshness_value = someip_ntohs(freshness_be);
 
@@ -88,5 +87,4 @@ bool E2EHeader::is_valid() const {
     return true;
 }
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e

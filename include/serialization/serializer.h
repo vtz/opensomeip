@@ -21,8 +21,7 @@
 #include <optional>
 #include "../common/result.h"
 
-namespace someip {
-namespace serialization {
+namespace someip::serialization {
 
 /**
  * @brief Result of a deserialization operation
@@ -89,8 +88,8 @@ public:
     }
 
 private:
-    std::optional<T> value_;
-    Result error_;
+    std::optional<T> value_{};
+    Result error_{Result::SUCCESS};
 };
 
 /**
@@ -343,7 +342,6 @@ DeserializationResult<std::vector<T>> Deserializer::deserialize_dynamic_array() 
     return deserialize_array<T>(element_count);
 }
 
-} // namespace serialization
-} // namespace someip
+}  // namespace someip::serialization
 
 #endif // SOMEIP_SERIALIZATION_SERIALIZER_H

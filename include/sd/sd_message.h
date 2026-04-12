@@ -19,8 +19,7 @@
 #include <vector>
 #include <memory>
 
-namespace someip {
-namespace sd {
+namespace someip::sd {
 
 /** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C */
 class SdEntry {
@@ -256,7 +255,6 @@ using EventGroupEntryPtr = std::unique_ptr<EventGroupEntry>;
 using IPv4EndpointOptionPtr = std::unique_ptr<IPv4EndpointOption>;
 using IPv4MulticastOptionPtr = std::unique_ptr<IPv4MulticastOption>;
 
-} // namespace sd
-} // namespace someip
+}  // namespace someip::sd
 
 #endif // SOMEIP_SD_MESSAGE_H

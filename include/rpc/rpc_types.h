@@ -20,8 +20,7 @@
 #include <chrono>
 #include <functional>
 
-namespace someip {
-namespace rpc {
+namespace someip::rpc {
 
 /**
  * @brief RPC call result codes
@@ -98,7 +97,6 @@ struct RpcSyncResult {
     std::chrono::milliseconds response_time{0};
 };
 
-} // namespace rpc
-} // namespace someip
+}  // namespace someip::rpc
 
 #endif // SOMEIP_RPC_TYPES_H

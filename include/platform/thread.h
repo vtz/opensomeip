@@ -25,8 +25,7 @@
 
 #include "thread_impl.h"
 
-namespace someip {
-namespace platform {
+namespace someip::platform {
 
 /** @implements REQ_PLATFORM_ARCH_001, REQ_PAL_LOCK_ACQUIRE, REQ_PAL_LOCK_RELEASE, REQ_PAL_LOCK_NONCOPY */
 class ScopedLock {
@@ -41,7 +40,6 @@ private:
     Mutex& m_;
 };
 
-} // namespace platform
-} // namespace someip
+}  // namespace someip::platform
 
 #endif // SOMEIP_PLATFORM_THREAD_H

@@ -21,8 +21,7 @@
 #include <unordered_map>
 #include <atomic>
 
-namespace someip {
-namespace rpc {
+namespace someip::rpc {
 
 /**
  * @brief RPC Server implementation
@@ -42,7 +41,8 @@ public:
         transport_->set_listener(this);
     }
 
-    ~RpcServerImpl() {
+    ~RpcServerImpl() override
+    {
         shutdown();
     }
 
@@ -67,14 +67,14 @@ public:
         running_ = false;
 
         // Clear all method handlers
-        platform::ScopedLock lock(methods_mutex_);
+        platform::ScopedLock const lock(methods_mutex_);
         method_handlers_.clear();
 
         transport_->stop();
     }
 
     bool register_method(MethodId method_id, MethodHandler handler) {
-        platform::ScopedLock lock(methods_mutex_);
+        platform::ScopedLock const lock(methods_mutex_);
 
         // Check if already registered
         bool already_exists = method_handlers_.count(method_id) > 0;
@@ -85,17 +85,17 @@ public:
     }
 
     bool unregister_method(MethodId method_id) {
-        platform::ScopedLock lock(methods_mutex_);
+        platform::ScopedLock const lock(methods_mutex_);
         return method_handlers_.erase(method_id) > 0;
     }
 
     bool is_method_registered(MethodId method_id) const {
-        platform::ScopedLock lock(methods_mutex_);
+        platform::ScopedLock const lock(methods_mutex_);
         return method_handlers_.find(method_id) != method_handlers_.end();
     }
 
     std::vector<MethodId> get_registered_methods() const {
-        platform::ScopedLock lock(methods_mutex_);
+        platform::ScopedLock const lock(methods_mutex_);
         std::vector<MethodId> methods;
         methods.reserve(method_handlers_.size());
         for (const auto& pair : method_handlers_) {
@@ -124,7 +124,7 @@ private:
         // Find method handler
         MethodHandler handler;
         {
-            platform::ScopedLock lock(methods_mutex_);
+            platform::ScopedLock const lock(methods_mutex_);
             auto it = method_handlers_.find(message->get_method_id());
             if (it == method_handlers_.end()) {
                 // Method not found - send error response
@@ -250,5 +250,4 @@ RpcServer::Statistics RpcServer::get_statistics() const {
     return impl_->get_statistics();
 }
 
-} // namespace rpc
-} // namespace someip
+}  // namespace someip::rpc

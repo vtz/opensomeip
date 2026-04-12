@@ -22,8 +22,7 @@
 #include <chrono>
 #include <algorithm>
 
-namespace someip {
-namespace sd {
+namespace someip::sd {
 
 static std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
     transport::UdpTransportConfig cfg;
@@ -52,7 +51,8 @@ public:
         transport_->set_listener(this);
     }
 
-    ~SdClientImpl() {
+    ~SdClientImpl() override
+    {
         shutdown();
     }
 
@@ -86,7 +86,7 @@ public:
 
         // Clear all subscriptions and callbacks
         {
-            platform::ScopedLock lock(subscriptions_mutex_);
+            platform::ScopedLock const lock(subscriptions_mutex_);
             service_subscriptions_.clear();
         }
 
@@ -116,8 +116,9 @@ public:
         sd_message.add_entry(std::move(find_entry));
 
         // Create SOME/IP message for SD (service ID 0xFFFF)
-        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
-                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast find message
@@ -129,7 +130,7 @@ public:
         // Store callback for responses
         uint32_t request_id = next_request_id_++;
         {
-            platform::ScopedLock lock(pending_finds_mutex_);
+            platform::ScopedLock const lock(pending_finds_mutex_);
             pending_finds_[request_id] = {
                 service_id, std::move(callback),
                 std::chrono::steady_clock::now(),
@@ -144,8 +145,7 @@ public:
     bool subscribe_service(uint16_t service_id,
                           ServiceAvailableCallback available_callback,
                           ServiceUnavailableCallback unavailable_callback) {
-
-        platform::ScopedLock lock(subscriptions_mutex_);
+        platform::ScopedLock const lock(subscriptions_mutex_);
 
         // Check if already subscribed
         bool already_exists = service_subscriptions_.count(service_id) > 0;
@@ -160,7 +160,7 @@ public:
 
     /** @implements REQ_SD_114, REQ_SD_116, REQ_SD_116_E01, REQ_SD_116_E02 */
     bool unsubscribe_service(uint16_t service_id) {
-        platform::ScopedLock lock(subscriptions_mutex_);
+        platform::ScopedLock const lock(subscriptions_mutex_);
         return service_subscriptions_.erase(service_id) > 0;
     }
 
@@ -194,8 +194,9 @@ public:
         sub_entry->set_num_opts1(1);
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
-                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast message
@@ -222,8 +223,9 @@ public:
         sd_message.add_entry(std::move(unsubscribe_entry));
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
-                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast message
@@ -232,7 +234,7 @@ public:
     }
 
     std::vector<ServiceInstance> get_available_services(uint16_t service_id) const {
-        platform::ScopedLock lock(available_services_mutex_);
+        platform::ScopedLock const lock(available_services_mutex_);
         std::vector<ServiceInstance> result;
 
         for (const auto& service : available_services_) {
@@ -260,10 +262,10 @@ private:
     };
 
     struct PendingFind {
-        uint16_t service_id;
+        uint16_t service_id{};
         FindServiceCallback callback;
         std::chrono::steady_clock::time_point start_time;
-        std::chrono::milliseconds timeout;
+        std::chrono::milliseconds timeout{};
     };
 
     bool join_multicast_group() {
@@ -341,8 +343,8 @@ private:
 
         // Extract endpoint information from options
         const auto& options = message.get_options();
-        uint8_t index1 = entry.get_index1();
-        uint8_t run1 = entry.get_num_opts1();
+        uint8_t const index1 = entry.get_index1();
+        uint8_t const run1 = entry.get_num_opts1();
 
         for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
             const auto& option = options[index1 + i];
@@ -357,7 +359,7 @@ private:
 
         // Update available services
         {
-            platform::ScopedLock lock(available_services_mutex_);
+            platform::ScopedLock const lock(available_services_mutex_);
             auto it = std::find_if(available_services_.begin(), available_services_.end(),
                 [&](const ServiceInstance& svc) {
                     return svc.service_id == instance.service_id &&
@@ -372,7 +374,7 @@ private:
         }
 
         // Notify subscribers
-        platform::ScopedLock lock(subscriptions_mutex_);
+        platform::ScopedLock const lock(subscriptions_mutex_);
         auto sub_it = service_subscriptions_.find(instance.service_id);
         if (sub_it != service_subscriptions_.end() && sub_it->second.available_callback) {
             sub_it->second.available_callback(instance);
@@ -380,7 +382,7 @@ private:
 
         // Check for pending finds
         {
-            platform::ScopedLock lock(pending_finds_mutex_);
+            platform::ScopedLock const lock(pending_finds_mutex_);
             for (auto it = pending_finds_.begin(); it != pending_finds_.end(); ) {
                 if (it->second.service_id == instance.service_id) {
                     if (it->second.callback) {
@@ -403,7 +405,7 @@ private:
 
         // Remove from available services
         {
-            platform::ScopedLock lock(available_services_mutex_);
+            platform::ScopedLock const lock(available_services_mutex_);
             auto it = std::remove_if(available_services_.begin(), available_services_.end(),
                 [&](const ServiceInstance& svc) {
                     return svc.service_id == instance.service_id &&
@@ -413,7 +415,7 @@ private:
         }
 
         // Notify subscribers
-        platform::ScopedLock lock(subscriptions_mutex_);
+        platform::ScopedLock const lock(subscriptions_mutex_);
         auto sub_it = service_subscriptions_.find(instance.service_id);
         if (sub_it != service_subscriptions_.end() && sub_it->second.unavailable_callback) {
             sub_it->second.unavailable_callback(instance);
@@ -487,5 +489,4 @@ SdClient::Statistics SdClient::get_statistics() const {
     return impl_->get_statistics();
 }
 
-} // namespace sd
-} // namespace someip
+}  // namespace someip::sd

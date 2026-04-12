@@ -20,8 +20,7 @@
 #include <memory>
 #include "platform/thread.h"
 
-namespace someip {
-namespace tp {
+namespace someip::tp {
 
 /**
  * @brief SOME/IP TP Message Reassembler
@@ -117,7 +116,6 @@ private:
     bool parse_tp_header(const std::vector<uint8_t>& payload, uint16_t& offset, bool& more_segments);
 };
 
-} // namespace tp
-} // namespace someip
+}  // namespace someip::tp
 
 #endif // SOMEIP_TP_REASSEMBLER_H

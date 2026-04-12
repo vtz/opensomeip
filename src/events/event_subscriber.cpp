@@ -22,8 +22,7 @@
 #include <atomic>
 #include <algorithm>
 
-namespace someip {
-namespace events {
+namespace someip::events {
 
 /**
  * @brief Event Subscriber implementation
@@ -43,7 +42,8 @@ public:
         transport_->set_listener(this);
     }
 
-    ~EventSubscriberImpl() {
+    ~EventSubscriberImpl() override
+    {
         shutdown();
     }
 
@@ -68,7 +68,7 @@ public:
         running_ = false;
 
         // Clear all subscriptions and callbacks
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
         subscriptions_.clear();
 
         transport_->stop();
@@ -95,7 +95,7 @@ public:
         sub_info.filters = filters;
 
         // Store subscription
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
         subscriptions_[key] = sub_info;
 
@@ -105,9 +105,9 @@ public:
         transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
 
         // Create subscription message (simplified)
-        MessageId msg_id(service_id, 0x0001);  // Method ID for subscription
-        Message subscription_msg(msg_id, RequestId(client_id_, 0x0001),
-                                MessageType::REQUEST, ReturnCode::E_OK);
+        MessageId const msg_id(service_id, 0x0001);  // Method ID for subscription
+        Message subscription_msg(msg_id, RequestId(client_id_, 0x0001), MessageType::REQUEST,
+                                 ReturnCode::E_OK);
 
         // Add subscription data to payload
         std::vector<uint8_t> payload;
@@ -116,7 +116,7 @@ public:
         subscription_msg.set_payload(payload);
 
         Result send_result = transport_->send_message(subscription_msg, service_endpoint);
-        bool success = (send_result == Result::SUCCESS);
+        bool const success = (send_result == Result::SUCCESS);
         if (!success) {
             subscriptions_.erase(key);
         }
@@ -128,7 +128,7 @@ public:
             return false;
         }
 
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
@@ -139,9 +139,9 @@ public:
         // Send unsubscription request
         transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
 
-        MessageId msg_id(service_id, 0x0002);  // Method ID for unsubscription
+        MessageId const msg_id(service_id, 0x0002);  // Method ID for unsubscription
         Message unsubscription_msg(msg_id, RequestId(client_id_, 0x0002),
-                                  MessageType::REQUEST, ReturnCode::E_OK);
+                                   MessageType::REQUEST, ReturnCode::E_OK);
 
         // Add unsubscription data to payload
         std::vector<uint8_t> payload;
@@ -167,16 +167,16 @@ public:
         }
 
         // Store callback for field response
-        platform::ScopedLock field_lock(field_requests_mutex_);
+        platform::ScopedLock const field_lock(field_requests_mutex_);
         std::string key = make_field_key(service_id, instance_id, event_id);
         field_requests_[key] = callback;
 
         // Send field request
         transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
 
-        MessageId msg_id(service_id, 0x0003);  // Method ID for field request
-        Message field_msg(msg_id, RequestId(client_id_, 0x0003),
-                         MessageType::REQUEST, ReturnCode::E_OK);
+        MessageId const msg_id(service_id, 0x0003);  // Method ID for field request
+        Message field_msg(msg_id, RequestId(client_id_, 0x0003), MessageType::REQUEST,
+                          ReturnCode::E_OK);
 
         // Add field ID to payload
         std::vector<uint8_t> payload;
@@ -189,8 +189,7 @@ public:
 
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                          const std::vector<EventFilter>& filters) {
-
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
@@ -204,7 +203,7 @@ public:
 
     /** @implements REQ_MSG_123, REQ_MSG_123_E01 */
     std::vector<EventSubscription> get_active_subscriptions() const {
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
         std::vector<EventSubscription> result;
 
         for (const auto& pair : subscriptions_) {
@@ -216,8 +215,7 @@ public:
 
     SubscriptionState get_subscription_status(uint16_t service_id, uint16_t instance_id,
                                             uint16_t eventgroup_id) const {
-
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
@@ -260,7 +258,7 @@ private:
         }
 
         // Check if this is for one of our subscriptions
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         uint16_t service_id = message->get_service_id();
         uint16_t event_id = message->get_method_id();  // Event ID is in method ID field for notifications
@@ -289,7 +287,7 @@ private:
         }
 
         // Check if this is a field response
-        platform::ScopedLock field_lock(field_requests_mutex_);
+        platform::ScopedLock const field_lock(field_requests_mutex_);
         std::string field_key = make_field_key(service_id, 0, event_id);  // Simplified
 
         auto field_it = field_requests_.find(field_key);
@@ -307,7 +305,7 @@ private:
 
     void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {
         // Handle service disconnection
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         for (auto& sub_pair : subscriptions_) {
             auto& sub_info = sub_pair.second;
@@ -392,5 +390,4 @@ EventSubscriber::Statistics EventSubscriber::get_statistics() const {
     return impl_->get_statistics();
 }
 
-} // namespace events
-} // namespace someip
+}  // namespace someip::events

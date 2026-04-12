@@ -23,8 +23,7 @@
 
 #include "platform/host/host_condition_variable.h"
 
-namespace someip {
-namespace platform {
+namespace someip::platform {
 
 /** @implements REQ_PLATFORM_POSIX_001, REQ_PAL_MUTEX_LOCK, REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_TRYLOCK, REQ_PAL_MUTEX_NONCOPY */
 using Mutex = std::mutex;
@@ -41,8 +40,9 @@ public:
         try {
             thread_ = std::thread(std::forward<Fn>(fn), std::forward<Args>(args)...);
             started_ = true;
-        } catch (const std::system_error&) {
-            // thread_ remains default-constructed (non-joinable)
+        } catch (const std::system_error&) { // NOLINT(bugprone-empty-catch)
+            // Intentional: thread_ remains default-constructed (non-joinable)
+            // and started() returns false — callers check this to detect failure.
         }
 #else
         thread_ = std::thread(std::forward<Fn>(fn), std::forward<Args>(args)...);
@@ -93,7 +93,6 @@ namespace this_thread {
 using std::this_thread::sleep_for;
 } // namespace this_thread
 
-} // namespace platform
-} // namespace someip
+}  // namespace someip::platform
 
 #endif // SOMEIP_PLATFORM_POSIX_THREAD_IMPL_H
