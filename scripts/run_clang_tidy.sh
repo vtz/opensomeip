@@ -170,6 +170,10 @@ if [[ "$QUALITY_GATE" == true ]]; then
     fi
 
     THRESHOLD=$(head -1 "$BASELINE_FILE" | tr -d '[:space:]')
+    if ! [[ "$THRESHOLD" =~ ^[0-9]+$ ]]; then
+        echo "Error: Baseline file $BASELINE_FILE does not contain a valid numeric threshold" >&2
+        exit 1
+    fi
     echo ""
     echo "=============================================="
     echo "QUALITY GATE"
