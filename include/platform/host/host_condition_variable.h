@@ -14,8 +14,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace someip {
-namespace platform {
+namespace someip::platform {
 
 /** @implements REQ_PAL_CV_WAIT, REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_NOTIFY_ONE, REQ_PAL_CV_NOTIFY_ALL, REQ_PAL_CV_OWNERSHIP, REQ_PAL_CV_EXCEPT_E01 */
 class ConditionVariable {
@@ -58,7 +57,11 @@ private:
     //   the caller-owned mutex.
     struct ReleaseOnExit {
         explicit ReleaseOnExit(std::unique_lock<std::mutex>& lk) : lk_(lk) {}
-        ~ReleaseOnExit() { if (!dismissed_) lk_.release(); }
+        ~ReleaseOnExit() {
+            if (!dismissed_) {
+                lk_.release();
+            }
+        }
         void dismiss() { dismissed_ = true; }
     private:
         std::unique_lock<std::mutex>& lk_;
@@ -68,7 +71,6 @@ private:
     std::condition_variable cv_;
 };
 
-} // namespace platform
-} // namespace someip
+}  // namespace someip::platform
 
 #endif // SOMEIP_PLATFORM_HOST_CONDITION_VARIABLE_H

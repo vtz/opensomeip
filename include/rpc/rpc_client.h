@@ -17,8 +17,7 @@
 #include "rpc/rpc_types.h"
 #include <memory>
 
-namespace someip {
-namespace rpc {
+namespace someip::rpc {
 
 /**
  * @brief Forward declaration
@@ -42,7 +41,7 @@ public:
     /**
      * @brief Destructor
      */
-    ~RpcClient();
+    ~RpcClient() = default;
 
     // Delete copy and move operations
     RpcClient(const RpcClient&) = delete;
@@ -122,7 +121,6 @@ private:
     std::unique_ptr<RpcClientImpl> impl_;
 };
 
-} // namespace rpc
-} // namespace someip
+}  // namespace someip::rpc
 
 #endif // SOMEIP_RPC_CLIENT_H

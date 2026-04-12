@@ -18,8 +18,7 @@
 #include <memory>
 #include <vector>
 
-namespace someip {
-namespace events {
+namespace someip::events {
 
 /**
  * @brief Forward declaration
@@ -44,7 +43,7 @@ public:
     /**
      * @brief Destructor
      */
-    ~EventPublisher();
+    ~EventPublisher() = default;
 
     // Delete copy and move operations
     EventPublisher(const EventPublisher&) = delete;
@@ -166,7 +165,6 @@ private:
     std::unique_ptr<EventPublisherImpl> impl_;
 };
 
-} // namespace events
-} // namespace someip
+}  // namespace someip::events
 
 #endif // SOMEIP_EVENTS_PUBLISHER_H

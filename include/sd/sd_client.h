@@ -18,8 +18,7 @@
 #include <memory>
 #include <vector>
 
-namespace someip {
-namespace sd {
+namespace someip::sd {
 
 /**
  * @brief Forward declaration
@@ -43,7 +42,7 @@ public:
     /**
      * @brief Destructor
      */
-    ~SdClient();
+    ~SdClient() = default;
 
     // Delete copy and move operations
     SdClient(const SdClient&) = delete;
@@ -147,7 +146,6 @@ private:
     std::unique_ptr<SdClientImpl> impl_;
 };
 
-} // namespace sd
-} // namespace someip
+}  // namespace someip::sd
 
 #endif // SOMEIP_SD_CLIENT_H

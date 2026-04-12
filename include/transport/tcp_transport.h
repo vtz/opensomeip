@@ -21,8 +21,7 @@
 #include <atomic>
 #include <queue>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief TCP Connection State
@@ -219,7 +218,6 @@ private:
     static const size_t MAX_MESSAGE_SIZE = 65535;
 };
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
 #endif // SOMEIP_TRANSPORT_TCP_TRANSPORT_H

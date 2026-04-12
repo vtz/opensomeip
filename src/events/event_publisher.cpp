@@ -23,8 +23,7 @@
 #include <chrono>
 #include <algorithm>
 
-namespace someip {
-namespace events {
+namespace someip::events {
 
 /**
  * @brief Event Publisher implementation
@@ -44,7 +43,8 @@ public:
         transport_->set_listener(this);
     }
 
-    ~EventPublisherImpl() {
+    ~EventPublisherImpl() override
+    {
         shutdown();
     }
 
@@ -72,11 +72,11 @@ public:
         stop_publish_timer();
 
         {
-            platform::ScopedLock events_lock(events_mutex_);
+            platform::ScopedLock const events_lock(events_mutex_);
             registered_events_.clear();
         }
         {
-            platform::ScopedLock subs_lock(subscriptions_mutex_);
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
             subscriptions_.clear();
         }
 
@@ -84,7 +84,7 @@ public:
     }
 
     bool register_event(const EventConfig& config) {
-        platform::ScopedLock events_lock(events_mutex_);
+        platform::ScopedLock const events_lock(events_mutex_);
 
         // Check if already registered
         bool already_exists = registered_events_.count(config.event_id) > 0;
@@ -95,12 +95,12 @@ public:
     }
 
     bool unregister_event(uint16_t event_id) {
-        platform::ScopedLock events_lock(events_mutex_);
+        platform::ScopedLock const events_lock(events_mutex_);
         return registered_events_.erase(event_id) > 0;
     }
 
     bool update_event_config(uint16_t event_id, const EventConfig& config) {
-        platform::ScopedLock events_lock(events_mutex_);
+        platform::ScopedLock const events_lock(events_mutex_);
 
         auto it = registered_events_.find(event_id);
         if (it == registered_events_.end()) {
@@ -117,9 +117,9 @@ public:
             return false;
         }
 
-        uint16_t eventgroup_id;
+        uint16_t eventgroup_id = 0;
         {
-            platform::ScopedLock events_lock(events_mutex_);
+            platform::ScopedLock const events_lock(events_mutex_);
             auto event_it = registered_events_.find(event_id);
             if (event_it == registered_events_.end()) {
                 return false;
@@ -133,7 +133,7 @@ public:
 
         std::vector<transport::Endpoint> targets;
         {
-            platform::ScopedLock subs_lock(subscriptions_mutex_);
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
             auto sub_it = subscriptions_.find(eventgroup_id);
             if (sub_it != subscriptions_.end()) {
                 for (const auto& client_info : sub_it->second) {
@@ -157,8 +157,7 @@ public:
     /** @implements REQ_MSG_124, REQ_MSG_124_E01, REQ_MSG_125, REQ_MSG_125_E01, REQ_MSG_126 */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const std::vector<EventFilter>& filters) {
-
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         // Create client info (simplified - using localhost for demo)
         ClientInfo client_info;
@@ -182,7 +181,7 @@ public:
     }
 
     bool handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id) {
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         auto sub_it = subscriptions_.find(eventgroup_id);
         if (sub_it == subscriptions_.end()) {
@@ -200,7 +199,7 @@ public:
     }
 
     std::vector<uint16_t> get_registered_events() const {
-        platform::ScopedLock events_lock(events_mutex_);
+        platform::ScopedLock const events_lock(events_mutex_);
         std::vector<uint16_t> events;
 
         for (const auto& pair : registered_events_) {
@@ -211,7 +210,7 @@ public:
     }
 
     std::vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const {
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         auto it = subscriptions_.find(eventgroup_id);
         if (it == subscriptions_.end()) {
@@ -237,7 +236,7 @@ public:
 
 private:
     struct ClientInfo {
-        uint16_t client_id;
+        uint16_t client_id{};
         transport::Endpoint endpoint;
         std::vector<EventFilter> filters;
     };
@@ -269,7 +268,7 @@ private:
     void publish_cyclic_events() {
         std::vector<uint16_t> events_to_publish;
         {
-            platform::ScopedLock events_lock(events_mutex_);
+            platform::ScopedLock const events_lock(events_mutex_);
             auto now = std::chrono::steady_clock::now();
 
             for (auto& event_pair : registered_events_) {
@@ -298,9 +297,10 @@ private:
                                const transport::Endpoint& client_endpoint) {
 
         // Create SOME/IP message for event notification
-        MessageId msg_id(service_id_, notification.event_id);
-        Message someip_message(msg_id, RequestId(notification.client_id, notification.session_id),
-                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        MessageId const msg_id(service_id_, notification.event_id);
+        Message someip_message(msg_id,
+                               RequestId(notification.client_id, notification.session_id),
+                               MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(notification.event_data);
 
         Result result = transport_->send_message(someip_message, client_endpoint);
@@ -316,7 +316,7 @@ private:
 
     void on_connection_lost(const transport::Endpoint& endpoint) override {
         // Handle client disconnection
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         for (auto& sub_pair : subscriptions_) {
             auto& clients = sub_pair.second;
@@ -356,8 +356,6 @@ private:
 EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id)
     : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id)) {
 }
-
-EventPublisher::~EventPublisher() = default;
 
 bool EventPublisher::initialize() {
     return impl_->initialize();
@@ -412,5 +410,4 @@ EventPublisher::Statistics EventPublisher::get_statistics() const {
     return impl_->get_statistics();
 }
 
-} // namespace events
-} // namespace someip
+}  // namespace someip::events

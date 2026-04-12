@@ -18,8 +18,7 @@
 #include <memory>
 #include <functional>
 
-namespace someip {
-namespace rpc {
+namespace someip::rpc {
 
 /**
  * @brief Forward declaration
@@ -56,7 +55,7 @@ public:
     /**
      * @brief Destructor
      */
-    ~RpcServer();
+    ~RpcServer() = default;
 
     // Delete copy and move operations
     RpcServer(const RpcServer&) = delete;
@@ -132,7 +131,6 @@ private:
     std::unique_ptr<RpcServerImpl> impl_;
 };
 
-} // namespace rpc
-} // namespace someip
+}  // namespace someip::rpc
 
 #endif // SOMEIP_RPC_SERVER_H

@@ -20,8 +20,7 @@
 #include <atomic>
 #include <queue>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief UDP Transport Configuration
@@ -117,7 +116,6 @@ private:
     UdpTransport& operator=(const UdpTransport&) = delete;
 };
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
 #endif // SOMEIP_TRANSPORT_UDP_TRANSPORT_H

@@ -11,15 +11,13 @@
  * @brief POSIX/Host memory backend.
  */
 
-namespace someip {
-namespace platform {
+namespace someip::platform {
 
 /** @implements REQ_PLATFORM_POSIX_002, REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_INDEPENDENT */
 inline MessagePtr allocate_message() {
     return std::make_shared<Message>();
 }
 
-} // namespace platform
-} // namespace someip
+}  // namespace someip::platform
 
 #endif // SOMEIP_PLATFORM_POSIX_MEMORY_IMPL_H

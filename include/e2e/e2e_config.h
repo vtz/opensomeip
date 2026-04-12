@@ -17,8 +17,7 @@
 #include <cstdint>
 #include <string>
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief E2E protection configuration
@@ -89,7 +88,6 @@ struct E2EConfig {
     explicit E2EConfig(uint16_t data_id) : data_id(data_id) {}
 };
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e
 
 #endif // E2E_CONFIG_H

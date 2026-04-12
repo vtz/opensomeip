@@ -18,9 +18,6 @@
 #include <cstdint>
 #include <vector>
 
-namespace someip {
-namespace e2e {
-
 /**
  * @brief CRC calculation utilities using publicly available standards
  *
@@ -29,7 +26,7 @@ namespace e2e {
  * - ITU-T X.25 / CCITT: 16-bit CRC (telecommunications standard)
  * - CRC32: Standard 32-bit CRC
  */
-namespace E2ECRC {
+namespace someip::e2e::E2ECRC {
 
 /**
  * @brief Calculate 8-bit CRC using SAE-J1850 algorithm
@@ -74,8 +71,6 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data);
  */
 uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type);
 
-} // namespace E2ECRC
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e::E2ECRC
 
 #endif // E2E_CRC_H

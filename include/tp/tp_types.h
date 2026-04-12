@@ -21,8 +21,7 @@
 #include <chrono>
 #include <functional>
 
-namespace someip {
-namespace tp {
+namespace someip::tp {
 
 /**
  * @brief TP (Transport Protocol) result codes
@@ -168,7 +167,6 @@ struct TpStatistics {
     uint32_t errors{0};
 };
 
-} // namespace tp
-} // namespace someip
+}  // namespace someip::tp
 
 #endif // SOMEIP_TP_TYPES_H

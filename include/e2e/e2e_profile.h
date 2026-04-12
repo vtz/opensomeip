@@ -22,8 +22,7 @@
 #include <string>
 #include <memory>
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief Abstract interface for E2E protection profiles
@@ -75,7 +74,6 @@ public:
  */
 using E2EProfilePtr = std::unique_ptr<E2EProfile>;
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e
 
 #endif // E2E_PROFILE_H

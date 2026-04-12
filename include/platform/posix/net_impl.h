@@ -43,14 +43,18 @@ static inline int someip_shutdown_socket(someip_socket_t fd) {
 /** @implements REQ_PAL_NET_NONBLOCK, REQ_PAL_NET_MODE_E01 */
 static inline int someip_set_nonblocking(someip_socket_t fd) {
     int flags = fcntl(fd, F_GETFL, 0);
-    if (flags < 0) return -1;
+    if (flags < 0) {
+        return -1;
+    }
     return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
 
 /** @implements REQ_PAL_NET_BLOCK, REQ_PAL_NET_MODE_E01 */
 static inline int someip_set_blocking(someip_socket_t fd) {
     int flags = fcntl(fd, F_GETFL, 0);
-    if (flags < 0) return -1;
+    if (flags < 0) {
+        return -1;
+    }
     return fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
 }
 
@@ -149,7 +153,7 @@ static inline ssize_t someip_recv(someip_socket_t fd, void* buf,
 
 static inline int someip_set_socket_timeout(someip_socket_t fd, int optname,
                                             int timeout_ms) {
-    struct timeval tv;
+    struct timeval tv{};
     tv.tv_sec  = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
     return ::setsockopt(fd, SOL_SOCKET, optname, &tv, sizeof(tv));

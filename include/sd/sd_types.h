@@ -21,8 +21,7 @@
 #include <memory>
 #include <functional>
 
-namespace someip {
-namespace sd {
+namespace someip::sd {
 
 /** @implements REQ_SD_242 */
 enum class EntryType : uint8_t {
@@ -132,7 +131,6 @@ struct EventGroupSubscription {
     }
 };
 
-} // namespace sd
-} // namespace someip
+}  // namespace someip::sd
 
 #endif // SOMEIP_SD_TYPES_H

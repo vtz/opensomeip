@@ -200,7 +200,7 @@ bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
     if (offset + sizeof(uint32_t) > data.size()) {
         return false;
     }
-    uint32_t message_id_be;
+    uint32_t message_id_be = 0;
     std::memcpy(&message_id_be, &data[offset], sizeof(uint32_t));
     message_id_ = MessageId::from_uint32(someip_ntohl(message_id_be));
     offset += sizeof(uint32_t);
@@ -208,7 +208,7 @@ bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
     if (offset + sizeof(uint32_t) > data.size()) {
         return false;
     }
-    uint32_t length_be;
+    uint32_t length_be = 0;
     std::memcpy(&length_be, &data[offset], sizeof(uint32_t));
     length_ = someip_ntohl(length_be);
     offset += sizeof(uint32_t);
@@ -216,7 +216,7 @@ bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
     if (offset + sizeof(uint32_t) > data.size()) {
         return false;
     }
-    uint32_t request_id_be;
+    uint32_t request_id_be = 0;
     std::memcpy(&request_id_be, &data[offset], sizeof(uint32_t));
     request_id_ = RequestId::from_uint32(someip_ntohl(request_id_be));
     offset += sizeof(uint32_t);
@@ -267,7 +267,7 @@ bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
         return false;  // Invalid length: must be at least 8 for header
     }
     size_t e2e_size = e2e_header_.has_value() ? e2e_header_->get_header_size() : 0;
-    size_t expected_payload_size = length_ - 8 - e2e_size;
+    size_t const expected_payload_size = length_ - 8 - e2e_size;
     size_t actual_payload_size = data.size() - offset;
 
     if (actual_payload_size != expected_payload_size) {
@@ -275,7 +275,7 @@ bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
     }
 
     // Copy payload
-    payload_.assign(data.begin() + offset, data.end());
+    payload_.assign(data.begin() + static_cast<std::ptrdiff_t>(offset), data.end());
 
     // Update timestamp
     update_timestamp();
@@ -297,7 +297,7 @@ bool Message::is_valid() const {
  * @implements REQ_MSG_004_E01, REQ_MSG_004_E02
  */
 bool Message::has_valid_service_id() const {
-    [[maybe_unused]] uint16_t service_id = get_service_id();
+    [[maybe_unused]] uint16_t const service_id = get_service_id();
 
     // REQ_MSG_004: Reserved Service ID 0x0000 is technically invalid per spec
     // But we allow it for default/uninitialized messages to maintain backward compatibility
@@ -310,7 +310,7 @@ bool Message::has_valid_service_id() const {
  * @implements REQ_MSG_006, REQ_MSG_007, REQ_MSG_008
  */
 bool Message::has_valid_method_id() const {
-    uint16_t method_id = get_method_id();
+    uint16_t const method_id = get_method_id();
 
     // REQ_MSG_008: Reserved Method ID 0xFFFF is invalid
     if (method_id == 0xFFFF) {
@@ -353,7 +353,7 @@ bool Message::has_valid_length() const {
  * @implements REQ_MSG_025
  */
 bool Message::has_valid_client_id() const {
-    [[maybe_unused]] uint16_t client_id = get_client_id();
+    [[maybe_unused]] uint16_t const client_id = get_client_id();
 
     // REQ_MSG_025: Client ID 0 is reserved for SD
     // But allow it for default/uninitialized messages
@@ -366,7 +366,7 @@ bool Message::has_valid_client_id() const {
  * @implements REQ_MSG_024_E01, REQ_MSG_024_E02
  */
 bool Message::has_valid_session_id() const {
-    [[maybe_unused]] uint16_t session_id = get_session_id();
+    [[maybe_unused]] uint16_t const session_id = get_session_id();
 
     // REQ_MSG_023: Session ID 0 is disabled session handling
     // This is valid but indicates no session management

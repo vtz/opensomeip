@@ -18,8 +18,7 @@
 #include <someip/message.h>
 #include <someip/types.h>
 
-namespace someip {
-namespace tp {
+namespace someip::tp {
 
 /**
  * @brief SOME/IP TP Message Segmenter
@@ -38,7 +37,7 @@ public:
     /**
      * @brief Destructor
      */
-    ~TpSegmenter();
+    ~TpSegmenter() = default;
 
     // Delete copy and move operations
     TpSegmenter(const TpSegmenter&) = delete;
@@ -83,7 +82,6 @@ private:
     MessageType add_tp_flag(MessageType type) const;
 };
 
-} // namespace tp
-} // namespace someip
+}  // namespace someip::tp
 
 #endif // SOMEIP_TP_SEGMENTER_H

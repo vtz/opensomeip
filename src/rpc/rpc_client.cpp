@@ -22,8 +22,7 @@
 #include <atomic>
 #include <chrono>
 
-namespace someip {
-namespace rpc {
+namespace someip::rpc {
 
 /**
  * @brief RPC Client implementation
@@ -45,8 +44,15 @@ public:
         transport_->set_listener(this);
     }
 
-    ~RpcClientImpl() {
+    ~RpcClientImpl() noexcept override
+    {
+#ifdef __cpp_exceptions
+        try {
+            shutdown();
+        } catch (...) {}  // NOLINT(bugprone-empty-catch) destructor must not throw
+#else
         shutdown();
+#endif
     }
 
     bool initialize() {
@@ -71,7 +77,7 @@ public:
 
         // Cancel all pending calls
         {
-            platform::ScopedLock lock(pending_calls_mutex_);
+            platform::ScopedLock const lock(pending_calls_mutex_);
             for (auto& pair : pending_calls_) {
                 if (pair.second.callback) {
                     RpcResponse response(pair.second.service_id, pair.second.method_id,
@@ -118,7 +124,7 @@ public:
         }
 
         {
-            platform::ScopedLock lk(sync_mtx);
+            platform::ScopedLock const lk(sync_mtx);
             auto now = std::chrono::steady_clock::now();
             if (now > deadline) {
                 cancel_call(handle);
@@ -142,8 +148,8 @@ public:
         uint16_t session_id = session_manager_->create_session(client_id_);
 
         // Create request message
-        MessageId msg_id(service_id, method_id);
-        RequestId req_id(client_id_, session_id);
+        MessageId const msg_id(service_id, method_id);
+        RequestId const req_id(client_id_, session_id);
         Message request(msg_id, req_id, MessageType::REQUEST, ReturnCode::E_OK);
         request.set_payload(parameters);
 
@@ -154,9 +160,9 @@ public:
             timeout, callback
         };
 
-        RpcCallHandle handle;
+        RpcCallHandle handle = 0;
         {
-            platform::ScopedLock lock(pending_calls_mutex_);
+            platform::ScopedLock const lock(pending_calls_mutex_);
             handle = next_call_handle_++;
             pending_calls_[handle] = std::move(call_info);
         }
@@ -164,7 +170,7 @@ public:
         // Send request
         transport::Endpoint server_endpoint("127.0.0.1", 30490); // TODO: Make configurable
         if (transport_->send_message(request, server_endpoint) != Result::SUCCESS) {
-            platform::ScopedLock lock(pending_calls_mutex_);
+            platform::ScopedLock const lock(pending_calls_mutex_);
             pending_calls_.erase(handle);
             return 0;
         }
@@ -173,7 +179,7 @@ public:
     }
 
     bool cancel_call(RpcCallHandle handle) {
-        platform::ScopedLock lock(pending_calls_mutex_);
+        platform::ScopedLock const lock(pending_calls_mutex_);
         auto it = pending_calls_.find(handle);
         if (it == pending_calls_.end()) {
             return false;
@@ -201,9 +207,9 @@ public:
 
 private:
     struct PendingCall {
-        uint16_t service_id;
-        MethodId method_id;
-        uint16_t session_id;
+        uint16_t service_id{};
+        MethodId method_id{};
+        uint16_t session_id{};
         std::chrono::steady_clock::time_point start_time;
         RpcTimeout timeout;
         RpcCallback callback;
@@ -216,7 +222,7 @@ private:
             return;
         }
 
-        platform::ScopedLock lock(pending_calls_mutex_);
+        platform::ScopedLock const lock(pending_calls_mutex_);
 
         // Find matching pending call by session ID
         for (auto it = pending_calls_.begin(); it != pending_calls_.end(); ++it) {
@@ -269,8 +275,6 @@ RpcClient::RpcClient(uint16_t client_id)
     : impl_(std::make_unique<RpcClientImpl>(client_id)) {
 }
 
-RpcClient::~RpcClient() = default;
-
 bool RpcClient::initialize() {
     return impl_->initialize();
 }
@@ -304,5 +308,4 @@ RpcClient::Statistics RpcClient::get_statistics() const {
     return impl_->get_statistics();
 }
 
-} // namespace rpc
-} // namespace someip
+}  // namespace someip::rpc
