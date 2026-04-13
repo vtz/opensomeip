@@ -21,7 +21,7 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-04-13 17:56:23</p>
+    <p>Generated: 2026-04-13 19:00:48</p>
 
     <div class="summary">
         <strong>Summary:</strong>
@@ -46,7 +46,7 @@
             <td>REQ_ARCH_001</td>
             <td>Modular Architecture</td>
             <td>feat_req_someip_2, feat_req_someip_3, feat_req_someip_4, feat_req_someip_14, feat_req_someip_15, feat_req_someip_697</td>
-            <td class="code-ref">CODE_event_publisher_events_28, CODE_event_subscriber_events_28, CODE_rpc_client_rpc_30, CODE_rpc_server_rpc_27, CODE_sd_client_sd_39, CODE_sd_message_sd_30, CODE_sd_server_sd_41, CODE_types_someip_25</td>
+            <td class="code-ref">CODE_event_publisher_events_28, CODE_event_subscriber_events_28, CODE_rpc_client_rpc_30, CODE_rpc_server_rpc_27, CODE_sd_client_sd_39, CODE_sd_message_sd_32, CODE_sd_server_sd_41, CODE_types_someip_25</td>
             <td>TC_test_someip_system_SomeIpSystemTest, TC_test_events_EventsTest, TC_test_message_MessageTest, TC_test_rpc_RpcTest, TC_test_sd_SdTest, TC_test_serialization_21, TC_test_tp_TpTest, TC_test_echo_integration_74, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1606,7 +1606,7 @@
             <td>REQ_PLATFORM_FREERTOS_002</td>
             <td>FreeRTOS Memory Pool Backend</td>
             <td>REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_INDEPENDENT</td>
-            <td class="code-ref">CODE_memory_freertos_90, CODE_memory_impl_freertos_23, CODE_memory_impl_freertos_25</td>
+            <td class="code-ref">CODE_memory_freertos_92, CODE_memory_impl_freertos_23, CODE_memory_impl_freertos_25</td>
             <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1670,7 +1670,7 @@
             <td>REQ_PLATFORM_THREADX_002</td>
             <td>ThreadX Memory Pool Backend</td>
             <td>REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_INDEPENDENT</td>
-            <td class="code-ref">CODE_memory_threadx_86, CODE_memory_impl_threadx_23</td>
+            <td class="code-ref">CODE_memory_threadx_87, CODE_memory_impl_threadx_23</td>
             <td>TC_test_pal_threadx_mock_allocate_message, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1742,7 +1742,7 @@
             <td>REQ_SD_001</td>
             <td>SD Service ID</td>
             <td>feat_req_someipsd_141</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1750,7 +1750,7 @@
             <td>REQ_SD_001_E01</td>
             <td>Error - SD Message Too Short</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_72</td>
+            <td class="code-ref">CODE_sd_message_sd_74</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_001, TC_SD_DESER_002, TC_SD_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1758,7 +1758,7 @@
             <td>REQ_SD_001_E02</td>
             <td>Error - SD Entries Length Mismatch</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_72</td>
+            <td class="code-ref">CODE_sd_message_sd_74</td>
             <td>TC_test_sd_SdTest, TC_SD_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1766,7 +1766,7 @@
             <td>REQ_SD_002</td>
             <td>SD Method ID</td>
             <td>feat_req_someipsd_142</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1774,7 +1774,7 @@
             <td>REQ_SD_003</td>
             <td>SD Client ID</td>
             <td>feat_req_someipsd_144</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1782,7 +1782,7 @@
             <td>REQ_SD_004</td>
             <td>SD Protocol Version</td>
             <td>feat_req_someipsd_147</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1790,7 +1790,7 @@
             <td>REQ_SD_005</td>
             <td>SD Interface Version</td>
             <td>feat_req_someipsd_148</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1798,7 +1798,7 @@
             <td>REQ_SD_006</td>
             <td>SD Message Type</td>
             <td>feat_req_someipsd_205</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1806,7 +1806,7 @@
             <td>REQ_SD_007</td>
             <td>SD Return Code</td>
             <td>feat_req_someipsd_208, feat_req_someipsd_209</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1814,7 +1814,7 @@
             <td>REQ_SD_010</td>
             <td>Parse SD Flags Byte</td>
             <td>feat_req_someipsd_100, feat_req_someipsd_209, feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1822,7 +1822,7 @@
             <td>REQ_SD_010_E01</td>
             <td>Error - SD Session ID Non-Incremental</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_72</td>
+            <td class="code-ref">CODE_sd_message_sd_74</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_001, TC_SD_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1830,7 +1830,7 @@
             <td>REQ_SD_010_E02</td>
             <td>Error - SD Reserved Flags</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_72</td>
+            <td class="code-ref">CODE_sd_message_sd_74</td>
             <td>TC_test_sd_SdTest, TC_SD_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1838,7 +1838,7 @@
             <td>REQ_SD_011</td>
             <td>Extract Reboot Flag</td>
             <td>feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1846,7 +1846,7 @@
             <td>REQ_SD_012</td>
             <td>Extract Unicast Flag</td>
             <td>feat_req_someipsd_100, feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1854,7 +1854,7 @@
             <td>REQ_SD_013</td>
             <td>Validate Reserved Flags</td>
             <td>feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1862,7 +1862,7 @@
             <td>REQ_SD_014</td>
             <td>Ignore Reserved Flags on Receive</td>
             <td>feat_req_someipsd_148, feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1870,7 +1870,7 @@
             <td>REQ_SD_020</td>
             <td>Parse Entries Length Field</td>
             <td>feat_req_someipsd_575</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1878,7 +1878,7 @@
             <td>REQ_SD_020_E01</td>
             <td>Error - Invalid Entries Length</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_72</td>
+            <td class="code-ref">CODE_sd_message_sd_74</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1886,7 +1886,7 @@
             <td>REQ_SD_020_E02</td>
             <td>Error - Entries Length Not Multiple of Entry Size</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_72</td>
+            <td class="code-ref">CODE_sd_message_sd_74</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1894,7 +1894,7 @@
             <td>REQ_SD_021</td>
             <td>Parse Entry Type</td>
             <td>feat_req_someipsd_575, feat_req_someipsd_625, feat_req_someipsd_626</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1902,7 +1902,7 @@
             <td>REQ_SD_021_E01</td>
             <td>Error - SD Options Array Too Large</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_72</td>
+            <td class="code-ref">CODE_sd_message_sd_74</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1910,7 +1910,7 @@
             <td>REQ_SD_022</td>
             <td>Entry Size Calculation</td>
             <td>feat_req_someipsd_575, feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1918,7 +1918,7 @@
             <td>REQ_SD_022_E01</td>
             <td>Error - Truncated Entry</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_72</td>
+            <td class="code-ref">CODE_sd_message_sd_74</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_004</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1926,7 +1926,7 @@
             <td>REQ_SD_023</td>
             <td>Parse Type 0 Find Service Entry</td>
             <td>feat_req_someipsd_626</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1934,7 +1934,7 @@
             <td>REQ_SD_024</td>
             <td>Parse Type 1 Offer Service Entry</td>
             <td>feat_req_someipsd_626</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1942,7 +1942,7 @@
             <td>REQ_SD_025</td>
             <td>Parse Type 6 Subscribe Eventgroup Entry</td>
             <td>feat_req_someipsd_629</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1950,7 +1950,7 @@
             <td>REQ_SD_026</td>
             <td>Parse Type 7 Subscribe Eventgroup Ack Entry</td>
             <td>feat_req_someipsd_630</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1958,7 +1958,7 @@
             <td>REQ_SD_030</td>
             <td>Parse Service ID in Entry</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1974,7 +1974,7 @@
             <td>REQ_SD_031</td>
             <td>Parse Instance ID in Entry</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1982,7 +1982,7 @@
             <td>REQ_SD_032</td>
             <td>Instance ID Wildcard</td>
             <td>feat_req_someipsd_625, feat_req_someipsd_734</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1990,7 +1990,7 @@
             <td>REQ_SD_033</td>
             <td>Parse Major Version and TTL</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1998,7 +1998,7 @@
             <td>REQ_SD_034</td>
             <td>Parse Minor Version</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2006,7 +2006,7 @@
             <td>REQ_SD_035</td>
             <td>Parse Eventgroup ID</td>
             <td>feat_req_someipsd_629</td>
-            <td class="code-ref">CODE_sd_message_sd_30</td>
+            <td class="code-ref">CODE_sd_message_sd_32</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2014,7 +2014,7 @@
             <td>REQ_SD_040</td>
             <td>Store Service Offer TTL</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2022,7 +2022,7 @@
             <td>REQ_SD_040_E01</td>
             <td>Error - Service List Full</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_111</td>
+            <td class="code-ref">CODE_sd_message_sd_113</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_004, TC_SD_SERVER_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2030,7 +2030,7 @@
             <td>REQ_SD_041</td>
             <td>Decrement TTL Periodically</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2038,7 +2038,7 @@
             <td>REQ_SD_041_E01</td>
             <td>Error - TTL Underflow Protection</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_111</td>
+            <td class="code-ref">CODE_sd_message_sd_113</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_005, TC_SD_CLIENT_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2046,7 +2046,7 @@
             <td>REQ_SD_042</td>
             <td>Remove Service on TTL Expiry</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2054,7 +2054,7 @@
             <td>REQ_SD_043</td>
             <td>Infinite TTL Value</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2062,7 +2062,7 @@
             <td>REQ_SD_044</td>
             <td>Stop Offer TTL Zero</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2070,7 +2070,7 @@
             <td>REQ_SD_044_E01</td>
             <td>Error - SD Entry With Invalid TTL Format</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_111</td>
+            <td class="code-ref">CODE_sd_message_sd_113</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2078,7 +2078,7 @@
             <td>REQ_SD_045</td>
             <td>Reset TTL on New Offer</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2086,7 +2086,7 @@
             <td>REQ_SD_046</td>
             <td>Notify Application on Service Availability Change</td>
             <td>feat_req_someipsd_14</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2094,7 +2094,7 @@
             <td>REQ_SD_050</td>
             <td>Track Session ID per Endpoint</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2102,7 +2102,7 @@
             <td>REQ_SD_050_E01</td>
             <td>Error - SD Malformed Option Length</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_111</td>
+            <td class="code-ref">CODE_sd_message_sd_113</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_005, TC_SD_E04</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2110,7 +2110,7 @@
             <td>REQ_SD_051</td>
             <td>Compare Session ID for Reboot Detection</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2118,7 +2118,7 @@
             <td>REQ_SD_052</td>
             <td>Detect Reboot on Session ID Regression</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2126,7 +2126,7 @@
             <td>REQ_SD_052_E01</td>
             <td>Error - Session ID Wrap-Around Handling</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_111</td>
+            <td class="code-ref">CODE_sd_message_sd_113</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2134,7 +2134,7 @@
             <td>REQ_SD_053</td>
             <td>Detect Reboot on Reboot Flag</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2142,7 +2142,7 @@
             <td>REQ_SD_054</td>
             <td>Trigger Reboot Detection Event</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2150,7 +2150,7 @@
             <td>REQ_SD_055</td>
             <td>Clear Cached Services on Reboot</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2158,7 +2158,7 @@
             <td>REQ_SD_056</td>
             <td>Update Stored Session ID</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_90</td>
+            <td class="code-ref">CODE_sd_message_sd_92</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2238,7 +2238,7 @@
             <td>REQ_SD_064_E01</td>
             <td>Error - Invalid IP Address</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_159, CODE_sd_message_sd_244, CODE_sd_message_sd_326</td>
+            <td class="code-ref">CODE_sd_message_sd_159, CODE_sd_message_sd_241, CODE_sd_message_sd_325</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_008</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2622,7 +2622,7 @@
             <td>REQ_SD_120</td>
             <td>SubscribeEventgroupNack Processing</td>
             <td>feat_req_someipsd_618, feat_req_someipsd_630</td>
-            <td class="code-ref">CODE_sd_message_sd_214</td>
+            <td class="code-ref">CODE_sd_message_sd_211</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2646,7 +2646,7 @@
             <td>REQ_SD_122</td>
             <td>IPv4 SD Endpoint Option</td>
             <td>feat_req_someipsd_1081, feat_req_someipsd_1086</td>
-            <td class="code-ref">CODE_sd_message_sd_214</td>
+            <td class="code-ref">CODE_sd_message_sd_211</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2654,7 +2654,7 @@
             <td>REQ_SD_123</td>
             <td>IPv6 SD Endpoint Option</td>
             <td>feat_req_someipsd_1135</td>
-            <td class="code-ref">CODE_sd_message_sd_214</td>
+            <td class="code-ref">CODE_sd_message_sd_211</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2718,7 +2718,7 @@
             <td>REQ_SD_132</td>
             <td>Eventgroup Subscription State Machine</td>
             <td>feat_req_someipsd_632, feat_req_someipsd_633, feat_req_someipsd_634</td>
-            <td class="code-ref">CODE_sd_message_sd_301</td>
+            <td class="code-ref">CODE_sd_message_sd_300</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2782,7 +2782,7 @@
             <td>REQ_SD_160</td>
             <td>SD Multicast Transmission</td>
             <td>feat_req_someipsd_100, feat_req_someipsd_105</td>
-            <td class="code-ref">CODE_sd_client_sd_339, CODE_sd_message_sd_301</td>
+            <td class="code-ref">CODE_sd_client_sd_339, CODE_sd_message_sd_300</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4286,7 +4286,7 @@
             <td>REQ_TP_001</td>
             <td>Calculate Segment Count</td>
             <td>feat_req_someiptp_760, feat_req_someiptp_764, feat_req_someiptp_759</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_31</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_32</td>
             <td>TC_test_tp_TpTest, TC_TP_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4294,7 +4294,7 @@
             <td>REQ_TP_001_E01</td>
             <td>Error - Message Too Large</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_31</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_32</td>
             <td>TC_test_tp_TpTest, TC_TP_ERR_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4302,7 +4302,7 @@
             <td>REQ_TP_001_E02</td>
             <td>Error - Segment Creation Failure</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest, TC_TP_ERR_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4310,7 +4310,7 @@
             <td>REQ_TP_001_E03</td>
             <td>Error - Empty Message Segmentation</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest, TC_TP_ERR_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4318,7 +4318,7 @@
             <td>REQ_TP_002</td>
             <td>Maximum Segment Payload Size</td>
             <td>feat_req_someiptp_773</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_31, CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_32, CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest, TC_TP_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4326,7 +4326,7 @@
             <td>REQ_TP_003</td>
             <td>Segment Alignment</td>
             <td>feat_req_someiptp_772</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_31, CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_32, CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest, TC_TP_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4334,7 +4334,7 @@
             <td>REQ_TP_004</td>
             <td>Last Segment Size</td>
             <td>feat_req_someiptp_772</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_31, CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_32, CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4342,7 +4342,7 @@
             <td>REQ_TP_005</td>
             <td>Preserve Original Message Fields</td>
             <td>feat_req_someiptp_762, feat_req_someiptp_774</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4350,7 +4350,7 @@
             <td>REQ_TP_006</td>
             <td>Same Session ID for All Segments</td>
             <td>feat_req_someiptp_763</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest, TC_TP_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4358,7 +4358,7 @@
             <td>REQ_TP_007</td>
             <td>Set TP Flag in Message Type</td>
             <td>feat_req_someiptp_765</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_231</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_232</td>
             <td>TC_test_tp_TpTest, TC_TP_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4366,7 +4366,7 @@
             <td>REQ_TP_008</td>
             <td>Preserve Base Message Type</td>
             <td>feat_req_someiptp_765, feat_req_someiptp_774</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_231</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_232</td>
             <td>TC_test_tp_TpTest, TC_TP_008</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4374,7 +4374,7 @@
             <td>REQ_TP_010</td>
             <td>TP Header Position</td>
             <td>feat_req_someiptp_766</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest, TC_TP_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4382,7 +4382,7 @@
             <td>REQ_TP_011</td>
             <td>TP Header Size</td>
             <td>feat_req_someiptp_766</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4390,7 +4390,7 @@
             <td>REQ_TP_012</td>
             <td>Offset Field Position</td>
             <td>feat_req_someiptp_766, feat_req_someiptp_768</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4398,7 +4398,7 @@
             <td>REQ_TP_013</td>
             <td>Offset Value Calculation</td>
             <td>feat_req_someiptp_767, feat_req_someiptp_768</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4406,7 +4406,7 @@
             <td>REQ_TP_013_E01</td>
             <td>Error - Invalid Offset Value</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest, TC_TP_ERR_002, TC_TP_ERR_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4414,7 +4414,7 @@
             <td>REQ_TP_014</td>
             <td>First Segment Offset</td>
             <td>feat_req_someiptp_767</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4422,7 +4422,7 @@
             <td>REQ_TP_015</td>
             <td>Offset 16-Byte Alignment</td>
             <td>feat_req_someiptp_768</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4430,7 +4430,7 @@
             <td>REQ_TP_015_E01</td>
             <td>Error - Offset Not Aligned on Receive</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest, TC_TP_ERR_003, TC_TP_ERR_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4438,7 +4438,7 @@
             <td>REQ_TP_016</td>
             <td>Reserved Flags Position</td>
             <td>feat_req_someiptp_769</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4446,7 +4446,7 @@
             <td>REQ_TP_017</td>
             <td>Reserved Flags Value on Send</td>
             <td>feat_req_someiptp_769</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4454,7 +4454,7 @@
             <td>REQ_TP_018</td>
             <td>Reserved Flags Ignored on Receive</td>
             <td>feat_req_someiptp_769</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4462,7 +4462,7 @@
             <td>REQ_TP_019</td>
             <td>More Segments Flag Position</td>
             <td>feat_req_someiptp_770</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4470,7 +4470,7 @@
             <td>REQ_TP_020</td>
             <td>More Segments Flag Set for Non-Last</td>
             <td>feat_req_someiptp_770</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4478,7 +4478,7 @@
             <td>REQ_TP_021</td>
             <td>More Segments Flag Clear for Last</td>
             <td>feat_req_someiptp_770</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_193</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_36, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_194</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4486,7 +4486,7 @@
             <td>REQ_TP_022</td>
             <td>Segment Length Field</td>
             <td>feat_req_someiptp_771</td>
-            <td class="code-ref">CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4742,7 +4742,7 @@
             <td>REQ_TP_070</td>
             <td>Segment Only Configured Messages</td>
             <td>feat_req_someiptp_788, feat_req_someiptp_775</td>
-            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_31, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_185</td>
+            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_32, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_186</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4750,7 +4750,7 @@
             <td>REQ_TP_071</td>
             <td>Send Segments in Ascending Order</td>
             <td>feat_req_someiptp_777</td>
-            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_31, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_185</td>
+            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_32, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_186</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4758,7 +4758,7 @@
             <td>REQ_TP_072</td>
             <td>Uniform Segment Size</td>
             <td>feat_req_someiptp_778, feat_req_someiptp_779</td>
-            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_31, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_185</td>
+            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_32, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_186</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4774,7 +4774,7 @@
             <td>REQ_TP_073</td>
             <td>No Overlapping or Duplicate Segments</td>
             <td>feat_req_someiptp_780</td>
-            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_31, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_185</td>
+            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_32, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_186</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4782,7 +4782,7 @@
             <td>REQ_TP_074</td>
             <td>Configured Client IDs for TP</td>
             <td>feat_req_someiptp_786</td>
-            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_31, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_185</td>
+            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_32, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_186</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4790,7 +4790,7 @@
             <td>REQ_TP_075</td>
             <td>Traffic Shaping for Segments</td>
             <td>feat_req_someiptp_801</td>
-            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_31, CODE_tp_segmenter_tp_71, CODE_tp_segmenter_tp_185</td>
+            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_segmenter_tp_32, CODE_tp_segmenter_tp_72, CODE_tp_segmenter_tp_186</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4798,7 +4798,7 @@
             <td>REQ_TP_076</td>
             <td>Session ID Based Reassembly Detection</td>
             <td>feat_req_someiptp_793, feat_req_someiptp_795, feat_req_someiptp_776</td>
-            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_reassembler_tp_76, CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_reassembler_tp_76, CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4822,7 +4822,7 @@
             <td>REQ_TP_077</td>
             <td>Return Code from Last Segment</td>
             <td>feat_req_someiptp_784</td>
-            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_reassembler_tp_76, CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_reassembler_tp_76, CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4830,7 +4830,7 @@
             <td>REQ_TP_078</td>
             <td>Clear TP Flag After Reassembly</td>
             <td>feat_req_someiptp_785</td>
-            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_reassembler_tp_76, CODE_tp_segmenter_tp_71</td>
+            <td class="code-ref">CODE_tp_manager_tp_237, CODE_tp_reassembler_tp_76, CODE_tp_segmenter_tp_72</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4902,7 +4902,7 @@
             <td>REQ_TRANSPORT_001A</td>
             <td>UDP Bind and Unicast Send/Receive</td>
             <td>feat_req_someip_32, feat_req_someip_318, feat_req_someip_319, feat_req_someip_33</td>
-            <td class="code-ref">CODE_udp_transport_transport_23, CODE_udp_transport_transport_45</td>
+            <td class="code-ref">CODE_udp_transport_transport_24, CODE_udp_transport_transport_46</td>
             <td>TC_test_udp_transport_UdpTransportTest, TC_test_echo_integration_74, TC_test_echo_integration_108, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4910,7 +4910,7 @@
             <td>REQ_TRANSPORT_001B</td>
             <td>UDP Multicast Support</td>
             <td>feat_req_someip_584, feat_req_someip_811, feat_req_someip_315, feat_req_someip_316</td>
-            <td class="code-ref">CODE_udp_transport_transport_23, CODE_udp_transport_transport_45</td>
+            <td class="code-ref">CODE_udp_transport_transport_24, CODE_udp_transport_transport_46</td>
             <td>TC_test_udp_transport_UdpTransportTest, TC_test_echo_integration_74, TC_test_echo_integration_108, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4918,7 +4918,7 @@
             <td>REQ_TRANSPORT_001C</td>
             <td>Non-Blocking I/O and Thread Safety</td>
             <td>feat_req_someip_659, feat_req_someip_664, feat_req_someip_317</td>
-            <td class="code-ref">CODE_udp_transport_transport_23, CODE_udp_transport_transport_45</td>
+            <td class="code-ref">CODE_udp_transport_transport_24, CODE_udp_transport_transport_46</td>
             <td>TC_test_udp_transport_UdpTransportTest, TC_test_echo_integration_74, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4926,7 +4926,7 @@
             <td>REQ_TRANSPORT_001_E01</td>
             <td>Error - UDP Send Failure</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_45, CODE_udp_transport_transport_396</td>
+            <td class="code-ref">CODE_udp_transport_transport_46, CODE_udp_transport_transport_397</td>
             <td>TC_test_udp_transport_UdpTransportTest, TC_UDP_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4934,7 +4934,7 @@
             <td>REQ_TRANSPORT_001_E02</td>
             <td>Error - UDP Bind Failure</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_45, CODE_udp_transport_transport_396</td>
+            <td class="code-ref">CODE_udp_transport_transport_46, CODE_udp_transport_transport_397</td>
             <td>TC_test_udp_transport_UdpTransportTest, TC_UDP_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4942,7 +4942,7 @@
             <td>REQ_TRANSPORT_001_E03</td>
             <td>Error - UDP Receive Buffer Too Small</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_45, CODE_udp_transport_transport_396</td>
+            <td class="code-ref">CODE_udp_transport_transport_46, CODE_udp_transport_transport_397</td>
             <td>TC_test_udp_transport_UdpTransportTest, TC_UDP_E03</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4950,7 +4950,7 @@
             <td>REQ_TRANSPORT_002A</td>
             <td>TCP Client/Server Modes</td>
             <td>feat_req_someip_32, feat_req_someip_325, feat_req_someip_323, feat_req_someip_324</td>
-            <td class="code-ref">CODE_tcp_transport_transport_25</td>
+            <td class="code-ref">CODE_tcp_transport_transport_26</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4958,7 +4958,7 @@
             <td>REQ_TRANSPORT_002B</td>
             <td>TCP Framing and State Management</td>
             <td>feat_req_someip_585, feat_req_someip_644, feat_req_someip_645, feat_req_someip_661</td>
-            <td class="code-ref">CODE_tcp_transport_transport_25</td>
+            <td class="code-ref">CODE_tcp_transport_transport_26</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4966,7 +4966,7 @@
             <td>REQ_TRANSPORT_002_E01</td>
             <td>Error - TCP Connection Refused</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_294, CODE_tcp_transport_transport_461, CODE_tcp_transport_transport_486</td>
+            <td class="code-ref">CODE_tcp_transport_transport_295, CODE_tcp_transport_transport_462, CODE_tcp_transport_transport_487</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_TCP_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4974,7 +4974,7 @@
             <td>REQ_TRANSPORT_002_E02</td>
             <td>Error - TCP Connection Reset</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_294, CODE_tcp_transport_transport_461, CODE_tcp_transport_transport_486</td>
+            <td class="code-ref">CODE_tcp_transport_transport_295, CODE_tcp_transport_transport_462, CODE_tcp_transport_transport_487</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_TCP_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4982,7 +4982,7 @@
             <td>REQ_TRANSPORT_002_E03</td>
             <td>Error - TCP Message Framing Error</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_294, CODE_tcp_transport_transport_461, CODE_tcp_transport_transport_486</td>
+            <td class="code-ref">CODE_tcp_transport_transport_295, CODE_tcp_transport_transport_462, CODE_tcp_transport_transport_487</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_TCP_E03</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4990,7 +4990,7 @@
             <td>REQ_TRANSPORT_002_E04</td>
             <td>Error - TCP Send on Disconnected Socket</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_294, CODE_tcp_transport_transport_461, CODE_tcp_transport_transport_486</td>
+            <td class="code-ref">CODE_tcp_transport_transport_295, CODE_tcp_transport_transport_462, CODE_tcp_transport_transport_487</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_TCP_E04</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4998,7 +4998,7 @@
             <td>REQ_TRANSPORT_003A</td>
             <td>Connection State Tracking and Notification</td>
             <td>feat_req_someip_326, feat_req_someip_644, feat_req_someip_646</td>
-            <td class="code-ref">CODE_tcp_transport_transport_25</td>
+            <td class="code-ref">CODE_tcp_transport_transport_26</td>
             <td>TC_test_tcp_transport_TcpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5006,7 +5006,7 @@
             <td>REQ_TRANSPORT_003B</td>
             <td>Graceful Shutdown and Error Handling</td>
             <td>feat_req_someip_647, feat_req_someip_678, feat_req_someip_679, feat_req_someip_680</td>
-            <td class="code-ref">CODE_tcp_transport_transport_25</td>
+            <td class="code-ref">CODE_tcp_transport_transport_26</td>
             <td>TC_test_tcp_transport_TcpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5014,7 +5014,7 @@
             <td>REQ_TRANSPORT_003_E01</td>
             <td>Error - TCP Server Socket Exhaustion</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_195</td>
+            <td class="code-ref">CODE_tcp_transport_transport_196</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_TCP_E04</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5022,7 +5022,7 @@
             <td>REQ_TRANSPORT_004A</td>
             <td>Retry Send on Transient Errors</td>
             <td>feat_req_someip_429, feat_req_someip_430, feat_req_someip_434, feat_req_someip_435</td>
-            <td class="code-ref">CODE_udp_transport_transport_45</td>
+            <td class="code-ref">CODE_udp_transport_transport_46</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_test_udp_transport_UdpTransportTest, TC_test_echo_integration_74, TC_test_echo_integration_108</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5030,7 +5030,7 @@
             <td>REQ_TRANSPORT_004B</td>
             <td>Socket Close/Reopen on Persistent Errors</td>
             <td>feat_req_someip_436, feat_req_someip_437, feat_req_someip_438</td>
-            <td class="code-ref">CODE_udp_transport_transport_45</td>
+            <td class="code-ref">CODE_udp_transport_transport_46</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_test_udp_transport_UdpTransportTest, TC_test_echo_integration_74, TC_test_echo_integration_108</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5038,7 +5038,7 @@
             <td>REQ_TRANSPORT_004C</td>
             <td>Error Logging with Detail</td>
             <td>feat_req_someip_439, feat_req_someip_440, feat_req_someip_441</td>
-            <td class="code-ref">CODE_udp_transport_transport_45</td>
+            <td class="code-ref">CODE_udp_transport_transport_46</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_test_udp_transport_UdpTransportTest, TC_test_echo_integration_74</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5046,7 +5046,7 @@
             <td>REQ_TRANSPORT_004D</td>
             <td>Return Error Codes and Configurable Retry</td>
             <td>feat_req_someip_326, feat_req_someip_371, feat_req_someip_442, feat_req_someip_443</td>
-            <td class="code-ref">CODE_udp_transport_transport_45</td>
+            <td class="code-ref">CODE_udp_transport_transport_46</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_test_udp_transport_UdpTransportTest, TC_test_echo_integration_74</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5054,7 +5054,7 @@
             <td>REQ_TRANSPORT_005</td>
             <td>Abstract Transport Interface</td>
             <td>feat_req_someip_32, feat_req_someip_56, feat_req_someip_31</td>
-            <td class="code-ref">CODE_tcp_transport_transport_25, CODE_udp_transport_transport_23</td>
+            <td class="code-ref">CODE_tcp_transport_transport_26, CODE_udp_transport_transport_24</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_test_udp_transport_UdpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5070,7 +5070,7 @@
             <td>REQ_TRANSPORT_006_E01</td>
             <td>Error - Endpoint Address Format Invalid</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_89</td>
+            <td class="code-ref">CODE_udp_transport_transport_90</td>
             <td>TC_test_udp_transport_UdpTransportTest, TC_UDP_E04</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5078,7 +5078,7 @@
             <td>REQ_TRANSPORT_010</td>
             <td>nPDU Feature Support</td>
             <td>feat_req_someip_702, feat_req_someip_741, feat_req_someip_663</td>
-            <td class="code-ref">CODE_udp_transport_transport_423</td>
+            <td class="code-ref">CODE_udp_transport_transport_424</td>
             <td>TC_test_udp_transport_UdpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5086,7 +5086,7 @@
             <td>REQ_TRANSPORT_011</td>
             <td>UDP Multicast Support</td>
             <td>feat_req_someip_811, feat_req_someip_812, feat_req_someip_814</td>
-            <td class="code-ref">CODE_udp_transport_transport_174, CODE_udp_transport_transport_329</td>
+            <td class="code-ref">CODE_udp_transport_transport_175, CODE_udp_transport_transport_330</td>
             <td>TC_test_udp_transport_UdpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5094,7 +5094,7 @@
             <td>REQ_TRANSPORT_011_E01</td>
             <td>Error - Multicast Join Failure</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_174, CODE_udp_transport_transport_223, CODE_udp_transport_transport_329</td>
+            <td class="code-ref">CODE_udp_transport_transport_175, CODE_udp_transport_transport_224, CODE_udp_transport_transport_330</td>
             <td>TC_test_udp_transport_UdpTransportTest, TC_UDP_E05</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5102,7 +5102,7 @@
             <td>REQ_TRANSPORT_011_E02</td>
             <td>Error - UDP Multicast TTL Configuration</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_174, CODE_udp_transport_transport_223, CODE_udp_transport_transport_329</td>
+            <td class="code-ref">CODE_udp_transport_transport_175, CODE_udp_transport_transport_224, CODE_udp_transport_transport_330</td>
             <td>TC_test_udp_transport_UdpTransportTest, TC_UDP_E05</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5110,7 +5110,7 @@
             <td>REQ_TRANSPORT_012</td>
             <td>Multicast Threshold Switching</td>
             <td>feat_req_someip_813</td>
-            <td class="code-ref">CODE_udp_transport_transport_23</td>
+            <td class="code-ref">CODE_udp_transport_transport_24</td>
             <td>TC_test_udp_transport_UdpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5126,7 +5126,7 @@
             <td>REQ_TRANSPORT_014</td>
             <td>Port Configuration</td>
             <td>feat_req_someip_658, feat_req_someip_676, feat_req_someip_733</td>
-            <td class="code-ref">CODE_udp_transport_transport_311</td>
+            <td class="code-ref">CODE_udp_transport_transport_312</td>
             <td>TC_test_udp_transport_UdpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5134,7 +5134,7 @@
             <td>REQ_TRANSPORT_014_E01</td>
             <td>Error - Port Already In Use</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_311</td>
+            <td class="code-ref">CODE_udp_transport_transport_312</td>
             <td>TC_test_udp_transport_UdpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5150,7 +5150,7 @@
             <td>REQ_TRANSPORT_016</td>
             <td>Client-Initiated TCP Connection</td>
             <td>feat_req_someip_646, feat_req_someip_647</td>
-            <td class="code-ref">CODE_tcp_transport_transport_294</td>
+            <td class="code-ref">CODE_tcp_transport_transport_295</td>
             <td>TC_test_tcp_transport_TcpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5158,7 +5158,7 @@
             <td>REQ_TRANSPORT_016_E01</td>
             <td>Error - TCP Reconnection Exhaustion</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_294</td>
+            <td class="code-ref">CODE_tcp_transport_transport_295</td>
             <td>TC_test_tcp_transport_TcpTransportTest, TC_TCP_E05</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5166,7 +5166,7 @@
             <td>REQ_TRANSPORT_017</td>
             <td>TCP Connection Sharing</td>
             <td>feat_req_someip_644, feat_req_someip_645</td>
-            <td class="code-ref">CODE_tcp_transport_transport_255</td>
+            <td class="code-ref">CODE_tcp_transport_transport_256</td>
             <td>TC_test_tcp_transport_TcpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5174,7 +5174,7 @@
             <td>REQ_TRANSPORT_018</td>
             <td>TCP Connection Closure</td>
             <td>feat_req_someip_678, feat_req_someip_679, feat_req_someip_680</td>
-            <td class="code-ref">CODE_tcp_transport_transport_294</td>
+            <td class="code-ref">CODE_tcp_transport_transport_295</td>
             <td>TC_test_tcp_transport_TcpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5182,7 +5182,7 @@
             <td>REQ_TRANSPORT_019</td>
             <td>TCP Timeout on Connection Loss</td>
             <td>feat_req_someip_326, feat_req_someip_681</td>
-            <td class="code-ref">CODE_tcp_transport_transport_143</td>
+            <td class="code-ref">CODE_tcp_transport_transport_144</td>
             <td>TC_test_tcp_transport_TcpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5190,7 +5190,7 @@
             <td>REQ_TRANSPORT_020</td>
             <td>TCP Magic Cookie Messages</td>
             <td>feat_req_someip_586, feat_req_someip_591, feat_req_someip_592, feat_req_someip_609, feat_req_someip_619</td>
-            <td class="code-ref">CODE_udp_transport_transport_121</td>
+            <td class="code-ref">CODE_udp_transport_transport_122</td>
             <td>TC_test_tcp_transport_TcpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5198,7 +5198,7 @@
             <td>REQ_TRANSPORT_021</td>
             <td>Magic Cookie Fallback Heuristic</td>
             <td>feat_req_someip_593, feat_req_someip_594</td>
-            <td class="code-ref">CODE_udp_transport_transport_121</td>
+            <td class="code-ref">CODE_udp_transport_transport_122</td>
             <td>TC_test_tcp_transport_TcpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5206,7 +5206,7 @@
             <td>REQ_TRANSPORT_022</td>
             <td>Multiple Service Instance Port Binding</td>
             <td>feat_req_someip_445, feat_req_someip_636, feat_req_someip_967, feat_req_someip_1079, feat_req_someip_444</td>
-            <td class="code-ref">CODE_udp_transport_transport_121</td>
+            <td class="code-ref">CODE_udp_transport_transport_122</td>
             <td>TC_test_udp_transport_UdpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5214,7 +5214,7 @@
             <td>REQ_TRANSPORT_023</td>
             <td>Client Server Address Resolution</td>
             <td>feat_req_someip_660, feat_req_someip_665</td>
-            <td class="code-ref">CODE_udp_transport_transport_121</td>
+            <td class="code-ref">CODE_udp_transport_transport_122</td>
             <td>TC_test_udp_transport_UdpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5222,7 +5222,7 @@
             <td>REQ_TRANSPORT_024</td>
             <td>Unaligned Message Reception</td>
             <td>feat_req_someip_664, feat_req_someip_668</td>
-            <td class="code-ref">CODE_tcp_transport_transport_378</td>
+            <td class="code-ref">CODE_tcp_transport_transport_379</td>
             <td>TC_test_udp_transport_UdpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5230,7 +5230,7 @@
             <td>REQ_TRANSPORT_025</td>
             <td>Magic Cookie Message Format</td>
             <td>feat_req_someip_589, feat_req_someip_607</td>
-            <td class="code-ref">CODE_udp_transport_transport_145</td>
+            <td class="code-ref">CODE_udp_transport_transport_146</td>
             <td>TC_test_tcp_transport_TcpTransportTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5395,8 +5395,8 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_memory_freertos_90</td>
-            <td class="code-ref">src/platform/freertos/memory.cpp:90</td>
+            <td>CODE_memory_freertos_92</td>
+            <td class="code-ref">src/platform/freertos/memory.cpp:92</td>
             <td>REQ_PLATFORM_FREERTOS_002</td>
             <td>-</td>
         </tr>
@@ -5437,8 +5437,8 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_memory_threadx_86</td>
-            <td class="code-ref">src/platform/threadx/memory.cpp:86</td>
+            <td>CODE_memory_threadx_87</td>
+            <td class="code-ref">src/platform/threadx/memory.cpp:87</td>
             <td>REQ_PLATFORM_THREADX_002</td>
             <td>-</td>
         </tr>
@@ -5719,8 +5719,8 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_111</td>
-            <td class="code-ref">src/sd/sd_message.cpp:111</td>
+            <td>CODE_sd_message_sd_113</td>
+            <td class="code-ref">src/sd/sd_message.cpp:113</td>
             <td>REQ_SD_040_E01, REQ_SD_041_E01, REQ_SD_044_E01, REQ_SD_050_E01, REQ_SD_052_E01</td>
             <td>-</td>
         </tr>
@@ -5743,16 +5743,10 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_214</td>
-            <td class="code-ref">src/sd/sd_message.cpp:214</td>
+            <td>CODE_sd_message_sd_211</td>
+            <td class="code-ref">src/sd/sd_message.cpp:211</td>
             <td>REQ_SD_120, REQ_SD_122, REQ_SD_123</td>
             <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_sd_message_sd_23</td>
-            <td class="code-ref">src/sd/sd_message.cpp:23</td>
-            <td>-</td>
-            <td>feat_req_someipsd_300, feat_req_someipsd_301</td>
         </tr>
         <tr>
             <td>CODE_sd_message_sd_24</td>
@@ -5761,26 +5755,32 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_244</td>
-            <td class="code-ref">src/sd/sd_message.cpp:244</td>
+            <td>CODE_sd_message_sd_241</td>
+            <td class="code-ref">src/sd/sd_message.cpp:241</td>
             <td>REQ_SD_064_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_30</td>
-            <td class="code-ref">src/sd/sd_message.cpp:30</td>
-            <td>REQ_ARCH_001, REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007, REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014, REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026, REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035</td>
+            <td>CODE_sd_message_sd_25</td>
+            <td class="code-ref">src/sd/sd_message.cpp:25</td>
             <td>-</td>
+            <td>feat_req_someipsd_300, feat_req_someipsd_301</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_301</td>
-            <td class="code-ref">src/sd/sd_message.cpp:301</td>
+            <td>CODE_sd_message_sd_300</td>
+            <td class="code-ref">src/sd/sd_message.cpp:300</td>
             <td>REQ_SD_132, REQ_SD_160</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_326</td>
-            <td class="code-ref">src/sd/sd_message.cpp:326</td>
+            <td>CODE_sd_message_sd_32</td>
+            <td class="code-ref">src/sd/sd_message.cpp:32</td>
+            <td>REQ_ARCH_001, REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007, REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014, REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026, REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_message_sd_325</td>
+            <td class="code-ref">src/sd/sd_message.cpp:325</td>
             <td>REQ_SD_064_E01</td>
             <td>-</td>
         </tr>
@@ -5815,14 +5815,14 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_72</td>
-            <td class="code-ref">src/sd/sd_message.cpp:72</td>
+            <td>CODE_sd_message_sd_74</td>
+            <td class="code-ref">src/sd/sd_message.cpp:74</td>
             <td>REQ_SD_001_E01, REQ_SD_001_E02, REQ_SD_010_E01, REQ_SD_010_E02, REQ_SD_020_E01, REQ_SD_020_E02, REQ_SD_021_E01, REQ_SD_022_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_90</td>
-            <td class="code-ref">src/sd/sd_message.cpp:90</td>
+            <td>CODE_sd_message_sd_92</td>
+            <td class="code-ref">src/sd/sd_message.cpp:92</td>
             <td>REQ_SD_040, REQ_SD_041, REQ_SD_042, REQ_SD_043, REQ_SD_044, REQ_SD_045, REQ_SD_046, REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054, REQ_SD_055, REQ_SD_056</td>
             <td>-</td>
         </tr>
@@ -6169,50 +6169,50 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_143</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:143</td>
+            <td>CODE_tcp_transport_transport_144</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:144</td>
             <td>REQ_TRANSPORT_019</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_195</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:195</td>
+            <td>CODE_tcp_transport_transport_196</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:196</td>
             <td>REQ_TRANSPORT_003_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_25</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:25</td>
-            <td>REQ_TRANSPORT_002A, REQ_TRANSPORT_002B, REQ_TRANSPORT_003A, REQ_TRANSPORT_003B, REQ_TRANSPORT_005</td>
-            <td>feat_req_someip_850, feat_req_someip_851</td>
-        </tr>
-        <tr>
-            <td>CODE_tcp_transport_transport_255</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:255</td>
+            <td>CODE_tcp_transport_transport_256</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:256</td>
             <td>REQ_TRANSPORT_017</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_294</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:294</td>
+            <td>CODE_tcp_transport_transport_26</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:26</td>
+            <td>REQ_TRANSPORT_002A, REQ_TRANSPORT_002B, REQ_TRANSPORT_003A, REQ_TRANSPORT_003B, REQ_TRANSPORT_005</td>
+            <td>feat_req_someip_850, feat_req_someip_851</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_295</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:295</td>
             <td>REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04, REQ_TRANSPORT_016, REQ_TRANSPORT_016_E01, REQ_TRANSPORT_018</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_378</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:378</td>
+            <td>CODE_tcp_transport_transport_379</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:379</td>
             <td>REQ_TRANSPORT_024</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_461</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:461</td>
+            <td>CODE_tcp_transport_transport_462</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:462</td>
             <td>REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_486</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:486</td>
+            <td>CODE_tcp_transport_transport_487</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:487</td>
             <td>REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04</td>
             <td>-</td>
         </tr>
@@ -6661,38 +6661,38 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_segmenter_tp_185</td>
-            <td class="code-ref">src/tp/tp_segmenter.cpp:185</td>
+            <td>CODE_tp_segmenter_tp_186</td>
+            <td class="code-ref">src/tp/tp_segmenter.cpp:186</td>
             <td>REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_segmenter_tp_193</td>
-            <td class="code-ref">src/tp/tp_segmenter.cpp:193</td>
+            <td>CODE_tp_segmenter_tp_194</td>
+            <td class="code-ref">src/tp/tp_segmenter.cpp:194</td>
             <td>REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015, REQ_TP_016, REQ_TP_017, REQ_TP_019, REQ_TP_020, REQ_TP_021, REQ_TP_013_E01, REQ_TP_015_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_segmenter_tp_21</td>
-            <td class="code-ref">src/tp/tp_segmenter.cpp:21</td>
+            <td>CODE_tp_segmenter_tp_22</td>
+            <td class="code-ref">src/tp/tp_segmenter.cpp:22</td>
             <td>-</td>
             <td>feat_req_someiptp_402, feat_req_someiptp_403, feat_req_someiptp_404</td>
         </tr>
         <tr>
-            <td>CODE_tp_segmenter_tp_231</td>
-            <td class="code-ref">src/tp/tp_segmenter.cpp:231</td>
+            <td>CODE_tp_segmenter_tp_232</td>
+            <td class="code-ref">src/tp/tp_segmenter.cpp:232</td>
             <td>REQ_TP_007, REQ_TP_008</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_segmenter_tp_31</td>
-            <td class="code-ref">src/tp/tp_segmenter.cpp:31</td>
+            <td>CODE_tp_segmenter_tp_32</td>
+            <td class="code-ref">src/tp/tp_segmenter.cpp:32</td>
             <td>REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_004, REQ_TP_001_E01, REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_segmenter_tp_71</td>
-            <td class="code-ref">src/tp/tp_segmenter.cpp:71</td>
+            <td>CODE_tp_segmenter_tp_72</td>
+            <td class="code-ref">src/tp/tp_segmenter.cpp:72</td>
             <td>REQ_TP_002, REQ_TP_003, REQ_TP_004, REQ_TP_005, REQ_TP_006, REQ_TP_007, REQ_TP_008, REQ_TP_010, REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015, REQ_TP_016, REQ_TP_017, REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021, REQ_TP_022, REQ_TP_001_E02, REQ_TP_001_E03, REQ_TP_013_E01, REQ_TP_015_E01, REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075, REQ_TP_076, REQ_TP_077, REQ_TP_078</td>
             <td>-</td>
         </tr>
@@ -6727,68 +6727,68 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_121</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:121</td>
+            <td>CODE_udp_transport_transport_122</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:122</td>
             <td>REQ_TRANSPORT_020, REQ_TRANSPORT_021, REQ_TRANSPORT_022, REQ_TRANSPORT_023</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_145</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:145</td>
+            <td>CODE_udp_transport_transport_146</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:146</td>
             <td>REQ_TRANSPORT_025</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_174</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:174</td>
+            <td>CODE_udp_transport_transport_175</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:175</td>
             <td>REQ_TRANSPORT_011, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_223</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:223</td>
+            <td>CODE_udp_transport_transport_224</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:224</td>
             <td>REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_23</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:23</td>
+            <td>CODE_udp_transport_transport_24</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:24</td>
             <td>REQ_TRANSPORT_001A, REQ_TRANSPORT_001B, REQ_TRANSPORT_001C, REQ_TRANSPORT_005, REQ_TRANSPORT_012</td>
             <td>feat_req_someip_800, feat_req_someip_801</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_311</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:311</td>
+            <td>CODE_udp_transport_transport_312</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:312</td>
             <td>REQ_TRANSPORT_014, REQ_TRANSPORT_014_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_329</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:329</td>
+            <td>CODE_udp_transport_transport_330</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:330</td>
             <td>REQ_TRANSPORT_011, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_396</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:396</td>
+            <td>CODE_udp_transport_transport_397</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:397</td>
             <td>REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_423</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:423</td>
+            <td>CODE_udp_transport_transport_424</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:424</td>
             <td>REQ_TRANSPORT_010</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_45</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:45</td>
+            <td>CODE_udp_transport_transport_46</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:46</td>
             <td>REQ_TRANSPORT_001A, REQ_TRANSPORT_001B, REQ_TRANSPORT_001C, REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03, REQ_TRANSPORT_004A, REQ_TRANSPORT_004B, REQ_TRANSPORT_004C, REQ_TRANSPORT_004D</td>
             <td>feat_req_someip_800, feat_req_someip_804</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_89</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:89</td>
+            <td>CODE_udp_transport_transport_90</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:90</td>
             <td>REQ_TRANSPORT_006_E01</td>
             <td>-</td>
         </tr>
