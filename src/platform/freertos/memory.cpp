@@ -19,7 +19,9 @@
 
 #include <FreeRTOS.h>
 #include <semphr.h>
+#include <task.h>
 
+#include <atomic>
 #include <cstring>
 #include <new>
 
@@ -34,26 +36,28 @@ alignas(someip::Message) static char
 
 static bool block_used[POOL_SIZE] = {};
 static SemaphoreHandle_t pool_mutex = nullptr;
-static bool pool_initialized = false;
+static std::atomic<bool> pool_initialized{false};
 
 static void ensure_pool_init() {
-    if (pool_initialized) return;
+    if (pool_initialized.load(std::memory_order_acquire)) {
+        return;
+    }
 
-    if (!pool_mutex) {
+    taskENTER_CRITICAL();
+
+    if (!pool_initialized.load(std::memory_order_relaxed)) {
         pool_mutex = xSemaphoreCreateMutex();
         configASSERT(pool_mutex != nullptr);
+        if (pool_mutex != nullptr) {
+            std::memset(block_used, 0, sizeof(block_used));
+            pool_initialized.store(true, std::memory_order_release);
+        }
     }
 
-    xSemaphoreTake(pool_mutex, portMAX_DELAY);
-    if (!pool_initialized) {
-        std::memset(block_used, 0, sizeof(block_used));
-        pool_initialized = true;
-    }
-    xSemaphoreGive(pool_mutex);
+    taskEXIT_CRITICAL();
 }
 
-namespace someip {
-namespace platform {
+namespace someip::platform {
 
 /** @implements REQ_PLATFORM_FREERTOS_002 */
 MessagePtr allocate_message() {
@@ -79,13 +83,15 @@ MessagePtr allocate_message() {
 }
 
 void release_message(Message* msg) {
-    if (!msg) return;
+    if (!msg) {
+        return;
+    }
 
     msg->~Message();
 
     auto* raw = reinterpret_cast<char*>(msg);
-    size_t offset = static_cast<size_t>(raw - pool_buffer);
-    size_t index = offset / sizeof(Message);
+    size_t const offset = static_cast<size_t>(raw - pool_buffer);
+    size_t const index = offset / sizeof(Message);
 
     if (index < POOL_SIZE) {
         xSemaphoreTake(pool_mutex, portMAX_DELAY);
@@ -94,5 +100,4 @@ void release_message(Message* msg) {
     }
 }
 
-} // namespace platform
-} // namespace someip
+}  // namespace someip::platform

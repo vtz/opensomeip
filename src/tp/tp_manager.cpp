@@ -16,9 +16,10 @@
 #include "tp/tp_reassembler.h"
 #include "someip/message.h"
 #include <algorithm>
+#include <utility>
+#include <vector>
 
-namespace someip {
-namespace tp {
+namespace someip::tp {
 
 /**
  * @brief SOME/IP-TP Manager implementation
@@ -39,7 +40,7 @@ bool TpManager::initialize() {
 }
 
 void TpManager::shutdown() {
-    platform::ScopedLock lock(transfers_mutex_);
+    platform::ScopedLock const lock(transfers_mutex_);
     active_transfers_.clear();
 }
 
@@ -54,7 +55,7 @@ bool TpManager::needs_segmentation(const Message& message) const {
  * @implements REQ_TP_050_E01
  */
 TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_id) {
-    platform::ScopedLock lock(transfers_mutex_);
+    platform::ScopedLock const lock(transfers_mutex_);
 
     // Check if we have capacity for new transfers
     if (active_transfers_.size() >= config_.max_concurrent_transfers) {
@@ -63,8 +64,8 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
 
     // Create new transfer
     transfer_id = next_transfer_id_++;
-    uint32_t message_id = (static_cast<uint32_t>(message.get_service_id()) << 16) |
-                         message.get_method_id();
+    uint32_t const message_id =
+        (static_cast<uint32_t>(message.get_service_id()) << 16) | message.get_method_id();
 
     TpTransfer transfer(transfer_id, message_id);
 
@@ -90,7 +91,7 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
  * @implements REQ_TP_052, REQ_TP_053, REQ_TP_054
  */
 TpResult TpManager::get_next_segment(uint32_t transfer_id, TpSegment& segment) {
-    platform::ScopedLock lock(transfers_mutex_);
+    platform::ScopedLock const lock(transfers_mutex_);
 
     auto it = active_transfers_.find(transfer_id);
     if (it == active_transfers_.end()) {
@@ -134,7 +135,7 @@ bool TpManager::handle_received_segment(const TpSegment& segment, std::vector<ui
 }
 
 TpResult TpManager::acknowledge_segments(uint32_t transfer_id, const std::vector<uint16_t>& /*segments_acknowledged*/) {
-    platform::ScopedLock lock(transfers_mutex_);
+    platform::ScopedLock const lock(transfers_mutex_);
 
     auto it = active_transfers_.find(transfer_id);
     if (it == active_transfers_.end()) {
@@ -149,7 +150,7 @@ TpResult TpManager::acknowledge_segments(uint32_t transfer_id, const std::vector
 }
 
 TpResult TpManager::cancel_transfer(uint32_t transfer_id) {
-    platform::ScopedLock lock(transfers_mutex_);
+    platform::ScopedLock const lock(transfers_mutex_);
 
     auto it = active_transfers_.find(transfer_id);
     if (it == active_transfers_.end()) {
@@ -163,7 +164,7 @@ TpResult TpManager::cancel_transfer(uint32_t transfer_id) {
 }
 
 TpTransferState TpManager::get_transfer_status(uint32_t transfer_id) const {
-    platform::ScopedLock lock(transfers_mutex_);
+    platform::ScopedLock const lock(transfers_mutex_);
 
     auto it = active_transfers_.find(transfer_id);
     if (it == active_transfers_.end()) {
@@ -174,46 +175,55 @@ TpTransferState TpManager::get_transfer_status(uint32_t transfer_id) const {
 }
 
 void TpManager::set_completion_callback(TpCompletionCallback callback) {
+    platform::ScopedLock const lock(transfers_mutex_);
     completion_callback_ = std::move(callback);
 }
 
 void TpManager::set_progress_callback(TpProgressCallback callback) {
+    platform::ScopedLock const lock(transfers_mutex_);
     progress_callback_ = std::move(callback);
 }
 
 void TpManager::set_message_callback(TpMessageCallback callback) {
+    platform::ScopedLock const lock(transfers_mutex_);
     message_callback_ = std::move(callback);
 }
 
 void TpManager::process_timeouts() {
-    platform::ScopedLock lock(transfers_mutex_);
+    std::vector<std::pair<uint32_t, TpResult>> timed_out;
+    TpCompletionCallback cb;
 
-    auto now = std::chrono::steady_clock::now();
+    {
+        platform::ScopedLock const lock(transfers_mutex_);
 
-    for (auto it = active_transfers_.begin(); it != active_transfers_.end(); ) {
-        TpTransfer& transfer = it->second;
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - transfer.last_activity);
+        cb = completion_callback_;
 
-        if (elapsed > config_.reassembly_timeout) {
-            transfer.state = TpTransferState::TIMEOUT;
-            statistics_.timeouts++;
+        auto now = std::chrono::steady_clock::now();
 
-            if (completion_callback_) {
-                completion_callback_(transfer.transfer_id, TpResult::TIMEOUT);
+        for (auto it = active_transfers_.begin(); it != active_transfers_.end(); ) {
+            TpTransfer& transfer = it->second;
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                now - transfer.last_activity);
+
+            if (elapsed > config_.reassembly_timeout) {
+                transfer.state = TpTransferState::TIMEOUT;
+                statistics_.timeouts++;
+                timed_out.emplace_back(transfer.transfer_id, TpResult::TIMEOUT);
+                it = active_transfers_.erase(it);
+            } else {
+                ++it;
             }
-
-            it = active_transfers_.erase(it);
-        } else {
-            ++it;
         }
+
+        reassembler_->process_timeouts();
+        cleanup_completed_transfers();
     }
 
-    // Process reassembler timeouts
-    reassembler_->process_timeouts();
-
-    // Cleanup completed transfers
-    cleanup_completed_transfers();
+    if (cb) {
+        for (const auto& [id, result] : timed_out) {
+            cb(id, result);
+        }
+    }
 }
 
 /**
@@ -246,5 +256,4 @@ void TpManager::cleanup_completed_transfers() {
     }
 }
 
-} // namespace tp
-} // namespace someip
+}  // namespace someip::tp

@@ -24,8 +24,7 @@
 #include "platform/net.h"
 #include <algorithm>
 
-namespace someip {
-namespace sd {
+namespace someip::sd {
 
 static std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
     transport::UdpTransportConfig cfg;
@@ -54,7 +53,8 @@ public:
         transport_->set_listener(this);
     }
 
-    ~SdServerImpl() {
+    ~SdServerImpl() override
+    {
         shutdown();
     }
 
@@ -96,7 +96,7 @@ public:
         send_stop_offer_messages();
 
         // Clear offered services
-        platform::ScopedLock lock(offered_services_mutex_);
+        platform::ScopedLock const lock(offered_services_mutex_);
         offered_services_.clear();
 
         // Leave multicast group
@@ -109,8 +109,7 @@ public:
     bool offer_service(const ServiceInstance& instance,
                       const std::string& unicast_endpoint,
                       const std::string& multicast_endpoint) {
-
-        platform::ScopedLock lock(offered_services_mutex_);
+        platform::ScopedLock const lock(offered_services_mutex_);
 
         // Check if service already offered
         auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
@@ -147,7 +146,7 @@ public:
 
     /** @implements REQ_SD_220, REQ_SD_221, REQ_SD_222, REQ_SD_223, REQ_SD_250, REQ_SD_251, REQ_SD_260 */
     bool stop_offer_service(uint16_t service_id, uint16_t instance_id) {
-        platform::ScopedLock lock(offered_services_mutex_);
+        platform::ScopedLock const lock(offered_services_mutex_);
 
         auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
             [&](const OfferedService& svc) {
@@ -168,7 +167,7 @@ public:
 
     /** @implements REQ_SD_270, REQ_SD_272, REQ_SD_273 */
     bool update_service_ttl(uint16_t service_id, uint16_t instance_id, uint32_t ttl_seconds) {
-        platform::ScopedLock lock(offered_services_mutex_);
+        platform::ScopedLock const lock(offered_services_mutex_);
 
         auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
             [&](const OfferedService& svc) {
@@ -227,8 +226,9 @@ public:
         transport::Endpoint client_endpoint(client_ip, client_port);
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
-                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     ReturnCode::E_OK);
         someip_message.set_payload(response_message.serialize());
 
         // Send the ACK message
@@ -237,7 +237,7 @@ public:
     }
 
     std::vector<ServiceInstance> get_offered_services() const {
-        platform::ScopedLock lock(offered_services_mutex_);
+        platform::ScopedLock const lock(offered_services_mutex_);
         std::vector<ServiceInstance> result;
 
         for (const auto& service : offered_services_) {
@@ -315,7 +315,7 @@ private:
 
     /** @implements REQ_SD_250, REQ_SD_251, REQ_SD_260 */
     void send_periodic_offers() {
-        platform::ScopedLock lock(offered_services_mutex_);
+        platform::ScopedLock const lock(offered_services_mutex_);
 
         auto now = std::chrono::steady_clock::now();
         for (auto& service : offered_services_) {
@@ -330,7 +330,7 @@ private:
     }
 
     void send_stop_offer_messages() {
-        platform::ScopedLock lock(offered_services_mutex_);
+        platform::ScopedLock const lock(offered_services_mutex_);
 
         for (const auto& service : offered_services_) {
             send_service_stop_offer(service);
@@ -371,8 +371,9 @@ private:
         offer_entry_ptr->set_num_opts1(1);
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
-                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast offer
@@ -396,8 +397,9 @@ private:
         sd_message.add_entry(std::move(stop_entry));
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
-                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast stop offer
@@ -457,7 +459,7 @@ private:
 
     /** @implements REQ_SD_330, REQ_SD_341, REQ_SD_342, REQ_SD_343, REQ_SD_344, REQ_SD_345 */
     void handle_find_service(const ServiceEntry& find_entry, const transport::Endpoint& sender) {
-        platform::ScopedLock lock(offered_services_mutex_);
+        platform::ScopedLock const lock(offered_services_mutex_);
 
         // Check if we offer the requested service
         for (const auto& service : offered_services_) {
@@ -542,8 +544,9 @@ private:
         offer_entry_ptr->set_num_opts1(1);
 
         // Create SOME/IP message for SD
-        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID), RequestId(0x0000, 0x0000),
-                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
         // Send unicast offer to client
@@ -612,5 +615,4 @@ SdServer::Statistics SdServer::get_statistics() const {
     return impl_->get_statistics();
 }
 
-} // namespace sd
-} // namespace someip
+}  // namespace someip::sd

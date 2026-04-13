@@ -24,8 +24,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief Basic E2E protection profile
@@ -49,85 +48,90 @@ namespace e2e {
  */
 class BasicE2EProfile : public E2EProfile {
 public:
-    BasicE2EProfile() {}
+ BasicE2EProfile() = default;
 
-    /** @implements REQ_E2E_PLUGIN_001, REQ_E2E_PLUGIN_004 */
-    Result protect(Message& msg, const E2EConfig& config) override {
-        // Calculate CRC over protected data
-        // CRC covers: Message ID, Length, Request ID, Protocol Version,
-        // Interface Version, Message Type, Return Code, Payload
-        // (E2E header is NOT included in CRC calculation)
-        uint32_t crc = 0;
-        if (config.enable_crc) {
-            // Build data for CRC: header + payload (without E2E header)
-            std::vector<uint8_t> crc_data;
-            crc_data.reserve(16 + msg.get_payload().size());
+ /** @implements REQ_E2E_PLUGIN_001, REQ_E2E_PLUGIN_004 */
+ Result protect(Message& msg, const E2EConfig& config) override
+ {
+     // Calculate CRC over protected data
+     // CRC covers: Message ID, Length, Request ID, Protocol Version,
+     // Interface Version, Message Type, Return Code, Payload
+     // (E2E header is NOT included in CRC calculation)
+     uint32_t crc = 0;
+     if (config.enable_crc) {
+         // Build data for CRC: header + payload (without E2E header)
+         std::vector<uint8_t> crc_data;
+         crc_data.reserve(16 + msg.get_payload().size());
 
-            // Serialize header fields manually (without E2E header)
-            uint32_t message_id_be = someip_htonl(msg.get_message_id().to_uint32());
-            crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&message_id_be),
-                          reinterpret_cast<const uint8_t*>(&message_id_be) + sizeof(uint32_t));
+         // Serialize header fields manually (without E2E header)
+         uint32_t message_id_be = someip_htonl(msg.get_message_id().to_uint32());
+         crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&message_id_be),
+                         reinterpret_cast<const uint8_t*>(&message_id_be) + sizeof(uint32_t));
 
-            // Length includes: 8 bytes (client_id to return_code) + E2E header + payload
-            // But for CRC calculation, we use the length that will be in the serialized message
-            // which includes E2E header. However, we need to be careful - the actual length
-            // in the message will be set by update_length() after we set the E2E header.
-            // For now, calculate what the length will be:
-            size_t e2e_size = E2EHeader::get_header_size();
-            uint32_t length = 8 + e2e_size + static_cast<uint32_t>(msg.get_payload().size());
-            uint32_t length_be = someip_htonl(length);
-            crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&length_be),
-                          reinterpret_cast<const uint8_t*>(&length_be) + sizeof(uint32_t));
+         // Length includes: 8 bytes (client_id to return_code) + E2E header + payload
+         // But for CRC calculation, we use the length that will be in the serialized message
+         // which includes E2E header. However, we need to be careful - the actual length
+         // in the message will be set by update_length() after we set the E2E header.
+         // For now, calculate what the length will be:
+         size_t const e2e_size = E2EHeader::get_header_size();
+         uint32_t length = 8 + e2e_size + static_cast<uint32_t>(msg.get_payload().size());
+         uint32_t length_be = someip_htonl(length);
+         crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&length_be),
+                         reinterpret_cast<const uint8_t*>(&length_be) + sizeof(uint32_t));
 
-            uint32_t request_id_be = someip_htonl(msg.get_request_id().to_uint32());
-            crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&request_id_be),
-                          reinterpret_cast<const uint8_t*>(&request_id_be) + sizeof(uint32_t));
+         uint32_t request_id_be = someip_htonl(msg.get_request_id().to_uint32());
+         crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&request_id_be),
+                         reinterpret_cast<const uint8_t*>(&request_id_be) + sizeof(uint32_t));
 
-            crc_data.push_back(msg.get_protocol_version());
-            crc_data.push_back(msg.get_interface_version());
-            crc_data.push_back(static_cast<uint8_t>(msg.get_message_type()));
-            crc_data.push_back(static_cast<uint8_t>(msg.get_return_code()));
+         crc_data.push_back(msg.get_protocol_version());
+         crc_data.push_back(msg.get_interface_version());
+         crc_data.push_back(static_cast<uint8_t>(msg.get_message_type()));
+         crc_data.push_back(static_cast<uint8_t>(msg.get_return_code()));
 
-            // Include payload
-            const auto& payload = msg.get_payload();
-            crc_data.insert(crc_data.end(), payload.begin(), payload.end());
+         // Include payload
+         const auto& payload = msg.get_payload();
+         crc_data.insert(crc_data.end(), payload.begin(), payload.end());
 
-            crc = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
-        }
+         auto crc_result = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
+         if (!crc_result.has_value()) {
+             return Result::INVALID_ARGUMENT;
+         }
+         crc = crc_result.value();
+     }
 
-        // Update counter (per data ID)
-        uint32_t counter = 0;
-        if (config.enable_counter) {
-            platform::ScopedLock lock(counter_mutex_);
-            uint32_t& last_counter = counters_[config.data_id];
-            last_counter++;
-            if (last_counter > config.max_counter_value) {
-                last_counter = 1;  // Rollover
-            }
-            counter = last_counter;
-        }
+     // Update counter (per data ID)
+     uint32_t counter = 0;
+     if (config.enable_counter) {
+         platform::ScopedLock const lock(counter_mutex_);
+         uint32_t& last_counter = counters_[config.data_id];
+         last_counter++;
+         if (last_counter > config.max_counter_value) {
+             last_counter = 1;  // Rollover
+         }
+         counter = last_counter;
+     }
 
-        // Update freshness value (per data ID)
-        uint16_t freshness = 0;
-        if (config.enable_freshness) {
-            platform::ScopedLock lock(freshness_mutex_);
-            auto now = std::chrono::steady_clock::now();
-            auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                now.time_since_epoch()).count();
-            freshness = static_cast<uint16_t>(ms & 0xFFFF);
-            freshness_values_[config.data_id] = freshness;
-        }
+     // Update freshness value (per data ID)
+     uint16_t freshness = 0;
+     if (config.enable_freshness) {
+         platform::ScopedLock const lock(freshness_mutex_);
+         auto now = std::chrono::steady_clock::now();
+         auto ms =
+             std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+         freshness = static_cast<uint16_t>(ms & 0xFFFF);
+         freshness_values_[config.data_id] = freshness;
+     }
 
-        // Create E2E header
-        E2EHeader header(crc, counter, config.data_id, freshness);
+     // Create E2E header
+     E2EHeader const header(crc, counter, config.data_id, freshness);
 
-        // Store header in message (will be inserted during serialization)
-        // For now, we'll store it as metadata that will be used during serialization
-        // The actual insertion happens in Message::serialize()
-        msg.set_e2e_header(header);
+     // Store header in message (will be inserted during serialization)
+     // For now, we'll store it as metadata that will be used during serialization
+     // The actual insertion happens in Message::serialize()
+     msg.set_e2e_header(header);
 
-        return Result::SUCCESS;
-    }
+     return Result::SUCCESS;
+ }
 
     /** @implements REQ_E2E_PLUGIN_001, REQ_E2E_PLUGIN_004 */
     Result validate(const Message& msg, const E2EConfig& config) override {
@@ -173,9 +177,12 @@ public:
             const auto& payload = msg.get_payload();
             crc_data.insert(crc_data.end(), payload.begin(), payload.end());
 
-            uint32_t expected_crc = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
+            auto crc_result = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
+            if (!crc_result.has_value()) {
+                return Result::INVALID_ARGUMENT;
+            }
+            uint32_t expected_crc = crc_result.value();
 
-            // Compare CRC (mask based on CRC type)
             uint32_t received_crc = header.crc;
             if (config.crc_type == 0) {  // 8-bit
                 received_crc &= 0xFF;
@@ -192,28 +199,19 @@ public:
 
         // Validate counter (sequence check, per data ID)
         if (config.enable_counter) {
-            platform::ScopedLock lock(counter_mutex_);
+            platform::ScopedLock const lock(counter_mutex_);
             uint32_t& last_counter = counters_[config.data_id];
 
-            // Counter validation logic:
-            // - If last_counter == 0: This is the first message, accept counter >= 1
-            // - If header.counter == last_counter: Same message being validated (shouldn't happen normally, but accept in tests)
-            // - If header.counter > last_counter: New message, accept it
-            // - If header.counter < last_counter: Could be rollover or replay
-            //   - If near rollover (last_counter close to max), allow wrap-around
-            //   - Otherwise, reject as replay
+            // protect() and validate() share counters_; after protect() bumps
+            // counter to N the immediate validate() will see header.counter == last_counter.
+            // Equality is therefore a valid state, not a replay.
 
             bool counter_valid = false;
 
             if (last_counter == 0) {
                 // First message - accept any counter >= 1
                 counter_valid = (header.counter >= 1 && header.counter <= config.max_counter_value);
-            } else if (header.counter == last_counter) {
-                // Same message being validated again (e.g., in tests)
-                // In production, this shouldn't happen, but we accept it
-                counter_valid = true;
-            } else if (header.counter > last_counter) {
-                // New message with higher counter - always valid
+            } else if (header.counter >= last_counter) {
                 counter_valid = true;
             } else {
                 // header.counter < last_counter
@@ -255,7 +253,7 @@ public:
             // For timeout checking, we compare the lower 16 bits
             // If the difference is small (within timeout), it's fresh
             // If difference is large (close to 0xFFFF), it might be wrap-around or stale
-            uint16_t freshness_diff;
+            uint16_t freshness_diff = 0;
             if (current_freshness >= header.freshness_value) {
                 freshness_diff = current_freshness - header.freshness_value;
             } else {
@@ -266,7 +264,7 @@ public:
             // Convert timeout to 16-bit units (approximately)
             // Since we're storing lower 16 bits of milliseconds,
             // we compare against timeout_ms directly (assuming timeout < 65535 ms)
-            uint16_t timeout_units = static_cast<uint16_t>(config.freshness_timeout_ms);
+            uint16_t const timeout_units = static_cast<uint16_t>(config.freshness_timeout_ms);
             if (freshness_diff > timeout_units && freshness_diff < (0xFFFF - timeout_units)) {
                 // If difference is large and not due to wrap-around, it's stale
                 return Result::TIMEOUT;  // Stale data
@@ -302,5 +300,4 @@ void initialize_basic_profile() {
     registry.register_profile(std::move(profile));
 }
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e

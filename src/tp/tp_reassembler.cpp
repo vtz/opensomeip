@@ -15,8 +15,7 @@
 #include <algorithm>
 #include <iostream>
 
-namespace someip {
-namespace tp {
+namespace someip::tp {
 
 /**
  * @brief SOME/IP-TP Reassembler implementation
@@ -30,7 +29,7 @@ TpReassembler::TpReassembler(const TpConfig& config)
 
 // NOLINTNEXTLINE(modernize-use-equals-default) - intentional cleanup with lock
 TpReassembler::~TpReassembler() {
-    platform::ScopedLock lock(buffers_mutex_);
+    platform::ScopedLock const lock(buffers_mutex_);
     reassembly_buffers_.clear();
 }
 
@@ -44,7 +43,7 @@ TpReassembler::~TpReassembler() {
  * @implements REQ_TP_082
  */
 bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
-                                   uint16_t& offset, bool& more_segments) {
+                                   uint32_t& offset, bool& more_segments) {
     if (payload.size() < 20) {  // SOME/IP header (16) + TP header (4) minimum
         return false;
     }
@@ -54,7 +53,7 @@ bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
                         (payload[18] << 8) | payload[19];
 
     // Extract offset (28 bits, divided by 4 to get byte offset)
-    uint32_t offset_units = tp_header >> 4;
+    uint32_t const offset_units = tp_header >> 4;
     offset = offset_units * 16;  // Convert back to bytes
 
     // Check offset alignment (REQ_TP_015_E01)
@@ -82,7 +81,7 @@ bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_
         return false;
     }
 
-    platform::ScopedLock lock(buffers_mutex_);
+    platform::ScopedLock const lock(buffers_mutex_);
 
     TpReassemblyBuffer* buffer = find_or_create_buffer(segment);
     if (!buffer) {
@@ -131,14 +130,10 @@ bool TpReassembler::validate_segment(const TpSegment& segment) const {
     }
 
     // Validate offset: the actual payload portion should fit within message bounds
-    uint16_t actual_payload_bytes = segment.header.segment_length > header_overhead
-                                    ? segment.header.segment_length - header_overhead
-                                    : 0;
-    if (segment.header.segment_offset + actual_payload_bytes > segment.header.message_length) {
-        return false;
-    }
-
-    return true;
+    uint16_t const actual_payload_bytes = segment.header.segment_length > header_overhead
+                                              ? segment.header.segment_length - header_overhead
+                                              : 0;
+    return segment.header.segment_offset + actual_payload_bytes <= segment.header.message_length;
 }
 
 /**
@@ -238,14 +233,14 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
 }
 
 bool TpReassembler::is_reassembling(uint32_t message_id) const {
-    platform::ScopedLock lock(buffers_mutex_);
+    platform::ScopedLock const lock(buffers_mutex_);
     return reassembly_buffers_.find(message_id) != reassembly_buffers_.end();
 }
 
 bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& received_bytes, uint32_t& total_bytes) const {
     const auto config = get_config_copy();
 
-    platform::ScopedLock lock(buffers_mutex_);
+    platform::ScopedLock const lock(buffers_mutex_);
     auto it = reassembly_buffers_.find(message_id);
 
     if (it == reassembly_buffers_.end()) {
@@ -276,7 +271,7 @@ bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& recei
  * @implements REQ_TP_079
  */
 void TpReassembler::cancel_reassembly(uint32_t message_id) {
-    platform::ScopedLock lock(buffers_mutex_);
+    platform::ScopedLock const lock(buffers_mutex_);
     reassembly_buffers_.erase(message_id);
 }
 
@@ -287,18 +282,18 @@ void TpReassembler::cancel_reassembly(uint32_t message_id) {
 void TpReassembler::process_timeouts() {
     const auto config = get_config_copy();
 
-    platform::ScopedLock lock(buffers_mutex_);
+    platform::ScopedLock const lock(buffers_mutex_);
     cleanup_timed_out_buffers(config);
     cleanup_completed_buffers();
 }
 
 size_t TpReassembler::get_active_reassemblies() const {
-    platform::ScopedLock lock(buffers_mutex_);
+    platform::ScopedLock const lock(buffers_mutex_);
     return reassembly_buffers_.size();
 }
 
 void TpReassembler::update_config(const TpConfig& config) {
-    platform::ScopedLock lock(config_mutex_);
+    platform::ScopedLock const lock(config_mutex_);
     config_ = config;
 }
 
@@ -322,14 +317,14 @@ void TpReassembler::cleanup_timed_out_buffers(const TpConfig& config) {
 }
 
 TpConfig TpReassembler::get_config_copy() const {
-    platform::ScopedLock lock(config_mutex_);
+    platform::ScopedLock const lock(config_mutex_);
     return config_;
 }
 
 // TpReassemblyBuffer implementation
-bool TpReassemblyBuffer::is_segment_received(uint16_t offset, uint16_t length) const {
-    for (uint16_t i = 0; i < length; ++i) {
-        size_t bit_index = offset + i;
+bool TpReassemblyBuffer::is_segment_received(uint32_t offset, uint32_t length) const {
+    for (uint32_t i = 0; i < length; ++i) {
+        size_t const bit_index = offset + i;
         if (bit_index >= received_segments.size() || !received_segments[bit_index]) {
             return false;
         }
@@ -337,14 +332,13 @@ bool TpReassemblyBuffer::is_segment_received(uint16_t offset, uint16_t length) c
     return true;
 }
 
-void TpReassemblyBuffer::mark_segment_received(uint16_t offset, uint16_t length) {
-    // Ensure received_segments is large enough
+void TpReassemblyBuffer::mark_segment_received(uint32_t offset, uint32_t length) {
     if (received_segments.size() < total_length) {
         received_segments.resize(total_length, false);
     }
 
-    for (uint16_t i = 0; i < length; ++i) {
-        size_t bit_index = offset + i;
+    for (uint32_t i = 0; i < length; ++i) {
+        size_t const bit_index = offset + i;
         if (bit_index < received_segments.size()) {
             received_segments[bit_index] = true;
         }
@@ -373,5 +367,4 @@ std::vector<uint8_t> TpReassemblyBuffer::get_complete_message() const {
     return received_data;
 }
 
-} // namespace tp
-} // namespace someip
+}  // namespace someip::tp

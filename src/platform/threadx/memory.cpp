@@ -20,6 +20,7 @@
 
 #include <tx_api.h>
 
+#include <atomic>
 #include <cstring>
 #include <new>
 
@@ -34,32 +35,39 @@ alignas(someip::Message) static UCHAR
 
 TX_BLOCK_POOL message_pool;
 static TX_MUTEX pool_guard;
-bool pool_initialized = false;
+std::atomic<bool> pool_initialized{false};
 
 static void ensure_pool_init() {
-    if (pool_initialized) return;
-
-    static bool guard_created = false;
-    if (!guard_created) {
-        tx_mutex_create(&pool_guard, const_cast<CHAR*>("someip_pool_guard"),
-                        TX_NO_INHERIT);
-        guard_created = true;
+    if (pool_initialized.load(std::memory_order_acquire)) {
+        return;
     }
 
-    tx_mutex_get(&pool_guard, TX_WAIT_FOREVER);
-    if (!pool_initialized) {
-        tx_block_pool_create(&message_pool,
-                             const_cast<CHAR*>("someip_msg"),
-                             sizeof(someip::Message),
-                             pool_buffer,
-                             sizeof(pool_buffer));
-        pool_initialized = true;
+    TX_INTERRUPT_SAVE_AREA
+    TX_DISABLE
+
+    if (!pool_initialized.load(std::memory_order_relaxed)) {
+        UINT status = tx_mutex_create(&pool_guard,
+                                      const_cast<CHAR*>("someip_pool_guard"),
+                                      TX_NO_INHERIT);
+        if (status == TX_SUCCESS) {
+            status = tx_block_pool_create(&message_pool,
+                                          const_cast<CHAR*>("someip_msg"),
+                                          sizeof(someip::Message),
+                                          pool_buffer,
+                                          sizeof(pool_buffer));
+            if (status != TX_SUCCESS) {
+                tx_mutex_delete(&pool_guard);
+            }
+        }
+        if (status == TX_SUCCESS) {
+            pool_initialized.store(true, std::memory_order_release);
+        }
     }
-    tx_mutex_put(&pool_guard);
+
+    TX_RESTORE
 }
 
-namespace someip {
-namespace platform {
+namespace someip::platform {
 
 /** @implements REQ_PLATFORM_THREADX_002 */
 MessagePtr allocate_message() {
@@ -78,11 +86,12 @@ MessagePtr allocate_message() {
 }
 
 void release_message(Message* msg) {
-    if (!msg) return;
+    if (!msg) {
+        return;
+    }
 
     msg->~Message();
     tx_block_release(static_cast<void*>(msg));
 }
 
-} // namespace platform
-} // namespace someip
+}  // namespace someip::platform

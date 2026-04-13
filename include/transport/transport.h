@@ -20,8 +20,7 @@
 #include <memory>
 #include <functional>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief Transport listener interface
@@ -137,7 +136,6 @@ public:
 using ITransportPtr = std::shared_ptr<ITransport>;
 using ITransportListenerPtr = std::shared_ptr<ITransportListener>;
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
 #endif // SOMEIP_TRANSPORT_TRANSPORT_H

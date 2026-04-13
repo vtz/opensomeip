@@ -70,7 +70,7 @@ CheckOptions:
   - key: readability-identifier-naming.FunctionCase
     value: lower_case
   - key: readability-identifier-naming.VariableCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.ConstantCase
     value: UPPER_CASE
   - key: readability-identifier-naming.NamespaceCase
@@ -78,9 +78,9 @@ CheckOptions:
   - key: readability-identifier-naming.EnumCase
     value: CamelCase
   - key: readability-identifier-naming.MemberCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.ParameterCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.PrivateMemberSuffix
     value: '_'
   - key: readability-identifier-naming.EnumConstantCase

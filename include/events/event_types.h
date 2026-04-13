@@ -21,8 +21,7 @@
 #include <chrono>
 #include <string>
 
-namespace someip {
-namespace events {
+namespace someip::events {
 
 /**
  * @brief Event reliability types
@@ -146,7 +145,6 @@ enum class PublicationPolicy : uint8_t {
     TRIGGERED       // Publish when triggered by external event
 };
 
-} // namespace events
-} // namespace someip
+}  // namespace someip::events
 
 #endif // SOMEIP_EVENTS_TYPES_H

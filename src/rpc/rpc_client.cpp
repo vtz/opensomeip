@@ -21,9 +21,11 @@
 #include <unordered_map>
 #include <atomic>
 #include <chrono>
+#include <memory>
+#include <utility>
+#include <vector>
 
-namespace someip {
-namespace rpc {
+namespace someip::rpc {
 
 /**
  * @brief RPC Client implementation
@@ -45,8 +47,15 @@ public:
         transport_->set_listener(this);
     }
 
-    ~RpcClientImpl() {
+    ~RpcClientImpl() noexcept override
+    {
+#ifdef __cpp_exceptions
+        try {
+            shutdown();
+        } catch (...) {}  // NOLINT(bugprone-empty-catch) destructor must not throw
+#else
         shutdown();
+#endif
     }
 
     bool initialize() {
@@ -69,17 +78,21 @@ public:
 
         running_ = false;
 
-        // Cancel all pending calls
+        std::vector<std::pair<RpcCallback, RpcResponse>> shutdown_cbs;
         {
-            platform::ScopedLock lock(pending_calls_mutex_);
+            platform::ScopedLock const lock(pending_calls_mutex_);
             for (auto& pair : pending_calls_) {
                 if (pair.second.callback) {
-                    RpcResponse response(pair.second.service_id, pair.second.method_id,
-                                       client_id_, pair.second.session_id, RpcResult::INTERNAL_ERROR);
-                    pair.second.callback(response);
+                    shutdown_cbs.emplace_back(
+                        pair.second.callback,
+                        RpcResponse(pair.second.service_id, pair.second.method_id,
+                                    client_id_, pair.second.session_id, RpcResult::INTERNAL_ERROR));
                 }
             }
             pending_calls_.clear();
+        }
+        for (auto& [cb, resp] : shutdown_cbs) {
+            cb(resp);
         }
 
         transport_->stop();
@@ -89,15 +102,18 @@ public:
                                    const std::vector<uint8_t>& parameters,
                                    const RpcTimeout& timeout) {
 
-        platform::Mutex sync_mtx;
-        std::shared_ptr<RpcResponse> sync_resp;
-        std::atomic<bool> response_ready{false};
+        struct SyncState {
+            platform::Mutex mtx;
+            std::shared_ptr<RpcResponse> resp;
+            std::atomic<bool> ready{false};
+        };
+        auto state = std::make_shared<SyncState>();
 
         auto handle = call_method_async(service_id, method_id, parameters,
-            [&sync_mtx, &sync_resp, &response_ready](const RpcResponse& response) {
-                platform::ScopedLock lk(sync_mtx);
-                sync_resp = std::make_shared<RpcResponse>(response);
-                response_ready.store(true);
+            [state](const RpcResponse& response) {
+                platform::ScopedLock lk(state->mtx);
+                state->resp = std::make_shared<RpcResponse>(response);
+                state->ready.store(true);
             }, timeout);
 
         if (handle == 0) {
@@ -106,7 +122,7 @@ public:
 
         auto deadline = std::chrono::steady_clock::now()
                        + std::chrono::milliseconds(timeout.response_timeout);
-        while (!response_ready.load()) {
+        while (!state->ready.load()) {
             auto now = std::chrono::steady_clock::now();
             if (now >= deadline) {
                 cancel_call(handle);
@@ -118,13 +134,8 @@ public:
         }
 
         {
-            platform::ScopedLock lk(sync_mtx);
-            auto now = std::chrono::steady_clock::now();
-            if (now > deadline) {
-                cancel_call(handle);
-                return {RpcResult::TIMEOUT, {}, timeout.response_timeout};
-            }
-            return {sync_resp->result, sync_resp->return_values, std::chrono::milliseconds(0)};
+            platform::ScopedLock const lk(state->mtx);
+            return {state->resp->result, state->resp->return_values, std::chrono::milliseconds(0)};
         }
     }
 
@@ -142,8 +153,8 @@ public:
         uint16_t session_id = session_manager_->create_session(client_id_);
 
         // Create request message
-        MessageId msg_id(service_id, method_id);
-        RequestId req_id(client_id_, session_id);
+        MessageId const msg_id(service_id, method_id);
+        RequestId const req_id(client_id_, session_id);
         Message request(msg_id, req_id, MessageType::REQUEST, ReturnCode::E_OK);
         request.set_payload(parameters);
 
@@ -154,9 +165,9 @@ public:
             timeout, callback
         };
 
-        RpcCallHandle handle;
+        RpcCallHandle handle = 0;
         {
-            platform::ScopedLock lock(pending_calls_mutex_);
+            platform::ScopedLock const lock(pending_calls_mutex_);
             handle = next_call_handle_++;
             pending_calls_[handle] = std::move(call_info);
         }
@@ -164,7 +175,7 @@ public:
         // Send request
         transport::Endpoint server_endpoint("127.0.0.1", 30490); // TODO: Make configurable
         if (transport_->send_message(request, server_endpoint) != Result::SUCCESS) {
-            platform::ScopedLock lock(pending_calls_mutex_);
+            platform::ScopedLock const lock(pending_calls_mutex_);
             pending_calls_.erase(handle);
             return 0;
         }
@@ -173,20 +184,24 @@ public:
     }
 
     bool cancel_call(RpcCallHandle handle) {
-        platform::ScopedLock lock(pending_calls_mutex_);
-        auto it = pending_calls_.find(handle);
-        if (it == pending_calls_.end()) {
-            return false;
+        RpcCallback cancel_cb;
+        RpcResponse cancel_resp({}, {}, {}, {}, RpcResult::INTERNAL_ERROR);
+        {
+            platform::ScopedLock const lock(pending_calls_mutex_);
+            auto it = pending_calls_.find(handle);
+            if (it == pending_calls_.end()) {
+                return false;
+            }
+            if (it->second.callback) {
+                cancel_cb = it->second.callback;
+                cancel_resp = RpcResponse(it->second.service_id, it->second.method_id,
+                                          client_id_, it->second.session_id, RpcResult::INTERNAL_ERROR);
+            }
+            pending_calls_.erase(it);
         }
-
-        // Call callback with cancellation result
-        if (it->second.callback) {
-            RpcResponse response(it->second.service_id, it->second.method_id,
-                               client_id_, it->second.session_id, RpcResult::INTERNAL_ERROR);
-            it->second.callback(response);
+        if (cancel_cb) {
+            cancel_cb(cancel_resp);
         }
-
-        pending_calls_.erase(it);
         return true;
     }
 
@@ -201,9 +216,9 @@ public:
 
 private:
     struct PendingCall {
-        uint16_t service_id;
-        MethodId method_id;
-        uint16_t session_id;
+        uint16_t service_id{};
+        MethodId method_id{};
+        uint16_t session_id{};
         std::chrono::steady_clock::time_point start_time;
         RpcTimeout timeout;
         RpcCallback callback;
@@ -216,29 +231,30 @@ private:
             return;
         }
 
-        platform::ScopedLock lock(pending_calls_mutex_);
+        RpcCallback recv_cb;
+        RpcResponse recv_resp({}, {}, {}, {}, RpcResult::INTERNAL_ERROR);
+        {
+            platform::ScopedLock const lock(pending_calls_mutex_);
+            for (auto it = pending_calls_.begin(); it != pending_calls_.end(); ++it) {
+                if (it->second.session_id == message->get_session_id() &&
+                    it->second.service_id == message->get_service_id() &&
+                    it->second.method_id == message->get_method_id()) {
 
-        // Find matching pending call by session ID
-        for (auto it = pending_calls_.begin(); it != pending_calls_.end(); ++it) {
-            if (it->second.session_id == message->get_session_id() &&
-                it->second.service_id == message->get_service_id() &&
-                it->second.method_id == message->get_method_id()) {
+                    RpcResult result = (message->is_success()) ? RpcResult::SUCCESS : RpcResult::INTERNAL_ERROR;
+                    recv_resp = RpcResponse(message->get_service_id(), message->get_method_id(),
+                                            message->get_client_id(), message->get_session_id(), result);
+                    recv_resp.return_values = message->get_payload();
 
-                // Create response
-                RpcResult result = (message->is_success()) ? RpcResult::SUCCESS : RpcResult::INTERNAL_ERROR;
-                RpcResponse response(message->get_service_id(), message->get_method_id(),
-                                   message->get_client_id(), message->get_session_id(), result);
-                response.return_values = message->get_payload();
-
-                // Call callback
-                if (it->second.callback) {
-                    it->second.callback(response);
+                    if (it->second.callback) {
+                        recv_cb = it->second.callback;
+                    }
+                    pending_calls_.erase(it);
+                    break;
                 }
-
-                // Remove pending call
-                pending_calls_.erase(it);
-                break;
             }
+        }
+        if (recv_cb) {
+            recv_cb(recv_resp);
         }
     }
 
@@ -304,5 +320,4 @@ RpcClient::Statistics RpcClient::get_statistics() const {
     return impl_->get_statistics();
 }
 
-} // namespace rpc
-} // namespace someip
+}  // namespace someip::rpc

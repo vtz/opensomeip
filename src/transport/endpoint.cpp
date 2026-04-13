@@ -18,8 +18,7 @@
 #include <cstring>
 #include <cctype>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief Transport endpoint implementation
@@ -223,7 +222,7 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
         if (next == std::string::npos) {
             next = address.size();
         }
-        size_t len = next - pos;
+        size_t const len = next - pos;
 
         if (len > 0) {
             if (len > 4) {
@@ -274,5 +273,4 @@ bool Endpoint::is_multicast_ipv4(const std::string& address) const {
     return first_octet >= 224 && first_octet <= 239;
 }
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport

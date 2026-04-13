@@ -13,9 +13,8 @@
 
 #include "e2e/e2e_crc.h"
 #include <algorithm>
-
-namespace someip {
-namespace e2e {
+#include <cstddef>
+#include <cstdint>
 
 /**
  * @brief E2E CRC calculation functions
@@ -26,7 +25,7 @@ namespace e2e {
  * - ITU-T X.25 (16-bit)
  * - ISO 3309 / IEEE 802.3 (32-bit)
  */
-namespace E2ECRC {
+namespace someip::e2e::E2ECRC {
 
 // SAE-J1850 CRC-8 polynomial: 0x1D (x^8 + x^4 + x^3 + x^2 + 1)
 static constexpr uint8_t SAE_J1850_POLY = 0x1D;
@@ -114,12 +113,14 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
     return crc;
 }
 
-uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type) {
-    if (offset > data.size() || length > data.size() || offset > data.size() - length) {
-        return 0;
+std::optional<uint32_t> calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type) {
+    if (offset > data.size() || length > data.size() || offset > data.size() - length ||
+        offset > static_cast<size_t>(PTRDIFF_MAX) || length > static_cast<size_t>(PTRDIFF_MAX)) {
+        return std::nullopt;
     }
 
-    std::vector<uint8_t> slice(data.begin() + offset, data.begin() + offset + length);
+    auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
+    std::vector<uint8_t> slice(first, first + static_cast<std::ptrdiff_t>(length));
 
     switch (crc_type) {
         case 0:  // SAE-J1850 (8-bit)
@@ -129,10 +130,8 @@ uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t l
         case 2:  // CRC32
             return calculate_crc32(slice);
         default:
-            return 0;
+            return std::nullopt;
     }
 }
 
-} // namespace E2ECRC
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e::E2ECRC

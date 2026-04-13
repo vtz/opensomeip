@@ -19,8 +19,7 @@
 #include <vector>
 #include <optional>
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief E2E protection header structure
@@ -93,7 +92,6 @@ struct E2EHeader {
     bool is_valid() const;
 };
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e
 
 #endif // E2E_HEADER_H

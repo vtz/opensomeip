@@ -109,7 +109,7 @@ static void test_threadx_memory_pool() {
 static void test_threadx_pool_diagnostics() {
     printf("\n--- ThreadX block pool diagnostics ---\n");
 
-    if (!pool_initialized) {
+    if (!pool_initialized.load(std::memory_order_acquire)) {
         auto init_msg = someip::platform::allocate_message();
         init_msg.reset();
     }

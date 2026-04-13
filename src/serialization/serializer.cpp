@@ -16,8 +16,7 @@
 #include <algorithm>
 #include "platform/byteorder.h"
 
-namespace someip {
-namespace serialization {
+namespace someip::serialization {
 
 /**
  * @brief SOME/IP Serializer implementation
@@ -148,8 +147,11 @@ void Serializer::serialize_string(const std::string& value) {
  * @implements REQ_SER_080_E01, REQ_SER_080_E02
  */
 void Serializer::align_to(size_t alignment) {
+    if (alignment == 0) {
+        return;
+    }
     size_t current_size = buffer_.size();
-    size_t padding_needed = (alignment - (current_size % alignment)) % alignment;
+    size_t const padding_needed = (alignment - (current_size % alignment)) % alignment;
 
     for (size_t i = 0; i < padding_needed; ++i) {
         buffer_.push_back(0x00);
@@ -206,14 +208,14 @@ void Serializer::append_be_int64(int64_t value) {
 
 void Serializer::append_be_float(float value) {
     // Convert to big-endian bytes
-    uint32_t bits;
+    uint32_t bits = 0;
     std::memcpy(&bits, &value, sizeof(bits));
     append_be_uint32(bits);
 }
 
 void Serializer::append_be_double(double value) {
     // Convert to big-endian bytes using memcpy to avoid undefined behavior
-    uint64_t bits;
+    uint64_t bits = 0;
     std::memcpy(&bits, &value, sizeof(bits));
     append_be_uint64(bits);
 }
@@ -398,8 +400,8 @@ DeserializationResult<std::string> Deserializer::deserialize_string() {
         return DeserializationResult<std::string>::error(Result::MALFORMED_MESSAGE);
     }
 
-    std::string result(buffer_.begin() + position_,
-                      buffer_.begin() + position_ + length);
+    auto first = buffer_.begin() + static_cast<std::ptrdiff_t>(position_);
+    std::string result(first, first + static_cast<std::ptrdiff_t>(length));
     position_ += length;
 
     // Skip padding to align to 4-byte boundary
@@ -429,7 +431,10 @@ void Deserializer::skip(size_t bytes) {
  * @implements REQ_SER_080, REQ_SER_081, REQ_SER_082
  */
 void Deserializer::align_to(size_t alignment) {
-    size_t padding = (alignment - (position_ % alignment)) % alignment;
+    if (alignment == 0) {
+        return;
+    }
+    size_t const padding = (alignment - (position_ % alignment)) % alignment;
     skip(padding);
 }
 
@@ -438,7 +443,7 @@ std::optional<uint16_t> Deserializer::read_be_uint16() {
         return std::nullopt;
     }
 
-    uint16_t value;
+    uint16_t value = 0;
     std::memcpy(&value, &buffer_[position_], sizeof(uint16_t));
     position_ += sizeof(uint16_t);
     return someip_ntohs(value);
@@ -449,7 +454,7 @@ std::optional<uint32_t> Deserializer::read_be_uint32() {
         return std::nullopt;
     }
 
-    uint32_t value;
+    uint32_t value = 0;
     std::memcpy(&value, &buffer_[position_], sizeof(uint32_t));
     position_ += sizeof(uint32_t);
     return someip_ntohl(value);
@@ -460,7 +465,7 @@ std::optional<uint64_t> Deserializer::read_be_uint64() {
         return std::nullopt;
     }
 
-    uint64_t be_value;
+    uint64_t be_value = 0;
     std::memcpy(&be_value, &buffer_[position_], sizeof(uint64_t));
     position_ += sizeof(uint64_t);
 
@@ -504,7 +509,7 @@ std::optional<float> Deserializer::read_be_float() {
     if (!bits) {
         return std::nullopt;
     }
-    float result;
+    float result = 0.0F;
     std::memcpy(&result, &*bits, sizeof(result));
     return result;
 }
@@ -514,10 +519,9 @@ std::optional<double> Deserializer::read_be_double() {
     if (!bits) {
         return std::nullopt;
     }
-    double result;
+    double result = 0.0;
     std::memcpy(&result, &*bits, sizeof(result));
     return result;
 }
 
-} // namespace serialization
-} // namespace someip
+}  // namespace someip::serialization

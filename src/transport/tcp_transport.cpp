@@ -20,8 +20,7 @@
 #include <algorithm>
 #include <cstdio>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief TCP Transport constructor
@@ -55,7 +54,7 @@ Result TcpTransport::initialize(const Endpoint& local_endpoint) {
     }
 
     // Update local endpoint with the actual bound port (useful when port was 0)
-    sockaddr_in bound_addr;
+    sockaddr_in bound_addr = {};
     socklen_t addr_len = sizeof(bound_addr);
     if (someip_getsockname(connection_.socket_fd, (sockaddr*)&bound_addr, &addr_len) == 0) {
         local_endpoint_ = Endpoint(local_endpoint_.get_address(), ntohs(bound_addr.sin_port));
@@ -82,7 +81,7 @@ Result TcpTransport::send_message(const Message& message, const Endpoint& /*endp
 }
 
 MessagePtr TcpTransport::receive_message() {
-    platform::ScopedLock lock(queue_mutex_);
+    platform::ScopedLock const lock(queue_mutex_);
     if (message_queue_.empty()) {
         return nullptr;
     }
@@ -209,7 +208,7 @@ someip_socket_t TcpTransport::accept_connection() {
         return SOMEIP_INVALID_SOCKET;
     }
 
-    sockaddr_in client_addr;
+    sockaddr_in client_addr = {};
     socklen_t client_len = sizeof(client_addr);
 
     someip_socket_t client_fd = someip_accept(listen_socket_fd_, (sockaddr*)&client_addr, &client_len);
@@ -240,8 +239,7 @@ Result TcpTransport::bind_socket() {
         return Result::NOT_INITIALIZED;
     }
 
-    sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
+    sockaddr_in addr = {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(local_endpoint_.get_port());
     addr.sin_addr.s_addr = someip_inet_addr(local_endpoint_.get_address().c_str());
@@ -294,8 +292,7 @@ Result TcpTransport::setup_socket_options(someip_socket_t socket_fd, bool blocki
 
 /** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04, REQ_TRANSPORT_016, REQ_TRANSPORT_016_E01, REQ_TRANSPORT_018 */
 Result TcpTransport::connect_internal(const Endpoint& endpoint) {
-    sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
+    sockaddr_in addr = {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(endpoint.get_port());
     addr.sin_addr.s_addr = someip_inet_addr(endpoint.get_address().c_str());
@@ -321,7 +318,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         FD_ZERO(&write_fds);
         FD_SET(connection_.socket_fd, &write_fds);
 
-        struct timeval timeout;
+        struct timeval timeout = {};
         timeout.tv_sec  = static_cast<decltype(timeout.tv_sec)>(config_.connection_timeout.count() / 1000);
         timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>((config_.connection_timeout.count() % 1000) * 1000);
 
@@ -354,7 +351,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
 }
 
 void TcpTransport::disconnect_internal() {
-    platform::ScopedLock lock(connection_mutex_);
+    platform::ScopedLock const lock(connection_mutex_);
 
     if (connection_.socket_fd != SOMEIP_INVALID_SOCKET) {
         connection_.state = TcpConnectionState::DISCONNECTING;
@@ -389,7 +386,7 @@ void TcpTransport::receive_loop() {
                     continue;
                 }
 
-                someip_socket_t client_fd = accept_connection();
+                someip_socket_t const client_fd = accept_connection();
                 if (client_fd != SOMEIP_INVALID_SOCKET) {
                     // For this simple implementation, we'll handle one client at a time
                     // In a real implementation, you'd manage multiple client connections
@@ -422,7 +419,7 @@ void TcpTransport::receive_loop() {
             // Try to parse messages from buffer
             MessagePtr message;
             if (parse_message_from_buffer(buffer, message)) {
-                platform::ScopedLock lock(queue_mutex_);
+                platform::ScopedLock const lock(queue_mutex_);
                 message_queue_.push({message, connection_.remote_endpoint});
                 connection_.update_activity();
 
@@ -469,7 +466,7 @@ Result TcpTransport::send_data(someip_socket_t socket_fd, const std::vector<uint
                                    data.size() - total_sent, 0);
 
         if (sent < 0) {
-            int err = someip_socket_errno();
+            int const err = someip_socket_errno();
             if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK || err == SOMEIP_EINTR) {
                 continue;
             }
@@ -496,7 +493,7 @@ Result TcpTransport::receive_data(someip_socket_t socket_fd, std::vector<uint8_t
     ssize_t received = someip_recv(socket_fd, buffer, max_chunk_size, 0);
 
     if (received < 0) {
-        int err = someip_socket_errno();
+        int const err = someip_socket_errno();
         if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK || err == SOMEIP_EINTR) {
             return Result::SUCCESS;  // No data available or interrupted
         }
@@ -541,7 +538,8 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
                                        buffer[search_start + 3];
             if (potential_msg_id != 0) {  // Found a non-zero message ID
                 // Discard data before this potential header
-                buffer.erase(buffer.begin(), buffer.begin() + search_start);
+                buffer.erase(buffer.begin(),
+                             buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
                 found_valid_header = true;
                 break;
             }
@@ -563,17 +561,13 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
     }
 
     // Extract message data
-    std::vector<uint8_t> message_data(buffer.begin(), buffer.begin() + total_message_size);
-    buffer.erase(buffer.begin(), buffer.begin() + total_message_size);
+    auto msg_end = buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size);
+    std::vector<uint8_t> message_data(buffer.begin(), msg_end);
+    buffer.erase(buffer.begin(), msg_end);
 
     // Parse message
     message = platform::allocate_message();
-    if (message && message->deserialize(message_data)) {
-        return true;
-    }
-
-    return false;
+    return message && message->deserialize(message_data);
 }
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport

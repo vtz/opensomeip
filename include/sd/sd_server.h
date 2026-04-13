@@ -18,8 +18,7 @@
 #include <memory>
 #include <vector>
 
-namespace someip {
-namespace sd {
+namespace someip::sd {
 
 /**
  * @brief Forward declaration
@@ -139,7 +138,6 @@ private:
     std::unique_ptr<SdServerImpl> impl_;
 };
 
-} // namespace sd
-} // namespace someip
+}  // namespace someip::sd
 
 #endif // SOMEIP_SD_SERVER_H

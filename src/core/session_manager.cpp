@@ -30,9 +30,9 @@ SessionManager::SessionManager() = default;
  * @implements REQ_MSG_118
  */
 uint16_t SessionManager::create_session(uint16_t client_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
-    uint16_t session_id = get_next_session_id();
+    uint16_t const session_id = get_next_session_id();
 
     auto session = std::make_shared<Session>(session_id, client_id);
     sessions_[session_id] = session;
@@ -41,7 +41,7 @@ uint16_t SessionManager::create_session(uint16_t client_id) {
 }
 
 std::shared_ptr<Session> SessionManager::get_session(uint16_t session_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     auto it = sessions_.find(session_id);
     if (it != sessions_.end()) {
@@ -52,13 +52,13 @@ std::shared_ptr<Session> SessionManager::get_session(uint16_t session_id) {
 }
 
 void SessionManager::remove_session(uint16_t session_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     sessions_.erase(session_id);
 }
 
 bool SessionManager::validate_session(uint16_t session_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     auto it = sessions_.find(session_id);
     if (it == sessions_.end()) {
@@ -69,7 +69,7 @@ bool SessionManager::validate_session(uint16_t session_id) {
 }
 
 void SessionManager::update_session_activity(uint16_t session_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     auto it = sessions_.find(session_id);
     if (it != sessions_.end()) {
@@ -78,7 +78,7 @@ void SessionManager::update_session_activity(uint16_t session_id) {
 }
 
 size_t SessionManager::cleanup_expired_sessions(std::chrono::seconds timeout) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     size_t cleaned_count = 0;
     auto it = sessions_.begin();
@@ -118,7 +118,7 @@ uint16_t SessionManager::get_next_session_id() {
 }
 
 size_t SessionManager::get_active_session_count() const {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     size_t count = 0;
     for (const auto& pair : sessions_) {

@@ -20,8 +20,7 @@
 #include <unordered_map>
 #include "platform/thread.h"
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief Registry for E2E protection profiles
@@ -89,7 +88,6 @@ private:
     std::unordered_map<std::string, E2EProfile*> profiles_by_name_;
 };
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e
 
 #endif // E2E_PROFILE_REGISTRY_H
