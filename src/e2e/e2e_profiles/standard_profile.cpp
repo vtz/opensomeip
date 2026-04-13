@@ -265,7 +265,8 @@ public:
             // Convert timeout to 16-bit units (approximately)
             // Since we're storing lower 16 bits of milliseconds,
             // we compare against timeout_ms directly (assuming timeout < 65535 ms)
-            auto const timeout_units = static_cast<uint16_t>(config.freshness_timeout_ms);
+            auto const timeout_units = static_cast<uint16_t>(
+                config.freshness_timeout_ms > 0xFFFFU ? 0xFFFFU : config.freshness_timeout_ms);
             if (freshness_diff > timeout_units && freshness_diff < (0xFFFFU - timeout_units)) {
                 // If difference is large and not due to wrap-around, it's stale
                 return Result::TIMEOUT;  // Stale data

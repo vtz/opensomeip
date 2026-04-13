@@ -84,7 +84,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
                                           std::vector<TpSegment>& segments) {
 
     auto const total_length = static_cast<uint32_t>(payload.size());
-    uint16_t payload_offset = 0;  // Offset into the payload data
+    uint32_t payload_offset = 0;  // Offset into the payload data
     uint8_t const sequence_number = next_sequence_number_;
 
     // Create a copy of the message with TP flag added to message type
@@ -198,7 +198,7 @@ void TpSegmenter::update_config(const TpConfig& config) {
  * @implements REQ_TP_013_E01, REQ_TP_015_E01
  */
 void TpSegmenter::serialize_tp_header(std::vector<uint8_t>& payload,
-                                     uint16_t offset, bool more_segments) {
+                                     uint32_t offset, bool more_segments) {
     // TP header is 4 bytes: [Offset (28 bits) | Reserved (3 bits) | More Segments (1 bit)]
     // Offset is in units of 16 bytes, so divide by 16
     uint32_t const offset_units = offset / 16;
