@@ -55,6 +55,9 @@ static void ensure_pool_init() {
                                           sizeof(someip::Message),
                                           pool_buffer,
                                           sizeof(pool_buffer));
+            if (status != TX_SUCCESS) {
+                tx_mutex_delete(&pool_guard);
+            }
         }
         if (status == TX_SUCCESS) {
             pool_initialized.store(true, std::memory_order_release);
