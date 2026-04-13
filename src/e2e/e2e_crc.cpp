@@ -74,13 +74,15 @@ uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data) {
 static constexpr uint32_t CRC32_POLY = 0x04C11DB7;
 static constexpr uint32_t CRC32_INIT = 0xFFFFFFFF;
 
+namespace {
+
 // Precomputed CRC32 lookup table
-static uint32_t crc32_table[256];
+uint32_t crc32_table[256];
 
 // Initialize CRC32 lookup table (called once)
-static bool crc32_table_initialized = false;
+bool crc32_table_initialized = false;
 
-static void init_crc32_table() {
+void init_crc32_table() {
     if (crc32_table_initialized) {
         return;
     }
@@ -99,6 +101,8 @@ static void init_crc32_table() {
 
     crc32_table_initialized = true;
 }
+
+}  // namespace
 
 uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
     init_crc32_table();

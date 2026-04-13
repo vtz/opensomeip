@@ -20,6 +20,7 @@
 #include "common/result.h"
 #include <unordered_map>
 #include <atomic>
+#include <utility>
 
 namespace someip::rpc {
 
@@ -79,7 +80,7 @@ public:
         // Check if already registered
         bool already_exists = method_handlers_.count(method_id) > 0;
         if (!already_exists) {
-            method_handlers_[method_id] = handler;
+            method_handlers_[method_id] = std::move(handler);
         }
         return !already_exists;
     }
@@ -160,7 +161,7 @@ private:
     }
 
     /** @implements REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01 */
-    void send_success_response(MessagePtr request, const transport::Endpoint& sender,
+    void send_success_response(MessagePtr const& request, const transport::Endpoint& sender,
                               const std::vector<uint8_t>& return_values) {
         MessageId response_msg_id(request->get_service_id(), request->get_method_id());
         Message response(response_msg_id, request->get_request_id(),
@@ -174,7 +175,7 @@ private:
     }
 
     /** @implements REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01, REQ_MSG_129 */
-    void send_error_response(MessagePtr request, const transport::Endpoint& sender, ReturnCode error_code) {
+    void send_error_response(MessagePtr const& request, const transport::Endpoint& sender, ReturnCode error_code) {
         MessageId response_msg_id(request->get_service_id(), request->get_method_id());
         Message response(response_msg_id, request->get_request_id(),
                         MessageType::ERROR, error_code);
@@ -227,7 +228,7 @@ void RpcServer::shutdown() {
 }
 
 bool RpcServer::register_method(MethodId method_id, MethodHandler handler) {
-    return impl_->register_method(method_id, handler);
+    return impl_->register_method(method_id, std::move(handler));
 }
 
 bool RpcServer::unregister_method(MethodId method_id) {

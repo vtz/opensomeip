@@ -34,7 +34,7 @@ struct UdpTransportConfig {
     bool reuse_address{true};               // Allow address reuse (SO_REUSEADDR)
     bool reuse_port{false};                 // Allow port reuse (SO_REUSEPORT) - for multicast
     bool enable_broadcast{false};           // Enable broadcast sending
-    std::string multicast_interface{};      // Interface for multicast (empty = INADDR_ANY)
+    std::string multicast_interface;        // Interface for multicast (empty = INADDR_ANY)
     int multicast_ttl{1};                   // Multicast TTL (1 = local network only)
 
     // SOME/IP spec recommends max 1400 bytes to avoid IP fragmentation

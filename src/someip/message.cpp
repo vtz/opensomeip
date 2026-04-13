@@ -81,7 +81,7 @@ Message::Message(const Message& other)
 
 Message::Message(Message&& other) noexcept
     : message_id_(other.message_id_),
-      length_(8 + (other.e2e_header_.has_value() ? other.e2e_header_->get_header_size() : 0) + other.payload_.size()),
+      length_(8 + (other.e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0) + other.payload_.size()),
       request_id_(other.request_id_),
       protocol_version_(other.protocol_version_),
       interface_version_(other.interface_version_),
@@ -115,7 +115,7 @@ Message& Message::operator=(const Message& other) {
 Message& Message::operator=(Message&& other) noexcept {
     if (this != &other) {
         message_id_ = other.message_id_;
-        length_ = 8 + (other.e2e_header_.has_value() ? other.e2e_header_->get_header_size() : 0) + other.payload_.size();
+        length_ = 8 + (other.e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0) + other.payload_.size();
         request_id_ = other.request_id_;
         protocol_version_ = other.protocol_version_;
         interface_version_ = SOMEIP_INTERFACE_VERSION;  // Valid interface version for moved-to object
@@ -266,7 +266,7 @@ bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
     if (length_ < 8) {
         return false;  // Invalid length: must be at least 8 for header
     }
-    size_t e2e_size = e2e_header_.has_value() ? e2e_header_->get_header_size() : 0;
+    size_t e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
     size_t const expected_payload_size = length_ - 8 - e2e_size;
     size_t actual_payload_size = data.size() - offset;
 
@@ -313,14 +313,10 @@ bool Message::has_valid_method_id() const {
     uint16_t const method_id = get_method_id();
 
     // REQ_MSG_008: Reserved Method ID 0xFFFF is invalid
-    if (method_id == 0xFFFF) {
-        return false;
-    }
-
     // REQ_MSG_006: Method IDs for methods (0x0001-0x7FFF) are valid
     // REQ_MSG_007: Method IDs for events (0x8001-0x8FFF) are valid
     // Allow 0x0000 for default/uninitialized messages
-    return true;  // Allow all valid method IDs including 0x0000
+    return method_id != 0xFFFF;
 }
 
 /**
@@ -338,14 +334,9 @@ bool Message::has_valid_message_id() const {
  */
 bool Message::has_valid_length() const {
     // REQ_MSG_012: Minimum length value
-    if (length_ < 8) {
-        return false;
-    }
-
     // REQ_MSG_015: Length must be at least minimum header size
     // Additional validation happens in has_valid_header()
-
-    return true;
+    return length_ >= 8;
 }
 
 /**
@@ -464,7 +455,7 @@ bool Message::has_valid_header() const {
     // Check length consistency
     // length_ contains length from client_id to end (8 + e2e_size + payload_size)
     // Total expected message size should be HEADER_SIZE + e2e_size + payload_size
-    size_t e2e_size = e2e_header_.has_value() ? e2e_header_->get_header_size() : 0;
+    size_t e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
     uint32_t expected_total_size = HEADER_SIZE + e2e_size + payload_.size();
     uint32_t actual_total_size = HEADER_SIZE + e2e_size + payload_.size();  // Same calculation
     if (expected_total_size != actual_total_size) {
@@ -529,7 +520,7 @@ void Message::update_length() {
     // SOME/IP length field contains length from client_id to end of message
     // client_id(2) + session_id(2) + protocol_version(1) + interface_version(1) +
     // message_type(1) + return_code(1) + e2e_header_size + payload_size
-    size_t e2e_size = e2e_header_.has_value() ? e2e_header_->get_header_size() : 0;
+    size_t e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
     length_ = 8 + e2e_size + payload_.size();
 }
 

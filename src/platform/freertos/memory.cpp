@@ -31,14 +31,16 @@
 
 static constexpr size_t POOL_SIZE = SOMEIP_FREERTOS_MESSAGE_POOL_SIZE;
 
-alignas(someip::Message) static char
+namespace {
+
+alignas(someip::Message) char
     pool_buffer[POOL_SIZE * sizeof(someip::Message)];
 
-static bool block_used[POOL_SIZE] = {};
-static SemaphoreHandle_t pool_mutex = nullptr;
-static std::atomic<bool> pool_initialized{false};
+bool block_used[POOL_SIZE] = {};
+SemaphoreHandle_t pool_mutex = nullptr;
+std::atomic<bool> pool_initialized{false};
 
-static void ensure_pool_init() {
+void ensure_pool_init() {
     if (pool_initialized.load(std::memory_order_acquire)) {
         return;
     }
@@ -56,6 +58,26 @@ static void ensure_pool_init() {
 
     taskEXIT_CRITICAL();
 }
+
+void release_message_impl(someip::Message* msg) {
+    if (!msg) {
+        return;
+    }
+
+    msg->~Message();
+
+    auto* raw = reinterpret_cast<char*>(msg);
+    size_t const offset = static_cast<size_t>(raw - pool_buffer);
+    size_t const index = offset / sizeof(someip::Message);
+
+    if (index < POOL_SIZE) {
+        xSemaphoreTake(pool_mutex, portMAX_DELAY);
+        block_used[index] = false;
+        xSemaphoreGive(pool_mutex);
+    }
+}
+
+}  // namespace
 
 namespace someip::platform {
 
@@ -83,21 +105,7 @@ MessagePtr allocate_message() {
 }
 
 void release_message(Message* msg) {
-    if (!msg) {
-        return;
-    }
-
-    msg->~Message();
-
-    auto* raw = reinterpret_cast<char*>(msg);
-    size_t const offset = static_cast<size_t>(raw - pool_buffer);
-    size_t const index = offset / sizeof(Message);
-
-    if (index < POOL_SIZE) {
-        xSemaphoreTake(pool_mutex, portMAX_DELAY);
-        block_used[index] = false;
-        xSemaphoreGive(pool_mutex);
-    }
+    release_message_impl(msg);
 }
 
 }  // namespace someip::platform

@@ -141,10 +141,10 @@ struct TpTransfer {
     TpTransfer() = default;
 
     TpTransfer(uint32_t id, uint32_t msg_id)
-        : transfer_id(id), message_id(msg_id) {
-        start_time = std::chrono::steady_clock::now();
-        last_activity = start_time;
-    }
+        : transfer_id(id),
+          message_id(msg_id),
+          start_time(std::chrono::steady_clock::now()),
+          last_activity(start_time) {}
 };
 
 /**

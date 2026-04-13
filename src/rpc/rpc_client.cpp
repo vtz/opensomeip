@@ -162,7 +162,7 @@ public:
         PendingCall call_info{
             service_id, method_id, session_id,
             std::chrono::steady_clock::now(),
-            timeout, callback
+            timeout, std::move(callback)
         };
 
         RpcCallHandle handle = 0;
@@ -305,7 +305,7 @@ RpcCallHandle RpcClient::call_method_async(uint16_t service_id, MethodId method_
                                           const std::vector<uint8_t>& parameters,
                                           RpcCallback callback,
                                           const RpcTimeout& timeout) {
-    return impl_->call_method_async(service_id, method_id, parameters, callback, timeout);
+    return impl_->call_method_async(service_id, method_id, parameters, std::move(callback), timeout);
 }
 
 bool RpcClient::cancel_call(RpcCallHandle handle) {

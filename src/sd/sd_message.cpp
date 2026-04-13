@@ -262,7 +262,7 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
                   << ((ipv4_address_ >> 24) & 0xFF) << "."
                   << ((ipv4_address_ >> 16) & 0xFF) << "."
                   << ((ipv4_address_ >> 8) & 0xFF) << "."
-                  << (ipv4_address_ & 0xFF) << std::endl;
+                  << (ipv4_address_ & 0xFF) << '\n';
         // Continue processing despite invalid address
     }
 
@@ -343,7 +343,7 @@ bool IPv4MulticastOption::deserialize(const std::vector<uint8_t>& data, size_t& 
                   << ((ipv4_address_ >> 24) & 0xFF) << "."
                   << ((ipv4_address_ >> 16) & 0xFF) << "."
                   << ((ipv4_address_ >> 8) & 0xFF) << "."
-                  << (ipv4_address_ & 0xFF) << std::endl;
+                  << (ipv4_address_ & 0xFF) << '\n';
         // Continue processing despite invalid address
     }
     port_ = (data[offset] << 8) | data[offset + 1];
