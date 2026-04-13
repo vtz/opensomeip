@@ -16,6 +16,8 @@
 #include "tp/tp_reassembler.h"
 #include "someip/message.h"
 #include <algorithm>
+#include <utility>
+#include <vector>
 
 namespace someip::tp {
 
@@ -185,34 +187,37 @@ void TpManager::set_message_callback(TpMessageCallback callback) {
 }
 
 void TpManager::process_timeouts() {
-    platform::ScopedLock const lock(transfers_mutex_);
+    std::vector<std::pair<uint32_t, TpResult>> timed_out;
 
-    auto now = std::chrono::steady_clock::now();
+    {
+        platform::ScopedLock const lock(transfers_mutex_);
 
-    for (auto it = active_transfers_.begin(); it != active_transfers_.end(); ) {
-        TpTransfer& transfer = it->second;
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - transfer.last_activity);
+        auto now = std::chrono::steady_clock::now();
 
-        if (elapsed > config_.reassembly_timeout) {
-            transfer.state = TpTransferState::TIMEOUT;
-            statistics_.timeouts++;
+        for (auto it = active_transfers_.begin(); it != active_transfers_.end(); ) {
+            TpTransfer& transfer = it->second;
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                now - transfer.last_activity);
 
-            if (completion_callback_) {
-                completion_callback_(transfer.transfer_id, TpResult::TIMEOUT);
+            if (elapsed > config_.reassembly_timeout) {
+                transfer.state = TpTransferState::TIMEOUT;
+                statistics_.timeouts++;
+                timed_out.emplace_back(transfer.transfer_id, TpResult::TIMEOUT);
+                it = active_transfers_.erase(it);
+            } else {
+                ++it;
             }
-
-            it = active_transfers_.erase(it);
-        } else {
-            ++it;
         }
+
+        reassembler_->process_timeouts();
+        cleanup_completed_transfers();
     }
 
-    // Process reassembler timeouts
-    reassembler_->process_timeouts();
-
-    // Cleanup completed transfers
-    cleanup_completed_transfers();
+    for (const auto& [id, result] : timed_out) {
+        if (completion_callback_) {
+            completion_callback_(id, result);
+        }
+    }
 }
 
 /**

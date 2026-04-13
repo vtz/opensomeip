@@ -89,7 +89,7 @@ public:
 
 private:
     std::optional<T> value_{};
-    Result error_{Result::SUCCESS};
+    Result error_{Result::NOT_INITIALIZED};
 };
 
 /**

@@ -17,7 +17,9 @@
 
 #include <tx_api.h>
 
+#include <atomic>
+
 extern TX_BLOCK_POOL message_pool;
-extern bool pool_initialized;
+extern std::atomic<bool> pool_initialized;
 
 #endif // SOMEIP_PLATFORM_THREADX_MEMORY_INTERNAL_H

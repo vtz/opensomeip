@@ -20,6 +20,7 @@
 
 #include <tx_api.h>
 
+#include <atomic>
 #include <cstring>
 #include <new>
 
@@ -34,28 +35,28 @@ alignas(someip::Message) static UCHAR
 
 TX_BLOCK_POOL message_pool;
 static TX_MUTEX pool_guard;
-bool pool_initialized = false;
+std::atomic<bool> pool_initialized{false};
 
 static void ensure_pool_init() {
-    if (pool_initialized) {
+    if (pool_initialized.load(std::memory_order_acquire)) {
         return;
     }
 
-    static bool guard_created = false;
-    if (!guard_created) {
+    static std::atomic<bool> guard_created{false};
+    if (!guard_created.load(std::memory_order_acquire)) {
         tx_mutex_create(&pool_guard, const_cast<CHAR*>("someip_pool_guard"),
                         TX_NO_INHERIT);
-        guard_created = true;
+        guard_created.store(true, std::memory_order_release);
     }
 
     tx_mutex_get(&pool_guard, TX_WAIT_FOREVER);
-    if (!pool_initialized) {
+    if (!pool_initialized.load(std::memory_order_relaxed)) {
         tx_block_pool_create(&message_pool,
                              const_cast<CHAR*>("someip_msg"),
                              sizeof(someip::Message),
                              pool_buffer,
                              sizeof(pool_buffer));
-        pool_initialized = true;
+        pool_initialized.store(true, std::memory_order_release);
     }
     tx_mutex_put(&pool_guard);
 }

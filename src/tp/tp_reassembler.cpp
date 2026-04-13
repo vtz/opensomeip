@@ -43,7 +43,7 @@ TpReassembler::~TpReassembler() {
  * @implements REQ_TP_082
  */
 bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
-                                   uint16_t& offset, bool& more_segments) {
+                                   uint32_t& offset, bool& more_segments) {
     if (payload.size() < 20) {  // SOME/IP header (16) + TP header (4) minimum
         return false;
     }
@@ -322,8 +322,8 @@ TpConfig TpReassembler::get_config_copy() const {
 }
 
 // TpReassemblyBuffer implementation
-bool TpReassemblyBuffer::is_segment_received(uint16_t offset, uint16_t length) const {
-    for (uint16_t i = 0; i < length; ++i) {
+bool TpReassemblyBuffer::is_segment_received(uint32_t offset, uint32_t length) const {
+    for (uint32_t i = 0; i < length; ++i) {
         size_t const bit_index = offset + i;
         if (bit_index >= received_segments.size() || !received_segments[bit_index]) {
             return false;
@@ -332,13 +332,12 @@ bool TpReassemblyBuffer::is_segment_received(uint16_t offset, uint16_t length) c
     return true;
 }
 
-void TpReassemblyBuffer::mark_segment_received(uint16_t offset, uint16_t length) {
-    // Ensure received_segments is large enough
+void TpReassemblyBuffer::mark_segment_received(uint32_t offset, uint32_t length) {
     if (received_segments.size() < total_length) {
         received_segments.resize(total_length, false);
     }
 
-    for (uint16_t i = 0; i < length; ++i) {
+    for (uint32_t i = 0; i < length; ++i) {
         size_t const bit_index = offset + i;
         if (bit_index < received_segments.size()) {
             received_segments[bit_index] = true;

@@ -357,7 +357,6 @@ private:
             }
         }
 
-        // Update available services
         {
             platform::ScopedLock const lock(available_services_mutex_);
             auto it = std::find_if(available_services_.begin(), available_services_.end(),
@@ -369,31 +368,40 @@ private:
             if (it == available_services_.end()) {
                 available_services_.push_back(instance);
             } else {
-                *it = instance;  // Update existing
+                *it = instance;
             }
         }
 
-        // Notify subscribers
-        platform::ScopedLock const lock(subscriptions_mutex_);
-        auto sub_it = service_subscriptions_.find(instance.service_id);
-        if (sub_it != service_subscriptions_.end() && sub_it->second.available_callback) {
-            sub_it->second.available_callback(instance);
+        ServiceAvailableCallback avail_cb;
+        {
+            platform::ScopedLock const lock(subscriptions_mutex_);
+            auto sub_it = service_subscriptions_.find(instance.service_id);
+            if (sub_it != service_subscriptions_.end() && sub_it->second.available_callback) {
+                avail_cb = sub_it->second.available_callback;
+            }
         }
 
-        // Check for pending finds
+        std::vector<FindServiceCallback> find_cbs;
         {
             platform::ScopedLock const lock(pending_finds_mutex_);
             for (auto it = pending_finds_.begin(); it != pending_finds_.end(); ) {
                 if (it->second.service_id == instance.service_id) {
                     if (it->second.callback) {
-                        std::vector<ServiceInstance> found_services = {instance};
-                        it->second.callback(found_services);
+                        find_cbs.push_back(it->second.callback);
                     }
                     it = pending_finds_.erase(it);
                 } else {
                     ++it;
                 }
             }
+        }
+
+        if (avail_cb) {
+            avail_cb(instance);
+        }
+        for (const auto& cb : find_cbs) {
+            std::vector<ServiceInstance> found_services = {instance};
+            cb(found_services);
         }
     }
 
@@ -403,7 +411,6 @@ private:
         instance.service_id = entry.get_service_id();
         instance.instance_id = entry.get_instance_id();
 
-        // Remove from available services
         {
             platform::ScopedLock const lock(available_services_mutex_);
             auto it = std::remove_if(available_services_.begin(), available_services_.end(),
@@ -414,11 +421,17 @@ private:
             available_services_.erase(it, available_services_.end());
         }
 
-        // Notify subscribers
-        platform::ScopedLock const lock(subscriptions_mutex_);
-        auto sub_it = service_subscriptions_.find(instance.service_id);
-        if (sub_it != service_subscriptions_.end() && sub_it->second.unavailable_callback) {
-            sub_it->second.unavailable_callback(instance);
+        ServiceUnavailableCallback unavail_cb;
+        {
+            platform::ScopedLock const lock(subscriptions_mutex_);
+            auto sub_it = service_subscriptions_.find(instance.service_id);
+            if (sub_it != service_subscriptions_.end() && sub_it->second.unavailable_callback) {
+                unavail_cb = sub_it->second.unavailable_callback;
+            }
+        }
+
+        if (unavail_cb) {
+            unavail_cb(instance);
         }
     }
 

@@ -317,8 +317,8 @@ std::vector<uint8_t> IPv4MulticastOption::serialize() const {
 
     // Update length (7 bytes: 4 address + 1 reserved + 2 port)
     uint16_t const length = 7;
-    data[2] = (length >> 8) & 0xFF;
-    data[3] = length & 0xFF;
+    data[0] = (length >> 8) & 0xFF;
+    data[1] = length & 0xFF;
 
     return data;
 }

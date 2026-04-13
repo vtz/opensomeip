@@ -14,6 +14,7 @@
 #include "e2e/e2e_crc.h"
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 
 /**
  * @brief E2E CRC calculation functions
@@ -113,7 +114,8 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
 }
 
 uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type) {
-    if (offset > data.size() || length > data.size() || offset > data.size() - length) {
+    if (offset > data.size() || length > data.size() || offset > data.size() - length ||
+        offset > static_cast<size_t>(PTRDIFF_MAX) || length > static_cast<size_t>(PTRDIFF_MAX)) {
         return 0;
     }
 

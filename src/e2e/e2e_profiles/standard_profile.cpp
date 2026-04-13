@@ -208,11 +208,10 @@ public:
             if (last_counter == 0) {
                 // First message - accept any counter >= 1
                 counter_valid = (header.counter >= 1 && header.counter <= config.max_counter_value);
-            } else if (header.counter >= last_counter) {
-                // Equal: same message re-validated (e.g. in tests).
-                // Greater: new message with higher counter.
-                // Both cases are valid.
+            } else if (header.counter > last_counter) {
                 counter_valid = true;
+            } else if (header.counter == last_counter) {
+                return Result::INVALID_ARGUMENT;
             } else {
                 // header.counter < last_counter
                 // Check if this is a rollover case

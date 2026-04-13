@@ -66,7 +66,7 @@ struct TpConfig {
  */
 struct TpSegmentHeader {
     uint32_t message_length{0};     // Total message length
-    uint16_t segment_offset{0};     // Offset of this segment in the message
+    uint32_t segment_offset{0};     // Offset of this segment in the message
     uint16_t segment_length{0};     // Length of this segment's payload
     uint8_t sequence_number{0};     // Sequence number for ordering
     TpMessageType message_type{TpMessageType::SINGLE_MESSAGE};  // Type of TP message
@@ -104,8 +104,8 @@ struct TpReassemblyBuffer {
         start_time = std::chrono::steady_clock::now();
     }
 
-    bool is_segment_received(uint16_t offset, uint16_t length) const;
-    void mark_segment_received(uint16_t offset, uint16_t length);
+    bool is_segment_received(uint32_t offset, uint32_t length) const;
+    void mark_segment_received(uint32_t offset, uint32_t length);
     bool is_complete() const;
     std::vector<uint8_t> get_complete_message() const;
 };
