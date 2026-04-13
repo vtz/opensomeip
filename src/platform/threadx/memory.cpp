@@ -36,36 +36,32 @@ alignas(someip::Message) static UCHAR
 TX_BLOCK_POOL message_pool;
 static TX_MUTEX pool_guard;
 std::atomic<bool> pool_initialized{false};
-static std::atomic_flag init_lock = ATOMIC_FLAG_INIT;
 
 static void ensure_pool_init() {
     if (pool_initialized.load(std::memory_order_acquire)) {
         return;
     }
 
-    while (init_lock.test_and_set(std::memory_order_acquire)) { }
+    TX_INTERRUPT_SAVE_AREA
+    TX_DISABLE
 
     if (!pool_initialized.load(std::memory_order_relaxed)) {
         UINT status = tx_mutex_create(&pool_guard,
                                       const_cast<CHAR*>("someip_pool_guard"),
                                       TX_NO_INHERIT);
-        if (status != TX_SUCCESS) {
-            init_lock.clear(std::memory_order_release);
-            return;
+        if (status == TX_SUCCESS) {
+            status = tx_block_pool_create(&message_pool,
+                                          const_cast<CHAR*>("someip_msg"),
+                                          sizeof(someip::Message),
+                                          pool_buffer,
+                                          sizeof(pool_buffer));
         }
-        status = tx_block_pool_create(&message_pool,
-                                      const_cast<CHAR*>("someip_msg"),
-                                      sizeof(someip::Message),
-                                      pool_buffer,
-                                      sizeof(pool_buffer));
-        if (status != TX_SUCCESS) {
-            init_lock.clear(std::memory_order_release);
-            return;
+        if (status == TX_SUCCESS) {
+            pool_initialized.store(true, std::memory_order_release);
         }
-        pool_initialized.store(true, std::memory_order_release);
     }
 
-    init_lock.clear(std::memory_order_release);
+    TX_RESTORE
 }
 
 namespace someip::platform {

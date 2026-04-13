@@ -19,6 +19,7 @@
 
 #include <FreeRTOS.h>
 #include <semphr.h>
+#include <task.h>
 
 #include <atomic>
 #include <cstring>
@@ -36,14 +37,13 @@ alignas(someip::Message) static char
 static bool block_used[POOL_SIZE] = {};
 static SemaphoreHandle_t pool_mutex = nullptr;
 static std::atomic<bool> pool_initialized{false};
-static std::atomic_flag init_lock = ATOMIC_FLAG_INIT;
 
 static void ensure_pool_init() {
     if (pool_initialized.load(std::memory_order_acquire)) {
         return;
     }
 
-    while (init_lock.test_and_set(std::memory_order_acquire)) { }
+    taskENTER_CRITICAL();
 
     if (!pool_initialized.load(std::memory_order_relaxed)) {
         pool_mutex = xSemaphoreCreateMutex();
@@ -54,7 +54,7 @@ static void ensure_pool_init() {
         }
     }
 
-    init_lock.clear(std::memory_order_release);
+    taskEXIT_CRITICAL();
 }
 
 namespace someip::platform {

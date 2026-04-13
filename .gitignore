@@ -1,5 +1,6 @@
 # Build directories
 build/
+build_lib/
 build_test/
 build-*/
 
@@ -100,4 +101,3 @@ docs/diagrams/svg/
 .git/
 *.patch
 *.diff
-build_lib/
