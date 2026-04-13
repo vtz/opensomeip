@@ -39,7 +39,7 @@ uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data) {
     for (uint8_t byte : data) {
         crc ^= byte;
         for (int i = 0; i < 8; ++i) {
-            if (crc & 0x80) {
+            if ((crc & 0x80) != 0) {
                 crc = (crc << 1) ^ SAE_J1850_POLY;
             } else {
                 crc <<= 1;
@@ -60,7 +60,7 @@ uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data) {
     for (uint8_t byte : data) {
         crc ^= (static_cast<uint16_t>(byte) << 8);
         for (int i = 0; i < 8; ++i) {
-            if (crc & 0x8000) {
+            if ((crc & 0x8000) != 0) {
                 crc = (crc << 1) ^ ITU_X25_POLY;
             } else {
                 crc <<= 1;

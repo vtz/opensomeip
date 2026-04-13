@@ -82,7 +82,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
                                           const std::vector<uint8_t>& payload,
                                           std::vector<TpSegment>& segments) {
 
-    uint32_t total_length = static_cast<uint32_t>(payload.size());
+    uint32_t const total_length = static_cast<uint32_t>(payload.size());
     uint16_t payload_offset = 0;  // Offset into the payload data
     uint8_t const sequence_number = next_sequence_number_++;
 
@@ -102,7 +102,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         header.resize(16);  // Keep only header (16 bytes)
 
         // Add first part of payload (accounting for TP header)
-        size_t first_payload_size = std::min(static_cast<size_t>(config_.max_segment_size - 16 - 4),
+        size_t const first_payload_size = std::min(static_cast<size_t>(config_.max_segment_size - 16 - 4),
                                            static_cast<size_t>(total_length));
         header.insert(header.end(), payload.begin(),
                       payload.begin() + static_cast<std::ptrdiff_t>(first_payload_size));
@@ -142,7 +142,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         segment.header.sequence_number = sequence_number;
 
         // Calculate payload size for this segment (accounting for TP header)
-        uint16_t payload_size = static_cast<uint16_t>(
+        uint16_t const payload_size = static_cast<uint16_t>(
             std::min(static_cast<uint32_t>(config_.max_segment_size - 4), remaining_bytes));
 
         // Create segment with TP header

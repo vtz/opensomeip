@@ -61,7 +61,7 @@ void ensure_pool_init() {
 }
 
 void release_message_impl(someip::Message* msg) {
-    if (!msg) {
+    if (msg == nullptr) {
         return;
     }
 
