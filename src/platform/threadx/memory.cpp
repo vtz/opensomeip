@@ -20,6 +20,7 @@
 
 #include <tx_api.h>
 
+#include <array>
 #include <atomic>
 #include <cstring>
 #include <new>
@@ -35,8 +36,8 @@ std::atomic<bool> pool_initialized{false};
 
 namespace {
 
-alignas(someip::Message) UCHAR
-    pool_buffer[POOL_SIZE * sizeof(someip::Message)];
+alignas(someip::Message) std::array<UCHAR, POOL_SIZE * sizeof(someip::Message)>
+    pool_buffer{};
 
 TX_MUTEX pool_guard;
 
@@ -56,7 +57,7 @@ void ensure_pool_init() {
             status = tx_block_pool_create(&message_pool,
                                           const_cast<CHAR*>("someip_msg"),
                                           sizeof(someip::Message),
-                                          pool_buffer,
+                                          pool_buffer.data(),
                                           sizeof(pool_buffer));
             if (status != TX_SUCCESS) {
                 tx_mutex_delete(&pool_guard);

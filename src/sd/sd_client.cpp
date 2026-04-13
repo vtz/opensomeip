@@ -126,7 +126,7 @@ public:
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast find message
-        transport::Endpoint multicast_endpoint(config_.multicast_address, config_.multicast_port);
+        transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         if (transport_->send_message(someip_message, multicast_endpoint) != Result::SUCCESS) {
             return false;
         }
@@ -204,7 +204,7 @@ public:
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast message
-        transport::Endpoint multicast_endpoint(config_.multicast_address, config_.multicast_port);
+        transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         return transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
     }
 
@@ -233,7 +233,7 @@ public:
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast message
-        transport::Endpoint multicast_endpoint(config_.multicast_address, config_.multicast_port);
+        transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         return transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
     }
 
@@ -273,7 +273,7 @@ private:
     };
 
     bool join_multicast_group() {
-        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
+        const auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
         if (!udp_transport) {
             return false;
         }
@@ -282,7 +282,7 @@ private:
     }
 
     void leave_multicast_group() {
-        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
+        const auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
         if (udp_transport) {
             udp_transport->leave_multicast_group(config_.multicast_address);
         }
@@ -363,7 +363,7 @@ private:
 
         {
             platform::ScopedLock const lock(available_services_mutex_);
-            auto it = std::find_if(available_services_.begin(), available_services_.end(),
+            const auto it = std::find_if(available_services_.begin(), available_services_.end(),
                 [&](const ServiceInstance& svc) {
                     return svc.service_id == instance.service_id &&
                            svc.instance_id == instance.instance_id;
@@ -404,7 +404,7 @@ private:
             avail_cb(instance);
         }
         for (const auto& cb : find_cbs) {
-            std::vector<ServiceInstance> found_services = {instance};
+            const std::vector<ServiceInstance> found_services = {instance};
             cb(found_services);
         }
     }
@@ -417,7 +417,7 @@ private:
 
         {
             platform::ScopedLock const lock(available_services_mutex_);
-            auto it = std::remove_if(available_services_.begin(), available_services_.end(),
+            const auto it = std::remove_if(available_services_.begin(), available_services_.end(),
                 [&](const ServiceInstance& svc) {
                     return svc.service_id == instance.service_id &&
                            svc.instance_id == instance.instance_id;

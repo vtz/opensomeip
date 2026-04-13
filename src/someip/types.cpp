@@ -24,7 +24,7 @@ namespace someip {
 
 /** @implements REQ_ARCH_001 */
 std::string to_string(MessageType type) {
-    static const std::unordered_map<MessageType, std::string> type_strings = {
+    static const std::unordered_map<MessageType, std::string> TYPE_STRINGS = {
         {MessageType::REQUEST, "REQUEST"},
         {MessageType::REQUEST_NO_RETURN, "REQUEST_NO_RETURN"},
         {MessageType::NOTIFICATION, "NOTIFICATION"},
@@ -38,12 +38,12 @@ std::string to_string(MessageType type) {
         {MessageType::TP_NOTIFICATION, "TP_NOTIFICATION"}
     };
 
-    auto it = type_strings.find(type);
-    return (it != type_strings.end()) ? it->second : "UNKNOWN_MESSAGE_TYPE";
+    const auto it = TYPE_STRINGS.find(type);
+    return (it != TYPE_STRINGS.end()) ? it->second : "UNKNOWN_MESSAGE_TYPE";
 }
 
 std::string to_string(ReturnCode code) {
-    static const std::unordered_map<ReturnCode, std::string> code_strings = {
+    static const std::unordered_map<ReturnCode, std::string> CODE_STRINGS = {
         {ReturnCode::E_OK, "E_OK"},
         {ReturnCode::E_NOT_OK, "E_NOT_OK"},
         {ReturnCode::E_UNKNOWN_SERVICE, "E_UNKNOWN_SERVICE"},
@@ -62,8 +62,8 @@ std::string to_string(ReturnCode code) {
         {ReturnCode::E_E2E_NO_NEW_DATA, "E_E2E_NO_NEW_DATA"}
     };
 
-    auto it = code_strings.find(code);
-    return (it != code_strings.end()) ? it->second : "UNKNOWN_RETURN_CODE";
+    const auto it = CODE_STRINGS.find(code);
+    return (it != CODE_STRINGS.end()) ? it->second : "UNKNOWN_RETURN_CODE";
 }
 
 bool is_request(MessageType type) {

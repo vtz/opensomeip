@@ -150,7 +150,7 @@ void Serializer::align_to(size_t alignment) {
     if (alignment == 0) {
         return;
     }
-    size_t current_size = buffer_.size();
+    const size_t current_size = buffer_.size();
     size_t const padding_needed = (alignment - (current_size % alignment)) % alignment;
 
     for (size_t i = 0; i < padding_needed; ++i) {
@@ -169,20 +169,20 @@ void Serializer::add_padding(size_t bytes) {
 }
 
 void Serializer::append_be_uint16(uint16_t value) {
-    uint16_t be_value = someip_htons(value);
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&be_value);
+    const uint16_t be_value = someip_htons(value);
+    auto bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint16_t));
 }
 
 void Serializer::append_be_uint32(uint32_t value) {
-    uint32_t be_value = someip_htonl(value);
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&be_value);
+    const uint32_t be_value = someip_htonl(value);
+    auto bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint32_t));
 }
 
 void Serializer::append_be_uint64(uint64_t value) {
     // Manual big-endian conversion for macOS compatibility
-    uint64_t be_value = ((value & 0xFF00000000000000ULL) >> 56) |
+    const uint64_t be_value = ((value & 0xFF00000000000000ULL) >> 56) |
                         ((value & 0x00FF000000000000ULL) >> 40) |
                         ((value & 0x0000FF0000000000ULL) >> 24) |
                         ((value & 0x000000FF00000000ULL) >> 8) |
@@ -190,7 +190,7 @@ void Serializer::append_be_uint64(uint64_t value) {
                         ((value & 0x0000000000FF0000ULL) << 24) |
                         ((value & 0x000000000000FF00ULL) << 40) |
                         ((value & 0x00000000000000FFULL) << 56);
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&be_value);
+    auto bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint64_t));
 }
 
@@ -257,7 +257,7 @@ DeserializationResult<bool> Deserializer::deserialize_bool() {
     if (position_ + sizeof(uint8_t) > buffer_.size()) {
         return DeserializationResult<bool>::error(Result::MALFORMED_MESSAGE);
     }
-    bool value = buffer_[position_++] != 0x00;
+    const bool value = buffer_[position_++] != 0x00;
     return DeserializationResult<bool>::success(value);
 }
 
@@ -270,7 +270,7 @@ DeserializationResult<uint8_t> Deserializer::deserialize_uint8() {
     if (position_ + sizeof(uint8_t) > buffer_.size()) {
         return DeserializationResult<uint8_t>::error(Result::MALFORMED_MESSAGE);
     }
-    uint8_t value = buffer_[position_++];
+    const uint8_t value = buffer_[position_++];
     return DeserializationResult<uint8_t>::success(value);
 }
 
@@ -394,13 +394,13 @@ DeserializationResult<std::string> Deserializer::deserialize_string() {
     if (length_result.is_error()) {
         return DeserializationResult<std::string>::error(length_result.get_error());
     }
-    uint32_t length = length_result.get_value();
+    const uint32_t length = length_result.get_value();
 
     if (position_ + length > buffer_.size()) {
         return DeserializationResult<std::string>::error(Result::MALFORMED_MESSAGE);
     }
 
-    auto first = buffer_.begin() + static_cast<std::ptrdiff_t>(position_);
+    const auto first = buffer_.begin() + static_cast<std::ptrdiff_t>(position_);
     std::string result(first, first + static_cast<std::ptrdiff_t>(length));
     position_ += length;
 

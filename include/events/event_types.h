@@ -81,7 +81,7 @@ struct EventSubscription {
     std::chrono::milliseconds cycle_time{0};  // For periodic events
     std::chrono::steady_clock::time_point last_notification{std::chrono::steady_clock::now()};
 
-    EventSubscription(uint16_t svc_id = 0, uint16_t inst_id = 0, uint16_t evt_id = 0, uint16_t eg_id = 0)
+    explicit EventSubscription(uint16_t svc_id = 0, uint16_t inst_id = 0, uint16_t evt_id = 0, uint16_t eg_id = 0)
         : service_id(svc_id), instance_id(inst_id), event_id(evt_id), eventgroup_id(eg_id) {
         last_notification = std::chrono::steady_clock::now();
     }
@@ -99,7 +99,7 @@ struct EventNotification {
     std::vector<uint8_t> event_data;
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
 
-    EventNotification(uint16_t svc_id = 0, uint16_t inst_id = 0, uint16_t evt_id = 0)
+    explicit EventNotification(uint16_t svc_id = 0, uint16_t inst_id = 0, uint16_t evt_id = 0)
         : service_id(svc_id), instance_id(inst_id), event_id(evt_id) {
         timestamp = std::chrono::steady_clock::now();
     }

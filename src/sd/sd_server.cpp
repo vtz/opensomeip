@@ -116,7 +116,7 @@ public:
         platform::ScopedLock const lock(offered_services_mutex_);
 
         // Check if service already offered
-        auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
+        const auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
             [&](const OfferedService& svc) {
                 return svc.instance.service_id == instance.service_id &&
                        svc.instance.instance_id == instance.instance_id;
@@ -152,7 +152,7 @@ public:
     bool stop_offer_service(uint16_t service_id, uint16_t instance_id) {
         platform::ScopedLock const lock(offered_services_mutex_);
 
-        auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
+        const auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
             [&](const OfferedService& svc) {
                 return svc.instance.service_id == service_id &&
                        svc.instance.instance_id == instance_id;
@@ -173,7 +173,7 @@ public:
     bool update_service_ttl(uint16_t service_id, uint16_t instance_id, uint32_t ttl_seconds) {
         platform::ScopedLock const lock(offered_services_mutex_);
 
-        auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
+        const auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
             [&](const OfferedService& svc) {
                 return svc.instance.service_id == service_id &&
                        svc.instance.instance_id == instance_id;
@@ -207,7 +207,7 @@ public:
         // Add IPv4 multicast option (spec requires multicast option for ACK)
         auto multicast_option = std::make_unique<IPv4MulticastOption>();
         // Convert multicast address to network byte order
-        in_addr_t multicast_addr = someip_inet_addr(config_.multicast_address.c_str());
+        const in_addr_t multicast_addr = someip_inet_addr(config_.multicast_address.c_str());
         multicast_option->set_ipv4_address(multicast_addr);
         multicast_option->set_port(someip_htons(config_.multicast_port));
         response_message.add_option(std::move(multicast_option));
@@ -218,7 +218,7 @@ public:
 
         // Send unicast response to client
         // Parse client_address (format: "ip:port" or just "ip")
-        size_t colon_pos = client_address.find(':');
+        const size_t colon_pos = client_address.find(':');
         std::string client_ip = client_address;
         uint16_t client_port = config_.unicast_port;  // Default to our unicast port
 
@@ -236,7 +236,7 @@ public:
         someip_message.set_payload(response_message.serialize());
 
         // Send the ACK message
-        Result result = transport_->send_message(someip_message, client_endpoint);
+        const Result result = transport_->send_message(someip_message, client_endpoint);
         return result == Result::SUCCESS;
     }
 
@@ -269,7 +269,7 @@ private:
     };
 
     bool join_multicast_group() {
-        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
+        const auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
         if (!udp_transport) {
             return false;
         }
@@ -278,7 +278,7 @@ private:
     }
 
     void leave_multicast_group() {
-        auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
+        const auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
         if (udp_transport) {
             udp_transport->leave_multicast_group(config_.multicast_address);
         }
@@ -321,9 +321,9 @@ private:
     void send_periodic_offers() {
         platform::ScopedLock const lock(offered_services_mutex_);
 
-        auto now = std::chrono::steady_clock::now();
+        const auto now = std::chrono::steady_clock::now();
         for (auto& service : offered_services_) {
-            auto time_since_last_offer = std::chrono::duration_cast<std::chrono::milliseconds>(
+            const auto time_since_last_offer = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now - service.last_offer_time);
 
             if (time_since_last_offer >= config_.cyclic_offer) {
@@ -357,10 +357,10 @@ private:
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
 
         // Parse unicast endpoint (format: "ip:port")
-        size_t colon_pos = service.unicast_endpoint.find(':');
+        const size_t colon_pos = service.unicast_endpoint.find(':');
         if (colon_pos != std::string::npos) {
-            std::string ip_str = service.unicast_endpoint.substr(0, colon_pos);
-            std::string port_str = service.unicast_endpoint.substr(colon_pos + 1);
+            const std::string ip_str = service.unicast_endpoint.substr(0, colon_pos);
+            const std::string port_str = service.unicast_endpoint.substr(colon_pos + 1);
 
             endpoint_option->set_ipv4_address_from_string(ip_str);
             endpoint_option->set_port(static_cast<uint16_t>(std::stoi(port_str)));
@@ -381,8 +381,8 @@ private:
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast offer
-        transport::Endpoint multicast_endpoint(config_.multicast_address, config_.multicast_port);
-        Result result = transport_->send_message(someip_message, multicast_endpoint);
+        transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
+        const Result result = transport_->send_message(someip_message, multicast_endpoint);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
         }
@@ -407,8 +407,8 @@ private:
         someip_message.set_payload(sd_message.serialize());
 
         // Send multicast stop offer
-        transport::Endpoint multicast_endpoint(config_.multicast_address, config_.multicast_port);
-        Result result = transport_->send_message(someip_message, multicast_endpoint);
+        transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
+        const Result result = transport_->send_message(someip_message, multicast_endpoint);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
         }
@@ -488,7 +488,7 @@ private:
         [[maybe_unused]] uint8_t client_protocol = 0x11;  // Default to UDP
 
         // Check if entry references an endpoint option
-        uint8_t index1 = subscription_entry.get_index1();
+        const uint8_t index1 = subscription_entry.get_index1();
         const auto& options = message.get_options();
 
         if (index1 < options.size()) {
@@ -530,10 +530,10 @@ private:
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
 
         // Parse unicast endpoint (format: "ip:port")
-        size_t colon_pos = service.unicast_endpoint.find(':');
+        const size_t colon_pos = service.unicast_endpoint.find(':');
         if (colon_pos != std::string::npos) {
-            std::string ip_str = service.unicast_endpoint.substr(0, colon_pos);
-            std::string port_str = service.unicast_endpoint.substr(colon_pos + 1);
+            const std::string ip_str = service.unicast_endpoint.substr(0, colon_pos);
+            const std::string port_str = service.unicast_endpoint.substr(colon_pos + 1);
 
             endpoint_option->set_ipv4_address_from_string(ip_str);
             endpoint_option->set_port(static_cast<uint16_t>(std::stoi(port_str)));
@@ -554,7 +554,7 @@ private:
         someip_message.set_payload(sd_message.serialize());
 
         // Send unicast offer to client
-        Result result = transport_->send_message(someip_message, client);
+        const Result result = transport_->send_message(someip_message, client);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
         }

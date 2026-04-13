@@ -15,6 +15,7 @@
 #include "platform/net.h"
 #include "platform/memory.h"
 #include "common/result.h"
+#include <array>
 #include <cstring>
 #include <iostream>
 
@@ -60,7 +61,7 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
     }
 
     // Serialize message
-    std::vector<uint8_t> data = message.serialize();
+    const std::vector<uint8_t> data = message.serialize();
 
     if (data.size() > MAX_UDP_PAYLOAD) {
         return Result::BUFFER_OVERFLOW;
@@ -401,11 +402,11 @@ Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint&
         return Result::NOT_CONNECTED;
     }
 
-    sockaddr_in dest_addr = create_sockaddr(endpoint);
+    const sockaddr_in dest_addr = create_sockaddr(endpoint);
     ssize_t sent = 0;
     do {
         sent = someip_sendto(socket_fd_, data.data(), data.size(), 0,
-                             reinterpret_cast<sockaddr*>(&dest_addr),
+                             reinterpret_cast<const sockaddr*>(&dest_addr),
                              sizeof(dest_addr));
     } while (sent < 0 && someip_socket_errno() == SOMEIP_EINTR);
 
@@ -463,10 +464,10 @@ sockaddr_in UdpTransport::create_sockaddr(const Endpoint& endpoint) const {
 }
 
 Endpoint UdpTransport::sockaddr_to_endpoint(const sockaddr_in& addr) const {
-    char ip_str[INET_ADDRSTRLEN];
-    someip_inet_ntop(AF_INET, &addr.sin_addr, ip_str, sizeof(ip_str));
+    std::array<char, INET_ADDRSTRLEN> ip_str{};
+    someip_inet_ntop(AF_INET, &addr.sin_addr, ip_str.data(), ip_str.size());
 
-    return Endpoint(ip_str, ntohs(addr.sin_port), TransportProtocol::UDP);
+    return Endpoint(ip_str.data(), ntohs(addr.sin_port), TransportProtocol::UDP);
 }
 
 bool UdpTransport::is_multicast_address(const std::string& address) const {

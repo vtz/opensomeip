@@ -15,6 +15,7 @@
 #include "platform/net.h"
 #include "platform/memory.h"
 #include "common/result.h"
+#include <array>
 #include <cstring>
 #include <iostream>
 #include <algorithm>
@@ -69,10 +70,10 @@ Result TcpTransport::send_message(const Message& message, const Endpoint& /*endp
     }
 
     // Serialize message
-    std::vector<uint8_t> data = message.serialize();
+    const std::vector<uint8_t> data = message.serialize();
 
     // Send data
-    Result result = send_data(connection_.socket_fd, data);
+    const Result result = send_data(connection_.socket_fd, data);
     if (result == Result::SUCCESS) {
         connection_.update_activity();
     }
@@ -203,7 +204,7 @@ someip_socket_t TcpTransport::accept_connection() {
     FD_SET(listen_socket_fd_, &read_fds);
 
     struct timeval tv = {0, 100000}; // 100ms
-    int sel = someip_select(static_cast<int>(listen_socket_fd_) + 1, &read_fds, nullptr, nullptr, &tv);
+    const int sel = someip_select(static_cast<int>(listen_socket_fd_) + 1, &read_fds, nullptr, nullptr, &tv);
     if (sel <= 0) {
         return SOMEIP_INVALID_SOCKET;
     }
@@ -329,7 +330,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         if (connect_result > 0) {
             int error = 0;
             socklen_t len = sizeof(error);
-            int gso_ret = someip_getsockopt(connection_.socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
+            const int gso_ret = someip_getsockopt(connection_.socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
 
             if (gso_ret == 0 && error == 0) {
                 connection_.state = TcpConnectionState::CONNECTED;
@@ -442,8 +443,8 @@ void TcpTransport::receive_loop() {
 void TcpTransport::connection_monitor_loop() {
     while (running_) {
         if (is_connected()) {
-            auto now = std::chrono::steady_clock::now();
-            auto time_since_activity = std::chrono::duration_cast<std::chrono::milliseconds>(
+            const auto now = std::chrono::steady_clock::now();
+            const auto time_since_activity = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now - connection_.last_activity);
 
             if (time_since_activity > std::chrono::minutes(5)) {
@@ -486,13 +487,13 @@ Result TcpTransport::send_data(someip_socket_t socket_fd, const std::vector<uint
 /** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04 */
 Result TcpTransport::receive_data(someip_socket_t socket_fd, std::vector<uint8_t>& data) {
     // Respect maximum receive buffer size from config
-    size_t max_chunk_size = std::min(static_cast<size_t>(4096), config_.max_receive_buffer - data.size());
+    const size_t max_chunk_size = std::min(static_cast<size_t>(4096), config_.max_receive_buffer - data.size());
     if (max_chunk_size == 0) {
         return Result::BUFFER_OVERFLOW;  // Already at buffer limit
     }
 
-    uint8_t buffer[4096];
-    ssize_t received = someip_recv(socket_fd, buffer, max_chunk_size, 0);
+    std::array<uint8_t, 4096> buffer{};
+    const ssize_t received = someip_recv(socket_fd, buffer.data(), max_chunk_size, 0);
 
     if (received < 0) {
         int const err = someip_socket_errno();
@@ -504,7 +505,7 @@ Result TcpTransport::receive_data(someip_socket_t socket_fd, std::vector<uint8_t
         return Result::NETWORK_ERROR;  // Connection closed
     }
 
-    data.insert(data.end(), buffer, buffer + received);
+    data.insert(data.end(), buffer.begin(), buffer.begin() + received);
     return Result::SUCCESS;
 }
 
@@ -524,7 +525,7 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
 
     // Parse message length from header (bytes 4-7 in big-endian)
     // Length field contains length from client_id to end of message
-    uint32_t length_from_client_id = (buffer[4] << 24) | (buffer[5] << 16) | (buffer[6] << 8) | buffer[7];
+    const uint32_t length_from_client_id = (buffer[4] << 24) | (buffer[5] << 16) | (buffer[6] << 8) | buffer[7];
 
     if (length_from_client_id < 8 || length_from_client_id > MAX_MESSAGE_SIZE) {
         // Invalid message length - try to resync by skipping this potential header
@@ -556,15 +557,15 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
     }
 
     // Total message size = message_id(4) + length(4) + length_from_client_id
-    size_t total_message_size = 8 + length_from_client_id;
+    const size_t total_message_size = 8 + length_from_client_id;
 
     if (buffer.size() < total_message_size) {
         return false;  // Need more data
     }
 
     // Extract message data
-    auto msg_end = buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size);
-    std::vector<uint8_t> message_data(buffer.begin(), msg_end);
+    const auto msg_end = buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size);
+    const std::vector<uint8_t> message_data(buffer.begin(), msg_end);
     buffer.erase(buffer.begin(), msg_end);
 
     // Parse message

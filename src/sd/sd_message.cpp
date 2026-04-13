@@ -16,7 +16,9 @@
 #include "platform/byteorder.h"
 #include "platform/net.h"
 #include <algorithm>
+#include <array>
 #include <iostream>
+#include <string>
 
 namespace someip::sd {
 
@@ -78,7 +80,7 @@ bool SdEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     type_ = static_cast<EntryType>(data[offset++]);   // byte 0
     index1_ = data[offset++];                          // byte 1
     index2_ = data[offset++];                          // byte 2
-    uint8_t opts_byte = data[offset++];                // byte 3
+    const uint8_t opts_byte = data[offset++];          // byte 3
     num_opts1_ = (opts_byte >> 4) & 0x0F;
     num_opts2_ = opts_byte & 0x0F;
 
@@ -290,11 +292,11 @@ void IPv4EndpointOption::set_ipv4_address_from_string(const std::string& ip_addr
 }
 
 std::string IPv4EndpointOption::get_ipv4_address_string() const {
-    char buffer[INET_ADDRSTRLEN];
+    std::array<char, INET_ADDRSTRLEN> buffer{};
     struct in_addr addr{};
     addr.s_addr = ipv4_address_;  // Already in network byte order
-    someip_inet_ntop(AF_INET, &addr, buffer, sizeof(buffer));
-    return buffer;
+    someip_inet_ntop(AF_INET, &addr, buffer.data(), buffer.size());
+    return std::string(buffer.data());
 }
 
 // IPv4MulticastOption implementation
@@ -371,7 +373,7 @@ std::vector<uint8_t> ConfigurationOption::serialize() const {
     data.insert(data.end(), config_string_.begin(), config_string_.end());
 
     // Update length
-    uint16_t length = static_cast<uint16_t>(config_string_.size());
+    const auto length = static_cast<uint16_t>(config_string_.size());
     data[2] = (length >> 8) & 0xFF;
     data[3] = length & 0xFF;
 
@@ -389,7 +391,7 @@ bool ConfigurationOption::deserialize(const std::vector<uint8_t>& data, size_t& 
     }
 
     // Extract configuration string
-    auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
+    const auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
     config_string_.assign(first, first + static_cast<std::ptrdiff_t>(length_));
     offset += length_;
 
@@ -410,7 +412,7 @@ std::vector<uint8_t> SdMessage::serialize() const {
     std::vector<uint8_t> data;
 
     // Flags (1 byte) - ensure reserved bits 5-0 are zero (REQ_SD_013)
-    uint8_t flags_to_send = flags_ & 0xC0;
+    const uint8_t flags_to_send = flags_ & 0xC0;
     data.push_back(flags_to_send);
 
     // Reserved (3 bytes)
@@ -419,19 +421,19 @@ std::vector<uint8_t> SdMessage::serialize() const {
     data.push_back(reserved_ & 0xFF);
 
     // Length of Entries Array (4 bytes) - placeholder
-    size_t entries_len_offset = data.size();
+    const size_t entries_len_offset = data.size();
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
 
     // Entries Array
-    size_t entries_start = data.size();
+    const size_t entries_start = data.size();
     for (const auto& entry : entries_) {
         auto entry_data = entry->serialize();
         data.insert(data.end(), entry_data.begin(), entry_data.end());
     }
-    uint32_t entries_length = data.size() - entries_start;
+    const uint32_t entries_length = static_cast<uint32_t>(data.size() - entries_start);
 
     // Back-fill Length of Entries Array
     data[entries_len_offset]     = (entries_length >> 24) & 0xFF;
@@ -440,19 +442,19 @@ std::vector<uint8_t> SdMessage::serialize() const {
     data[entries_len_offset + 3] = entries_length & 0xFF;
 
     // Length of Options Array (4 bytes) - placeholder
-    size_t options_len_offset = data.size();
+    const size_t options_len_offset = data.size();
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
 
     // Options Array
-    size_t options_start = data.size();
+    const size_t options_start = data.size();
     for (const auto& option : options_) {
         auto option_data = option->serialize();
         data.insert(data.end(), option_data.begin(), option_data.end());
     }
-    uint32_t options_length = data.size() - options_start;
+    const uint32_t options_length = static_cast<uint32_t>(data.size() - options_start);
 
     // Back-fill Length of Options Array
     data[options_len_offset]     = (options_length >> 24) & 0xFF;
@@ -477,8 +479,8 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     offset += 3;
 
     // Length of Entries Array (4 bytes)
-    uint32_t entries_length = (data[offset] << 24) | (data[offset + 1] << 16) |
-                              (data[offset + 2] << 8) | data[offset + 3];
+    const uint32_t entries_length = (data[offset] << 24) | (data[offset + 1] << 16) |
+                                    (data[offset + 2] << 8) | data[offset + 3];
     offset += 4;
 
     if (offset + entries_length > data.size()) {
@@ -492,7 +494,7 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     // Parse entries (each entry is exactly 16 bytes)
     size_t const entries_end = offset + entries_length;
     while (offset + 16 <= entries_end) {
-        uint8_t raw_entry_type = data[offset];
+        const uint8_t raw_entry_type = data[offset];
 
         std::unique_ptr<SdEntry> entry;
         if (raw_entry_type == 0x00 || raw_entry_type == 0x01) {
@@ -513,8 +515,8 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     if (offset + 4 > data.size()) {
         return true;  // no options section present
     }
-    uint32_t options_length = (data[offset] << 24) | (data[offset + 1] << 16) |
-                              (data[offset + 2] << 8) | data[offset + 3];
+    const uint32_t options_length = (data[offset] << 24) | (data[offset + 1] << 16) |
+                                    (data[offset + 2] << 8) | data[offset + 3];
     offset += 4;
 
     if (offset + options_length > data.size()) {
@@ -530,7 +532,7 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
 
         // Options start with length(2) + type(1) + reserved(1).
         // Peek at the type byte (offset + 2) to determine the option kind.
-        uint8_t type_byte = data[offset + 2];
+        const uint8_t type_byte = data[offset + 2];
         OptionType const option_type = static_cast<OptionType>(type_byte);
         std::unique_ptr<SdOption> option;
 
@@ -542,7 +544,7 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
             option = std::make_unique<IPv4MulticastOption>();
         } else {
             // Skip unknown option
-            uint16_t option_len = (data[offset] << 8) | data[offset + 1];
+            const uint16_t option_len = (data[offset] << 8) | data[offset + 1];
             offset += 4 + option_len;
             continue;
         }
