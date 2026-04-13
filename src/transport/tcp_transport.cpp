@@ -525,7 +525,9 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
 
     // Parse message length from header (bytes 4-7 in big-endian)
     // Length field contains length from client_id to end of message
-    const uint32_t length_from_client_id = (buffer[4] << 24) | (buffer[5] << 16) | (buffer[6] << 8) | buffer[7];
+    const uint32_t length_from_client_id =
+        (static_cast<uint32_t>(buffer[4]) << 24U) | (static_cast<uint32_t>(buffer[5]) << 16U) |
+        (static_cast<uint32_t>(buffer[6]) << 8U) | static_cast<uint32_t>(buffer[7]);
 
     if (length_from_client_id < 8 || length_from_client_id > MAX_MESSAGE_SIZE) {
         // Invalid message length - try to resync by skipping this potential header
@@ -535,10 +537,11 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
 
         while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
             // Check if this looks like a valid SOME/IP header
-            uint32_t potential_msg_id = (buffer[search_start] << 24) |
-                                       (buffer[search_start + 1] << 16) |
-                                       (buffer[search_start + 2] << 8) |
-                                       buffer[search_start + 3];
+            uint32_t potential_msg_id =
+                (static_cast<uint32_t>(buffer[search_start]) << 24U) |
+                (static_cast<uint32_t>(buffer[search_start + 1]) << 16U) |
+                (static_cast<uint32_t>(buffer[search_start + 2]) << 8U) |
+                static_cast<uint32_t>(buffer[search_start + 3]);
             if (potential_msg_id != 0) {  // Found a non-zero message ID
                 // Discard data before this potential header
                 buffer.erase(buffer.begin(),

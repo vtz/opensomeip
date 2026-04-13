@@ -46,7 +46,9 @@ static inline int someip_set_nonblocking(someip_socket_t fd) {
     if (flags < 0) {
         return -1;
     }
-    return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    return fcntl(fd, F_SETFL,
+                 static_cast<int>(static_cast<unsigned int>(flags) |
+                                  static_cast<unsigned int>(O_NONBLOCK)));
 }
 
 /** @implements REQ_PAL_NET_BLOCK, REQ_PAL_NET_MODE_E01 */
@@ -55,7 +57,9 @@ static inline int someip_set_blocking(someip_socket_t fd) {
     if (flags < 0) {
         return -1;
     }
-    return fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+    return fcntl(fd, F_SETFL,
+                 static_cast<int>(static_cast<unsigned int>(flags) &
+                                  ~static_cast<unsigned int>(O_NONBLOCK)));
 }
 
 /* ---------- Socket creation & connection ----------------------------------- */

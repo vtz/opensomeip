@@ -48,7 +48,7 @@ std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& con
  */
 class SdServerImpl : public transport::ITransportListener {
 public:
-    SdServerImpl(const SdConfig& config)
+    explicit SdServerImpl(const SdConfig& config)
         : config_(config),
           transport_(create_sd_transport(config)),
           next_offer_delay_(config.initial_delay),

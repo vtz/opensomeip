@@ -170,27 +170,27 @@ void Serializer::add_padding(size_t bytes) {
 
 void Serializer::append_be_uint16(uint16_t value) {
     const uint16_t be_value = someip_htons(value);
-    auto bytes = reinterpret_cast<const uint8_t*>(&be_value);
+    const auto* bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint16_t));
 }
 
 void Serializer::append_be_uint32(uint32_t value) {
     const uint32_t be_value = someip_htonl(value);
-    auto bytes = reinterpret_cast<const uint8_t*>(&be_value);
+    const auto* bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint32_t));
 }
 
 void Serializer::append_be_uint64(uint64_t value) {
     // Manual big-endian conversion for macOS compatibility
-    const uint64_t be_value = ((value & 0xFF00000000000000ULL) >> 56) |
-                        ((value & 0x00FF000000000000ULL) >> 40) |
-                        ((value & 0x0000FF0000000000ULL) >> 24) |
-                        ((value & 0x000000FF00000000ULL) >> 8) |
-                        ((value & 0x00000000FF000000ULL) << 8) |
-                        ((value & 0x0000000000FF0000ULL) << 24) |
-                        ((value & 0x000000000000FF00ULL) << 40) |
-                        ((value & 0x00000000000000FFULL) << 56);
-    auto bytes = reinterpret_cast<const uint8_t*>(&be_value);
+    const uint64_t be_value = ((value & 0xFF00000000000000ULL) >> 56U) |
+                        ((value & 0x00FF000000000000ULL) >> 40U) |
+                        ((value & 0x0000FF0000000000ULL) >> 24U) |
+                        ((value & 0x000000FF00000000ULL) >> 8U) |
+                        ((value & 0x00000000FF000000ULL) << 8U) |
+                        ((value & 0x0000000000FF0000ULL) << 24U) |
+                        ((value & 0x000000000000FF00ULL) << 40U) |
+                        ((value & 0x00000000000000FFULL) << 56U);
+    const auto* bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint64_t));
 }
 
@@ -470,14 +470,14 @@ std::optional<uint64_t> Deserializer::read_be_uint64() {
     position_ += sizeof(uint64_t);
 
     // Manual big-endian to host conversion for macOS compatibility
-    return ((be_value & 0xFF00000000000000ULL) >> 56) |
-           ((be_value & 0x00FF000000000000ULL) >> 40) |
-           ((be_value & 0x0000FF0000000000ULL) >> 24) |
-           ((be_value & 0x000000FF00000000ULL) >> 8) |
-           ((be_value & 0x00000000FF000000ULL) << 8) |
-           ((be_value & 0x0000000000FF0000ULL) << 24) |
-           ((be_value & 0x000000000000FF00ULL) << 40) |
-           ((be_value & 0x00000000000000FFULL) << 56);
+    return ((be_value & 0xFF00000000000000ULL) >> 56U) |
+           ((be_value & 0x00FF000000000000ULL) >> 40U) |
+           ((be_value & 0x0000FF0000000000ULL) >> 24U) |
+           ((be_value & 0x000000FF00000000ULL) >> 8U) |
+           ((be_value & 0x00000000FF000000ULL) << 8U) |
+           ((be_value & 0x0000000000FF0000ULL) << 24U) |
+           ((be_value & 0x000000000000FF00ULL) << 40U) |
+           ((be_value & 0x00000000000000FFULL) << 56U);
 }
 
 std::optional<int16_t> Deserializer::read_be_int16() {

@@ -149,7 +149,8 @@ bool Endpoint::is_valid_ipv4(const std::string& address) const {
             return false;
         }
 
-        int const val = std::atoi(address.substr(start, digit_len).c_str());
+        int const val = static_cast<int>(
+            std::strtol(address.substr(start, digit_len).c_str(), nullptr, 10));
         if (val < 0 || val > 255) {
             return false;
         }

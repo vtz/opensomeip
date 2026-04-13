@@ -34,7 +34,7 @@ namespace someip::events {
  */
 class EventSubscriberImpl : public transport::ITransportListener {
 public:
-    EventSubscriberImpl(uint16_t client_id)
+    explicit EventSubscriberImpl(uint16_t client_id)
         : client_id_(client_id),
           transport_(std::make_shared<transport::UdpTransport>(
               transport::Endpoint("127.0.0.1", 0))),
@@ -112,8 +112,8 @@ public:
 
         // Add subscription data to payload
         std::vector<uint8_t> payload;
-        payload.push_back((eventgroup_id >> 8) & 0xFF);
-        payload.push_back(eventgroup_id & 0xFF);
+        payload.push_back(static_cast<uint8_t>((static_cast<uint32_t>(eventgroup_id) >> 8U) & 0xFFU));
+        payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
         subscription_msg.set_payload(payload);
 
         Result send_result = transport_->send_message(subscription_msg, service_endpoint);
@@ -146,8 +146,8 @@ public:
 
         // Add unsubscription data to payload
         std::vector<uint8_t> payload;
-        payload.push_back((eventgroup_id >> 8) & 0xFF);
-        payload.push_back(eventgroup_id & 0xFF);
+        payload.push_back(static_cast<uint8_t>((static_cast<uint32_t>(eventgroup_id) >> 8U) & 0xFFU));
+        payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
         unsubscription_msg.set_payload(payload);
 
         Result result = transport_->send_message(unsubscription_msg, service_endpoint);
@@ -181,8 +181,8 @@ public:
 
         // Add field ID to payload
         std::vector<uint8_t> payload;
-        payload.push_back((event_id >> 8) & 0xFF);
-        payload.push_back(event_id & 0xFF);
+        payload.push_back(static_cast<uint8_t>((static_cast<uint32_t>(event_id) >> 8U) & 0xFFU));
+        payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(event_id) & 0xFFU));
         field_msg.set_payload(payload);
 
         return transport_->send_message(field_msg, service_endpoint) == Result::SUCCESS;

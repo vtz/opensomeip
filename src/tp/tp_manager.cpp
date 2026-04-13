@@ -65,7 +65,8 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
     // Create new transfer
     transfer_id = next_transfer_id_++;
     uint32_t const message_id =
-        (static_cast<uint32_t>(message.get_service_id()) << 16) | message.get_method_id();
+        (static_cast<uint32_t>(message.get_service_id()) << 16U) |
+        static_cast<uint32_t>(message.get_method_id());
 
     TpTransfer transfer(transfer_id, message_id);
 

@@ -220,22 +220,22 @@ public:
     bool deserialize(const std::vector<uint8_t>& data);
 
     // Helper methods
-    bool is_reboot() const { return (flags_ & 0x80) != 0; }
-    bool is_unicast() const { return (flags_ & 0x40) != 0; }
+    bool is_reboot() const { return (static_cast<uint32_t>(flags_) & 0x80U) != 0; }
+    bool is_unicast() const { return (static_cast<uint32_t>(flags_) & 0x40U) != 0; }
 
     void set_reboot(bool reboot) {
         if (reboot) {
-            flags_ |= 0x80;
+            flags_ = static_cast<uint8_t>(static_cast<uint32_t>(flags_) | 0x80U);
         } else {
-            flags_ &= ~0x80;
+            flags_ = static_cast<uint8_t>(static_cast<uint32_t>(flags_) & ~0x80U);
         }
     }
 
     void set_unicast(bool unicast) {
         if (unicast) {
-            flags_ |= 0x40;
+            flags_ = static_cast<uint8_t>(static_cast<uint32_t>(flags_) | 0x40U);
         } else {
-            flags_ &= ~0x40;
+            flags_ = static_cast<uint8_t>(static_cast<uint32_t>(flags_) & ~0x40U);
         }
     }
 

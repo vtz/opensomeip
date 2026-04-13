@@ -34,20 +34,20 @@ static constexpr uint8_t SAE_J1850_INIT = 0xFF;
 
 /** @implements REQ_E2E_PLUGIN_004 */
 uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data) {
-    uint8_t crc = SAE_J1850_INIT;
+    uint32_t crc_reg = SAE_J1850_INIT;
 
     for (uint8_t byte : data) {
-        crc ^= byte;
+        crc_reg ^= static_cast<uint32_t>(byte);
         for (int i = 0; i < 8; ++i) {
-            if ((crc & 0x80) != 0) {
-                crc = (crc << 1) ^ SAE_J1850_POLY;
+            if ((crc_reg & 0x80U) != 0) {
+                crc_reg = ((crc_reg << 1U) ^ static_cast<uint32_t>(SAE_J1850_POLY)) & 0xFFU;
             } else {
-                crc <<= 1;
+                crc_reg = (crc_reg << 1U) & 0xFFU;
             }
         }
     }
 
-    return crc;
+    return static_cast<uint8_t>(crc_reg);
 }
 
 // ITU-T X.25 / CCITT CRC-16 polynomial: 0x1021 (x^16 + x^12 + x^5 + 1)
@@ -55,20 +55,20 @@ static constexpr uint16_t ITU_X25_POLY = 0x1021;
 static constexpr uint16_t ITU_X25_INIT = 0xFFFF;
 
 uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data) {
-    uint16_t crc = ITU_X25_INIT;
+    uint32_t crc_reg = ITU_X25_INIT;
 
     for (uint8_t byte : data) {
-        crc ^= (static_cast<uint16_t>(byte) << 8);
+        crc_reg ^= static_cast<uint32_t>(byte) << 8U;
         for (int i = 0; i < 8; ++i) {
-            if ((crc & 0x8000) != 0) {
-                crc = (crc << 1) ^ ITU_X25_POLY;
+            if ((crc_reg & 0x8000U) != 0) {
+                crc_reg = ((crc_reg << 1U) ^ static_cast<uint32_t>(ITU_X25_POLY)) & 0xFFFFU;
             } else {
-                crc <<= 1;
+                crc_reg = (crc_reg << 1U) & 0xFFFFU;
             }
         }
     }
 
-    return crc;
+    return static_cast<uint16_t>(crc_reg);
 }
 
 // CRC-32 polynomial: 0x04C11DB7 (IEEE 802.3)
@@ -81,12 +81,12 @@ const std::array<uint32_t, 256>& get_crc32_table() {
     static const std::array<uint32_t, 256> table = [] {
         std::array<uint32_t, 256> t{};
         for (uint32_t i = 0; i < 256; ++i) {
-            uint32_t crc = i << 24;
+            uint32_t crc = i << 24U;
             for (int j = 0; j < 8; ++j) {
-                if (crc & 0x80000000) {
-                    crc = (crc << 1) ^ CRC32_POLY;
+                if (crc & 0x80000000U) {
+                    crc = (crc << 1U) ^ CRC32_POLY;
                 } else {
-                    crc <<= 1;
+                    crc <<= 1U;
                 }
             }
             t[i] = crc;
@@ -104,8 +104,8 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
     uint32_t crc = CRC32_INIT;
 
     for (uint8_t byte : data) {
-        uint32_t index = ((crc >> 24) ^ byte) & 0xFF;
-        crc = (crc << 8) ^ crc32_table[index];
+        uint32_t index = ((crc >> 24U) ^ static_cast<uint32_t>(byte)) & 0xFFU;
+        crc = (crc << 8U) ^ crc32_table[index];
     }
 
     return crc;

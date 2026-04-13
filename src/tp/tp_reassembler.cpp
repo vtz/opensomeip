@@ -50,13 +50,13 @@ bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
 
     // TP header starts at offset 16 (after SOME/IP header)
     uint32_t const tp_header =
-        (static_cast<uint32_t>(payload[16]) << 24) |
-        (static_cast<uint32_t>(payload[17]) << 16) |
-        (static_cast<uint32_t>(payload[18]) << 8) |
+        (static_cast<uint32_t>(payload[16]) << 24U) |
+        (static_cast<uint32_t>(payload[17]) << 16U) |
+        (static_cast<uint32_t>(payload[18]) << 8U) |
         static_cast<uint32_t>(payload[19]);
 
     // Extract offset (28 bits, divided by 4 to get byte offset)
-    uint32_t const offset_units = tp_header >> 4;
+    uint32_t const offset_units = tp_header >> 4U;
     offset = offset_units * 16;  // Convert back to bytes
 
     // Check offset alignment (REQ_TP_015_E01)
@@ -66,7 +66,7 @@ bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
     }
 
     // Extract more segments flag (bit 0)
-    more_segments = (tp_header & 0x01) != 0;
+    more_segments = (tp_header & 0x01U) != 0;
 
     // Reserved bits (bits 1-3) are ignored (REQ_TP_018)
 
