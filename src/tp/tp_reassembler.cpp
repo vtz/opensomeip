@@ -49,8 +49,11 @@ bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
     }
 
     // TP header starts at offset 16 (after SOME/IP header)
-    uint32_t const tp_header = (payload[16] << 24) | (payload[17] << 16) |
-                        (payload[18] << 8) | payload[19];
+    uint32_t const tp_header =
+        (static_cast<uint32_t>(payload[16]) << 24) |
+        (static_cast<uint32_t>(payload[17]) << 16) |
+        (static_cast<uint32_t>(payload[18]) << 8) |
+        static_cast<uint32_t>(payload[19]);
 
     // Extract offset (28 bits, divided by 4 to get byte offset)
     uint32_t const offset_units = tp_header >> 4;
