@@ -246,7 +246,7 @@ public:
             auto now = std::chrono::steady_clock::now();
             auto ms_now = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now.time_since_epoch()).count();
-            uint16_t current_freshness = static_cast<uint16_t>(ms_now & 0xFFFF);
+            auto current_freshness = static_cast<uint16_t>(ms_now & 0xFFFF);
 
             // Calculate freshness difference (handle wrap-around)
             // Since we're using 16-bit values, we need to handle wrap-around
@@ -264,7 +264,7 @@ public:
             // Convert timeout to 16-bit units (approximately)
             // Since we're storing lower 16 bits of milliseconds,
             // we compare against timeout_ms directly (assuming timeout < 65535 ms)
-            uint16_t const timeout_units = static_cast<uint16_t>(config.freshness_timeout_ms);
+            auto const timeout_units = static_cast<uint16_t>(config.freshness_timeout_ms);
             if (freshness_diff > timeout_units && freshness_diff < (0xFFFF - timeout_units)) {
                 // If difference is large and not due to wrap-around, it's stale
                 return Result::TIMEOUT;  // Stale data

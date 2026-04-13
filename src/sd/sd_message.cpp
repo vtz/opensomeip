@@ -16,7 +16,9 @@
 #include "platform/byteorder.h"
 #include "platform/net.h"
 #include <algorithm>
+#include <array>
 #include <iostream>
+#include <string>
 
 namespace someip::sd {
 
@@ -78,7 +80,7 @@ bool SdEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
     type_ = static_cast<EntryType>(data[offset++]);   // byte 0
     index1_ = data[offset++];                          // byte 1
     index2_ = data[offset++];                          // byte 2
-    uint8_t opts_byte = data[offset++];                // byte 3
+    const uint8_t opts_byte = data[offset++];          // byte 3
     num_opts1_ = (opts_byte >> 4) & 0x0F;
     num_opts2_ = opts_byte & 0x0F;
 
@@ -120,12 +122,10 @@ bool ServiceEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset)
 
     // SdEntry::deserialize consumed bytes 0-4 (type, idx1, idx2, opts, skip).
     // We're now at byte 5 within the 16-byte entry.
-    service_id_ = (data[offset] << 8) | data[offset + 1];
-    instance_id_ = (data[offset + 2] << 8) | data[offset + 3];
+    service_id_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8) | data[offset + 1]);
+    instance_id_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset + 2]) << 8) | data[offset + 3]);
     major_version_ = data[offset + 4];
-    // TTL is 24-bit (bytes 9-11 of the entry)
-    ttl_ = (data[offset + 5] << 16) | (data[offset + 6] << 8) | data[offset + 7];
-    // Minor version is 32-bit (bytes 12-15), but stored as uint8_t (low byte)
+    ttl_ = (static_cast<uint32_t>(data[offset + 5]) << 16) | (static_cast<uint32_t>(data[offset + 6]) << 8) | data[offset + 7];
     minor_version_ = data[offset + 11];
 
     offset += 12;
@@ -166,14 +166,11 @@ bool EventGroupEntry::deserialize(const std::vector<uint8_t>& data, size_t& offs
         return false;
     }
 
-    service_id_ = (data[offset] << 8) | data[offset + 1];
-    instance_id_ = (data[offset + 2] << 8) | data[offset + 3];
+    service_id_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8) | data[offset + 1]);
+    instance_id_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset + 2]) << 8) | data[offset + 3]);
     major_version_ = data[offset + 4];
-    // TTL is 24-bit (bytes 9-11 of the entry)
-    ttl_ = (data[offset + 5] << 16) | (data[offset + 6] << 8) | data[offset + 7];
-    // Bytes 12-13: Reserved + Counter (skip)
-    // Bytes 14-15: EventGroup ID
-    eventgroup_id_ = (data[offset + 10] << 8) | data[offset + 11];
+    ttl_ = (static_cast<uint32_t>(data[offset + 5]) << 16) | (static_cast<uint32_t>(data[offset + 6]) << 8) | data[offset + 7];
+    eventgroup_id_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset + 10]) << 8) | data[offset + 11]);
 
     offset += 12;
     return true;
@@ -201,7 +198,7 @@ bool SdOption::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
         return false;
     }
 
-    length_ = (data[offset] << 8) | data[offset + 1];
+    length_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8) | data[offset + 1]);
     offset += 2;
 
     type_ = static_cast<OptionType>(data[offset++]);
@@ -252,8 +249,10 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
     }
 
     // IPv4 Address (4 bytes, network byte order)
-    ipv4_address_ = (data[offset] << 24) | (data[offset + 1] << 16) |
-                   (data[offset + 2] << 8) | data[offset + 3];
+    ipv4_address_ = (static_cast<uint32_t>(data[offset]) << 24) |
+                    (static_cast<uint32_t>(data[offset + 1]) << 16) |
+                    (static_cast<uint32_t>(data[offset + 2]) << 8) |
+                    static_cast<uint32_t>(data[offset + 3]);
     offset += 4;
 
     // Validate IP address (REQ_SD_064_E01)
@@ -273,7 +272,7 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
     protocol_ = data[offset++];
 
     // Port (2 bytes, network byte order)
-    uint16_t network_port = (data[offset] << 8) | data[offset + 1];
+    uint16_t network_port = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8) | data[offset + 1]);
     port_ = someip_ntohs(network_port);
     offset += 2;
 
@@ -290,11 +289,11 @@ void IPv4EndpointOption::set_ipv4_address_from_string(const std::string& ip_addr
 }
 
 std::string IPv4EndpointOption::get_ipv4_address_string() const {
-    char buffer[INET_ADDRSTRLEN];
+    std::array<char, INET_ADDRSTRLEN> buffer{};
     struct in_addr addr{};
     addr.s_addr = ipv4_address_;  // Already in network byte order
-    someip_inet_ntop(AF_INET, &addr, buffer, sizeof(buffer));
-    return buffer;
+    someip_inet_ntop(AF_INET, &addr, buffer.data(), buffer.size());
+    return std::string(buffer.data());
 }
 
 // IPv4MulticastOption implementation
@@ -333,8 +332,10 @@ bool IPv4MulticastOption::deserialize(const std::vector<uint8_t>& data, size_t& 
         return false;
     }
 
-    ipv4_address_ = (data[offset] << 24) | (data[offset + 1] << 16) |
-                   (data[offset + 2] << 8) | data[offset + 3];
+    ipv4_address_ = (static_cast<uint32_t>(data[offset]) << 24) |
+                    (static_cast<uint32_t>(data[offset + 1]) << 16) |
+                    (static_cast<uint32_t>(data[offset + 2]) << 8) |
+                    static_cast<uint32_t>(data[offset + 3]);
     offset += 5;  // Skip address + reserved
 
     // Validate IP address (REQ_SD_064_E01)
@@ -344,9 +345,8 @@ bool IPv4MulticastOption::deserialize(const std::vector<uint8_t>& data, size_t& 
                   << ((ipv4_address_ >> 16) & 0xFF) << "."
                   << ((ipv4_address_ >> 8) & 0xFF) << "."
                   << (ipv4_address_ & 0xFF) << '\n';
-        // Continue processing despite invalid address
     }
-    port_ = (data[offset] << 8) | data[offset + 1];
+    port_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8) | data[offset + 1]);
     offset += 2;
 
     return true;
@@ -371,7 +371,7 @@ std::vector<uint8_t> ConfigurationOption::serialize() const {
     data.insert(data.end(), config_string_.begin(), config_string_.end());
 
     // Update length
-    uint16_t length = static_cast<uint16_t>(config_string_.size());
+    const auto length = static_cast<uint16_t>(config_string_.size());
     data[2] = (length >> 8) & 0xFF;
     data[3] = length & 0xFF;
 
@@ -389,7 +389,7 @@ bool ConfigurationOption::deserialize(const std::vector<uint8_t>& data, size_t& 
     }
 
     // Extract configuration string
-    auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
+    const auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
     config_string_.assign(first, first + static_cast<std::ptrdiff_t>(length_));
     offset += length_;
 
@@ -410,7 +410,7 @@ std::vector<uint8_t> SdMessage::serialize() const {
     std::vector<uint8_t> data;
 
     // Flags (1 byte) - ensure reserved bits 5-0 are zero (REQ_SD_013)
-    uint8_t flags_to_send = flags_ & 0xC0;
+    const uint8_t flags_to_send = flags_ & 0xC0;
     data.push_back(flags_to_send);
 
     // Reserved (3 bytes)
@@ -419,19 +419,19 @@ std::vector<uint8_t> SdMessage::serialize() const {
     data.push_back(reserved_ & 0xFF);
 
     // Length of Entries Array (4 bytes) - placeholder
-    size_t entries_len_offset = data.size();
+    const size_t entries_len_offset = data.size();
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
 
     // Entries Array
-    size_t entries_start = data.size();
+    const size_t entries_start = data.size();
     for (const auto& entry : entries_) {
         auto entry_data = entry->serialize();
         data.insert(data.end(), entry_data.begin(), entry_data.end());
     }
-    uint32_t entries_length = data.size() - entries_start;
+    const uint32_t entries_length = static_cast<uint32_t>(data.size() - entries_start);
 
     // Back-fill Length of Entries Array
     data[entries_len_offset]     = (entries_length >> 24) & 0xFF;
@@ -440,19 +440,19 @@ std::vector<uint8_t> SdMessage::serialize() const {
     data[entries_len_offset + 3] = entries_length & 0xFF;
 
     // Length of Options Array (4 bytes) - placeholder
-    size_t options_len_offset = data.size();
+    const size_t options_len_offset = data.size();
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
     data.push_back(0);
 
     // Options Array
-    size_t options_start = data.size();
+    const size_t options_start = data.size();
     for (const auto& option : options_) {
         auto option_data = option->serialize();
         data.insert(data.end(), option_data.begin(), option_data.end());
     }
-    uint32_t options_length = data.size() - options_start;
+    const uint32_t options_length = static_cast<uint32_t>(data.size() - options_start);
 
     // Back-fill Length of Options Array
     data[options_len_offset]     = (options_length >> 24) & 0xFF;
@@ -473,12 +473,14 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
 
     // Flags (1 byte) + Reserved (3 bytes)
     flags_ = data[offset++];
-    reserved_ = (data[offset] << 16) | (data[offset + 1] << 8) | data[offset + 2];
+    reserved_ = (static_cast<uint32_t>(data[offset]) << 16) | (static_cast<uint32_t>(data[offset + 1]) << 8) | data[offset + 2];
     offset += 3;
 
     // Length of Entries Array (4 bytes)
-    uint32_t entries_length = (data[offset] << 24) | (data[offset + 1] << 16) |
-                              (data[offset + 2] << 8) | data[offset + 3];
+    const uint32_t entries_length = (static_cast<uint32_t>(data[offset]) << 24) |
+                                    (static_cast<uint32_t>(data[offset + 1]) << 16) |
+                                    (static_cast<uint32_t>(data[offset + 2]) << 8) |
+                                    static_cast<uint32_t>(data[offset + 3]);
     offset += 4;
 
     if (offset + entries_length > data.size()) {
@@ -492,7 +494,7 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     // Parse entries (each entry is exactly 16 bytes)
     size_t const entries_end = offset + entries_length;
     while (offset + 16 <= entries_end) {
-        uint8_t raw_entry_type = data[offset];
+        const uint8_t raw_entry_type = data[offset];
 
         std::unique_ptr<SdEntry> entry;
         if (raw_entry_type == 0x00 || raw_entry_type == 0x01) {
@@ -513,8 +515,10 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
     if (offset + 4 > data.size()) {
         return true;  // no options section present
     }
-    uint32_t options_length = (data[offset] << 24) | (data[offset + 1] << 16) |
-                              (data[offset + 2] << 8) | data[offset + 3];
+    const uint32_t options_length = (static_cast<uint32_t>(data[offset]) << 24) |
+                                    (static_cast<uint32_t>(data[offset + 1]) << 16) |
+                                    (static_cast<uint32_t>(data[offset + 2]) << 8) |
+                                    static_cast<uint32_t>(data[offset + 3]);
     offset += 4;
 
     if (offset + options_length > data.size()) {
@@ -530,7 +534,7 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
 
         // Options start with length(2) + type(1) + reserved(1).
         // Peek at the type byte (offset + 2) to determine the option kind.
-        uint8_t type_byte = data[offset + 2];
+        const uint8_t type_byte = data[offset + 2];
         OptionType const option_type = static_cast<OptionType>(type_byte);
         std::unique_ptr<SdOption> option;
 
@@ -541,8 +545,11 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
         } else if (option_type == OptionType::IPV4_MULTICAST) {
             option = std::make_unique<IPv4MulticastOption>();
         } else {
-            // Skip unknown option
-            uint16_t option_len = (data[offset] << 8) | data[offset + 1];
+            const uint16_t option_len = static_cast<uint16_t>(
+                (static_cast<uint32_t>(data[offset]) << 8) | data[offset + 1]);
+            if (offset + 4 + option_len > options_end) {
+                return false;
+            }
             offset += 4 + option_len;
             continue;
         }

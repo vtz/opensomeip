@@ -14,6 +14,7 @@
 #include "tp/tp_segmenter.h"
 #include "someip/message.h"
 #include <algorithm>
+#include <array>
 #include <iostream>
 
 namespace someip::tp {
@@ -82,7 +83,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
                                           const std::vector<uint8_t>& payload,
                                           std::vector<TpSegment>& segments) {
 
-    uint32_t const total_length = static_cast<uint32_t>(payload.size());
+    auto const total_length = static_cast<uint32_t>(payload.size());
     uint16_t payload_offset = 0;  // Offset into the payload data
     uint8_t const sequence_number = next_sequence_number_;
 
@@ -145,7 +146,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
 
         uint32_t const segment_capacity = config_.max_segment_size > 4
             ? config_.max_segment_size - 4 : 0;
-        uint16_t const payload_size = static_cast<uint16_t>(
+        auto const payload_size = static_cast<uint16_t>(
             std::min(segment_capacity, remaining_bytes));
 
         // Create segment with TP header
@@ -218,14 +219,14 @@ void TpSegmenter::serialize_tp_header(std::vector<uint8_t>& payload,
     uint32_t const tp_header = (offset_units << 4) | (more_segments ? 0x01 : 0x00);
 
     // Serialize in big-endian
-    uint8_t header_bytes[4];
+    std::array<uint8_t, 4> header_bytes{};
     header_bytes[0] = (tp_header >> 24) & 0xFF;
     header_bytes[1] = (tp_header >> 16) & 0xFF;
     header_bytes[2] = (tp_header >> 8) & 0xFF;
     header_bytes[3] = tp_header & 0xFF;
 
     // Insert TP header after SOME/IP header (16 bytes)
-    payload.insert(payload.begin() + 16, header_bytes, header_bytes + 4);
+    payload.insert(payload.begin() + 16, header_bytes.begin(), header_bytes.end());
 }
 
 /**

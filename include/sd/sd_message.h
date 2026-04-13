@@ -24,7 +24,7 @@ namespace someip::sd {
 /** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C */
 class SdEntry {
 public:
-    SdEntry(EntryType type, uint32_t ttl = 0)
+    explicit SdEntry(EntryType type, uint32_t ttl = 0)
         : type_(type), ttl_(ttl) {}
 
     virtual ~SdEntry() = default;
@@ -58,7 +58,7 @@ protected:
 /** @implements REQ_SD_200B */
 class ServiceEntry : public SdEntry {
 public:
-    ServiceEntry(EntryType type = EntryType::FIND_SERVICE)
+    explicit ServiceEntry(EntryType type = EntryType::FIND_SERVICE)
         : SdEntry(type) {}
 
     uint16_t get_service_id() const { return service_id_; }
@@ -88,7 +88,7 @@ private:
  */
 class EventGroupEntry : public SdEntry {
 public:
-    EventGroupEntry(EntryType type = EntryType::SUBSCRIBE_EVENTGROUP)
+    explicit EventGroupEntry(EntryType type = EntryType::SUBSCRIBE_EVENTGROUP)
         : SdEntry(type) {}
 
     uint16_t get_service_id() const { return service_id_; }
@@ -118,7 +118,7 @@ private:
  */
 class SdOption {
 public:
-    SdOption(OptionType type) : type_(type) {}
+    explicit SdOption(OptionType type) : type_(type) {}
     virtual ~SdOption() = default;
 
     OptionType get_type() const { return type_; }

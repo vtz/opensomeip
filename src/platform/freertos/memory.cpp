@@ -21,6 +21,8 @@
 #include <semphr.h>
 #include <task.h>
 
+#include <algorithm>
+#include <array>
 #include <atomic>
 #include <cstdint>
 #include <cstring>
@@ -34,10 +36,10 @@ static constexpr size_t POOL_SIZE = SOMEIP_FREERTOS_MESSAGE_POOL_SIZE;
 
 namespace {
 
-alignas(someip::Message) char
-    pool_buffer[POOL_SIZE * sizeof(someip::Message)];
+alignas(someip::Message) std::array<char, POOL_SIZE * sizeof(someip::Message)>
+    pool_buffer{};
 
-bool block_used[POOL_SIZE] = {};
+std::array<bool, POOL_SIZE> block_used{};
 SemaphoreHandle_t pool_mutex = nullptr;
 std::atomic<bool> pool_initialized{false};
 
@@ -52,7 +54,7 @@ void ensure_pool_init() {
         pool_mutex = xSemaphoreCreateMutex();
         configASSERT(pool_mutex != nullptr);
         if (pool_mutex != nullptr) {
-            std::memset(block_used, 0, sizeof(block_used));
+            std::fill(block_used.begin(), block_used.end(), false);
             pool_initialized.store(true, std::memory_order_release);
         }
     }
@@ -66,7 +68,7 @@ void release_message_impl(someip::Message* msg) {
     }
 
     auto raw_addr = reinterpret_cast<std::uintptr_t>(msg);
-    auto pool_addr = reinterpret_cast<std::uintptr_t>(pool_buffer);
+    auto pool_addr = reinterpret_cast<std::uintptr_t>(pool_buffer.data());
     if (raw_addr < pool_addr || raw_addr >= pool_addr + POOL_SIZE * sizeof(someip::Message)) {
         return;
     }
@@ -98,7 +100,7 @@ MessagePtr allocate_message() {
             block_used[i] = true;
             xSemaphoreGive(pool_mutex);
 
-            void* block = pool_buffer + i * sizeof(Message);
+            void* block = pool_buffer.data() + i * sizeof(Message);
             auto* msg = new (block) Message();
             return MessagePtr(msg, [](Message* p) {
                 release_message(p);

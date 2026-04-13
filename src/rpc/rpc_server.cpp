@@ -126,7 +126,7 @@ private:
         MethodHandler handler;
         {
             platform::ScopedLock const lock(methods_mutex_);
-            auto it = method_handlers_.find(message->get_method_id());
+            const auto it = method_handlers_.find(message->get_method_id());
             if (it == method_handlers_.end()) {
                 // Method not found - send error response
                 send_error_response(message, sender, ReturnCode::E_UNKNOWN_METHOD);
@@ -163,12 +163,12 @@ private:
     /** @implements REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01 */
     void send_success_response(MessagePtr const& request, const transport::Endpoint& sender,
                               const std::vector<uint8_t>& return_values) {
-        MessageId response_msg_id(request->get_service_id(), request->get_method_id());
+        const MessageId response_msg_id(request->get_service_id(), request->get_method_id());
         Message response(response_msg_id, request->get_request_id(),
                         MessageType::RESPONSE, ReturnCode::E_OK);
         response.set_payload(return_values);
 
-        Result result = transport_->send_message(response, sender);
+        const Result result = transport_->send_message(response, sender);
         if (result != Result::SUCCESS) {
             // Log error or handle send failure
         }
@@ -176,11 +176,11 @@ private:
 
     /** @implements REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01, REQ_MSG_129 */
     void send_error_response(MessagePtr const& request, const transport::Endpoint& sender, ReturnCode error_code) {
-        MessageId response_msg_id(request->get_service_id(), request->get_method_id());
+        const MessageId response_msg_id(request->get_service_id(), request->get_method_id());
         Message response(response_msg_id, request->get_request_id(),
                         MessageType::ERROR, error_code);
 
-        Result result = transport_->send_message(response, sender);
+        const Result result = transport_->send_message(response, sender);
         if (result != Result::SUCCESS) {
             // Log error or handle send failure
         }
