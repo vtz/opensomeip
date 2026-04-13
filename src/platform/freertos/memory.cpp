@@ -48,8 +48,10 @@ static void ensure_pool_init() {
     if (!pool_initialized.load(std::memory_order_relaxed)) {
         pool_mutex = xSemaphoreCreateMutex();
         configASSERT(pool_mutex != nullptr);
-        std::memset(block_used, 0, sizeof(block_used));
-        pool_initialized.store(true, std::memory_order_release);
+        if (pool_mutex != nullptr) {
+            std::memset(block_used, 0, sizeof(block_used));
+            pool_initialized.store(true, std::memory_order_release);
+        }
     }
 
     init_lock.clear(std::memory_order_release);

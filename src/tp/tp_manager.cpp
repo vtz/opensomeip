@@ -219,8 +219,8 @@ void TpManager::process_timeouts() {
         cleanup_completed_transfers();
     }
 
-    for (const auto& [id, result] : timed_out) {
-        if (cb) {
+    if (cb) {
+        for (const auto& [id, result] : timed_out) {
             cb(id, result);
         }
     }

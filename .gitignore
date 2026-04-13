@@ -100,3 +100,4 @@ docs/diagrams/svg/
 .git/
 *.patch
 *.diff
+build_lib/

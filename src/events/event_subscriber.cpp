@@ -328,10 +328,10 @@ private:
     std::shared_ptr<transport::UdpTransport> transport_;
 
     std::unordered_map<std::string, SubscriptionInfo> subscriptions_;
-    mutable platform::Mutex subscriptions_mutex_;
+    mutable platform::Mutex subscriptions_mutex_;  // Lock order: acquire before field_requests_mutex_
 
     std::unordered_map<std::string, EventNotificationCallback> field_requests_;
-    mutable platform::Mutex field_requests_mutex_;
+    mutable platform::Mutex field_requests_mutex_;  // Lock order: acquire after subscriptions_mutex_
 
     std::atomic<bool> running_;
 };

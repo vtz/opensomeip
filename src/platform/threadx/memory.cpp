@@ -46,13 +46,22 @@ static void ensure_pool_init() {
     while (init_lock.test_and_set(std::memory_order_acquire)) { }
 
     if (!pool_initialized.load(std::memory_order_relaxed)) {
-        tx_mutex_create(&pool_guard, const_cast<CHAR*>("someip_pool_guard"),
-                        TX_NO_INHERIT);
-        tx_block_pool_create(&message_pool,
-                             const_cast<CHAR*>("someip_msg"),
-                             sizeof(someip::Message),
-                             pool_buffer,
-                             sizeof(pool_buffer));
+        UINT status = tx_mutex_create(&pool_guard,
+                                      const_cast<CHAR*>("someip_pool_guard"),
+                                      TX_NO_INHERIT);
+        if (status != TX_SUCCESS) {
+            init_lock.clear(std::memory_order_release);
+            return;
+        }
+        status = tx_block_pool_create(&message_pool,
+                                      const_cast<CHAR*>("someip_msg"),
+                                      sizeof(someip::Message),
+                                      pool_buffer,
+                                      sizeof(pool_buffer));
+        if (status != TX_SUCCESS) {
+            init_lock.clear(std::memory_order_release);
+            return;
+        }
         pool_initialized.store(true, std::memory_order_release);
     }
 

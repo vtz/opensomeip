@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <chrono>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -101,15 +102,18 @@ public:
                                    const std::vector<uint8_t>& parameters,
                                    const RpcTimeout& timeout) {
 
-        platform::Mutex sync_mtx;
-        std::shared_ptr<RpcResponse> sync_resp;
-        std::atomic<bool> response_ready{false};
+        struct SyncState {
+            platform::Mutex mtx;
+            std::shared_ptr<RpcResponse> resp;
+            std::atomic<bool> ready{false};
+        };
+        auto state = std::make_shared<SyncState>();
 
         auto handle = call_method_async(service_id, method_id, parameters,
-            [&sync_mtx, &sync_resp, &response_ready](const RpcResponse& response) {
-                platform::ScopedLock lk(sync_mtx);
-                sync_resp = std::make_shared<RpcResponse>(response);
-                response_ready.store(true);
+            [state](const RpcResponse& response) {
+                platform::ScopedLock lk(state->mtx);
+                state->resp = std::make_shared<RpcResponse>(response);
+                state->ready.store(true);
             }, timeout);
 
         if (handle == 0) {
@@ -118,7 +122,7 @@ public:
 
         auto deadline = std::chrono::steady_clock::now()
                        + std::chrono::milliseconds(timeout.response_timeout);
-        while (!response_ready.load()) {
+        while (!state->ready.load()) {
             auto now = std::chrono::steady_clock::now();
             if (now >= deadline) {
                 cancel_call(handle);
@@ -130,13 +134,8 @@ public:
         }
 
         {
-            platform::ScopedLock const lk(sync_mtx);
-            auto now = std::chrono::steady_clock::now();
-            if (now > deadline) {
-                cancel_call(handle);
-                return {RpcResult::TIMEOUT, {}, timeout.response_timeout};
-            }
-            return {sync_resp->result, sync_resp->return_values, std::chrono::milliseconds(0)};
+            platform::ScopedLock const lk(state->mtx);
+            return {state->resp->result, state->resp->return_values, std::chrono::milliseconds(0)};
         }
     }
 

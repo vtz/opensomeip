@@ -286,16 +286,18 @@ TEST_F(E2ETest, CRC_OverflowGuard) {
 TEST_F(E2ETest, CRC_AllTypeBranches) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
 
-    uint32_t crc8  = E2ECRC::calculate_crc(data, 0, 4, 0);
-    uint32_t crc16 = E2ECRC::calculate_crc(data, 0, 4, 1);
-    uint32_t crc32 = E2ECRC::calculate_crc(data, 0, 4, 2);
-    uint32_t unk   = E2ECRC::calculate_crc(data, 0, 4, 255);
+    auto crc8  = E2ECRC::calculate_crc(data, 0, 4, 0);
+    auto crc16 = E2ECRC::calculate_crc(data, 0, 4, 1);
+    auto crc32 = E2ECRC::calculate_crc(data, 0, 4, 2);
+    auto unk   = E2ECRC::calculate_crc(data, 0, 4, 255);
 
-    // Ranged CRC should match direct calls
-    EXPECT_EQ(crc8,  static_cast<uint32_t>(E2ECRC::calculate_crc8_sae_j1850(data)));
-    EXPECT_EQ(crc16, static_cast<uint32_t>(E2ECRC::calculate_crc16_itu_x25(data)));
-    EXPECT_EQ(crc32, E2ECRC::calculate_crc32(data));
-    EXPECT_EQ(unk, 0u);  // Unknown type returns 0
+    ASSERT_TRUE(crc8.has_value());
+    ASSERT_TRUE(crc16.has_value());
+    ASSERT_TRUE(crc32.has_value());
+    EXPECT_EQ(crc8.value(),  static_cast<uint32_t>(E2ECRC::calculate_crc8_sae_j1850(data)));
+    EXPECT_EQ(crc16.value(), static_cast<uint32_t>(E2ECRC::calculate_crc16_itu_x25(data)));
+    EXPECT_EQ(crc32.value(), E2ECRC::calculate_crc32(data));
+    EXPECT_FALSE(unk.has_value());
 }
 
 /**
