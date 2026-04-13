@@ -76,11 +76,11 @@ struct MessageId {
     MessageId(uint16_t service, uint16_t method) : service_id(service), method_id(method) {}
 
     uint32_t to_uint32() const {
-        return (static_cast<uint32_t>(service_id) << 16) | method_id;
+        return (static_cast<uint32_t>(service_id) << 16) | static_cast<uint32_t>(method_id);
     }
 
     static MessageId from_uint32(uint32_t value) {
-        return MessageId(static_cast<uint16_t>(value >> 16), static_cast<uint16_t>(value & 0xFFFF));
+        return MessageId(static_cast<uint16_t>(value >> 16), static_cast<uint16_t>(value & 0xFFFFU));
     }
 
     bool operator==(const MessageId& other) const {
@@ -103,11 +103,11 @@ struct RequestId {
     RequestId(uint16_t client, uint16_t session) : client_id(client), session_id(session) {}
 
     uint32_t to_uint32() const {
-        return (static_cast<uint32_t>(client_id) << 16) | session_id;
+        return (static_cast<uint32_t>(client_id) << 16) | static_cast<uint32_t>(session_id);
     }
 
     static RequestId from_uint32(uint32_t value) {
-        return RequestId(static_cast<uint16_t>(value >> 16), static_cast<uint16_t>(value & 0xFFFF));
+        return RequestId(static_cast<uint16_t>(value >> 16), static_cast<uint16_t>(value & 0xFFFFU));
     }
 
     bool operator==(const RequestId& other) const {

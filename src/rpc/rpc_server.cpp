@@ -34,7 +34,7 @@ namespace someip::rpc {
  */
 class RpcServerImpl : public transport::ITransportListener {
 public:
-    RpcServerImpl(uint16_t service_id)
+    explicit RpcServerImpl(uint16_t service_id)
         : service_id_(service_id),
           transport_(std::make_shared<transport::UdpTransport>(transport::Endpoint("127.0.0.1", 30490))),
           running_(false) {

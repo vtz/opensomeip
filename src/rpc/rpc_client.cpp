@@ -37,7 +37,7 @@ namespace someip::rpc {
  */
 class RpcClientImpl : public transport::ITransportListener {
 public:
-    RpcClientImpl(uint16_t client_id)
+    explicit RpcClientImpl(uint16_t client_id)
         : client_id_(client_id),
           session_manager_(std::make_unique<SessionManager>()),
           transport_(std::make_shared<transport::UdpTransport>(transport::Endpoint("127.0.0.1", 0))),

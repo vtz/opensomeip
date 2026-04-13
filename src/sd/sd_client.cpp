@@ -46,7 +46,7 @@ std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& con
  */
 class SdClientImpl : public transport::ITransportListener {
 public:
-    SdClientImpl(const SdConfig& config)
+    explicit SdClientImpl(const SdConfig& config)
         : config_(config),
           transport_(create_sd_transport(config)),
           next_request_id_(1),

@@ -118,7 +118,7 @@ public:
          auto now = std::chrono::steady_clock::now();
          auto ms =
              std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-         freshness = static_cast<uint16_t>(ms & 0xFFFF);
+         freshness = static_cast<uint16_t>(static_cast<uint64_t>(ms) & 0xFFFFULL);
          freshness_values_[config.data_id] = freshness;
      }
 
@@ -185,11 +185,11 @@ public:
 
             uint32_t received_crc = header.crc;
             if (config.crc_type == 0) {  // 8-bit
-                received_crc &= 0xFF;
-                expected_crc &= 0xFF;
+                received_crc &= 0xFFU;
+                expected_crc &= 0xFFU;
             } else if (config.crc_type == 1) {  // 16-bit
-                received_crc &= 0xFFFF;
-                expected_crc &= 0xFFFF;
+                received_crc &= 0xFFFFU;
+                expected_crc &= 0xFFFFU;
             }
 
             if (received_crc != expected_crc) {
@@ -246,7 +246,7 @@ public:
             auto now = std::chrono::steady_clock::now();
             auto ms_now = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now.time_since_epoch()).count();
-            auto current_freshness = static_cast<uint16_t>(ms_now & 0xFFFF);
+            auto current_freshness = static_cast<uint16_t>(static_cast<uint64_t>(ms_now) & 0xFFFFULL);
 
             // Calculate freshness difference (handle wrap-around)
             // Since we're using 16-bit values, we need to handle wrap-around
@@ -258,14 +258,15 @@ public:
                 freshness_diff = current_freshness - header.freshness_value;
             } else {
                 // Wrap-around case - calculate how much time passed
-                freshness_diff = (0xFFFF - header.freshness_value) + current_freshness + 1;
+                freshness_diff = static_cast<uint16_t>((0xFFFFU - static_cast<uint32_t>(header.freshness_value)) +
+                                                       static_cast<uint32_t>(current_freshness) + 1U);
             }
 
             // Convert timeout to 16-bit units (approximately)
             // Since we're storing lower 16 bits of milliseconds,
             // we compare against timeout_ms directly (assuming timeout < 65535 ms)
             auto const timeout_units = static_cast<uint16_t>(config.freshness_timeout_ms);
-            if (freshness_diff > timeout_units && freshness_diff < (0xFFFF - timeout_units)) {
+            if (freshness_diff > timeout_units && freshness_diff < (0xFFFFU - timeout_units)) {
                 // If difference is large and not due to wrap-around, it's stale
                 return Result::TIMEOUT;  // Stale data
             }
