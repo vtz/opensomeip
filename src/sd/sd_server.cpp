@@ -26,13 +26,17 @@
 
 namespace someip::sd {
 
-static std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
+namespace {
+
+std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
     transport::UdpTransportConfig cfg;
     cfg.reuse_port = true;
     cfg.multicast_interface = config.unicast_address;
     return std::make_shared<transport::UdpTransport>(
         transport::Endpoint("0.0.0.0", config.multicast_port), cfg);
 }
+
+}  // namespace
 
 /**
  * @brief Service Discovery Server implementation
@@ -490,7 +494,7 @@ private:
         if (index1 < options.size()) {
             const auto& option = options[index1];
             if (option->get_type() == OptionType::IPV4_ENDPOINT) {
-                auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
+                const auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
                 client_ip = ep->get_ipv4_address_string();
                 client_port = ep->get_port();
                 client_protocol = ep->get_protocol();

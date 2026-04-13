@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <algorithm>
+#include <utility>
 
 namespace someip::events {
 
@@ -90,14 +91,14 @@ public:
 
         SubscriptionInfo sub_info;
         sub_info.subscription = subscription;
-        sub_info.notification_callback = notification_callback;
-        sub_info.status_callback = status_callback;
+        sub_info.notification_callback = std::move(notification_callback);
+        sub_info.status_callback = std::move(status_callback);
         sub_info.filters = filters;
 
         // Store subscription
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
-        subscriptions_[key] = sub_info;
+        subscriptions_[key] = std::move(sub_info);
 
         // Send subscription request via RPC (simplified - in real implementation,
         // this would use SD to find the service endpoint and send subscription)
@@ -169,7 +170,7 @@ public:
         // Store callback for field response
         platform::ScopedLock const field_lock(field_requests_mutex_);
         std::string key = make_field_key(service_id, instance_id, event_id);
-        field_requests_[key] = callback;
+        field_requests_[key] = std::move(callback);
 
         // Send field request
         transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
@@ -356,7 +357,7 @@ bool EventSubscriber::subscribe_eventgroup(uint16_t service_id, uint16_t instanc
                                          SubscriptionStatusCallback status_callback,
                                          const std::vector<EventFilter>& filters) {
     return impl_->subscribe_eventgroup(service_id, instance_id, eventgroup_id,
-                                     notification_callback, status_callback, filters);
+                                     std::move(notification_callback), std::move(status_callback), filters);
 }
 
 bool EventSubscriber::unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
@@ -365,7 +366,7 @@ bool EventSubscriber::unsubscribe_eventgroup(uint16_t service_id, uint16_t insta
 
 bool EventSubscriber::request_field(uint16_t service_id, uint16_t instance_id, uint16_t event_id,
                                    EventNotificationCallback callback) {
-    return impl_->request_field(service_id, instance_id, event_id, callback);
+    return impl_->request_field(service_id, instance_id, event_id, std::move(callback));
 }
 
 bool EventSubscriber::set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,

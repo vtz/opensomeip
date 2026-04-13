@@ -301,6 +301,60 @@ TEST_F(MessageTest, LengthValidation) {
 }
 
 /**
+ * @test_case TC_MSG_003_BOUNDARY
+ * @tests REQ_MSG_003
+ * @brief Boundary tests for method ID validation
+ */
+TEST_F(MessageTest, MethodIdValidationBoundary) {
+    Message msg;
+
+    msg.set_method_id(0x0000);
+    EXPECT_TRUE(msg.has_valid_method_id());
+
+    msg.set_method_id(0x0001);
+    EXPECT_TRUE(msg.has_valid_method_id());
+
+    msg.set_method_id(0xFFFE);
+    EXPECT_TRUE(msg.has_valid_method_id());
+
+    msg.set_method_id(0xFFFF);
+    EXPECT_FALSE(msg.has_valid_method_id());
+}
+
+/**
+ * @test_case TC_MSG_012_BOUNDARY
+ * @tests REQ_MSG_012
+ * @brief Boundary tests for length validation
+ */
+TEST_F(MessageTest, LengthValidationBoundary) {
+    Message msg;
+
+    msg.set_length(0);
+    EXPECT_FALSE(msg.has_valid_length());
+
+    msg.set_length(7);
+    EXPECT_FALSE(msg.has_valid_length());
+
+    msg.set_length(8);
+    EXPECT_TRUE(msg.has_valid_length());
+
+    msg.set_length(9);
+    EXPECT_TRUE(msg.has_valid_length());
+
+    msg.set_length(UINT32_MAX);
+    EXPECT_TRUE(msg.has_valid_length());
+}
+
+/**
+ * @test_case TC_MSG_STATIC_ACCESS
+ * @brief Verify E2E header size is accessible via static method
+ */
+TEST_F(MessageTest, E2EHeaderSizeStaticAccess) {
+    constexpr size_t header_size = e2e::E2EHeader::get_header_size();
+    EXPECT_EQ(header_size, 12u);
+}
+
+/**
  * @test_case TC_MSG_021
  * @tests REQ_MSG_021, REQ_MSG_022
  * @brief Test Request ID component extraction
@@ -355,6 +409,24 @@ TEST_F(MessageTest, CopyAndMove) {
     // Original should be in valid but unspecified state after move
     // For safety, moved-from SOME/IP messages are considered invalid
     EXPECT_FALSE(original.is_valid());
+}
+
+/**
+ * @test_case TC_MSG_MOVE_ASSIGN
+ * @brief Move assignment preserves interface_version from source
+ */
+TEST_F(MessageTest, MoveAssignmentPreservesInterfaceVersion) {
+    Message source;
+    source.set_service_id(0x1234);
+    source.set_interface_version(0x42);
+    source.set_payload({0xAA, 0xBB});
+
+    Message target;
+    target = std::move(source);
+
+    EXPECT_EQ(target.get_service_id(), 0x1234);
+    EXPECT_EQ(target.get_interface_version(), 0x42);
+    EXPECT_EQ(target.get_payload(), (std::vector<uint8_t>{0xAA, 0xBB}));
 }
 
 /**

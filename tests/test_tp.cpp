@@ -683,3 +683,19 @@ TEST_F(TpTest, MessageExceedsMaxSize) {
 
     tp_manager.shutdown();
 }
+
+/**
+ * @test_case TC_TP_TRANSFER_INIT
+ * @brief Verify TpTransfer initializes start_time and last_activity consistently
+ */
+TEST(TpTypesTest, TransferInitTimestamps) {
+    auto before = std::chrono::steady_clock::now();
+    someip::tp::TpTransfer transfer(42, 0x12345678);
+    auto after = std::chrono::steady_clock::now();
+
+    EXPECT_EQ(transfer.transfer_id, 42u);
+    EXPECT_EQ(transfer.message_id, 0x12345678u);
+    EXPECT_GE(transfer.start_time, before);
+    EXPECT_LE(transfer.start_time, after);
+    EXPECT_EQ(transfer.start_time, transfer.last_activity);
+}

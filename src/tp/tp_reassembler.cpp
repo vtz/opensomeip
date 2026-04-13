@@ -59,7 +59,7 @@ bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
     // Check offset alignment (REQ_TP_015_E01)
     if (offset % 16 != 0) {
         // Log warning but continue processing
-        std::cout << "Warning: Received TP segment with misaligned offset: " << offset << std::endl;
+        std::cout << "Warning: Received TP segment with misaligned offset: " << offset << '\n';
     }
 
     // Extract more segments flag (bit 0)

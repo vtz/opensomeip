@@ -30,14 +30,17 @@
 
 static constexpr size_t POOL_SIZE = SOMEIP_THREADX_MESSAGE_POOL_SIZE;
 
-alignas(someip::Message) static UCHAR
-    pool_buffer[POOL_SIZE * sizeof(someip::Message)];
-
 TX_BLOCK_POOL message_pool;
-static TX_MUTEX pool_guard;
 std::atomic<bool> pool_initialized{false};
 
-static void ensure_pool_init() {
+namespace {
+
+alignas(someip::Message) UCHAR
+    pool_buffer[POOL_SIZE * sizeof(someip::Message)];
+
+TX_MUTEX pool_guard;
+
+void ensure_pool_init() {
     if (pool_initialized.load(std::memory_order_acquire)) {
         return;
     }
@@ -67,6 +70,17 @@ static void ensure_pool_init() {
     TX_RESTORE
 }
 
+void release_message_impl(someip::Message* msg) {
+    if (!msg) {
+        return;
+    }
+
+    msg->~Message();
+    tx_block_release(static_cast<void*>(msg));
+}
+
+}  // namespace
+
 namespace someip::platform {
 
 /** @implements REQ_PLATFORM_THREADX_002 */
@@ -86,12 +100,7 @@ MessagePtr allocate_message() {
 }
 
 void release_message(Message* msg) {
-    if (!msg) {
-        return;
-    }
-
-    msg->~Message();
-    tx_block_release(static_cast<void*>(msg));
+    release_message_impl(msg);
 }
 
 }  // namespace someip::platform

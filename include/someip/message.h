@@ -130,7 +130,7 @@ public:
 
     // Utility methods
     size_t get_total_size() const {
-        size_t e2e_size = e2e_header_.has_value() ? e2e_header_->get_header_size() : 0;
+        size_t e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
         return HEADER_SIZE + e2e_size + payload_.size();
     }
     static size_t get_header_size() { return HEADER_SIZE; }

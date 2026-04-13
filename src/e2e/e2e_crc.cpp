@@ -13,6 +13,7 @@
 
 #include "e2e/e2e_crc.h"
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 
@@ -74,34 +75,31 @@ uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data) {
 static constexpr uint32_t CRC32_POLY = 0x04C11DB7;
 static constexpr uint32_t CRC32_INIT = 0xFFFFFFFF;
 
-// Precomputed CRC32 lookup table
-static uint32_t crc32_table[256];
+namespace {
 
-// Initialize CRC32 lookup table (called once)
-static bool crc32_table_initialized = false;
-
-static void init_crc32_table() {
-    if (crc32_table_initialized) {
-        return;
-    }
-
-    for (uint32_t i = 0; i < 256; ++i) {
-        uint32_t crc = i << 24;
-        for (int j = 0; j < 8; ++j) {
-            if (crc & 0x80000000) {
-                crc = (crc << 1) ^ CRC32_POLY;
-            } else {
-                crc <<= 1;
+const std::array<uint32_t, 256>& get_crc32_table() {
+    static const std::array<uint32_t, 256> table = [] {
+        std::array<uint32_t, 256> t{};
+        for (uint32_t i = 0; i < 256; ++i) {
+            uint32_t crc = i << 24;
+            for (int j = 0; j < 8; ++j) {
+                if (crc & 0x80000000) {
+                    crc = (crc << 1) ^ CRC32_POLY;
+                } else {
+                    crc <<= 1;
+                }
             }
+            t[i] = crc;
         }
-        crc32_table[i] = crc;
-    }
-
-    crc32_table_initialized = true;
+        return t;
+    }();
+    return table;
 }
 
+}  // namespace
+
 uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
-    init_crc32_table();
+    const auto& crc32_table = get_crc32_table();
 
     uint32_t crc = CRC32_INIT;
 
