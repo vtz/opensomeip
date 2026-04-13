@@ -82,9 +82,9 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
                                           const std::vector<uint8_t>& payload,
                                           std::vector<TpSegment>& segments) {
 
-    uint32_t total_length = static_cast<uint32_t>(payload.size());
+    uint32_t const total_length = static_cast<uint32_t>(payload.size());
     uint16_t payload_offset = 0;  // Offset into the payload data
-    uint8_t const sequence_number = next_sequence_number_++;
+    uint8_t const sequence_number = next_sequence_number_;
 
     // Create a copy of the message with TP flag added to message type
     Message tp_message = message;
@@ -101,8 +101,10 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         std::vector<uint8_t> header = tp_message.serialize();
         header.resize(16);  // Keep only header (16 bytes)
 
-        // Add first part of payload (accounting for TP header)
-        size_t first_payload_size = std::min(static_cast<size_t>(config_.max_segment_size - 16 - 4),
+        size_t const first_overhead = 16 + 4;
+        size_t const first_capacity = config_.max_segment_size > first_overhead
+            ? config_.max_segment_size - first_overhead : 0;
+        size_t const first_payload_size = std::min(first_capacity,
                                            static_cast<size_t>(total_length));
         header.insert(header.end(), payload.begin(),
                       payload.begin() + static_cast<std::ptrdiff_t>(first_payload_size));
@@ -141,9 +143,10 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         segment.header.segment_offset = payload_offset;
         segment.header.sequence_number = sequence_number;
 
-        // Calculate payload size for this segment (accounting for TP header)
-        uint16_t payload_size = static_cast<uint16_t>(
-            std::min(static_cast<uint32_t>(config_.max_segment_size - 4), remaining_bytes));
+        uint32_t const segment_capacity = config_.max_segment_size > 4
+            ? config_.max_segment_size - 4 : 0;
+        uint16_t const payload_size = static_cast<uint16_t>(
+            std::min(segment_capacity, remaining_bytes));
 
         // Create segment with TP header
         std::vector<uint8_t> segment_data;

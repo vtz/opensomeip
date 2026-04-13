@@ -32,16 +32,16 @@ Result E2EProtection::protect(Message& message, const E2EConfig& config) {
     E2EProfile* profile = registry.get_profile(config.profile_id);
 
     // If profile not found by ID, try by name
-    if (!profile) {
+    if (profile == nullptr) {
         profile = registry.get_profile(config.profile_name);
     }
 
     // If still not found, use default profile
-    if (!profile) {
+    if (profile == nullptr) {
         profile = registry.get_default_profile();
     }
 
-    if (!profile) {
+    if (profile == nullptr) {
         return Result::NOT_INITIALIZED;  // Basic profile not initialized
     }
 
@@ -62,16 +62,16 @@ Result E2EProtection::validate(const Message& message, const E2EConfig& config) 
     E2EProfile* profile = registry.get_profile(config.profile_id);
 
     // If profile not found by ID, try by name
-    if (!profile) {
+    if (profile == nullptr) {
         profile = registry.get_profile(config.profile_name);
     }
 
     // If still not found, use default profile
-    if (!profile) {
+    if (profile == nullptr) {
         profile = registry.get_default_profile();
     }
 
-    if (!profile) {
+    if (profile == nullptr) {
         return Result::NOT_INITIALIZED;  // Basic profile not initialized
     }
 

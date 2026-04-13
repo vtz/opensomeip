@@ -87,7 +87,7 @@ public:
         platform::ScopedLock const events_lock(events_mutex_);
 
         // Check if already registered
-        bool already_exists = registered_events_.count(config.event_id) > 0;
+        bool const already_exists = registered_events_.count(config.event_id) > 0;
         if (!already_exists) {
             registered_events_[config.event_id] = config;
         }
@@ -277,7 +277,7 @@ private:
                 if (config.notification_type == NotificationType::PERIODIC &&
                     config.cycle_time.count() > 0) {
 
-                    auto time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    auto const time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(
                         now - last_publish_times_[config.event_id]);
 
                     if (time_since_last >= config.cycle_time) {
@@ -303,7 +303,7 @@ private:
                                MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(notification.event_data);
 
-        Result result = transport_->send_message(someip_message, client_endpoint);
+        Result const result = transport_->send_message(someip_message, client_endpoint);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
         }

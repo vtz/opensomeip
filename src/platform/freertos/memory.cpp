@@ -22,6 +22,7 @@
 #include <task.h>
 
 #include <atomic>
+#include <cstdint>
 #include <cstring>
 #include <new>
 
@@ -60,16 +61,16 @@ void ensure_pool_init() {
 }
 
 void release_message_impl(someip::Message* msg) {
-    if (!msg) {
+    if (msg == nullptr) {
         return;
     }
 
-    auto* raw = reinterpret_cast<char*>(msg);
-    auto* pool_start = static_cast<char*>(pool_buffer);
-    if (raw < pool_start || raw >= pool_start + POOL_SIZE * sizeof(someip::Message)) {
+    auto raw_addr = reinterpret_cast<std::uintptr_t>(msg);
+    auto pool_addr = reinterpret_cast<std::uintptr_t>(pool_buffer);
+    if (raw_addr < pool_addr || raw_addr >= pool_addr + POOL_SIZE * sizeof(someip::Message)) {
         return;
     }
-    size_t const byte_offset = static_cast<size_t>(raw - pool_start);
+    size_t const byte_offset = raw_addr - pool_addr;
     if (byte_offset % sizeof(someip::Message) != 0) {
         return;
     }

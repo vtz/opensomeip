@@ -73,6 +73,12 @@ CheckOptions:
     value: lower_case
   - key: readability-identifier-naming.ConstantCase
     value: UPPER_CASE
+  - key: readability-identifier-naming.LocalConstantCase
+    value: lower_case
+  - key: readability-identifier-naming.LocalConstantPointerCase
+    value: lower_case
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case
   - key: readability-identifier-naming.EnumCase
@@ -82,6 +88,8 @@ CheckOptions:
   - key: readability-identifier-naming.ParameterCase
     value: lower_case
   - key: readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key: readability-identifier-naming.ProtectedMemberSuffix
     value: '_'
   - key: readability-identifier-naming.EnumConstantCase
     value: UPPER_CASE

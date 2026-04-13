@@ -49,8 +49,11 @@ bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
     }
 
     // TP header starts at offset 16 (after SOME/IP header)
-    uint32_t tp_header = (payload[16] << 24) | (payload[17] << 16) |
-                        (payload[18] << 8) | payload[19];
+    uint32_t const tp_header =
+        (static_cast<uint32_t>(payload[16]) << 24) |
+        (static_cast<uint32_t>(payload[17]) << 16) |
+        (static_cast<uint32_t>(payload[18]) << 8) |
+        static_cast<uint32_t>(payload[19]);
 
     // Extract offset (28 bits, divided by 4 to get byte offset)
     uint32_t const offset_units = tp_header >> 4;
@@ -84,7 +87,7 @@ bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_
     platform::ScopedLock const lock(buffers_mutex_);
 
     TpReassemblyBuffer* buffer = find_or_create_buffer(segment);
-    if (!buffer) {
+    if (buffer == nullptr) {
         return false;
     }
 
@@ -176,7 +179,7 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
         header_overhead = 4;  // TP header only for consecutive/last segments
     }
 
-    size_t actual_payload_bytes = segment.payload.size() > header_overhead
+    size_t const actual_payload_bytes = segment.payload.size() > header_overhead
                                   ? segment.payload.size() - header_overhead
                                   : 0;
 
@@ -252,8 +255,8 @@ bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& recei
 
     // Count received bytes
     received_bytes = 0;
-    for (size_t i = 0; i < buffer.received_segments.size(); ++i) {
-        if (buffer.received_segments[i]) {
+    for (bool received : buffer.received_segments) {
+        if (received) {
             received_bytes += config.max_segment_size;  // Approximate
         }
     }
@@ -302,10 +305,10 @@ void TpReassembler::cleanup_completed_buffers() {
 }
 
 void TpReassembler::cleanup_timed_out_buffers(const TpConfig& config) {
-    auto now = std::chrono::steady_clock::now();
+    auto const now = std::chrono::steady_clock::now();
 
     for (auto it = reassembly_buffers_.begin(); it != reassembly_buffers_.end(); ) {
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             now - it->second->start_time);
 
         if (elapsed > config.reassembly_timeout) {

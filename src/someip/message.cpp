@@ -64,20 +64,7 @@ Message::Message(MessageId message_id, RequestId request_id,
     update_length();
 }
 
-// NOLINTNEXTLINE(modernize-use-equals-default) - explicit copy for clarity
-Message::Message(const Message& other)
-    : message_id_(other.message_id_),
-      length_(other.length_),
-      request_id_(other.request_id_),
-      protocol_version_(other.protocol_version_),
-      interface_version_(other.interface_version_),
-      message_type_(other.message_type_),
-      return_code_(other.return_code_),
-      payload_(other.payload_),
-      e2e_header_(other.e2e_header_),
-      timestamp_(other.timestamp_) {
-    // Length is copied as-is for copy constructor
-}
+Message::Message(const Message& other) = default;
 
 Message::Message(Message&& other) noexcept
     : message_id_(other.message_id_),

@@ -45,7 +45,7 @@ void TpManager::shutdown() {
 }
 
 bool TpManager::needs_segmentation(const Message& message) const {
-    std::vector<uint8_t> data = message.serialize();
+    std::vector<uint8_t> const data = message.serialize();
     return data.size() > config_.max_segment_size;
 }
 
@@ -71,7 +71,7 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
 
     // Segment the message
     std::vector<TpSegment> segments;
-    TpResult result = segmenter_->segment_message(message, segments);
+    TpResult const result = segmenter_->segment_message(message, segments);
 
     if (result != TpResult::SUCCESS) {
         return result;
@@ -198,11 +198,11 @@ void TpManager::process_timeouts() {
 
         cb = completion_callback_;
 
-        auto now = std::chrono::steady_clock::now();
+        auto const now = std::chrono::steady_clock::now();
 
         for (auto it = active_transfers_.begin(); it != active_transfers_.end(); ) {
             TpTransfer& transfer = it->second;
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now - transfer.last_activity);
 
             if (elapsed > config_.reassembly_timeout) {
