@@ -98,7 +98,7 @@ public:
         // Store subscription
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
         std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
-        subscriptions_[key] = sub_info;
+        subscriptions_[key] = std::move(sub_info);
 
         // Send subscription request via RPC (simplified - in real implementation,
         // this would use SD to find the service endpoint and send subscription)

@@ -64,17 +64,22 @@ void release_message_impl(someip::Message* msg) {
         return;
     }
 
+    auto* raw = reinterpret_cast<char*>(msg);
+    auto* pool_start = static_cast<char*>(pool_buffer);
+    if (raw < pool_start || raw >= pool_start + POOL_SIZE * sizeof(someip::Message)) {
+        return;
+    }
+    size_t const byte_offset = static_cast<size_t>(raw - pool_start);
+    if (byte_offset % sizeof(someip::Message) != 0) {
+        return;
+    }
+    size_t const index = byte_offset / sizeof(someip::Message);
+
     msg->~Message();
 
-    auto* raw = reinterpret_cast<char*>(msg);
-    size_t const offset = static_cast<size_t>(raw - pool_buffer);
-    size_t const index = offset / sizeof(someip::Message);
-
-    if (index < POOL_SIZE) {
-        xSemaphoreTake(pool_mutex, portMAX_DELAY);
-        block_used[index] = false;
-        xSemaphoreGive(pool_mutex);
-    }
+    xSemaphoreTake(pool_mutex, portMAX_DELAY);
+    block_used[index] = false;
+    xSemaphoreGive(pool_mutex);
 }
 
 }  // namespace

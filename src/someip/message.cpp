@@ -118,7 +118,7 @@ Message& Message::operator=(Message&& other) noexcept {
         length_ = 8 + (other.e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0) + other.payload_.size();
         request_id_ = other.request_id_;
         protocol_version_ = other.protocol_version_;
-        interface_version_ = SOMEIP_INTERFACE_VERSION;  // Valid interface version for moved-to object
+        interface_version_ = other.interface_version_;
         message_type_ = other.message_type_;
         return_code_ = other.return_code_;
         payload_ = std::move(other.payload_);  // Move the payload
@@ -453,16 +453,7 @@ bool Message::has_valid_header() const {
     }
 
     // Check length consistency
-    // length_ contains length from client_id to end (8 + e2e_size + payload_size)
-    // Total expected message size should be HEADER_SIZE + e2e_size + payload_size
     size_t e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
-    uint32_t expected_total_size = HEADER_SIZE + e2e_size + payload_.size();
-    uint32_t actual_total_size = HEADER_SIZE + e2e_size + payload_.size();  // Same calculation
-    if (expected_total_size != actual_total_size) {
-        return false;
-    }
-
-    // Also check that length_ is consistent
     uint32_t expected_length = 8 + e2e_size + payload_.size();
     if (length_ != expected_length) {
         return false;

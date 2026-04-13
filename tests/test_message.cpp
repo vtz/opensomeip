@@ -412,6 +412,24 @@ TEST_F(MessageTest, CopyAndMove) {
 }
 
 /**
+ * @test_case TC_MSG_MOVE_ASSIGN
+ * @brief Move assignment preserves interface_version from source
+ */
+TEST_F(MessageTest, MoveAssignmentPreservesInterfaceVersion) {
+    Message source;
+    source.set_service_id(0x1234);
+    source.set_interface_version(0x42);
+    source.set_payload({0xAA, 0xBB});
+
+    Message target;
+    target = std::move(source);
+
+    EXPECT_EQ(target.get_service_id(), 0x1234);
+    EXPECT_EQ(target.get_interface_version(), 0x42);
+    EXPECT_EQ(target.get_payload(), (std::vector<uint8_t>{0xAA, 0xBB}));
+}
+
+/**
  * @test_case TC_MSG_006
  * @tests REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_054
  * @brief Test message type helper functions
