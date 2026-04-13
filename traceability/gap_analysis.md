@@ -1,6 +1,6 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-04-13 07:37:10
+Generated: 2026-04-13 16:48:02
 
 ## Summary
 
@@ -45,7 +45,7 @@ may not require direct spec links.
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 186 |
+| Unit Tests | 191 |
 | Integration Tests | 9 |
 | System Tests | 6 |
 
