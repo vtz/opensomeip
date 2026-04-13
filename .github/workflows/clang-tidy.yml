@@ -1,0 +1,48 @@
+name: clang-tidy
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  clang-tidy:
+    name: MISRA-aligned static analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-tidy-18
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends clang-18 clang-tidy-18
+
+      - name: Configure CMake
+        run: >
+          cmake -B build
+          -DCMAKE_CXX_COMPILER=clang++-18
+          -DCMAKE_C_COMPILER=clang-18
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_TESTS=OFF
+          -DBUILD_EXAMPLES=OFF
+          -DSOMEIP_DEV_TOOLS=OFF
+
+      - name: Run clang-tidy quality gate
+        run: |
+          chmod +x scripts/run_clang_tidy.sh
+          scripts/run_clang_tidy.sh \
+            "$(command -v clang-tidy-18)" \
+            .clang-tidy \
+            build \
+            . \
+            --quality-gate clang-tidy-baseline.txt
+
+      - name: Upload clang-tidy report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clang-tidy-report
+          path: build/clang-tidy-report.txt
+          retention-days: 14

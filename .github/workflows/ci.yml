@@ -36,6 +36,7 @@ jobs:
       requirements: ${{ steps.filter.outputs.requirements }}
       rpm: ${{ steps.filter.outputs.rpm }}
       infra_only: ${{ steps.filter.outputs.infra_only }}
+      clang_tidy: ${{ steps.filter.outputs.clang_tidy }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3.0.3
@@ -146,6 +147,12 @@ jobs:
               - 'packaging/**'
               - '.packit.yaml'
               - '.github/workflows/rpm-build.yml'
+            clang_tidy:
+              - '.clang-tidy'
+              - 'src/platform/.clang-tidy'
+              - 'clang-tidy-baseline.txt'
+              - 'scripts/run_clang_tidy.sh'
+              - '.github/workflows/clang-tidy.yml'
             infra_only:
               - '.devcontainer/**'
               - '.clang-format'
@@ -173,6 +180,7 @@ jobs:
               - 'scripts/run_client_server_test.sh'
               - 'scripts/run_clang_tidy.sh'
               - 'scripts/fix_clang_tidy_issues.sh'
+              - 'clang-tidy-baseline.txt'
               - 'scripts/setup_deps.sh'
               - 'scripts/test_in_docker.sh'
               - 'scripts/run_tests.py'
@@ -192,6 +200,7 @@ jobs:
           REQUIREMENTS: ${{ steps.filter.outputs.requirements }}
           RPM: ${{ steps.filter.outputs.rpm }}
           INFRA_ONLY: ${{ steps.filter.outputs.infra_only }}
+          CLANG_TIDY: ${{ steps.filter.outputs.clang_tidy }}
         run: |
           echo "Path filter results:"
           echo "  shared=$SHARED"
@@ -203,6 +212,7 @@ jobs:
           echo "  requirements=$REQUIREMENTS"
           echo "  rpm=$RPM"
           echo "  infra_only=$INFRA_ONLY"
+          echo "  clang_tidy=$CLANG_TIDY"
 
           if [[ "$SHARED" == "false" && \
                 "$HOST" == "false" && \
@@ -212,13 +222,26 @@ jobs:
                 "$PYTHON" == "false" && \
                 "$REQUIREMENTS" == "false" && \
                 "$RPM" == "false" && \
-                "$INFRA_ONLY" == "false" ]]; then
+                "$INFRA_ONLY" == "false" && \
+                "$CLANG_TIDY" == "false" ]]; then
             echo ""
             echo "::error::Changed files do not match any path filter category."
             echo "::error::This means new or moved files are not categorized in ci.yml."
             echo "::error::Update the path filters in the 'changes' job to include the new paths."
             exit 1
           fi
+
+  clang-tidy:
+    needs: changes
+    if: >-
+      needs.changes.outputs.shared == 'true' ||
+      needs.changes.outputs.freertos == 'true' ||
+      needs.changes.outputs.threadx == 'true' ||
+      needs.changes.outputs.zephyr == 'true' ||
+      needs.changes.outputs.clang_tidy == 'true'
+    uses: ./.github/workflows/clang-tidy.yml
+    permissions:
+      contents: read
 
   host:
     needs: changes
