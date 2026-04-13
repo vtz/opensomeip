@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 /**
@@ -69,7 +70,7 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data);
  * @param crc_type 0 = SAE-J1850 (8-bit), 1 = ITU-T X.25 (16-bit), 2 = CRC32
  * @return CRC value (size depends on crc_type)
  */
-uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type);
+std::optional<uint32_t> calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type);
 
 }  // namespace someip::e2e::E2ECRC
 

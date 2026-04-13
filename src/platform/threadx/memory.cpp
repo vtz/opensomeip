@@ -36,21 +36,18 @@ alignas(someip::Message) static UCHAR
 TX_BLOCK_POOL message_pool;
 static TX_MUTEX pool_guard;
 std::atomic<bool> pool_initialized{false};
+static std::atomic_flag init_lock = ATOMIC_FLAG_INIT;
 
 static void ensure_pool_init() {
     if (pool_initialized.load(std::memory_order_acquire)) {
         return;
     }
 
-    static std::atomic<bool> guard_created{false};
-    if (!guard_created.load(std::memory_order_acquire)) {
+    while (init_lock.test_and_set(std::memory_order_acquire)) { }
+
+    if (!pool_initialized.load(std::memory_order_relaxed)) {
         tx_mutex_create(&pool_guard, const_cast<CHAR*>("someip_pool_guard"),
                         TX_NO_INHERIT);
-        guard_created.store(true, std::memory_order_release);
-    }
-
-    tx_mutex_get(&pool_guard, TX_WAIT_FOREVER);
-    if (!pool_initialized.load(std::memory_order_relaxed)) {
         tx_block_pool_create(&message_pool,
                              const_cast<CHAR*>("someip_msg"),
                              sizeof(someip::Message),
@@ -58,7 +55,8 @@ static void ensure_pool_init() {
                              sizeof(pool_buffer));
         pool_initialized.store(true, std::memory_order_release);
     }
-    tx_mutex_put(&pool_guard);
+
+    init_lock.clear(std::memory_order_release);
 }
 
 namespace someip::platform {

@@ -175,22 +175,28 @@ TpTransferState TpManager::get_transfer_status(uint32_t transfer_id) const {
 }
 
 void TpManager::set_completion_callback(TpCompletionCallback callback) {
+    platform::ScopedLock const lock(transfers_mutex_);
     completion_callback_ = std::move(callback);
 }
 
 void TpManager::set_progress_callback(TpProgressCallback callback) {
+    platform::ScopedLock const lock(transfers_mutex_);
     progress_callback_ = std::move(callback);
 }
 
 void TpManager::set_message_callback(TpMessageCallback callback) {
+    platform::ScopedLock const lock(transfers_mutex_);
     message_callback_ = std::move(callback);
 }
 
 void TpManager::process_timeouts() {
     std::vector<std::pair<uint32_t, TpResult>> timed_out;
+    TpCompletionCallback cb;
 
     {
         platform::ScopedLock const lock(transfers_mutex_);
+
+        cb = completion_callback_;
 
         auto now = std::chrono::steady_clock::now();
 
@@ -214,8 +220,8 @@ void TpManager::process_timeouts() {
     }
 
     for (const auto& [id, result] : timed_out) {
-        if (completion_callback_) {
-            completion_callback_(id, result);
+        if (cb) {
+            cb(id, result);
         }
     }
 }

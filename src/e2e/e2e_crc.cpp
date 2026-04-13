@@ -113,10 +113,10 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
     return crc;
 }
 
-uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type) {
+std::optional<uint32_t> calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type) {
     if (offset > data.size() || length > data.size() || offset > data.size() - length ||
         offset > static_cast<size_t>(PTRDIFF_MAX) || length > static_cast<size_t>(PTRDIFF_MAX)) {
-        return 0;
+        return std::nullopt;
     }
 
     auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
@@ -130,7 +130,7 @@ uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t l
         case 2:  // CRC32
             return calculate_crc32(slice);
         default:
-            return 0;
+            return std::nullopt;
     }
 }
 

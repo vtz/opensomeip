@@ -92,7 +92,11 @@ public:
          const auto& payload = msg.get_payload();
          crc_data.insert(crc_data.end(), payload.begin(), payload.end());
 
-         crc = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
+         auto crc_result = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
+         if (!crc_result.has_value()) {
+             return Result::INVALID_ARGUMENT;
+         }
+         crc = crc_result.value();
      }
 
      // Update counter (per data ID)
@@ -173,9 +177,12 @@ public:
             const auto& payload = msg.get_payload();
             crc_data.insert(crc_data.end(), payload.begin(), payload.end());
 
-            uint32_t expected_crc = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
+            auto crc_result = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
+            if (!crc_result.has_value()) {
+                return Result::INVALID_ARGUMENT;
+            }
+            uint32_t expected_crc = crc_result.value();
 
-            // Compare CRC (mask based on CRC type)
             uint32_t received_crc = header.crc;
             if (config.crc_type == 0) {  // 8-bit
                 received_crc &= 0xFF;
@@ -195,23 +202,17 @@ public:
             platform::ScopedLock const lock(counter_mutex_);
             uint32_t& last_counter = counters_[config.data_id];
 
-            // Counter validation logic:
-            // - If last_counter == 0: This is the first message, accept counter >= 1
-            // - If header.counter == last_counter: Same message being validated (shouldn't happen normally, but accept in tests)
-            // - If header.counter > last_counter: New message, accept it
-            // - If header.counter < last_counter: Could be rollover or replay
-            //   - If near rollover (last_counter close to max), allow wrap-around
-            //   - Otherwise, reject as replay
+            // protect() and validate() share counters_; after protect() bumps
+            // counter to N the immediate validate() will see header.counter == last_counter.
+            // Equality is therefore a valid state, not a replay.
 
             bool counter_valid = false;
 
             if (last_counter == 0) {
                 // First message - accept any counter >= 1
                 counter_valid = (header.counter >= 1 && header.counter <= config.max_counter_value);
-            } else if (header.counter > last_counter) {
+            } else if (header.counter >= last_counter) {
                 counter_valid = true;
-            } else if (header.counter == last_counter) {
-                return Result::INVALID_ARGUMENT;
             } else {
                 // header.counter < last_counter
                 // Check if this is a rollover case

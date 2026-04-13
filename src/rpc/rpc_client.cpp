@@ -21,6 +21,8 @@
 #include <unordered_map>
 #include <atomic>
 #include <chrono>
+#include <utility>
+#include <vector>
 
 namespace someip::rpc {
 
@@ -75,17 +77,21 @@ public:
 
         running_ = false;
 
-        // Cancel all pending calls
+        std::vector<std::pair<RpcCallback, RpcResponse>> shutdown_cbs;
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
             for (auto& pair : pending_calls_) {
                 if (pair.second.callback) {
-                    RpcResponse response(pair.second.service_id, pair.second.method_id,
-                                       client_id_, pair.second.session_id, RpcResult::INTERNAL_ERROR);
-                    pair.second.callback(response);
+                    shutdown_cbs.emplace_back(
+                        pair.second.callback,
+                        RpcResponse(pair.second.service_id, pair.second.method_id,
+                                    client_id_, pair.second.session_id, RpcResult::INTERNAL_ERROR));
                 }
             }
             pending_calls_.clear();
+        }
+        for (auto& [cb, resp] : shutdown_cbs) {
+            cb(resp);
         }
 
         transport_->stop();
@@ -179,20 +185,24 @@ public:
     }
 
     bool cancel_call(RpcCallHandle handle) {
-        platform::ScopedLock const lock(pending_calls_mutex_);
-        auto it = pending_calls_.find(handle);
-        if (it == pending_calls_.end()) {
-            return false;
+        RpcCallback cancel_cb;
+        RpcResponse cancel_resp({}, {}, {}, {}, RpcResult::INTERNAL_ERROR);
+        {
+            platform::ScopedLock const lock(pending_calls_mutex_);
+            auto it = pending_calls_.find(handle);
+            if (it == pending_calls_.end()) {
+                return false;
+            }
+            if (it->second.callback) {
+                cancel_cb = it->second.callback;
+                cancel_resp = RpcResponse(it->second.service_id, it->second.method_id,
+                                          client_id_, it->second.session_id, RpcResult::INTERNAL_ERROR);
+            }
+            pending_calls_.erase(it);
         }
-
-        // Call callback with cancellation result
-        if (it->second.callback) {
-            RpcResponse response(it->second.service_id, it->second.method_id,
-                               client_id_, it->second.session_id, RpcResult::INTERNAL_ERROR);
-            it->second.callback(response);
+        if (cancel_cb) {
+            cancel_cb(cancel_resp);
         }
-
-        pending_calls_.erase(it);
         return true;
     }
 
@@ -222,29 +232,30 @@ private:
             return;
         }
 
-        platform::ScopedLock const lock(pending_calls_mutex_);
+        RpcCallback recv_cb;
+        RpcResponse recv_resp({}, {}, {}, {}, RpcResult::INTERNAL_ERROR);
+        {
+            platform::ScopedLock const lock(pending_calls_mutex_);
+            for (auto it = pending_calls_.begin(); it != pending_calls_.end(); ++it) {
+                if (it->second.session_id == message->get_session_id() &&
+                    it->second.service_id == message->get_service_id() &&
+                    it->second.method_id == message->get_method_id()) {
 
-        // Find matching pending call by session ID
-        for (auto it = pending_calls_.begin(); it != pending_calls_.end(); ++it) {
-            if (it->second.session_id == message->get_session_id() &&
-                it->second.service_id == message->get_service_id() &&
-                it->second.method_id == message->get_method_id()) {
+                    RpcResult result = (message->is_success()) ? RpcResult::SUCCESS : RpcResult::INTERNAL_ERROR;
+                    recv_resp = RpcResponse(message->get_service_id(), message->get_method_id(),
+                                            message->get_client_id(), message->get_session_id(), result);
+                    recv_resp.return_values = message->get_payload();
 
-                // Create response
-                RpcResult result = (message->is_success()) ? RpcResult::SUCCESS : RpcResult::INTERNAL_ERROR;
-                RpcResponse response(message->get_service_id(), message->get_method_id(),
-                                   message->get_client_id(), message->get_session_id(), result);
-                response.return_values = message->get_payload();
-
-                // Call callback
-                if (it->second.callback) {
-                    it->second.callback(response);
+                    if (it->second.callback) {
+                        recv_cb = it->second.callback;
+                    }
+                    pending_calls_.erase(it);
+                    break;
                 }
-
-                // Remove pending call
-                pending_calls_.erase(it);
-                break;
             }
+        }
+        if (recv_cb) {
+            recv_cb(recv_resp);
         }
     }
 

@@ -36,23 +36,23 @@ alignas(someip::Message) static char
 static bool block_used[POOL_SIZE] = {};
 static SemaphoreHandle_t pool_mutex = nullptr;
 static std::atomic<bool> pool_initialized{false};
+static std::atomic_flag init_lock = ATOMIC_FLAG_INIT;
 
 static void ensure_pool_init() {
     if (pool_initialized.load(std::memory_order_acquire)) {
         return;
     }
 
-    if (!pool_mutex) {
+    while (init_lock.test_and_set(std::memory_order_acquire)) { }
+
+    if (!pool_initialized.load(std::memory_order_relaxed)) {
         pool_mutex = xSemaphoreCreateMutex();
         configASSERT(pool_mutex != nullptr);
-    }
-
-    xSemaphoreTake(pool_mutex, portMAX_DELAY);
-    if (!pool_initialized.load(std::memory_order_relaxed)) {
         std::memset(block_used, 0, sizeof(block_used));
         pool_initialized.store(true, std::memory_order_release);
     }
-    xSemaphoreGive(pool_mutex);
+
+    init_lock.clear(std::memory_order_release);
 }
 
 namespace someip::platform {

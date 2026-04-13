@@ -147,6 +147,9 @@ void Serializer::serialize_string(const std::string& value) {
  * @implements REQ_SER_080_E01, REQ_SER_080_E02
  */
 void Serializer::align_to(size_t alignment) {
+    if (alignment == 0) {
+        return;
+    }
     size_t current_size = buffer_.size();
     size_t const padding_needed = (alignment - (current_size % alignment)) % alignment;
 
@@ -428,6 +431,9 @@ void Deserializer::skip(size_t bytes) {
  * @implements REQ_SER_080, REQ_SER_081, REQ_SER_082
  */
 void Deserializer::align_to(size_t alignment) {
+    if (alignment == 0) {
+        return;
+    }
     size_t const padding = (alignment - (position_ % alignment)) % alignment;
     skip(padding);
 }

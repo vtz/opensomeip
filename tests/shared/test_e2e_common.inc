@@ -118,21 +118,20 @@ static void test_e2e() {
     // CRC type dispatch and bounds guard
     {
         std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-        uint32_t crc8  = E2ECRC::calculate_crc(data, 0, 4, 0);
-        uint32_t crc16 = E2ECRC::calculate_crc(data, 0, 4, 1);
-        uint32_t crc32 = E2ECRC::calculate_crc(data, 0, 4, 2);
-        uint32_t unk   = E2ECRC::calculate_crc(data, 0, 4, 255);
+        auto crc8  = E2ECRC::calculate_crc(data, 0, 4, 0);
+        auto crc16 = E2ECRC::calculate_crc(data, 0, 4, 1);
+        auto crc32 = E2ECRC::calculate_crc(data, 0, 4, 2);
+        auto unk   = E2ECRC::calculate_crc(data, 0, 4, 255);
 
-        CHECK(crc8 == static_cast<uint32_t>(E2ECRC::calculate_crc8_sae_j1850(data)),
+        CHECK(crc8.has_value() && crc8.value() == static_cast<uint32_t>(E2ECRC::calculate_crc8_sae_j1850(data)),
               "crc_dispatch_type0");
-        CHECK(crc16 == static_cast<uint32_t>(E2ECRC::calculate_crc16_itu_x25(data)),
+        CHECK(crc16.has_value() && crc16.value() == static_cast<uint32_t>(E2ECRC::calculate_crc16_itu_x25(data)),
               "crc_dispatch_type1");
-        CHECK(crc32 == E2ECRC::calculate_crc32(data), "crc_dispatch_type2");
-        CHECK(unk == 0u, "crc_unknown_type_zero");
+        CHECK(crc32.has_value() && crc32.value() == E2ECRC::calculate_crc32(data), "crc_dispatch_type2");
+        CHECK(!unk.has_value(), "crc_unknown_type_nullopt");
 
-        // Out-of-bounds range returns 0
-        uint32_t oob = E2ECRC::calculate_crc(data, 2, 5, 0);
-        CHECK(oob == 0u, "crc_oob_returns_zero");
+        auto oob = E2ECRC::calculate_crc(data, 2, 5, 0);
+        CHECK(!oob.has_value(), "crc_oob_returns_nullopt");
     }
 
     // Profile registry
