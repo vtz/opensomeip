@@ -378,25 +378,15 @@ bool IPv4MulticastOption::deserialize(const std::vector<uint8_t>& data, size_t& 
 // ConfigurationOption implementation
 /** @implements REQ_SD_236, REQ_SD_243 */
 std::vector<uint8_t> ConfigurationOption::serialize() const {
-    std::vector<uint8_t> data;
-
-    // Type (1 byte)
-    data.push_back(static_cast<uint8_t>(OptionType::CONFIGURATION));
-
-    // Reserved (1 byte)
-    data.push_back(0);
-
-    // Length (2 bytes) - will be filled later
-    data.push_back(0);
-    data.push_back(0);
+    std::vector<uint8_t> data = SdOption::serialize();
 
     // Configuration string
     data.insert(data.end(), config_string_.begin(), config_string_.end());
 
-    // Update length
+    // Update length field (bytes 0-1) to cover type + reserved + config string
     const auto length = static_cast<uint16_t>(config_string_.size());
-    data[2] = static_cast<uint8_t>((static_cast<uint32_t>(length) >> 8U) & 0xFFU);
-    data[3] = static_cast<uint8_t>(length & 0xFFU);
+    data[0] = static_cast<uint8_t>((static_cast<uint32_t>(length) >> 8U) & 0xFFU);
+    data[1] = static_cast<uint8_t>(length & 0xFFU);
 
     return data;
 }

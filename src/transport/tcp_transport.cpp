@@ -596,6 +596,4 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
 
 // NOLINTEND(misc-include-cleaner)
 
-// NOLINTEND(misc-include-cleaner)
-
 }  // namespace someip::transport

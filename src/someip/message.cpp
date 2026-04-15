@@ -539,4 +539,6 @@ std::string Message::to_string() const {
     return ss.str();
 }
 
+// NOLINTEND(misc-include-cleaner)
+
 } // namespace someip
