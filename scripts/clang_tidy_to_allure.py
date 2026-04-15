@@ -14,7 +14,6 @@ report workflow can ingest.
 
 import argparse
 import re
-import sys
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
@@ -26,9 +25,7 @@ def parse_report(report_path: str) -> tuple[list[tuple[str, int, str, str]], dic
 
     with open(report_path) as f:
         for line in f:
-            m = re.match(
-                r"(.+?):(\d+):\d+: warning: (.+?) \[(.+?)\]", line.strip()
-            )
+            m = re.match(r"(.+?):(\d+):\d+: warning: (.+?) \[(.+?)\]", line.strip())
             if m:
                 filepath, lineno, message, check = (
                     m.group(1),
@@ -105,9 +102,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("report", help="Path to clang-tidy-report.txt")
     parser.add_argument("output_dir", help="Output directory for JUnit XML")
-    parser.add_argument(
-        "--threshold", type=int, default=None, help="Quality-gate threshold"
-    )
+    parser.add_argument("--threshold", type=int, default=None, help="Quality-gate threshold")
     args = parser.parse_args()
 
     warnings, summary = parse_report(args.report)
