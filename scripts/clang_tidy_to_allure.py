@@ -23,7 +23,7 @@ def parse_report(report_path: str) -> tuple[list[tuple[str, int, str, str]], dic
     warnings: list[tuple[str, int, str, str]] = []
     summary: dict[str, int] = {}
 
-    with open(report_path) as f:
+    with open(report_path, encoding="utf-8", errors="replace") as f:
         for line in f:
             m = re.match(r"(.+?):(\d+):\d+: warning: (.+?) \[(.+?)\]", line.strip())
             if m:
@@ -87,7 +87,7 @@ def build_xml(
         gate_suite,
         "testcase",
         classname="clang-tidy.quality-gate",
-        name=f"violations={total}" + (f" threshold={threshold}" if threshold else ""),
+        name=f"violations={total}" + (f" threshold={threshold}" if threshold is not None else ""),
     )
     if threshold is not None and total > threshold:
         failure = ET.SubElement(
