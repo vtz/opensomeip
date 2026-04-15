@@ -13,6 +13,13 @@
 
 #include "core/session_manager.h"
 
+#include "platform/thread.h"
+
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+
 namespace someip {
 
 /**

@@ -12,16 +12,24 @@
  ********************************************************************************/
 
 #include "events/event_subscriber.h"
+
+#include "common/result.h"
 #include "events/event_types.h"
 #include "platform/thread.h"
-#include "transport/udp_transport.h"
+#include "someip/message.h"
+#include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
-#include "someip/message.h"
-#include <unordered_map>
+#include "transport/udp_transport.h"
+
 #include <atomic>
-#include <algorithm>
+#include <chrono>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace someip::events {
 

@@ -12,6 +12,8 @@
  ********************************************************************************/
 
 #include "someip/types.h"
+
+#include <string>
 #include <unordered_map>
 
 namespace someip {

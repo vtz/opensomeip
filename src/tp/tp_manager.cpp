@@ -12,10 +12,18 @@
  ********************************************************************************/
 
 #include "tp/tp_manager.h"
-#include "tp/tp_segmenter.h"
-#include "tp/tp_reassembler.h"
+
+#include "platform/thread.h"
 #include "someip/message.h"
-#include <algorithm>
+#include "tp/tp_reassembler.h"
+#include "tp/tp_segmenter.h"
+#include "tp/tp_types.h"
+
+#include <chrono>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 

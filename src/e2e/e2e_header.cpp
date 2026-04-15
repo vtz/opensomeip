@@ -12,10 +12,17 @@
  ********************************************************************************/
 
 #include "e2e/e2e_header.h"
+
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
+
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
+#include <vector>
 
 namespace someip::e2e {
+// NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from platform/byteorder.h -> byteorder_impl.h
 
 /**
  * @brief Serialize E2E header to byte vector
@@ -86,5 +93,7 @@ bool E2EHeader::is_valid() const {
     // Specific validation is done by the profile
     return true;
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::e2e

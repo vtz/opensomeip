@@ -12,19 +12,36 @@
  ********************************************************************************/
 
 #include "sd/sd_server.h"
+
+#include "common/result.h"
+#include "platform/thread.h"
 #include "sd/sd_message.h"
-#include "transport/udp_transport.h"
+#include "sd/sd_types.h"
+#include "someip/message.h"
+#include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
-#include "someip/message.h"
-#include <unordered_map>
+#include "transport/udp_transport.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
+#include "platform/byteorder.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_inet_*/AF_INET/in_addr via net_impl.h
+#include "platform/net.h"
+
+#include <algorithm>
 #include <atomic>
 #include <chrono>
-#include "platform/byteorder.h"
-#include "platform/net.h"
-#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace someip::sd {
+
+// NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_inet_*/in_addr_t are macros/types from
+// platform/byteorder.h and platform/net.h that misc-include-cleaner cannot trace.
 
 namespace {
 
@@ -618,5 +635,7 @@ bool SdServer::is_ready() const {
 SdServer::Statistics SdServer::get_statistics() const {
     return impl_->get_statistics();
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::sd

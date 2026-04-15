@@ -12,7 +12,14 @@
  ********************************************************************************/
 
 #include "e2e/e2e_profile_registry.h"
-#include <algorithm>
+
+#include "e2e/e2e_config.h"
+#include "platform/thread.h"
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace someip::e2e {
 

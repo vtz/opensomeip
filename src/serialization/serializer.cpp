@@ -12,11 +12,21 @@
  ********************************************************************************/
 
 #include "serialization/serializer.h"
-#include <cstring>
-#include <algorithm>
+
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
 
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace someip::serialization {
+// NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from platform/byteorder.h -> byteorder_impl.h
 
 /**
  * @brief SOME/IP Serializer implementation
@@ -523,5 +533,7 @@ std::optional<double> Deserializer::read_be_double() {
     std::memcpy(&result, &*bits, sizeof(result));
     return result;
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::serialization

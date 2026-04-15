@@ -12,15 +12,27 @@
  ********************************************************************************/
 
 #include "sd/sd_message.h"
-#include "serialization/serializer.h"
+
+#include "sd/sd_types.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_inet_*/AF_INET/in_addr via net_impl.h
 #include "platform/net.h"
-#include <algorithm>
+
 #include <array>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace someip::sd {
+
+// NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_ntoh*/someip_inet_*/AF_INET/in_addr/
+// INET_ADDRSTRLEN are macros and types from platform/byteorder.h and platform/net.h that
+// misc-include-cleaner cannot trace through the abstraction layer.
 
 /**
  * @brief Service Discovery message serialization
@@ -574,5 +586,7 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
 
     return true;
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::sd

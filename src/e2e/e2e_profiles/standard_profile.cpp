@@ -12,19 +12,29 @@
  ********************************************************************************/
 
 #include "e2e/e2e_profile.h"
+
 #include "e2e/e2e_header.h"
 #include "e2e/e2e_crc.h"
 #include "e2e/e2e_config.h"
 #include "e2e/e2e_profile_registry.h"
 #include "someip/message.h"
 #include "common/result.h"
+#include "platform/thread.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_htonl macro from byteorder_impl.h
 #include "platform/byteorder.h"
+
 #include <chrono>
-#include <unordered_map>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace someip::e2e {
+// NOLINTBEGIN(misc-include-cleaner) - someip_htonl macro from platform/byteorder.h -> byteorder_impl.h
 
 /**
  * @brief Basic E2E protection profile
@@ -301,5 +311,7 @@ void initialize_basic_profile() {
     auto profile = std::make_unique<BasicE2EProfile>();
     registry.register_profile(std::move(profile));
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::e2e

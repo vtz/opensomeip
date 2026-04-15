@@ -12,10 +12,15 @@
  ********************************************************************************/
 
 #include "e2e/e2e_protection.h"
+
+#include "e2e/e2e_config.h"
+#include "e2e/e2e_profile.h"
 #include "e2e/e2e_profile_registry.h"
 #include "e2e/e2e_header.h"
 #include "someip/message.h"
 #include "common/result.h"
+
+#include <optional>
 
 namespace someip::e2e {
 

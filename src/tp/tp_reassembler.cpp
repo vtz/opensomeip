@@ -12,8 +12,18 @@
  ********************************************************************************/
 
 #include "tp/tp_reassembler.h"
+
+#include "platform/thread.h"
+#include "tp/tp_types.h"
+
 #include <algorithm>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
+#include <memory>
+#include <utility>
+#include <vector>
 
 namespace someip::tp {
 

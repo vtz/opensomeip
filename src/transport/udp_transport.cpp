@@ -12,14 +12,33 @@
  ********************************************************************************/
 
 #include "transport/udp_transport.h"
-#include "platform/net.h"
-#include "platform/memory.h"
+
 #include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
+#include "platform/memory.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - socket/POSIX types and someip_* helpers from net_impl.h
+#include "platform/net.h"
+#include "platform/thread.h"
+#include "someip/message.h"
+#include "someip/types.h"
+#include "transport/endpoint.h"
+#include "transport/transport.h"
+
 #include <array>
+#include <atomic>
+#include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <iostream>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace someip::transport {
+
+// NOLINTBEGIN(misc-include-cleaner) - sockaddr_in/ip_mreq/INADDR_ANY and someip_* wrappers/macros
+// come from platform/net.h -> net_impl.h; misc-include-cleaner cannot trace through this abstraction.
 
 /**
  * @brief UDP Transport constructor
@@ -480,5 +499,7 @@ bool UdpTransport::is_multicast_address(const std::string& address) const {
     uint32_t host_addr = ntohl(addr);
     return (host_addr >= 0xE0000000) && (host_addr <= 0xEFFFFFFF);
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::transport
