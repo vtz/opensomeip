@@ -1,4 +1,6 @@
 #include "common/result.h"
+
+#include <string>
 #include <unordered_map>
 
 namespace someip {

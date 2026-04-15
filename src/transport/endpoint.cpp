@@ -12,11 +12,15 @@
  ********************************************************************************/
 
 #include "transport/endpoint.h"
-#include <sstream>
-#include <functional>
+
+#include <cctype>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <cctype>
+#include <functional>
+#include <sstream>
+#include <string>
+#include <utility>
 
 namespace someip::transport {
 

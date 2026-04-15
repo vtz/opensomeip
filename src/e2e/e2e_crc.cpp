@@ -12,10 +12,12 @@
  ********************************************************************************/
 
 #include "e2e/e2e_crc.h"
-#include <algorithm>
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
+#include <vector>
 
 /**
  * @brief E2E CRC calculation functions

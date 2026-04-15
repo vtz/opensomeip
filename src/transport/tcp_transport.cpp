@@ -12,16 +12,34 @@
  ********************************************************************************/
 
 #include "transport/tcp_transport.h"
-#include "platform/net.h"
-#include "platform/memory.h"
+
 #include "common/result.h"
-#include <array>
-#include <cstring>
-#include <iostream>
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
+#include "platform/memory.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - socket/POSIX types and someip_* helpers from net_impl.h
+#include "platform/net.h"
+#include "platform/thread.h"
+#include "someip/message.h"
+#include "someip/types.h"
+#include "transport/endpoint.h"
+#include "transport/transport.h"
+
 #include <algorithm>
-#include <cstdio>
+#include <array>
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <queue>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace someip::transport {
+
+// NOLINTBEGIN(misc-include-cleaner) - sockaddr/timeval/fd_set and someip_* wrappers/macros come from
+// platform/net.h -> net_impl.h; misc-include-cleaner does not trace through this abstraction.
 
 /**
  * @brief TCP Transport constructor
@@ -575,5 +593,7 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
     message = platform::allocate_message();
     return message && message->deserialize(message_data);
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::transport

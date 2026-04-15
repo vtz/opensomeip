@@ -12,10 +12,17 @@
  ********************************************************************************/
 
 #include "tp/tp_segmenter.h"
+
 #include "someip/message.h"
+#include "someip/types.h"
+#include "tp/tp_types.h"
+
 #include <algorithm>
 #include <array>
-#include <iostream>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+#include <vector>
 
 namespace someip::tp {
 
