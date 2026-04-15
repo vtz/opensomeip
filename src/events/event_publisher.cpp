@@ -32,6 +32,8 @@
 
 namespace someip::events {
 
+// NOLINTBEGIN(misc-include-cleaner) - platform::Mutex / platform::this_thread from platform/thread.h (IWYU false positives in impl).
+
 /**
  * @brief Event Publisher implementation
  * @implements REQ_ARCH_001
@@ -208,6 +210,7 @@ public:
     std::vector<uint16_t> get_registered_events() const {
         platform::ScopedLock const events_lock(events_mutex_);
         std::vector<uint16_t> events;
+        events.reserve(registered_events_.size());
 
         for (const auto& pair : registered_events_) {
             events.push_back(pair.first);
@@ -295,7 +298,7 @@ private:
             }
         }
 
-        for (uint16_t eid : events_to_publish) {
+        for (const uint16_t eid : events_to_publish) {
             publish_event(eid, {});
         }
     }
@@ -418,5 +421,7 @@ bool EventPublisher::is_ready() const {
 EventPublisher::Statistics EventPublisher::get_statistics() const {
     return impl_->get_statistics();
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::events

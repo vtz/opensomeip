@@ -130,14 +130,14 @@ public:
      */
     size_t get_active_session_count() const;
 
+    // Prevent copying
+    SessionManager(const SessionManager&) = delete;
+    SessionManager& operator=(const SessionManager&) = delete;
+
 private:
     std::unordered_map<uint16_t, std::shared_ptr<Session>> sessions_;
     mutable platform::Mutex sessions_mutex_;
     uint16_t next_session_id_{1};
-
-    // Prevent copying
-    SessionManager(const SessionManager&) = delete;
-    SessionManager& operator=(const SessionManager&) = delete;
 };
 
 } // namespace someip

@@ -159,7 +159,7 @@ static inline int someip_set_socket_timeout(someip_socket_t fd, int optname,
                                             int timeout_ms) {
     struct timeval tv{};
     tv.tv_sec  = timeout_ms / 1000;
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    tv.tv_usec = static_cast<long>(timeout_ms % 1000) * 1000L;
     return ::setsockopt(fd, SOL_SOCKET, optname, &tv, sizeof(tv));
 }
 

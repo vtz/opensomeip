@@ -32,6 +32,8 @@
 
 namespace someip::rpc {
 
+// NOLINTBEGIN(misc-include-cleaner) - platform::Mutex from platform/thread.h (IWYU false positives in impl).
+
 /**
  * @brief RPC Server implementation
  * @implements REQ_ARCH_001
@@ -86,7 +88,7 @@ public:
         platform::ScopedLock const lock(methods_mutex_);
 
         // Check if already registered
-        bool already_exists = method_handlers_.count(method_id) > 0;
+        const bool already_exists = method_handlers_.count(method_id) > 0;
         if (!already_exists) {
             method_handlers_[method_id] = std::move(handler);
         }
@@ -145,7 +147,7 @@ private:
 
         // Process the method call
         std::vector<uint8_t> output_params;
-        RpcResult result = handler(message->get_client_id(), message->get_session_id(),
+        const RpcResult result = handler(message->get_client_id(), message->get_session_id(),
                                   message->get_payload(), output_params);
 
         // Send response
@@ -258,5 +260,7 @@ bool RpcServer::is_ready() const {
 RpcServer::Statistics RpcServer::get_statistics() const {
     return impl_->get_statistics();
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::rpc

@@ -13,7 +13,6 @@
 
 #include "e2e/e2e_profile_registry.h"
 
-#include "e2e/e2e_config.h"
 #include "platform/thread.h"
 
 #include <cstdint>

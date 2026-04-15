@@ -77,11 +77,12 @@ public:
      */
     E2EProfile* get_default_profile();
 
+    E2EProfileRegistry(const E2EProfileRegistry&) = delete;
+    E2EProfileRegistry& operator=(const E2EProfileRegistry&) = delete;
+
 private:
     E2EProfileRegistry() = default;
     ~E2EProfileRegistry() = default;
-    E2EProfileRegistry(const E2EProfileRegistry&) = delete;
-    E2EProfileRegistry& operator=(const E2EProfileRegistry&) = delete;
 
     mutable platform::Mutex mutex_;
     std::unordered_map<uint32_t, E2EProfilePtr> profiles_by_id_;

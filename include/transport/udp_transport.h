@@ -83,6 +83,10 @@ public:
     Result join_multicast_group(const std::string& multicast_address);
     Result leave_multicast_group(const std::string& multicast_address);
 
+    // Disable copy and assignment
+    UdpTransport(const UdpTransport&) = delete;
+    UdpTransport& operator=(const UdpTransport&) = delete;
+
 private:
     Endpoint local_endpoint_;
     UdpTransportConfig config_;
@@ -110,10 +114,6 @@ private:
     sockaddr_in create_sockaddr(const Endpoint& endpoint) const;
     Endpoint sockaddr_to_endpoint(const sockaddr_in& addr) const;
     bool is_multicast_address(const std::string& address) const;
-
-    // Disable copy and assignment
-    UdpTransport(const UdpTransport&) = delete;
-    UdpTransport& operator=(const UdpTransport&) = delete;
 };
 
 }  // namespace someip::transport
