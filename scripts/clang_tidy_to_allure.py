@@ -112,7 +112,7 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     tree = ET.ElementTree(xml_root)
     ET.indent(tree, space="  ")
-    tree.write(out / "clang-tidy-results.xml", encoding="unicode", xml_declaration=True)
+    tree.write(out / "clang-tidy-results.xml", encoding="utf-8", xml_declaration=True)
     print(f"Wrote {len(warnings)} warnings to {out / 'clang-tidy-results.xml'}")
 
 
