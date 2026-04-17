@@ -25,7 +25,7 @@ def parse_report(report_path: str) -> tuple[list[tuple[str, int, str, str]], dic
 
     with open(report_path, encoding="utf-8", errors="replace") as f:
         for line in f:
-            m = re.match(r"(.+?):(\d+):\d+: warning: (.+?) \[(.+?)\]", line.strip())
+            m = re.match(r"^(.*):(\d+):\d+: warning: (.*) \[([^\]]+)\]$", line.strip())
             if m:
                 filepath, lineno, message, check = (
                     m.group(1),
