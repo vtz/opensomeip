@@ -34,7 +34,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -244,7 +243,7 @@ public:
             client_port = static_cast<uint16_t>(std::stoi(client_address.substr(colon_pos + 1)));
         }
 
-        transport::Endpoint client_endpoint(client_ip, client_port);
+        const transport::Endpoint client_endpoint(client_ip, client_port);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
@@ -260,6 +259,7 @@ public:
     std::vector<ServiceInstance> get_offered_services() const {
         platform::ScopedLock const lock(offered_services_mutex_);
         std::vector<ServiceInstance> result;
+        result.reserve(offered_services_.size());
 
         for (const auto& service : offered_services_) {
             result.push_back(service.instance);

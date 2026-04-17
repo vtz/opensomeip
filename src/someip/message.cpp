@@ -86,7 +86,7 @@ Message::Message(Message&& other) noexcept
       message_type_(other.message_type_),
       return_code_(other.return_code_),
       payload_(std::move(other.payload_)),  // Move the payload
-      e2e_header_(std::move(other.e2e_header_)),  // Move E2E header
+      e2e_header_(other.e2e_header_),
       timestamp_(other.timestamp_) {
     // Invalidate the moved-from object (safety-critical design: moved-from messages are invalid)
     other.interface_version_ = 0xFF;
@@ -120,7 +120,7 @@ Message& Message::operator=(Message&& other) noexcept {
         message_type_ = other.message_type_;
         return_code_ = other.return_code_;
         payload_ = std::move(other.payload_);  // Move the payload
-        e2e_header_ = std::move(other.e2e_header_);  // Move E2E header
+        e2e_header_ = other.e2e_header_;
         timestamp_ = other.timestamp_;
 
         // Invalidate the moved-from object

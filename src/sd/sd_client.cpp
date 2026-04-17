@@ -36,6 +36,8 @@
 
 namespace someip::sd {
 
+// NOLINTBEGIN(misc-include-cleaner) - platform::Mutex from platform/thread.h (IWYU false positives in impl).
+
 namespace {
 
 std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
@@ -144,7 +146,7 @@ public:
         }
 
         // Store callback for responses
-        uint32_t request_id = next_request_id_++;
+        const uint32_t request_id = next_request_id_++;
         {
             platform::ScopedLock const lock(pending_finds_mutex_);
             pending_finds_[request_id] = {
@@ -391,7 +393,7 @@ private:
         ServiceAvailableCallback avail_cb;
         {
             platform::ScopedLock const lock(subscriptions_mutex_);
-            auto sub_it = service_subscriptions_.find(instance.service_id);
+            const auto sub_it = service_subscriptions_.find(instance.service_id);
             if (sub_it != service_subscriptions_.end() && sub_it->second.available_callback) {
                 avail_cb = sub_it->second.available_callback;
             }
@@ -440,7 +442,7 @@ private:
         ServiceUnavailableCallback unavail_cb;
         {
             platform::ScopedLock const lock(subscriptions_mutex_);
-            auto sub_it = service_subscriptions_.find(instance.service_id);
+            const auto sub_it = service_subscriptions_.find(instance.service_id);
             if (sub_it != service_subscriptions_.end() && sub_it->second.unavailable_callback) {
                 unavail_cb = sub_it->second.unavailable_callback;
             }
@@ -517,5 +519,7 @@ bool SdClient::is_ready() const {
 SdClient::Statistics SdClient::get_statistics() const {
     return impl_->get_statistics();
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::sd

@@ -35,6 +35,8 @@
 
 namespace someip::rpc {
 
+// NOLINTBEGIN(misc-include-cleaner) - platform::Mutex / platform::this_thread from platform/thread.h (IWYU false positives in impl).
+
 /**
  * @brief RPC Client implementation
  * @implements REQ_ARCH_001
@@ -115,9 +117,9 @@ public:
             std::shared_ptr<RpcResponse> resp;
             std::atomic<bool> ready{false};
         };
-        auto state = std::make_shared<SyncState>();
+        const auto state = std::make_shared<SyncState>();
 
-        auto handle = call_method_async(service_id, method_id, parameters,
+        const auto handle = call_method_async(service_id, method_id, parameters,
             [state](const RpcResponse& response) {
                 platform::ScopedLock lk(state->mtx);
                 state->resp = std::make_shared<RpcResponse>(response);
@@ -128,7 +130,7 @@ public:
             return {RpcResult::INTERNAL_ERROR, {}, std::chrono::milliseconds(0)};
         }
 
-        auto deadline = std::chrono::steady_clock::now()
+        const auto deadline = std::chrono::steady_clock::now()
                        + std::chrono::milliseconds(timeout.response_timeout);
         while (!state->ready.load()) {
             auto now = std::chrono::steady_clock::now();
@@ -136,8 +138,8 @@ public:
                 cancel_call(handle);
                 return {RpcResult::TIMEOUT, {}, timeout.response_timeout};
             }
-            auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
-            auto sleep_time = std::min(remaining, std::chrono::milliseconds(1));
+            const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
+            const auto sleep_time = std::min(remaining, std::chrono::milliseconds(1));
             platform::this_thread::sleep_for(sleep_time);
         }
 
@@ -158,7 +160,7 @@ public:
         }
 
         // Create session for this call
-        uint16_t session_id = session_manager_->create_session(client_id_);
+        const uint16_t session_id = session_manager_->create_session(client_id_);
 
         // Create request message
         MessageId const msg_id(service_id, method_id);
@@ -181,7 +183,7 @@ public:
         }
 
         // Send request
-        transport::Endpoint server_endpoint("127.0.0.1", 30490); // TODO: Make configurable
+        const transport::Endpoint server_endpoint("127.0.0.1", 30490); // TODO: Make configurable
         if (transport_->send_message(request, server_endpoint) != Result::SUCCESS) {
             platform::ScopedLock const lock(pending_calls_mutex_);
             pending_calls_.erase(handle);
@@ -248,7 +250,7 @@ private:
                     it->second.service_id == message->get_service_id() &&
                     it->second.method_id == message->get_method_id()) {
 
-                    RpcResult result = (message->is_success()) ? RpcResult::SUCCESS : RpcResult::INTERNAL_ERROR;
+                    const RpcResult result = (message->is_success()) ? RpcResult::SUCCESS : RpcResult::INTERNAL_ERROR;
                     recv_resp = RpcResponse(message->get_service_id(), message->get_method_id(),
                                             message->get_client_id(), message->get_session_id(), result);
                     recv_resp.return_values = message->get_payload();
@@ -327,5 +329,7 @@ bool RpcClient::is_ready() const {
 RpcClient::Statistics RpcClient::get_statistics() const {
     return impl_->get_statistics();
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::rpc

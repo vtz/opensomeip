@@ -20,7 +20,6 @@
 #include "platform/net.h"
 #include "platform/thread.h"
 #include "someip/message.h"
-#include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
 
@@ -29,7 +28,6 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -375,7 +373,7 @@ void UdpTransport::receive_loop() {
     while (running_) {
         Endpoint sender;
         size_t bytes_received = 0;
-        Result result = receive_data(buffer, sender, bytes_received);
+        const Result result = receive_data(buffer, sender, bytes_received);
 
         if (result == Result::SUCCESS && bytes_received > 0) {
             MessagePtr message = platform::allocate_message();

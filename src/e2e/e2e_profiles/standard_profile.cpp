@@ -83,8 +83,8 @@ public:
          // which includes E2E header. However, we need to be careful - the actual length
          // in the message will be set by update_length() after we set the E2E header.
          // For now, calculate what the length will be:
-         size_t const e2e_size = E2EHeader::get_header_size();
-         uint32_t length = 8 + e2e_size + static_cast<uint32_t>(msg.get_payload().size());
+        size_t const e2e_size = E2EHeader::get_header_size();
+        const uint32_t length = 8 + e2e_size + static_cast<uint32_t>(msg.get_payload().size());
          uint32_t length_be = someip_htonl(length);
          crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&length_be),
                          reinterpret_cast<const uint8_t*>(&length_be) + sizeof(uint32_t));

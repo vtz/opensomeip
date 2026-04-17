@@ -33,6 +33,8 @@
 
 namespace someip::events {
 
+// NOLINTBEGIN(misc-include-cleaner) - platform::Mutex from platform/thread.h (IWYU false positives in impl).
+
 /**
  * @brief Event Subscriber implementation
  * @implements REQ_ARCH_001
@@ -105,13 +107,13 @@ public:
 
         // Store subscription
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
-        std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
+        const std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
         subscriptions_[key] = std::move(sub_info);
 
         // Send subscription request via RPC (simplified - in real implementation,
         // this would use SD to find the service endpoint and send subscription)
         // For now, we'll assume the service is at a known endpoint
-        transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
+        const transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
 
         // Create subscription message (simplified)
         MessageId const msg_id(service_id, 0x0001);  // Method ID for subscription
@@ -124,7 +126,7 @@ public:
         payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
         subscription_msg.set_payload(payload);
 
-        Result send_result = transport_->send_message(subscription_msg, service_endpoint);
+        const Result send_result = transport_->send_message(subscription_msg, service_endpoint);
         bool const success = (send_result == Result::SUCCESS);
         if (!success) {
             subscriptions_.erase(key);
@@ -138,7 +140,7 @@ public:
         }
 
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
-        std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
+        const std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
         if (it == subscriptions_.end()) {
@@ -146,7 +148,7 @@ public:
         }
 
         // Send unsubscription request
-        transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
+        const transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
 
         MessageId const msg_id(service_id, 0x0002);  // Method ID for unsubscription
         Message unsubscription_msg(msg_id, RequestId(client_id_, 0x0002),
@@ -158,7 +160,7 @@ public:
         payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
         unsubscription_msg.set_payload(payload);
 
-        Result result = transport_->send_message(unsubscription_msg, service_endpoint);
+        const Result result = transport_->send_message(unsubscription_msg, service_endpoint);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
         }
@@ -177,11 +179,11 @@ public:
 
         // Store callback for field response
         platform::ScopedLock const field_lock(field_requests_mutex_);
-        std::string key = make_field_key(service_id, instance_id, event_id);
+        const std::string key = make_field_key(service_id, instance_id, event_id);
         field_requests_[key] = std::move(callback);
 
         // Send field request
-        transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
+        const transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
 
         MessageId const msg_id(service_id, 0x0003);  // Method ID for field request
         Message field_msg(msg_id, RequestId(client_id_, 0x0003), MessageType::REQUEST,
@@ -214,6 +216,7 @@ public:
     std::vector<EventSubscription> get_active_subscriptions() const {
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
         std::vector<EventSubscription> result;
+        result.reserve(subscriptions_.size());
 
         for (const auto& pair : subscriptions_) {
             result.push_back(pair.second.subscription);
@@ -398,5 +401,7 @@ bool EventSubscriber::is_ready() const {
 EventSubscriber::Statistics EventSubscriber::get_statistics() const {
     return impl_->get_statistics();
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 }  // namespace someip::events

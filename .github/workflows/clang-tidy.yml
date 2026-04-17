@@ -46,3 +46,20 @@ jobs:
           name: clang-tidy-report
           path: build/clang-tidy-report.txt
           retention-days: 14
+
+      - name: Convert clang-tidy report to Allure JUnit XML
+        if: always()
+        run: |
+          THRESHOLD=$(head -1 clang-tidy-baseline.txt 2>/dev/null | tr -d '[:space:]')
+          python3 scripts/clang_tidy_to_allure.py \
+            build/clang-tidy-report.txt \
+            allure-results \
+            ${THRESHOLD:+--threshold "$THRESHOLD"}
+
+      - name: Upload Allure results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results-clang-tidy
+          path: allure-results/
+          retention-days: 14

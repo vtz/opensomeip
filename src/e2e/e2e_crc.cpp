@@ -38,7 +38,7 @@ static constexpr uint8_t SAE_J1850_INIT = 0xFF;
 uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data) {
     uint32_t crc_reg = SAE_J1850_INIT;
 
-    for (uint8_t byte : data) {
+    for (const uint8_t byte : data) {
         crc_reg ^= static_cast<uint32_t>(byte);
         for (int i = 0; i < 8; ++i) {
             if ((crc_reg & 0x80U) != 0) {
@@ -59,7 +59,7 @@ static constexpr uint16_t ITU_X25_INIT = 0xFFFF;
 uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data) {
     uint32_t crc_reg = ITU_X25_INIT;
 
-    for (uint8_t byte : data) {
+    for (const uint8_t byte : data) {
         crc_reg ^= static_cast<uint32_t>(byte) << 8U;
         for (int i = 0; i < 8; ++i) {
             if ((crc_reg & 0x8000U) != 0) {
@@ -105,8 +105,8 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
 
     uint32_t crc = CRC32_INIT;
 
-    for (uint8_t byte : data) {
-        uint32_t index = ((crc >> 24U) ^ static_cast<uint32_t>(byte)) & 0xFFU;
+    for (const uint8_t byte : data) {
+        const uint32_t index = ((crc >> 24U) ^ static_cast<uint32_t>(byte)) & 0xFFU;
         crc = (crc << 8U) ^ crc32_table[index];
     }
 
@@ -120,7 +120,7 @@ std::optional<uint32_t> calculate_crc(const std::vector<uint8_t>& data, size_t o
     }
 
     auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
-    std::vector<uint8_t> slice(first, first + static_cast<std::ptrdiff_t>(length));
+    const std::vector<uint8_t> slice(first, first + static_cast<std::ptrdiff_t>(length));
 
     switch (crc_type) {
         case 0:  // SAE-J1850 (8-bit)

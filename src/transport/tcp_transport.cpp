@@ -20,7 +20,6 @@
 #include "platform/net.h"
 #include "platform/thread.h"
 #include "someip/message.h"
-#include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
 
@@ -434,14 +433,14 @@ void TcpTransport::receive_loop() {
         }
 
         std::vector<uint8_t> buffer;
-        Result result = receive_data(connection_.socket_fd, buffer);
+        const Result result = receive_data(connection_.socket_fd, buffer);
 
         if (result == Result::SUCCESS && !buffer.empty()) {
             // Try to parse messages from buffer
             MessagePtr message;
             if (parse_message_from_buffer(buffer, message)) {
                 platform::ScopedLock const lock(queue_mutex_);
-                message_queue_.push({message, connection_.remote_endpoint});
+                message_queue_.emplace(message, connection_.remote_endpoint);
                 connection_.update_activity();
 
                 if (auto* l = listener_.load(std::memory_order_acquire)) {
