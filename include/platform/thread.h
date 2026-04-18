@@ -36,6 +36,8 @@ public:
     ~ScopedLock() { m_.unlock(); }
     ScopedLock(const ScopedLock&) = delete;
     ScopedLock& operator=(const ScopedLock&) = delete;
+    ScopedLock(ScopedLock&&) = delete;
+    ScopedLock& operator=(ScopedLock&&) = delete;
 private:
     Mutex& m_;
 };

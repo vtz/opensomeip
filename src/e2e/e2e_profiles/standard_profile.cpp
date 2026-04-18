@@ -102,7 +102,7 @@ public:
          const auto& payload = msg.get_payload();
          crc_data.insert(crc_data.end(), payload.begin(), payload.end());
 
-         auto crc_result = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
+         auto crc_result = e2ecrc::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
          if (!crc_result.has_value()) {
              return Result::INVALID_ARGUMENT;
          }
@@ -187,7 +187,7 @@ public:
             const auto& payload = msg.get_payload();
             crc_data.insert(crc_data.end(), payload.begin(), payload.end());
 
-            auto crc_result = E2ECRC::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
+            auto crc_result = e2ecrc::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
             if (!crc_result.has_value()) {
                 return Result::INVALID_ARGUMENT;
             }

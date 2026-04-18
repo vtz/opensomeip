@@ -29,6 +29,11 @@ public:
 
     virtual ~SdEntry() = default;
 
+    SdEntry(const SdEntry&) = delete;
+    SdEntry& operator=(const SdEntry&) = delete;
+    SdEntry(SdEntry&&) = delete;
+    SdEntry& operator=(SdEntry&&) = delete;
+
     EntryType get_type() const { return type_; }
     uint32_t get_ttl() const { return ttl_; }
     void set_ttl(uint32_t ttl) { ttl_ = ttl; }
@@ -120,6 +125,11 @@ class SdOption {
 public:
     explicit SdOption(OptionType type) : type_(type) {}
     virtual ~SdOption() = default;
+
+    SdOption(const SdOption&) = delete;
+    SdOption& operator=(const SdOption&) = delete;
+    SdOption(SdOption&&) = delete;
+    SdOption& operator=(SdOption&&) = delete;
 
     OptionType get_type() const { return type_; }
     uint16_t get_length() const { return length_; }

@@ -27,7 +27,7 @@
  * - ITU-T X.25 / CCITT: 16-bit CRC (telecommunications standard)
  * - CRC32: Standard 32-bit CRC
  */
-namespace someip::e2e::E2ECRC {
+namespace someip::e2e::e2ecrc {
 
 /**
  * @brief Calculate 8-bit CRC using SAE-J1850 algorithm
@@ -72,6 +72,6 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data);
  */
 std::optional<uint32_t> calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type);
 
-}  // namespace someip::e2e::E2ECRC
+}  // namespace someip::e2e::e2ecrc
 
 #endif // E2E_CRC_H

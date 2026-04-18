@@ -41,6 +41,11 @@ public:
      */
     ~E2EProtection() = default;
 
+    E2EProtection(const E2EProtection&) = delete;
+    E2EProtection& operator=(const E2EProtection&) = delete;
+    E2EProtection(E2EProtection&&) = delete;
+    E2EProtection& operator=(E2EProtection&&) = delete;
+
     /**
      * @brief Protect a message before sending
      *

@@ -28,7 +28,7 @@
  * - ITU-T X.25 (16-bit)
  * - ISO 3309 / IEEE 802.3 (32-bit)
  */
-namespace someip::e2e::E2ECRC {
+namespace someip::e2e::e2ecrc {
 
 // SAE-J1850 CRC-8 polynomial: 0x1D (x^8 + x^4 + x^3 + x^2 + 1)
 static constexpr uint8_t SAE_J1850_POLY = 0x1D;
@@ -80,7 +80,7 @@ static constexpr uint32_t CRC32_INIT = 0xFFFFFFFF;
 namespace {
 
 const std::array<uint32_t, 256>& get_crc32_table() {
-    static const std::array<uint32_t, 256> table = [] {
+    static const std::array<uint32_t, 256> CRC32_TABLE = [] {
         std::array<uint32_t, 256> t{};
         for (uint32_t i = 0; i < 256; ++i) {
             uint32_t crc = i << 24U;
@@ -91,11 +91,12 @@ const std::array<uint32_t, 256>& get_crc32_table() {
                     crc <<= 1U;
                 }
             }
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
             t[i] = crc;
         }
         return t;
     }();
-    return table;
+    return CRC32_TABLE;
 }
 
 }  // namespace
@@ -107,6 +108,7 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
 
     for (const uint8_t byte : data) {
         const uint32_t index = ((crc >> 24U) ^ static_cast<uint32_t>(byte)) & 0xFFU;
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
         crc = (crc << 8U) ^ crc32_table[index];
     }
 
@@ -134,4 +136,4 @@ std::optional<uint32_t> calculate_crc(const std::vector<uint8_t>& data, size_t o
     }
 }
 
-}  // namespace someip::e2e::E2ECRC
+}  // namespace someip::e2e::e2ecrc

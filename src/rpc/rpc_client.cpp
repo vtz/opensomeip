@@ -68,6 +68,11 @@ public:
 #endif
     }
 
+    RpcClientImpl(const RpcClientImpl&) = delete;
+    RpcClientImpl& operator=(const RpcClientImpl&) = delete;
+    RpcClientImpl(RpcClientImpl&&) = delete;
+    RpcClientImpl& operator=(RpcClientImpl&&) = delete;
+
     bool initialize() {
         if (running_) {
             return true;

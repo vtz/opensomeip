@@ -44,8 +44,11 @@ public:
     }
 
     ConditionVariable() = default;
+    ~ConditionVariable() = default;
     ConditionVariable(const ConditionVariable&) = delete;
     ConditionVariable& operator=(const ConditionVariable&) = delete;
+    ConditionVariable(ConditionVariable&&) = delete;
+    ConditionVariable& operator=(ConditionVariable&&) = delete;
 
 private:
     // On the normal path, wait() calls lk.release() then guard.dismiss():
@@ -56,6 +59,7 @@ private:
     //   back to the caller — preventing unique_lock's destructor from unlocking
     //   the caller-owned mutex.
     struct ReleaseOnExit {
+    public:
         explicit ReleaseOnExit(std::unique_lock<std::mutex>& lk) : lk_(lk) {}
         ~ReleaseOnExit() {
             if (!dismissed_) {
@@ -63,7 +67,14 @@ private:
             }
         }
         void dismiss() { dismissed_ = true; }
+
+        ReleaseOnExit(const ReleaseOnExit&) = delete;
+        ReleaseOnExit& operator=(const ReleaseOnExit&) = delete;
+        ReleaseOnExit(ReleaseOnExit&&) = delete;
+        ReleaseOnExit& operator=(ReleaseOnExit&&) = delete;
+
     private:
+        // NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members)
         std::unique_lock<std::mutex>& lk_;
         bool dismissed_{false};
     };

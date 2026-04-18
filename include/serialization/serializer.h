@@ -117,6 +117,11 @@ public:
      */
     ~Serializer() = default;
 
+    Serializer(const Serializer&) = delete;
+    Serializer& operator=(const Serializer&) = delete;
+    Serializer(Serializer&&) = delete;
+    Serializer& operator=(Serializer&&) = delete;
+
     /**
      * @brief Reset the serializer (clear buffer)
      */
@@ -187,6 +192,11 @@ public:
      * @brief Destructor
      */
     ~Deserializer() = default;
+
+    Deserializer(const Deserializer&) = delete;
+    Deserializer& operator=(const Deserializer&) = delete;
+    Deserializer(Deserializer&&) = default;
+    Deserializer& operator=(Deserializer&&) = default;
 
     /**
      * @brief Reset position to beginning

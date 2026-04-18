@@ -34,6 +34,11 @@ class E2EProfile {
 public:
     virtual ~E2EProfile() = default;
 
+    E2EProfile(const E2EProfile&) = delete;
+    E2EProfile& operator=(const E2EProfile&) = delete;
+    E2EProfile(E2EProfile&&) = delete;
+    E2EProfile& operator=(E2EProfile&&) = delete;
+
     /**
      * @brief Protect a message before sending
      * @param msg Message to protect
@@ -67,6 +72,9 @@ public:
      * @return Profile ID (unique identifier)
      */
     virtual uint32_t get_profile_id() const = 0;
+
+protected:
+    E2EProfile() = default;
 };
 
 /**

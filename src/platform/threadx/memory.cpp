@@ -26,19 +26,23 @@
 #include <new>
 
 #ifndef SOMEIP_THREADX_MESSAGE_POOL_SIZE
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define SOMEIP_THREADX_MESSAGE_POOL_SIZE 16
 #endif
 
 static constexpr size_t POOL_SIZE = SOMEIP_THREADX_MESSAGE_POOL_SIZE;
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 TX_BLOCK_POOL message_pool;
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 std::atomic<bool> pool_initialized{false};
 
 namespace {
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 alignas(someip::Message) std::array<UCHAR, POOL_SIZE * sizeof(someip::Message)>
     pool_buffer{};
-
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 TX_MUTEX pool_guard;
 
 void ensure_pool_init() {
@@ -47,6 +51,7 @@ void ensure_pool_init() {
     }
 
     TX_INTERRUPT_SAVE_AREA
+    // NOLINTNEXTLINE(readability-identifier-naming)
     TX_DISABLE
 
     if (!pool_initialized.load(std::memory_order_relaxed)) {
@@ -94,6 +99,7 @@ MessagePtr allocate_message() {
         return nullptr;
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     auto* msg = new (block) Message();
     return MessagePtr(msg, [](Message* p) {
         release_message(p);

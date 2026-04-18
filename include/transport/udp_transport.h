@@ -86,6 +86,8 @@ public:
     // Disable copy and assignment
     UdpTransport(const UdpTransport&) = delete;
     UdpTransport& operator=(const UdpTransport&) = delete;
+    UdpTransport(UdpTransport&&) = delete;
+    UdpTransport& operator=(UdpTransport&&) = delete;
 
 private:
     Endpoint local_endpoint_;

@@ -79,6 +79,8 @@ public:
 
     E2EProfileRegistry(const E2EProfileRegistry&) = delete;
     E2EProfileRegistry& operator=(const E2EProfileRegistry&) = delete;
+    E2EProfileRegistry(E2EProfileRegistry&&) = delete;
+    E2EProfileRegistry& operator=(E2EProfileRegistry&&) = delete;
 
 private:
     E2EProfileRegistry() = default;

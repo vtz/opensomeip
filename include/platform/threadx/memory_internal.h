@@ -19,7 +19,9 @@
 
 #include <atomic>
 
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 extern TX_BLOCK_POOL message_pool;
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 extern std::atomic<bool> pool_initialized;
 
 #endif // SOMEIP_PLATFORM_THREADX_MEMORY_INTERNAL_H
