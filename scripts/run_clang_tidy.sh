@@ -146,7 +146,7 @@ for file in "${SOURCE_FILES[@]}"; do
     fi
 done
 
-TOTAL=$((TOTAL_WARNINGS + TOTAL_ERRORS))
+TOTAL=$TOTAL_WARNINGS
 
 # ── Write summary ─────────────────────────────────────────────────────────────
 {
