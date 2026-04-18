@@ -166,7 +166,7 @@ public:
         platform::ScopedLock const lock(subscriptions_mutex_);
 
         // Check if already subscribed
-        bool already_exists = service_subscriptions_.count(service_id) > 0;
+        bool const already_exists = service_subscriptions_.count(service_id) > 0;
         if (!already_exists) {
             service_subscriptions_[service_id] = {
                 std::move(available_callback),

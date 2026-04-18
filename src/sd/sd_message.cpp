@@ -247,7 +247,7 @@ std::vector<uint8_t> IPv4EndpointOption::serialize() const {
     data.push_back(protocol_);
 
     // Port (2 bytes, network byte order)
-    uint16_t network_port = someip_htons(port_);
+    uint16_t const network_port = someip_htons(port_);
     data.push_back(static_cast<uint8_t>((static_cast<uint32_t>(network_port) >> 8U) & 0xFFU));
     data.push_back(static_cast<uint8_t>(network_port & 0xFFU));
 

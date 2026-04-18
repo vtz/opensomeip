@@ -42,7 +42,7 @@ static inline int someip_shutdown_socket(someip_socket_t fd) {
 
 /** @implements REQ_PAL_NET_NONBLOCK, REQ_PAL_NET_MODE_E01 */
 static inline int someip_set_nonblocking(someip_socket_t fd) {
-    int flags = fcntl(fd, F_GETFL, 0);
+    const int flags = fcntl(fd, F_GETFL, 0);
     if (flags < 0) {
         return -1;
     }
@@ -53,7 +53,7 @@ static inline int someip_set_nonblocking(someip_socket_t fd) {
 
 /** @implements REQ_PAL_NET_BLOCK, REQ_PAL_NET_MODE_E01 */
 static inline int someip_set_blocking(someip_socket_t fd) {
-    int flags = fcntl(fd, F_GETFL, 0);
+    const int flags = fcntl(fd, F_GETFL, 0);
     if (flags < 0) {
         return -1;
     }

@@ -376,7 +376,7 @@ void UdpTransport::receive_loop() {
         const Result result = receive_data(buffer, sender, bytes_received);
 
         if (result == Result::SUCCESS && bytes_received > 0) {
-            MessagePtr message = platform::allocate_message();
+            MessagePtr const message = platform::allocate_message();
             const uint8_t* begin = buffer.data();
             if (message->deserialize({begin, begin + bytes_received})) {
                 // Add to queue
@@ -420,12 +420,14 @@ Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint&
     }
 
     const sockaddr_in dest_addr = create_sockaddr(endpoint);
-    ssize_t sent = 0;
-    do {
+    ssize_t sent = someip_sendto(socket_fd_, data.data(), data.size(), 0,
+                                 reinterpret_cast<const sockaddr*>(&dest_addr),
+                                 sizeof(dest_addr));
+    while (sent < 0 && someip_socket_errno() == SOMEIP_EINTR) {
         sent = someip_sendto(socket_fd_, data.data(), data.size(), 0,
                              reinterpret_cast<const sockaddr*>(&dest_addr),
                              sizeof(dest_addr));
-    } while (sent < 0 && someip_socket_errno() == SOMEIP_EINTR);
+    }
 
     if (sent < 0) {
         return Result::NETWORK_ERROR;
@@ -445,12 +447,14 @@ Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender, 
 
     bytes_received = 0;
 
-    ssize_t received = 0;
-    do {
+    ssize_t received = someip_recvfrom(socket_fd_, data.data(), data.size(), 0,
+                                       reinterpret_cast<sockaddr*>(&src_addr),
+                                       &addr_len);
+    while (received < 0 && someip_socket_errno() == SOMEIP_EINTR) {
         received = someip_recvfrom(socket_fd_, data.data(), data.size(), 0,
                                    reinterpret_cast<sockaddr*>(&src_addr),
                                    &addr_len);
-    } while (received < 0 && someip_socket_errno() == SOMEIP_EINTR);
+    }
 
     if (received < 0) {
         int const err = someip_socket_errno();
@@ -488,13 +492,13 @@ Endpoint UdpTransport::sockaddr_to_endpoint(const sockaddr_in& addr) const {
 }
 
 bool UdpTransport::is_multicast_address(const std::string& address) const {
-    in_addr_t addr = someip_inet_addr(address.c_str());
+    in_addr_t const addr = someip_inet_addr(address.c_str());
     if (addr == INADDR_NONE) {
         return false;
     }
 
     // Check if address is in multicast range (224.0.0.0 - 239.255.255.255)
-    uint32_t host_addr = ntohl(addr);
+    uint32_t const host_addr = ntohl(addr);
     return (host_addr >= 0xE0000000) && (host_addr <= 0xEFFFFFFF);
 }
 

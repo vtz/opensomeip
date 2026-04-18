@@ -121,7 +121,7 @@ public:
 
         const auto handle = call_method_async(service_id, method_id, parameters,
             [state](const RpcResponse& response) {
-                platform::ScopedLock lk(state->mtx);
+                platform::ScopedLock const lk(state->mtx);
                 state->resp = std::make_shared<RpcResponse>(response);
                 state->ready.store(true);
             }, timeout);

@@ -229,7 +229,7 @@ someip_socket_t TcpTransport::accept_connection() {
     sockaddr_in client_addr = {};
     socklen_t client_len = sizeof(client_addr);
 
-    someip_socket_t client_fd =
+    someip_socket_t const client_fd =
         someip_accept(listen_socket_fd_, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
 
     if (client_fd == SOMEIP_INVALID_SOCKET) {
@@ -482,8 +482,8 @@ Result TcpTransport::send_data(someip_socket_t socket_fd, const std::vector<uint
     const uint8_t* buffer = data.data();
 
     while (total_sent < data.size()) {
-        ssize_t sent = someip_send(socket_fd, buffer + total_sent,
-                                   data.size() - total_sent, 0);
+        ssize_t const sent = someip_send(socket_fd, buffer + total_sent,
+                                         data.size() - total_sent, 0);
 
         if (sent < 0) {
             int const err = someip_socket_errno();
@@ -554,7 +554,7 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
 
         while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
             // Check if this looks like a valid SOME/IP header
-            uint32_t potential_msg_id =
+            uint32_t const potential_msg_id =
                 (static_cast<uint32_t>(buffer[search_start]) << 24U) |
                 (static_cast<uint32_t>(buffer[search_start + 1]) << 16U) |
                 (static_cast<uint32_t>(buffer[search_start + 2]) << 8U) |
