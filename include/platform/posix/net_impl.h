@@ -26,7 +26,7 @@
 #include <errno.h>
 
 using someip_socket_t = int;
-#define SOMEIP_INVALID_SOCKET (-1)
+constexpr someip_socket_t SOMEIP_INVALID_SOCKET = -1;
 
 /* ---------- Socket lifecycle ----------------------------------------------- */
 
@@ -46,6 +46,7 @@ static inline int someip_set_nonblocking(someip_socket_t fd) {
     if (flags < 0) {
         return -1;
     }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
     return fcntl(fd, F_SETFL,
                  static_cast<int>(static_cast<unsigned int>(flags) |
                                   static_cast<unsigned int>(O_NONBLOCK)));
@@ -57,6 +58,7 @@ static inline int someip_set_blocking(someip_socket_t fd) {
     if (flags < 0) {
         return -1;
     }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
     return fcntl(fd, F_SETFL,
                  static_cast<int>(static_cast<unsigned int>(flags) &
                                   ~static_cast<unsigned int>(O_NONBLOCK)));

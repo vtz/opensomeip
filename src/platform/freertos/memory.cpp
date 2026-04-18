@@ -29,6 +29,7 @@
 #include <new>
 
 #ifndef SOMEIP_FREERTOS_MESSAGE_POOL_SIZE
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define SOMEIP_FREERTOS_MESSAGE_POOL_SIZE 16
 #endif
 
@@ -37,10 +38,12 @@ static constexpr size_t POOL_SIZE = SOMEIP_FREERTOS_MESSAGE_POOL_SIZE;
 namespace {
 
 alignas(someip::Message) std::array<char, POOL_SIZE * sizeof(someip::Message)>
-    pool_buffer{};
-
+    pool_buffer{};  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 std::array<bool, POOL_SIZE> block_used{};
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 SemaphoreHandle_t pool_mutex = nullptr;
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 std::atomic<bool> pool_initialized{false};
 
 void ensure_pool_init() {
@@ -101,6 +104,7 @@ MessagePtr allocate_message() {
             xSemaphoreGive(pool_mutex);
 
             void* block = pool_buffer.data() + i * sizeof(Message);
+            // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
             auto* msg = new (block) Message();
             return MessagePtr(msg, [](Message* p) {
                 release_message(p);

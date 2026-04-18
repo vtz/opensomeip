@@ -58,6 +58,11 @@ public:
         shutdown();
     }
 
+    EventSubscriberImpl(const EventSubscriberImpl&) = delete;
+    EventSubscriberImpl& operator=(const EventSubscriberImpl&) = delete;
+    EventSubscriberImpl(EventSubscriberImpl&&) = delete;
+    EventSubscriberImpl& operator=(EventSubscriberImpl&&) = delete;
+
     bool initialize() {
         if (running_) {
             return true;

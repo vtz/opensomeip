@@ -57,6 +57,11 @@ public:
         shutdown();
     }
 
+    EventPublisherImpl(const EventPublisherImpl&) = delete;
+    EventPublisherImpl& operator=(const EventPublisherImpl&) = delete;
+    EventPublisherImpl(EventPublisherImpl&&) = delete;
+    EventPublisherImpl& operator=(EventPublisherImpl&&) = delete;
+
     bool initialize() {
         if (running_) {
             return true;

@@ -32,6 +32,11 @@ class ITransportListener {
 public:
     virtual ~ITransportListener() = default;
 
+    ITransportListener(const ITransportListener&) = delete;
+    ITransportListener& operator=(const ITransportListener&) = delete;
+    ITransportListener(ITransportListener&&) = delete;
+    ITransportListener& operator=(ITransportListener&&) = delete;
+
     /**
      * @brief Called when a message is received
      * @param message The received message
@@ -56,6 +61,9 @@ public:
      * @param error The error that occurred
      */
     virtual void on_error(Result error) = 0;
+
+protected:
+    ITransportListener() = default;
 };
 
 /**
@@ -67,6 +75,11 @@ public:
 class ITransport {
 public:
     virtual ~ITransport() = default;
+
+    ITransport(const ITransport&) = delete;
+    ITransport& operator=(const ITransport&) = delete;
+    ITransport(ITransport&&) = delete;
+    ITransport& operator=(ITransport&&) = delete;
 
     /**
      * @brief Send a message to an endpoint
@@ -130,6 +143,9 @@ public:
      * @return true if running, false otherwise
      */
     virtual bool is_running() const = 0;
+
+protected:
+    ITransport() = default;
 };
 
 // Type aliases for convenience

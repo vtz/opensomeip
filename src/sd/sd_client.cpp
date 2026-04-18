@@ -74,6 +74,11 @@ public:
         shutdown();
     }
 
+    SdClientImpl(const SdClientImpl&) = delete;
+    SdClientImpl& operator=(const SdClientImpl&) = delete;
+    SdClientImpl(SdClientImpl&&) = delete;
+    SdClientImpl& operator=(SdClientImpl&&) = delete;
+
     /** @implements REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084 */
     bool initialize() {
         if (running_) {
@@ -196,6 +201,9 @@ public:
         subscribe_entry->set_major_version(0x01);  // Version 1
         subscribe_entry->set_ttl(3600);  // 1 hour TTL
 
+        subscribe_entry->set_index1(0);
+        subscribe_entry->set_num_opts1(1);
+
         // Create SD message
         SdMessage sd_message;
         sd_message.add_entry(std::move(subscribe_entry));
@@ -206,10 +214,6 @@ public:
         endpoint_option->set_port(transport_->get_local_endpoint().get_port());
         endpoint_option->set_protocol(0x11);  // UDP
         sd_message.add_option(std::move(endpoint_option));
-
-        auto* sub_entry = static_cast<EventGroupEntry*>(sd_message.get_entries()[0].get());
-        sub_entry->set_index1(0);
-        sub_entry->set_num_opts1(1);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
@@ -338,8 +342,10 @@ private:
                 case EntryType::OFFER_SERVICE:
                     // Check TTL to distinguish between offer and stop offer
                     if (entry->get_ttl() == 0) {
+                        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                         handle_service_stop_offer(*static_cast<const ServiceEntry*>(entry.get()));
                     } else {
+                        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                         handle_service_offer(*static_cast<const ServiceEntry*>(entry.get()), message);
                     }
                     break;
@@ -367,6 +373,7 @@ private:
         for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
             const auto& option = options[index1 + i];
             if (option->get_type() == OptionType::IPV4_ENDPOINT) {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
                 instance.ip_address = ep->get_ipv4_address_string();
                 instance.port = ep->get_port();

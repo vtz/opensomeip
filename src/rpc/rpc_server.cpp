@@ -57,6 +57,11 @@ public:
         shutdown();
     }
 
+    RpcServerImpl(const RpcServerImpl&) = delete;
+    RpcServerImpl& operator=(const RpcServerImpl&) = delete;
+    RpcServerImpl(RpcServerImpl&&) = delete;
+    RpcServerImpl& operator=(RpcServerImpl&&) = delete;
+
     bool initialize() {
         if (running_) {
             return true;

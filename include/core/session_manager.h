@@ -133,6 +133,8 @@ public:
     // Prevent copying
     SessionManager(const SessionManager&) = delete;
     SessionManager& operator=(const SessionManager&) = delete;
+    SessionManager(SessionManager&&) = delete;
+    SessionManager& operator=(SessionManager&&) = delete;
 
 private:
     std::unordered_map<uint16_t, std::shared_ptr<Session>> sessions_;

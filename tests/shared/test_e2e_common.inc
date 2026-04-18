@@ -85,52 +85,52 @@ static void test_e2e() {
     // CRC-8 SAE-J1850
     {
         std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-        uint8_t crc = E2ECRC::calculate_crc8_sae_j1850(data);
+        uint8_t crc = e2ecrc::calculate_crc8_sae_j1850(data);
         CHECK(crc != 0, "crc8_nonzero");
 
         std::vector<uint8_t> empty;
-        uint8_t crc_empty = E2ECRC::calculate_crc8_sae_j1850(empty);
+        uint8_t crc_empty = e2ecrc::calculate_crc8_sae_j1850(empty);
         CHECK(crc_empty == 0xFF, "crc8_empty_init_value");
 
         // Determinism
-        uint8_t crc_b = E2ECRC::calculate_crc8_sae_j1850(data);
+        uint8_t crc_b = e2ecrc::calculate_crc8_sae_j1850(data);
         CHECK(crc == crc_b, "crc8_deterministic");
     }
 
     // CRC-16 ITU-T X.25
     {
         std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-        uint16_t crc = E2ECRC::calculate_crc16_itu_x25(data);
+        uint16_t crc = e2ecrc::calculate_crc16_itu_x25(data);
         CHECK(crc != 0, "crc16_nonzero");
 
         std::vector<uint8_t> empty;
-        uint16_t crc_empty = E2ECRC::calculate_crc16_itu_x25(empty);
+        uint16_t crc_empty = e2ecrc::calculate_crc16_itu_x25(empty);
         CHECK(crc_empty == 0xFFFF, "crc16_empty_init_value");
     }
 
     // CRC-32
     {
         std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-        uint32_t crc = E2ECRC::calculate_crc32(data);
+        uint32_t crc = e2ecrc::calculate_crc32(data);
         CHECK(crc != 0, "crc32_nonzero");
     }
 
     // CRC type dispatch and bounds guard
     {
         std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-        auto crc8  = E2ECRC::calculate_crc(data, 0, 4, 0);
-        auto crc16 = E2ECRC::calculate_crc(data, 0, 4, 1);
-        auto crc32 = E2ECRC::calculate_crc(data, 0, 4, 2);
-        auto unk   = E2ECRC::calculate_crc(data, 0, 4, 255);
+        auto crc8  = e2ecrc::calculate_crc(data, 0, 4, 0);
+        auto crc16 = e2ecrc::calculate_crc(data, 0, 4, 1);
+        auto crc32 = e2ecrc::calculate_crc(data, 0, 4, 2);
+        auto unk   = e2ecrc::calculate_crc(data, 0, 4, 255);
 
-        CHECK(crc8.has_value() && crc8.value() == static_cast<uint32_t>(E2ECRC::calculate_crc8_sae_j1850(data)),
+        CHECK(crc8.has_value() && crc8.value() == static_cast<uint32_t>(e2ecrc::calculate_crc8_sae_j1850(data)),
               "crc_dispatch_type0");
-        CHECK(crc16.has_value() && crc16.value() == static_cast<uint32_t>(E2ECRC::calculate_crc16_itu_x25(data)),
+        CHECK(crc16.has_value() && crc16.value() == static_cast<uint32_t>(e2ecrc::calculate_crc16_itu_x25(data)),
               "crc_dispatch_type1");
-        CHECK(crc32.has_value() && crc32.value() == E2ECRC::calculate_crc32(data), "crc_dispatch_type2");
+        CHECK(crc32.has_value() && crc32.value() == e2ecrc::calculate_crc32(data), "crc_dispatch_type2");
         CHECK(!unk.has_value(), "crc_unknown_type_nullopt");
 
-        auto oob = E2ECRC::calculate_crc(data, 2, 5, 0);
+        auto oob = e2ecrc::calculate_crc(data, 2, 5, 0);
         CHECK(!oob.has_value(), "crc_oob_returns_nullopt");
     }
 

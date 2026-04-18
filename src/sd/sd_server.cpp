@@ -78,6 +78,11 @@ public:
         shutdown();
     }
 
+    SdServerImpl(const SdServerImpl&) = delete;
+    SdServerImpl& operator=(const SdServerImpl&) = delete;
+    SdServerImpl(SdServerImpl&&) = delete;
+    SdServerImpl& operator=(SdServerImpl&&) = delete;
+
     /** @implements REQ_SD_080, REQ_SD_080_E01, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_083_E01, REQ_SD_084 */
     bool initialize() {
         if (running_) {
@@ -216,6 +221,8 @@ public:
         response_entry->set_eventgroup_id(eventgroup_id);
         response_entry->set_major_version(0x01);
         response_entry->set_ttl(acknowledge ? 3600 : 0);  // TTL or 0 for NACK
+        response_entry->set_index1(0);
+        response_entry->set_num_opts1(1);
 
         SdMessage response_message;
         response_message.add_entry(std::move(response_entry));
@@ -227,10 +234,6 @@ public:
         multicast_option->set_ipv4_address(multicast_addr);
         multicast_option->set_port(someip_htons(config_.multicast_port));
         response_message.add_option(std::move(multicast_option));
-
-        auto* entry = static_cast<EventGroupEntry*>(response_message.get_entries()[0].get());
-        entry->set_index1(0);
-        entry->set_num_opts1(1);
 
         // Send unicast response to client
         // Parse client_address (format: "ip:port" or just "ip")
@@ -366,6 +369,8 @@ private:
         offer_entry->set_instance_id(service.instance.instance_id);
         offer_entry->set_major_version(service.instance.major_version);
         offer_entry->set_ttl(service.instance.ttl_seconds);
+        offer_entry->set_index1(0);
+        offer_entry->set_num_opts1(1);
 
         SdMessage sd_message;
         sd_message.add_entry(std::move(offer_entry));
@@ -386,10 +391,6 @@ private:
         }
 
         sd_message.add_option(std::move(endpoint_option));
-
-        auto* offer_entry_ptr = static_cast<ServiceEntry*>(sd_message.get_entries()[0].get());
-        offer_entry_ptr->set_index1(0);
-        offer_entry_ptr->set_num_opts1(1);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
@@ -465,10 +466,12 @@ private:
         for (const auto& entry : message.get_entries()) {
             switch (entry->get_type()) {
                 case EntryType::FIND_SERVICE:
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                     handle_find_service(*static_cast<const ServiceEntry*>(entry.get()), sender);
                     break;
                 case EntryType::SUBSCRIBE_EVENTGROUP:
                     handle_eventgroup_subscription_request(
+                        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                         *static_cast<const EventGroupEntry*>(entry.get()), message, sender);
                     break;
                 default:
@@ -511,6 +514,7 @@ private:
         if (index1 < options.size()) {
             const auto& option = options[index1];
             if (option->get_type() == OptionType::IPV4_ENDPOINT) {
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
                 client_ip = ep->get_ipv4_address_string();
                 client_port = ep->get_port();
@@ -538,6 +542,8 @@ private:
         offer_entry->set_instance_id(service.instance.instance_id);
         offer_entry->set_major_version(service.instance.major_version);
         offer_entry->set_ttl(service.instance.ttl_seconds);
+        offer_entry->set_index1(0);
+        offer_entry->set_num_opts1(1);
 
         SdMessage sd_message;
         sd_message.set_unicast(true);  // Unicast response
@@ -559,10 +565,6 @@ private:
         }
 
         sd_message.add_option(std::move(endpoint_option));
-
-        auto* offer_entry_ptr = static_cast<ServiceEntry*>(sd_message.get_entries()[0].get());
-        offer_entry_ptr->set_index1(0);
-        offer_entry_ptr->set_num_opts1(1);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),

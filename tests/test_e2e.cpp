@@ -66,14 +66,14 @@ TEST_F(E2ETest, HeaderSerialization) {
  */
 TEST_F(E2ETest, CRC8SAEJ1850) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-    uint8_t crc = E2ECRC::calculate_crc8_sae_j1850(data);
+    uint8_t crc = e2ecrc::calculate_crc8_sae_j1850(data);
 
     // CRC should be non-zero for non-empty data
     EXPECT_NE(crc, 0);
 
     // Test with empty data
     std::vector<uint8_t> empty;
-    uint8_t crc_empty = E2ECRC::calculate_crc8_sae_j1850(empty);
+    uint8_t crc_empty = e2ecrc::calculate_crc8_sae_j1850(empty);
     EXPECT_EQ(crc_empty, 0xFF);  // SAE-J1850 init value
 }
 
@@ -84,21 +84,21 @@ TEST_F(E2ETest, CRC8SAEJ1850) {
  */
 TEST_F(E2ETest, CRC16ITUX25) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-    uint16_t crc = E2ECRC::calculate_crc16_itu_x25(data);
+    uint16_t crc = e2ecrc::calculate_crc16_itu_x25(data);
 
     // CRC should be non-zero for non-empty data
     EXPECT_NE(crc, 0);
 
     // Test with empty data
     std::vector<uint8_t> empty;
-    uint16_t crc_empty = E2ECRC::calculate_crc16_itu_x25(empty);
+    uint16_t crc_empty = e2ecrc::calculate_crc16_itu_x25(empty);
     EXPECT_EQ(crc_empty, 0xFFFF);  // ITU-T X.25 init value
 }
 
 // Test CRC calculation - CRC32
 TEST_F(E2ETest, CRC32) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-    uint32_t crc = E2ECRC::calculate_crc32(data);
+    uint32_t crc = e2ecrc::calculate_crc32(data);
 
     // CRC should be non-zero for non-empty data
     EXPECT_NE(crc, 0);
@@ -263,7 +263,7 @@ TEST_F(E2ETest, MessageWithoutE2E) {
  */
 TEST_F(E2ETest, CRC_OutOfBoundsRange) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-    auto crc = E2ECRC::calculate_crc(data, 2, 5, 0);  // offset+length=7 > size=4
+    auto crc = e2ecrc::calculate_crc(data, 2, 5, 0);  // offset+length=7 > size=4
     EXPECT_FALSE(crc.has_value());
 }
 
@@ -274,7 +274,7 @@ TEST_F(E2ETest, CRC_OutOfBoundsRange) {
  */
 TEST_F(E2ETest, CRC_OverflowGuard) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
-    auto crc = E2ECRC::calculate_crc(data, SIZE_MAX, 1, 0);
+    auto crc = e2ecrc::calculate_crc(data, SIZE_MAX, 1, 0);
     EXPECT_FALSE(crc.has_value());
 }
 
@@ -286,17 +286,17 @@ TEST_F(E2ETest, CRC_OverflowGuard) {
 TEST_F(E2ETest, CRC_AllTypeBranches) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
 
-    auto crc8  = E2ECRC::calculate_crc(data, 0, 4, 0);
-    auto crc16 = E2ECRC::calculate_crc(data, 0, 4, 1);
-    auto crc32 = E2ECRC::calculate_crc(data, 0, 4, 2);
-    auto unk   = E2ECRC::calculate_crc(data, 0, 4, 255);
+    auto crc8  = e2ecrc::calculate_crc(data, 0, 4, 0);
+    auto crc16 = e2ecrc::calculate_crc(data, 0, 4, 1);
+    auto crc32 = e2ecrc::calculate_crc(data, 0, 4, 2);
+    auto unk   = e2ecrc::calculate_crc(data, 0, 4, 255);
 
     ASSERT_TRUE(crc8.has_value());
     ASSERT_TRUE(crc16.has_value());
     ASSERT_TRUE(crc32.has_value());
-    EXPECT_EQ(crc8.value(),  static_cast<uint32_t>(E2ECRC::calculate_crc8_sae_j1850(data)));
-    EXPECT_EQ(crc16.value(), static_cast<uint32_t>(E2ECRC::calculate_crc16_itu_x25(data)));
-    EXPECT_EQ(crc32.value(), E2ECRC::calculate_crc32(data));
+    EXPECT_EQ(crc8.value(),  static_cast<uint32_t>(e2ecrc::calculate_crc8_sae_j1850(data)));
+    EXPECT_EQ(crc16.value(), static_cast<uint32_t>(e2ecrc::calculate_crc16_itu_x25(data)));
+    EXPECT_EQ(crc32.value(), e2ecrc::calculate_crc32(data));
     EXPECT_FALSE(unk.has_value());
 }
 
@@ -308,8 +308,8 @@ TEST_F(E2ETest, CRC_AllTypeBranches) {
 TEST_F(E2ETest, CRC8_Deterministic) {
     std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
 
-    uint8_t crc_a = E2ECRC::calculate_crc8_sae_j1850(data);
-    uint8_t crc_b = E2ECRC::calculate_crc8_sae_j1850(data);
+    uint8_t crc_a = e2ecrc::calculate_crc8_sae_j1850(data);
+    uint8_t crc_b = e2ecrc::calculate_crc8_sae_j1850(data);
 
     EXPECT_EQ(crc_a, crc_b);
 }
@@ -321,7 +321,7 @@ TEST_F(E2ETest, CRC8_Deterministic) {
  */
 TEST_F(E2ETest, CRC16_SingleByte) {
     std::vector<uint8_t> data = {0x42};
-    uint16_t crc = E2ECRC::calculate_crc16_itu_x25(data);
+    uint16_t crc = e2ecrc::calculate_crc16_itu_x25(data);
     EXPECT_NE(crc, 0u);
     EXPECT_NE(crc, 0xFFFFu);
 }
@@ -337,9 +337,9 @@ TEST_F(E2ETest, CRC16_SingleByte) {
 TEST_F(E2ETest, CRC_AllTypesNonZeroForKnownPayload) {
     std::vector<uint8_t> data = {0xDE, 0xAD, 0xBE, 0xEF};
 
-    EXPECT_NE(E2ECRC::calculate_crc8_sae_j1850(data), 0u);
-    EXPECT_NE(E2ECRC::calculate_crc16_itu_x25(data), 0u);
-    EXPECT_NE(E2ECRC::calculate_crc32(data), 0u);
+    EXPECT_NE(e2ecrc::calculate_crc8_sae_j1850(data), 0u);
+    EXPECT_NE(e2ecrc::calculate_crc16_itu_x25(data), 0u);
+    EXPECT_NE(e2ecrc::calculate_crc32(data), 0u);
 }
 
 /**
@@ -350,9 +350,9 @@ TEST_F(E2ETest, CRC_AllTypesNonZeroForKnownPayload) {
 TEST_F(E2ETest, CRC_SubRange) {
     std::vector<uint8_t> data = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
 
-    auto crc_sub = E2ECRC::calculate_crc(data, 2, 2, 0);
+    auto crc_sub = e2ecrc::calculate_crc(data, 2, 2, 0);
     std::vector<uint8_t> sub = {0xCC, 0xDD};
-    uint32_t crc_direct = E2ECRC::calculate_crc8_sae_j1850(sub);
+    uint32_t crc_direct = e2ecrc::calculate_crc8_sae_j1850(sub);
     ASSERT_TRUE(crc_sub.has_value());
     EXPECT_EQ(crc_sub.value(), crc_direct);
 }
