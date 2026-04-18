@@ -119,8 +119,8 @@ public:
 
     Serializer(const Serializer&) = delete;
     Serializer& operator=(const Serializer&) = delete;
-    Serializer(Serializer&&) = delete;
-    Serializer& operator=(Serializer&&) = delete;
+    Serializer(Serializer&&) = default;
+    Serializer& operator=(Serializer&&) = default;
 
     /**
      * @brief Reset the serializer (clear buffer)

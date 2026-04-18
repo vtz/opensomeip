@@ -74,4 +74,8 @@ std::optional<uint32_t> calculate_crc(const std::vector<uint8_t>& data, size_t o
 
 }  // namespace someip::e2e::e2ecrc
 
+namespace someip::e2e {
+namespace E2ECRC = e2ecrc;  // backward-compatible alias
+}  // namespace someip::e2e
+
 #endif // E2E_CRC_H

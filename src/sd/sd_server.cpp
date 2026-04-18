@@ -221,6 +221,8 @@ public:
         response_entry->set_eventgroup_id(eventgroup_id);
         response_entry->set_major_version(0x01);
         response_entry->set_ttl(acknowledge ? 3600 : 0);  // TTL or 0 for NACK
+        response_entry->set_index1(0);
+        response_entry->set_num_opts1(1);
 
         SdMessage response_message;
         response_message.add_entry(std::move(response_entry));
@@ -232,11 +234,6 @@ public:
         multicast_option->set_ipv4_address(multicast_addr);
         multicast_option->set_port(someip_htons(config_.multicast_port));
         response_message.add_option(std::move(multicast_option));
-
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        auto* entry = static_cast<EventGroupEntry*>(response_message.get_entries()[0].get());
-        entry->set_index1(0);
-        entry->set_num_opts1(1);
 
         // Send unicast response to client
         // Parse client_address (format: "ip:port" or just "ip")
@@ -372,6 +369,8 @@ private:
         offer_entry->set_instance_id(service.instance.instance_id);
         offer_entry->set_major_version(service.instance.major_version);
         offer_entry->set_ttl(service.instance.ttl_seconds);
+        offer_entry->set_index1(0);
+        offer_entry->set_num_opts1(1);
 
         SdMessage sd_message;
         sd_message.add_entry(std::move(offer_entry));
@@ -392,11 +391,6 @@ private:
         }
 
         sd_message.add_option(std::move(endpoint_option));
-
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        auto* offer_entry_ptr = static_cast<ServiceEntry*>(sd_message.get_entries()[0].get());
-        offer_entry_ptr->set_index1(0);
-        offer_entry_ptr->set_num_opts1(1);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
@@ -548,6 +542,8 @@ private:
         offer_entry->set_instance_id(service.instance.instance_id);
         offer_entry->set_major_version(service.instance.major_version);
         offer_entry->set_ttl(service.instance.ttl_seconds);
+        offer_entry->set_index1(0);
+        offer_entry->set_num_opts1(1);
 
         SdMessage sd_message;
         sd_message.set_unicast(true);  // Unicast response
@@ -569,11 +565,6 @@ private:
         }
 
         sd_message.add_option(std::move(endpoint_option));
-
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        auto* offer_entry_ptr = static_cast<ServiceEntry*>(sd_message.get_entries()[0].get());
-        offer_entry_ptr->set_index1(0);
-        offer_entry_ptr->set_num_opts1(1);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),

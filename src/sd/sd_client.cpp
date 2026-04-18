@@ -201,6 +201,9 @@ public:
         subscribe_entry->set_major_version(0x01);  // Version 1
         subscribe_entry->set_ttl(3600);  // 1 hour TTL
 
+        subscribe_entry->set_index1(0);
+        subscribe_entry->set_num_opts1(1);
+
         // Create SD message
         SdMessage sd_message;
         sd_message.add_entry(std::move(subscribe_entry));
@@ -211,11 +214,6 @@ public:
         endpoint_option->set_port(transport_->get_local_endpoint().get_port());
         endpoint_option->set_protocol(0x11);  // UDP
         sd_message.add_option(std::move(endpoint_option));
-
-        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-        auto* sub_entry = static_cast<EventGroupEntry*>(sd_message.get_entries()[0].get());
-        sub_entry->set_index1(0);
-        sub_entry->set_num_opts1(1);
 
         // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
