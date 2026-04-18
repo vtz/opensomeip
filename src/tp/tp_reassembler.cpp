@@ -265,7 +265,7 @@ bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& recei
 
     // Count received bytes
     received_bytes = 0;
-    for (bool received : buffer.received_segments) {
+    for (bool const received : buffer.received_segments) {
         if (received) {
             received_bytes += config.max_segment_size;  // Approximate
         }
@@ -364,7 +364,7 @@ bool TpReassemblyBuffer::is_complete() const {
     }
 
     // Check if all segments received
-    for (bool received : received_segments) {
+    for (bool const received : received_segments) {
         if (!received) {
             return false;
         }

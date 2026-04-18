@@ -425,7 +425,7 @@ DeserializationResult<std::string> Deserializer::deserialize_string() {
  * @implements REQ_SER_073
  */
 bool Deserializer::set_position(size_t pos) {
-    bool valid = pos <= buffer_.size();
+    bool const valid = pos <= buffer_.size();
     if (valid) {
         position_ = pos;
     }

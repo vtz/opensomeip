@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <memory>
 #include <optional>
@@ -77,14 +78,20 @@ public:
      * @brief Get the value (only valid if is_success() returns true)
      */
     const T& get_value() const {
-        return value_.value();
+        if (!value_.has_value()) {
+            std::abort();
+        }
+        return *value_;
     }
 
     /**
      * @brief Get the value with move semantics (only valid if is_success() returns true)
      */
     T&& move_value() {
-        return std::move(value_.value());
+        if (!value_.has_value()) {
+            std::abort();
+        }
+        return std::move(*value_);
     }
 
 private:
@@ -328,7 +335,7 @@ DeserializationResult<std::vector<T>> Deserializer::deserialize_dynamic_array() 
         return DeserializationResult<std::vector<T>>::error(length_result.get_error());
     }
 
-    uint32_t byte_length = length_result.get_value();
+    const uint32_t byte_length = length_result.get_value();
 
     // Validate that byte length is multiple of element size (REQ_SER_082_E01)
     size_t element_size = sizeof(T);

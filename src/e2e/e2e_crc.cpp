@@ -85,7 +85,7 @@ const std::array<uint32_t, 256>& get_crc32_table() {
         for (uint32_t i = 0; i < 256; ++i) {
             uint32_t crc = i << 24U;
             for (int j = 0; j < 8; ++j) {
-                if (crc & 0x80000000U) {
+                if ((crc & 0x80000000U) != 0U) {
                     crc = (crc << 1U) ^ CRC32_POLY;
                 } else {
                     crc <<= 1U;

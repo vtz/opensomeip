@@ -246,7 +246,7 @@ bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
     e2e_header_.reset();
     if (expect_e2e) {
         constexpr size_t e2e_header_size = e2e::E2EHeader::get_header_size();
-        size_t remaining = data.size() - offset;
+        size_t const remaining = data.size() - offset;
         if (remaining >= e2e_header_size && length_ >= 8 + e2e_header_size) {
             e2e::E2EHeader header;
             if (header.deserialize(data, offset)) {
@@ -264,9 +264,9 @@ bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
     if (length_ < 8) {
         return false;  // Invalid length: must be at least 8 for header
     }
-    size_t e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
+    size_t const e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
     size_t const expected_payload_size = length_ - 8 - e2e_size;
-    size_t actual_payload_size = data.size() - offset;
+    size_t const actual_payload_size = data.size() - offset;
 
     if (actual_payload_size != expected_payload_size) {
         return false;
@@ -451,8 +451,8 @@ bool Message::has_valid_header() const {
     }
 
     // Check length consistency
-    size_t e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
-    uint32_t expected_length = 8 + e2e_size + payload_.size();
+    size_t const e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
+    uint32_t const expected_length = 8 + e2e_size + payload_.size();
     if (length_ != expected_length) {
         return false;
     }
@@ -509,7 +509,7 @@ void Message::update_length() {
     // SOME/IP length field contains length from client_id to end of message
     // client_id(2) + session_id(2) + protocol_version(1) + interface_version(1) +
     // message_type(1) + return_code(1) + e2e_header_size + payload_size
-    size_t e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
+    size_t const e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
     length_ = 8 + e2e_size + payload_.size();
 }
 

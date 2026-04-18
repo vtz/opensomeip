@@ -201,7 +201,7 @@ public:
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                          const std::vector<EventFilter>& filters) {
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
-        std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
+        std::string const key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
         if (it == subscriptions_.end()) {
@@ -228,7 +228,7 @@ public:
     SubscriptionState get_subscription_status(uint16_t service_id, uint16_t instance_id,
                                             uint16_t eventgroup_id) const {
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
-        std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
+        std::string const key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
         if (it == subscriptions_.end()) {
@@ -272,8 +272,8 @@ private:
         // Check if this is for one of our subscriptions
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
-        uint16_t service_id = message->get_service_id();
-        uint16_t event_id = message->get_method_id();  // Event ID is in method ID field for notifications
+        uint16_t const service_id = message->get_service_id();
+        uint16_t const event_id = message->get_method_id();  // Event ID is in method ID field for notifications
 
         // Find matching subscription (we need to check all subscriptions for this service)
         for (auto& sub_pair : subscriptions_) {
@@ -300,7 +300,7 @@ private:
 
         // Check if this is a field response
         platform::ScopedLock const field_lock(field_requests_mutex_);
-        std::string field_key = make_field_key(service_id, 0, event_id);  // Simplified
+        std::string const field_key = make_field_key(service_id, 0, event_id);  // Simplified
 
         auto field_it = field_requests_.find(field_key);
         if (field_it != field_requests_.end()) {

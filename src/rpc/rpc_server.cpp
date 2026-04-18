@@ -187,7 +187,7 @@ private:
     /** @implements REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01, REQ_MSG_129 */
     void send_error_response(MessagePtr const& request, const transport::Endpoint& sender, ReturnCode error_code) {
         const MessageId response_msg_id(request->get_service_id(), request->get_method_id());
-        Message response(response_msg_id, request->get_request_id(),
+        Message const response(response_msg_id, request->get_request_id(),
                         MessageType::ERROR, error_code);
 
         const Result result = transport_->send_message(response, sender);
