@@ -39,9 +39,8 @@ std::atomic<bool> pool_initialized{false};
 
 namespace {
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 alignas(someip::Message) std::array<UCHAR, POOL_SIZE * sizeof(someip::Message)>
-    pool_buffer{};
+    pool_buffer{};  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 TX_MUTEX pool_guard;
 

@@ -37,9 +37,8 @@ static constexpr size_t POOL_SIZE = SOMEIP_FREERTOS_MESSAGE_POOL_SIZE;
 
 namespace {
 
-// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 alignas(someip::Message) std::array<char, POOL_SIZE * sizeof(someip::Message)>
-    pool_buffer{};
+    pool_buffer{};  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 std::array<bool, POOL_SIZE> block_used{};
 // NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
