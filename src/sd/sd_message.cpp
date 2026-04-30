@@ -233,12 +233,14 @@ bool SdOption::deserialize(const std::vector<uint8_t>& data, size_t& offset) {
 std::vector<uint8_t> IPv4EndpointOption::serialize() const {
     std::vector<uint8_t> data = SdOption::serialize();
 
-    // IPv4 Address (4 bytes, network byte order)
-    // ipv4_address_ is already in network byte order
-    data.push_back(static_cast<uint8_t>((ipv4_address_ >> 24U) & 0xFFU));
-    data.push_back(static_cast<uint8_t>((ipv4_address_ >> 16U) & 0xFFU));
-    data.push_back(static_cast<uint8_t>((ipv4_address_ >> 8U) & 0xFFU));
-    data.push_back(static_cast<uint8_t>(ipv4_address_ & 0xFFU));
+    // IPv4 Address (4 bytes, network byte order on the wire)
+    // ipv4_address_ stores addr.s_addr (NBO in memory); convert to host order
+    // so that MSB-first shifts produce correct NBO wire bytes.
+    uint32_t const host_addr = someip_ntohl(ipv4_address_);
+    data.push_back(static_cast<uint8_t>((host_addr >> 24U) & 0xFFU));
+    data.push_back(static_cast<uint8_t>((host_addr >> 16U) & 0xFFU));
+    data.push_back(static_cast<uint8_t>((host_addr >> 8U) & 0xFFU));
+    data.push_back(static_cast<uint8_t>(host_addr & 0xFFU));
 
     // Reserved (1 byte)
     data.push_back(0);
@@ -246,13 +248,13 @@ std::vector<uint8_t> IPv4EndpointOption::serialize() const {
     // Protocol (1 byte)
     data.push_back(protocol_);
 
-    // Port (2 bytes, network byte order)
-    uint16_t const network_port = someip_htons(port_);
-    data.push_back(static_cast<uint8_t>((static_cast<uint32_t>(network_port) >> 8U) & 0xFFU));
-    data.push_back(static_cast<uint8_t>(network_port & 0xFFU));
+    // Port (2 bytes) — shifts produce big-endian (NBO) wire bytes directly
+    data.push_back(static_cast<uint8_t>((static_cast<uint32_t>(port_) >> 8U) & 0xFFU));
+    data.push_back(static_cast<uint8_t>(port_ & 0xFFU));
 
-    // Update length (8 bytes of data after the option header)
-    uint16_t const length = 8;
+    // Length covers everything except Length(2) and Type(1) fields:
+    // Reserved(1) + IPv4(4) + Reserved(1) + Proto(1) + Port(2) = 9
+    uint16_t const length = 9;
     data[0] = static_cast<uint8_t>((static_cast<uint32_t>(length) >> 8U) & 0xFFU);
     data[1] = static_cast<uint8_t>(length & 0xFFU);
 
@@ -265,15 +267,22 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
         return false;
     }
 
-    if (offset + length_ > data.size()) {
+    if (length_ != 9) {
         return false;
     }
 
-    // IPv4 Address (4 bytes, network byte order)
-    ipv4_address_ = (static_cast<uint32_t>(data[offset]) << 24U) |
-                    (static_cast<uint32_t>(data[offset + 1]) << 16U) |
-                    (static_cast<uint32_t>(data[offset + 2]) << 8U) |
-                    static_cast<uint32_t>(data[offset + 3]);
+    constexpr size_t payload_bytes = 8;
+    if (offset + payload_bytes > data.size()) {
+        return false;
+    }
+
+    // IPv4 Address (4 wire bytes in NBO → host-order uint32 → s_addr via htonl)
+    uint32_t const host_addr =
+        (static_cast<uint32_t>(data[offset]) << 24U) |
+        (static_cast<uint32_t>(data[offset + 1]) << 16U) |
+        (static_cast<uint32_t>(data[offset + 2]) << 8U) |
+        static_cast<uint32_t>(data[offset + 3]);
+    ipv4_address_ = someip_htonl(host_addr);
     offset += 4;
 
     // Validate IP address (REQ_SD_064_E01)
@@ -292,10 +301,9 @@ bool IPv4EndpointOption::deserialize(const std::vector<uint8_t>& data, size_t& o
     // Protocol (1 byte)
     protocol_ = data[offset++];
 
-    // Port (2 bytes, network byte order)
-    auto const network_port = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8U) |
-                                                    static_cast<uint32_t>(data[offset + 1]));
-    port_ = someip_ntohs(network_port);
+    // Port (2 bytes) — shifts reconstruct host-order value directly from NBO wire bytes
+    port_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8U) |
+                                  static_cast<uint32_t>(data[offset + 1]));
     offset += 2;
 
     return true;
@@ -323,21 +331,26 @@ std::string IPv4EndpointOption::get_ipv4_address_string() const {
 std::vector<uint8_t> IPv4MulticastOption::serialize() const {
     std::vector<uint8_t> data = SdOption::serialize();
 
-    // IPv4 Address (4 bytes)
-    data.push_back(static_cast<uint8_t>((ipv4_address_ >> 24U) & 0xFFU));
-    data.push_back(static_cast<uint8_t>((ipv4_address_ >> 16U) & 0xFFU));
-    data.push_back(static_cast<uint8_t>((ipv4_address_ >> 8U) & 0xFFU));
-    data.push_back(static_cast<uint8_t>(ipv4_address_ & 0xFFU));
+    // IPv4 Address (4 bytes, NBO on wire)
+    uint32_t const host_addr = someip_ntohl(ipv4_address_);
+    data.push_back(static_cast<uint8_t>((host_addr >> 24U) & 0xFFU));
+    data.push_back(static_cast<uint8_t>((host_addr >> 16U) & 0xFFU));
+    data.push_back(static_cast<uint8_t>((host_addr >> 8U) & 0xFFU));
+    data.push_back(static_cast<uint8_t>(host_addr & 0xFFU));
 
     // Reserved (1 byte)
     data.push_back(0);
 
-    // Port (2 bytes)
+    // Protocol (1 byte)
+    data.push_back(protocol_);
+
+    // Port (2 bytes) — shifts produce big-endian (NBO) wire bytes directly
     data.push_back(static_cast<uint8_t>((static_cast<uint32_t>(port_) >> 8U) & 0xFFU));
     data.push_back(static_cast<uint8_t>(port_ & 0xFFU));
 
-    // Update length (7 bytes: 4 address + 1 reserved + 2 port)
-    uint16_t const length = 7;
+    // Length covers everything except Length(2) and Type(1):
+    // Reserved(1) + IPv4(4) + Reserved(1) + Proto(1) + Port(2) = 9
+    uint16_t const length = 9;
     data[0] = static_cast<uint8_t>((static_cast<uint32_t>(length) >> 8U) & 0xFFU);
     data[1] = static_cast<uint8_t>(length & 0xFFU);
 
@@ -350,26 +363,42 @@ bool IPv4MulticastOption::deserialize(const std::vector<uint8_t>& data, size_t& 
         return false;
     }
 
-    if (offset + length_ > data.size()) {
+    if (length_ != 9) {
         return false;
     }
 
-    ipv4_address_ = (static_cast<uint32_t>(data[offset]) << 24U) |
-                    (static_cast<uint32_t>(data[offset + 1]) << 16U) |
-                    (static_cast<uint32_t>(data[offset + 2]) << 8U) |
-                    static_cast<uint32_t>(data[offset + 3]);
-    offset += 5;  // Skip address + reserved
+    constexpr size_t payload_bytes = 8;
+    if (offset + payload_bytes > data.size()) {
+        return false;
+    }
+
+    uint32_t const host_addr =
+        (static_cast<uint32_t>(data[offset]) << 24U) |
+        (static_cast<uint32_t>(data[offset + 1]) << 16U) |
+        (static_cast<uint32_t>(data[offset + 2]) << 8U) |
+        static_cast<uint32_t>(data[offset + 3]);
+    ipv4_address_ = someip_htonl(host_addr);
+    offset += 4;
 
     // Validate IP address (REQ_SD_064_E01)
     if (ipv4_address_ == 0 || ipv4_address_ == 0xFFFFFFFFU) {
         std::cout << "Warning: Invalid IP address in multicast option: "
-                  << ((ipv4_address_ >> 24U) & 0xFFU) << "."
-                  << ((ipv4_address_ >> 16U) & 0xFFU) << "."
-                  << ((ipv4_address_ >> 8U) & 0xFFU) << "."
-                  << (ipv4_address_ & 0xFFU) << '\n';
+                  << ((host_addr >> 24U) & 0xFFU) << "."
+                  << ((host_addr >> 16U) & 0xFFU) << "."
+                  << ((host_addr >> 8U) & 0xFFU) << "."
+                  << (host_addr & 0xFFU) << '\n';
     }
-    port_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8U) |
-                                   static_cast<uint32_t>(data[offset + 1]));
+
+    // Skip reserved byte
+    offset++;
+
+    // Protocol (1 byte)
+    protocol_ = data[offset++];
+
+    // Port (2 bytes) — shifts reconstruct host-order value from NBO wire bytes
+    port_ = static_cast<uint16_t>(
+        (static_cast<uint32_t>(data[offset]) << 8U) |
+        static_cast<uint32_t>(data[offset + 1]));
     offset += 2;
 
     return true;

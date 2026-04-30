@@ -135,36 +135,34 @@ TEST_F(SdTest, IPv4EndpointOptionSerialization) {
 
     auto data = option.serialize();
 
-    // Check length: 4 bytes header + 8 bytes data = 12 bytes total
+    // Total: Length(2) + Type(1) + Reserved(1) + IPv4(4) + Reserved(1) + Proto(1) + Port(2) = 12
     EXPECT_EQ(data.size(), 12);
 
-    // Check length field (first 2 bytes)
+    // Length = 0x0009 per spec (covers all except Length and Type fields)
     EXPECT_EQ(data[0], 0x00);
-    EXPECT_EQ(data[1], 0x08);
+    EXPECT_EQ(data[1], 0x09);
 
-    // Check type field (3rd byte)
+    // Type = 0x04
     EXPECT_EQ(data[2], 0x04);
 
-    // Check reserved field (4th byte)
+    // Reserved
     EXPECT_EQ(data[3], 0x00);
 
-    // Check IPv4 address (bytes 4-7, network byte order)
-    // On this system, inet_pton gives 0x6401A8C0 -> 64 01 A8 C0
-    EXPECT_EQ(data[4], 0x64);  // 100
-    EXPECT_EQ(data[5], 0x01);  // 1
-    EXPECT_EQ(data[6], 0xA8);  // 168
-    EXPECT_EQ(data[7], 0xC0);  // 192
+    // IPv4 address in network byte order: 192.168.1.100 = C0 A8 01 64
+    EXPECT_EQ(data[4], 0xC0);  // 192
+    EXPECT_EQ(data[5], 0xA8);  // 168
+    EXPECT_EQ(data[6], 0x01);  // 1
+    EXPECT_EQ(data[7], 0x64);  // 100
 
-    // Check reserved byte (8th byte)
+    // Reserved
     EXPECT_EQ(data[8], 0x00);
 
-    // Check protocol (9th byte)
+    // Protocol
     EXPECT_EQ(data[9], 0x11);
 
-    // Check port (bytes 10-11, network byte order)
-    uint16_t expected_port = someip_htons(30509);
-    EXPECT_EQ(data[10], (expected_port >> 8) & 0xFF);
-    EXPECT_EQ(data[11], expected_port & 0xFF);
+    // Port 30509 in NBO = 0x772D
+    EXPECT_EQ(data[10], 0x77);
+    EXPECT_EQ(data[11], 0x2D);
 }
 
 /**
@@ -439,11 +437,119 @@ TEST_F(SdTest, SdResults) {
 }
 
 // ============================================================================
-// SD Message Serialization Tests
+// Interop / Wire-Format Compliance Tests (Issue #238)
 // ============================================================================
 
-// Note: These tests validate the current implementation behavior.
-// Full SOME/IP-SD wire format compliance requires additional work.
+/**
+ * @test_case TC_SD_INTEROP_001
+ * @tests feat_req_someipsd_129
+ * @brief Verify serialized IPv4 Endpoint Option length field is 0x0009 per spec.
+ *
+ * The spec says: "Length field shall cover all bytes of the option except
+ * the length field and type field."  For IPv4 Endpoint Option that is
+ * Reserved(1) + IPv4(4) + Reserved(1) + L4-Proto(1) + Port(2) = 9.
+ */
+TEST_F(SdTest, IPv4EndpointOptionSerializesLength9) {
+    IPv4EndpointOption option;
+    option.set_ipv4_address_from_string("192.168.1.100");
+    option.set_port(30509);
+    option.set_protocol(0x11);
+
+    auto data = option.serialize();
+    ASSERT_EQ(data.size(), 12u);
+
+    EXPECT_EQ(data[0], 0x00) << "Length MSB";
+    EXPECT_EQ(data[1], 0x09) << "Length LSB — spec mandates 0x0009";
+}
+
+/**
+ * @test_case TC_SD_INTEROP_002
+ * @tests feat_req_someipsd_129
+ * @brief Verify IPv4 address is serialized in network byte order (MSB first).
+ *
+ * For 192.168.1.100 the wire bytes shall be C0 A8 01 64.
+ */
+TEST_F(SdTest, IPv4EndpointOptionSerializesAddressNBO) {
+    IPv4EndpointOption option;
+    option.set_ipv4_address_from_string("192.168.1.100");
+    option.set_port(30509);
+    option.set_protocol(0x11);
+
+    auto data = option.serialize();
+    ASSERT_GE(data.size(), 8u);
+
+    EXPECT_EQ(data[4], 0xC0) << "192";
+    EXPECT_EQ(data[5], 0xA8) << "168";
+    EXPECT_EQ(data[6], 0x01) << "1";
+    EXPECT_EQ(data[7], 0x64) << "100";
+}
+
+/**
+ * @test_case TC_SD_INTEROP_003
+ * @tests feat_req_someipsd_129
+ * @brief Deserializing a spec-compliant (length=9) IPv4 Endpoint Option
+ *        must succeed.  This reproduces the vsomeip interop failure from
+ *        issue #238: opensomeip's bounds check rejected length=9 packets.
+ */
+TEST_F(SdTest, IPv4EndpointOptionDeserializesSpecCompliantPacket) {
+    // Hand-crafted spec-compliant IPv4 Endpoint Option for 10.0.3.1:30509/UDP
+    const std::vector<uint8_t> wire = {
+        0x00, 0x09,       // Length = 9 (spec-correct)
+        0x04,             // Type = IPv4 Endpoint
+        0x00,             // Reserved
+        0x0A, 0x00, 0x03, 0x01,  // IPv4 = 10.0.3.1 (NBO)
+        0x00,             // Reserved
+        0x11,             // UDP
+        0x77, 0x2D,       // Port = 30509 (NBO)
+    };
+
+    IPv4EndpointOption option;
+    size_t offset = 0;
+    ASSERT_TRUE(option.deserialize(wire, offset))
+        << "Spec-compliant packet with length=9 must be accepted";
+
+    EXPECT_EQ(option.get_ipv4_address_string(), "10.0.3.1");
+    EXPECT_EQ(option.get_port(), 30509);
+    EXPECT_EQ(option.get_protocol(), 0x11);
+    EXPECT_EQ(offset, 12u);
+}
+
+/**
+ * @test_case TC_SD_INTEROP_004
+ * @tests feat_req_someipsd_129
+ * @brief Full round-trip: serialize then deserialize must preserve all fields
+ *        and produce spec-compliant wire format.
+ */
+TEST_F(SdTest, IPv4EndpointOptionSpecCompliantRoundTrip) {
+    IPv4EndpointOption original;
+    original.set_ipv4_address_from_string("172.16.254.1");
+    original.set_port(443);
+    original.set_protocol(0x06);  // TCP
+
+    auto wire = original.serialize();
+
+    // Verify spec-compliant length
+    EXPECT_EQ(wire[0], 0x00);
+    EXPECT_EQ(wire[1], 0x09);
+
+    // Verify NBO address: 172.16.254.1 = AC 10 FE 01
+    EXPECT_EQ(wire[4], 0xAC);
+    EXPECT_EQ(wire[5], 0x10);
+    EXPECT_EQ(wire[6], 0xFE);
+    EXPECT_EQ(wire[7], 0x01);
+
+    IPv4EndpointOption deserialized;
+    size_t offset = 0;
+    ASSERT_TRUE(deserialized.deserialize(wire, offset));
+
+    EXPECT_EQ(deserialized.get_ipv4_address_string(), "172.16.254.1");
+    EXPECT_EQ(deserialized.get_port(), 443);
+    EXPECT_EQ(deserialized.get_protocol(), 0x06);
+}
+
+// ============================================================================
+// SD Message Serialization Tests
+// ============================================================================
 
 TEST_F(SdTest, ServiceEntrySerialization) {
     ServiceEntry original(EntryType::OFFER_SERVICE);

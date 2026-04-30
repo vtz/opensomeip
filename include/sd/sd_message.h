@@ -181,6 +181,9 @@ public:
     uint32_t get_ipv4_address() const { return ipv4_address_; }
     void set_ipv4_address(uint32_t address) { ipv4_address_ = address; }
 
+    uint8_t get_protocol() const { return protocol_; }
+    void set_protocol(uint8_t protocol) { protocol_ = protocol; }
+
     uint16_t get_port() const { return port_; }
     void set_port(uint16_t port) { port_ = port; }
 
@@ -189,7 +192,8 @@ public:
 
 private:
     uint32_t ipv4_address_{0}; // IPv4 address in network byte order
-    uint16_t port_{0};         // Port in network byte order
+    uint8_t protocol_{0x11};   // L4 protocol (default UDP per spec)
+    uint16_t port_{0};
 };
 
 /**

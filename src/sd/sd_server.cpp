@@ -232,7 +232,7 @@ public:
         // Convert multicast address to network byte order
         const in_addr_t multicast_addr = someip_inet_addr(config_.multicast_address.c_str());
         multicast_option->set_ipv4_address(multicast_addr);
-        multicast_option->set_port(someip_htons(config_.multicast_port));
+        multicast_option->set_port(config_.multicast_port);
         response_message.add_option(std::move(multicast_option));
 
         // Send unicast response to client
