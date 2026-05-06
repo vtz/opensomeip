@@ -547,6 +547,63 @@ TEST_F(SdTest, IPv4EndpointOptionSpecCompliantRoundTrip) {
     EXPECT_EQ(deserialized.get_protocol(), 0x06);
 }
 
+/**
+ * @test_case TC_SD_INTEROP_005
+ * @tests feat_req_someipsd_129
+ * @brief End-to-end interop test using the exact scenario from issue #238:
+ *        vsomeip server at 10.10.10.20:30510/UDP sends a spec-compliant
+ *        OfferService with an IPv4EndpointOption.  opensomeip must parse
+ *        the option and recover the correct address and port.
+ *
+ *        Previously, opensomeip would either reject the packet (bug 1:
+ *        length=9 bounds check) or decode the address as 20.10.10.10
+ *        (bug 2: byte order).
+ */
+TEST_F(SdTest, VsomeipInteropScenario) {
+    // Exact wire bytes that vsomeip sends for server at 10.10.10.20:30510/UDP
+    // per AUTOSAR SOME/IP-SD wire format
+    const std::vector<uint8_t> vsomeip_wire = {
+        0x00, 0x09,                   // Length = 9 (AUTOSAR-compliant)
+        0x04,                         // Type = IPv4 Endpoint (0x04)
+        0x00,                         // Reserved
+        0x0A, 0x0A, 0x0A, 0x14,      // IPv4 = 10.10.10.20 in NBO
+        0x00,                         // Reserved
+        0x11,                         // L4-Proto = UDP (0x11)
+        0x77, 0x2E,                   // Port = 30510 in NBO (0x772E)
+    };
+
+    IPv4EndpointOption option;
+    size_t offset = 0;
+
+    // Bug 1 fix: must not reject length=9 packets
+    ASSERT_TRUE(option.deserialize(vsomeip_wire, offset))
+        << "vsomeip OfferService with length=9 must be accepted (bug 1 fix)";
+
+    // Bug 2 fix: must decode address as 10.10.10.20, not 20.10.10.10
+    EXPECT_EQ(option.get_ipv4_address_string(), "10.10.10.20")
+        << "Address must be decoded correctly from NBO wire bytes (bug 2 fix)";
+
+    EXPECT_EQ(option.get_port(), 30510)
+        << "Port must be decoded correctly without double-swap";
+
+    EXPECT_EQ(option.get_protocol(), 0x11);
+    EXPECT_EQ(offset, 12u);
+
+    // Also verify that opensomeip's serialized output matches what vsomeip
+    // would expect (bidirectional interop)
+    IPv4EndpointOption outgoing;
+    outgoing.set_ipv4_address_from_string("10.10.10.20");
+    outgoing.set_port(30510);
+    outgoing.set_protocol(0x11);
+
+    auto serialized = outgoing.serialize();
+    ASSERT_EQ(serialized.size(), 12u);
+
+    // Must produce identical wire bytes as vsomeip
+    EXPECT_EQ(serialized, vsomeip_wire)
+        << "opensomeip must produce spec-compliant wire bytes identical to vsomeip";
+}
+
 // ============================================================================
 // SD Message Serialization Tests
 // ============================================================================
