@@ -115,7 +115,7 @@ REQ_MSG_110,Service Instance ID Support,requirement,feat_req_someip_542; feat_re
 REQ_MSG_110_E01,Error - Invalid Service Instance ID,requirement,,CODE_event_publisher_events_128,TC_test_message_MessageTest; TC_MSG_E08,Yes,Yes
 REQ_MSG_111,Service ID Uniqueness,requirement,feat_req_someip_541,CODE_rpc_server_rpc_133; CODE_types_someip_70,TC_test_message_MessageTest,Yes,Yes
 REQ_MSG_112,Non-SOME/IP Service ID 0xFFFE,requirement,feat_req_someip_624,CODE_types_someip_37,TC_test_message_MessageTest,Yes,Yes
-REQ_MSG_113,Eventgroup ID Support,requirement,feat_req_someip_545; feat_req_someip_546; feat_req_someip_547; feat_req_someip_670,CODE_sd_message_sd_212; CODE_sd_types_sd_77,TC_test_message_MessageTest,Yes,Yes
+REQ_MSG_113,Eventgroup ID Support,requirement,feat_req_someip_545; feat_req_someip_546; feat_req_someip_547; feat_req_someip_670,CODE_sd_message_sd_216; CODE_sd_types_sd_77,TC_test_message_MessageTest,Yes,Yes
 REQ_MSG_113_E01,Error - Duplicate Eventgroup ID,requirement,,,TC_test_message_MessageTest,No,Yes
 REQ_MSG_114,Request/Response Header Construction,requirement,feat_req_someip_329; feat_req_someip_338; feat_req_someip_327; feat_req_someip_328,CODE_rpc_client_rpc_157,TC_test_message_MessageTest; TC_test_rpc_RpcTest,Yes,Yes
 REQ_MSG_114_E01,Error - Response Without Matching Request,requirement,,CODE_rpc_client_rpc_157,TC_test_message_MessageTest,Yes,Yes
@@ -239,7 +239,7 @@ REQ_SD_024,Parse Type 1 Offer Service Entry,requirement,feat_req_someipsd_626,CO
 REQ_SD_025,Parse Type 6 Subscribe Eventgroup Entry,requirement,feat_req_someipsd_629,CODE_sd_message_sd_44,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_026,Parse Type 7 Subscribe Eventgroup Ack Entry,requirement,feat_req_someipsd_630,CODE_sd_message_sd_44,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_030,Parse Service ID in Entry,requirement,feat_req_someipsd_625,CODE_sd_message_sd_44,TC_test_sd_SdTest; TC_SD_INTEGRATION_001,Yes,Yes
-REQ_SD_030_E01,Error - SD Entry References No Options,requirement,,CODE_sd_message_sd_479,TC_test_sd_SdTest; TC_SD_E03,Yes,Yes
+REQ_SD_030_E01,Error - SD Entry References No Options,requirement,,CODE_sd_message_sd_508,TC_test_sd_SdTest; TC_SD_E03,Yes,Yes
 REQ_SD_031,Parse Instance ID in Entry,requirement,feat_req_someipsd_625,CODE_sd_message_sd_44,TC_test_sd_SdTest; TC_SD_INTEGRATION_001,Yes,Yes
 REQ_SD_032,Instance ID Wildcard,requirement,feat_req_someipsd_625; feat_req_someipsd_734,CODE_sd_message_sd_44,TC_test_sd_SdTest; TC_SD_INTEGRATION_001,Yes,Yes
 REQ_SD_033,Parse Major Version and TTL,requirement,feat_req_someipsd_625,CODE_sd_message_sd_44,TC_test_sd_SdTest; TC_SD_INTEGRATION_002,Yes,Yes
@@ -273,7 +273,7 @@ REQ_SD_062,Parse Option Length,requirement,feat_req_someipsd_1096; feat_req_some
 REQ_SD_062_E01,Error - Truncated Option,requirement,,CODE_sd_message_sd_175,TC_test_sd_SdTest; TC_SD_DESER_007,Yes,Yes
 REQ_SD_063,Parse IPv4 Endpoint Option Type,requirement,feat_req_someipsd_1112,CODE_sd_message_sd_152,TC_test_sd_SdTest; TC_SD_004; TC_SD_005; TC_SD_008,Yes,Yes
 REQ_SD_064,Extract IPv4 Address,requirement,feat_req_someipsd_1112,CODE_sd_message_sd_152,TC_test_sd_SdTest; TC_SD_004; TC_SD_005; TC_SD_008,Yes,Yes
-REQ_SD_064_E01,Error - Invalid IP Address,requirement,,CODE_sd_message_sd_175; CODE_sd_message_sd_262; CODE_sd_message_sd_347,TC_test_sd_SdTest; TC_SD_DESER_008,Yes,Yes
+REQ_SD_064_E01,Error - Invalid IP Address,requirement,,CODE_sd_message_sd_175; CODE_sd_message_sd_264; CODE_sd_message_sd_360,TC_test_sd_SdTest; TC_SD_DESER_008,Yes,Yes
 REQ_SD_065,Extract IPv4 Port Number,requirement,feat_req_someipsd_1112,CODE_sd_message_sd_152,TC_test_sd_SdTest; TC_SD_004; TC_SD_005,Yes,Yes
 REQ_SD_066,Extract IPv4 Protocol,requirement,feat_req_someipsd_1112,CODE_sd_message_sd_152,TC_test_sd_SdTest; TC_SD_009,Yes,Yes
 REQ_SD_067,Parse IPv6 Endpoint Option Type,requirement,feat_req_someipsd_1112,CODE_sd_message_sd_152,TC_test_sd_SdTest; TC_SD_009,Yes,Yes
@@ -333,7 +333,7 @@ REQ_SD_126,Handling Redundant Options,requirement,feat_req_someipsd_1143; feat_r
 REQ_SD_127,Handling Conflicting Options,requirement,feat_req_someipsd_1145; feat_req_someipsd_1146,CODE_sd_client_sd_122,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_130,Server Service State Machine,requirement,feat_req_someipsd_627; feat_req_someipsd_628; feat_req_someipsd_629,CODE_sd_server_sd_133; CODE_sd_server_sd_364,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_131,Client Service State Machine,requirement,feat_req_someipsd_627; feat_req_someipsd_628; feat_req_someipsd_630,CODE_sd_client_sd_122; CODE_sd_types_sd_88,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_132,Eventgroup Subscription State Machine,requirement,feat_req_someipsd_632; feat_req_someipsd_633; feat_req_someipsd_634,CODE_sd_message_sd_322,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_132,Eventgroup Subscription State Machine,requirement,feat_req_someipsd_632; feat_req_someipsd_633; feat_req_someipsd_634,CODE_sd_message_sd_330,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_134_E01,Error - SD Multicast Send Failure,requirement,,,TC_test_sd_SdTest,No,Yes
 REQ_SD_140,Service Endpoint Association,requirement,feat_req_someipsd_810; feat_req_someipsd_815,CODE_sd_server_sd_133; CODE_sd_server_sd_364,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_141,Multicast Endpoint Association,requirement,feat_req_someipsd_722; feat_req_someipsd_723,CODE_sd_server_sd_133; CODE_sd_server_sd_364,TC_test_sd_SdTest,Yes,Yes
@@ -341,16 +341,16 @@ REQ_SD_142,Initial Event Sending,requirement,feat_req_someipsd_789; feat_req_som
 REQ_SD_150,SD Malformed Message Handling,requirement,feat_req_someipsd_900; feat_req_someipsd_1220,CODE_sd_server_sd_133; CODE_sd_server_sd_364,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_151,SD Invalid Entry Handling,requirement,feat_req_someipsd_1141; feat_req_someipsd_1233,CODE_sd_server_sd_133; CODE_sd_server_sd_364,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_152,SD TTL Expiry Handling,requirement,feat_req_someipsd_681; feat_req_someipsd_682; feat_req_someipsd_748,CODE_sd_server_sd_133; CODE_sd_server_sd_364,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_160,SD Multicast Transmission,requirement,feat_req_someipsd_100; feat_req_someipsd_105,CODE_sd_client_sd_359; CODE_sd_message_sd_322,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_160,SD Multicast Transmission,requirement,feat_req_someipsd_100; feat_req_someipsd_105,CODE_sd_client_sd_359; CODE_sd_message_sd_330,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_161,SD Unicast Response,requirement,feat_req_someipsd_90; feat_req_someipsd_91; feat_req_someipsd_826,CODE_sd_client_sd_359,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_170,SD Session ID Management,requirement,feat_req_someipsd_150; feat_req_someipsd_97,,TC_test_sd_SdTest,No,Yes
 REQ_SD_171,SD Reboot Detection Response,requirement,feat_req_someipsd_764; feat_req_someipsd_765; feat_req_someipsd_872,,TC_test_sd_SdTest,No,Yes
 REQ_SD_180,Minor Version Matching,requirement,feat_req_someipsd_238; feat_req_someipsd_736,CODE_sd_types_sd_88,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_200A,SD Message Structure - Flags and Reserved,requirement,feat_req_someipsd_38; feat_req_someipsd_39; feat_req_someipsd_40,CODE_sd_message_sd_421; CODE_sd_message_sd_479; CODE_sd_message_sd_24; CODE_sd_message_sd_212,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_200B,SD Entries Array Format,requirement,feat_req_someipsd_41; feat_req_someipsd_42; feat_req_someipsd_44,CODE_sd_message_sd_421; CODE_sd_message_sd_479; CODE_sd_message_sd_24; CODE_sd_message_sd_63,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_200C,SD Options Array Format,requirement,feat_req_someipsd_1; feat_req_someipsd_2; feat_req_someipsd_13,CODE_sd_message_sd_421; CODE_sd_message_sd_479; CODE_sd_message_sd_24; CODE_sd_message_sd_212,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_201,SD Transport Requirements,requirement,feat_req_someipsd_46; feat_req_someipsd_47,CODE_sd_message_sd_421; CODE_sd_message_sd_479,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_202,SD ECU Internal Interface,requirement,feat_req_someipsd_22; feat_req_someipsd_23; feat_req_someipsd_24; feat_req_someipsd_25; feat_req_someipsd_26; feat_req_someipsd_27; feat_req_someipsd_16; feat_req_someipsd_17; feat_req_someipsd_18,CODE_sd_message_sd_421; CODE_sd_message_sd_479,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_200A,SD Message Structure - Flags and Reserved,requirement,feat_req_someipsd_38; feat_req_someipsd_39; feat_req_someipsd_40,CODE_sd_message_sd_450; CODE_sd_message_sd_508; CODE_sd_message_sd_24; CODE_sd_message_sd_216,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_200B,SD Entries Array Format,requirement,feat_req_someipsd_41; feat_req_someipsd_42; feat_req_someipsd_44,CODE_sd_message_sd_450; CODE_sd_message_sd_508; CODE_sd_message_sd_24; CODE_sd_message_sd_63,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_200C,SD Options Array Format,requirement,feat_req_someipsd_1; feat_req_someipsd_2; feat_req_someipsd_13,CODE_sd_message_sd_450; CODE_sd_message_sd_508; CODE_sd_message_sd_24; CODE_sd_message_sd_216,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_201,SD Transport Requirements,requirement,feat_req_someipsd_46; feat_req_someipsd_47,CODE_sd_message_sd_450; CODE_sd_message_sd_508,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_202,SD ECU Internal Interface,requirement,feat_req_someipsd_22; feat_req_someipsd_23; feat_req_someipsd_24; feat_req_someipsd_25; feat_req_someipsd_26; feat_req_someipsd_27; feat_req_someipsd_16; feat_req_someipsd_17; feat_req_someipsd_18,CODE_sd_message_sd_450; CODE_sd_message_sd_508,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_210,SD Header Field Parsing,requirement,feat_req_someipsd_59; feat_req_someipsd_61; feat_req_someipsd_62,CODE_sd_client_sd_122,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_211,SD Session ID Handling,requirement,feat_req_someipsd_96; feat_req_someipsd_94; feat_req_someipsd_863,CODE_sd_client_sd_122; CODE_sd_client_sd_190; CODE_sd_client_sd_359,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_212,SD Reboot Flag Management,requirement,feat_req_someipsd_83; feat_req_someipsd_84; feat_req_someipsd_85; feat_req_someipsd_87; feat_req_someipsd_89,CODE_sd_client_sd_122,TC_test_sd_SdTest,Yes,Yes
@@ -365,15 +365,15 @@ REQ_SD_232,SD IPv4 Endpoint Option Format,requirement,feat_req_someipsd_197; fea
 REQ_SD_233,SD IPv6 Endpoint Option Format,requirement,feat_req_someipsd_203; feat_req_someipsd_204,CODE_sd_client_sd_190; CODE_sd_client_sd_229; CODE_sd_client_sd_359,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_234,SD IPv4 Multicast Option Format,requirement,feat_req_someipsd_724; feat_req_someipsd_725; feat_req_someipsd_733; feat_req_someipsd_749,CODE_sd_client_sd_190; CODE_sd_client_sd_229; CODE_sd_client_sd_359,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_235,SD IPv6 Multicast Option Format,requirement,feat_req_someipsd_737; feat_req_someipsd_738; feat_req_someipsd_739; feat_req_someipsd_750,CODE_sd_client_sd_190; CODE_sd_client_sd_229; CODE_sd_client_sd_359,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_236,SD IPv4 SD Endpoint Option Format,requirement,feat_req_someipsd_1080; feat_req_someipsd_1082; feat_req_someipsd_1083; feat_req_someipsd_1084; feat_req_someipsd_1087,CODE_sd_message_sd_379; CODE_sd_message_sd_394,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_236,SD IPv4 SD Endpoint Option Format,requirement,feat_req_someipsd_1080; feat_req_someipsd_1082; feat_req_someipsd_1083; feat_req_someipsd_1084; feat_req_someipsd_1087,CODE_sd_message_sd_408; CODE_sd_message_sd_423,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_240,SD Option Index and Run Length,requirement,feat_req_someipsd_332; feat_req_someipsd_333; feat_req_someipsd_342; feat_req_someipsd_343,CODE_sd_client_sd_190; CODE_sd_client_sd_229; CODE_sd_client_sd_359,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_241,SD Option Run Processing,requirement,feat_req_someipsd_346; feat_req_someipsd_347; feat_req_someipsd_348; feat_req_someipsd_351,CODE_sd_client_sd_190,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_242,SD Option Validation,requirement,feat_req_someipsd_1095; feat_req_someipsd_1097; feat_req_someipsd_1098; feat_req_someipsd_1099; feat_req_someipsd_1100,CODE_sd_types_sd_26,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_243,SD Endpoint Option Processing,requirement,feat_req_someipsd_1101; feat_req_someipsd_1102; feat_req_someipsd_1103,CODE_sd_message_sd_379; CODE_sd_message_sd_394,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_243,SD Endpoint Option Processing,requirement,feat_req_someipsd_1101; feat_req_someipsd_1102; feat_req_someipsd_1103,CODE_sd_message_sd_408; CODE_sd_message_sd_423,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_250,SD FindService Message Construction,requirement,feat_req_someipsd_217; feat_req_someipsd_218; feat_req_someipsd_219; feat_req_someipsd_220,CODE_sd_server_sd_172; CODE_sd_server_sd_307; CODE_sd_server_sd_340,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_251,SD FindService Response Behavior,requirement,feat_req_someipsd_224; feat_req_someipsd_225; feat_req_someipsd_227; feat_req_someipsd_766; feat_req_someipsd_767,CODE_sd_server_sd_172; CODE_sd_server_sd_307; CODE_sd_server_sd_340,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_260,SD OfferService Message Construction,requirement,feat_req_someipsd_221; feat_req_someipsd_233; feat_req_someipsd_235; feat_req_someipsd_236; feat_req_someipsd_237,CODE_sd_server_sd_172; CODE_sd_server_sd_307; CODE_sd_server_sd_340,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_261,SD StopOfferService Construction,requirement,feat_req_someipsd_256; feat_req_someipsd_261; feat_req_someipsd_262,CODE_sd_message_sd_421; CODE_sd_message_sd_479,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_261,SD StopOfferService Construction,requirement,feat_req_someipsd_256; feat_req_someipsd_261; feat_req_someipsd_262,CODE_sd_message_sd_450; CODE_sd_message_sd_508,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_270,SD SubscribeEventgroup Construction,requirement,feat_req_someipsd_230; feat_req_someipsd_429; feat_req_someipsd_430; feat_req_someipsd_431; feat_req_someipsd_432; feat_req_someipsd_428,CODE_sd_server_sd_193,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_271,SD Subscription Lifecycle,requirement,feat_req_someipsd_435; feat_req_someipsd_436; feat_req_someipsd_437; feat_req_someipsd_439; feat_req_someipsd_444; feat_req_someipsd_445,CODE_sd_types_sd_77; CODE_sd_types_sd_110,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_272,SD SubscribeEventgroupAck Construction,requirement,feat_req_someipsd_612; feat_req_someipsd_613; feat_req_someipsd_614; feat_req_someipsd_619; feat_req_someipsd_844,CODE_sd_server_sd_193,TC_test_sd_SdTest,Yes,Yes
@@ -381,20 +381,20 @@ REQ_SD_273,SD SubscribeEventgroupNack Construction,requirement,feat_req_someipsd
 REQ_SD_274,SD StopSubscribeEventgroup Construction,requirement,feat_req_someipsd_433; feat_req_someipsd_440; feat_req_someipsd_441; feat_req_someipsd_442,CODE_sd_client_sd_433,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_280,SD Timing Configuration,requirement,feat_req_someipsd_66; feat_req_someipsd_68; feat_req_someipsd_72,CODE_sd_server_sd_537,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_281,SD Phase Transitions,requirement,feat_req_someipsd_74; feat_req_someipsd_75; feat_req_someipsd_77; feat_req_someipsd_419; feat_req_someipsd_422,CODE_sd_types_sd_88,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_282,SD Multicast Group Management,requirement,feat_req_someipsd_101; feat_req_someipsd_102; feat_req_someipsd_103; feat_req_someipsd_104,CODE_sd_message_sd_421; CODE_sd_message_sd_479,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_282,SD Multicast Group Management,requirement,feat_req_someipsd_101; feat_req_someipsd_102; feat_req_someipsd_103; feat_req_someipsd_104,CODE_sd_message_sd_450; CODE_sd_message_sd_508,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_283,SD Response Delay Configuration,requirement,feat_req_someipsd_106; feat_req_someipsd_107; feat_req_someipsd_109,CODE_sd_server_sd_537,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_290,SD Server Endpoint Registration,requirement,feat_req_someipsd_806; feat_req_someipsd_807; feat_req_someipsd_808; feat_req_someipsd_809; feat_req_someipsd_811,CODE_sd_server_sd_435,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_291,SD Client Endpoint Resolution,requirement,feat_req_someipsd_812; feat_req_someipsd_813; feat_req_someipsd_814; feat_req_someipsd_816,CODE_sd_message_sd_421; CODE_sd_message_sd_479,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_291,SD Client Endpoint Resolution,requirement,feat_req_someipsd_812; feat_req_someipsd_813; feat_req_someipsd_814; feat_req_someipsd_816,CODE_sd_message_sd_450; CODE_sd_message_sd_508,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_292,SD Multicast Endpoint Handling,requirement,feat_req_someipsd_751; feat_req_someipsd_752; feat_req_someipsd_754; feat_req_someipsd_755; feat_req_someipsd_756; feat_req_someipsd_757; feat_req_someipsd_758,CODE_sd_server_sd_435,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_293,SD Endpoint Validation,requirement,feat_req_someipsd_1111; feat_req_someipsd_1113; feat_req_someipsd_1114; feat_req_someipsd_1169; feat_req_someipsd_1170; feat_req_someipsd_1171,CODE_sd_types_sd_60,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_300,SD Service Offer Processing,requirement,feat_req_someipsd_762; feat_req_someipsd_763; feat_req_someipsd_828; feat_req_someipsd_829,CODE_sd_server_sd_464,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_301,SD Service State Tracking,requirement,feat_req_someipsd_771; feat_req_someipsd_772; feat_req_someipsd_776; feat_req_someipsd_777; feat_req_someipsd_778,CODE_sd_message_sd_421; CODE_sd_message_sd_479,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_302,SD Subscription State Tracking,requirement,feat_req_someipsd_779; feat_req_someipsd_780; feat_req_someipsd_781; feat_req_someipsd_782; feat_req_someipsd_783,CODE_sd_message_sd_421; CODE_sd_message_sd_479,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_303,SD Service Registry Management,requirement,feat_req_someipsd_784; feat_req_someipsd_785; feat_req_someipsd_786; feat_req_someipsd_787; feat_req_someipsd_788,CODE_sd_message_sd_421; CODE_sd_message_sd_479,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_301,SD Service State Tracking,requirement,feat_req_someipsd_771; feat_req_someipsd_772; feat_req_someipsd_776; feat_req_someipsd_777; feat_req_someipsd_778,CODE_sd_message_sd_450; CODE_sd_message_sd_508,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_302,SD Subscription State Tracking,requirement,feat_req_someipsd_779; feat_req_someipsd_780; feat_req_someipsd_781; feat_req_someipsd_782; feat_req_someipsd_783,CODE_sd_message_sd_450; CODE_sd_message_sd_508,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_303,SD Service Registry Management,requirement,feat_req_someipsd_784; feat_req_someipsd_785; feat_req_someipsd_786; feat_req_someipsd_787; feat_req_someipsd_788,CODE_sd_message_sd_450; CODE_sd_message_sd_508,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_310,SD Graceful Shutdown,requirement,feat_req_someipsd_818; feat_req_someipsd_819; feat_req_someipsd_822; feat_req_someipsd_823; feat_req_someipsd_824,CODE_sd_types_sd_88,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_311,SD Reboot Recovery,requirement,feat_req_someipsd_871; feat_req_someipsd_793; feat_req_someipsd_794,CODE_sd_client_sd_309; CODE_sd_client_sd_338,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_312,SD Service Stop Handling,requirement,feat_req_someipsd_831; feat_req_someipsd_832; feat_req_someipsd_834,CODE_sd_server_sd_464,TC_test_sd_SdTest,Yes,Yes
-REQ_SD_320,SD Non-SOME/IP Service Announcement,requirement,feat_req_someipsd_497; feat_req_someipsd_498; feat_req_someipsd_499; feat_req_someipsd_500; feat_req_someipsd_501; feat_req_someipsd_502; feat_req_someipsd_503,CODE_sd_message_sd_421; CODE_sd_message_sd_479,TC_test_sd_SdTest,Yes,Yes
+REQ_SD_320,SD Non-SOME/IP Service Announcement,requirement,feat_req_someipsd_497; feat_req_someipsd_498; feat_req_someipsd_499; feat_req_someipsd_500; feat_req_someipsd_501; feat_req_someipsd_502; feat_req_someipsd_503,CODE_sd_message_sd_450; CODE_sd_message_sd_508,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_330,SD Initial Event Sending,requirement,feat_req_someipsd_833; feat_req_someipsd_1166; feat_req_someipsd_1167; feat_req_someipsd_1168,CODE_sd_server_sd_484,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_331,SD Initial Event Requesting,requirement,feat_req_someipsd_1191; feat_req_someipsd_1192; feat_req_someipsd_1193; feat_req_someipsd_946,CODE_sd_client_sd_309; CODE_sd_client_sd_338,TC_test_sd_SdTest,Yes,Yes
 REQ_SD_340,SD Error Handling,requirement,feat_req_someipsd_1162; feat_req_someipsd_1164; feat_req_someipsd_1221; feat_req_someipsd_1227; feat_req_someipsd_1228,CODE_sd_types_sd_50,TC_test_sd_SdTest,Yes,Yes
