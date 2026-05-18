@@ -47,19 +47,19 @@ jobs:
           fi
           exit $missing
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download Coverity Build Tool
         run: |
-          curl -fsS \
-            -d "token=${COVERITY_SCAN_TOKEN}&project=vtz/opensomeip" \
+          curl -fsS --retry 3 --retry-delay 10 \
+            --data "token=${COVERITY_SCAN_TOKEN}&project=vtz%2Fopensomeip" \
             -o coverity_tool.tgz \
-            https://scan.coverity.com/download/linux64
+            https://scan.coverity.com/download/cxx/linux64
           mkdir -p coverity_tool
           tar xzf coverity_tool.tgz --strip-components=1 -C coverity_tool
 
       - name: Cache CMake FetchContent
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: build/_deps
           key: fetchcontent-coverity-${{ hashFiles('CMakeLists.txt') }}
@@ -79,10 +79,10 @@ jobs:
       - name: Submit to Coverity Scan
         run: |
           tar czf analysis-results.tgz cov-int
-          curl -fsS \
+          curl -fsS --retry 3 --retry-delay 10 \
             --form "token=${COVERITY_SCAN_TOKEN}" \
             --form "email=${COVERITY_EMAIL}" \
             --form file=@analysis-results.tgz \
             --form version="${{ github.sha }}" \
             --form description="Automated Coverity Scan from GitHub Actions" \
-            https://scan.coverity.com/builds?project=vtz/opensomeip
+            "https://scan.coverity.com/builds?project=vtz%2Fopensomeip"
