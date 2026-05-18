@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-05-20
+
+This is the first minor release and includes **breaking changes** to wire formats,
+public API types, and default behaviors to bring the stack into compliance with the
+SOME/IP and SOME/IP-SD specifications.
+
+### Breaking Changes
+
+- **SD minor version widened to 32-bit**: `ServiceEntry::minor_version_` and `ServiceInstance::minor_version` changed from `uint8_t` to `uint32_t`; `get_minor_version()` / `set_minor_version()` signatures updated accordingly (#245, #251)
+- **SD ConfigurationOption length field corrected**: Wire-format length now includes the Reserved byte per spec; messages serialized by v0.0.x are **not** wire-compatible with v0.1.0 (#246, #251)
+- **SD unknown-option skip corrected**: Skip logic uses `3 + len` instead of `4 + len`, fixing option-array parsing for messages containing unknown options (#247, #251)
+- **Serialization `serialize_array` writes byte count**: Length prefix now encodes total byte length instead of element count per SOME/IP spec; existing serialized payloads are **not** backward-compatible (#249, #251)
+- **Serialization `uint64` endianness made portable**: 64-bit ser/des uses explicit MSB-first byte layout instead of unconditional byte-swap; changes wire bytes on big-endian targets (#250, #251)
+- **E2E default profile name**: `E2EConfig::profile_name` default changed from `"standard"` to `"basic"` to match the registered profile name; code relying on the old default will silently fail to find a profile (#248, #251)
+- **`E2ECRC::calculate_crc` return type**: Changed from `uint32_t` to `std::optional<uint32_t>` to signal invalid `crc_type` instead of returning 0 (#251)
+- **TP segment offset widened to 32-bit**: `TpSegmentHeader::segment_offset` changed from `uint16_t` to `uint32_t`; `TpReassemblyBuffer` segment methods updated to match (#251)
+- **Constructors made `explicit`**: `ServiceEntry`, `EventGroupEntry`, `SdEntry`, `SdOption`, `ServiceInstance`, `EventSubscription`, `EventNotification`, `EventGroupSubscription`, and `EventGroup` constructors are now `explicit` — implicit conversions from integers will no longer compile (#251)
+- **Copy/move deleted on core types**: `SdEntry`, `SdOption`, `E2EProfile`, `E2EProtection`, `E2EProfileRegistry`, `ITransport`, `ITransportListener`, `UdpTransport`, and `SessionManager` are now non-copyable and non-movable (#251)
+
+### Added
+
+- **Shared Library Packaging**: Build shared `libopensomeip.so` and split RPM into base, devel, and static sub-packages (#216)
+- **Version Single Source of Truth**: Make the `VERSION` file the authoritative version reference for all build and packaging artifacts (#213)
+- **Path-Based CI Filtering**: Implement path-based workflow filtering to skip irrelevant CI jobs on documentation-only or scoped changes (#202)
+- **MISRA-Aligned Quality Gate**: Add MISRA-aligned clang-tidy quality gate to CI for automotive-grade static analysis (#223)
+- **RTOS Test Coverage**: Increase RTOS test coverage with shared E2E and TP suites across FreeRTOS, ThreadX, and Zephyr (#218)
+- **CI Caching**: Cache CMake FetchContent, Zephyr SDK/workspace, ARM toolchain, pip packages, Renode binary, and ccache across CI jobs (#200, #201, #203, #204, #205, #206)
+- **SD Session ID Counter**: `SdSessionIdCounter` class and `SdMessage::get/set_session_id()` for per-message session tracking per SOME/IP-SD spec (#251)
+- **SD IPv4 Endpoint protocol field**: `IPv4EndpointOption::get/set_protocol()` to specify L4 protocol (default UDP) (#251)
+- **SD Server event-group selection**: `SdServer::offer_service()` accepts explicit `eventgroup_ids` parameter (#251)
+- **Event publisher/subscriber endpoint APIs**: `EventPublisher::set_default_client_endpoint()`, `EventSubscriber::set_default_endpoint()`, and `EventSubscriber::set_endpoint_resolver()` (#251)
+- **TCP Magic Cookie support**: Periodic magic-cookie keep-alives with `TcpTransportConfig::magic_cookie_enabled/interval`; `TcpTransport::is_magic_cookie()`, `make_magic_cookie_client()`, `make_magic_cookie_server()` (#251)
+- **TCP stream parsing made public**: `TcpTransport::parse_message_from_buffer()` exposed for external use (#251)
+- **15 new regression tests**: Dedicated tests for each spec-compliance fix across SD, serialization, and E2E (#251)
+
+### Fixed
+
+- **Spec Compliance** (6 bugs): SD minor version truncation, ConfigurationOption length off-by-one, unknown option skip off-by-one, E2E profile name mismatch, `serialize_array` element-vs-byte count, `uint64` endianness — all with regression tests (#245, #246, #247, #248, #249, #250, #251)
+- **Coverity CI**: Repair Coverity Scan CI download URL and upgrade to Node.js 24 actions (#240, #241)
+- **SD Interop**: Correct IPv4 option wire format for SOME/IP-SD interoperability (#239)
+- **Stale Code Removal**: Remove stale vsomeip interop stubs and inflated conformance claims (#237)
+- **Transport Safety**: Eliminate TOCTOU race on transport `listener_` pointer; use `std::atomic<ITransportListener*>` (#214)
+- **Code Quality**: Resolve all remaining clang-tidy violations — threshold reduced to 0 across 9 remediation batches (#222, #225, #227, #228, #229, #230, #231, #232, #234, #236)
+- **CI Compatibility**: Support Fedora container jobs on fork PRs (#183)
+
+### Changed
+
+- **CI Architecture**: Trim CI matrix — Fedora, Renode skip, reporting cleanup (#212); extract Python 3.12 installation to a reusable composite action (#215)
+- **Documentation**: Convert PlantUML diagrams to Mermaid and add PAL architecture diagram (#220); rewrite TEST_REPORTING.md to reflect current CI reporting architecture (#217)
+
 ## [0.0.5] - 2026-03-31
 
 This release supersedes v0.0.4 as the first published Fedora Copr package.
@@ -152,6 +202,7 @@ _Superseded by v0.0.5 — Copr packages were not published for this release._
 
 ---
 
+[0.1.0]: https://github.com/vtz/opensomeip/compare/v0.0.5...v0.1.0
 [0.0.5]: https://github.com/vtz/opensomeip/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/vtz/opensomeip/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/vtz/opensomeip/compare/v0.0.2...v0.0.3

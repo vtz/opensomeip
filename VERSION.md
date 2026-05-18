@@ -22,7 +22,7 @@ updated by `bump_version.sh`.
 
 | File | How it gets the version |
 |------|------------------------|
-| `VERSION` | **Source of truth** — plain text, e.g. `0.0.5` |
+| `VERSION` | **Source of truth** — plain text, e.g. `0.1.0` |
 | `CMakeLists.txt` | `file(READ ... VERSION)` — reads at configure time |
 | `.packit.yaml` | `get-current-version: cat VERSION` — read by Packit |
 | `packaging/opensomeip.spec` | Updated by `bump_version.sh` |
@@ -37,13 +37,13 @@ Bump the project version following semantic versioning rules. This script
 updates **all** version-bearing files in a single command:
 
 ```bash
-# Bump patch version (0.0.5 -> 0.0.6)
+# Bump patch version (0.1.0 -> 0.1.1)
 ./scripts/bump_version.sh patch
 
-# Bump minor version (0.0.5 -> 0.1.0)
+# Bump minor version (0.1.0 -> 0.2.0)
 ./scripts/bump_version.sh minor
 
-# Bump major version (0.0.5 -> 1.0.0)
+# Bump major version (0.1.0 -> 1.0.0)
 ./scripts/bump_version.sh major
 
 # Set specific version

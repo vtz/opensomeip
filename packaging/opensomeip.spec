@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 Name:           opensomeip
-Version:        0.0.5
+Version:        0.1.0
 Release:        1%{?dist}
 Summary:        C++17 implementation of SOME/IP for automotive and embedded systems
 
