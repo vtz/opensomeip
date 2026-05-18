@@ -295,7 +295,7 @@ void Serializer::serialize_array(const std::vector<T>& array) {
     }
 
     // Back-fill the byte length (guard against overflow beyond uint32_t)
-    size_t raw_length = buffer_.size() - data_start;
+    size_t const raw_length = buffer_.size() - data_start;
     if (raw_length > static_cast<size_t>(UINT32_MAX)) {
         buffer_.resize(data_start);
         return;
