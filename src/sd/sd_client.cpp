@@ -362,7 +362,7 @@ private:
         instance.service_id = entry.get_service_id();
         instance.instance_id = entry.get_instance_id();
         instance.major_version = entry.get_major_version();
-        instance.minor_version = 0;  // Not in basic offer
+        instance.minor_version = entry.get_minor_version();
         instance.ttl_seconds = entry.get_ttl();
 
         // Extract endpoint information from options

@@ -368,6 +368,7 @@ private:
         offer_entry->set_service_id(service.instance.service_id);
         offer_entry->set_instance_id(service.instance.instance_id);
         offer_entry->set_major_version(service.instance.major_version);
+        offer_entry->set_minor_version(service.instance.minor_version);
         offer_entry->set_ttl(service.instance.ttl_seconds);
         offer_entry->set_index1(0);
         offer_entry->set_num_opts1(1);
@@ -413,6 +414,7 @@ private:
         stop_entry->set_service_id(service.instance.service_id);
         stop_entry->set_instance_id(service.instance.instance_id);
         stop_entry->set_major_version(service.instance.major_version);
+        stop_entry->set_minor_version(service.instance.minor_version);
         stop_entry->set_ttl(0);  // TTL = 0 means stop offering
 
         SdMessage sd_message;
@@ -541,6 +543,7 @@ private:
         offer_entry->set_service_id(service.instance.service_id);
         offer_entry->set_instance_id(service.instance.instance_id);
         offer_entry->set_major_version(service.instance.major_version);
+        offer_entry->set_minor_version(service.instance.minor_version);
         offer_entry->set_ttl(service.instance.ttl_seconds);
         offer_entry->set_index1(0);
         offer_entry->set_num_opts1(1);

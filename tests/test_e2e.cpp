@@ -731,20 +731,25 @@ TEST_F(E2ETest, DefaultConfigProfileNameMatchesRegistered) {
 
 /**
  * @test_case TC_E2E_REG_002
- * @brief E2E protect + validate succeeds using default config (name-based lookup)
+ * @brief E2E protect + validate via name-based profile lookup
  *
- * Verifies the profile_name fix by exercising the full protect/validate path
- * with a default E2EConfig (which must use "basic" as profile_name).
+ * Sets profile_id to a value not in the registry so that the ID lookup
+ * fails and the name-based fallback is exercised.  This ensures the
+ * default profile_name ("basic") actually resolves to the registered
+ * BasicE2EProfile.
  */
-TEST_F(E2ETest, ProtectValidateWithDefaultConfig) {
+TEST_F(E2ETest, ProtectValidateViaNameLookup) {
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x0001, 0x0001));
     msg.set_payload({0x01, 0x02, 0x03, 0x04});
 
     E2EConfig config(0x1234);
+    config.profile_id = 9999;  // Force ID lookup to fail
+
     E2EProtection protection;
 
     Result result = protection.protect(msg, config);
-    EXPECT_EQ(result, Result::SUCCESS);
+    EXPECT_EQ(result, Result::SUCCESS)
+        << "Name-based lookup for \"basic\" must succeed when ID lookup fails";
     EXPECT_TRUE(msg.has_e2e_header());
 
     std::vector<uint8_t> wire = msg.serialize();

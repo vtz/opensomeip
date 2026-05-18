@@ -294,10 +294,13 @@ void Serializer::serialize_array(const std::vector<T>& array) {
         }
     }
 
-    // Back-fill the byte length (guard against overflow beyond uint32_t)
+    // Back-fill the byte length (guard against overflow beyond uint32_t).
+    // On overflow, roll back the entire serialize_array call (including the
+    // placeholder) so the buffer is left in its pre-call state rather than
+    // containing a misleading zero-length prefix.
     size_t const raw_length = buffer_.size() - data_start;
     if (raw_length > static_cast<size_t>(UINT32_MAX)) {
-        buffer_.resize(data_start);
+        buffer_.resize(length_pos);
         return;
     }
     auto byte_length = static_cast<uint32_t>(raw_length);
