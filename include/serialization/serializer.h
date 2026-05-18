@@ -14,6 +14,7 @@
 #ifndef SOMEIP_SERIALIZATION_SERIALIZER_H
 #define SOMEIP_SERIALIZATION_SERIALIZER_H
 
+#include <climits>
 #include <vector>
 #include <cstdint>
 #include <cstdlib>
@@ -293,8 +294,13 @@ void Serializer::serialize_array(const std::vector<T>& array) {
         }
     }
 
-    // Back-fill the byte length
-    auto byte_length = static_cast<uint32_t>(buffer_.size() - data_start);
+    // Back-fill the byte length (guard against overflow beyond uint32_t)
+    size_t raw_length = buffer_.size() - data_start;
+    if (raw_length > static_cast<size_t>(UINT32_MAX)) {
+        buffer_.resize(data_start);
+        return;
+    }
+    auto byte_length = static_cast<uint32_t>(raw_length);
     uint32_t be_value = someip_htonl(byte_length);
     std::memcpy(&buffer_[length_pos], &be_value, sizeof(uint32_t));
 }

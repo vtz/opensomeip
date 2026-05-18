@@ -649,7 +649,8 @@ TEST_F(SerializationTest, SerializeDeserializeStringArray) {
     auto length_result = deserializer.deserialize_uint32();
     EXPECT_TRUE(length_result.is_success());
     uint32_t byte_length = length_result.get_value();
-    EXPECT_GT(byte_length, 0u);
+    EXPECT_EQ(byte_length, serializer.get_size() - sizeof(uint32_t))
+        << "Byte length prefix must equal total serialized element data size";
 
     // For variable-length types, use deserialize_array with known element count
     auto array_result = deserializer.deserialize_array<std::string>(test_array.size());
