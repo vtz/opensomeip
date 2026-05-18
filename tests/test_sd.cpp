@@ -875,14 +875,14 @@ TEST_F(SdIntegrationTest, MinorVersionSurvivesServerToClient) {
     std::atomic<bool> offer_received{false};
     ServiceInstance received_instance;
 
-    client.subscribe_service(
+    ASSERT_TRUE(client.subscribe_service(
         0xBEEF,
         [&](const ServiceInstance& inst) {
             received_instance = inst;
             offer_received = true;
         },
         [](const ServiceInstance&) {}
-    );
+    ));
 
     SdServer server(server_config);
     ASSERT_TRUE(server.initialize());
