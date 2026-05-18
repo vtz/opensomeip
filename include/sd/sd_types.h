@@ -62,14 +62,14 @@ struct ServiceInstance {
     uint16_t service_id{0};
     uint16_t instance_id{0};
     uint8_t major_version{0};
-    uint8_t minor_version{0};
+    uint32_t minor_version{0};
     std::string ip_address;
     uint16_t port{0};
     uint8_t protocol{0x11};  // Default to UDP (0x11)
     uint32_t ttl_seconds{0};  // Time to live
 
     explicit ServiceInstance(uint16_t svc_id = 0, uint16_t inst_id = 0,
-                   uint8_t maj_ver = 0, uint8_t min_ver = 0)
+                   uint8_t maj_ver = 0, uint32_t min_ver = 0)
         : service_id(svc_id), instance_id(inst_id),
           major_version(maj_ver), minor_version(min_ver) {}
 };

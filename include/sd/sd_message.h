@@ -75,8 +75,8 @@ public:
     uint8_t get_major_version() const { return major_version_; }
     void set_major_version(uint8_t version) { major_version_ = version; }
 
-    uint8_t get_minor_version() const { return minor_version_; }
-    void set_minor_version(uint8_t version) { minor_version_ = version; }
+    uint32_t get_minor_version() const { return minor_version_; }
+    void set_minor_version(uint32_t version) { minor_version_ = version; }
 
     std::vector<uint8_t> serialize() const override;
     bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
@@ -85,7 +85,7 @@ private:
     uint16_t service_id_{0};
     uint16_t instance_id_{0};
     uint8_t major_version_{0};
-    uint8_t minor_version_{0};
+    uint32_t minor_version_{0};
 };
 
 /**

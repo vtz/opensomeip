@@ -191,17 +191,15 @@ void Serializer::append_be_uint32(uint32_t value) {
 }
 
 void Serializer::append_be_uint64(uint64_t value) {
-    // Manual big-endian conversion for macOS compatibility
-    const uint64_t be_value = ((value & 0xFF00000000000000ULL) >> 56U) |
-                        ((value & 0x00FF000000000000ULL) >> 40U) |
-                        ((value & 0x0000FF0000000000ULL) >> 24U) |
-                        ((value & 0x000000FF00000000ULL) >> 8U) |
-                        ((value & 0x00000000FF000000ULL) << 8U) |
-                        ((value & 0x0000000000FF0000ULL) << 24U) |
-                        ((value & 0x000000000000FF00ULL) << 40U) |
-                        ((value & 0x00000000000000FFULL) << 56U);
-    const auto* bytes = reinterpret_cast<const uint8_t*>(&be_value);
-    buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint64_t));
+    // Portable big-endian serialization: extract bytes MSB-first
+    buffer_.push_back(static_cast<uint8_t>((value >> 56U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 48U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 40U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 32U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 24U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 16U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 8U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>(value & 0xFFU));
 }
 
 void Serializer::append_be_int16(int16_t value) {
@@ -475,19 +473,18 @@ std::optional<uint64_t> Deserializer::read_be_uint64() {
         return std::nullopt;
     }
 
-    uint64_t be_value = 0;
-    std::memcpy(&be_value, &buffer_[position_], sizeof(uint64_t));
+    // Portable big-endian deserialization: reconstruct from MSB-first bytes
+    uint64_t value = (static_cast<uint64_t>(buffer_[position_]) << 56U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 1]) << 48U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 2]) << 40U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 3]) << 32U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 4]) << 24U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 5]) << 16U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 6]) << 8U) |
+                     static_cast<uint64_t>(buffer_[position_ + 7]);
     position_ += sizeof(uint64_t);
 
-    // Manual big-endian to host conversion for macOS compatibility
-    return ((be_value & 0xFF00000000000000ULL) >> 56U) |
-           ((be_value & 0x00FF000000000000ULL) >> 40U) |
-           ((be_value & 0x0000FF0000000000ULL) >> 24U) |
-           ((be_value & 0x000000FF00000000ULL) >> 8U) |
-           ((be_value & 0x00000000FF000000ULL) << 8U) |
-           ((be_value & 0x0000000000FF0000ULL) << 24U) |
-           ((be_value & 0x000000000000FF00ULL) << 40U) |
-           ((be_value & 0x00000000000000FFULL) << 56U);
+    return value;
 }
 
 std::optional<int16_t> Deserializer::read_be_int16() {

@@ -1266,6 +1266,219 @@ TEST_F(SdTest, UnsupportedEntryType) {
  * @tests REQ_SD_120_E01
  * @brief Test SD with zero-length options array
  */
+// =============================================================================
+// Regression tests for spec-compliance bugs
+// =============================================================================
+
+/**
+ * @test_case TC_SD_REG_001
+ * @brief ServiceEntry minor_version must be full 32-bit per SOME/IP-SD spec
+ *
+ * Regression: minor_version_ was uint8_t, truncating values > 255.
+ * Bytes 12-15 of a ServiceEntry carry the 32-bit Minor Version.
+ */
+TEST_F(SdTest, ServiceEntryMinorVersion32Bit) {
+    ServiceEntry entry(EntryType::OFFER_SERVICE);
+    entry.set_service_id(0x1234);
+    entry.set_instance_id(0x5678);
+    entry.set_major_version(1);
+    entry.set_minor_version(0x00010002);
+    entry.set_ttl(3600);
+
+    std::vector<uint8_t> serialized = entry.serialize();
+    ASSERT_EQ(serialized.size(), 16u);
+
+    // Bytes 12-15 must carry the full 32-bit minor version in big-endian
+    EXPECT_EQ(serialized[12], 0x00);
+    EXPECT_EQ(serialized[13], 0x01);
+    EXPECT_EQ(serialized[14], 0x00);
+    EXPECT_EQ(serialized[15], 0x02);
+
+    // Round-trip
+    ServiceEntry deserialized;
+    size_t offset = 0;
+    EXPECT_TRUE(deserialized.deserialize(serialized, offset));
+    EXPECT_EQ(deserialized.get_minor_version(), 0x00010002u);
+}
+
+/**
+ * @test_case TC_SD_REG_002
+ * @brief ServiceEntry minor version 0xFFFFFFFF round-trips correctly
+ */
+TEST_F(SdTest, ServiceEntryMinorVersionMax) {
+    ServiceEntry entry(EntryType::OFFER_SERVICE);
+    entry.set_service_id(0x1111);
+    entry.set_instance_id(0x2222);
+    entry.set_major_version(2);
+    entry.set_minor_version(0xFFFFFFFF);
+    entry.set_ttl(100);
+
+    std::vector<uint8_t> serialized = entry.serialize();
+    ServiceEntry deserialized;
+    size_t offset = 0;
+    EXPECT_TRUE(deserialized.deserialize(serialized, offset));
+    EXPECT_EQ(deserialized.get_minor_version(), 0xFFFFFFFFu);
+}
+
+/**
+ * @test_case TC_SD_REG_003
+ * @brief ConfigurationOption length field must include the reserved byte
+ *
+ * Regression: length was set to config_string_.size(), but per SOME/IP-SD
+ * spec the Length field counts everything after Length(2) and Type(1),
+ * which includes Reserved(1) + config_data.
+ */
+TEST_F(SdTest, ConfigurationOptionLengthIncludesReserved) {
+    ConfigurationOption opt;
+    opt.set_configuration_string("test=value");
+
+    std::vector<uint8_t> serialized = opt.serialize();
+    ASSERT_GE(serialized.size(), 4u);
+
+    // Length field (bytes 0-1) must be 1 + strlen("test=value") = 11
+    uint16_t length = (static_cast<uint16_t>(serialized[0]) << 8) | serialized[1];
+    EXPECT_EQ(length, 1 + 10) << "Length must include the reserved byte";
+
+    // Total option size = Length(2) + Type(1) + length_value
+    EXPECT_EQ(serialized.size(), 3u + length);
+
+    // Round-trip
+    ConfigurationOption deserialized;
+    size_t offset = 0;
+    EXPECT_TRUE(deserialized.deserialize(serialized, offset));
+    EXPECT_EQ(deserialized.get_configuration_string(), "test=value");
+}
+
+/**
+ * @test_case TC_SD_REG_004
+ * @brief ConfigurationOption interop: accept length that includes reserved byte
+ *
+ * Simulates a spec-compliant external stack that sets
+ * length = 1 (reserved) + config_data_len.
+ */
+TEST_F(SdTest, ConfigurationOptionInteropDeserialize) {
+    // Hand-craft a spec-compliant Configuration Option:
+    // Length(2) = 0x0006 (1 reserved + 5 bytes "hello")
+    // Type(1)  = 0x01 (CONFIGURATION)
+    // Reserved(1) = 0x00
+    // Data(5)  = "hello"
+    std::vector<uint8_t> wire = {
+        0x00, 0x06,  // Length = 6 (reserved + "hello")
+        0x01,        // Type = CONFIGURATION
+        0x00,        // Reserved
+        'h', 'e', 'l', 'l', 'o'
+    };
+
+    ConfigurationOption opt;
+    size_t offset = 0;
+    EXPECT_TRUE(opt.deserialize(wire, offset));
+    EXPECT_EQ(opt.get_configuration_string(), "hello");
+    EXPECT_EQ(offset, wire.size());
+}
+
+/**
+ * @test_case TC_SD_REG_005
+ * @brief Unknown option types must be skipped with correct byte count
+ *
+ * Regression: unknown options were skipped with offset += 4 + length
+ * instead of 3 + length, eating 1 extra byte from the next option.
+ */
+TEST_F(SdTest, UnknownOptionSkipCorrectBytes) {
+    SdMessage sd_msg;
+    sd_msg.set_flags(0xC0);
+
+    auto entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
+    entry->set_service_id(0x1234);
+    entry->set_instance_id(0x0001);
+    entry->set_major_version(1);
+    entry->set_ttl(3600);
+    entry->set_index1(0);
+    entry->set_num_opts1(2);
+    sd_msg.add_entry(std::move(entry));
+
+    auto ep_opt = std::make_unique<IPv4EndpointOption>();
+    ep_opt->set_ipv4_address_from_string("192.168.1.100");
+    ep_opt->set_protocol(0x11);
+    ep_opt->set_port(30501);
+    sd_msg.add_option(std::move(ep_opt));
+
+    std::vector<uint8_t> serialized = sd_msg.serialize();
+
+    // Insert an unknown option (type 0x99) BEFORE the IPv4 endpoint option
+    // in the options array. Find the options start.
+    // Layout: flags(1) + reserved(3) + entries_len(4) + entries(16) +
+    //         options_len(4) + options(...)
+    size_t options_len_offset = 1 + 3 + 4 + 16;
+    size_t options_start = options_len_offset + 4;
+
+    // Build a new message with an unknown option followed by the IPv4 endpoint
+    std::vector<uint8_t> modified;
+    modified.insert(modified.end(), serialized.begin(),
+                    serialized.begin() + static_cast<std::ptrdiff_t>(options_start));
+
+    // Unknown option: Length=0x0003 (reserved + 2 data bytes), Type=0x99, Reserved=0x00, Data=0xAA 0xBB
+    std::vector<uint8_t> unknown_opt = {0x00, 0x03, 0x99, 0x00, 0xAA, 0xBB};
+    modified.insert(modified.end(), unknown_opt.begin(), unknown_opt.end());
+
+    // Append the original IPv4 endpoint option
+    modified.insert(modified.end(),
+                    serialized.begin() + static_cast<std::ptrdiff_t>(options_start),
+                    serialized.end());
+
+    // Update options array length
+    uint32_t new_options_len = static_cast<uint32_t>(modified.size() - options_start);
+    modified[options_len_offset]     = static_cast<uint8_t>((new_options_len >> 24) & 0xFF);
+    modified[options_len_offset + 1] = static_cast<uint8_t>((new_options_len >> 16) & 0xFF);
+    modified[options_len_offset + 2] = static_cast<uint8_t>((new_options_len >> 8) & 0xFF);
+    modified[options_len_offset + 3] = static_cast<uint8_t>(new_options_len & 0xFF);
+
+    SdMessage deserialized;
+    EXPECT_TRUE(deserialized.deserialize(modified))
+        << "Must parse message with unknown option followed by known option";
+
+    // The unknown option should be skipped; the IPv4 endpoint should be parsed
+    ASSERT_GE(deserialized.get_options().size(), 1u);
+    auto* ipv4_opt = dynamic_cast<IPv4EndpointOption*>(deserialized.get_options()[0].get());
+    ASSERT_NE(ipv4_opt, nullptr);
+    EXPECT_EQ(ipv4_opt->get_port(), 30501);
+    EXPECT_EQ(ipv4_opt->get_protocol(), 0x11);
+}
+
+/**
+ * @test_case TC_SD_REG_006
+ * @brief Full SD message with 32-bit minor version round-trips
+ */
+TEST_F(SdTest, FullMessageMinorVersion32BitRoundTrip) {
+    SdMessage sd_msg;
+    sd_msg.set_flags(0xC0);
+
+    auto entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
+    entry->set_service_id(0xABCD);
+    entry->set_instance_id(0x0001);
+    entry->set_major_version(3);
+    entry->set_minor_version(0x00020003);
+    entry->set_ttl(7200);
+    sd_msg.add_entry(std::move(entry));
+
+    auto opt = std::make_unique<IPv4EndpointOption>();
+    opt->set_ipv4_address_from_string("10.0.0.1");
+    opt->set_protocol(0x06);
+    opt->set_port(8080);
+    sd_msg.add_option(std::move(opt));
+
+    std::vector<uint8_t> serialized = sd_msg.serialize();
+
+    SdMessage deserialized;
+    EXPECT_TRUE(deserialized.deserialize(serialized));
+    ASSERT_EQ(deserialized.get_entries().size(), 1u);
+
+    auto* de = dynamic_cast<ServiceEntry*>(deserialized.get_entries()[0].get());
+    ASSERT_NE(de, nullptr);
+    EXPECT_EQ(de->get_minor_version(), 0x00020003u);
+    EXPECT_EQ(de->get_major_version(), 3);
+    EXPECT_EQ(de->get_service_id(), 0xABCDu);
+}
+
 TEST_F(SdTest, ZeroLengthOptions) {
     SdMessage sd_msg;
     sd_msg.set_flags(0xC0);

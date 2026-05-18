@@ -117,8 +117,11 @@ std::vector<uint8_t> ServiceEntry::serialize() const {
     // Byte 8: Major Version
     data[8] = major_version_;
 
-    // Bytes 12-15: Minor Version (32-bit per spec, stored as uint8_t in our API)
-    data[15] = minor_version_;
+    // Bytes 12-15: Minor Version (32-bit per SOME/IP-SD spec)
+    data[12] = static_cast<uint8_t>((minor_version_ >> 24U) & 0xFFU);
+    data[13] = static_cast<uint8_t>((minor_version_ >> 16U) & 0xFFU);
+    data[14] = static_cast<uint8_t>((minor_version_ >> 8U) & 0xFFU);
+    data[15] = static_cast<uint8_t>(minor_version_ & 0xFFU);
 
     return data;
 }
@@ -142,7 +145,10 @@ bool ServiceEntry::deserialize(const std::vector<uint8_t>& data, size_t& offset)
     major_version_ = data[offset + 4];
     ttl_ = (static_cast<uint32_t>(data[offset + 5]) << 16U) | (static_cast<uint32_t>(data[offset + 6]) << 8U) |
            static_cast<uint32_t>(data[offset + 7]);
-    minor_version_ = data[offset + 11];
+    minor_version_ = (static_cast<uint32_t>(data[offset + 8]) << 24U) |
+                     (static_cast<uint32_t>(data[offset + 9]) << 16U) |
+                     (static_cast<uint32_t>(data[offset + 10]) << 8U) |
+                     static_cast<uint32_t>(data[offset + 11]);
 
     offset += 12;
     return true;
@@ -412,8 +418,9 @@ std::vector<uint8_t> ConfigurationOption::serialize() const {
     // Configuration string
     data.insert(data.end(), config_string_.begin(), config_string_.end());
 
-    // Update length field (bytes 0-1) to cover type + reserved + config string
-    const auto length = static_cast<uint16_t>(config_string_.size());
+    // Length covers everything after Length(2) and Type(1) fields:
+    // Reserved(1) + config_string = 1 + config_string_.size()
+    const auto length = static_cast<uint16_t>(1 + config_string_.size());
     data[0] = static_cast<uint8_t>((static_cast<uint32_t>(length) >> 8U) & 0xFFU);
     data[1] = static_cast<uint8_t>(length & 0xFFU);
 
@@ -426,14 +433,21 @@ bool ConfigurationOption::deserialize(const std::vector<uint8_t>& data, size_t& 
         return false;
     }
 
-    if (offset + length_ > data.size()) {
+    // length_ includes the Reserved byte (already consumed by SdOption::deserialize).
+    // The actual config string length is length_ - 1.
+    if (length_ < 1) {
+        return false;
+    }
+    const uint16_t config_len = length_ - 1;
+
+    if (offset + config_len > data.size()) {
         return false;
     }
 
     // Extract configuration string
     const auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
-    config_string_.assign(first, first + static_cast<std::ptrdiff_t>(length_));
-    offset += length_;
+    config_string_.assign(first, first + static_cast<std::ptrdiff_t>(config_len));
+    offset += config_len;
 
     return true;
 }
@@ -588,12 +602,14 @@ bool SdMessage::deserialize(const std::vector<uint8_t>& data) {
         } else if (option_type == OptionType::IPV4_MULTICAST) {
             option = std::make_unique<IPv4MulticastOption>();
         } else {
+            // Total option size = Length(2) + Type(1) + length_value
+            // where length_value includes Reserved(1) + option-specific data
             auto const option_len = static_cast<uint16_t>(
                 (static_cast<uint32_t>(data[offset]) << 8U) | static_cast<uint32_t>(data[offset + 1]));
-            if (offset + 4 + option_len > options_end) {
+            if (offset + 3 + option_len > options_end) {
                 return false;
             }
-            offset += 4 + option_len;
+            offset += 3 + option_len;
             continue;
         }
 

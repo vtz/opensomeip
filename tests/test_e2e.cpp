@@ -705,3 +705,69 @@ TEST_F(E2ETest, ProfileRegistry_UnknownProfile) {
     EXPECT_EQ(registry.get_profile(static_cast<uint32_t>(999)), nullptr);
     EXPECT_EQ(registry.get_profile(std::string("nonexistent")), nullptr);
 }
+
+// =============================================================================
+// Regression tests for spec-compliance bugs
+// =============================================================================
+
+/**
+ * @test_case TC_E2E_REG_001
+ * @brief E2EConfig default profile_name must match BasicE2EProfile's name
+ *
+ * Regression: E2EConfig defaulted profile_name to "standard" but the
+ * registered basic profile reports its name as "basic", causing
+ * name-based lookup to silently fail.
+ */
+TEST_F(E2ETest, DefaultConfigProfileNameMatchesRegistered) {
+    E2EConfig config;
+    EXPECT_EQ(config.profile_name, "basic")
+        << "Default profile_name must match BasicE2EProfile::get_profile_name()";
+
+    E2EProfileRegistry& registry = E2EProfileRegistry::instance();
+    E2EProfile* profile = registry.get_profile(config.profile_name);
+    EXPECT_NE(profile, nullptr)
+        << "Default profile_name must resolve to a registered profile";
+}
+
+/**
+ * @test_case TC_E2E_REG_002
+ * @brief E2E protect + validate succeeds using default config (name-based lookup)
+ *
+ * Verifies the profile_name fix by exercising the full protect/validate path
+ * with a default E2EConfig (which must use "basic" as profile_name).
+ */
+TEST_F(E2ETest, ProtectValidateWithDefaultConfig) {
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x0001, 0x0001));
+    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+
+    E2EConfig config(0x1234);
+    E2EProtection protection;
+
+    Result result = protection.protect(msg, config);
+    EXPECT_EQ(result, Result::SUCCESS);
+    EXPECT_TRUE(msg.has_e2e_header());
+
+    std::vector<uint8_t> wire = msg.serialize();
+    Message received;
+    EXPECT_TRUE(received.deserialize(wire, true));
+
+    result = protection.validate(received, config);
+    EXPECT_EQ(result, Result::SUCCESS);
+}
+
+/**
+ * @test_case TC_E2E_REG_003
+ * @brief E2E header ser/des preserves all fields across serialize→deserialize
+ */
+TEST_F(E2ETest, HeaderFieldsPreservedAcrossWire) {
+    E2EHeader header(0xDEADBEEF, 42, 0x1234, 0x5678);
+    std::vector<uint8_t> wire = header.serialize();
+    EXPECT_EQ(wire.size(), E2EHeader::get_header_size());
+
+    E2EHeader decoded;
+    EXPECT_TRUE(decoded.deserialize(wire, 0));
+    EXPECT_EQ(decoded.crc, 0xDEADBEEFu);
+    EXPECT_EQ(decoded.counter, 42u);
+    EXPECT_EQ(decoded.data_id, 0x1234u);
+    EXPECT_EQ(decoded.freshness_value, 0x5678u);
+}
