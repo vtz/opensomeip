@@ -185,15 +185,18 @@ public:
             return false;
         }
 
-        // Store callback for field response
-        platform::ScopedLock const field_lock(field_requests_mutex_);
-        const std::string key = make_field_key(service_id, instance_id, event_id);
-        field_requests_[key] = std::move(callback);
-
-        const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        transport::Endpoint service_endpoint;
+        {
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
+            service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        }
         if (service_endpoint.get_port() == 0) {
             return false;
         }
+
+        platform::ScopedLock const field_lock(field_requests_mutex_);
+        const std::string key = make_field_key(service_id, instance_id, event_id);
+        field_requests_[key] = std::move(callback);
 
         MessageId const msg_id(service_id, 0x0003);
         Message field_msg(msg_id, RequestId(client_id_, 0x0003), MessageType::REQUEST,
