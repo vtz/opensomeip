@@ -28,7 +28,6 @@ on log inspection or placeholder pass stubs.
 """
 
 import struct
-import socket
 import sys
 import os
 import unittest

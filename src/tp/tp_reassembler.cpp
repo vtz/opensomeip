@@ -102,7 +102,7 @@ bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_
     }
 
     if (!add_segment_to_buffer(*buffer, segment)) {
-        reassembly_buffers_.erase(segment.header.sequence_number);
+        reassembly_buffers_.erase(buffer->message_id);
         return false;
     }
 

@@ -327,15 +327,22 @@ private:
             return false;
         }
 
-        int dot_count = 0;
+        int octet_count = 0;
+        int octet_val = -1;
         for (const char c : ip_str) {
             if (c == '.') {
-                ++dot_count;
-            } else if (c < '0' || c > '9') {
+                if (octet_val < 0 || octet_val > 255) {
+                    return false;
+                }
+                ++octet_count;
+                octet_val = -1;
+            } else if (c >= '0' && c <= '9') {
+                octet_val = (octet_val < 0 ? 0 : octet_val * 10) + (c - '0');
+            } else {
                 return false;
             }
         }
-        if (dot_count != 3) {
+        if (octet_val < 0 || octet_val > 255 || octet_count != 3) {
             return false;
         }
 

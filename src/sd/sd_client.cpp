@@ -192,19 +192,6 @@ public:
             return false;
         }
 
-        {
-            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
-            const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
-                                 (static_cast<uint64_t>(instance_id) << 16U) |
-                                 eventgroup_id;
-            EventGroupSubscription sub;
-            sub.service_id = service_id;
-            sub.instance_id = instance_id;
-            sub.eventgroup_id = eventgroup_id;
-            sub.major_version = 0x01;
-            eventgroup_subscriptions_[key] = sub;
-        }
-
         auto subscribe_entry = std::make_unique<EventGroupEntry>(EntryType::SUBSCRIBE_EVENTGROUP);
         subscribe_entry->set_service_id(service_id);
         subscribe_entry->set_instance_id(instance_id);
@@ -215,11 +202,9 @@ public:
         subscribe_entry->set_index1(0);
         subscribe_entry->set_num_opts1(1);
 
-        // Create SD message
         SdMessage sd_message;
         sd_message.add_entry(std::move(subscribe_entry));
 
-        // Add IPv4 endpoint option (client's unicast address)
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
         endpoint_option->set_ipv4_address_from_string(config_.unicast_address);
         endpoint_option->set_port(transport_->get_local_endpoint().get_port());
@@ -233,21 +218,27 @@ public:
         someip_message.set_payload(sd_message.serialize());
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
-        return transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
+        const bool sent = transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
+
+        if (sent) {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
+                                 (static_cast<uint64_t>(instance_id) << 16U) |
+                                 eventgroup_id;
+            EventGroupSubscription sub;
+            sub.service_id = service_id;
+            sub.instance_id = instance_id;
+            sub.eventgroup_id = eventgroup_id;
+            sub.major_version = 0x01;
+            eventgroup_subscriptions_[key] = sub;
+        }
+        return sent;
     }
 
     /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240 */
     bool unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
         if (!running_) {
             return false;
-        }
-
-        {
-            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
-            const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
-                                 (static_cast<uint64_t>(instance_id) << 16U) |
-                                 eventgroup_id;
-            eventgroup_subscriptions_.erase(key);
         }
 
         auto unsubscribe_entry = std::make_unique<EventGroupEntry>(EntryType::STOP_SUBSCRIBE_EVENTGROUP);
@@ -267,7 +258,16 @@ public:
         someip_message.set_payload(sd_message.serialize());
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
-        return transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
+        const bool sent = transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
+
+        if (sent) {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
+                                 (static_cast<uint64_t>(instance_id) << 16U) |
+                                 eventgroup_id;
+            eventgroup_subscriptions_.erase(key);
+        }
+        return sent;
     }
 
     std::vector<ServiceInstance> get_available_services(uint16_t service_id) const {
@@ -657,20 +657,12 @@ private:
 
     void replay_subscriptions(uint16_t service_id, uint16_t instance_id) {
         std::vector<EventGroupSubscription> subs_to_renew;
-        {
-            platform::ScopedLock const lock(subscriptions_mutex_);
-            for (const auto& entry : service_subscriptions_) {
-                if (entry.first == service_id) {
-                    (void)instance_id;
-                    break;
-                }
-            }
-        }
 
         {
             platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
             for (const auto& eg : eventgroup_subscriptions_) {
-                if (eg.second.service_id == service_id) {
+                if (eg.second.service_id == service_id &&
+                    eg.second.instance_id == instance_id) {
                     subs_to_renew.push_back(eg.second);
                 }
             }
