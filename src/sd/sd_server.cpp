@@ -316,10 +316,11 @@ private:
         }
 
         long port_val = 0;
-        try {
-            port_val = std::stol(port_str);
-        } catch (...) {
-            return false;
+        for (const char c : port_str) {
+            port_val = port_val * 10 + (c - '0');
+            if (port_val > 65535) {
+                return false;
+            }
         }
 
         if (port_val <= 0 || port_val > 65535) {
@@ -666,7 +667,7 @@ private:
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(response.serialize());
-        transport_->send_message(someip_message, client);
+        static_cast<void>(transport_->send_message(someip_message, client));
     }
 
     /** @implements REQ_SD_280, REQ_SD_283 */
