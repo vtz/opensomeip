@@ -245,9 +245,9 @@ someip_socket_t TcpTransport::accept_connection_with_peer(Endpoint& peer_endpoin
 
     setup_socket_options(client_fd, true);
 
-    char addr_buf[64] = {};
-    someip_inet_ntop(AF_INET, &client_addr.sin_addr, addr_buf, sizeof(addr_buf));
-    peer_endpoint = Endpoint(addr_buf, someip_ntohs(client_addr.sin_port), TransportProtocol::TCP);
+    std::array<char, 64> addr_buf = {};
+    someip_inet_ntop(AF_INET, &client_addr.sin_addr, addr_buf.data(), addr_buf.size());
+    peer_endpoint = Endpoint(addr_buf.data(), someip_ntohs(client_addr.sin_port), TransportProtocol::TCP);
 
     return client_fd;
 }
@@ -445,7 +445,7 @@ void TcpTransport::receive_loop() {
             continue;
         }
 
-        Result result;
+        Result result = Result::NETWORK_ERROR;
         {
             platform::ScopedLock const lock(connection_mutex_);
             if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
