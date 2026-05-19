@@ -44,7 +44,21 @@ def build_someip_message(service_id, method_id, client_id, session_id,
                          protocol_version=1, interface_version=1,
                          message_type=0x00, return_code=0x00,
                          payload=b''):
-    """Build a raw SOME/IP message (header + payload)."""
+    """Build a raw SOME/IP message (header + payload).
+
+    All 16-bit fields must be 0..0xFFFF and 8-bit fields 0..0xFF.
+    """
+    for name, val, limit in [('service_id', service_id, 0xFFFF),
+                              ('method_id', method_id, 0xFFFF),
+                              ('client_id', client_id, 0xFFFF),
+                              ('session_id', session_id, 0xFFFF),
+                              ('protocol_version', protocol_version, 0xFF),
+                              ('interface_version', interface_version, 0xFF),
+                              ('message_type', message_type, 0xFF),
+                              ('return_code', return_code, 0xFF)]:
+        if not 0 <= val <= limit:
+            raise ValueError(f'{name}={val:#x} out of range 0..{limit:#x}')
+
     length = 8 + len(payload)
     header = struct.pack(
         '!HHIHHBBBB',
@@ -58,11 +72,20 @@ def build_someip_message(service_id, method_id, client_id, session_id,
 
 
 def parse_someip_header(data):
-    """Parse the 16-byte SOME/IP header into a dict."""
+    """Parse the 16-byte SOME/IP header into a dict.
+
+    Validates that the length field is consistent with the actual data size.
+    """
     if len(data) < SOMEIP_HEADER_SIZE:
         return None
     service_id, method_id, length, client_id, session_id, pv, iv, mt, rc = struct.unpack(
         '!HHIHHBBBB', data[:SOMEIP_HEADER_SIZE])
+    payload = data[SOMEIP_HEADER_SIZE:]
+    expected_length = 8 + len(payload)
+    if length != expected_length:
+        raise ValueError(
+            f'SOME/IP length field {length} does not match '
+            f'expected {expected_length} (8 + {len(payload)} payload bytes)')
     return {
         'service_id': service_id,
         'method_id': method_id,
@@ -73,7 +96,7 @@ def parse_someip_header(data):
         'interface_version': iv,
         'message_type': mt,
         'return_code': rc,
-        'payload': data[SOMEIP_HEADER_SIZE:],
+        'payload': payload,
     }
 
 
@@ -153,11 +176,23 @@ class E2EIntegrationTest(SomeIpTestFramework):
     def test_freshness_timeout(self):
         """
         Verify that stale messages (identified by non-incrementing session ID)
-        can be detected by the receiver.
+        can be detected by the receiver, including across rollover boundaries.
 
         @test_case TC_E2E_INT_004
         @tests REQ_E2E_PLUGIN_004
         """
+
+        def is_fresh(new_id, last_id):
+            """Session-ID freshness check that handles 16-bit rollover.
+
+            Fresh if new_id is ahead of last_id within a half-range window,
+            accounting for wrap-around from 0xFFFF -> 0x0001 (0x0000 skipped).
+            """
+            if new_id == last_id:
+                return False
+            diff = (new_id - last_id) & 0xFFFF
+            return 0 < diff < 0x8000
+
         last_session = 10
         stale_msg = build_someip_message(
             service_id=0x1234, method_id=0x0001,
@@ -165,8 +200,24 @@ class E2EIntegrationTest(SomeIpTestFramework):
             payload=b'\x00',
         )
         parsed = parse_someip_header(stale_msg)
-        is_stale = parsed['session_id'] <= last_session
-        self.assertTrue(is_stale, "Stale message should be detected")
+        self.assertFalse(is_fresh(parsed['session_id'], last_session),
+                         "Session 5 after 10 should be stale")
+
+        fresh_msg = build_someip_message(
+            service_id=0x1234, method_id=0x0001,
+            client_id=0x00AB, session_id=11,
+            payload=b'\x00',
+        )
+        parsed_fresh = parse_someip_header(fresh_msg)
+        self.assertTrue(is_fresh(parsed_fresh['session_id'], last_session),
+                        "Session 11 after 10 should be fresh")
+
+        # Rollover: last=0xFFFE, new=0x0001 should be fresh
+        self.assertTrue(is_fresh(0x0001, 0xFFFE),
+                        "0x0001 after 0xFFFE (rollover) should be fresh")
+        # Rollover: last=0x0002, new=0xFFFE should be stale
+        self.assertFalse(is_fresh(0xFFFE, 0x0002),
+                         "0xFFFE after 0x0002 (large backward jump) should be stale")
 
     def test_error_propagation(self):
         """

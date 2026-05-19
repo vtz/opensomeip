@@ -168,9 +168,17 @@ public:
         return publish_event(event_id, data);
     }
 
+    void set_default_client_endpoint(const std::string& address, uint16_t port) {
+        default_client_address_ = address;
+        default_client_port_ = port;
+    }
+
     /** @implements REQ_MSG_124, REQ_MSG_124_E01, REQ_MSG_125, REQ_MSG_125_E01, REQ_MSG_126 */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const std::vector<EventFilter>& filters) {
+        if (default_client_address_ == "0.0.0.0" && default_client_port_ == 0) {
+            return false;
+        }
         return handle_subscription(eventgroup_id, client_id,
                                    transport::Endpoint(default_client_address_, default_client_port_),
                                    filters);
@@ -409,6 +417,10 @@ bool EventPublisher::publish_event(uint16_t event_id, const std::vector<uint8_t>
 
 bool EventPublisher::publish_field(uint16_t event_id, const std::vector<uint8_t>& data) {
     return impl_->publish_field(event_id, data);
+}
+
+void EventPublisher::set_default_client_endpoint(const std::string& address, uint16_t port) {
+    impl_->set_default_client_endpoint(address, port);
 }
 
 bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,

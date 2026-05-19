@@ -223,6 +223,7 @@ private:
     bool server_mode_{false};
     someip_socket_t listen_socket_fd_{SOMEIP_INVALID_SOCKET};
 
+    someip_socket_t accept_connection_with_peer(Endpoint& peer_endpoint);
     Result create_socket();
     Result bind_socket();
     Result setup_socket_options(someip_socket_t socket_fd, bool blocking = true);

@@ -766,3 +766,46 @@ TEST_F(TpTest, SingleMessageValidAccepted) {
     EXPECT_TRUE(tp_manager.handle_received_segment(segment, complete));
     EXPECT_EQ(complete.size(), 20u);
 }
+
+/**
+ * @test_case TC_TP_VALID_004
+ * @tests REQ_TP_055
+ * @brief SINGLE_MESSAGE exceeding max_message_size is rejected
+ */
+TEST_F(TpTest, SingleMessageExceedsMaxSizeRejected) {
+    TpConfig config;
+    config.max_message_size = 100;
+    TpManager tp_manager(config);
+    ASSERT_TRUE(tp_manager.initialize());
+
+    TpSegment segment;
+    segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
+    segment.payload = std::vector<uint8_t>(50, 0xCC);
+    segment.header.segment_length = 50;
+    segment.header.message_length = 200;
+
+    std::vector<uint8_t> complete;
+    EXPECT_FALSE(tp_manager.handle_received_segment(segment, complete))
+        << "Message exceeding max_message_size must be rejected";
+}
+
+/**
+ * @test_case TC_TP_VALID_005
+ * @tests REQ_TP_055
+ * @brief SINGLE_MESSAGE with segment_length < payload.size() is rejected
+ */
+TEST_F(TpTest, SingleMessageSegmentLengthSmallerThanPayloadRejected) {
+    TpConfig config;
+    TpManager tp_manager(config);
+    ASSERT_TRUE(tp_manager.initialize());
+
+    TpSegment segment;
+    segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
+    segment.payload = std::vector<uint8_t>(50, 0xDD);
+    segment.header.segment_length = 30;
+    segment.header.message_length = 50;
+
+    std::vector<uint8_t> complete;
+    EXPECT_FALSE(tp_manager.handle_received_segment(segment, complete))
+        << "Segment with segment_length < payload.size() must be rejected";
+}

@@ -14,6 +14,8 @@
 #include "transport/tcp_transport.h"
 
 #include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_ntohs for portable byte order
+#include "platform/byteorder.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
 #include "platform/memory.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - socket/POSIX types and someip_* helpers from net_impl.h
@@ -212,6 +214,11 @@ Result TcpTransport::enable_server_mode(int backlog) {
 
 /** @implements REQ_TRANSPORT_003_E01 */
 someip_socket_t TcpTransport::accept_connection() {
+    Endpoint unused;
+    return accept_connection_with_peer(unused);
+}
+
+someip_socket_t TcpTransport::accept_connection_with_peer(Endpoint& peer_endpoint) {
     if (!server_mode_ || listen_socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return SOMEIP_INVALID_SOCKET;
     }
@@ -237,6 +244,10 @@ someip_socket_t TcpTransport::accept_connection() {
     }
 
     setup_socket_options(client_fd, true);
+
+    char addr_buf[64] = {};
+    someip_inet_ntop(AF_INET, &client_addr.sin_addr, addr_buf, sizeof(addr_buf));
+    peer_endpoint = Endpoint(addr_buf, someip_ntohs(client_addr.sin_port), TransportProtocol::TCP);
 
     return client_fd;
 }
@@ -407,13 +418,16 @@ void TcpTransport::receive_loop() {
                     continue;
                 }
 
-                someip_socket_t const client_fd = accept_connection();
+                Endpoint peer_ep("0.0.0.0", 0, TransportProtocol::TCP);
+                someip_socket_t const client_fd = accept_connection_with_peer(peer_ep);
                 if (client_fd != SOMEIP_INVALID_SOCKET) {
-                    if (!is_connected()) {
+                    platform::ScopedLock const lock(connection_mutex_);
+                    if (!connection_.is_connected()) {
                         connection_.socket_fd = client_fd;
                         connection_.state = TcpConnectionState::CONNECTED;
-                        connection_.remote_endpoint = Endpoint("127.0.0.1", 0, TransportProtocol::TCP);
+                        connection_.remote_endpoint = peer_ep;
                         connection_.receive_buffer.clear();
+                        last_magic_cookie_time_ = std::chrono::steady_clock::now();
                         active_connections_.fetch_add(1);
 
                         if (auto* l = listener_.load(std::memory_order_acquire)) {
@@ -431,22 +445,38 @@ void TcpTransport::receive_loop() {
             continue;
         }
 
-        const Result result = receive_data(connection_.socket_fd, connection_.receive_buffer);
+        Result result;
+        {
+            platform::ScopedLock const lock(connection_mutex_);
+            if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
+                continue;
+            }
+            result = receive_data(connection_.socket_fd, connection_.receive_buffer);
+        }
 
-        if (result == Result::SUCCESS && !connection_.receive_buffer.empty()) {
-            MessagePtr message;
-            while (parse_message_from_buffer(connection_.receive_buffer, message)) {
-                platform::ScopedLock const lock(queue_mutex_);
-                message_queue_.emplace(message, connection_.remote_endpoint);
+        if (result == Result::SUCCESS) {
+            platform::ScopedLock const conn_lock(connection_mutex_);
+            while (!connection_.receive_buffer.empty()) {
+                MessagePtr message;
+                if (!parse_message_from_buffer(connection_.receive_buffer, message)) {
+                    break;
+                }
+
+                {
+                    platform::ScopedLock const q_lock(queue_mutex_);
+                    message_queue_.emplace(message, connection_.remote_endpoint);
+                }
                 connection_.update_activity();
 
                 if (auto* l = listener_.load(std::memory_order_acquire)) {
                     l->on_message_received(message, connection_.remote_endpoint);
                 }
-                message = nullptr;
             }
         } else if (result != Result::SUCCESS) {
-            connection_.receive_buffer.clear();
+            {
+                platform::ScopedLock const lock(connection_mutex_);
+                connection_.receive_buffer.clear();
+            }
             disconnect_internal();
         }
 
@@ -457,11 +487,16 @@ void TcpTransport::receive_loop() {
 void TcpTransport::connection_monitor_loop() {
     while (running_) {
         if (is_connected()) {
-            const auto now = std::chrono::steady_clock::now();
-            const auto time_since_activity = std::chrono::duration_cast<std::chrono::milliseconds>(
-                now - connection_.last_activity);
+            bool timed_out = false;
+            {
+                platform::ScopedLock const lock(connection_mutex_);
+                const auto now = std::chrono::steady_clock::now();
+                const auto time_since_activity = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    now - connection_.last_activity);
+                timed_out = (time_since_activity > std::chrono::minutes(5));
+            }
 
-            if (time_since_activity > std::chrono::minutes(5)) {
+            if (timed_out) {
                 disconnect_internal();
             } else {
                 send_periodic_magic_cookie();
@@ -485,6 +520,11 @@ void TcpTransport::send_periodic_magic_cookie() {
         now - last_magic_cookie_time_);
 
     if (elapsed < config_.magic_cookie_interval) {
+        return;
+    }
+
+    platform::ScopedLock const lock(connection_mutex_);
+    if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
         return;
     }
 
@@ -594,7 +634,10 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
         }
 
         if (!found_valid) {
-            buffer.clear();
+            if (buffer.size() > SOMEIP_HEADER_SIZE) {
+                buffer.erase(buffer.begin(),
+                             buffer.begin() + static_cast<std::ptrdiff_t>(buffer.size() - SOMEIP_HEADER_SIZE + 1));
+            }
         }
         return false;
     }

@@ -117,8 +117,11 @@ public:
         subscriptions_[key] = std::move(sub_info);
 
         const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        if (service_endpoint.get_port() == 0) {
+            subscriptions_.erase(key);
+            return false;
+        }
 
-        // Create subscription message (simplified)
         MessageId const msg_id(service_id, 0x0001);  // Method ID for subscription
         Message subscription_msg(msg_id, RequestId(client_id_, 0x0001), MessageType::REQUEST,
                                  ReturnCode::E_OK);
@@ -151,8 +154,11 @@ public:
         }
 
         const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        if (service_endpoint.get_port() == 0) {
+            return false;
+        }
 
-        MessageId const msg_id(service_id, 0x0002);  // Method ID for unsubscription
+        MessageId const msg_id(service_id, 0x0002);
         Message unsubscription_msg(msg_id, RequestId(client_id_, 0x0002),
                                    MessageType::REQUEST, ReturnCode::E_OK);
 
@@ -185,8 +191,11 @@ public:
         field_requests_[key] = std::move(callback);
 
         const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        if (service_endpoint.get_port() == 0) {
+            return false;
+        }
 
-        MessageId const msg_id(service_id, 0x0003);  // Method ID for field request
+        MessageId const msg_id(service_id, 0x0003);
         Message field_msg(msg_id, RequestId(client_id_, 0x0003), MessageType::REQUEST,
                           ReturnCode::E_OK);
 
@@ -248,6 +257,18 @@ public:
         return EventSubscriber::Statistics{};
     }
 
+    using EndpointResolver = std::function<transport::Endpoint(uint16_t, uint16_t)>;
+
+    void set_endpoint_resolver(EndpointResolver resolver) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        endpoint_resolver_ = std::move(resolver);
+    }
+
+    void set_default_endpoint(const std::string& address, uint16_t port) {
+        default_service_address_ = address;
+        default_service_port_ = port;
+    }
+
 private:
     struct SubscriptionInfo {
         EventSubscription subscription;
@@ -256,23 +277,14 @@ private:
         std::vector<EventFilter> filters;
     };
 
-    using EndpointResolver = std::function<transport::Endpoint(uint16_t, uint16_t)>;
-
-    void set_endpoint_resolver(EndpointResolver resolver) {
-        platform::ScopedLock const lock(subscriptions_mutex_);
-        endpoint_resolver_ = std::move(resolver);
-    }
-
     transport::Endpoint resolve_service_endpoint(uint16_t service_id, uint16_t instance_id) const {
         if (endpoint_resolver_) {
             return endpoint_resolver_(service_id, instance_id);
         }
+        if (default_service_address_ == "0.0.0.0" && default_service_port_ == 0) {
+            return transport::Endpoint();
+        }
         return transport::Endpoint(default_service_address_, default_service_port_);
-    }
-
-    void set_default_endpoint(const std::string& address, uint16_t port) {
-        default_service_address_ = address;
-        default_service_port_ = port;
     }
 
     std::string make_subscription_key(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) const {
@@ -377,6 +389,14 @@ EventSubscriber::EventSubscriber(uint16_t client_id)
 }
 
 EventSubscriber::~EventSubscriber() = default;
+
+void EventSubscriber::set_default_endpoint(const std::string& address, uint16_t port) {
+    impl_->set_default_endpoint(address, port);
+}
+
+void EventSubscriber::set_endpoint_resolver(EndpointResolver resolver) {
+    impl_->set_endpoint_resolver(std::move(resolver));
+}
 
 bool EventSubscriber::initialize() {
     return impl_->initialize();

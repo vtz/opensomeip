@@ -134,7 +134,8 @@ public:
     /** @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152 */
     bool offer_service(const ServiceInstance& instance,
                       const std::string& unicast_endpoint,
-                      const std::string& multicast_endpoint) {
+                      const std::string& multicast_endpoint,
+                      const std::vector<uint16_t>& eventgroup_ids) {
         if (!unicast_endpoint.empty()) {
             std::string tmp_ip;
             uint16_t tmp_port = 0;
@@ -168,6 +169,11 @@ public:
         offered.unicast_endpoint = unicast_endpoint;
         offered.multicast_endpoint = multicast_endpoint;
         offered.last_offer_time = std::chrono::steady_clock::now();
+        for (const uint16_t eg_id : eventgroup_ids) {
+            OfferedEventGroup eg;
+            eg.eventgroup_id = eg_id;
+            offered.eventgroups.push_back(eg);
+        }
 
         offered_services_.push_back(std::move(offered));
 
@@ -762,8 +768,9 @@ void SdServer::shutdown() {
 
 bool SdServer::offer_service(const ServiceInstance& instance,
                             const std::string& unicast_endpoint,
-                            const std::string& multicast_endpoint) {
-    return impl_->offer_service(instance, unicast_endpoint, multicast_endpoint);
+                            const std::string& multicast_endpoint,
+                            const std::vector<uint16_t>& eventgroup_ids) {
+    return impl_->offer_service(instance, unicast_endpoint, multicast_endpoint, eventgroup_ids);
 }
 
 bool SdServer::stop_offer_service(uint16_t service_id, uint16_t instance_id) {

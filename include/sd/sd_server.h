@@ -67,11 +67,13 @@ public:
      * @param instance Service instance information
      * @param unicast_endpoint Unicast endpoint for the service
      * @param multicast_endpoint Multicast endpoint (optional)
+     * @param eventgroup_ids Event group IDs offered by this service (empty = accept all)
      * @return true if service offered, false on error
      */
     bool offer_service(const ServiceInstance& instance,
                       const std::string& unicast_endpoint,
-                      const std::string& multicast_endpoint = "");
+                      const std::string& multicast_endpoint = "",
+                      const std::vector<uint16_t>& eventgroup_ids = {});
 
     /**
      * @brief Stop offering a service instance

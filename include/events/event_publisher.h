@@ -106,6 +106,14 @@ public:
     bool publish_field(uint16_t event_id, const std::vector<uint8_t>& data);
 
     /**
+     * @brief Set the default client endpoint for subscriptions that don't
+     *        provide an explicit endpoint (e.g. from SD-discovered addresses).
+     * @param address Client IP address
+     * @param port    Client port
+     */
+    void set_default_client_endpoint(const std::string& address, uint16_t port);
+
+    /**
      * @brief Handle event subscription request
      *
      * @param eventgroup_id Event group being subscribed to

@@ -15,7 +15,10 @@
 #define SOMEIP_EVENTS_SUBSCRIBER_H
 
 #include "event_types.h"
+#include "transport/endpoint.h"
+#include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace someip::events {
@@ -60,6 +63,20 @@ public:
      * @brief Shutdown the event subscriber
      */
     void shutdown();
+
+    /**
+     * @brief Set the default service endpoint used when no resolver is configured.
+     * @param address Service IP address
+     * @param port    Service port
+     */
+    void set_default_endpoint(const std::string& address, uint16_t port);
+
+    /**
+     * @brief Set a resolver function that maps (service_id, instance_id) to an endpoint.
+     * @param resolver Callable returning an Endpoint for the given service+instance
+     */
+    using EndpointResolver = std::function<transport::Endpoint(uint16_t, uint16_t)>;
+    void set_endpoint_resolver(EndpointResolver resolver);
 
     /**
      * @brief Subscribe to an event group
