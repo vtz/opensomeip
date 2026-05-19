@@ -169,6 +169,7 @@ public:
     }
 
     void set_default_client_endpoint(const std::string& address, uint16_t port) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
         default_client_address_ = address;
         default_client_port_ = port;
     }
@@ -176,18 +177,25 @@ public:
     /** @implements REQ_MSG_124, REQ_MSG_124_E01, REQ_MSG_125, REQ_MSG_125_E01, REQ_MSG_126 */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const std::vector<EventFilter>& filters) {
-        if (default_client_address_ == "0.0.0.0" && default_client_port_ == 0) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        if (default_client_port_ == 0) {
             return false;
         }
-        return handle_subscription(eventgroup_id, client_id,
-                                   transport::Endpoint(default_client_address_, default_client_port_),
-                                   filters);
+        return handle_subscription_locked(eventgroup_id, client_id,
+                                          transport::Endpoint(default_client_address_, default_client_port_),
+                                          filters);
     }
 
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const transport::Endpoint& client_endpoint,
                            const std::vector<EventFilter>& filters) {
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        return handle_subscription_locked(eventgroup_id, client_id, client_endpoint, filters);
+    }
+
+    bool handle_subscription_locked(uint16_t eventgroup_id, uint16_t client_id,
+                                    const transport::Endpoint& client_endpoint,
+                                    const std::vector<EventFilter>& filters) {
 
         ClientInfo client_info;
         client_info.client_id = client_id;

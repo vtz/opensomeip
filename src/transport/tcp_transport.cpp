@@ -515,16 +515,16 @@ void TcpTransport::send_periodic_magic_cookie() {
         return;
     }
 
+    platform::ScopedLock const lock(connection_mutex_);
+    if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
+        return;
+    }
+
     const auto now = std::chrono::steady_clock::now();
     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
         now - last_magic_cookie_time_);
 
     if (elapsed < config_.magic_cookie_interval) {
-        return;
-    }
-
-    platform::ScopedLock const lock(connection_mutex_);
-    if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
         return;
     }
 

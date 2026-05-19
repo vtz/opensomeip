@@ -195,8 +195,8 @@ public:
      */
     bool parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message);
 
-    static const size_t SOMEIP_HEADER_SIZE = 16;
-    static const size_t MAX_MESSAGE_SIZE = 65535;
+    static constexpr size_t SOMEIP_HEADER_SIZE = 16;
+    static constexpr size_t MAX_MESSAGE_SIZE = 65535;
 
     /** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_025 */
     static bool is_magic_cookie(const std::vector<uint8_t>& data, size_t offset = 0);

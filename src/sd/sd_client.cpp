@@ -625,7 +625,6 @@ private:
     mutable platform::Mutex eventgroup_subscriptions_mutex_;
 
     SdSessionIdCounter multicast_session_id_;
-    std::unordered_map<std::string, SdSessionIdCounter> unicast_session_ids_;
     mutable platform::Mutex session_id_mutex_;
 
     uint16_t next_multicast_session_id() {
@@ -633,10 +632,6 @@ private:
         return multicast_session_id_.next();
     }
 
-    uint16_t next_unicast_session_id(const std::string& peer) {
-        platform::ScopedLock const lock(session_id_mutex_);
-        return unicast_session_ids_[peer].next();
-    }
 
     /** @implements REQ_SD_340, REQ_SD_341, REQ_SD_342, REQ_SD_343, REQ_SD_344, REQ_SD_346, REQ_SD_348 */
     void handle_remote_reboot(const ServiceInstance& instance) {

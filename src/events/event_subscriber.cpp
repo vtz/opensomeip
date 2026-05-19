@@ -265,6 +265,7 @@ public:
     }
 
     void set_default_endpoint(const std::string& address, uint16_t port) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
         default_service_address_ = address;
         default_service_port_ = port;
     }
