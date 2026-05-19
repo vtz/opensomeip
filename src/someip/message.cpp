@@ -295,12 +295,13 @@ bool Message::is_valid() const {
  * @implements REQ_MSG_004_E01, REQ_MSG_004_E02
  */
 bool Message::has_valid_service_id() const {
-    [[maybe_unused]] uint16_t const service_id = get_service_id();
+    uint16_t const service_id = get_service_id();
 
-    // REQ_MSG_004: Reserved Service ID 0x0000 is technically invalid per spec
-    // But we allow it for default/uninitialized messages to maintain backward compatibility
-    // REQ_MSG_005: SD Service ID 0xFFFF is valid but special
-    return true;  // Allow all service IDs for backward compatibility
+    if (service_id == 0x0000) {
+        return false;
+    }
+
+    return true;
 }
 
 /**

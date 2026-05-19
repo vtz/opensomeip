@@ -1625,3 +1625,72 @@ TEST_F(SdTest, ZeroLengthOptions) {
     EXPECT_EQ(de->get_major_version(), 0xFF);
     EXPECT_EQ(de->get_ttl(), 3u);
 }
+
+// ============================================================================
+// SD Session ID Counter Tests (Issue #253)
+// ============================================================================
+
+/**
+ * @test_case TC_SD_SESSION_001
+ * @tests REQ_SD_070, REQ_SD_071
+ * @brief First session ID value is 0x0001
+ */
+TEST_F(SdTest, SessionIdStartsAtOne) {
+    SdSessionIdCounter counter;
+    EXPECT_EQ(counter.next(), 0x0001);
+}
+
+/**
+ * @test_case TC_SD_SESSION_002
+ * @tests REQ_SD_070, REQ_SD_071
+ * @brief Session IDs increment sequentially
+ */
+TEST_F(SdTest, SessionIdIncrements) {
+    SdSessionIdCounter counter;
+    EXPECT_EQ(counter.next(), 0x0001);
+    EXPECT_EQ(counter.next(), 0x0002);
+    EXPECT_EQ(counter.next(), 0x0003);
+}
+
+/**
+ * @test_case TC_SD_SESSION_003
+ * @tests REQ_SD_070, REQ_SD_071
+ * @brief Session ID wraps from 0xFFFF to 0x0001, never emitting 0x0000
+ */
+TEST_F(SdTest, SessionIdWrapAroundSkipsZero) {
+    SdSessionIdCounter counter;
+    // Advance to near wrap-around point
+    for (uint32_t i = 1; i < 0xFFFF; ++i) {
+        counter.next();
+    }
+    EXPECT_EQ(counter.next(), 0xFFFF);
+    EXPECT_EQ(counter.next(), 0x0001) << "Must wrap to 0x0001, never 0x0000";
+}
+
+/**
+ * @test_case TC_SD_SESSION_004
+ * @tests REQ_SD_070, REQ_SD_071
+ * @brief Per-peer unicast session IDs are isolated
+ */
+TEST_F(SdTest, UnicastSessionIdsIsolatedPerPeer) {
+    SdSessionIdCounter peer_a;
+    SdSessionIdCounter peer_b;
+    EXPECT_EQ(peer_a.next(), 0x0001);
+    EXPECT_EQ(peer_a.next(), 0x0002);
+    EXPECT_EQ(peer_b.next(), 0x0001) << "Peer B should start at 1 independently";
+
+    EXPECT_EQ(peer_a.next(), 0x0003);
+    EXPECT_EQ(peer_b.next(), 0x0002);
+}
+
+/**
+ * @test_case TC_SD_SESSION_005
+ * @tests REQ_SD_070, REQ_SD_071
+ * @brief SdMessage session_id tracking field round-trips
+ */
+TEST_F(SdTest, SdMessageSessionIdAccessor) {
+    SdMessage msg;
+    EXPECT_EQ(msg.get_session_id(), 0);
+    msg.set_session_id(42);
+    EXPECT_EQ(msg.get_session_id(), 42);
+}

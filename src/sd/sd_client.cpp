@@ -89,13 +89,13 @@ public:
             return false;
         }
 
-        // Join multicast group for SD messages
         if (!join_multicast_group()) {
             transport_->stop();
             return false;
         }
 
         running_ = true;
+        start_maintenance_loop();
         return true;
     }
 
@@ -107,13 +107,13 @@ public:
 
         running_ = false;
 
-        // Clear all subscriptions and callbacks
+        stop_maintenance_loop();
+
         {
             platform::ScopedLock const lock(subscriptions_mutex_);
             service_subscriptions_.clear();
         }
 
-        // Leave multicast group
         leave_multicast_group();
 
         transport_->stop();
@@ -138,13 +138,12 @@ public:
         SdMessage sd_message;
         sd_message.add_entry(std::move(find_entry));
 
-        // Create SOME/IP message for SD (service ID 0xFFFF)
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     RequestId(SOMEIP_SD_CLIENT_ID, next_multicast_session_id()),
+                                     MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
-        // Send multicast find message
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         if (transport_->send_message(someip_message, multicast_endpoint) != Result::SUCCESS) {
             return false;
@@ -193,13 +192,25 @@ public:
             return false;
         }
 
-        // Create subscribe event group entry
+        {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
+                                 (static_cast<uint64_t>(instance_id) << 16U) |
+                                 eventgroup_id;
+            EventGroupSubscription sub;
+            sub.service_id = service_id;
+            sub.instance_id = instance_id;
+            sub.eventgroup_id = eventgroup_id;
+            sub.major_version = 0x01;
+            eventgroup_subscriptions_[key] = sub;
+        }
+
         auto subscribe_entry = std::make_unique<EventGroupEntry>(EntryType::SUBSCRIBE_EVENTGROUP);
         subscribe_entry->set_service_id(service_id);
         subscribe_entry->set_instance_id(instance_id);
         subscribe_entry->set_eventgroup_id(eventgroup_id);
-        subscribe_entry->set_major_version(0x01);  // Version 1
-        subscribe_entry->set_ttl(3600);  // 1 hour TTL
+        subscribe_entry->set_major_version(0x01);
+        subscribe_entry->set_ttl(3600);
 
         subscribe_entry->set_index1(0);
         subscribe_entry->set_num_opts1(1);
@@ -215,13 +226,12 @@ public:
         endpoint_option->set_protocol(0x11);  // UDP
         sd_message.add_option(std::move(endpoint_option));
 
-        // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     RequestId(SOMEIP_SD_CLIENT_ID, next_multicast_session_id()),
+                                     MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
-        // Send multicast message
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         return transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
     }
@@ -232,7 +242,14 @@ public:
             return false;
         }
 
-        // Create unsubscribe event group entry (TTL = 0)
+        {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
+                                 (static_cast<uint64_t>(instance_id) << 16U) |
+                                 eventgroup_id;
+            eventgroup_subscriptions_.erase(key);
+        }
+
         auto unsubscribe_entry = std::make_unique<EventGroupEntry>(EntryType::STOP_SUBSCRIBE_EVENTGROUP);
         unsubscribe_entry->set_service_id(service_id);
         unsubscribe_entry->set_instance_id(instance_id);
@@ -240,17 +257,15 @@ public:
         unsubscribe_entry->set_major_version(0x01);
         unsubscribe_entry->set_ttl(0);  // TTL = 0 means unsubscribe
 
-        // Create SD message
         SdMessage sd_message;
         sd_message.add_entry(std::move(unsubscribe_entry));
 
-        // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     RequestId(SOMEIP_SD_CLIENT_ID, next_multicast_session_id()),
+                                     MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
-        // Send multicast message
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         return transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
     }
@@ -290,6 +305,100 @@ private:
         std::chrono::milliseconds timeout{};
     };
 
+    struct CachedService {
+        ServiceInstance instance;
+        std::chrono::steady_clock::time_point received_time;
+        uint16_t last_session_id{0};
+        bool reboot_flag{false};
+    };
+
+    void start_maintenance_loop() {
+        if (maintenance_thread_ && maintenance_thread_->joinable()) {
+            return;
+        }
+        maintenance_thread_ = std::make_unique<platform::Thread>([this]() {
+            while (running_) {
+                platform::this_thread::sleep_for(std::chrono::milliseconds(500));
+                if (!running_) { break; }
+                process_find_timeouts();
+                process_ttl_expiry();
+            }
+        });
+    }
+
+    void stop_maintenance_loop() {
+        if (maintenance_thread_ && maintenance_thread_->joinable()) {
+            maintenance_thread_->join();
+        }
+    }
+
+    void process_find_timeouts() {
+        std::vector<FindServiceCallback> timed_out_cbs;
+        {
+            platform::ScopedLock const lock(pending_finds_mutex_);
+            auto const now = std::chrono::steady_clock::now();
+            for (auto it = pending_finds_.begin(); it != pending_finds_.end(); ) {
+                auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    now - it->second.start_time);
+                if (elapsed >= it->second.timeout) {
+                    if (it->second.callback) {
+                        timed_out_cbs.push_back(it->second.callback);
+                    }
+                    it = pending_finds_.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+        }
+        for (const auto& cb : timed_out_cbs) {
+            cb(std::vector<ServiceInstance>{});
+        }
+    }
+
+    void process_ttl_expiry() {
+        std::vector<ServiceInstance> expired;
+        {
+            platform::ScopedLock const lock(available_services_mutex_);
+            auto const now = std::chrono::steady_clock::now();
+            for (auto it = cached_services_.begin(); it != cached_services_.end(); ) {
+                if (it->second.instance.ttl_seconds > 0) {
+                    auto const age = std::chrono::duration_cast<std::chrono::seconds>(
+                        now - it->second.received_time);
+                    if (age.count() >= static_cast<long long>(it->second.instance.ttl_seconds)) {
+                        expired.push_back(it->second.instance);
+                        const auto rm_it = std::remove_if(
+                            available_services_.begin(), available_services_.end(),
+                            [&](const ServiceInstance& svc) {
+                                return svc.service_id == it->second.instance.service_id &&
+                                       svc.instance_id == it->second.instance.instance_id;
+                            });
+                        available_services_.erase(rm_it, available_services_.end());
+                        it = cached_services_.erase(it);
+                        continue;
+                    }
+                }
+                ++it;
+            }
+        }
+        for (const auto& inst : expired) {
+            ServiceUnavailableCallback unavail_cb;
+            {
+                platform::ScopedLock const lock(subscriptions_mutex_);
+                const auto sub_it = service_subscriptions_.find(inst.service_id);
+                if (sub_it != service_subscriptions_.end() && sub_it->second.unavailable_callback) {
+                    unavail_cb = sub_it->second.unavailable_callback;
+                }
+            }
+            if (unavail_cb) {
+                unavail_cb(inst);
+            }
+        }
+    }
+
+    static uint64_t make_service_key(uint16_t service_id, uint16_t instance_id) {
+        return (static_cast<uint64_t>(service_id) << 16U) | instance_id;
+    }
+
     bool join_multicast_group() {
         const auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
         if (!udp_transport) {
@@ -313,13 +422,12 @@ private:
             return;
         }
 
-        // Parse SD message
         SdMessage sd_message;
         if (!sd_message.deserialize(message->get_payload())) {
             return;
         }
+        sd_message.set_session_id(message->get_session_id());
 
-        // Process SD entries
         process_sd_entries(sd_message);
     }
 
@@ -382,19 +490,54 @@ private:
             }
         }
 
+        bool rebooted = false;
         {
             platform::ScopedLock const lock(available_services_mutex_);
+            const uint64_t key = make_service_key(instance.service_id, instance.instance_id);
+            const uint16_t incoming_session = message.get_session_id();
+            const bool incoming_reboot_flag = message.get_reboot_flag();
+
+            auto cache_it = cached_services_.find(key);
+            if (cache_it != cached_services_.end()) {
+                const auto& prev = cache_it->second;
+                if (incoming_reboot_flag != prev.reboot_flag ||
+                    (incoming_session < prev.last_session_id && incoming_reboot_flag)) {
+                    rebooted = true;
+                }
+            }
+
+            if (rebooted) {
+                const auto rm_it = std::remove_if(
+                    available_services_.begin(), available_services_.end(),
+                    [&](const ServiceInstance& svc) {
+                        return svc.service_id == instance.service_id &&
+                               svc.instance_id == instance.instance_id;
+                    });
+                available_services_.erase(rm_it, available_services_.end());
+                cached_services_.erase(key);
+            }
+
             const auto it = std::find_if(available_services_.begin(), available_services_.end(),
                 [&](const ServiceInstance& svc) {
                     return svc.service_id == instance.service_id &&
                            svc.instance_id == instance.instance_id;
                 });
-
             if (it == available_services_.end()) {
                 available_services_.push_back(instance);
             } else {
                 *it = instance;
             }
+
+            cached_services_[key] = CachedService{
+                instance,
+                std::chrono::steady_clock::now(),
+                incoming_session,
+                incoming_reboot_flag
+            };
+        }
+
+        if (rebooted) {
+            handle_remote_reboot(instance);
         }
 
         ServiceAvailableCallback avail_cb;
@@ -474,6 +617,70 @@ private:
 
     std::atomic<uint32_t> next_request_id_;
     std::atomic<bool> running_;
+
+    std::unique_ptr<platform::Thread> maintenance_thread_;
+
+    std::unordered_map<uint64_t, CachedService> cached_services_;
+    std::unordered_map<uint64_t, EventGroupSubscription> eventgroup_subscriptions_;
+    mutable platform::Mutex eventgroup_subscriptions_mutex_;
+
+    SdSessionIdCounter multicast_session_id_;
+    std::unordered_map<std::string, SdSessionIdCounter> unicast_session_ids_;
+    mutable platform::Mutex session_id_mutex_;
+
+    uint16_t next_multicast_session_id() {
+        platform::ScopedLock const lock(session_id_mutex_);
+        return multicast_session_id_.next();
+    }
+
+    uint16_t next_unicast_session_id(const std::string& peer) {
+        platform::ScopedLock const lock(session_id_mutex_);
+        return unicast_session_ids_[peer].next();
+    }
+
+    /** @implements REQ_SD_340, REQ_SD_341, REQ_SD_342, REQ_SD_343, REQ_SD_344, REQ_SD_346, REQ_SD_348 */
+    void handle_remote_reboot(const ServiceInstance& instance) {
+        ServiceUnavailableCallback unavail_cb;
+        {
+            platform::ScopedLock const lock(subscriptions_mutex_);
+            const auto sub_it = service_subscriptions_.find(instance.service_id);
+            if (sub_it != service_subscriptions_.end() && sub_it->second.unavailable_callback) {
+                unavail_cb = sub_it->second.unavailable_callback;
+            }
+        }
+        if (unavail_cb) {
+            unavail_cb(instance);
+        }
+
+        replay_subscriptions(instance.service_id, instance.instance_id);
+    }
+
+    void replay_subscriptions(uint16_t service_id, uint16_t instance_id) {
+        std::vector<EventGroupSubscription> subs_to_renew;
+        {
+            platform::ScopedLock const lock(subscriptions_mutex_);
+            for (const auto& entry : service_subscriptions_) {
+                if (entry.first == service_id) {
+                    (void)instance_id;
+                    break;
+                }
+            }
+        }
+
+        {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            for (const auto& eg : eventgroup_subscriptions_) {
+                if (eg.second.service_id == service_id) {
+                    subs_to_renew.push_back(eg.second);
+                }
+            }
+        }
+
+        for (const auto& sub : subs_to_renew) {
+            subscribe_eventgroup(sub.service_id, sub.instance_id,
+                                 sub.eventgroup_id);
+        }
+    }
 };
 
 // SdClient implementation

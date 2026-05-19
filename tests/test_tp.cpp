@@ -699,3 +699,70 @@ TEST(TpTypesTest, TransferInitTimestamps) {
     EXPECT_LE(transfer.start_time, after);
     EXPECT_EQ(transfer.start_time, transfer.last_activity);
 }
+
+// ============================================================================
+// TP Receive Validation Tests (Issue #259)
+// ============================================================================
+
+/**
+ * @test_case TC_TP_VALID_001
+ * @tests REQ_TP_055
+ * @brief SINGLE_MESSAGE with mismatched segment_length is rejected
+ */
+TEST_F(TpTest, SingleMessageMismatchedLengthRejected) {
+    TpConfig config;
+    TpManager tp_manager(config);
+    ASSERT_TRUE(tp_manager.initialize());
+
+    TpSegment segment;
+    segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
+    segment.header.segment_length = 100;
+    segment.payload = std::vector<uint8_t>(50, 0xAA);
+    segment.header.message_length = 50;
+
+    std::vector<uint8_t> complete;
+    EXPECT_FALSE(tp_manager.handle_received_segment(segment, complete))
+        << "Segment with length mismatch must be rejected";
+}
+
+/**
+ * @test_case TC_TP_VALID_002
+ * @tests REQ_TP_055
+ * @brief SINGLE_MESSAGE with empty payload is rejected
+ */
+TEST_F(TpTest, SingleMessageEmptyPayloadRejected) {
+    TpConfig config;
+    TpManager tp_manager(config);
+    ASSERT_TRUE(tp_manager.initialize());
+
+    TpSegment segment;
+    segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
+    segment.header.segment_length = 0;
+    segment.payload.clear();
+    segment.header.message_length = 0;
+
+    std::vector<uint8_t> complete;
+    EXPECT_FALSE(tp_manager.handle_received_segment(segment, complete))
+        << "Empty SINGLE_MESSAGE must be rejected";
+}
+
+/**
+ * @test_case TC_TP_VALID_003
+ * @tests REQ_TP_055
+ * @brief Valid SINGLE_MESSAGE is accepted
+ */
+TEST_F(TpTest, SingleMessageValidAccepted) {
+    TpConfig config;
+    TpManager tp_manager(config);
+    ASSERT_TRUE(tp_manager.initialize());
+
+    TpSegment segment;
+    segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
+    segment.payload = std::vector<uint8_t>(20, 0xBB);
+    segment.header.segment_length = 20;
+    segment.header.message_length = 20;
+
+    std::vector<uint8_t> complete;
+    EXPECT_TRUE(tp_manager.handle_received_segment(segment, complete));
+    EXPECT_EQ(complete.size(), 20u);
+}

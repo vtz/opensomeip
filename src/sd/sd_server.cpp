@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -134,9 +135,16 @@ public:
     bool offer_service(const ServiceInstance& instance,
                       const std::string& unicast_endpoint,
                       const std::string& multicast_endpoint) {
+        if (!unicast_endpoint.empty()) {
+            std::string tmp_ip;
+            uint16_t tmp_port = 0;
+            if (!parse_endpoint_string(unicast_endpoint, tmp_ip, tmp_port)) {
+                return false;
+            }
+        }
+
         platform::ScopedLock const lock(offered_services_mutex_);
 
-        // Check if service already offered
         const auto it = std::find_if(offered_services_.begin(), offered_services_.end(),
             [&](const OfferedService& svc) {
                 return svc.instance.service_id == instance.service_id &&
@@ -144,7 +152,7 @@ public:
             });
 
         if (it != offered_services_.end()) {
-            return false;  // Already offered
+            return false;
         }
 
         // Check service list limit (REQ_SD_040_E01)
@@ -235,26 +243,24 @@ public:
         multicast_option->set_port(config_.multicast_port);
         response_message.add_option(std::move(multicast_option));
 
-        // Send unicast response to client
-        // Parse client_address (format: "ip:port" or just "ip")
-        const size_t colon_pos = client_address.find(':');
         std::string client_ip = client_address;
-        uint16_t client_port = config_.unicast_port;  // Default to our unicast port
+        uint16_t client_port = config_.unicast_port;
 
-        if (colon_pos != std::string::npos) {
-            client_ip = client_address.substr(0, colon_pos);
-            client_port = static_cast<uint16_t>(std::stoi(client_address.substr(colon_pos + 1)));
+        if (client_address.find(':') != std::string::npos) {
+            if (!parse_endpoint_string(client_address, client_ip, client_port)) {
+                return false;
+            }
         }
 
         const transport::Endpoint client_endpoint(client_ip, client_port);
 
-        // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     RequestId(SOMEIP_SD_CLIENT_ID,
+                                               next_unicast_session_id(client_ip)),
+                                     MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(response_message.serialize());
 
-        // Send the ACK message
         const Result result = transport_->send_message(someip_message, client_endpoint);
         return result == Result::SUCCESS;
     }
@@ -286,7 +292,56 @@ private:
         std::string unicast_endpoint;
         std::string multicast_endpoint;
         std::chrono::steady_clock::time_point last_offer_time;
+        std::vector<OfferedEventGroup> eventgroups;
     };
+
+    static bool parse_endpoint_string(const std::string& endpoint_str,
+                                       std::string& ip_out, uint16_t& port_out) {
+        const size_t colon_pos = endpoint_str.find(':');
+        if (colon_pos == std::string::npos || colon_pos == 0) {
+            return false;
+        }
+
+        const std::string ip_str = endpoint_str.substr(0, colon_pos);
+        const std::string port_str = endpoint_str.substr(colon_pos + 1);
+
+        if (port_str.empty()) {
+            return false;
+        }
+
+        for (const char c : port_str) {
+            if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+
+        long port_val = 0;
+        try {
+            port_val = std::stol(port_str);
+        } catch (...) {
+            return false;
+        }
+
+        if (port_val <= 0 || port_val > 65535) {
+            return false;
+        }
+
+        int dot_count = 0;
+        for (const char c : ip_str) {
+            if (c == '.') {
+                ++dot_count;
+            } else if (c < '0' || c > '9') {
+                return false;
+            }
+        }
+        if (dot_count != 3) {
+            return false;
+        }
+
+        ip_out = ip_str;
+        port_out = static_cast<uint16_t>(port_val);
+        return true;
+    }
 
     bool join_multicast_group() {
         const auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
@@ -376,30 +431,27 @@ private:
         SdMessage sd_message;
         sd_message.add_entry(std::move(offer_entry));
 
-        // Add IPv4 endpoint option
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
 
-        // Parse unicast endpoint (format: "ip:port")
-        const size_t colon_pos = service.unicast_endpoint.find(':');
-        if (colon_pos != std::string::npos) {
-            const std::string ip_str = service.unicast_endpoint.substr(0, colon_pos);
-            const std::string port_str = service.unicast_endpoint.substr(colon_pos + 1);
-
-            endpoint_option->set_ipv4_address_from_string(ip_str);
-            endpoint_option->set_port(static_cast<uint16_t>(std::stoi(port_str)));
-            // Use UDP as default protocol for SOME/IP SD
-            endpoint_option->set_protocol(0x11);  // UDP
+        std::string ep_ip;
+        uint16_t ep_port = 0;
+        if (parse_endpoint_string(service.unicast_endpoint, ep_ip, ep_port)) {
+            endpoint_option->set_ipv4_address_from_string(ep_ip);
+            endpoint_option->set_port(ep_port);
+            endpoint_option->set_protocol(0x11);
+        } else {
+            return;
         }
 
         sd_message.add_option(std::move(endpoint_option));
 
-        // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     RequestId(SOMEIP_SD_CLIENT_ID,
+                                               next_multicast_session_id()),
+                                     MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
-        // Send multicast offer
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         const Result result = transport_->send_message(someip_message, multicast_endpoint);
         if (result != Result::SUCCESS) {
@@ -420,13 +472,13 @@ private:
         SdMessage sd_message;
         sd_message.add_entry(std::move(stop_entry));
 
-        // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     RequestId(SOMEIP_SD_CLIENT_ID,
+                                               next_multicast_session_id()),
+                                     MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
-        // Send multicast stop offer
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         const Result result = transport_->send_message(someip_message, multicast_endpoint);
         if (result != Result::SUCCESS) {
@@ -504,36 +556,117 @@ private:
     void handle_eventgroup_subscription_request(const EventGroupEntry& subscription_entry,
                                                const SdMessage& message,
                                                const transport::Endpoint& sender) {
-        // Extract client endpoint from options
+        const uint16_t service_id = subscription_entry.get_service_id();
+        const uint16_t instance_id = subscription_entry.get_instance_id();
+        const uint16_t eventgroup_id = subscription_entry.get_eventgroup_id();
+
+        {
+            platform::ScopedLock const lock(offered_services_mutex_);
+            const auto svc_it = std::find_if(offered_services_.begin(), offered_services_.end(),
+                [&](const OfferedService& svc) {
+                    return svc.instance.service_id == service_id &&
+                           svc.instance.instance_id == instance_id;
+                });
+            if (svc_it == offered_services_.end()) {
+                send_subscribe_nack(subscription_entry, sender);
+                return;
+            }
+
+            bool eventgroup_found = false;
+            for (const auto& eg : svc_it->eventgroups) {
+                if (eg.eventgroup_id == eventgroup_id) {
+                    eventgroup_found = true;
+                    break;
+                }
+            }
+            if (!eventgroup_found && !svc_it->eventgroups.empty()) {
+                send_subscribe_nack(subscription_entry, sender);
+                return;
+            }
+        }
+
         std::string client_ip = sender.get_address();
         uint16_t client_port = sender.get_port();
-        [[maybe_unused]] uint8_t client_protocol = 0x11;  // Default to UDP
+        uint8_t client_protocol = 0x11;
 
-        // Check if entry references an endpoint option
         const uint8_t index1 = subscription_entry.get_index1();
+        const uint8_t run1 = subscription_entry.get_num_opts1();
         const auto& options = message.get_options();
 
-        if (index1 < options.size()) {
-            const auto& option = options[index1];
+        bool has_endpoint = false;
+        bool has_conflicting_options = false;
+
+        for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
+            const auto& option = options[index1 + i];
             if (option->get_type() == OptionType::IPV4_ENDPOINT) {
+                if (has_endpoint) {
+                    has_conflicting_options = true;
+                    break;
+                }
                 // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
                 const auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
                 client_ip = ep->get_ipv4_address_string();
                 client_port = ep->get_port();
                 client_protocol = ep->get_protocol();
+                has_endpoint = true;
             }
         }
 
-        // TODO: Validate service and event group
-        // For now, acknowledge all subscription requests
+        const uint8_t index2 = subscription_entry.get_index2();
+        const uint8_t run2 = subscription_entry.get_num_opts2();
+        for (uint8_t i = 0; i < run2 && (index2 + i) < options.size(); ++i) {
+            const auto& option = options[index2 + i];
+            if (option->get_type() == OptionType::IPV4_ENDPOINT) {
+                if (has_endpoint) {
+                    has_conflicting_options = true;
+                    break;
+                }
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+                const auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
+                client_ip = ep->get_ipv4_address_string();
+                client_port = ep->get_port();
+                client_protocol = ep->get_protocol();
+                has_endpoint = true;
+            }
+        }
+
+        if (has_conflicting_options) {
+            send_subscribe_nack(subscription_entry, sender);
+            return;
+        }
+
+        if (client_port == 0) {
+            send_subscribe_nack(subscription_entry, sender);
+            return;
+        }
+
+        (void)client_protocol;
 
         handle_eventgroup_subscription(
-            subscription_entry.get_service_id(),
-            subscription_entry.get_instance_id(),
-            subscription_entry.get_eventgroup_id(),
-            client_ip + ":" + std::to_string(client_port),  // Pass full endpoint
-            true  // Acknowledge
+            service_id, instance_id, eventgroup_id,
+            client_ip + ":" + std::to_string(client_port),
+            true
         );
+    }
+
+    void send_subscribe_nack(const EventGroupEntry& entry, const transport::Endpoint& client) {
+        auto nack_entry = std::make_unique<EventGroupEntry>(EntryType::SUBSCRIBE_EVENTGROUP_NACK);
+        nack_entry->set_service_id(entry.get_service_id());
+        nack_entry->set_instance_id(entry.get_instance_id());
+        nack_entry->set_eventgroup_id(entry.get_eventgroup_id());
+        nack_entry->set_major_version(entry.get_major_version());
+        nack_entry->set_ttl(0);
+
+        SdMessage response;
+        response.add_entry(std::move(nack_entry));
+
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                                     RequestId(SOMEIP_SD_CLIENT_ID,
+                                               next_unicast_session_id(client.get_address())),
+                                     MessageType::NOTIFICATION,
+                                     ReturnCode::E_OK);
+        someip_message.set_payload(response.serialize());
+        transport_->send_message(someip_message, client);
     }
 
     /** @implements REQ_SD_280, REQ_SD_283 */
@@ -552,30 +685,27 @@ private:
         sd_message.set_unicast(true);  // Unicast response
         sd_message.add_entry(std::move(offer_entry));
 
-        // Add IPv4 endpoint option
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
 
-        // Parse unicast endpoint (format: "ip:port")
-        const size_t colon_pos = service.unicast_endpoint.find(':');
-        if (colon_pos != std::string::npos) {
-            const std::string ip_str = service.unicast_endpoint.substr(0, colon_pos);
-            const std::string port_str = service.unicast_endpoint.substr(colon_pos + 1);
-
-            endpoint_option->set_ipv4_address_from_string(ip_str);
-            endpoint_option->set_port(static_cast<uint16_t>(std::stoi(port_str)));
-            // Use UDP as default protocol for SOME/IP SD
-            endpoint_option->set_protocol(0x11);  // UDP
+        std::string ep_ip;
+        uint16_t ep_port = 0;
+        if (parse_endpoint_string(service.unicast_endpoint, ep_ip, ep_port)) {
+            endpoint_option->set_ipv4_address_from_string(ep_ip);
+            endpoint_option->set_port(ep_port);
+            endpoint_option->set_protocol(0x11);
+        } else {
+            return;
         }
 
         sd_message.add_option(std::move(endpoint_option));
 
-        // Create SOME/IP message for SD
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(0x0000, 0x0000), MessageType::NOTIFICATION,
+                                     RequestId(SOMEIP_SD_CLIENT_ID,
+                                               next_unicast_session_id(client.get_address())),
+                                     MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(sd_message.serialize());
 
-        // Send unicast offer to client
         const Result result = transport_->send_message(someip_message, client);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
@@ -591,6 +721,20 @@ private:
     std::unique_ptr<platform::Thread> offer_timer_thread_;
     std::chrono::milliseconds next_offer_delay_;
     std::atomic<bool> running_;
+
+    SdSessionIdCounter multicast_session_id_;
+    std::unordered_map<std::string, SdSessionIdCounter> unicast_session_ids_;
+    mutable platform::Mutex session_id_mutex_;
+
+    uint16_t next_multicast_session_id() {
+        platform::ScopedLock const lock(session_id_mutex_);
+        return multicast_session_id_.next();
+    }
+
+    uint16_t next_unicast_session_id(const std::string& peer) {
+        platform::ScopedLock const lock(session_id_mutex_);
+        return unicast_session_ids_[peer].next();
+    }
 };
 
 // SdServer implementation

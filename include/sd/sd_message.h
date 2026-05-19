@@ -237,6 +237,11 @@ public:
     bool is_reboot() const { return (static_cast<uint32_t>(flags_) & 0x80U) != 0; }
     bool is_unicast() const { return (static_cast<uint32_t>(flags_) & 0x40U) != 0; }
 
+    uint16_t get_session_id() const { return session_id_; }
+    void set_session_id(uint16_t id) { session_id_ = id; }
+
+    bool get_reboot_flag() const { return is_reboot(); }
+
     void set_reboot(bool reboot) {
         if (reboot) {
             flags_ = static_cast<uint8_t>(static_cast<uint32_t>(flags_) | 0x80U);
@@ -255,7 +260,8 @@ public:
 
 private:
     uint8_t flags_{0};
-    uint32_t reserved_{0};  // 24-bit field (stored as 32-bit for convenience)
+    uint32_t reserved_{0};
+    uint16_t session_id_{0};
 
     std::vector<std::unique_ptr<SdEntry>> entries_;
     std::vector<std::unique_ptr<SdOption>> options_;
