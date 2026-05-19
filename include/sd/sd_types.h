@@ -124,7 +124,7 @@ enum class SubscriptionState : uint8_t {
 class SdSessionIdCounter {
 public:
     uint16_t next() {
-        uint16_t val = next_id_++;
+        const uint16_t val = next_id_++;
         if (next_id_ == 0) {
             next_id_ = 1;
         }

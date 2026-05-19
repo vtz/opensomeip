@@ -295,13 +295,7 @@ bool Message::is_valid() const {
  * @implements REQ_MSG_004_E01, REQ_MSG_004_E02
  */
 bool Message::has_valid_service_id() const {
-    uint16_t const service_id = get_service_id();
-
-    if (service_id == 0x0000) {
-        return false;
-    }
-
-    return true;
+    return get_service_id() != 0x0000;
 }
 
 /**
