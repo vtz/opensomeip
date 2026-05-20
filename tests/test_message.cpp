@@ -90,7 +90,7 @@ TEST_F(MessageTest, DefaultConstructor) {
     EXPECT_EQ(msg.get_message_type(), MessageType::REQUEST);
     EXPECT_EQ(msg.get_return_code(), ReturnCode::E_OK);
     EXPECT_TRUE(msg.get_payload().empty());
-    EXPECT_TRUE(msg.is_valid());
+    EXPECT_FALSE(msg.is_valid()) << "Default service_id 0x0000 is reserved";
 }
 
 /**
@@ -195,8 +195,8 @@ TEST_F(MessageTest, SerializationRoundTrip) {
  */
 TEST_F(MessageTest, Validation) {
     Message msg;
+    msg.set_service_id(0x0001);
 
-    // Valid message
     EXPECT_TRUE(msg.is_valid());
     EXPECT_TRUE(msg.has_valid_header());
 
@@ -227,11 +227,9 @@ TEST_F(MessageTest, ServiceIdValidation) {
     msg.set_service_id(0x1234);
     EXPECT_TRUE(msg.has_valid_service_id());
 
-    // Reserved service ID 0x0000 - allowed for backward compatibility
-    // Note: Per spec (REQ_MSG_004), 0x0000 is reserved, but we allow it
-    // for default-constructed messages to maintain backward compatibility
+    // REQ_MSG_004: Service ID 0x0000 is reserved and rejected
     msg.set_service_id(0x0000);
-    EXPECT_TRUE(msg.has_valid_service_id());  // Lenient validation
+    EXPECT_FALSE(msg.has_valid_service_id());
 
     // SD service ID 0xFFFF (valid)
     msg.set_service_id(0xFFFF);
@@ -272,9 +270,8 @@ TEST_F(MessageTest, MessageIdValidation) {
     msg.set_method_id(0x5678);
     EXPECT_TRUE(msg.has_valid_message_id());
 
-    // Service ID 0x0000 - allowed for backward compatibility
     msg.set_service_id(0x0000);
-    EXPECT_TRUE(msg.has_valid_message_id());  // Lenient validation
+    EXPECT_FALSE(msg.has_valid_message_id()) << "Service ID 0x0000 is reserved";
     msg.set_service_id(0x1234);
 
     // Invalid Method ID (0xFFFF is reserved per spec)

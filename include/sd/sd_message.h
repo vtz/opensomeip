@@ -75,8 +75,8 @@ public:
     uint8_t get_major_version() const { return major_version_; }
     void set_major_version(uint8_t version) { major_version_ = version; }
 
-    uint8_t get_minor_version() const { return minor_version_; }
-    void set_minor_version(uint8_t version) { minor_version_ = version; }
+    uint32_t get_minor_version() const { return minor_version_; }
+    void set_minor_version(uint32_t version) { minor_version_ = version; }
 
     std::vector<uint8_t> serialize() const override;
     bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
@@ -85,7 +85,7 @@ private:
     uint16_t service_id_{0};
     uint16_t instance_id_{0};
     uint8_t major_version_{0};
-    uint8_t minor_version_{0};
+    uint32_t minor_version_{0};
 };
 
 /**
@@ -237,6 +237,11 @@ public:
     bool is_reboot() const { return (static_cast<uint32_t>(flags_) & 0x80U) != 0; }
     bool is_unicast() const { return (static_cast<uint32_t>(flags_) & 0x40U) != 0; }
 
+    uint16_t get_session_id() const { return session_id_; }
+    void set_session_id(uint16_t id) { session_id_ = id; }
+
+    bool get_reboot_flag() const { return is_reboot(); }
+
     void set_reboot(bool reboot) {
         if (reboot) {
             flags_ = static_cast<uint8_t>(static_cast<uint32_t>(flags_) | 0x80U);
@@ -255,7 +260,8 @@ public:
 
 private:
     uint8_t flags_{0};
-    uint32_t reserved_{0};  // 24-bit field (stored as 32-bit for convenience)
+    uint32_t reserved_{0};
+    uint16_t session_id_{0};
 
     std::vector<std::unique_ptr<SdEntry>> entries_;
     std::vector<std::unique_ptr<SdOption>> options_;

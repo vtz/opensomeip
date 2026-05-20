@@ -101,17 +101,19 @@ bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_
         return false;
     }
 
-    if (add_segment_to_buffer(*buffer, segment)) {
-        if (buffer->is_complete()) {
-            buffer->complete = true;  // Mark as complete
-            complete_message = buffer->get_complete_message();
-            // Remove completed buffer
-            reassembly_buffers_.erase(buffer->message_id);
-            return true;
-        }
+    if (!add_segment_to_buffer(*buffer, segment)) {
+        reassembly_buffers_.erase(buffer->message_id);
+        return false;
     }
 
-    return true;  // Segment processed but reassembly not complete
+    if (buffer->is_complete()) {
+        buffer->complete = true;
+        complete_message = buffer->get_complete_message();
+        reassembly_buffers_.erase(buffer->message_id);
+        return true;
+    }
+
+    return true;
 }
 
 /**

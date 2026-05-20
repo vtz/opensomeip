@@ -62,14 +62,14 @@ struct ServiceInstance {
     uint16_t service_id{0};
     uint16_t instance_id{0};
     uint8_t major_version{0};
-    uint8_t minor_version{0};
+    uint32_t minor_version{0};
     std::string ip_address;
     uint16_t port{0};
     uint8_t protocol{0x11};  // Default to UDP (0x11)
     uint32_t ttl_seconds{0};  // Time to live
 
     explicit ServiceInstance(uint16_t svc_id = 0, uint16_t inst_id = 0,
-                   uint8_t maj_ver = 0, uint8_t min_ver = 0)
+                   uint8_t maj_ver = 0, uint32_t min_ver = 0)
         : service_id(svc_id), instance_id(inst_id),
           major_version(maj_ver), minor_version(min_ver) {}
 };
@@ -116,12 +116,35 @@ enum class SubscriptionState : uint8_t {
 };
 
 /**
+ * @brief SD Session ID counter per SOME/IP-SD spec.
+ *
+ * Session IDs start at 0x0001, increment per message, and wrap from
+ * 0xFFFF back to 0x0001 (0x0000 is never emitted).
+ */
+class SdSessionIdCounter {
+public:
+    uint16_t next() {
+        const uint16_t val = next_id_++;
+        if (next_id_ == 0) {
+            next_id_ = 1;
+        }
+        return val;
+    }
+
+    uint16_t current() const { return next_id_; }
+
+private:
+    uint16_t next_id_{1};
+};
+
+/**
  * @brief Event group subscription info
  */
 struct EventGroupSubscription {
     uint16_t service_id{0};
     uint16_t instance_id{0};
     uint16_t eventgroup_id{0};
+    uint8_t major_version{0};
     SubscriptionState state{SubscriptionState::REQUESTED};
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
 
@@ -129,6 +152,13 @@ struct EventGroupSubscription {
         : service_id(svc_id), instance_id(inst_id), eventgroup_id(eg_id) {
         timestamp = std::chrono::steady_clock::now();
     }
+};
+
+/**
+ * @brief Offered event group definition for subscription validation.
+ */
+struct OfferedEventGroup {
+    uint16_t eventgroup_id{0};
 };
 
 }  // namespace someip::sd

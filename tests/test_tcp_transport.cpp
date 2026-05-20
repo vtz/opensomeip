@@ -545,3 +545,277 @@ TEST_F(TcpTransportTest, ZeroLengthMessage) {
     EXPECT_FALSE(serialized.empty()) << "Even empty payload has header";
     EXPECT_GE(serialized.size(), 16u) << "Minimum SOME/IP header is 16 bytes";
 }
+
+// ============================================================================
+// TCP Persistent Buffer / Fragmented Frame Tests (Issue #255)
+// ============================================================================
+
+/**
+ * @test_case TC_TCP_PARSE_001
+ * @tests REQ_TRANSPORT_024
+ * @brief parse_message_from_buffer handles a complete single message
+ */
+TEST_F(TcpTransportTest, ParseSingleCompleteMessage) {
+    TcpTransport transport(config);
+
+    Message original(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    original.set_payload({0x01, 0x02, 0x03, 0x04});
+
+    std::vector<uint8_t> buffer = original.serialize();
+    MessagePtr parsed;
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed));
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0x1234);
+    EXPECT_EQ(parsed->get_method_id(), 0x5678);
+    EXPECT_EQ(parsed->get_payload(), (std::vector<uint8_t>{0x01, 0x02, 0x03, 0x04}));
+    EXPECT_TRUE(buffer.empty()) << "Buffer should be consumed";
+}
+
+/**
+ * @test_case TC_TCP_PARSE_002
+ * @tests REQ_TRANSPORT_024
+ * @brief Incomplete message (only partial header) stays in buffer
+ */
+TEST_F(TcpTransportTest, ParseIncompleteHeaderStaysInBuffer) {
+    TcpTransport transport(config);
+
+    Message original(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    original.set_payload({0x01, 0x02, 0x03});
+
+    std::vector<uint8_t> full = original.serialize();
+    std::vector<uint8_t> buffer(full.begin(), full.begin() + 10);
+
+    MessagePtr parsed;
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed));
+    EXPECT_EQ(buffer.size(), 10u) << "Incomplete bytes must be preserved";
+}
+
+/**
+ * @test_case TC_TCP_PARSE_003
+ * @tests REQ_TRANSPORT_024
+ * @brief Multiple complete messages in one buffer are parseable sequentially
+ */
+TEST_F(TcpTransportTest, ParseMultipleMessagesInBuffer) {
+    TcpTransport transport(config);
+
+    Message msg1(MessageId(0x1111, 0x2222), RequestId(0x0001, 0x0001),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    msg1.set_payload({0xAA});
+
+    Message msg2(MessageId(0x3333, 0x4444), RequestId(0x0002, 0x0001),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    msg2.set_payload({0xBB, 0xCC});
+
+    std::vector<uint8_t> buffer;
+    auto s1 = msg1.serialize();
+    auto s2 = msg2.serialize();
+    buffer.insert(buffer.end(), s1.begin(), s1.end());
+    buffer.insert(buffer.end(), s2.begin(), s2.end());
+
+    MessagePtr parsed1;
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed1));
+    ASSERT_NE(parsed1, nullptr);
+    EXPECT_EQ(parsed1->get_service_id(), 0x1111);
+
+    MessagePtr parsed2;
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed2));
+    ASSERT_NE(parsed2, nullptr);
+    EXPECT_EQ(parsed2->get_service_id(), 0x3333);
+    EXPECT_EQ(parsed2->get_payload(), (std::vector<uint8_t>{0xBB, 0xCC}));
+
+    EXPECT_TRUE(buffer.empty());
+}
+
+/**
+ * @test_case TC_TCP_PARSE_004
+ * @tests REQ_TRANSPORT_024
+ * @brief Complete message + incomplete tail: first parses, tail preserved
+ */
+TEST_F(TcpTransportTest, ParseCompleteMessagePlusIncompleteTail) {
+    TcpTransport transport(config);
+
+    Message msg1(MessageId(0x1111, 0x2222), RequestId(0x0001, 0x0001),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    msg1.set_payload({0xAA});
+
+    Message msg2(MessageId(0x3333, 0x4444), RequestId(0x0002, 0x0001),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    msg2.set_payload({0xBB, 0xCC});
+
+    auto s1 = msg1.serialize();
+    auto s2 = msg2.serialize();
+
+    std::vector<uint8_t> buffer;
+    buffer.insert(buffer.end(), s1.begin(), s1.end());
+    buffer.insert(buffer.end(), s2.begin(), s2.begin() + 8);
+
+    MessagePtr parsed;
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed));
+    EXPECT_EQ(parsed->get_service_id(), 0x1111);
+
+    EXPECT_EQ(buffer.size(), 8u) << "Incomplete tail of second message must remain";
+
+    MessagePtr parsed2;
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed2));
+    EXPECT_EQ(buffer.size(), 8u) << "Tail still preserved after failed parse";
+}
+
+/**
+ * @test_case TC_TCP_PARSE_005
+ * @tests REQ_TRANSPORT_024
+ * @brief Simulated chunked arrival: feed a frame in 2+ chunks
+ */
+TEST_F(TcpTransportTest, ChunkedArrivalReassembly) {
+    TcpTransport transport(config);
+
+    Message original(MessageId(0xAAAA, 0xBBBB), RequestId(0xCCCC, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    original.set_payload({0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+    std::vector<uint8_t> full = original.serialize();
+    ASSERT_EQ(full.size(), 24u);
+
+    std::vector<uint8_t> persistent_buffer;
+    MessagePtr parsed;
+
+    persistent_buffer.insert(persistent_buffer.end(), full.begin(), full.begin() + 5);
+    EXPECT_FALSE(transport.parse_message_from_buffer(persistent_buffer, parsed));
+    EXPECT_EQ(persistent_buffer.size(), 5u);
+
+    persistent_buffer.insert(persistent_buffer.end(), full.begin() + 5, full.begin() + 16);
+    EXPECT_FALSE(transport.parse_message_from_buffer(persistent_buffer, parsed));
+    EXPECT_EQ(persistent_buffer.size(), 16u);
+
+    persistent_buffer.insert(persistent_buffer.end(), full.begin() + 16, full.end());
+    ASSERT_TRUE(transport.parse_message_from_buffer(persistent_buffer, parsed));
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0xAAAA);
+    EXPECT_EQ(parsed->get_payload().size(), 8u);
+    EXPECT_TRUE(persistent_buffer.empty());
+}
+
+// ============================================================================
+// Magic Cookie Tests (Issue #257)
+// ============================================================================
+
+/**
+ * @test_case TC_TCP_MAGIC_001
+ * @tests REQ_TRANSPORT_020, REQ_TRANSPORT_025
+ * @brief Client Magic Cookie has correct wire format
+ */
+TEST_F(TcpTransportTest, MagicCookieClientFormat) {
+    auto cookie = TcpTransport::make_magic_cookie_client();
+    ASSERT_EQ(cookie.size(), 16u);
+    EXPECT_EQ(cookie[0], 0xFF);  // Service ID high
+    EXPECT_EQ(cookie[1], 0xFF);  // Service ID low
+    EXPECT_EQ(cookie[2], 0x00);  // Method ID high (client)
+    EXPECT_EQ(cookie[3], 0x00);  // Method ID low
+    EXPECT_EQ(cookie[4], 0x00);  // Length high
+    EXPECT_EQ(cookie[7], 0x08);  // Length = 8
+    EXPECT_EQ(cookie[8], 0xDE);  // Client ID high
+    EXPECT_EQ(cookie[9], 0xAD);  // Client ID low
+    EXPECT_EQ(cookie[14], 0xBE); // Session ID high
+    EXPECT_EQ(cookie[15], 0xEF); // Session ID low
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_002
+ * @tests REQ_TRANSPORT_020, REQ_TRANSPORT_025
+ * @brief Server Magic Cookie has Method ID 0x8000
+ */
+TEST_F(TcpTransportTest, MagicCookieServerFormat) {
+    auto cookie = TcpTransport::make_magic_cookie_server();
+    ASSERT_EQ(cookie.size(), 16u);
+    EXPECT_EQ(cookie[2], 0x80);  // Method ID high (server)
+    EXPECT_EQ(cookie[3], 0x00);  // Method ID low
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_003
+ * @tests REQ_TRANSPORT_020
+ * @brief is_magic_cookie detects client and server cookies
+ */
+TEST_F(TcpTransportTest, IsMagicCookieDetection) {
+    auto client_cookie = TcpTransport::make_magic_cookie_client();
+    auto server_cookie = TcpTransport::make_magic_cookie_server();
+    EXPECT_TRUE(TcpTransport::is_magic_cookie(client_cookie));
+    EXPECT_TRUE(TcpTransport::is_magic_cookie(server_cookie));
+
+    std::vector<uint8_t> not_cookie(16, 0x00);
+    EXPECT_FALSE(TcpTransport::is_magic_cookie(not_cookie));
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_004
+ * @tests REQ_TRANSPORT_020
+ * @brief Magic Cookie in stream is silently consumed by parser
+ */
+TEST_F(TcpTransportTest, MagicCookieConsumedByParser) {
+    TcpTransport transport(config);
+    auto cookie = TcpTransport::make_magic_cookie_client();
+
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                MessageType::REQUEST, ReturnCode::E_OK);
+    msg.set_payload({0x01, 0x02});
+    std::vector<uint8_t> msg_bytes = msg.serialize();
+
+    std::vector<uint8_t> buffer;
+    buffer.insert(buffer.end(), cookie.begin(), cookie.end());
+    buffer.insert(buffer.end(), msg_bytes.begin(), msg_bytes.end());
+
+    MessagePtr parsed;
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed))
+        << "First call should consume the magic cookie";
+    EXPECT_EQ(buffer.size(), msg_bytes.size());
+
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed));
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0x1234);
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_005
+ * @tests REQ_TRANSPORT_021
+ * @brief magic_cookie_enabled config controls periodic insertion
+ */
+TEST_F(TcpTransportTest, MagicCookieConfigControls) {
+    TcpTransportConfig mc_config;
+    mc_config.magic_cookie_enabled = true;
+    mc_config.magic_cookie_interval = std::chrono::milliseconds(10000);
+    EXPECT_TRUE(mc_config.magic_cookie_enabled);
+    EXPECT_EQ(mc_config.magic_cookie_interval.count(), 10000);
+
+    mc_config.magic_cookie_enabled = false;
+    EXPECT_FALSE(mc_config.magic_cookie_enabled);
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_006
+ * @tests REQ_TRANSPORT_021
+ * @brief Multiple magic cookies in a stream are all consumed
+ */
+TEST_F(TcpTransportTest, MultipleMagicCookiesConsumed) {
+    TcpTransport transport(config);
+    auto cookie_c = TcpTransport::make_magic_cookie_client();
+    auto cookie_s = TcpTransport::make_magic_cookie_server();
+
+    Message msg(MessageId(0xAAAA, 0xBBBB), RequestId(0xCCCC, 0x0001),
+                MessageType::REQUEST, ReturnCode::E_OK);
+    msg.set_payload({0xDD});
+    std::vector<uint8_t> msg_bytes = msg.serialize();
+
+    std::vector<uint8_t> buffer;
+    buffer.insert(buffer.end(), cookie_c.begin(), cookie_c.end());
+    buffer.insert(buffer.end(), cookie_s.begin(), cookie_s.end());
+    buffer.insert(buffer.end(), msg_bytes.begin(), msg_bytes.end());
+
+    MessagePtr parsed;
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed));
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed));
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed));
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0xAAAA);
+    EXPECT_TRUE(buffer.empty());
+}

@@ -25,6 +25,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -47,7 +48,7 @@ public:
     explicit EventSubscriberImpl(uint16_t client_id)
         : client_id_(client_id),
           transport_(std::make_shared<transport::UdpTransport>(
-              transport::Endpoint("127.0.0.1", 0))),
+              transport::Endpoint("0.0.0.0", 0))),
           running_(false) {
 
         transport_->set_listener(this);
@@ -115,12 +116,12 @@ public:
         const std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
         subscriptions_[key] = std::move(sub_info);
 
-        // Send subscription request via RPC (simplified - in real implementation,
-        // this would use SD to find the service endpoint and send subscription)
-        // For now, we'll assume the service is at a known endpoint
-        const transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
+        const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        if (service_endpoint.get_port() == 0) {
+            subscriptions_.erase(key);
+            return false;
+        }
 
-        // Create subscription message (simplified)
         MessageId const msg_id(service_id, 0x0001);  // Method ID for subscription
         Message subscription_msg(msg_id, RequestId(client_id_, 0x0001), MessageType::REQUEST,
                                  ReturnCode::E_OK);
@@ -152,10 +153,12 @@ public:
             return false;
         }
 
-        // Send unsubscription request
-        const transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
+        const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        if (service_endpoint.get_port() == 0) {
+            return false;
+        }
 
-        MessageId const msg_id(service_id, 0x0002);  // Method ID for unsubscription
+        MessageId const msg_id(service_id, 0x0002);
         Message unsubscription_msg(msg_id, RequestId(client_id_, 0x0002),
                                    MessageType::REQUEST, ReturnCode::E_OK);
 
@@ -182,15 +185,20 @@ public:
             return false;
         }
 
-        // Store callback for field response
+        transport::Endpoint service_endpoint;
+        {
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
+            service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        }
+        if (service_endpoint.get_port() == 0) {
+            return false;
+        }
+
         platform::ScopedLock const field_lock(field_requests_mutex_);
         const std::string key = make_field_key(service_id, instance_id, event_id);
         field_requests_[key] = std::move(callback);
 
-        // Send field request
-        const transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
-
-        MessageId const msg_id(service_id, 0x0003);  // Method ID for field request
+        MessageId const msg_id(service_id, 0x0003);
         Message field_msg(msg_id, RequestId(client_id_, 0x0003), MessageType::REQUEST,
                           ReturnCode::E_OK);
 
@@ -252,6 +260,19 @@ public:
         return EventSubscriber::Statistics{};
     }
 
+    using EndpointResolver = std::function<transport::Endpoint(uint16_t, uint16_t)>;
+
+    void set_endpoint_resolver(EndpointResolver resolver) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        endpoint_resolver_ = std::move(resolver);
+    }
+
+    void set_default_endpoint(const std::string& address, uint16_t port) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        default_service_address_ = address;
+        default_service_port_ = port;
+    }
+
 private:
     struct SubscriptionInfo {
         EventSubscription subscription;
@@ -259,6 +280,16 @@ private:
         SubscriptionStatusCallback status_callback;
         std::vector<EventFilter> filters;
     };
+
+    transport::Endpoint resolve_service_endpoint(uint16_t service_id, uint16_t instance_id) const {
+        if (endpoint_resolver_) {
+            return endpoint_resolver_(service_id, instance_id);
+        }
+        if (default_service_address_ == "0.0.0.0" && default_service_port_ == 0) {
+            return transport::Endpoint();
+        }
+        return transport::Endpoint(default_service_address_, default_service_port_);
+    }
 
     std::string make_subscription_key(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) const {
         return std::to_string(service_id) + ":" + std::to_string(instance_id) + ":" + std::to_string(eventgroup_id);
@@ -342,6 +373,9 @@ private:
     }
 
     uint16_t client_id_;
+    std::string default_service_address_{"0.0.0.0"};
+    uint16_t default_service_port_{0};
+    EndpointResolver endpoint_resolver_;
     std::shared_ptr<transport::UdpTransport> transport_;
 
     std::unordered_map<std::string, SubscriptionInfo> subscriptions_;
@@ -359,6 +393,14 @@ EventSubscriber::EventSubscriber(uint16_t client_id)
 }
 
 EventSubscriber::~EventSubscriber() = default;
+
+void EventSubscriber::set_default_endpoint(const std::string& address, uint16_t port) {
+    impl_->set_default_endpoint(address, port);
+}
+
+void EventSubscriber::set_endpoint_resolver(EndpointResolver resolver) {
+    impl_->set_endpoint_resolver(std::move(resolver));
+}
 
 bool EventSubscriber::initialize() {
     return impl_->initialize();

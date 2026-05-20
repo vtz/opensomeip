@@ -65,6 +65,8 @@ struct TcpTransportConfig {
     size_t max_connections{10};                             // Max concurrent connections
     bool keep_alive{true};                                  // TCP keep-alive
     std::chrono::milliseconds keep_alive_interval{30000};   // Keep-alive interval
+    bool magic_cookie_enabled{true};                        // Periodic Magic Cookie insertion
+    std::chrono::milliseconds magic_cookie_interval{10000}; // 10s per SOME/IP spec
 };
 
 /**
@@ -181,6 +183,26 @@ public:
      */
     someip_socket_t accept_connection();
 
+    /**
+     * @brief Parse one complete SOME/IP message from a byte buffer.
+     *
+     * Consumes exactly the bytes of one message if successful; leaves
+     * incomplete trailing bytes in the buffer for subsequent calls.
+     *
+     * @param buffer Accumulation buffer (modified in-place)
+     * @param message [out] Parsed message on success
+     * @return true if a complete message was extracted
+     */
+    bool parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message);
+
+    static constexpr size_t SOMEIP_HEADER_SIZE = 16;
+    static constexpr size_t MAX_MESSAGE_SIZE = 65535;
+
+    /** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_025 */
+    static bool is_magic_cookie(const std::vector<uint8_t>& data, size_t offset = 0);
+    static std::vector<uint8_t> make_magic_cookie_client();
+    static std::vector<uint8_t> make_magic_cookie_server();
+
 private:
     TcpTransportConfig config_;
     Endpoint local_endpoint_;
@@ -201,7 +223,7 @@ private:
     bool server_mode_{false};
     someip_socket_t listen_socket_fd_{SOMEIP_INVALID_SOCKET};
 
-    // Helper methods
+    someip_socket_t accept_connection_with_peer(Endpoint& peer_endpoint);
     Result create_socket();
     Result bind_socket();
     Result setup_socket_options(someip_socket_t socket_fd, bool blocking = true);
@@ -209,13 +231,11 @@ private:
     void disconnect_internal();
     void receive_loop();
     void connection_monitor_loop();
+    void send_periodic_magic_cookie();
     Result send_data(someip_socket_t socket_fd, const std::vector<uint8_t>& data);
     Result receive_data(someip_socket_t socket_fd, std::vector<uint8_t>& data);
-    bool parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message);
 
-    // Message parsing
-    static const size_t SOMEIP_HEADER_SIZE = 16;
-    static const size_t MAX_MESSAGE_SIZE = 65535;
+    std::chrono::steady_clock::time_point last_magic_cookie_time_{std::chrono::steady_clock::now()};
 };
 
 }  // namespace someip::transport

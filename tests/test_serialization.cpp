@@ -201,13 +201,13 @@ TEST_F(SerializationTest, SerializeDeserializeArray) {
     serializer.serialize_array(test_array);
     deserializer = Deserializer(serializer.get_buffer());
 
-    // First read the array length that was serialized
+    // Per SOME/IP spec the length prefix is the byte length of the array data
     auto length_result = deserializer.deserialize_uint32();
     EXPECT_TRUE(length_result.is_success());
-    EXPECT_EQ(length_result.get_value(), test_array.size());
-    uint32_t array_length = length_result.get_value();
+    EXPECT_EQ(length_result.get_value(), test_array.size() * sizeof(uint32_t));
+    uint32_t byte_length = length_result.get_value();
+    uint32_t array_length = byte_length / sizeof(uint32_t);
 
-    // Then read the array elements
     auto array_result = deserializer.deserialize_array<uint32_t>(array_length);
     EXPECT_TRUE(array_result.is_success());
     auto result_array = array_result.get_value();
@@ -555,8 +555,9 @@ TEST_F(SerializationTest, SerializeDeserializeUint8Array) {
     deserializer = Deserializer(serializer.get_buffer());
     auto length_result = deserializer.deserialize_uint32();
     EXPECT_TRUE(length_result.is_success());
-    uint32_t length = length_result.get_value();
-    EXPECT_EQ(length, test_array.size());
+    uint32_t byte_length = length_result.get_value();
+    EXPECT_EQ(byte_length, test_array.size() * sizeof(uint8_t));
+    uint32_t length = byte_length / sizeof(uint8_t);
 
     auto array_result = deserializer.deserialize_array<uint8_t>(length);
     EXPECT_TRUE(array_result.is_success());
@@ -576,8 +577,9 @@ TEST_F(SerializationTest, SerializeDeserializeInt16Array) {
     deserializer = Deserializer(serializer.get_buffer());
     auto length_result = deserializer.deserialize_uint32();
     EXPECT_TRUE(length_result.is_success());
-    uint32_t length = length_result.get_value();
-    EXPECT_EQ(length, test_array.size());
+    uint32_t byte_length = length_result.get_value();
+    EXPECT_EQ(byte_length, test_array.size() * sizeof(int16_t));
+    uint32_t length = byte_length / sizeof(int16_t);
 
     auto array_result = deserializer.deserialize_array<int16_t>(length);
     EXPECT_TRUE(array_result.is_success());
@@ -597,8 +599,9 @@ TEST_F(SerializationTest, SerializeDeserializeFloatArray) {
     deserializer = Deserializer(serializer.get_buffer());
     auto length_result = deserializer.deserialize_uint32();
     EXPECT_TRUE(length_result.is_success());
-    uint32_t length = length_result.get_value();
-    EXPECT_EQ(length, test_array.size());
+    uint32_t byte_length = length_result.get_value();
+    EXPECT_EQ(byte_length, test_array.size() * sizeof(float));
+    uint32_t length = byte_length / sizeof(float);
 
     auto array_result = deserializer.deserialize_array<float>(length);
     EXPECT_TRUE(array_result.is_success());
@@ -621,10 +624,10 @@ TEST_F(SerializationTest, SerializeDeserializeEmptyArray) {
     deserializer = Deserializer(serializer.get_buffer());
     auto length_result = deserializer.deserialize_uint32();
     EXPECT_TRUE(length_result.is_success());
-    uint32_t length = length_result.get_value();
-    EXPECT_EQ(length, 0u);
+    uint32_t byte_length = length_result.get_value();
+    EXPECT_EQ(byte_length, 0u);
 
-    auto array_result = deserializer.deserialize_array<uint32_t>(length);
+    auto array_result = deserializer.deserialize_array<uint32_t>(byte_length / sizeof(uint32_t));
     EXPECT_TRUE(array_result.is_success());
     auto result = array_result.get_value();
     EXPECT_TRUE(result.empty());
@@ -645,10 +648,12 @@ TEST_F(SerializationTest, SerializeDeserializeStringArray) {
     deserializer = Deserializer(serializer.get_buffer());
     auto length_result = deserializer.deserialize_uint32();
     EXPECT_TRUE(length_result.is_success());
-    uint32_t length = length_result.get_value();
-    EXPECT_EQ(length, test_array.size());
+    uint32_t byte_length = length_result.get_value();
+    EXPECT_EQ(byte_length, serializer.get_size() - sizeof(uint32_t))
+        << "Byte length prefix must equal total serialized element data size";
 
-    auto array_result = deserializer.deserialize_array<std::string>(length);
+    // For variable-length types, use deserialize_array with known element count
+    auto array_result = deserializer.deserialize_array<std::string>(test_array.size());
     EXPECT_TRUE(array_result.is_success());
     auto result = array_result.get_value();
     EXPECT_EQ(result, test_array);
@@ -1218,6 +1223,121 @@ TEST_F(SerializationTest, DeeplyNestedArray) {
 
     auto extra = deserializer.deserialize_uint32();
     EXPECT_TRUE(extra.is_error()) << "Should fail after buffer exhaustion";
+}
+
+// =============================================================================
+// Regression tests for spec-compliance bugs
+// =============================================================================
+
+/**
+ * @test_case TC_SER_REG_001
+ * @brief serialize_array length prefix must be byte count, not element count
+ *
+ * Regression: serialize_array wrote element count but deserialize_dynamic_array
+ * interpreted the prefix as byte count, causing incorrect deserialization
+ * for types where sizeof(T) > 1.
+ */
+TEST_F(SerializationTest, ArrayLengthPrefixIsByteCount) {
+    Serializer serializer;
+    std::vector<uint32_t> array = {0x11111111, 0x22222222, 0x33333333};
+
+    serializer.serialize_array(array);
+    const auto& buf = serializer.get_buffer();
+
+    // First 4 bytes are the length prefix (big-endian uint32)
+    ASSERT_GE(buf.size(), 4u);
+    uint32_t length_prefix = (static_cast<uint32_t>(buf[0]) << 24) |
+                             (static_cast<uint32_t>(buf[1]) << 16) |
+                             (static_cast<uint32_t>(buf[2]) << 8) |
+                             static_cast<uint32_t>(buf[3]);
+
+    EXPECT_EQ(length_prefix, 3 * sizeof(uint32_t))
+        << "Length prefix must be byte count (12), not element count (3)";
+}
+
+/**
+ * @test_case TC_SER_REG_002
+ * @brief deserialize_dynamic_array correctly interprets byte-length prefix
+ */
+TEST_F(SerializationTest, DynamicArrayRoundTrip) {
+    Serializer serializer;
+    std::vector<uint16_t> original = {0x1111, 0x2222, 0x3333, 0x4444};
+
+    serializer.serialize_array(original);
+    Deserializer deserializer(serializer.get_buffer());
+
+    auto result = deserializer.deserialize_dynamic_array<uint16_t>();
+    ASSERT_TRUE(result.is_success());
+    auto recovered = result.get_value();
+    EXPECT_EQ(recovered, original);
+}
+
+/**
+ * @test_case TC_SER_REG_003
+ * @brief uint64 serialization produces correct big-endian wire bytes
+ *
+ * Regression: the old code used a byte-swap pattern that assumed
+ * little-endian host, breaking on big-endian targets. The new code
+ * uses portable MSB-first extraction.
+ */
+TEST_F(SerializationTest, Uint64BigEndianWireBytes) {
+    Serializer serializer;
+    serializer.serialize_uint64(0x0102030405060708ULL);
+
+    const auto& buf = serializer.get_buffer();
+    ASSERT_EQ(buf.size(), 8u);
+    EXPECT_EQ(buf[0], 0x01);
+    EXPECT_EQ(buf[1], 0x02);
+    EXPECT_EQ(buf[2], 0x03);
+    EXPECT_EQ(buf[3], 0x04);
+    EXPECT_EQ(buf[4], 0x05);
+    EXPECT_EQ(buf[5], 0x06);
+    EXPECT_EQ(buf[6], 0x07);
+    EXPECT_EQ(buf[7], 0x08);
+}
+
+/**
+ * @test_case TC_SER_REG_004
+ * @brief uint64 deserialization from known big-endian bytes
+ */
+TEST_F(SerializationTest, Uint64DeserializeFromBigEndian) {
+    std::vector<uint8_t> be_bytes = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+    Deserializer deserializer(be_bytes);
+    auto result = deserializer.deserialize_uint64();
+    ASSERT_TRUE(result.is_success());
+    EXPECT_EQ(result.get_value(), 0x0102030405060708ULL);
+}
+
+/**
+ * @test_case TC_SER_REG_005
+ * @brief int64 round-trip preserves negative values
+ */
+TEST_F(SerializationTest, Int64NegativeRoundTrip) {
+    Serializer serializer;
+    serializer.serialize_int64(-1);
+    serializer.serialize_int64(INT64_MIN);
+    serializer.serialize_int64(INT64_MAX);
+
+    Deserializer deserializer(serializer.get_buffer());
+    EXPECT_DESERIALIZE_SUCCESS(deserializer.deserialize_int64(), static_cast<int64_t>(-1));
+    EXPECT_DESERIALIZE_SUCCESS(deserializer.deserialize_int64(), INT64_MIN);
+    EXPECT_DESERIALIZE_SUCCESS(deserializer.deserialize_int64(), INT64_MAX);
+}
+
+/**
+ * @test_case TC_SER_REG_006
+ * @brief serialize_array + deserialize_dynamic_array for uint8_t
+ */
+TEST_F(SerializationTest, DynamicArrayUint8RoundTrip) {
+    Serializer serializer;
+    std::vector<uint8_t> original = {0xAA, 0xBB, 0xCC};
+
+    serializer.serialize_array(original);
+    Deserializer deserializer(serializer.get_buffer());
+
+    auto result = deserializer.deserialize_dynamic_array<uint8_t>();
+    ASSERT_TRUE(result.is_success());
+    EXPECT_EQ(result.get_value(), original);
 }
 
 int main(int argc, char **argv) {

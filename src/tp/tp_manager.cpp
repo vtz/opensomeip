@@ -133,8 +133,16 @@ bool TpManager::handle_received_segment(const TpSegment& segment, std::vector<ui
     // Update statistics
     statistics_.segments_received++;
 
-    // Check if this is a single-message segment
     if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
+        if (segment.header.segment_length != segment.payload.size()) {
+            return false;
+        }
+        if (segment.header.message_length > config_.max_message_size) {
+            return false;
+        }
+        if (segment.payload.empty()) {
+            return false;
+        }
         complete_message = segment.payload;
         return true;
     }

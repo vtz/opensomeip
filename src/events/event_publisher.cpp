@@ -46,7 +46,7 @@ public:
     EventPublisherImpl(uint16_t service_id, uint16_t instance_id)
         : service_id_(service_id), instance_id_(instance_id),
           transport_(std::make_shared<transport::UdpTransport>(
-              transport::Endpoint("127.0.0.1", 0))),
+              transport::Endpoint("0.0.0.0", 0))),
           next_session_id_(1), running_(false) {
 
         transport_->set_listener(this);
@@ -168,15 +168,38 @@ public:
         return publish_event(event_id, data);
     }
 
+    void set_default_client_endpoint(const std::string& address, uint16_t port) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        default_client_address_ = address;
+        default_client_port_ = port;
+    }
+
     /** @implements REQ_MSG_124, REQ_MSG_124_E01, REQ_MSG_125, REQ_MSG_125_E01, REQ_MSG_126 */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const std::vector<EventFilter>& filters) {
-        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        if (default_client_port_ == 0) {
+            return false;
+        }
+        return handle_subscription_locked(eventgroup_id, client_id,
+                                          transport::Endpoint(default_client_address_, default_client_port_),
+                                          filters);
+    }
 
-        // Create client info (simplified - using localhost for demo)
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                           const transport::Endpoint& client_endpoint,
+                           const std::vector<EventFilter>& filters) {
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        return handle_subscription_locked(eventgroup_id, client_id, client_endpoint, filters);
+    }
+
+    bool handle_subscription_locked(uint16_t eventgroup_id, uint16_t client_id,
+                                    const transport::Endpoint& client_endpoint,
+                                    const std::vector<EventFilter>& filters) {
+
         ClientInfo client_info;
         client_info.client_id = client_id;
-        client_info.endpoint = transport::Endpoint("127.0.0.1", 30500);  // TODO: Get from SD
+        client_info.endpoint = client_endpoint;
         client_info.filters = filters;
 
         auto& clients = subscriptions_[eventgroup_id];
@@ -188,7 +211,7 @@ public:
         if (it == clients.end()) {
             clients.push_back(client_info);
         } else {
-            *it = client_info;  // Update existing
+            *it = client_info;
         }
 
         return true;
@@ -353,6 +376,8 @@ private:
 
     uint16_t service_id_;
     uint16_t instance_id_;
+    std::string default_client_address_{"0.0.0.0"};
+    uint16_t default_client_port_{0};
     std::shared_ptr<transport::UdpTransport> transport_;
 
     std::unordered_map<uint16_t, EventConfig> registered_events_;
@@ -400,6 +425,10 @@ bool EventPublisher::publish_event(uint16_t event_id, const std::vector<uint8_t>
 
 bool EventPublisher::publish_field(uint16_t event_id, const std::vector<uint8_t>& data) {
     return impl_->publish_field(event_id, data);
+}
+
+void EventPublisher::set_default_client_endpoint(const std::string& address, uint16_t port) {
+    impl_->set_default_client_endpoint(address, port);
 }
 
 bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,

@@ -14,13 +14,17 @@
 #ifndef SOMEIP_SERIALIZATION_SERIALIZER_H
 #define SOMEIP_SERIALIZATION_SERIALIZER_H
 
+#include <climits>
 #include <vector>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <memory>
 #include <optional>
 #include "../common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_htonl macro from byteorder_impl.h
+#include "../platform/byteorder.h"
 
 namespace someip::serialization {
 
@@ -254,10 +258,12 @@ private:
 
 template<typename T>
 void Serializer::serialize_array(const std::vector<T>& array) {
-    // Serialize array length as uint32_t
-    serialize_uint32(static_cast<uint32_t>(array.size()));
+    // Per SOME/IP spec: length prefix is byte length of the serialized array data.
+    // Write a placeholder, serialize elements, then back-fill with actual byte length.
+    size_t const length_pos = buffer_.size();
+    serialize_uint32(0);
 
-    // Serialize each element
+    size_t const data_start = buffer_.size();
     for (const auto& element : array) {
         if constexpr (std::is_same_v<T, bool>) {
             serialize_bool(element);
@@ -284,10 +290,22 @@ void Serializer::serialize_array(const std::vector<T>& array) {
         } else if constexpr (std::is_same_v<T, std::string>) {
             serialize_string(element);
         } else {
-            // For complex types, static_assert will catch this at compile time
             static_assert(sizeof(T) == 0, "Unsupported array element type for serialization");
         }
     }
+
+    // Back-fill the byte length (guard against overflow beyond uint32_t).
+    // On overflow, roll back the entire serialize_array call (including the
+    // placeholder) so the buffer is left in its pre-call state rather than
+    // containing a misleading zero-length prefix.
+    size_t const raw_length = buffer_.size() - data_start;
+    if (raw_length > static_cast<size_t>(UINT32_MAX)) {
+        buffer_.resize(length_pos);
+        return;
+    }
+    auto byte_length = static_cast<uint32_t>(raw_length);
+    uint32_t be_value = someip_htonl(byte_length);
+    std::memcpy(&buffer_[length_pos], &be_value, sizeof(uint32_t));
 }
 
 template<typename T>

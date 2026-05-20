@@ -115,7 +115,7 @@ bool E2EProfileRegistry::is_registered(uint32_t profile_id) const {
 }
 
 E2EProfile* E2EProfileRegistry::get_default_profile() {
-    // Default profile has ID 0 and name "standard"
+    // Default profile has ID 0 and name "basic"
     return get_profile(0);
 }
 

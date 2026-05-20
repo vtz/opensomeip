@@ -34,7 +34,7 @@ struct E2EConfig {
     /**
      * @brief Profile name (e.g., "standard", "autosar_c", etc.)
      */
-    std::string profile_name{"standard"};
+    std::string profile_name{"basic"};
 
     /**
      * @brief Data ID for identifying the protected data
