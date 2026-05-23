@@ -13,16 +13,10 @@
 
 name: Coverity Scan
 
+# Disabled: Coverity Scan service is offline for upgrades (see #263).
+# Re-enable triggers once the service is restored (see #265).
 on:
-  schedule:
-    - cron: '0 4 * * 1'
-  push:
-    branches: ["main"]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - 'LICENSE'
-      - '.cursor/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
