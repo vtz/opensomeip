@@ -44,6 +44,7 @@ static int tests_failed = 0;
 #include "tests/shared/test_serializer_common.inc"
 #include "tests/shared/test_e2e_common.inc"
 #include "tests/shared/test_tp_common.inc"
+#include "tests/shared/test_sd_subscription_ttl_common.inc"
 
 int main() {
     printf("=== SOME/IP Core Tests on Zephyr ===\n");
@@ -54,6 +55,7 @@ int main() {
     test_serializer();
     test_e2e();
     test_tp();
+    test_sd_subscription_ttl();
 
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);
