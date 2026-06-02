@@ -151,7 +151,9 @@ public:
             auto sub_it = subscriptions_.find(eventgroup_id);
             if (sub_it != subscriptions_.end()) {
                 for (const auto& client_info : sub_it->second) {
-                    targets.push_back(client_info.endpoint);
+                    if (!client_info.is_expired()) {
+                        targets.push_back(client_info.endpoint);
+                    }
                 }
             }
         }
@@ -177,30 +179,55 @@ public:
     /** @implements REQ_MSG_124, REQ_MSG_124_E01, REQ_MSG_125, REQ_MSG_125_E01, REQ_MSG_126 */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const std::vector<EventFilter>& filters) {
+        return handle_subscription(eventgroup_id, client_id, TTL_INFINITE, filters);
+    }
+
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                           uint32_t ttl_seconds,
+                           const std::vector<EventFilter>& filters) {
         platform::ScopedLock const lock(subscriptions_mutex_);
         if (default_client_port_ == 0) {
             return false;
         }
         return handle_subscription_locked(eventgroup_id, client_id,
                                           transport::Endpoint(default_client_address_, default_client_port_),
-                                          filters);
+                                          ttl_seconds, filters);
     }
 
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const transport::Endpoint& client_endpoint,
                            const std::vector<EventFilter>& filters) {
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
-        return handle_subscription_locked(eventgroup_id, client_id, client_endpoint, filters);
+        return handle_subscription_locked(eventgroup_id, client_id, client_endpoint,
+                                          TTL_INFINITE, filters);
     }
 
     bool handle_subscription_locked(uint16_t eventgroup_id, uint16_t client_id,
                                     const transport::Endpoint& client_endpoint,
+                                    uint32_t ttl_seconds,
                                     const std::vector<EventFilter>& filters) {
+
+        if (ttl_seconds == 0) {
+            auto sub_it = subscriptions_.find(eventgroup_id);
+            if (sub_it == subscriptions_.end()) {
+                return false;
+            }
+            auto& clients = sub_it->second;
+            auto new_end = std::remove_if(clients.begin(), clients.end(),
+                [client_id](const ClientInfo& info) {
+                    return info.client_id == client_id;
+                });
+            bool const found = (new_end != clients.end());
+            clients.erase(new_end, clients.end());
+            return found;
+        }
 
         ClientInfo client_info;
         client_info.client_id = client_id;
         client_info.endpoint = client_endpoint;
         client_info.filters = filters;
+        client_info.ttl_seconds = ttl_seconds;
+        client_info.subscribed_at = std::chrono::steady_clock::now();
 
         auto& clients = subscriptions_[eventgroup_id];
         auto it = std::find_if(clients.begin(), clients.end(),
@@ -257,10 +284,27 @@ public:
 
         std::vector<uint16_t> client_ids;
         for (const auto& client : it->second) {
-            client_ids.push_back(client.client_id);
+            if (!client.is_expired()) {
+                client_ids.push_back(client.client_id);
+            }
         }
 
         return client_ids;
+    }
+
+    size_t cleanup_expired_subscriptions() {
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        size_t removed = 0;
+
+        for (auto& sub_pair : subscriptions_) {
+            auto& clients = sub_pair.second;
+            auto new_end = std::remove_if(clients.begin(), clients.end(),
+                [](const ClientInfo& info) { return info.is_expired(); });
+            removed += static_cast<size_t>(std::distance(new_end, clients.end()));
+            clients.erase(new_end, clients.end());
+        }
+
+        return removed;
     }
 
     bool is_ready() const {
@@ -273,10 +317,23 @@ public:
     }
 
 private:
+    static constexpr uint32_t TTL_INFINITE = 0xFFFFFF;
+
     struct ClientInfo {
         uint16_t client_id{};
         transport::Endpoint endpoint;
         std::vector<EventFilter> filters;
+        uint32_t ttl_seconds{TTL_INFINITE};
+        std::chrono::steady_clock::time_point subscribed_at{std::chrono::steady_clock::now()};
+
+        bool is_expired() const {
+            if (ttl_seconds >= TTL_INFINITE) {
+                return false;
+            }
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::steady_clock::now() - subscribed_at);
+            return elapsed.count() >= static_cast<long>(ttl_seconds);
+        }
     };
 
     void start_publish_timer() {
@@ -285,6 +342,7 @@ private:
         }
 
         publish_timer_thread_ = std::make_unique<platform::Thread>([this]() {
+            uint32_t tick_count = 0;
             while (running_) {
                 platform::this_thread::sleep_for(std::chrono::milliseconds(100));  // 100ms check
 
@@ -293,6 +351,11 @@ private:
                 }
 
                 publish_cyclic_events();
+
+                if (++tick_count >= 10) {
+                    tick_count = 0;
+                    cleanup_expired_subscriptions();
+                }
             }
         });
     }
@@ -436,8 +499,18 @@ bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client
     return impl_->handle_subscription(eventgroup_id, client_id, filters);
 }
 
+bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                                       uint32_t ttl_seconds,
+                                       const std::vector<EventFilter>& filters) {
+    return impl_->handle_subscription(eventgroup_id, client_id, ttl_seconds, filters);
+}
+
 bool EventPublisher::handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id) {
     return impl_->handle_unsubscription(eventgroup_id, client_id);
+}
+
+size_t EventPublisher::cleanup_expired_subscriptions() {
+    return impl_->cleanup_expired_subscriptions();
 }
 
 std::vector<uint16_t> EventPublisher::get_registered_events() const {
