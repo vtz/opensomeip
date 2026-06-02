@@ -671,10 +671,11 @@ private:
 
     void handle_stop_subscribe(uint16_t service_id, uint16_t instance_id,
                                uint16_t eventgroup_id, const transport::Endpoint& sender) {
-        (void)service_id;
-        (void)instance_id;
-        (void)eventgroup_id;
-        (void)sender;
+        handle_eventgroup_subscription(
+            service_id, instance_id, eventgroup_id,
+            sender.get_address() + ":" + std::to_string(sender.get_port()),
+            true, 0
+        );
     }
 
     void send_subscribe_nack(const EventGroupEntry& entry, const transport::Endpoint& client) {
