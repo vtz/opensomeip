@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-03T01:29:27.249641",
+  "generated": "2026-06-05T21:20:35.960616",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -3975,7 +3975,7 @@
         "feat_req_someip_634"
       ],
       "implemented_by": [
-        "CODE_event_publisher_events_177"
+        "CODE_event_publisher_events_179"
       ],
       "tested_by": [
         "TC_test_message_MessageTest"
@@ -3990,7 +3990,7 @@
         "feat_req_someip_635"
       ],
       "implemented_by": [
-        "CODE_event_publisher_events_177"
+        "CODE_event_publisher_events_179"
       ],
       "tested_by": [
         "TC_test_message_MessageTest"
@@ -4004,7 +4004,7 @@
         "feat_req_someip_632"
       ],
       "implemented_by": [
-        "CODE_event_publisher_events_177"
+        "CODE_event_publisher_events_179"
       ],
       "tested_by": [
         "TC_test_message_MessageTest"
@@ -4341,7 +4341,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_event_publisher_events_177"
+        "CODE_event_publisher_events_179"
       ],
       "tested_by": [
         "TC_test_message_MessageTest"
@@ -4405,7 +4405,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_event_publisher_events_177"
+        "CODE_event_publisher_events_179"
       ],
       "tested_by": [
         "TC_test_message_MessageTest"
@@ -7091,7 +7091,7 @@
         "feat_req_someipsd_72"
       ],
       "implemented_by": [
-        "CODE_sd_server_sd_686"
+        "CODE_sd_server_sd_701"
       ],
       "tested_by": [
         "TC_test_sd_SdTest"
@@ -7143,7 +7143,7 @@
         "feat_req_someipsd_109"
       ],
       "implemented_by": [
-        "CODE_sd_server_sd_686"
+        "CODE_sd_server_sd_701"
       ],
       "tested_by": [
         "TC_test_sd_SdTest"
@@ -10432,9 +10432,9 @@
       ],
       "satisfies": []
     },
-    "CODE_event_publisher_events_177": {
-      "id": "CODE_event_publisher_events_177",
-      "location": "src/events/event_publisher.cpp:177",
+    "CODE_event_publisher_events_179": {
+      "id": "CODE_event_publisher_events_179",
+      "location": "src/events/event_publisher.cpp:179",
       "implements": [
         "REQ_MSG_124",
         "REQ_MSG_124_E01",
@@ -11156,9 +11156,9 @@
       ],
       "satisfies": []
     },
-    "CODE_sd_server_sd_686": {
-      "id": "CODE_sd_server_sd_686",
-      "location": "src/sd/sd_server.cpp:686",
+    "CODE_sd_server_sd_701": {
+      "id": "CODE_sd_server_sd_701",
+      "location": "src/sd/sd_server.cpp:701",
       "implements": [
         "REQ_SD_280",
         "REQ_SD_283"
@@ -13483,13 +13483,67 @@
     },
     "TC_test_events_EventsTest": {
       "id": "TC_test_events_EventsTest",
-      "name": "EventsTest (tests/test_events.cpp:19)",
-      "location": "tests/test_events.cpp:19",
+      "name": "EventsTest (tests/test_events.cpp:22)",
+      "location": "tests/test_events.cpp:22",
       "tests": [
         "REQ_ARCH_001",
         "feat_req_someip_720",
         "feat_req_someip_730"
       ]
+    },
+    "TC_EVT_TTL_001": {
+      "id": "TC_EVT_TTL_001",
+      "name": "EventsSubscriptionTTLTest.SubscriptionWithTTLStored (tests/test_events.cpp:253)",
+      "location": "tests/test_events.cpp:253",
+      "tests": []
+    },
+    "TC_EVT_TTL_002": {
+      "id": "TC_EVT_TTL_002",
+      "name": "EventsSubscriptionTTLTest.SubscriptionExpiresAfterTTL (tests/test_events.cpp:265)",
+      "location": "tests/test_events.cpp:265",
+      "tests": []
+    },
+    "TC_EVT_TTL_003": {
+      "id": "TC_EVT_TTL_003",
+      "name": "EventsSubscriptionTTLTest.TTLZeroMeansStopSubscribe (tests/test_events.cpp:284)",
+      "location": "tests/test_events.cpp:284",
+      "tests": []
+    },
+    "TC_EVT_TTL_004": {
+      "id": "TC_EVT_TTL_004",
+      "name": "EventsSubscriptionTTLTest.ResubscribeRefreshesTTL (tests/test_events.cpp:300)",
+      "location": "tests/test_events.cpp:300",
+      "tests": []
+    },
+    "TC_EVT_TTL_005": {
+      "id": "TC_EVT_TTL_005",
+      "name": "EventsSubscriptionTTLTest.CleanupExpiredSubscriptions (tests/test_events.cpp:317)",
+      "location": "tests/test_events.cpp:317",
+      "tests": []
+    },
+    "TC_EVT_TTL_006": {
+      "id": "TC_EVT_TTL_006",
+      "name": "EventsSubscriptionTTLTest.InfiniteTTLNeverExpires (tests/test_events.cpp:335)",
+      "location": "tests/test_events.cpp:335",
+      "tests": []
+    },
+    "TC_EVT_TTL_007": {
+      "id": "TC_EVT_TTL_007",
+      "name": "EventsSubscriptionTTLTest.BackwardCompatibleSubscriptionIsInfinite (tests/test_events.cpp:347)",
+      "location": "tests/test_events.cpp:347",
+      "tests": []
+    },
+    "TC_EVT_TTL_008": {
+      "id": "TC_EVT_TTL_008",
+      "name": "EventsSubscriptionTTLTest.MultipleSubscribersDifferentTTL (tests/test_events.cpp:359)",
+      "location": "tests/test_events.cpp:359",
+      "tests": []
+    },
+    "TC_EVT_TTL_009": {
+      "id": "TC_EVT_TTL_009",
+      "name": "EventsSubscriptionTTLTest.StopSubscribeNonExistentReturnsFalse (tests/test_events.cpp:377)",
+      "location": "tests/test_events.cpp:377",
+      "tests": []
     },
     "TC_test_message_MessageTest": {
       "id": "TC_test_message_MessageTest",
@@ -14140,8 +14194,8 @@
     },
     "TC_test_sd_SdTest": {
       "id": "TC_test_sd_SdTest",
-      "name": "SdTest (tests/test_sd.cpp:26)",
-      "location": "tests/test_sd.cpp:26",
+      "name": "SdTest (tests/test_sd.cpp:29)",
+      "location": "tests/test_sd.cpp:29",
       "tests": [
         "REQ_ARCH_001",
         "REQ_ARCH_002",
@@ -14356,8 +14410,8 @@
     },
     "TC_SD_001": {
       "id": "TC_SD_001",
-      "name": "SdTest.EntryTypes (tests/test_sd.cpp:84)",
-      "location": "tests/test_sd.cpp:84",
+      "name": "SdTest.EntryTypes (tests/test_sd.cpp:87)",
+      "location": "tests/test_sd.cpp:87",
       "tests": [
         "REQ_SD_001",
         "REQ_SD_002"
@@ -14365,8 +14419,8 @@
     },
     "TC_SD_002": {
       "id": "TC_SD_002",
-      "name": "SdTest.OptionTypes (tests/test_sd.cpp:96)",
-      "location": "tests/test_sd.cpp:96",
+      "name": "SdTest.OptionTypes (tests/test_sd.cpp:99)",
+      "location": "tests/test_sd.cpp:99",
       "tests": [
         "REQ_SD_060",
         "REQ_SD_061",
@@ -14375,8 +14429,8 @@
     },
     "TC_SD_003": {
       "id": "TC_SD_003",
-      "name": "SdTest.Instance (tests/test_sd.cpp:107)",
-      "location": "tests/test_sd.cpp:107",
+      "name": "SdTest.Instance (tests/test_sd.cpp:110)",
+      "location": "tests/test_sd.cpp:110",
       "tests": [
         "REQ_SD_010",
         "REQ_SD_011",
@@ -14385,8 +14439,8 @@
     },
     "TC_SD_004": {
       "id": "TC_SD_004",
-      "name": "SdTest.IPv4EndpointOptionSerialization (tests/test_sd.cpp:125)",
-      "location": "tests/test_sd.cpp:125",
+      "name": "SdTest.IPv4EndpointOptionSerialization (tests/test_sd.cpp:128)",
+      "location": "tests/test_sd.cpp:128",
       "tests": [
         "REQ_SD_060",
         "REQ_SD_063",
@@ -14396,8 +14450,8 @@
     },
     "TC_SD_005": {
       "id": "TC_SD_005",
-      "name": "SdTest.IPv4EndpointOptionDeserialization (tests/test_sd.cpp:168)",
-      "location": "tests/test_sd.cpp:168",
+      "name": "SdTest.IPv4EndpointOptionDeserialization (tests/test_sd.cpp:171)",
+      "location": "tests/test_sd.cpp:171",
       "tests": [
         "REQ_SD_060",
         "REQ_SD_063",
@@ -14407,8 +14461,8 @@
     },
     "TC_SD_006": {
       "id": "TC_SD_006",
-      "name": "SdTest.ServiceEntry (tests/test_sd.cpp:249)",
-      "location": "tests/test_sd.cpp:249",
+      "name": "SdTest.ServiceEntry (tests/test_sd.cpp:252)",
+      "location": "tests/test_sd.cpp:252",
       "tests": [
         "REQ_SD_020",
         "REQ_SD_021",
@@ -14418,8 +14472,8 @@
     },
     "TC_SD_007": {
       "id": "TC_SD_007",
-      "name": "SdTest.EventGroupEntry (tests/test_sd.cpp:269)",
-      "location": "tests/test_sd.cpp:269",
+      "name": "SdTest.EventGroupEntry (tests/test_sd.cpp:272)",
+      "location": "tests/test_sd.cpp:272",
       "tests": [
         "REQ_SD_050",
         "REQ_SD_051",
@@ -14430,8 +14484,8 @@
     },
     "TC_SD_008": {
       "id": "TC_SD_008",
-      "name": "SdTest.EndpointOption (tests/test_sd.cpp:291)",
-      "location": "tests/test_sd.cpp:291",
+      "name": "SdTest.EndpointOption (tests/test_sd.cpp:294)",
+      "location": "tests/test_sd.cpp:294",
       "tests": [
         "REQ_SD_060",
         "REQ_SD_063",
@@ -14440,8 +14494,8 @@
     },
     "TC_SD_009": {
       "id": "TC_SD_009",
-      "name": "SdTest.MulticastOption (tests/test_sd.cpp:309)",
-      "location": "tests/test_sd.cpp:309",
+      "name": "SdTest.MulticastOption (tests/test_sd.cpp:312)",
+      "location": "tests/test_sd.cpp:312",
       "tests": [
         "REQ_SD_066",
         "REQ_SD_067",
@@ -14450,8 +14504,8 @@
     },
     "TC_SD_010": {
       "id": "TC_SD_010",
-      "name": "SdTest.SdMessage (tests/test_sd.cpp:325)",
-      "location": "tests/test_sd.cpp:325",
+      "name": "SdTest.SdMessage (tests/test_sd.cpp:328)",
+      "location": "tests/test_sd.cpp:328",
       "tests": [
         "REQ_SD_003",
         "REQ_SD_004",
@@ -14462,48 +14516,48 @@
     },
     "TC_SD_INTEROP_001": {
       "id": "TC_SD_INTEROP_001",
-      "name": "SdTest.IPv4EndpointOptionSerializesLength9 (tests/test_sd.cpp:443)",
-      "location": "tests/test_sd.cpp:443",
+      "name": "SdTest.IPv4EndpointOptionSerializesLength9 (tests/test_sd.cpp:446)",
+      "location": "tests/test_sd.cpp:446",
       "tests": [
         "feat_req_someipsd_129"
       ]
     },
     "TC_SD_INTEROP_002": {
       "id": "TC_SD_INTEROP_002",
-      "name": "SdTest.IPv4EndpointOptionSerializesAddressNBO (tests/test_sd.cpp:465)",
-      "location": "tests/test_sd.cpp:465",
+      "name": "SdTest.IPv4EndpointOptionSerializesAddressNBO (tests/test_sd.cpp:468)",
+      "location": "tests/test_sd.cpp:468",
       "tests": [
         "feat_req_someipsd_129"
       ]
     },
     "TC_SD_INTEROP_003": {
       "id": "TC_SD_INTEROP_003",
-      "name": "SdTest.IPv4EndpointOptionDeserializesSpecCompliantPacket (tests/test_sd.cpp:487)",
-      "location": "tests/test_sd.cpp:487",
+      "name": "SdTest.IPv4EndpointOptionDeserializesSpecCompliantPacket (tests/test_sd.cpp:490)",
+      "location": "tests/test_sd.cpp:490",
       "tests": [
         "feat_req_someipsd_129"
       ]
     },
     "TC_SD_INTEROP_004": {
       "id": "TC_SD_INTEROP_004",
-      "name": "SdTest.IPv4EndpointOptionSpecCompliantRoundTrip (tests/test_sd.cpp:517)",
-      "location": "tests/test_sd.cpp:517",
+      "name": "SdTest.IPv4EndpointOptionSpecCompliantRoundTrip (tests/test_sd.cpp:520)",
+      "location": "tests/test_sd.cpp:520",
       "tests": [
         "feat_req_someipsd_129"
       ]
     },
     "TC_SD_INTEROP_005": {
       "id": "TC_SD_INTEROP_005",
-      "name": "SdTest.VsomeipInteropScenario (tests/test_sd.cpp:550)",
-      "location": "tests/test_sd.cpp:550",
+      "name": "SdTest.VsomeipInteropScenario (tests/test_sd.cpp:553)",
+      "location": "tests/test_sd.cpp:553",
       "tests": [
         "feat_req_someipsd_129"
       ]
     },
     "TC_SD_INTEGRATION_001": {
       "id": "TC_SD_INTEGRATION_001",
-      "name": "SdIntegrationTest.ServerOfferService (tests/test_sd.cpp:726)",
-      "location": "tests/test_sd.cpp:726",
+      "name": "SdIntegrationTest.ServerOfferService (tests/test_sd.cpp:729)",
+      "location": "tests/test_sd.cpp:729",
       "tests": [
         "REQ_SD_030",
         "REQ_SD_031",
@@ -14512,8 +14566,8 @@
     },
     "TC_SD_INTEGRATION_002": {
       "id": "TC_SD_INTEGRATION_002",
-      "name": "SdIntegrationTest.ServerStopOfferService (tests/test_sd.cpp:768)",
-      "location": "tests/test_sd.cpp:768",
+      "name": "SdIntegrationTest.ServerStopOfferService (tests/test_sd.cpp:771)",
+      "location": "tests/test_sd.cpp:771",
       "tests": [
         "REQ_SD_033",
         "REQ_SD_034"
@@ -14521,8 +14575,8 @@
     },
     "TC_SD_INTEGRATION_003": {
       "id": "TC_SD_INTEGRATION_003",
-      "name": "SdIntegrationTest.ClientSubscribeUnsubscribeService (tests/test_sd.cpp:828)",
-      "location": "tests/test_sd.cpp:828",
+      "name": "SdIntegrationTest.ClientSubscribeUnsubscribeService (tests/test_sd.cpp:831)",
+      "location": "tests/test_sd.cpp:831",
       "tests": [
         "REQ_SD_090",
         "REQ_SD_091",
@@ -14532,8 +14586,8 @@
     },
     "TC_SD_INTEGRATION_004": {
       "id": "TC_SD_INTEGRATION_004",
-      "name": "SdIntegrationTest.MinorVersionSurvivesServerToClient (tests/test_sd.cpp:857)",
-      "location": "tests/test_sd.cpp:857",
+      "name": "SdIntegrationTest.MinorVersionSurvivesServerToClient (tests/test_sd.cpp:860)",
+      "location": "tests/test_sd.cpp:860",
       "tests": [
         "REQ_SD_110",
         "REQ_SD_160",
@@ -14542,8 +14596,8 @@
     },
     "TC_SD_DESER_001": {
       "id": "TC_SD_DESER_001",
-      "name": "SdTest.DeserializeEmptyBuffer (tests/test_sd.cpp:957)",
-      "location": "tests/test_sd.cpp:957",
+      "name": "SdTest.DeserializeEmptyBuffer (tests/test_sd.cpp:960)",
+      "location": "tests/test_sd.cpp:960",
       "tests": [
         "REQ_SD_001_E01",
         "REQ_SD_010_E01"
@@ -14551,8 +14605,8 @@
     },
     "TC_SD_DESER_002": {
       "id": "TC_SD_DESER_002",
-      "name": "SdTest.DeserializeTruncatedHeader (tests/test_sd.cpp:968)",
-      "location": "tests/test_sd.cpp:968",
+      "name": "SdTest.DeserializeTruncatedHeader (tests/test_sd.cpp:971)",
+      "location": "tests/test_sd.cpp:971",
       "tests": [
         "REQ_SD_001_E01",
         "REQ_SD_020_E01"
@@ -14560,8 +14614,8 @@
     },
     "TC_SD_DESER_003": {
       "id": "TC_SD_DESER_003",
-      "name": "SdTest.DeserializeInvalidLength (tests/test_sd.cpp:979)",
-      "location": "tests/test_sd.cpp:979",
+      "name": "SdTest.DeserializeInvalidLength (tests/test_sd.cpp:982)",
+      "location": "tests/test_sd.cpp:982",
       "tests": [
         "REQ_SD_020_E02",
         "REQ_SD_021_E01"
@@ -14569,8 +14623,8 @@
     },
     "TC_SD_DESER_004": {
       "id": "TC_SD_DESER_004",
-      "name": "SdTest.ServiceEntryDeserializeTruncated (tests/test_sd.cpp:994)",
-      "location": "tests/test_sd.cpp:994",
+      "name": "SdTest.ServiceEntryDeserializeTruncated (tests/test_sd.cpp:997)",
+      "location": "tests/test_sd.cpp:997",
       "tests": [
         "REQ_SD_022_E01",
         "REQ_SD_040_E01"
@@ -14578,8 +14632,8 @@
     },
     "TC_SD_DESER_005": {
       "id": "TC_SD_DESER_005",
-      "name": "SdTest.EventGroupEntryDeserializeTruncated (tests/test_sd.cpp:1006)",
-      "location": "tests/test_sd.cpp:1006",
+      "name": "SdTest.EventGroupEntryDeserializeTruncated (tests/test_sd.cpp:1009)",
+      "location": "tests/test_sd.cpp:1009",
       "tests": [
         "REQ_SD_041_E01",
         "REQ_SD_050_E01"
@@ -14587,8 +14641,8 @@
     },
     "TC_SD_DESER_006": {
       "id": "TC_SD_DESER_006",
-      "name": "SdTest.IPv4EndpointOptionDeserializeTruncated (tests/test_sd.cpp:1018)",
-      "location": "tests/test_sd.cpp:1018",
+      "name": "SdTest.IPv4EndpointOptionDeserializeTruncated (tests/test_sd.cpp:1021)",
+      "location": "tests/test_sd.cpp:1021",
       "tests": [
         "REQ_SD_052_E01",
         "REQ_SD_060_E01"
@@ -14596,8 +14650,8 @@
     },
     "TC_SD_DESER_007": {
       "id": "TC_SD_DESER_007",
-      "name": "SdTest.MulticastOptionDeserializeTruncated (tests/test_sd.cpp:1030)",
-      "location": "tests/test_sd.cpp:1030",
+      "name": "SdTest.MulticastOptionDeserializeTruncated (tests/test_sd.cpp:1033)",
+      "location": "tests/test_sd.cpp:1033",
       "tests": [
         "REQ_SD_061_E01",
         "REQ_SD_062_E01"
@@ -14605,8 +14659,8 @@
     },
     "TC_SD_DESER_008": {
       "id": "TC_SD_DESER_008",
-      "name": "SdTest.IPv4EndpointInvalidAddress (tests/test_sd.cpp:1042)",
-      "location": "tests/test_sd.cpp:1042",
+      "name": "SdTest.IPv4EndpointInvalidAddress (tests/test_sd.cpp:1045)",
+      "location": "tests/test_sd.cpp:1045",
       "tests": [
         "REQ_SD_064_E01",
         "REQ_SD_075_E01"
@@ -14614,24 +14668,24 @@
     },
     "TC_SD_SERVER_001": {
       "id": "TC_SD_SERVER_001",
-      "name": "SdTest.ServerDuplicateOffer (tests/test_sd.cpp:1061)",
-      "location": "tests/test_sd.cpp:1061",
+      "name": "SdTest.ServerDuplicateOffer (tests/test_sd.cpp:1064)",
+      "location": "tests/test_sd.cpp:1064",
       "tests": [
         "REQ_SD_040_E01"
       ]
     },
     "TC_SD_CLIENT_001": {
       "id": "TC_SD_CLIENT_001",
-      "name": "SdTest.ClientDoubleSubscribe (tests/test_sd.cpp:1086)",
-      "location": "tests/test_sd.cpp:1086",
+      "name": "SdTest.ClientDoubleSubscribe (tests/test_sd.cpp:1089)",
+      "location": "tests/test_sd.cpp:1089",
       "tests": [
         "REQ_SD_041_E01"
       ]
     },
     "TC_SD_E01": {
       "id": "TC_SD_E01",
-      "name": "SdTest.InvalidSdMessageHeader (tests/test_sd.cpp:1112)",
-      "location": "tests/test_sd.cpp:1112",
+      "name": "SdTest.InvalidSdMessageHeader (tests/test_sd.cpp:1115)",
+      "location": "tests/test_sd.cpp:1115",
       "tests": [
         "REQ_SD_001_E01",
         "REQ_SD_001_E02"
@@ -14639,8 +14693,8 @@
     },
     "TC_SD_E02": {
       "id": "TC_SD_E02",
-      "name": "SdTest.TruncatedEntriesArray (tests/test_sd.cpp:1133)",
-      "location": "tests/test_sd.cpp:1133",
+      "name": "SdTest.TruncatedEntriesArray (tests/test_sd.cpp:1136)",
+      "location": "tests/test_sd.cpp:1136",
       "tests": [
         "REQ_SD_010_E01",
         "REQ_SD_010_E02"
@@ -14648,24 +14702,24 @@
     },
     "TC_SD_E03": {
       "id": "TC_SD_E03",
-      "name": "SdTest.StopOfferZeroTtl (tests/test_sd.cpp:1150)",
-      "location": "tests/test_sd.cpp:1150",
+      "name": "SdTest.StopOfferZeroTtl (tests/test_sd.cpp:1153)",
+      "location": "tests/test_sd.cpp:1153",
       "tests": [
         "REQ_SD_030_E01"
       ]
     },
     "TC_SD_E04": {
       "id": "TC_SD_E04",
-      "name": "SdTest.FindServiceWildcard (tests/test_sd.cpp:1166)",
-      "location": "tests/test_sd.cpp:1166",
+      "name": "SdTest.FindServiceWildcard (tests/test_sd.cpp:1169)",
+      "location": "tests/test_sd.cpp:1169",
       "tests": [
         "REQ_SD_050_E01"
       ]
     },
     "TC_SD_E05": {
       "id": "TC_SD_E05",
-      "name": "SdTest.InvalidOptionLength (tests/test_sd.cpp:1182)",
-      "location": "tests/test_sd.cpp:1182",
+      "name": "SdTest.InvalidOptionLength (tests/test_sd.cpp:1185)",
+      "location": "tests/test_sd.cpp:1185",
       "tests": [
         "REQ_SD_060_E01",
         "REQ_SD_060_E02"
@@ -14673,40 +14727,40 @@
     },
     "TC_SD_E06": {
       "id": "TC_SD_E06",
-      "name": "SdTest.SubscribeNonExistentService (tests/test_sd.cpp:1204)",
-      "location": "tests/test_sd.cpp:1204",
+      "name": "SdTest.SubscribeNonExistentService (tests/test_sd.cpp:1207)",
+      "location": "tests/test_sd.cpp:1207",
       "tests": [
         "REQ_SD_070_E01"
       ]
     },
     "TC_SD_E07": {
       "id": "TC_SD_E07",
-      "name": "SdTest.EmptyEntriesArray (tests/test_sd.cpp:1224)",
-      "location": "tests/test_sd.cpp:1224",
+      "name": "SdTest.EmptyEntriesArray (tests/test_sd.cpp:1227)",
+      "location": "tests/test_sd.cpp:1227",
       "tests": [
         "REQ_SD_080_E01"
       ]
     },
     "TC_SD_E08": {
       "id": "TC_SD_E08",
-      "name": "SdTest.SubscriptionMaxTtl (tests/test_sd.cpp:1243)",
-      "location": "tests/test_sd.cpp:1243",
+      "name": "SdTest.SubscriptionMaxTtl (tests/test_sd.cpp:1246)",
+      "location": "tests/test_sd.cpp:1246",
       "tests": [
         "REQ_SD_083_E01"
       ]
     },
     "TC_SD_E09": {
       "id": "TC_SD_E09",
-      "name": "SdTest.ReOfferAfterStop (tests/test_sd.cpp:1258)",
-      "location": "tests/test_sd.cpp:1258",
+      "name": "SdTest.ReOfferAfterStop (tests/test_sd.cpp:1261)",
+      "location": "tests/test_sd.cpp:1261",
       "tests": [
         "REQ_SD_113_E01"
       ]
     },
     "TC_SD_E10": {
       "id": "TC_SD_E10",
-      "name": "SdTest.MalformedOptionIndex (tests/test_sd.cpp:1286)",
-      "location": "tests/test_sd.cpp:1286",
+      "name": "SdTest.MalformedOptionIndex (tests/test_sd.cpp:1289)",
+      "location": "tests/test_sd.cpp:1289",
       "tests": [
         "REQ_SD_116_E01",
         "REQ_SD_116_E02"
@@ -14714,66 +14768,66 @@
     },
     "TC_SD_E11": {
       "id": "TC_SD_E11",
-      "name": "SdTest.UnsupportedEntryType (tests/test_sd.cpp:1302)",
-      "location": "tests/test_sd.cpp:1302",
+      "name": "SdTest.UnsupportedEntryType (tests/test_sd.cpp:1305)",
+      "location": "tests/test_sd.cpp:1305",
       "tests": [
         "REQ_SD_119_E01"
       ]
     },
     "TC_SD_E12": {
       "id": "TC_SD_E12",
-      "name": "unknown (tests/test_sd.cpp:1324)",
-      "location": "tests/test_sd.cpp:1324",
+      "name": "unknown (tests/test_sd.cpp:1327)",
+      "location": "tests/test_sd.cpp:1327",
       "tests": [
         "REQ_SD_120_E01"
       ]
     },
     "TC_SD_REG_001": {
       "id": "TC_SD_REG_001",
-      "name": "SdTest.ServiceEntryMinorVersion32Bit (tests/test_sd.cpp:1333)",
-      "location": "tests/test_sd.cpp:1333",
+      "name": "SdTest.ServiceEntryMinorVersion32Bit (tests/test_sd.cpp:1336)",
+      "location": "tests/test_sd.cpp:1336",
       "tests": []
     },
     "TC_SD_REG_002": {
       "id": "TC_SD_REG_002",
-      "name": "SdTest.ServiceEntryMinorVersionMax (tests/test_sd.cpp:1364)",
-      "location": "tests/test_sd.cpp:1364",
+      "name": "SdTest.ServiceEntryMinorVersionMax (tests/test_sd.cpp:1367)",
+      "location": "tests/test_sd.cpp:1367",
       "tests": []
     },
     "TC_SD_REG_003": {
       "id": "TC_SD_REG_003",
-      "name": "SdTest.ConfigurationOptionLengthIncludesReserved (tests/test_sd.cpp:1383)",
-      "location": "tests/test_sd.cpp:1383",
+      "name": "SdTest.ConfigurationOptionLengthIncludesReserved (tests/test_sd.cpp:1386)",
+      "location": "tests/test_sd.cpp:1386",
       "tests": []
     },
     "TC_SD_REG_004": {
       "id": "TC_SD_REG_004",
-      "name": "SdTest.ConfigurationOptionInteropDeserialize (tests/test_sd.cpp:1412)",
-      "location": "tests/test_sd.cpp:1412",
+      "name": "SdTest.ConfigurationOptionInteropDeserialize (tests/test_sd.cpp:1415)",
+      "location": "tests/test_sd.cpp:1415",
       "tests": []
     },
     "TC_SD_REG_005": {
       "id": "TC_SD_REG_005",
-      "name": "SdTest.UnknownOptionSkipCorrectBytes (tests/test_sd.cpp:1439)",
-      "location": "tests/test_sd.cpp:1439",
+      "name": "SdTest.UnknownOptionSkipCorrectBytes (tests/test_sd.cpp:1442)",
+      "location": "tests/test_sd.cpp:1442",
       "tests": []
     },
     "TC_SD_REG_006": {
       "id": "TC_SD_REG_006",
-      "name": "SdTest.FullMessageMinorVersion32BitRoundTrip (tests/test_sd.cpp:1507)",
-      "location": "tests/test_sd.cpp:1507",
+      "name": "SdTest.FullMessageMinorVersion32BitRoundTrip (tests/test_sd.cpp:1510)",
+      "location": "tests/test_sd.cpp:1510",
       "tests": []
     },
     "TC_SD_REG_007": {
       "id": "TC_SD_REG_007",
-      "name": "SdTest.MinorVersionPreservedThroughOfferPath (tests/test_sd.cpp:1542)",
-      "location": "tests/test_sd.cpp:1542",
+      "name": "SdTest.MinorVersionPreservedThroughOfferPath (tests/test_sd.cpp:1545)",
+      "location": "tests/test_sd.cpp:1545",
       "tests": []
     },
     "TC_SD_SESSION_001": {
       "id": "TC_SD_SESSION_001",
-      "name": "SdTest.SessionIdStartsAtOne (tests/test_sd.cpp:1633)",
-      "location": "tests/test_sd.cpp:1633",
+      "name": "SdTest.SessionIdStartsAtOne (tests/test_sd.cpp:1636)",
+      "location": "tests/test_sd.cpp:1636",
       "tests": [
         "REQ_SD_070",
         "REQ_SD_071"
@@ -14781,8 +14835,8 @@
     },
     "TC_SD_SESSION_002": {
       "id": "TC_SD_SESSION_002",
-      "name": "SdTest.SessionIdIncrements (tests/test_sd.cpp:1643)",
-      "location": "tests/test_sd.cpp:1643",
+      "name": "SdTest.SessionIdIncrements (tests/test_sd.cpp:1646)",
+      "location": "tests/test_sd.cpp:1646",
       "tests": [
         "REQ_SD_070",
         "REQ_SD_071"
@@ -14790,8 +14844,8 @@
     },
     "TC_SD_SESSION_003": {
       "id": "TC_SD_SESSION_003",
-      "name": "SdTest.SessionIdWrapAroundSkipsZero (tests/test_sd.cpp:1655)",
-      "location": "tests/test_sd.cpp:1655",
+      "name": "SdTest.SessionIdWrapAroundSkipsZero (tests/test_sd.cpp:1658)",
+      "location": "tests/test_sd.cpp:1658",
       "tests": [
         "REQ_SD_070",
         "REQ_SD_071"
@@ -14799,8 +14853,8 @@
     },
     "TC_SD_SESSION_004": {
       "id": "TC_SD_SESSION_004",
-      "name": "SdTest.UnicastSessionIdsIsolatedPerPeer (tests/test_sd.cpp:1670)",
-      "location": "tests/test_sd.cpp:1670",
+      "name": "SdTest.UnicastSessionIdsIsolatedPerPeer (tests/test_sd.cpp:1673)",
+      "location": "tests/test_sd.cpp:1673",
       "tests": [
         "REQ_SD_070",
         "REQ_SD_071"
@@ -14808,12 +14862,30 @@
     },
     "TC_SD_SESSION_005": {
       "id": "TC_SD_SESSION_005",
-      "name": "SdTest.SdMessageSessionIdAccessor (tests/test_sd.cpp:1686)",
-      "location": "tests/test_sd.cpp:1686",
+      "name": "SdTest.SdMessageSessionIdAccessor (tests/test_sd.cpp:1689)",
+      "location": "tests/test_sd.cpp:1689",
       "tests": [
         "REQ_SD_070",
         "REQ_SD_071"
       ]
+    },
+    "TC_SD_TTL_001": {
+      "id": "TC_SD_TTL_001",
+      "name": "SdIntegrationTest.SubscriptionACKReflectsRequestedTTL (tests/test_sd.cpp:1789)",
+      "location": "tests/test_sd.cpp:1789",
+      "tests": []
+    },
+    "TC_SD_TTL_002": {
+      "id": "TC_SD_TTL_002",
+      "name": "SdIntegrationTest.StopSubscribeEventgroupTTLZero (tests/test_sd.cpp:1838)",
+      "location": "tests/test_sd.cpp:1838",
+      "tests": []
+    },
+    "TC_SD_TTL_003": {
+      "id": "TC_SD_TTL_003",
+      "name": "SdIntegrationTest.EventPublisherStopsEventsAfterTTLExpiry (tests/test_sd.cpp:1885)",
+      "location": "tests/test_sd.cpp:1885",
+      "tests": []
     },
     "TC_test_serialization_21": {
       "id": "TC_test_serialization_21",
