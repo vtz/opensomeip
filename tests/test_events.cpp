@@ -13,6 +13,9 @@
 
 #include <gtest/gtest.h>
 #include <events/event_types.h>
+#include <events/event_publisher.h>
+#include <thread>
+#include <chrono>
 
 using namespace someip::events;
 
@@ -223,4 +226,159 @@ TEST_F(EventsTest, EventConfigCopy) {
     EXPECT_EQ(config2.cycle_time, config1.cycle_time);
     EXPECT_EQ(config2.is_field, config1.is_field);
     EXPECT_EQ(config2.event_name, config1.event_name);
+}
+
+// ============================================================================
+// Subscription TTL Enforcement Tests (Issue #266)
+//
+// These tests verify that the server-side EventPublisher correctly tracks
+// subscription TTL and stops considering subscribers whose TTL has expired.
+// ============================================================================
+
+class EventsSubscriptionTTLTest : public ::testing::Test {
+protected:
+    static constexpr uint16_t TEST_SERVICE_ID = 0x1234;
+    static constexpr uint16_t TEST_INSTANCE_ID = 0x0001;
+    static constexpr uint16_t TEST_EVENTGROUP_ID = 0x0001;
+    static constexpr uint16_t TEST_CLIENT_A = 0x0100;
+    static constexpr uint16_t TEST_CLIENT_B = 0x0200;
+
+    EventPublisher publisher{TEST_SERVICE_ID, TEST_INSTANCE_ID};
+
+    void SetUp() override {
+        publisher.set_default_client_endpoint("127.0.0.1", 50000);
+    }
+};
+
+/**
+ * @test_case TC_EVT_TTL_001
+ * @brief Subscription with explicit TTL is stored and retrievable.
+ */
+TEST_F(EventsSubscriptionTTLTest, SubscriptionWithTTLStored) {
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 3600u));
+
+    auto subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    ASSERT_EQ(subs.size(), 1u);
+    EXPECT_EQ(subs[0], TEST_CLIENT_A);
+}
+
+/**
+ * @test_case TC_EVT_TTL_002
+ * @brief Subscription with short TTL expires and is no longer returned.
+ *
+ * This is the core regression: before the fix, a subscription persisted
+ * forever regardless of TTL.
+ */
+TEST_F(EventsSubscriptionTTLTest, SubscriptionExpiresAfterTTL) {
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 1u));
+
+    auto subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    EXPECT_EQ(subs.size(), 1u) << "Subscription should be active immediately after subscribe";
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+    subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    EXPECT_EQ(subs.size(), 0u) << "Subscription must expire after TTL elapses";
+}
+
+/**
+ * @test_case TC_EVT_TTL_003
+ * @brief TTL=0 means StopSubscribeEventgroup — immediate removal.
+ */
+TEST_F(EventsSubscriptionTTLTest, TTLZeroMeansStopSubscribe) {
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 3600u));
+
+    auto subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    EXPECT_EQ(subs.size(), 1u);
+
+    publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 0u);
+
+    subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    EXPECT_EQ(subs.size(), 0u) << "TTL=0 must immediately remove subscription";
+}
+
+/**
+ * @test_case TC_EVT_TTL_004
+ * @brief Re-subscribing before expiry refreshes the TTL.
+ */
+TEST_F(EventsSubscriptionTTLTest, ResubscribeRefreshesTTL) {
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 1u));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(600));
+
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 3600u));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(600));
+
+    auto subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    EXPECT_EQ(subs.size(), 1u) << "Re-subscription should have refreshed TTL";
+}
+
+/**
+ * @test_case TC_EVT_TTL_005
+ * @brief cleanup_expired_subscriptions removes only expired entries.
+ */
+TEST_F(EventsSubscriptionTTLTest, CleanupExpiredSubscriptions) {
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 1u));
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_B, 3600u));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+    size_t removed = publisher.cleanup_expired_subscriptions();
+    EXPECT_EQ(removed, 1u);
+
+    auto subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    ASSERT_EQ(subs.size(), 1u);
+    EXPECT_EQ(subs[0], TEST_CLIENT_B);
+}
+
+/**
+ * @test_case TC_EVT_TTL_006
+ * @brief TTL=0xFFFFFF (24-bit max) means infinite — never expires.
+ */
+TEST_F(EventsSubscriptionTTLTest, InfiniteTTLNeverExpires) {
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 0xFFFFFFu));
+
+    publisher.cleanup_expired_subscriptions();
+    auto subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    EXPECT_EQ(subs.size(), 1u);
+}
+
+/**
+ * @test_case TC_EVT_TTL_007
+ * @brief Backward-compatible handle_subscription (no TTL) uses infinite TTL.
+ */
+TEST_F(EventsSubscriptionTTLTest, BackwardCompatibleSubscriptionIsInfinite) {
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A));
+
+    publisher.cleanup_expired_subscriptions();
+    auto subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    EXPECT_EQ(subs.size(), 1u) << "Default (no TTL) subscription must not expire";
+}
+
+/**
+ * @test_case TC_EVT_TTL_008
+ * @brief Multiple subscribers with different TTLs expire independently.
+ */
+TEST_F(EventsSubscriptionTTLTest, MultipleSubscribersDifferentTTL) {
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 1u));
+    EXPECT_TRUE(publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_B, 10u));
+
+    auto subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    EXPECT_EQ(subs.size(), 2u);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+    subs = publisher.get_subscriptions(TEST_EVENTGROUP_ID);
+    ASSERT_EQ(subs.size(), 1u) << "Only short-TTL subscriber should have expired";
+    EXPECT_EQ(subs[0], TEST_CLIENT_B);
+}
+
+/**
+ * @test_case TC_EVT_TTL_009
+ * @brief TTL=0 for a non-existent subscription returns false.
+ */
+TEST_F(EventsSubscriptionTTLTest, StopSubscribeNonExistentReturnsFalse) {
+    bool result = publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 0u);
+    EXPECT_FALSE(result) << "StopSubscribe for unknown client should return false";
 }

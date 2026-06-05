@@ -225,7 +225,7 @@ public:
     /** @implements REQ_SD_115, REQ_SD_115_E01, REQ_SD_115_E02, REQ_SD_117, REQ_SD_118, REQ_SD_119, REQ_SD_119_E01 */
     bool handle_eventgroup_subscription(uint16_t service_id, uint16_t instance_id,
                                        uint16_t eventgroup_id, const std::string& client_address,
-                                       bool acknowledge) {
+                                       bool acknowledge, uint32_t ttl_seconds = 3600) {
 
         // Create subscription response
         auto response_entry = std::make_unique<EventGroupEntry>(
@@ -234,7 +234,7 @@ public:
         response_entry->set_instance_id(instance_id);
         response_entry->set_eventgroup_id(eventgroup_id);
         response_entry->set_major_version(0x01);
-        response_entry->set_ttl(acknowledge ? 3600 : 0);  // TTL or 0 for NACK
+        response_entry->set_ttl(acknowledge ? ttl_seconds : 0);
         response_entry->set_index1(0);
         response_entry->set_num_opts1(1);
 
@@ -573,6 +573,12 @@ private:
         const uint16_t service_id = subscription_entry.get_service_id();
         const uint16_t instance_id = subscription_entry.get_instance_id();
         const uint16_t eventgroup_id = subscription_entry.get_eventgroup_id();
+        const uint32_t ttl = subscription_entry.get_ttl();
+
+        if (ttl == 0) {
+            handle_stop_subscribe(service_id, instance_id, eventgroup_id, sender);
+            return;
+        }
 
         {
             platform::ScopedLock const lock(offered_services_mutex_);
@@ -659,7 +665,16 @@ private:
         handle_eventgroup_subscription(
             service_id, instance_id, eventgroup_id,
             client_ip + ":" + std::to_string(client_port),
-            true
+            true, ttl
+        );
+    }
+
+    void handle_stop_subscribe(uint16_t service_id, uint16_t instance_id,
+                               uint16_t eventgroup_id, const transport::Endpoint& sender) {
+        handle_eventgroup_subscription(
+            service_id, instance_id, eventgroup_id,
+            sender.get_address() + ":" + std::to_string(sender.get_port()),
+            true, 0
         );
     }
 
@@ -785,7 +800,7 @@ bool SdServer::handle_eventgroup_subscription(uint16_t service_id, uint16_t inst
                                              uint16_t eventgroup_id, const std::string& client_address,
                                              bool acknowledge) {
     return impl_->handle_eventgroup_subscription(service_id, instance_id, eventgroup_id,
-                                                client_address, acknowledge);
+                                                client_address, acknowledge, 3600);
 }
 
 std::vector<ServiceInstance> SdServer::get_offered_services() const {

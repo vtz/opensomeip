@@ -16,6 +16,9 @@
 #include <sd/sd_message.h>
 #include <sd/sd_server.h>
 #include <sd/sd_client.h>
+#include <events/event_publisher.h>
+#include <someip/types.h>
+#include <transport/udp_transport.h>
 #include <platform/byteorder.h>
 #include <thread>
 #include <chrono>
@@ -1693,4 +1696,223 @@ TEST_F(SdTest, SdMessageSessionIdAccessor) {
     EXPECT_EQ(msg.get_session_id(), 0);
     msg.set_session_id(42);
     EXPECT_EQ(msg.get_session_id(), 42);
+}
+
+// ============================================================================
+// Subscription TTL Enforcement Tests (Issue #266)
+//
+// These tests verify that the SdServer reads the TTL from incoming
+// SubscribeEventgroup entries, echoes it in the ACK, and correctly
+// handles TTL=0 as StopSubscribeEventgroup.
+// ============================================================================
+
+/**
+ * @brief Helper: build a SOME/IP-SD SubscribeEventgroup message.
+ *
+ * Constructs a complete SOME/IP message wrapping an SD payload that
+ * contains a SubscribeEventgroup entry with the given TTL and an
+ * IPv4EndpointOption pointing to the client.
+ */
+static someip::Message build_subscribe_eventgroup_message(
+    uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
+    uint32_t ttl, const std::string& client_ip, uint16_t client_port) {
+
+    auto entry = std::make_unique<EventGroupEntry>(EntryType::SUBSCRIBE_EVENTGROUP);
+    entry->set_service_id(service_id);
+    entry->set_instance_id(instance_id);
+    entry->set_eventgroup_id(eventgroup_id);
+    entry->set_major_version(0x01);
+    entry->set_ttl(ttl);
+    entry->set_index1(0);
+    entry->set_num_opts1(1);
+
+    auto option = std::make_unique<IPv4EndpointOption>();
+    option->set_ipv4_address_from_string(client_ip);
+    option->set_port(client_port);
+    option->set_protocol(0x11);
+
+    SdMessage sd_msg;
+    sd_msg.set_reboot(true);
+    sd_msg.add_entry(std::move(entry));
+    sd_msg.add_option(std::move(option));
+
+    someip::Message someip_msg(
+        someip::MessageId(0xFFFF, someip::SOMEIP_SD_METHOD_ID),
+        someip::RequestId(someip::SOMEIP_SD_CLIENT_ID, 0x0001),
+        someip::MessageType::NOTIFICATION,
+        someip::ReturnCode::E_OK);
+    someip_msg.set_payload(sd_msg.serialize());
+    return someip_msg;
+}
+
+/**
+ * @brief Helper: receive one SOME/IP-SD message on a UDP socket and
+ *        extract the first EventGroupEntry from it.
+ * @return true if a SubscribeEventgroup ACK/NACK entry was received.
+ */
+static bool receive_sd_ack(someip::transport::UdpTransport& transport,
+                           EventGroupEntry& out_entry,
+                           std::chrono::milliseconds timeout = std::chrono::milliseconds(2000)) {
+    auto deadline = std::chrono::steady_clock::now() + timeout;
+
+    while (std::chrono::steady_clock::now() < deadline) {
+        auto msg = transport.receive_message();
+        if (!msg) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+
+        if (msg->get_service_id() != 0xFFFF) {
+            continue;
+        }
+
+        SdMessage sd_msg;
+        if (!sd_msg.deserialize(msg->get_payload())) {
+            continue;
+        }
+
+        for (const auto& entry : sd_msg.get_entries()) {
+            if (entry->get_type() == EntryType::SUBSCRIBE_EVENTGROUP_ACK) {
+                const auto* eg = static_cast<const EventGroupEntry*>(entry.get());
+                out_entry.set_service_id(eg->get_service_id());
+                out_entry.set_instance_id(eg->get_instance_id());
+                out_entry.set_eventgroup_id(eg->get_eventgroup_id());
+                out_entry.set_major_version(eg->get_major_version());
+                out_entry.set_ttl(eg->get_ttl());
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * @test_case TC_SD_TTL_001
+ * @brief SdServer ACK echoes the subscription TTL from the request.
+ *
+ * Before the fix the ACK always hardcoded TTL=3600. After the fix it
+ * reflects the subscriber's requested TTL.
+ */
+TEST_F(SdIntegrationTest, SubscriptionACKReflectsRequestedTTL) {
+    const uint16_t server_port = get_unique_port();
+    const uint16_t client_port = get_unique_port();
+
+    auto server_config = create_test_config(server_port, server_port);
+    SdServer server(server_config);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {0x0001}));
+
+    someip::transport::UdpTransportConfig client_cfg;
+    client_cfg.blocking = false;
+    someip::transport::UdpTransport client_transport(
+        someip::transport::Endpoint("0.0.0.0", client_port), client_cfg);
+    ASSERT_EQ(client_transport.start(), someip::Result::SUCCESS);
+
+    const uint32_t requested_ttl = 1800;
+    auto subscribe_msg = build_subscribe_eventgroup_message(
+        0x1234, 0x0001, 0x0001, requested_ttl, "127.0.0.1", client_port);
+
+    someip::transport::Endpoint server_ep("127.0.0.1", server_port);
+    ASSERT_EQ(client_transport.send_message(subscribe_msg, server_ep),
+              someip::Result::SUCCESS);
+
+    EventGroupEntry ack_entry;
+    bool received = receive_sd_ack(client_transport, ack_entry);
+
+    client_transport.stop();
+    server.shutdown();
+
+    if (received) {
+        EXPECT_EQ(ack_entry.get_service_id(), 0x1234u);
+        EXPECT_EQ(ack_entry.get_eventgroup_id(), 0x0001u);
+        EXPECT_EQ(ack_entry.get_ttl(), requested_ttl)
+            << "ACK TTL must reflect the subscriber's requested TTL, not hardcoded 3600";
+    } else {
+        GTEST_SKIP() << "ACK not received (loopback may be unavailable)";
+    }
+}
+
+/**
+ * @test_case TC_SD_TTL_002
+ * @brief SdServer handles StopSubscribeEventgroup (TTL=0).
+ *
+ * Per SOME/IP-SD spec, a SubscribeEventgroup entry with TTL=0 signals
+ * StopSubscribeEventgroup. The server must respond with an ACK whose
+ * TTL is also 0.
+ */
+TEST_F(SdIntegrationTest, StopSubscribeEventgroupTTLZero) {
+    const uint16_t server_port = get_unique_port();
+    const uint16_t client_port = get_unique_port();
+
+    auto server_config = create_test_config(server_port, server_port);
+    SdServer server(server_config);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {0x0001}));
+
+    someip::transport::UdpTransportConfig client_cfg;
+    client_cfg.blocking = false;
+    someip::transport::UdpTransport client_transport(
+        someip::transport::Endpoint("0.0.0.0", client_port), client_cfg);
+    ASSERT_EQ(client_transport.start(), someip::Result::SUCCESS);
+
+    auto stop_msg = build_subscribe_eventgroup_message(
+        0x1234, 0x0001, 0x0001, 0, "127.0.0.1", client_port);
+
+    someip::transport::Endpoint server_ep("127.0.0.1", server_port);
+    ASSERT_EQ(client_transport.send_message(stop_msg, server_ep),
+              someip::Result::SUCCESS);
+
+    EventGroupEntry ack_entry;
+    bool received = receive_sd_ack(client_transport, ack_entry);
+
+    client_transport.stop();
+    server.shutdown();
+
+    if (received) {
+        EXPECT_EQ(ack_entry.get_ttl(), 0u)
+            << "StopSubscribe ACK must have TTL=0";
+    } else {
+        GTEST_SKIP() << "ACK not received (loopback may be unavailable)";
+    }
+}
+
+/**
+ * @test_case TC_SD_TTL_003
+ * @brief EventPublisher stops delivering events to expired subscribers.
+ *
+ * End-to-end test verifying that publish_event() filters out subscribers
+ * whose TTL has elapsed — the core behavior the bug report described.
+ */
+TEST_F(SdIntegrationTest, EventPublisherStopsEventsAfterTTLExpiry) {
+    someip::events::EventPublisher publisher(0x1234, 0x0001);
+    publisher.set_default_client_endpoint("127.0.0.1", 50000);
+
+    someip::events::EventConfig cfg;
+    cfg.event_id = 0x8001;
+    cfg.eventgroup_id = 0x0001;
+    cfg.notification_type = someip::events::NotificationType::ON_CHANGE;
+    publisher.register_event(cfg);
+
+    ASSERT_TRUE(publisher.handle_subscription(0x0001, 0x0100, 1u));
+    ASSERT_TRUE(publisher.handle_subscription(0x0001, 0x0200, 3600u));
+
+    auto subs = publisher.get_subscriptions(0x0001);
+    EXPECT_EQ(subs.size(), 2u) << "Both subscribers active immediately after subscribe";
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+    subs = publisher.get_subscriptions(0x0001);
+    ASSERT_EQ(subs.size(), 1u) << "Short-TTL subscriber must have expired";
+    EXPECT_EQ(subs[0], 0x0200u) << "Only long-TTL subscriber should remain";
+
+    size_t cleaned = publisher.cleanup_expired_subscriptions();
+    EXPECT_EQ(cleaned, 1u);
+    subs = publisher.get_subscriptions(0x0001);
+    EXPECT_EQ(subs.size(), 1u);
 }

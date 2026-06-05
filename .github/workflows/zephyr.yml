@@ -200,6 +200,25 @@ jobs:
       - name: Convert test_transport results to JUnit XML
         if: always()
         run: python3 scripts/zephyr_to_junit.py /tmp/test_transport.log test_transport /tmp/test_transport_junit.xml || true
+      - name: Build & run test_events
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: |
+          west build -b native_sim zephyr/tests/test_events -d build/ns_ev --pristine auto -- \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          if timeout 30 build/ns_ev/zephyr/zephyr.exe > /tmp/test_events.log 2>&1; then
+            rc=0
+          else
+            rc=$?
+          fi
+          cat /tmp/test_events.log
+          if [ "$rc" -eq 124 ]; then
+            grep -Eq "=== Results: [0-9]+ passed, 0 failed ===" /tmp/test_events.log || exit 1
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
+      - name: Convert test_events results to JUnit XML
+        if: always()
+        run: python3 scripts/zephyr_to_junit.py /tmp/test_events.log test_events /tmp/test_events_junit.xml || true
       - name: Upload Zephyr native_sim test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -229,7 +248,7 @@ jobs:
           -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build & run sanitizer tests (ASan + UBSan)
         run: |
-          for spec in test_core:tc test_transport:tp; do
+          for spec in test_core:tc test_transport:tp test_events:ev; do
             t="${spec%%:*}"
             short="${spec##*:}"
             out_dir="build/ns_${short}_asan"

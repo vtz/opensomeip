@@ -125,6 +125,24 @@ public:
                            const std::vector<EventFilter>& filters = {});
 
     /**
+     * @brief Handle event subscription request with explicit TTL
+     *
+     * Per SOME/IP-SD, the server must track subscription TTL and stop
+     * sending events once the TTL expires without renewal.
+     *
+     * @param eventgroup_id Event group being subscribed to
+     * @param client_id Client identifier
+     * @param ttl_seconds Subscription TTL in seconds.
+     *        0 = StopSubscribeEventgroup (immediate removal).
+     *        0xFFFFFF = infinite (never expires).
+     * @param filters Optional filters for selective notifications
+     * @return true if subscription handled, false on error
+     */
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                           uint32_t ttl_seconds,
+                           const std::vector<EventFilter>& filters = {});
+
+    /**
      * @brief Handle event unsubscription
      *
      * @param eventgroup_id Event group being unsubscribed from
@@ -132,6 +150,16 @@ public:
      * @return true if unsubscription handled, false on error
      */
     bool handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id);
+
+    /**
+     * @brief Remove subscriptions whose TTL has expired.
+     *
+     * Called automatically from the publish timer, but may also be invoked
+     * manually for deterministic testing.
+     *
+     * @return Number of subscriptions removed
+     */
+    size_t cleanup_expired_subscriptions();
 
     /**
      * @brief Get registered events
