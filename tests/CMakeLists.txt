@@ -107,6 +107,15 @@ target_link_libraries(test_e2e someip-core gtest_main)
         )
     endif()
 
+    # ---- Static Allocation Tests ----
+    if(SOMEIP_USE_STATIC_ALLOC)
+        add_executable(test_static_alloc test_static_alloc.cpp)
+        target_link_libraries(test_static_alloc opensomeip gtest_main)
+        target_compile_definitions(test_static_alloc PRIVATE SOMEIP_STATIC_ALLOC)
+        add_test(NAME StaticAllocTest COMMAND test_static_alloc)
+        set_tests_properties(StaticAllocTest PROPERTIES TIMEOUT 30)
+    endif()
+
     # Register available tests
     add_test(NAME PlatformThreadingTest COMMAND test_platform_threading)
     add_test(NAME SerializationTest COMMAND test_serialization)

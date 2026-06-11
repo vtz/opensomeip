@@ -725,6 +725,387 @@ Byte-Order Interface
    ``include/platform/lwip/byteorder_impl.h``,
    ``include/platform/zephyr/byteorder_impl.h``
 
+Static Allocation Contracts
+===========================
+
+Container Interface
+-------------------
+
+.. requirement:: Platform Vector Type
+   :id: REQ_PAL_CONTAINER_VECTOR
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_VECTOR_PUSH_BACK. Push elements up to compile-time capacity; verify size, indexing, and iteration match ``std::vector`` semantics without heap allocation.
+
+   The PAL shall provide a ``StaticVector<T, Capacity>`` type that stores
+   elements in a fixed-size inline buffer. ``push_back()``, ``emplace_back()``,
+   indexing, iteration, and ``size()`` shall behave like ``std::vector`` but
+   shall never allocate from the heap.
+
+   **Rationale**: Protocol layers use dynamic vectors extensively; a bounded
+   static replacement is required for no-heap builds.
+
+   **Code Location**: ``include/platform/static/container_vector.h``
+
+.. requirement:: Platform String Type
+   :id: REQ_PAL_CONTAINER_STRING
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_STRING_APPEND. Append characters and substrings up to compile-time capacity; verify ``c_str()``, ``size()``, and comparison operators.
+
+   The PAL shall provide a ``StaticString<Capacity>`` type that stores
+   characters in a fixed-size inline buffer. ``append()``, ``clear()``,
+   ``size()``, ``c_str()``, and comparison operators shall behave like
+   ``std::string`` but shall never allocate from the heap.
+
+   **Rationale**: Service names, endpoint identifiers, and diagnostic strings
+   must be representable without heap allocation in safety-critical builds.
+
+   **Code Location**: ``include/platform/static/container_string.h``
+
+.. requirement:: Platform Unordered Map Type
+   :id: REQ_PAL_CONTAINER_MAP
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_MAP_INSERT_LOOKUP. Insert key-value pairs up to compile-time capacity; verify ``find()``, ``erase()``, and ``size()`` without heap allocation.
+
+   The PAL shall provide a ``StaticUnorderedMap<Key, Value, Capacity>`` type
+   that stores entries in a fixed-size inline table. ``insert()``, ``find()``,
+   ``erase()``, and ``size()`` shall provide hash-map semantics bounded by
+   compile-time capacity and shall never allocate from the heap.
+
+   **Rationale**: Session tables and subscription registries require associative
+   lookup without runtime allocation.
+
+   **Code Location**: ``include/platform/static/container_map.h``
+
+.. requirement:: Platform Queue Type
+   :id: REQ_PAL_CONTAINER_QUEUE
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_QUEUE_FIFO. Enqueue and dequeue elements up to compile-time capacity; verify FIFO ordering and ``empty()``/``size()`` state.
+
+   The PAL shall provide a ``StaticQueue<T, Capacity>`` type that stores
+   elements in a fixed-size ring buffer. ``push()``, ``pop()``, ``front()``,
+   ``empty()``, and ``size()`` shall provide FIFO queue semantics and shall
+   never allocate from the heap.
+
+   **Rationale**: Event dispatch and work queues require bounded FIFO storage
+   with deterministic access time.
+
+   **Code Location**: ``include/platform/static/container_queue.h``
+
+.. requirement:: Platform Function Type
+   :id: REQ_PAL_CONTAINER_FUNCTION
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_FUNCTION_INVOKE. Store a callable in ``StaticFunction<Signature, Capacity>``; invoke and verify return value and argument forwarding without heap allocation.
+
+   The PAL shall provide a ``StaticFunction<Signature, Capacity>`` type that
+   stores callables in a fixed-size inline buffer using type erasure.
+   ``operator()`` shall invoke the stored callable with correct argument
+   forwarding and shall never allocate from the heap.
+
+   **Rationale**: Callback registration (event handlers, transport hooks) must
+   work without ``std::function`` heap allocations.
+
+   **Code Location**: ``include/platform/static/container_function.h``
+
+.. requirement:: Error - Container Capacity Exhaustion
+   :id: REQ_PAL_CONTAINER_CAPACITY_E01
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_CAPACITY_EXHAUST. Fill a StaticVector/StaticQueue to capacity; attempt one more insertion; verify the operation fails gracefully (returns false or reports overflow) without heap allocation or corruption.
+
+   When a static container reaches its compile-time capacity, insertion
+   operations (``push_back()``, ``push()``, ``insert()``, ``append()``) shall
+   fail gracefully without crashing, corrupting internal state, or allocating
+   from the heap.
+
+   **Rationale**: Bounded containers must surface capacity limits to callers
+   so protocol layers can implement safe failure modes.
+
+   **Error Handling**: Return ``false`` or an error indicator; container
+   internals remain consistent.
+
+   **Code Location**: ``include/platform/static/container_vector.h``,
+   ``include/platform/static/container_queue.h``,
+   ``include/platform/static/container_map.h``,
+   ``include/platform/static/container_string.h``
+
+Buffer Pool Interface
+---------------------
+
+.. requirement:: Buffer Pool Acquire
+   :id: REQ_PAL_BUFPOOL_ACQUIRE
+   :satisfies: REQ_ARCH_008, REQ_PAL_MEM_ALLOC
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_buffer_pool.cpp`` — TC_BUFPOOL_ACQUIRE_SMALL. Acquire a buffer from the pool; verify non-null pointer, correct tier size, and writable payload region.
+
+   ``someip::platform::acquire_buffer(size)`` shall return a pointer to a
+   writable byte buffer of at least ``size`` bytes from a static pool tier.
+   The caller shall obtain exclusive use of the buffer until ``release_buffer()``
+   is called.
+
+   **Rationale**: Payload serialization and TP reassembly require transient
+   byte buffers without heap allocation.
+
+   **Code Location**: ``include/platform/buffer_pool.h``,
+   ``include/platform/static/buffer_pool_impl.h``
+
+.. requirement:: Buffer Pool Release
+   :id: REQ_PAL_BUFPOOL_RELEASE
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_buffer_pool.cpp`` — TC_BUFPOOL_RELEASE_REUSE. Acquire a buffer, release it, acquire again; verify the same slot is recycled and no heap allocation occurs.
+
+   ``someip::platform::release_buffer(ptr)`` shall return a previously
+   acquired buffer to its static pool tier, making the slot available for
+   subsequent acquisitions.
+
+   **Rationale**: Explicit release enables deterministic reuse of fixed pool
+   slots and prevents pool exhaustion.
+
+   **Code Location**: ``include/platform/buffer_pool.h``,
+   ``include/platform/static/buffer_pool_impl.h``
+
+.. requirement:: Tiered Buffer Pool Selection
+   :id: REQ_PAL_BUFPOOL_TIERED
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_buffer_pool.cpp`` — TC_BUFPOOL_TIER_SELECT. Request buffers of small, medium, and large sizes; verify each is served from the smallest sufficient tier with no cross-tier aliasing.
+
+   The buffer pool shall provide multiple compile-time-configured size tiers.
+   ``acquire_buffer(size)`` shall select the smallest tier whose slot size is
+   greater than or equal to ``size``.
+
+   **Rationale**: Tiered pools reduce memory waste while keeping allocation
+   time bounded and predictable.
+
+   **Code Location**: ``include/platform/static/buffer_pool_impl.h``,
+   ``include/platform/static_config.h``
+
+.. requirement:: Error - Buffer Pool Exhaustion
+   :id: REQ_PAL_BUFPOOL_EXHAUST_E01
+   :satisfies: REQ_PAL_MEM_EXHAUST_E01
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: ``test_buffer_pool.cpp`` — TC_BUFPOOL_EXHAUST. Acquire buffers until a tier is exhausted; verify ``acquire_buffer()`` returns ``nullptr``. Release one buffer and re-acquire — verify non-null.
+
+   When all slots in the matching buffer-pool tier are in use,
+   ``acquire_buffer()`` shall return ``nullptr`` without crashing or
+   corrupting the pool.
+
+   **Rationale**: Fixed pools have bounded capacity; callers must handle
+   exhaustion the same way as message-pool exhaustion.
+
+   **Error Handling**: Return ``nullptr``; pool internals remain consistent.
+
+   **Code Location**: ``include/platform/static/buffer_pool_impl.h``
+
+.. requirement:: Error - Buffer Pool Thread Safety
+   :id: REQ_PAL_BUFPOOL_THREADSAFE_E01
+   :satisfies: REQ_PAL_MEM_THREADSAFE_E01
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: ``test_buffer_pool.cpp`` — TC_BUFPOOL_CONCURRENT. Spawn 4 threads, each acquiring and releasing 100 buffers concurrently; verify no corruption, no deadlock, and all slots returned.
+
+   Pool-based ``acquire_buffer()`` and ``release_buffer()`` implementations
+   shall be thread-safe: concurrent acquisitions and releases shall not
+   corrupt the pool or deadlock.
+
+   **Rationale**: Transport and SD layers acquire buffers from different
+   threads.
+
+   **Error Handling**: Mutex-protected acquire/release path.
+
+   **Code Location**: ``include/platform/static/buffer_pool_impl.h``,
+   ``src/platform/static/buffer_pool.cpp``
+
+Static Configuration Interface
+------------------------------
+
+.. requirement:: Compile-Time Capacity Configuration
+   :id: REQ_PAL_STATIC_CONFIG
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Build test: Configure ``SOMEIP_STATIC_MESSAGE_POOL_SIZE``, ``SOMEIP_STATIC_BUFPOOL_TIER_*`` via CMake; verify generated ``static_config.h`` reflects the values and pool sizes match at runtime without heap allocation.
+
+   All static-allocation capacities (message pool size, buffer-pool tier
+   counts and slot sizes, container defaults) shall be configurable at
+   compile time via CMake options and propagated to a generated
+   ``static_config.h`` header.
+
+   **Rationale**: Integrators must size pools for their ECU memory budget
+   without modifying library source code.
+
+   **Code Location**: ``CMakeLists.txt``, ``include/platform/static_config.h``
+
+.. requirement:: Intrusive Reference Counting for Message
+   :id: REQ_PAL_INTRUSIVE_PTR
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_intrusive_ptr.cpp`` — TC_INTRUSIVE_PTR_LIFETIME. Create MessagePtr from pool-allocated Message; copy and release references; verify object returns to pool when refcount reaches zero without heap allocation.
+
+   ``MessagePtr`` shall use intrusive reference counting embedded in the
+   ``Message`` object rather than ``std::shared_ptr`` control blocks.
+   When the reference count reaches zero, the ``Message`` shall be returned
+   to the static message pool.
+
+   **Rationale**: ``std::shared_ptr`` allocates a control block on the heap;
+   intrusive counting enables shared ownership within a fixed pool.
+
+   **Code Location**: ``include/platform/intrusive_ptr.h``,
+   ``include/common/message.h``
+
+.. requirement:: No-Heap Runtime Verification
+   :id: REQ_PAL_NOOP_HEAP_VERIFY
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_no_heap.cpp`` — TC_NO_HEAP_PROTOCOL_RUN. Run full protocol unit-test suite with heap-interception stubs; verify zero calls to ``malloc``, ``free``, ``new``, and ``delete`` during test execution.
+
+   When ``SOMEIP_USE_STATIC_ALLOC`` is enabled, the build shall link a
+   heap-interception layer that aborts or records any call to ``malloc``,
+   ``free``, ``new``, or ``delete`` at runtime. All protocol unit tests
+   shall pass under this interception.
+
+   **Rationale**: Automated verification that the no-heap policy is enforced
+   across the entire stack, not just individual components.
+
+   **Code Location**: ``tests/no_heap_stubs.cpp``, ``tests/test_no_heap.cpp``
+
+Static Allocation Backend
+-------------------------
+
+.. requirement:: Static Allocation Container Backend
+   :id: REQ_PLATFORM_STATIC_001
+   :satisfies: REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING, REQ_PAL_CONTAINER_MAP, REQ_PAL_CONTAINER_QUEUE, REQ_PAL_CONTAINER_FUNCTION
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Build with ``SOMEIP_USE_STATIC_ALLOC=ON``; run ``test_static_containers.cpp`` — all container tests pass on host and at least one RTOS target.
+
+   The static-allocation backend shall implement all PAL container types
+   (``StaticVector``, ``StaticString``, ``StaticUnorderedMap``, ``StaticQueue``,
+   ``StaticFunction``) using inline fixed-size storage with no heap fallback.
+
+   **Rationale**: A single backend directory provides the container
+   implementations selected when ``SOMEIP_USE_STATIC_ALLOC`` is enabled.
+
+   **Code Location**: ``include/platform/static/container_vector.h``,
+   ``include/platform/static/container_string.h``,
+   ``include/platform/static/container_map.h``,
+   ``include/platform/static/container_queue.h``,
+   ``include/platform/static/container_function.h``
+
+.. requirement:: Static Message Object Pool
+   :id: REQ_PLATFORM_STATIC_002
+   :satisfies: REQ_PAL_MEM_ALLOC, REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_static_memory.cpp`` — TC_STATIC_MSG_POOL_ALLOC. Call ``allocate_message()`` repeatedly up to pool size; verify non-null objects. Exhaust pool — verify ``nullptr``. Release and re-allocate — verify reuse.
+
+   The static-allocation backend shall implement ``allocate_message()`` using
+   a fixed-size pool of pre-constructed ``Message`` objects with intrusive
+   reference counting:
+
+   * Pool size configurable via ``SOMEIP_STATIC_MESSAGE_POOL_SIZE``
+   * ``alignas(Message)`` alignment on pool buffer
+   * Returns ``nullptr`` on pool exhaustion
+   * No heap allocation in alloc or release paths
+
+   **Rationale**: Message objects are the highest-frequency allocation in
+   the protocol stack; a static pool eliminates heap use and fragmentation.
+
+   **Code Location**: ``include/platform/static/memory_impl.h``,
+   ``src/platform/static/memory.cpp``
+
+.. requirement:: Static Byte Buffer Pool
+   :id: REQ_PLATFORM_STATIC_003
+   :satisfies: REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_TIERED
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_buffer_pool.cpp`` — TC_BUFPOOL_TIERED_ALLOC. Acquire buffers at each tier boundary; verify correct tier selection, acquire/release roundtrip, and no heap allocation.
+
+   The static-allocation backend shall implement tiered byte-buffer pools
+   using pre-allocated static storage:
+
+   * Multiple tiers with compile-time slot counts and sizes
+   * ``acquire_buffer()`` selects the smallest sufficient tier
+   * ``release_buffer()`` returns the slot to the correct tier
+   * Returns ``nullptr`` on tier exhaustion
+
+   **Rationale**: Payload buffers are the second-highest allocation frequency;
+   tiered static pools balance memory efficiency and determinism.
+
+   **Code Location**: ``include/platform/static/buffer_pool_impl.h``,
+   ``src/platform/static/buffer_pool.cpp``
+
+.. requirement:: OS-Agnostic Pool Synchronization
+   :id: REQ_PLATFORM_STATIC_004
+   :satisfies: REQ_PAL_BUFPOOL_THREADSAFE_E01
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_buffer_pool.cpp`` — TC_BUFPOOL_THREADSAFE. Concurrent acquire/release from 4 threads on host build; repeat on FreeRTOS POSIX port. Verify no corruption or deadlock.
+
+   The static-allocation backend shall protect message and buffer pools with
+   the PAL ``Mutex`` type, making pool synchronization independent of the
+   underlying OS threading implementation.
+
+   **Rationale**: Pool thread safety must work identically on host, FreeRTOS,
+   ThreadX, and Zephyr without OS-specific locking code in pool logic.
+
+   **Code Location**: ``include/platform/static/memory_impl.h``,
+   ``include/platform/static/buffer_pool_impl.h``
+
+.. requirement:: Pimpl Static Storage
+   :id: REQ_PLATFORM_STATIC_005
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``test_pimpl_static.cpp`` — TC_PIMPL_NO_HEAP. Construct and destroy all public API types that use pimpl (Transport, SD, SessionManager); verify no heap allocation and no leaks under heap interception.
+
+   Public API classes that use the pimpl idiom shall store their implementation
+   object in a compile-time-sized inline buffer (``StaticPimpl<Impl, Size>``)
+   rather than allocating via ``std::make_unique`` or ``new``.
+
+   **Rationale**: Pimpl is used throughout the stack; without static pimpl
+   storage, enabling no-heap mode would still trigger heap allocation in
+   constructors.
+
+   **Code Location**: ``include/platform/static/pimpl.h``, public API headers
+   using pimpl pattern
+
 Platform Backends
 =================
 

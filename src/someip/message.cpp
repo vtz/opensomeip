@@ -18,6 +18,10 @@
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
 
+#ifdef SOMEIP_STATIC_ALLOC
+#include "platform/memory.h"
+#endif
+
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -75,7 +79,25 @@ Message::Message(MessageId message_id, RequestId request_id,
     update_length();
 }
 
+#ifdef SOMEIP_STATIC_ALLOC
+// std::atomic<uint16_t> ref_count_ is non-copyable; explicit copy ctor
+// initialises the new Message with ref_count_ = 0 (default) while copying
+// all other members.
+Message::Message(const Message& other)
+    : message_id_(other.message_id_),
+      length_(other.length_),
+      request_id_(other.request_id_),
+      protocol_version_(other.protocol_version_),
+      interface_version_(other.interface_version_),
+      message_type_(other.message_type_),
+      return_code_(other.return_code_),
+      payload_(other.payload_),
+      e2e_header_(other.e2e_header_),
+      timestamp_(other.timestamp_) {
+}
+#else
 Message::Message(const Message& other) = default;
+#endif
 
 Message::Message(Message&& other) noexcept
     : message_id_(other.message_id_),
@@ -535,5 +557,19 @@ std::string Message::to_string() const {
 }
 
 // NOLINTEND(misc-include-cleaner)
+
+#ifdef SOMEIP_STATIC_ALLOC
+void intrusive_ptr_add_ref(const Message* p) {
+    if (p) {
+        p->ref_count_.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+void intrusive_ptr_release(const Message* p) {
+    if (p && p->ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+        platform::release_message(const_cast<Message*>(p));
+    }
+}
+#endif
 
 } // namespace someip

@@ -48,10 +48,18 @@ else()
     set(SOMEIP_NET_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/posix)
 endif()
 
+# Allocation backend (listed before threading so static memory_impl.h shadows RTOS headers)
+if(SOMEIP_USE_STATIC_ALLOC)
+    set(SOMEIP_ALLOC_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/static)
+else()
+    set(SOMEIP_ALLOC_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/dynamic)
+endif()
+
 # Library type follows BUILD_SHARED_LIBS (default: STATIC)
 add_library(opensomeip ${OPENSOMEIP_SOURCES})
 target_include_directories(opensomeip PUBLIC
     ${PROJECT_SOURCE_DIR}/include
+    ${SOMEIP_ALLOC_IMPL_DIR}
     ${SOMEIP_THREADING_IMPL_DIR}
     ${SOMEIP_NET_IMPL_DIR}
 )
@@ -74,16 +82,30 @@ if(WIN32)
     target_link_libraries(opensomeip PUBLIC ws2_32)
 endif()
 
-# FreeRTOS platform sources
-if(SOMEIP_USE_FREERTOS)
+# FreeRTOS platform sources (skipped when static allocation owns memory backend)
+if(SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_STATIC_ALLOC)
     target_sources(opensomeip PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/freertos/memory.cpp)
 endif()
 
-# ThreadX platform sources
-if(SOMEIP_USE_THREADX)
+# ThreadX platform sources (skipped when static allocation owns memory backend)
+if(SOMEIP_USE_THREADX AND NOT SOMEIP_USE_STATIC_ALLOC)
     target_sources(opensomeip PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/threadx/memory.cpp)
+endif()
+
+# Static allocation platform sources
+if(SOMEIP_USE_STATIC_ALLOC)
+    target_sources(opensomeip PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/memory.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/buffer_pool.cpp)
+    target_link_libraries(opensomeip PUBLIC etl::etl)
+    target_compile_definitions(opensomeip PUBLIC SOMEIP_STATIC_ALLOC)
+
+    # Malloc trap object library (linked into verification tests, not into main lib)
+    add_library(someip_malloc_trap OBJECT
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/malloc_trap.cpp)
+    target_compile_definitions(someip_malloc_trap PRIVATE SOMEIP_MALLOC_TRAP)
 endif()
 
 # Backward-compatible aliases so existing target_link_libraries() calls

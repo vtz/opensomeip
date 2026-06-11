@@ -61,7 +61,23 @@ if [[ ! -d "$SOURCE_DIR/src" ]]; then
 fi
 
 # Collect source files up front so we can detect an empty set.
-mapfile -t SOURCE_FILES < <(find "$SOURCE_DIR/src" -name "*.cpp" | sort)
+# Only analyse files present in compile_commands.json — platform backends
+# compiled under different CMake options are excluded automatically.
+if [[ -f "$BUILD_DIR/compile_commands.json" ]]; then
+    mapfile -t SOURCE_FILES < <(
+        python3 -c "
+import json, sys, os
+cc = json.load(open('$BUILD_DIR/compile_commands.json'))
+src = os.path.realpath('$SOURCE_DIR/src')
+for e in cc:
+    f = os.path.realpath(e['file'])
+    if f.startswith(src) and f.endswith('.cpp'):
+        print(f)
+" | sort
+    )
+else
+    mapfile -t SOURCE_FILES < <(find "$SOURCE_DIR/src" -name "*.cpp" | sort)
+fi
 if [[ ${#SOURCE_FILES[@]} -eq 0 ]]; then
     echo "Error: No .cpp files found under $SOURCE_DIR/src" >&2
     exit 1
