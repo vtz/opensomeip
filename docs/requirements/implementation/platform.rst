@@ -737,9 +737,9 @@ Container Interface
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_VECTOR_PUSH_BACK. Push elements up to compile-time capacity; verify size, indexing, and iteration match ``std::vector`` semantics without heap allocation.
+   :verification: Unit test: ``test_static_alloc.cpp`` — TC_CONTAINER_VECTOR_PUSH_BACK. Push elements up to compile-time capacity; verify size, indexing, and iteration match ``std::vector`` semantics without heap allocation.
 
-   The PAL shall provide a ``StaticVector<T, Capacity>`` type that stores
+   The PAL shall provide a ``platform::Vector<T, N>`` type alias that stores
    elements in a fixed-size inline buffer. ``push_back()``, ``emplace_back()``,
    indexing, iteration, and ``size()`` shall behave like ``std::vector`` but
    shall never allocate from the heap.
@@ -747,7 +747,7 @@ Container Interface
    **Rationale**: Protocol layers use dynamic vectors extensively; a bounded
    static replacement is required for no-heap builds.
 
-   **Code Location**: ``include/platform/static/container_vector.h``
+   **Code Location**: ``include/platform/static/containers_impl.h``
 
 .. requirement:: Platform String Type
    :id: REQ_PAL_CONTAINER_STRING
@@ -755,9 +755,9 @@ Container Interface
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_STRING_APPEND. Append characters and substrings up to compile-time capacity; verify ``c_str()``, ``size()``, and comparison operators.
+   :verification: Unit test: ``test_static_alloc.cpp`` — TC_CONTAINER_STRING_APPEND. Append characters and substrings up to compile-time capacity; verify ``c_str()``, ``size()``, and comparison operators.
 
-   The PAL shall provide a ``StaticString<Capacity>`` type that stores
+   The PAL shall provide a ``platform::String<N>`` type alias that stores
    characters in a fixed-size inline buffer. ``append()``, ``clear()``,
    ``size()``, ``c_str()``, and comparison operators shall behave like
    ``std::string`` but shall never allocate from the heap.
@@ -765,7 +765,7 @@ Container Interface
    **Rationale**: Service names, endpoint identifiers, and diagnostic strings
    must be representable without heap allocation in safety-critical builds.
 
-   **Code Location**: ``include/platform/static/container_string.h``
+   **Code Location**: ``include/platform/static/containers_impl.h``
 
 .. requirement:: Platform Unordered Map Type
    :id: REQ_PAL_CONTAINER_MAP
@@ -773,9 +773,9 @@ Container Interface
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_MAP_INSERT_LOOKUP. Insert key-value pairs up to compile-time capacity; verify ``find()``, ``erase()``, and ``size()`` without heap allocation.
+   :verification: Unit test: ``test_static_alloc.cpp`` — TC_CONTAINER_MAP_INSERT_LOOKUP. Insert key-value pairs up to compile-time capacity; verify ``find()``, ``erase()``, and ``size()`` without heap allocation.
 
-   The PAL shall provide a ``StaticUnorderedMap<Key, Value, Capacity>`` type
+   The PAL shall provide a ``platform::UnorderedMap<K, V, N>`` type alias
    that stores entries in a fixed-size inline table. ``insert()``, ``find()``,
    ``erase()``, and ``size()`` shall provide hash-map semantics bounded by
    compile-time capacity and shall never allocate from the heap.
@@ -783,7 +783,7 @@ Container Interface
    **Rationale**: Session tables and subscription registries require associative
    lookup without runtime allocation.
 
-   **Code Location**: ``include/platform/static/container_map.h``
+   **Code Location**: ``include/platform/static/containers_impl.h``
 
 .. requirement:: Platform Queue Type
    :id: REQ_PAL_CONTAINER_QUEUE
@@ -791,9 +791,9 @@ Container Interface
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_QUEUE_FIFO. Enqueue and dequeue elements up to compile-time capacity; verify FIFO ordering and ``empty()``/``size()`` state.
+   :verification: Unit test: ``test_static_alloc.cpp`` — TC_CONTAINER_QUEUE_FIFO. Enqueue and dequeue elements up to compile-time capacity; verify FIFO ordering and ``empty()``/``size()`` state.
 
-   The PAL shall provide a ``StaticQueue<T, Capacity>`` type that stores
+   The PAL shall provide a ``platform::Queue<T, N>`` type alias that stores
    elements in a fixed-size ring buffer. ``push()``, ``pop()``, ``front()``,
    ``empty()``, and ``size()`` shall provide FIFO queue semantics and shall
    never allocate from the heap.
@@ -801,7 +801,7 @@ Container Interface
    **Rationale**: Event dispatch and work queues require bounded FIFO storage
    with deterministic access time.
 
-   **Code Location**: ``include/platform/static/container_queue.h``
+   **Code Location**: ``include/platform/static/containers_impl.h``
 
 .. requirement:: Platform Function Type
    :id: REQ_PAL_CONTAINER_FUNCTION
@@ -809,17 +809,18 @@ Container Interface
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_FUNCTION_INVOKE. Store a callable in ``StaticFunction<Signature, Capacity>``; invoke and verify return value and argument forwarding without heap allocation.
+   :verification: Unit test: ``test_static_alloc.cpp`` — TC_CONTAINER_FUNCTION_INVOKE. Store a callable in ``platform::Function<Sig, N>``; invoke and verify return value and argument forwarding without heap allocation.
 
-   The PAL shall provide a ``StaticFunction<Signature, Capacity>`` type that
-   stores callables in a fixed-size inline buffer using type erasure.
-   ``operator()`` shall invoke the stored callable with correct argument
-   forwarding and shall never allocate from the heap.
+   The PAL shall provide a ``platform::Function<Sig, N>`` type alias that
+   stores callables in a fixed-size inline buffer using type erasure
+   (backed by ``etl::inplace_function``). ``operator()`` shall invoke the
+   stored callable with correct argument forwarding and shall never allocate
+   from the heap.
 
    **Rationale**: Callback registration (event handlers, transport hooks) must
    work without ``std::function`` heap allocations.
 
-   **Code Location**: ``include/platform/static/container_function.h``
+   **Code Location**: ``include/platform/static/containers_impl.h``
 
 .. requirement:: Error - Container Capacity Exhaustion
    :id: REQ_PAL_CONTAINER_CAPACITY_E01
@@ -827,7 +828,7 @@ Container Interface
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: ``test_static_containers.cpp`` — TC_CONTAINER_CAPACITY_EXHAUST. Fill a StaticVector/StaticQueue to capacity; attempt one more insertion; verify the operation fails gracefully (returns false or reports overflow) without heap allocation or corruption.
+   :verification: Unit test: ``test_static_alloc.cpp`` — TC_CONTAINER_CAPACITY_EXHAUST. Fill a Vector/Queue to capacity; attempt one more insertion; verify the operation fails gracefully (returns false or reports overflow) without heap allocation or corruption.
 
    When a static container reaches its compile-time capacity, insertion
    operations (``push_back()``, ``push()``, ``insert()``, ``append()``) shall
@@ -840,10 +841,8 @@ Container Interface
    **Error Handling**: Return ``false`` or an error indicator; container
    internals remain consistent.
 
-   **Code Location**: ``include/platform/static/container_vector.h``,
-   ``include/platform/static/container_queue.h``,
-   ``include/platform/static/container_map.h``,
-   ``include/platform/static/container_string.h``
+   **Code Location**: ``include/platform/static/containers_impl.h``
+   (ETL container overflow behavior governed by the ETL error handler)
 
 Buffer Pool Interface
 ---------------------
@@ -1009,20 +1008,17 @@ Static Allocation Backend
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Build with ``SOMEIP_USE_STATIC_ALLOC=ON``; run ``test_static_containers.cpp`` — all container tests pass on host and at least one RTOS target.
+   :verification: Build with ``SOMEIP_USE_STATIC_ALLOC=ON``; run ``test_static_alloc.cpp`` — all container tests pass on host and at least one RTOS target.
 
    The static-allocation backend shall implement all PAL container types
-   (``StaticVector``, ``StaticString``, ``StaticUnorderedMap``, ``StaticQueue``,
-   ``StaticFunction``) using inline fixed-size storage with no heap fallback.
+   (``Vector``, ``String``, ``UnorderedMap``, ``Queue``,
+   ``Function``) as type aliases over ETL containers with inline fixed-size
+   storage and no heap fallback.
 
    **Rationale**: A single backend directory provides the container
    implementations selected when ``SOMEIP_USE_STATIC_ALLOC`` is enabled.
 
-   **Code Location**: ``include/platform/static/container_vector.h``,
-   ``include/platform/static/container_string.h``,
-   ``include/platform/static/container_map.h``,
-   ``include/platform/static/container_queue.h``,
-   ``include/platform/static/container_function.h``
+   **Code Location**: ``include/platform/static/containers_impl.h``
 
 .. requirement:: Static Message Object Pool
    :id: REQ_PLATFORM_STATIC_002

@@ -110,7 +110,8 @@ target_link_libraries(test_e2e someip-core gtest_main)
 
     # ---- Static Allocation Tests ----
     if(SOMEIP_USE_STATIC_ALLOC)
-        add_executable(test_static_alloc test_static_alloc.cpp)
+        add_executable(test_static_alloc test_static_alloc.cpp
+            $<TARGET_OBJECTS:someip_malloc_trap>)
         target_link_libraries(test_static_alloc opensomeip gtest_main)
         add_test(NAME StaticAllocTest COMMAND test_static_alloc)
         set_tests_properties(StaticAllocTest PROPERTIES TIMEOUT 30)

@@ -133,7 +133,7 @@ public:
             return;
         }
         ensure_capacity(new_size);
-        if (!slot_) { return; }
+        if (!slot_ || slot_->capacity < new_size) { return; }
         if (new_size > slot_->size) {
             std::memset(slot_->data + slot_->size, 0, new_size - slot_->size);
         }
@@ -147,7 +147,7 @@ public:
         }
         size_t old_size = size();
         ensure_capacity(new_size);
-        if (!slot_) { return; }
+        if (!slot_ || slot_->capacity < new_size) { return; }
         if (new_size > old_size) {
             std::memset(slot_->data + old_size, value, new_size - old_size);
         }
@@ -163,7 +163,7 @@ public:
     void push_back(uint8_t byte) {
         size_t cur = size();
         ensure_capacity(cur + 1);
-        if (!slot_) { return; }
+        if (!slot_ || slot_->capacity < cur + 1) { return; }
         slot_->data[cur] = byte;
         slot_->size = cur + 1;
     }
@@ -174,7 +174,7 @@ public:
         size_t offset = (pos && slot_) ? static_cast<size_t>(pos - slot_->data) : size();
         size_t new_size = size() + insert_count;
         ensure_capacity(new_size);
-        if (!slot_) { return; }
+        if (!slot_ || slot_->capacity < new_size) { return; }
         if (offset < slot_->size) {
             std::memmove(slot_->data + offset + insert_count,
                          slot_->data + offset,
@@ -188,9 +188,9 @@ public:
     const uint8_t& operator[](size_t i) const noexcept { return slot_->data[i]; }
 
     iterator       begin() noexcept { return data(); }
-    iterator       end() noexcept { return data() + size(); }
+    iterator       end() noexcept { return slot_ ? slot_->data + slot_->size : nullptr; }
     const_iterator begin() const noexcept { return data(); }
-    const_iterator end() const noexcept { return data() + size(); }
+    const_iterator end() const noexcept { return slot_ ? slot_->data + slot_->size : nullptr; }
 
     bool operator==(const ByteBuffer& o) const noexcept {
         if (size() != o.size()) { return false; }

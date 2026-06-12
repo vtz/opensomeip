@@ -66,4 +66,52 @@ void* realloc(void* ptr, size_t size) {
 
 }  // extern "C"
 
+// NOLINTBEGIN(cert-dcl58-cpp,misc-new-delete-overloads)
+
+void* operator new(std::size_t size) {
+    std::fprintf(stderr,
+                 "MALLOC TRAP: operator new(%zu) detected\n", size);
+    std::abort();
+    return nullptr;
+}
+
+void* operator new[](std::size_t size) {
+    std::fprintf(stderr,
+                 "MALLOC TRAP: operator new[](%zu) detected\n", size);
+    std::abort();
+    return nullptr;
+}
+
+void operator delete(void* ptr) noexcept {
+    if (ptr) {
+        std::fprintf(stderr, "MALLOC TRAP: operator delete(%p) detected\n", ptr);
+        std::abort();
+    }
+}
+
+void operator delete[](void* ptr) noexcept {
+    if (ptr) {
+        std::fprintf(stderr,
+                     "MALLOC TRAP: operator delete[](%p) detected\n", ptr);
+        std::abort();
+    }
+}
+
+void operator delete(void* ptr, std::size_t) noexcept {
+    if (ptr) {
+        std::fprintf(stderr, "MALLOC TRAP: operator delete(%p, size) detected\n", ptr);
+        std::abort();
+    }
+}
+
+void operator delete[](void* ptr, std::size_t) noexcept {
+    if (ptr) {
+        std::fprintf(stderr,
+                     "MALLOC TRAP: operator delete[](%p, size) detected\n", ptr);
+        std::abort();
+    }
+}
+
+// NOLINTEND(cert-dcl58-cpp,misc-new-delete-overloads)
+
 #endif  // SOMEIP_MALLOC_TRAP

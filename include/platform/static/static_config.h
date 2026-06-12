@@ -124,4 +124,23 @@
 #define SOMEIP_PIMPL_SDSERVER_SIZE 512
 #endif
 
+static_assert(SOMEIP_MESSAGE_POOL_SIZE > 0 &&
+              SOMEIP_MESSAGE_POOL_SIZE <= 65535,
+              "SOMEIP_MESSAGE_POOL_SIZE must fit in uint16_t (1..65535)");
+static_assert(SOMEIP_BYTE_POOL_SMALL_COUNT > 0 &&
+              SOMEIP_BYTE_POOL_SMALL_COUNT <= 65535,
+              "SOMEIP_BYTE_POOL_SMALL_COUNT must fit in uint16_t (1..65535)");
+static_assert(SOMEIP_BYTE_POOL_MEDIUM_COUNT > 0 &&
+              SOMEIP_BYTE_POOL_MEDIUM_COUNT <= 65535,
+              "SOMEIP_BYTE_POOL_MEDIUM_COUNT must fit in uint16_t (1..65535)");
+static_assert(SOMEIP_BYTE_POOL_LARGE_COUNT > 0 &&
+              SOMEIP_BYTE_POOL_LARGE_COUNT <= 65535,
+              "SOMEIP_BYTE_POOL_LARGE_COUNT must fit in uint16_t (1..65535)");
+static_assert(SOMEIP_BYTE_POOL_SMALL_SIZE > 0,
+              "SOMEIP_BYTE_POOL_SMALL_SIZE must be positive");
+static_assert(SOMEIP_BYTE_POOL_MEDIUM_SIZE > SOMEIP_BYTE_POOL_SMALL_SIZE,
+              "SOMEIP_BYTE_POOL_MEDIUM_SIZE must exceed small tier size");
+static_assert(SOMEIP_BYTE_POOL_LARGE_SIZE > SOMEIP_BYTE_POOL_MEDIUM_SIZE,
+              "SOMEIP_BYTE_POOL_LARGE_SIZE must exceed medium tier size");
+
 #endif // SOMEIP_PLATFORM_STATIC_CONFIG_H
