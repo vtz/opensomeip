@@ -14,6 +14,10 @@ inline MessagePtr allocate_message() {
     return std::make_shared<Message>();
 }
 
+inline void release_message(Message* msg) {
+    delete msg;
+}
+
 } // namespace platform
 } // namespace someip
 

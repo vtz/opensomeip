@@ -100,7 +100,6 @@ if(SOMEIP_USE_STATIC_ALLOC)
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/memory.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/buffer_pool.cpp)
     target_link_libraries(opensomeip PUBLIC etl::etl)
-    target_compile_definitions(opensomeip PUBLIC SOMEIP_STATIC_ALLOC)
 
     # Malloc trap object library (linked into verification tests, not into main lib)
     add_library(someip_malloc_trap OBJECT

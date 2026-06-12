@@ -16,10 +16,12 @@
 
 #include "someip/types.h"
 #include "e2e/e2e_header.h"
-#include <vector>
-#include <memory>
+#include "platform/intrusive_ptr.h"
+#include <atomic>
 #include <chrono>
+#include <memory>
 #include <optional>
+#include <vector>
 
 namespace someip {
 
@@ -171,6 +173,11 @@ private:
     // Metadata
     std::chrono::steady_clock::time_point timestamp_;
 
+    mutable std::atomic<uint16_t> ref_count_{0};
+
+    friend void intrusive_ptr_add_ref(const Message* p);
+    friend void intrusive_ptr_release(const Message* p);
+
     // Constants
     static constexpr size_t HEADER_SIZE = 16;
     static constexpr size_t MIN_MESSAGE_SIZE = HEADER_SIZE;
@@ -183,10 +190,12 @@ private:
     bool validate_payload() const;
 };
 
-// Type aliases for convenience
-using MessagePtr = std::shared_ptr<Message>;
-using MessageConstPtr = std::shared_ptr<const Message>;
+void intrusive_ptr_add_ref(const Message* p);
+void intrusive_ptr_release(const Message* p);
 
-} // namespace someip
+}  // namespace someip
+
+// MessagePtr typedef is backend-specific; resolved by include-path shadowing.
+#include "platform/message_ptr.h"
 
 #endif // SOMEIP_MESSAGE_H

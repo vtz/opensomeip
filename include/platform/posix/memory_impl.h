@@ -18,6 +18,10 @@ inline MessagePtr allocate_message() {
     return std::make_shared<Message>();
 }
 
+inline void release_message(Message* msg) {
+    delete msg;
+}
+
 }  // namespace someip::platform
 
 #endif // SOMEIP_PLATFORM_POSIX_MEMORY_IMPL_H

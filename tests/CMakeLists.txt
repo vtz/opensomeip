@@ -78,6 +78,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
             target_include_directories(${TEST_NAME} BEFORE PRIVATE
                 ${MOCK_DIR}
                 ${CMAKE_SOURCE_DIR}/include
+                ${CMAKE_SOURCE_DIR}/include/platform/dynamic
                 ${BACKEND_DIR}
             )
             target_link_libraries(${TEST_NAME} PRIVATE gtest_main Threads::Threads)
@@ -111,7 +112,6 @@ target_link_libraries(test_e2e someip-core gtest_main)
     if(SOMEIP_USE_STATIC_ALLOC)
         add_executable(test_static_alloc test_static_alloc.cpp)
         target_link_libraries(test_static_alloc opensomeip gtest_main)
-        target_compile_definitions(test_static_alloc PRIVATE SOMEIP_STATIC_ALLOC)
         add_test(NAME StaticAllocTest COMMAND test_static_alloc)
         set_tests_properties(StaticAllocTest PROPERTIES TIMEOUT 30)
     endif()

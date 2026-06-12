@@ -17,10 +17,7 @@
 #include "someip/types.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
-
-#ifdef SOMEIP_STATIC_ALLOC
 #include "platform/memory.h"
-#endif
 
 #include <chrono>
 #include <cstddef>
@@ -79,10 +76,8 @@ Message::Message(MessageId message_id, RequestId request_id,
     update_length();
 }
 
-#ifdef SOMEIP_STATIC_ALLOC
-// std::atomic<uint16_t> ref_count_ is non-copyable; explicit copy ctor
-// initialises the new Message with ref_count_ = 0 (default) while copying
-// all other members.
+// std::atomic<uint16_t> ref_count_ is non-copyable, so the copy ctor must be
+// explicit.  A fresh copy always starts with ref_count_ = 0 (value-init).
 Message::Message(const Message& other)
     : message_id_(other.message_id_),
       length_(other.length_),
@@ -95,9 +90,6 @@ Message::Message(const Message& other)
       e2e_header_(other.e2e_header_),
       timestamp_(other.timestamp_) {
 }
-#else
-Message::Message(const Message& other) = default;
-#endif
 
 Message::Message(Message&& other) noexcept
     : message_id_(other.message_id_),
@@ -558,7 +550,6 @@ std::string Message::to_string() const {
 
 // NOLINTEND(misc-include-cleaner)
 
-#ifdef SOMEIP_STATIC_ALLOC
 void intrusive_ptr_add_ref(const Message* p) {
     if (p) {
         p->ref_count_.fetch_add(1, std::memory_order_relaxed);
@@ -570,6 +561,5 @@ void intrusive_ptr_release(const Message* p) {
         platform::release_message(const_cast<Message*>(p));
     }
 }
-#endif
 
 } // namespace someip
