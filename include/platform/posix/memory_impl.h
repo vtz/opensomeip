@@ -19,7 +19,7 @@ inline MessagePtr allocate_message() {
 }
 
 inline void release_message(Message* msg) {
-    delete msg;
+    delete msg;  // NOLINT(cppcoreguidelines-owning-memory)
 }
 
 }  // namespace someip::platform

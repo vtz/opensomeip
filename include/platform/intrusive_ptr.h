@@ -33,7 +33,7 @@ class IntrusivePtr {
 public:
     IntrusivePtr() noexcept = default;
 
-    // NOLINTNEXTLINE(google-explicit-constructor)
+    // NOLINTNEXTLINE(google-explicit-constructor,hicpp-explicit-conversions)
     IntrusivePtr(std::nullptr_t) noexcept {}
 
     explicit IntrusivePtr(T* p, bool add_ref = true) noexcept : ptr_(p) {

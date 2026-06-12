@@ -17,8 +17,10 @@
 #include "someip/types.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - release_message() resolved via memory_impl.h
 #include "platform/memory.h"
 
+#include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -550,16 +552,20 @@ std::string Message::to_string() const {
 
 // NOLINTEND(misc-include-cleaner)
 
+// NOLINTBEGIN(misc-include-cleaner) - memory_order_* from <atomic>, release_message from memory_impl.h
+
 void intrusive_ptr_add_ref(const Message* p) {
-    if (p) {
+    if (p != nullptr) {
         p->ref_count_.fetch_add(1, std::memory_order_relaxed);
     }
 }
 
 void intrusive_ptr_release(const Message* p) {
-    if (p && p->ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
-        platform::release_message(const_cast<Message*>(p));
+    if (p != nullptr && p->ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+        platform::release_message(const_cast<Message*>(p));  // NOLINT(cppcoreguidelines-pro-type-const-cast)
     }
 }
+
+// NOLINTEND(misc-include-cleaner)
 
 } // namespace someip
