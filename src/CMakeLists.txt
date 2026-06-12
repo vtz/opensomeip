@@ -107,7 +107,6 @@ if(SOMEIP_USE_STATIC_ALLOC)
     target_compile_definitions(opensomeip PUBLIC
         ETL_LOG_ERRORS=1
         ETL_THROW_EXCEPTIONS=0
-        ETL_NO_STL=1
     )
 
     # Malloc trap object library (linked into verification tests, not into main lib)

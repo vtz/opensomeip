@@ -839,10 +839,13 @@ Container Interface
    so protocol layers can implement safe failure modes.
 
    **Error Handling**: Return ``false`` or an error indicator; container
-   internals remain consistent.
+   internals remain consistent. When ``SOMEIP_USE_STATIC_ALLOC`` is enabled,
+   ETL containers are configured with ``ETL_THROW_EXCEPTIONS=0`` and
+   ``ETL_LOG_ERRORS=1``; insertion failures are signaled via return codes
+   rather than exceptions.
 
-   **Code Location**: ``include/platform/static/containers_impl.h``
-   (ETL container overflow behavior governed by the ETL error handler)
+   **Code Location**: ``include/platform/static/containers_impl.h``,
+   ``src/CMakeLists.txt`` (ETL build flags)
 
 Buffer Pool Interface
 ---------------------
@@ -968,7 +971,7 @@ Static Configuration Interface
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: ``test_intrusive_ptr.cpp`` — TC_INTRUSIVE_PTR_LIFETIME. Create MessagePtr from pool-allocated Message; copy and release references; verify object returns to pool when refcount reaches zero without heap allocation.
+   :verification: Unit test: ``test_static_alloc.cpp`` — TC_INTRUSIVE_PTR_LIFETIME. Create MessagePtr from pool-allocated Message; copy and release references; verify object returns to pool when refcount reaches zero without heap allocation.
 
    ``MessagePtr`` shall use intrusive reference counting embedded in the
    ``Message`` object rather than ``std::shared_ptr`` control blocks.
@@ -979,7 +982,8 @@ Static Configuration Interface
    intrusive counting enables shared ownership within a fixed pool.
 
    **Code Location**: ``include/platform/intrusive_ptr.h``,
-   ``include/common/message.h``
+   ``include/someip/message.h`` (``ref_count_``, ``intrusive_ptr_add_ref``,
+   ``intrusive_ptr_release``)
 
 .. requirement:: No-Heap Runtime Verification
    :id: REQ_PAL_NOOP_HEAP_VERIFY
@@ -987,7 +991,7 @@ Static Configuration Interface
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: ``test_no_heap.cpp`` — TC_NO_HEAP_PROTOCOL_RUN. Run full protocol unit-test suite with heap-interception stubs; verify zero calls to ``malloc``, ``free``, ``new``, and ``delete`` during test execution.
+   :verification: Unit test: ``test_static_alloc.cpp`` — TC_NO_HEAP_PROTOCOL_RUN. Run full protocol unit-test suite with heap-interception stubs (``malloc_trap.cpp``); verify zero calls to ``malloc``, ``free``, ``new``, and ``delete`` during test execution.
 
    When ``SOMEIP_USE_STATIC_ALLOC`` is enabled, the build shall link a
    heap-interception layer that aborts or records any call to ``malloc``,

@@ -16,17 +16,24 @@
  *            TC_BUFPOOL_TIER_SELECT, TC_BUFPOOL_EXHAUST,
  *            TC_BUFPOOL_TIERED_ALLOC, TC_BUFPOOL_CONCURRENT,
  *            TC_STATIC_MSG_POOL_ALLOC, TC_INTRUSIVE_PTR_LIFETIME,
- *            TC_BYTEBUFFER_API, TC_PIMPL_NO_HEAP
+ *            TC_BYTEBUFFER_API, TC_PIMPL_NO_HEAP,
+ *            TC_CONTAINER_VECTOR_PUSH_BACK, TC_CONTAINER_STRING_APPEND,
+ *            TC_CONTAINER_MAP_INSERT_LOOKUP, TC_CONTAINER_QUEUE_FIFO,
+ *            TC_CONTAINER_FUNCTION_INVOKE, TC_CONTAINER_CAPACITY_EXHAUST
  * @tests REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_RELEASE,
  *        REQ_PAL_BUFPOOL_TIERED, REQ_PAL_BUFPOOL_EXHAUST_E01,
  *        REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_003,
  *        REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_EXHAUST_E01,
- *        REQ_PAL_INTRUSIVE_PTR
+ *        REQ_PAL_INTRUSIVE_PTR,
+ *        REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING,
+ *        REQ_PAL_CONTAINER_MAP, REQ_PAL_CONTAINER_QUEUE,
+ *        REQ_PAL_CONTAINER_FUNCTION, REQ_PAL_CONTAINER_CAPACITY_EXHAUST
  */
 
 #include <gtest/gtest.h>
 
 #include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/intrusive_ptr.h"
 #include "platform/memory.h"
 #include "platform/thread.h"
@@ -435,6 +442,108 @@ TEST(ConcurrentTest, MessagePoolThreadSafety) {
     }
 
     EXPECT_GT(success_count.load(), 0);
+}
+
+// --- Container conformance tests ---
+
+/**
+ * @test_case TC_CONTAINER_VECTOR_PUSH_BACK
+ * @tests REQ_PAL_CONTAINER_VECTOR
+ */
+TEST(ContainerTest, VectorPushBack) {
+    Vector<int, 8> v;
+    for (int i = 0; i < 8; ++i) {
+        v.push_back(i);
+    }
+    EXPECT_EQ(v.size(), 8U);
+    for (int i = 0; i < 8; ++i) {
+        EXPECT_EQ(v[i], i);
+    }
+    int sum = 0;
+    for (auto val : v) {
+        sum += val;
+    }
+    EXPECT_EQ(sum, 28);
+}
+
+/**
+ * @test_case TC_CONTAINER_STRING_APPEND
+ * @tests REQ_PAL_CONTAINER_STRING
+ */
+TEST(ContainerTest, StringAppend) {
+    String<32> s;
+    s.append("hello");
+    s.append(" world");
+    EXPECT_EQ(s.size(), 11U);
+    EXPECT_STREQ(s.c_str(), "hello world");
+    EXPECT_TRUE(s == "hello world");
+}
+
+/**
+ * @test_case TC_CONTAINER_MAP_INSERT_LOOKUP
+ * @tests REQ_PAL_CONTAINER_MAP
+ */
+TEST(ContainerTest, MapInsertLookup) {
+    UnorderedMap<int, int, 8> m;
+    m[1] = 10;
+    m[2] = 20;
+    m[3] = 30;
+    EXPECT_EQ(m.size(), 3U);
+    EXPECT_NE(m.find(2), m.end());
+    EXPECT_EQ(m.find(2)->second, 20);
+    m.erase(2);
+    EXPECT_EQ(m.size(), 2U);
+    EXPECT_EQ(m.find(2), m.end());
+}
+
+/**
+ * @test_case TC_CONTAINER_QUEUE_FIFO
+ * @tests REQ_PAL_CONTAINER_QUEUE
+ */
+TEST(ContainerTest, QueueFIFO) {
+    Queue<int, 4> q;
+    EXPECT_TRUE(q.empty());
+    q.push(1);
+    q.push(2);
+    q.push(3);
+    EXPECT_EQ(q.size(), 3U);
+    EXPECT_EQ(q.front(), 1);
+    q.pop();
+    EXPECT_EQ(q.front(), 2);
+    q.pop();
+    EXPECT_EQ(q.front(), 3);
+    q.pop();
+    EXPECT_TRUE(q.empty());
+}
+
+/**
+ * @test_case TC_CONTAINER_FUNCTION_INVOKE
+ * @tests REQ_PAL_CONTAINER_FUNCTION
+ */
+TEST(ContainerTest, FunctionInvoke) {
+    int captured = 42;
+    Function<int(int), 32> fn = [captured](int x) { return captured + x; };
+    EXPECT_EQ(fn(8), 50);
+}
+
+/**
+ * @test_case TC_CONTAINER_CAPACITY_EXHAUST
+ * @tests REQ_PAL_CONTAINER_CAPACITY_EXHAUST
+ */
+TEST(ContainerTest, CapacityExhaust) {
+    Vector<int, 4> v;
+    v.push_back(1);
+    v.push_back(2);
+    v.push_back(3);
+    v.push_back(4);
+    EXPECT_EQ(v.size(), 4U);
+    EXPECT_TRUE(v.full());
+
+    Queue<int, 2> q;
+    q.push(1);
+    q.push(2);
+    EXPECT_EQ(q.size(), 2U);
+    EXPECT_TRUE(q.full());
 }
 
 }  // namespace
