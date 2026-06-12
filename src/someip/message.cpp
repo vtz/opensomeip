@@ -21,6 +21,7 @@
 #include "platform/memory.h"
 
 #include <atomic>
+#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -556,7 +557,9 @@ std::string Message::to_string() const {
 
 void intrusive_ptr_add_ref(const Message* p) {
     if (p != nullptr) {
-        p->ref_count_.fetch_add(1, std::memory_order_relaxed);
+        [[maybe_unused]] auto prev =
+            p->ref_count_.fetch_add(1, std::memory_order_relaxed);
+        assert(prev < UINT16_MAX && "ref_count_ saturated — likely a reference leak");
     }
 }
 

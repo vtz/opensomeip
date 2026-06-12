@@ -101,6 +101,15 @@ if(SOMEIP_USE_STATIC_ALLOC)
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/buffer_pool.cpp)
     target_link_libraries(opensomeip PUBLIC etl::etl)
 
+    # ETL safety configuration: disable exceptions, enable error logging.
+    # The custom error handler (when registered) surfaces container overflow
+    # as a return code rather than abort() — required for FMEA compliance.
+    target_compile_definitions(opensomeip PUBLIC
+        ETL_LOG_ERRORS=1
+        ETL_THROW_EXCEPTIONS=0
+        ETL_NO_STL=1
+    )
+
     # Malloc trap object library (linked into verification tests, not into main lib)
     add_library(someip_malloc_trap OBJECT
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/malloc_trap.cpp)

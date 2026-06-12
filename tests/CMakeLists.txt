@@ -115,6 +115,27 @@ target_link_libraries(test_e2e someip-core gtest_main)
         target_link_libraries(test_static_alloc opensomeip gtest_main)
         add_test(NAME StaticAllocTest COMMAND test_static_alloc)
         set_tests_properties(StaticAllocTest PROPERTIES TIMEOUT 30)
+
+        # PAL conformance for the static-alloc backend.
+        # Uses real static pools (memory.cpp, buffer_pool.cpp) + POSIX threading.
+        if(NOT WIN32)
+            add_executable(test_pal_static_alloc_mock
+                test_pal_static_alloc_mock.cpp
+                ${PAL_MOCK_CORE_SOURCES}
+                ${CMAKE_SOURCE_DIR}/src/platform/static/memory.cpp
+                ${CMAKE_SOURCE_DIR}/src/platform/static/buffer_pool.cpp
+            )
+            target_include_directories(test_pal_static_alloc_mock BEFORE PRIVATE
+                ${CMAKE_SOURCE_DIR}/include
+                ${CMAKE_SOURCE_DIR}/include/platform/static
+                ${CMAKE_SOURCE_DIR}/include/platform/posix
+            )
+            target_link_libraries(test_pal_static_alloc_mock PRIVATE
+                gtest_main Threads::Threads etl::etl)
+            target_compile_features(test_pal_static_alloc_mock PRIVATE cxx_std_17)
+            add_test(NAME test_pal_static_alloc_mock COMMAND test_pal_static_alloc_mock)
+            set_tests_properties(test_pal_static_alloc_mock PROPERTIES TIMEOUT 30)
+        endif()
     endif()
 
     # Register available tests
