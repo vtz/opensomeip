@@ -171,6 +171,69 @@ jobs:
           path: ${{ github.workspace }}/gtest_results/
           retention-days: 14
 
+  build-static:
+    name: Static allocation (no-heap)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-static-alloc-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-static-alloc-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: fetchcontent-${{ runner.os }}-static-alloc-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-${{ runner.os }}-static-alloc-
+
+      - name: Configure CMake (static allocation)
+        run: >
+          cmake -B build
+          -DCMAKE_CXX_COMPILER=g++
+          -DCMAKE_C_COMPILER=gcc
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          -DCMAKE_BUILD_TYPE=Release
+          -DSOMEIP_USE_STATIC_ALLOC=ON
+          -DENABLE_WERROR=ON
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Test
+        working-directory: build
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/gtest_results"
+          export GTEST_OUTPUT="xml:$GITHUB_WORKSPACE/gtest_results/"
+          ctest --build-config Release --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-host-static-alloc
+          path: build/junit_results.xml
+          retention-days: 14
+
+      - name: Upload GTest detailed results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gtest-results-host-static-alloc
+          path: ${{ github.workspace }}/gtest_results/
+          retention-days: 14
+
   coverage:
     runs-on: ubuntu-latest
     needs: build
@@ -360,7 +423,7 @@ jobs:
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [build, build-fedora, coverage, sanitizers]
+    needs: [build, build-fedora, build-static, coverage, sanitizers]
     if: always()
     permissions:
       checks: write

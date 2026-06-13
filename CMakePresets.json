@@ -170,6 +170,17 @@
         "SOMEIP_THREADX_RENODE_TESTS": "ON",
         "ARM_FLOAT_ABI": "soft"
       }
+    },
+    {
+      "name": "static-alloc-linux-tests",
+      "displayName": "Static Allocation (No-Heap) with Tests",
+      "description": "Host build with static allocation backend and unit tests. Exercises slab pools, ETL containers, malloc trap, and PAL conformance for no-heap lockstep mode.",
+      "inherits": "base",
+      "cacheVariables": {
+        "SOMEIP_USE_STATIC_ALLOC": "ON",
+        "BUILD_TESTS": "ON",
+        "BUILD_EXAMPLES": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -232,6 +243,10 @@
     {
       "name": "threadx-cortexm4-renode",
       "configurePreset": "threadx-cortexm4-renode"
+    },
+    {
+      "name": "static-alloc-linux-tests",
+      "configurePreset": "static-alloc-linux-tests"
     }
   ],
   "testPresets": [
@@ -282,6 +297,17 @@
     {
       "name": "threadx-linux-tests",
       "configurePreset": "threadx-linux-tests",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "timeout": 30,
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "static-alloc-linux-tests",
+      "configurePreset": "static-alloc-linux-tests",
       "output": {
         "outputOnFailure": true
       },

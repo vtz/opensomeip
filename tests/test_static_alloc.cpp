@@ -19,7 +19,8 @@
  *            TC_BYTEBUFFER_API, TC_PIMPL_NO_HEAP,
  *            TC_CONTAINER_VECTOR_PUSH_BACK, TC_CONTAINER_STRING_APPEND,
  *            TC_CONTAINER_MAP_INSERT_LOOKUP, TC_CONTAINER_QUEUE_FIFO,
- *            TC_CONTAINER_FUNCTION_INVOKE, TC_CONTAINER_CAPACITY_EXHAUST
+ *            TC_CONTAINER_FUNCTION_INVOKE, TC_CONTAINER_CAPACITY_EXHAUST,
+ *            TC_NO_HEAP_VERIFY
  * @tests REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_RELEASE,
  *        REQ_PAL_BUFPOOL_TIERED, REQ_PAL_BUFPOOL_EXHAUST_E01,
  *        REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_003,
@@ -27,7 +28,8 @@
  *        REQ_PAL_INTRUSIVE_PTR,
  *        REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING,
  *        REQ_PAL_CONTAINER_MAP, REQ_PAL_CONTAINER_QUEUE,
- *        REQ_PAL_CONTAINER_FUNCTION, REQ_PAL_CONTAINER_CAPACITY_EXHAUST
+ *        REQ_PAL_CONTAINER_FUNCTION, REQ_PAL_CONTAINER_CAPACITY_EXHAUST,
+ *        REQ_PAL_NOOP_HEAP_VERIFY
  */
 
 #include <gtest/gtest.h>
@@ -269,6 +271,23 @@ TEST_F(BufferPoolTest, ExhaustAllTiers) {
 
 TEST_F(BufferPoolTest, NullReleaseIsSafe) {
     release_buffer(nullptr);
+}
+
+TEST_F(BufferPoolTest, DoubleReleaseIsSafe) {
+    BufferSlot* s = acquire_buffer(32);
+    ASSERT_NE(s, nullptr);
+
+    release_buffer(s);
+    release_buffer(s);
+
+    BufferSlot* a = acquire_buffer(32);
+    BufferSlot* b = acquire_buffer(32);
+    ASSERT_NE(a, nullptr);
+    ASSERT_NE(b, nullptr);
+    EXPECT_NE(a, b) << "Double-release must not cause same slot to be handed out twice";
+
+    release_buffer(a);
+    release_buffer(b);
 }
 
 TEST_F(BufferPoolTest, WriteToSlot) {

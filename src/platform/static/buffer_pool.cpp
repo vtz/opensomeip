@@ -56,11 +56,16 @@ alignas(8) static uint8_t slab_2[SOMEIP_BYTE_POOL_LARGE_COUNT * SOMEIP_BYTE_POOL
 static BufferSlot         slots_2[SOMEIP_BYTE_POOL_LARGE_COUNT];
 static uint16_t           free_stack_2[SOMEIP_BYTE_POOL_LARGE_COUNT];
 
+static bool in_use_0[SOMEIP_BYTE_POOL_SMALL_COUNT];
+static bool in_use_1[SOMEIP_BYTE_POOL_MEDIUM_COUNT];
+static bool in_use_2[SOMEIP_BYTE_POOL_LARGE_COUNT];
+
 static uint16_t stack_top[kNumTiers] = {0, 0, 0};
 
 static uint8_t*    slab_ptrs[kNumTiers]       = {slab_0, slab_1, slab_2};
 static BufferSlot* slot_arrays[kNumTiers]      = {slots_0, slots_1, slots_2};
 static uint16_t*   free_stack_ptrs[kNumTiers]  = {free_stack_0, free_stack_1, free_stack_2};
+static bool*       in_use_ptrs[kNumTiers]      = {in_use_0, in_use_1, in_use_2};
 
 static Mutex pool_mutex;
 static std::atomic<bool> pool_initialized{false};
@@ -74,6 +79,7 @@ void init_pool() {
             slot_arrays[t][i].tier     = static_cast<uint8_t>(t);
             slot_arrays[t][i].index    = static_cast<uint16_t>(i);
             free_stack_ptrs[t][i]      = static_cast<uint16_t>(i);
+            in_use_ptrs[t][i]          = false;
         }
         stack_top[t] = static_cast<uint16_t>(kTierCount[t]);
     }
@@ -114,6 +120,7 @@ BufferSlot* acquire_buffer(size_t requested_size) {
             uint16_t idx = free_stack_ptrs[t][stack_top[t]];
             BufferSlot* s = &slot_arrays[t][idx];
             s->size = 0;
+            in_use_ptrs[t][idx] = true;
             return s;
         }
     }
@@ -129,7 +136,9 @@ void release_buffer(BufferSlot* slot) {
     if (t >= kNumTiers) { return; }
     if (slot->index >= kTierCount[t]) { return; }
     if (&slot_arrays[t][slot->index] != slot) { return; }
+    if (!in_use_ptrs[t][slot->index]) { return; }
 
+    in_use_ptrs[t][slot->index] = false;
     if (stack_top[t] < kTierCount[t]) {
         free_stack_ptrs[t][stack_top[t]] = slot->index;
         ++stack_top[t];
