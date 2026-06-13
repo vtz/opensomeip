@@ -133,7 +133,11 @@ target_link_libraries(test_e2e someip-core gtest_main)
             target_link_libraries(test_pal_static_alloc_mock PRIVATE
                 gtest_main Threads::Threads etl::etl)
             target_compile_features(test_pal_static_alloc_mock PRIVATE cxx_std_17)
-            add_test(NAME test_pal_static_alloc_mock COMMAND test_pal_static_alloc_mock)
+            # DestructorWithoutJoinSafe expects non-terminating destruction,
+            # but the POSIX Thread correctly calls std::terminate per
+            # REQ_PAL_THREAD_DTOR_E01. Exclude it from this target.
+            add_test(NAME test_pal_static_alloc_mock COMMAND test_pal_static_alloc_mock
+                --gtest_filter=-ThreadConformance.DestructorWithoutJoinSafe)
             set_tests_properties(test_pal_static_alloc_mock PROPERTIES TIMEOUT 30)
         endif()
     endif()

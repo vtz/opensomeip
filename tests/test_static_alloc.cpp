@@ -34,6 +34,7 @@
 
 #include <gtest/gtest.h>
 
+#include "malloc_trap.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 #include "platform/intrusive_ptr.h"
@@ -563,6 +564,39 @@ TEST(ContainerTest, CapacityExhaust) {
     q.push(2);
     EXPECT_EQ(q.size(), 2U);
     EXPECT_TRUE(q.full());
+}
+
+// --- No-heap verification ---
+
+/**
+ * @test_case TC_NO_HEAP_VERIFY
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ *
+ * Arms the malloc trap, exercises core protocol-layer allocations (message
+ * pool, buffer pool, intrusive ptr lifecycle), then disarms. Any heap call
+ * while armed aborts the process, proving the static backend is heap-free.
+ */
+TEST(NoHeapTest, ProtocolOperationsUnderTrap) {
+    malloc_trap_arm();
+
+    auto msg = allocate_message();
+    ASSERT_NE(msg, nullptr);
+    msg->set_service_id(0xABCD);
+    EXPECT_EQ(msg->get_service_id(), 0xABCD);
+
+    {
+        auto copy = msg;
+        EXPECT_EQ(copy->get_service_id(), 0xABCD);
+    }
+
+    msg.reset();
+
+    BufferSlot* slot = acquire_buffer(64);
+    ASSERT_NE(slot, nullptr);
+    slot->data[0] = 0x42;
+    release_buffer(slot);
+
+    malloc_trap_disarm();
 }
 
 }  // namespace
