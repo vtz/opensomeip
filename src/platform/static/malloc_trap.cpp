@@ -30,6 +30,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
+#include <new>
 
 extern "C" {
 
