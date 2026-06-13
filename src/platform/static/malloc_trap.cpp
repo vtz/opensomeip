@@ -68,18 +68,16 @@ void* realloc(void* ptr, size_t size) {
 
 // NOLINTBEGIN(cert-dcl58-cpp,misc-new-delete-overloads)
 
-void* operator new(std::size_t size) {
+void* operator new(std::size_t size) noexcept {
     std::fprintf(stderr,
                  "MALLOC TRAP: operator new(%zu) detected\n", size);
     std::abort();
-    return nullptr;
 }
 
-void* operator new[](std::size_t size) {
+void* operator new[](std::size_t size) noexcept {
     std::fprintf(stderr,
                  "MALLOC TRAP: operator new[](%zu) detected\n", size);
     std::abort();
-    return nullptr;
 }
 
 void operator delete(void* ptr) noexcept {
