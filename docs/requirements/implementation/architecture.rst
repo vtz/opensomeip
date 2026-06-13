@@ -199,7 +199,7 @@ Static Allocation
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Build with ``SOMEIP_USE_STATIC_ALLOC=ON`` and run unit tests with heap-interception enabled (``REQ_PAL_NOOP_HEAP_VERIFY``). Verify no ``malloc``/``new`` calls occur during protocol operation. Inspect container and pool types for compile-time capacity bounds.
+   :verification: Build with ``SOMEIP_USE_STATIC_ALLOC=ON`` and run unit tests with heap-interception enabled (``REQ_PAL_NOOP_HEAP_VERIFY``). Verify no ``malloc``, ``free``, ``new``, or ``delete`` calls occur during protocol operation. Inspect container and pool types for compile-time capacity bounds.
 
    When ``SOMEIP_USE_STATIC_ALLOC`` is enabled, the stack shall not perform
    dynamic memory allocation (heap) at runtime. All buffers, containers, and
