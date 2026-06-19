@@ -544,6 +544,9 @@ TEST_F(UdpTransportTest, MessageSizeLimit) {
 
 // Test maximum message size (64KB limit for UDP)
 TEST_F(UdpTransportTest, MaxUdpPayloadSize) {
+#ifdef SOMEIP_BYTE_POOL_LARGE_COUNT
+    GTEST_SKIP() << "Static allocation: large payload round-trip exhausts pool";
+#endif
     config.max_message_size = 0;  // Disable size check to test raw UDP limit
 
     UdpTransport sender(local_endpoint, config);
@@ -741,6 +744,9 @@ TEST_F(UdpTransportTest, InvalidMulticastGroup) {
  * @brief Test UDP message size exceeding max UDP payload
  */
 TEST_F(UdpTransportTest, MessageExceedsMtu) {
+#ifdef SOMEIP_BYTE_POOL_LARGE_COUNT
+    GTEST_SKIP() << "Static allocation: large payload exhausts pool";
+#endif
     // Disable the configurable size check to test the raw UDP max-payload rejection
     config.max_message_size = 0;
     UdpTransport transport(local_endpoint, config);

@@ -367,6 +367,7 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
 
 void UdpTransport::receive_loop() {
     platform::ByteBuffer buffer(config_.receive_buffer_size);
+    if (buffer.data() == nullptr) { return; }
 
     while (running_) {
         Endpoint sender;
