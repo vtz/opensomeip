@@ -663,7 +663,7 @@ private:
 
         platform::String<> client_addr(client_ip);
         client_addr.append(":");
-        client_addr.append(std::to_string(client_port).c_str());
+        client_addr.append(std::to_string(client_port).c_str()); // NOLINT(readability-redundant-string-cstr) ETL compat
         handle_eventgroup_subscription(
             service_id, instance_id, eventgroup_id,
             client_addr, true, ttl
@@ -674,7 +674,7 @@ private:
                                uint16_t eventgroup_id, const transport::Endpoint& sender) {
         platform::String<> client_addr(sender.get_address());
         client_addr.append(":");
-        client_addr.append(std::to_string(sender.get_port()).c_str());
+        client_addr.append(std::to_string(sender.get_port()).c_str()); // NOLINT(readability-redundant-string-cstr) ETL compat
         handle_eventgroup_subscription(
             service_id, instance_id, eventgroup_id,
             client_addr, true, 0

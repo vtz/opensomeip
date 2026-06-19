@@ -288,6 +288,7 @@ private:
         return transport::Endpoint(default_service_address_, default_service_port_);
     }
 
+    // NOLINTBEGIN(readability-redundant-string-cstr) .c_str() required for ETL backend
     platform::String<> make_subscription_key(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) const {
         platform::String<> key;
         key.append(std::to_string(service_id).c_str());
@@ -307,6 +308,7 @@ private:
         key.append(std::to_string(event_id).c_str());
         return key;
     }
+    // NOLINTEND(readability-redundant-string-cstr)
 
     void on_message_received(MessagePtr message, const transport::Endpoint& /*sender*/) override {
         // Check if this is an event notification
