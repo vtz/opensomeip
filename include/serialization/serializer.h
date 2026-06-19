@@ -15,16 +15,17 @@
 #define SOMEIP_SERIALIZATION_SERIALIZER_H
 
 #include <climits>
-#include <vector>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <string>
 #include <memory>
 #include <optional>
+#include <string>
 #include "../common/result.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_htonl macro from byteorder_impl.h
 #include "../platform/byteorder.h"
+#include "../platform/buffer_pool.h"
+#include "../platform/containers.h"
 
 namespace someip::serialization {
 
@@ -143,15 +144,15 @@ public:
     void serialize_int64(int64_t value);
     void serialize_float(float value);
     void serialize_double(double value);
-    void serialize_string(const std::string& value);
+    void serialize_string(const platform::String<>& value);
 
     // Array serialization
     template<typename T>
-    void serialize_array(const std::vector<T>& array);
+    void serialize_array(const platform::Vector<T>& array);
 
     // Get serialized data
-    const std::vector<uint8_t>& get_buffer() const { return buffer_; }
-    std::vector<uint8_t>&& move_buffer() { return std::move(buffer_); }
+    const platform::ByteBuffer& get_buffer() const { return buffer_; }
+    platform::ByteBuffer&& move_buffer() { return std::move(buffer_); }
     size_t get_size() const { return buffer_.size(); }
 
     // Utility methods
@@ -159,7 +160,7 @@ public:
     void add_padding(size_t bytes);
 
 private:
-    std::vector<uint8_t> buffer_;
+    platform::ByteBuffer buffer_;
 
     // Helper methods for endianness conversion
     void append_be_uint16(uint16_t value);
@@ -184,13 +185,13 @@ public:
      * @brief Constructor
      * @param data The data to deserialize from
      */
-    explicit Deserializer(const std::vector<uint8_t>& data);
+    explicit Deserializer(const platform::ByteBuffer& data);
 
     /**
      * @brief Constructor with data ownership
      * @param data The data to deserialize from (moved)
      */
-    explicit Deserializer(std::vector<uint8_t>&& data);
+    explicit Deserializer(platform::ByteBuffer&& data);
 
     /**
      * @brief Destructor
@@ -223,11 +224,11 @@ public:
 
     // Array deserialization
     template<typename T>
-    DeserializationResult<std::vector<T>> deserialize_array(size_t length);
+    DeserializationResult<platform::Vector<T>> deserialize_array(size_t length);
 
     // Dynamic array deserialization with length validation
     template<typename T>
-    DeserializationResult<std::vector<T>> deserialize_dynamic_array();
+    DeserializationResult<platform::Vector<T>> deserialize_dynamic_array();
 
     // Status and navigation
     bool is_valid() const { return position_ <= buffer_.size(); }
@@ -240,7 +241,7 @@ public:
     void align_to(size_t alignment);
 
 private:
-    std::vector<uint8_t> buffer_;
+    platform::ByteBuffer buffer_;
     size_t position_;
 
     // Helper methods for endianness conversion
@@ -257,7 +258,7 @@ private:
 // Template implementations (must be in header)
 
 template<typename T>
-void Serializer::serialize_array(const std::vector<T>& array) {
+void Serializer::serialize_array(const platform::Vector<T>& array) {
     // Per SOME/IP spec: length prefix is byte length of the serialized array data.
     // Write a placeholder, serialize elements, then back-fill with actual byte length.
     size_t const length_pos = buffer_.size();
@@ -309,9 +310,8 @@ void Serializer::serialize_array(const std::vector<T>& array) {
 }
 
 template<typename T>
-DeserializationResult<std::vector<T>> Deserializer::deserialize_array(size_t length) {
-    std::vector<T> result;
-    result.reserve(length);
+DeserializationResult<platform::Vector<T>> Deserializer::deserialize_array(size_t length) {
+    platform::Vector<T> result;
 
     for (size_t i = 0; i < length; ++i) {
         DeserializationResult<T> element_result;
@@ -346,21 +346,21 @@ DeserializationResult<std::vector<T>> Deserializer::deserialize_array(size_t len
         }
 
         if (element_result.is_error()) {
-            return DeserializationResult<std::vector<T>>::error(element_result.get_error());
+            return DeserializationResult<platform::Vector<T>>::error(element_result.get_error());
         }
 
         result.push_back(element_result.move_value());
     }
 
-    return DeserializationResult<std::vector<T>>::success(std::move(result));
+    return DeserializationResult<platform::Vector<T>>::success(std::move(result));
 }
 
 template<typename T>
-DeserializationResult<std::vector<T>> Deserializer::deserialize_dynamic_array() {
+DeserializationResult<platform::Vector<T>> Deserializer::deserialize_dynamic_array() {
     // Read length prefix (in bytes)
     auto length_result = deserialize_uint32();
     if (length_result.is_error()) {
-        return DeserializationResult<std::vector<T>>::error(length_result.get_error());
+        return DeserializationResult<platform::Vector<T>>::error(length_result.get_error());
     }
 
     const uint32_t byte_length = length_result.get_value();
@@ -368,7 +368,7 @@ DeserializationResult<std::vector<T>> Deserializer::deserialize_dynamic_array() 
     // Validate that byte length is multiple of element size (REQ_SER_082_E01)
     size_t element_size = sizeof(T);
     if (byte_length % element_size != 0) {
-        return DeserializationResult<std::vector<T>>::error(Result::MALFORMED_MESSAGE);
+        return DeserializationResult<platform::Vector<T>>::error(Result::MALFORMED_MESSAGE);
     }
 
     size_t element_count = byte_length / element_size;

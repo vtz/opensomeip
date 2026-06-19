@@ -15,8 +15,10 @@
 #define SOMEIP_EVENTS_PUBLISHER_H
 
 #include "event_types.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <memory>
-#include <vector>
 
 namespace someip::events {
 
@@ -94,7 +96,7 @@ public:
      * @param data Event data payload
      * @return true if published successfully, false on error
      */
-    bool publish_event(uint16_t event_id, const std::vector<uint8_t>& data);
+    bool publish_event(uint16_t event_id, const platform::ByteBuffer& data);
 
     /**
      * @brief Publish a field notification (immediate update)
@@ -103,7 +105,7 @@ public:
      * @param data Field data payload
      * @return true if published successfully, false on error
      */
-    bool publish_field(uint16_t event_id, const std::vector<uint8_t>& data);
+    bool publish_field(uint16_t event_id, const platform::ByteBuffer& data);
 
     /**
      * @brief Set the default client endpoint for subscriptions that don't
@@ -111,7 +113,7 @@ public:
      * @param address Client IP address
      * @param port    Client port
      */
-    void set_default_client_endpoint(const std::string& address, uint16_t port);
+    void set_default_client_endpoint(const platform::String<>& address, uint16_t port);
 
     /**
      * @brief Handle event subscription request
@@ -122,7 +124,7 @@ public:
      * @return true if subscription handled, false on error
      */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
-                           const std::vector<EventFilter>& filters = {});
+                           const platform::Vector<EventFilter>& filters = {});
 
     /**
      * @brief Handle event subscription request with explicit TTL
@@ -140,7 +142,7 @@ public:
      */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            uint32_t ttl_seconds,
-                           const std::vector<EventFilter>& filters = {});
+                           const platform::Vector<EventFilter>& filters = {});
 
     /**
      * @brief Handle event unsubscription
@@ -166,7 +168,7 @@ public:
      *
      * @return Vector of registered event IDs
      */
-    std::vector<uint16_t> get_registered_events() const;
+    platform::Vector<uint16_t> get_registered_events() const;
 
     /**
      * @brief Get active subscriptions for an event group
@@ -174,7 +176,7 @@ public:
      * @param eventgroup_id Event group identifier
      * @return Vector of subscribed client IDs
      */
-    std::vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const;
+    platform::Vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const;
 
     /**
      * @brief Check if publisher is initialized and ready

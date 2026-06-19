@@ -14,12 +14,13 @@
 #ifndef SOMEIP_TP_TYPES_H
 #define SOMEIP_TP_TYPES_H
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <memory>
-#include <chrono>
-#include <functional>
 
 namespace someip::tp {
 
@@ -79,7 +80,7 @@ struct TpSegmentHeader {
  */
 struct TpSegment {
     TpSegmentHeader header;
-    std::vector<uint8_t> payload;
+    platform::ByteBuffer payload;
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
     uint32_t retransmit_count{0};
 
@@ -92,8 +93,8 @@ struct TpSegment {
 struct TpReassemblyBuffer {
     uint32_t message_id{0};                    // SOME/IP message ID
     uint32_t total_length{0};                  // Total expected message length
-    std::vector<uint8_t> received_data;     // Buffer for received data
-    std::vector<bool> received_segments;    // Track which segments received
+    platform::ByteBuffer received_data;     // Buffer for received data
+    platform::Vector<bool> received_segments;    // Track which segments received
     std::chrono::steady_clock::time_point start_time{std::chrono::steady_clock::now()};
     uint8_t last_sequence_number{0};
     bool complete{false};
@@ -107,7 +108,7 @@ struct TpReassemblyBuffer {
     bool is_segment_received(uint32_t offset, uint32_t length) const;
     void mark_segment_received(uint32_t offset, uint32_t length);
     bool is_complete() const;
-    std::vector<uint8_t> get_complete_message() const;
+    platform::ByteBuffer get_complete_message() const;
 };
 
 /**
@@ -132,7 +133,7 @@ struct TpTransfer {
     uint32_t transfer_id{0};
     uint32_t message_id{0};
     TpTransferState state{TpTransferState::IDLE};
-    std::vector<TpSegment> segments;
+    platform::Vector<TpSegment> segments;
     size_t next_segment_to_send{0};
     std::chrono::steady_clock::time_point start_time{std::chrono::steady_clock::now()};
     std::chrono::steady_clock::time_point last_activity{std::chrono::steady_clock::now()};
@@ -150,9 +151,9 @@ struct TpTransfer {
 /**
  * @brief TP callback types
  */
-using TpCompletionCallback = std::function<void(uint32_t transfer_id, TpResult result)>;
-using TpProgressCallback = std::function<void(uint32_t transfer_id, uint32_t bytes_transferred, uint32_t total_bytes)>;
-using TpMessageCallback = std::function<void(uint32_t message_id, const std::vector<uint8_t>& data)>;
+using TpCompletionCallback = platform::Function<void(uint32_t transfer_id, TpResult result)>;
+using TpProgressCallback = platform::Function<void(uint32_t transfer_id, uint32_t bytes_transferred, uint32_t total_bytes)>;
+using TpMessageCallback = platform::Function<void(uint32_t message_id, const platform::ByteBuffer& data)>;
 
 /**
  * @brief TP statistics

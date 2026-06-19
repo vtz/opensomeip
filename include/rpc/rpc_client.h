@@ -15,6 +15,8 @@
 #define SOMEIP_RPC_CLIENT_H
 
 #include "rpc/rpc_types.h"
+#include "platform/buffer_pool.h"
+
 #include <memory>
 
 namespace someip::rpc {
@@ -70,7 +72,7 @@ public:
      * @return Synchronous result with return values or error
      */
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
-                                   const std::vector<uint8_t>& parameters,
+                                   const platform::ByteBuffer& parameters,
                                    const RpcTimeout& timeout = RpcTimeout());
 
     /**
@@ -84,7 +86,7 @@ public:
      * @return Call handle for cancellation, or 0 on failure
      */
     RpcCallHandle call_method_async(uint16_t service_id, MethodId method_id,
-                                    const std::vector<uint8_t>& parameters,
+                                    const platform::ByteBuffer& parameters,
                                     RpcCallback callback,
                                     const RpcTimeout& timeout = RpcTimeout());
 

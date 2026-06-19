@@ -15,10 +15,14 @@
 #define SOMEIP_TP_REASSEMBLER_H
 
 #include "tp_types.h"
-#include <cstddef>
-#include <unordered_map>
-#include <memory>
+
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/thread.h"
+
+#include <cstddef>
+#include <memory>
+#include <unordered_map>
 
 namespace someip::tp {
 
@@ -54,7 +58,7 @@ public:
      * @param complete_message Complete reassembled message (output, if available)
      * @return true if segment processed successfully, false on error
      */
-    bool process_segment(const TpSegment& segment, std::vector<uint8_t>& complete_message);
+    bool process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message);
 
     /**
      * @brief Check if a message is currently being reassembled
@@ -113,7 +117,7 @@ private:
     bool add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment);
     void cleanup_completed_buffers();
     void cleanup_timed_out_buffers(const TpConfig& config);
-    bool parse_tp_header(const std::vector<uint8_t>& payload, uint32_t& offset, bool& more_segments);
+    bool parse_tp_header(const platform::ByteBuffer& payload, uint32_t& offset, bool& more_segments);
 };
 
 }  // namespace someip::tp

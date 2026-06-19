@@ -13,6 +13,8 @@
 
 #include "tp/tp_manager.h"
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "someip/message.h"
 #include "tp/tp_reassembler.h"
@@ -21,11 +23,9 @@
 
 #include <chrono>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::tp {
 
@@ -53,7 +53,7 @@ void TpManager::shutdown() {
 }
 
 bool TpManager::needs_segmentation(const Message& message) const {
-    std::vector<uint8_t> const data = message.serialize();
+    platform::ByteBuffer const data = message.serialize();
     return data.size() > config_.max_segment_size;
 }
 
@@ -79,7 +79,7 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
     TpTransfer transfer(transfer_id, message_id);
 
     // Segment the message
-    std::vector<TpSegment> segments;
+    platform::Vector<TpSegment> segments;
     TpResult const result = segmenter_->segment_message(message, segments);
 
     if (result != TpResult::SUCCESS) {
@@ -129,7 +129,7 @@ TpResult TpManager::get_next_segment(uint32_t transfer_id, TpSegment& segment) {
  * @implements REQ_TP_055, REQ_TP_056, REQ_TP_057
  * @implements REQ_TP_050_E02
  */
-bool TpManager::handle_received_segment(const TpSegment& segment, std::vector<uint8_t>& complete_message) {
+bool TpManager::handle_received_segment(const TpSegment& segment, platform::ByteBuffer& complete_message) {
     // Update statistics
     statistics_.segments_received++;
 
@@ -151,7 +151,7 @@ bool TpManager::handle_received_segment(const TpSegment& segment, std::vector<ui
     return reassembler_->process_segment(segment, complete_message);
 }
 
-TpResult TpManager::acknowledge_segments(uint32_t transfer_id, const std::vector<uint16_t>& /*segments_acknowledged*/) {
+TpResult TpManager::acknowledge_segments(uint32_t transfer_id, const platform::Vector<uint16_t>& /*segments_acknowledged*/) {
     platform::ScopedLock const lock(transfers_mutex_);
 
     auto it = active_transfers_.find(transfer_id);
@@ -207,7 +207,7 @@ void TpManager::set_message_callback(TpMessageCallback callback) {
 }
 
 void TpManager::process_timeouts() {
-    std::vector<std::pair<uint32_t, TpResult>> timed_out;
+    platform::Vector<std::pair<uint32_t, TpResult>> timed_out;
     TpCompletionCallback cb;
 
     {

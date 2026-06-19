@@ -13,6 +13,8 @@
 
 #include "tp/tp_reassembler.h"
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "tp/tp_types.h"
 
@@ -23,7 +25,6 @@
 #include <iostream>
 #include <memory>
 #include <utility>
-#include <vector>
 
 namespace someip::tp {
 
@@ -52,7 +53,7 @@ TpReassembler::~TpReassembler() {
  * @implements REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
  * @implements REQ_TP_082
  */
-bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
+bool TpReassembler::parse_tp_header(const platform::ByteBuffer& payload,
                                    uint32_t& offset, bool& more_segments) {
     if (payload.size() < 20) {  // SOME/IP header (16) + TP header (4) minimum
         return false;
@@ -89,7 +90,7 @@ bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
  * @implements REQ_TP_030_E01, REQ_TP_076, REQ_TP_077, REQ_TP_078
  * @implements REQ_TP_079, REQ_TP_080, REQ_TP_081, REQ_TP_082
  */
-bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_t>& complete_message) {
+bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message) {
     if (!validate_segment(segment)) {
         return false;
     }
@@ -375,7 +376,7 @@ bool TpReassemblyBuffer::is_complete() const {
     return true;
 }
 
-std::vector<uint8_t> TpReassemblyBuffer::get_complete_message() const {
+platform::ByteBuffer TpReassemblyBuffer::get_complete_message() const {
     if (!is_complete()) {
         return {};
     }

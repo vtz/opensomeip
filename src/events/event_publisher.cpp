@@ -22,13 +22,15 @@
 #include "transport/transport.h"
 #include "transport/udp_transport.h"
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
-#include <vector>
 
 namespace someip::events {
 
@@ -126,7 +128,7 @@ public:
     }
 
     /** @implements REQ_MSG_110, REQ_MSG_110_E01, REQ_MSG_119, REQ_MSG_121A, REQ_MSG_121B, REQ_MSG_121C, REQ_MSG_121_E01, REQ_MSG_121_E02, REQ_MSG_141 */
-    bool publish_event(uint16_t event_id, const std::vector<uint8_t>& data) {
+    bool publish_event(uint16_t event_id, const platform::ByteBuffer& data) {
         if (!running_) {
             return false;
         }
@@ -145,7 +147,7 @@ public:
         notification.event_data = data;
         notification.session_id = next_session_id_++;
 
-        std::vector<transport::Endpoint> targets;
+        platform::Vector<transport::Endpoint> targets;
         {
             platform::ScopedLock const subs_lock(subscriptions_mutex_);
             auto sub_it = subscriptions_.find(eventgroup_id);
@@ -165,12 +167,12 @@ public:
         return true;
     }
 
-    bool publish_field(uint16_t event_id, const std::vector<uint8_t>& data) {
+    bool publish_field(uint16_t event_id, const platform::ByteBuffer& data) {
         // Fields are published immediately like events
         return publish_event(event_id, data);
     }
 
-    void set_default_client_endpoint(const std::string& address, uint16_t port) {
+    void set_default_client_endpoint(const platform::String<>& address, uint16_t port) {
         platform::ScopedLock const lock(subscriptions_mutex_);
         default_client_address_ = address;
         default_client_port_ = port;
@@ -178,13 +180,13 @@ public:
 
     /** @implements REQ_MSG_124, REQ_MSG_124_E01, REQ_MSG_125, REQ_MSG_125_E01, REQ_MSG_126 */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
-                           const std::vector<EventFilter>& filters) {
+                           const platform::Vector<EventFilter>& filters) {
         return handle_subscription(eventgroup_id, client_id, TTL_INFINITE, filters);
     }
 
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            uint32_t ttl_seconds,
-                           const std::vector<EventFilter>& filters) {
+                           const platform::Vector<EventFilter>& filters) {
         platform::ScopedLock const lock(subscriptions_mutex_);
         if (default_client_port_ == 0) {
             return false;
@@ -196,7 +198,7 @@ public:
 
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const transport::Endpoint& client_endpoint,
-                           const std::vector<EventFilter>& filters) {
+                           const platform::Vector<EventFilter>& filters) {
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
         return handle_subscription_locked(eventgroup_id, client_id, client_endpoint,
                                           TTL_INFINITE, filters);
@@ -205,7 +207,7 @@ public:
     bool handle_subscription_locked(uint16_t eventgroup_id, uint16_t client_id,
                                     const transport::Endpoint& client_endpoint,
                                     uint32_t ttl_seconds,
-                                    const std::vector<EventFilter>& filters) {
+                                    const platform::Vector<EventFilter>& filters) {
 
         if (ttl_seconds == 0) {
             auto sub_it = subscriptions_.find(eventgroup_id);
@@ -262,9 +264,9 @@ public:
         return true;
     }
 
-    std::vector<uint16_t> get_registered_events() const {
+    platform::Vector<uint16_t> get_registered_events() const {
         platform::ScopedLock const events_lock(events_mutex_);
-        std::vector<uint16_t> events;
+        platform::Vector<uint16_t> events;
         events.reserve(registered_events_.size());
 
         for (const auto& pair : registered_events_) {
@@ -274,7 +276,7 @@ public:
         return events;
     }
 
-    std::vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const {
+    platform::Vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const {
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         auto it = subscriptions_.find(eventgroup_id);
@@ -282,7 +284,7 @@ public:
             return {};
         }
 
-        std::vector<uint16_t> client_ids;
+        platform::Vector<uint16_t> client_ids;
         for (const auto& client : it->second) {
             if (!client.is_expired()) {
                 client_ids.push_back(client.client_id);
@@ -322,7 +324,7 @@ private:
     struct ClientInfo {
         uint16_t client_id{};
         transport::Endpoint endpoint;
-        std::vector<EventFilter> filters;
+        platform::Vector<EventFilter> filters;
         uint32_t ttl_seconds{TTL_INFINITE};
         std::chrono::steady_clock::time_point subscribed_at{std::chrono::steady_clock::now()};
 
@@ -367,7 +369,7 @@ private:
     }
 
     void publish_cyclic_events() {
-        std::vector<uint16_t> events_to_publish;
+        platform::Vector<uint16_t> events_to_publish;
         {
             platform::ScopedLock const events_lock(events_mutex_);
             auto now = std::chrono::steady_clock::now();
@@ -439,14 +441,14 @@ private:
 
     uint16_t service_id_;
     uint16_t instance_id_;
-    std::string default_client_address_{"0.0.0.0"};
+    platform::String<> default_client_address_{"0.0.0.0"};
     uint16_t default_client_port_{0};
     std::shared_ptr<transport::UdpTransport> transport_;
 
     std::unordered_map<uint16_t, EventConfig> registered_events_;
     mutable platform::Mutex events_mutex_;
 
-    std::unordered_map<uint16_t, std::vector<ClientInfo>> subscriptions_;
+    std::unordered_map<uint16_t, platform::Vector<ClientInfo>> subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;
 
     std::unordered_map<uint16_t, std::chrono::steady_clock::time_point> last_publish_times_;
@@ -482,26 +484,26 @@ bool EventPublisher::update_event_config(uint16_t event_id, const EventConfig& c
     return impl_->update_event_config(event_id, config);
 }
 
-bool EventPublisher::publish_event(uint16_t event_id, const std::vector<uint8_t>& data) {
+bool EventPublisher::publish_event(uint16_t event_id, const platform::ByteBuffer& data) {
     return impl_->publish_event(event_id, data);
 }
 
-bool EventPublisher::publish_field(uint16_t event_id, const std::vector<uint8_t>& data) {
+bool EventPublisher::publish_field(uint16_t event_id, const platform::ByteBuffer& data) {
     return impl_->publish_field(event_id, data);
 }
 
-void EventPublisher::set_default_client_endpoint(const std::string& address, uint16_t port) {
+void EventPublisher::set_default_client_endpoint(const platform::String<>& address, uint16_t port) {
     impl_->set_default_client_endpoint(address, port);
 }
 
 bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
-                                       const std::vector<EventFilter>& filters) {
+                                       const platform::Vector<EventFilter>& filters) {
     return impl_->handle_subscription(eventgroup_id, client_id, filters);
 }
 
 bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                                        uint32_t ttl_seconds,
-                                       const std::vector<EventFilter>& filters) {
+                                       const platform::Vector<EventFilter>& filters) {
     return impl_->handle_subscription(eventgroup_id, client_id, ttl_seconds, filters);
 }
 
@@ -513,11 +515,11 @@ size_t EventPublisher::cleanup_expired_subscriptions() {
     return impl_->cleanup_expired_subscriptions();
 }
 
-std::vector<uint16_t> EventPublisher::get_registered_events() const {
+platform::Vector<uint16_t> EventPublisher::get_registered_events() const {
     return impl_->get_registered_events();
 }
 
-std::vector<uint16_t> EventPublisher::get_subscriptions(uint16_t eventgroup_id) const {
+platform::Vector<uint16_t> EventPublisher::get_subscriptions(uint16_t eventgroup_id) const {
     return impl_->get_subscriptions(eventgroup_id);
 }
 

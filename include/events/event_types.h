@@ -14,12 +14,12 @@
 #ifndef SOMEIP_EVENTS_TYPES_H
 #define SOMEIP_EVENTS_TYPES_H
 
-#include <cstdint>
-#include <vector>
-#include <memory>
-#include <functional>
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <chrono>
-#include <string>
+#include <cstdint>
+#include <memory>
 
 namespace someip::events {
 
@@ -96,7 +96,7 @@ struct EventNotification {
     uint16_t event_id{0};
     uint16_t client_id{0};
     uint16_t session_id{0};
-    std::vector<uint8_t> event_data;
+    platform::ByteBuffer event_data;
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
 
     explicit EventNotification(uint16_t svc_id = 0, uint16_t inst_id = 0, uint16_t evt_id = 0)
@@ -115,7 +115,7 @@ struct EventConfig {
     NotificationType notification_type{NotificationType::UNKNOWN};
     std::chrono::milliseconds cycle_time{1000};  // Default 1 second
     bool is_field{false};  // true for fields, false for events
-    std::string event_name;
+    platform::String<> event_name;
 };
 
 /**
@@ -123,7 +123,7 @@ struct EventConfig {
  */
 struct EventFilter {
     uint16_t event_id;
-    std::vector<uint8_t> filter_data;
+    platform::ByteBuffer filter_data;
     bool operator==(const EventFilter& other) const {
         return event_id == other.event_id && filter_data == other.filter_data;
     }
@@ -132,8 +132,8 @@ struct EventFilter {
 /**
  * @brief Event callback types
  */
-using EventNotificationCallback = std::function<void(const EventNotification&)>;
-using SubscriptionStatusCallback = std::function<void(uint16_t event_id, SubscriptionState state)>;
+using EventNotificationCallback = platform::Function<void(const EventNotification&)>;
+using SubscriptionStatusCallback = platform::Function<void(uint16_t event_id, SubscriptionState state)>;
 
 /**
  * @brief Event publication policies

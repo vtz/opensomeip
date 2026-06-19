@@ -15,7 +15,7 @@
 #define E2E_CONFIG_H
 
 #include <cstdint>
-#include <string>
+#include "platform/containers.h"
 
 namespace someip::e2e {
 
@@ -34,7 +34,7 @@ struct E2EConfig {
     /**
      * @brief Profile name (e.g., "standard", "autosar_c", etc.)
      */
-    std::string profile_name{"basic"};
+    platform::String<> profile_name{"basic"};
 
     /**
      * @brief Data ID for identifying the protected data

@@ -14,12 +14,12 @@
 #ifndef SOMEIP_SD_TYPES_H
 #define SOMEIP_SD_TYPES_H
 
-#include <cstdint>
-#include <vector>
-#include <string>
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <chrono>
+#include <cstdint>
 #include <memory>
-#include <functional>
 
 namespace someip::sd {
 
@@ -63,7 +63,7 @@ struct ServiceInstance {
     uint16_t instance_id{0};
     uint8_t major_version{0};
     uint32_t minor_version{0};
-    std::string ip_address;
+    platform::String<> ip_address;
     uint16_t port{0};
     uint8_t protocol{0x11};  // Default to UDP (0x11)
     uint32_t ttl_seconds{0};  // Time to live
@@ -79,7 +79,7 @@ struct EventGroup {
     uint16_t eventgroup_id{0};
     uint8_t major_version{0};
     uint8_t minor_version{0};
-    std::vector<uint16_t> event_ids;
+    platform::Vector<uint16_t> event_ids;
 
     explicit EventGroup(uint16_t eg_id = 0, uint8_t maj_ver = 0, uint8_t min_ver = 0)
         : eventgroup_id(eg_id), major_version(maj_ver), minor_version(min_ver) {}
@@ -87,9 +87,9 @@ struct EventGroup {
 
 /** @implements REQ_SD_131, REQ_SD_180, REQ_SD_281, REQ_SD_310, REQ_COMPAT_030 */
 struct SdConfig {
-    std::string multicast_address{"239.255.255.251"};  // Default SOME/IP SD multicast
-    uint16_t multicast_port{30490};                    // Default SOME/IP SD port
-    std::string unicast_address{"127.0.0.1"};         // Local unicast address
+    platform::String<> multicast_address{"239.255.255.251"};  // Default SOME/IP SD multicast
+    uint16_t multicast_port{30490};                           // Default SOME/IP SD port
+    platform::String<> unicast_address{"127.0.0.1"};         // Local unicast address
     uint16_t unicast_port{0};                          // Auto-assign port
     std::chrono::milliseconds initial_delay{100};      // Initial offer delay
     std::chrono::milliseconds repetition_base{2000};   // Base repetition interval
@@ -103,9 +103,9 @@ struct SdConfig {
 /**
  * @brief Service discovery callback types
  */
-using ServiceAvailableCallback = std::function<void(const ServiceInstance&)>;
-using ServiceUnavailableCallback = std::function<void(const ServiceInstance&)>;
-using FindServiceCallback = std::function<void(const std::vector<ServiceInstance>&)>;
+using ServiceAvailableCallback = platform::Function<void(const ServiceInstance&)>;
+using ServiceUnavailableCallback = platform::Function<void(const ServiceInstance&)>;
+using FindServiceCallback = platform::Function<void(const platform::Vector<ServiceInstance>&)>;
 
 /** @implements REQ_SD_271 */
 enum class SubscriptionState : uint8_t {

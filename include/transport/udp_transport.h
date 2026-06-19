@@ -15,10 +15,11 @@
 #define SOMEIP_TRANSPORT_UDP_TRANSPORT_H
 
 #include "transport/transport.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/net.h"
 #include "platform/thread.h"
 #include <atomic>
-#include <queue>
 
 namespace someip::transport {
 
@@ -34,7 +35,7 @@ struct UdpTransportConfig {
     bool reuse_address{true};               // Allow address reuse (SO_REUSEADDR)
     bool reuse_port{false};                 // Allow port reuse (SO_REUSEPORT) - for multicast
     bool enable_broadcast{false};           // Enable broadcast sending
-    std::string multicast_interface;        // Interface for multicast (empty = INADDR_ANY)
+    platform::String<> multicast_interface;  // Interface for multicast (empty = INADDR_ANY)
     int multicast_ttl{1};                   // Multicast TTL (1 = local network only)
 
     // SOME/IP spec recommends max 1400 bytes to avoid IP fragmentation
@@ -80,8 +81,8 @@ public:
     bool is_running() const override;
 
     // Multicast support
-    Result join_multicast_group(const std::string& multicast_address);
-    Result leave_multicast_group(const std::string& multicast_address);
+    Result join_multicast_group(const platform::String<>& multicast_address);
+    Result leave_multicast_group(const platform::String<>& multicast_address);
 
     // Disable copy and assignment
     UdpTransport(const UdpTransport&) = delete;
@@ -97,7 +98,7 @@ private:
     std::unique_ptr<platform::Thread> receive_thread_;
     std::atomic<ITransportListener*> listener_{nullptr};
 
-    std::queue<MessagePtr> receive_queue_;
+    platform::Queue<MessagePtr> receive_queue_;
     platform::Mutex queue_mutex_;
     platform::ConditionVariable queue_cv_;
 
@@ -111,11 +112,11 @@ private:
     Result bind_socket();
     Result configure_multicast(const Endpoint& endpoint);
     void receive_loop();
-    Result send_data(const std::vector<uint8_t>& data, const Endpoint& endpoint);
-    Result receive_data(std::vector<uint8_t>& data, Endpoint& sender, size_t& bytes_received);
+    Result send_data(const platform::ByteBuffer& data, const Endpoint& endpoint);
+    Result receive_data(platform::ByteBuffer& data, Endpoint& sender, size_t& bytes_received);
     sockaddr_in create_sockaddr(const Endpoint& endpoint) const;
     Endpoint sockaddr_to_endpoint(const sockaddr_in& addr) const;
-    bool is_multicast_address(const std::string& address) const;
+    bool is_multicast_address(const platform::String<>& address) const;
 };
 
 }  // namespace someip::transport

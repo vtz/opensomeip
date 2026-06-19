@@ -27,6 +27,8 @@
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_inet_*/AF_INET/in_addr via net_impl.h
 #include "platform/net.h"
 
+#include "platform/containers.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -36,7 +38,6 @@
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::sd {
 
@@ -133,11 +134,11 @@ public:
 
     /** @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152 */
     bool offer_service(const ServiceInstance& instance,
-                      const std::string& unicast_endpoint,
-                      const std::string& multicast_endpoint,
-                      const std::vector<uint16_t>& eventgroup_ids) {
+                      const platform::String<>& unicast_endpoint,
+                      const platform::String<>& multicast_endpoint,
+                      const platform::Vector<uint16_t>& eventgroup_ids) {
         if (!unicast_endpoint.empty()) {
-            std::string tmp_ip;
+            platform::String<> tmp_ip;
             uint16_t tmp_port = 0;
             if (!parse_endpoint_string(unicast_endpoint, tmp_ip, tmp_port)) {
                 return false;
@@ -224,7 +225,7 @@ public:
 
     /** @implements REQ_SD_115, REQ_SD_115_E01, REQ_SD_115_E02, REQ_SD_117, REQ_SD_118, REQ_SD_119, REQ_SD_119_E01 */
     bool handle_eventgroup_subscription(uint16_t service_id, uint16_t instance_id,
-                                       uint16_t eventgroup_id, const std::string& client_address,
+                                       uint16_t eventgroup_id, const platform::String<>& client_address,
                                        bool acknowledge, uint32_t ttl_seconds = 3600) {
 
         // Create subscription response
@@ -249,10 +250,10 @@ public:
         multicast_option->set_port(config_.multicast_port);
         response_message.add_option(std::move(multicast_option));
 
-        std::string client_ip = client_address;
+        platform::String<> client_ip = client_address;
         uint16_t client_port = config_.unicast_port;
 
-        if (client_address.find(':') != std::string::npos) {
+        if (client_address.find(':') != platform::String<>::npos) {
             if (!parse_endpoint_string(client_address, client_ip, client_port)) {
                 return false;
             }
@@ -271,9 +272,9 @@ public:
         return result == Result::SUCCESS;
     }
 
-    std::vector<ServiceInstance> get_offered_services() const {
+    platform::Vector<ServiceInstance> get_offered_services() const {
         platform::ScopedLock const lock(offered_services_mutex_);
-        std::vector<ServiceInstance> result;
+        platform::Vector<ServiceInstance> result;
         result.reserve(offered_services_.size());
 
         for (const auto& service : offered_services_) {
@@ -295,21 +296,21 @@ public:
 private:
     struct OfferedService {
         ServiceInstance instance;
-        std::string unicast_endpoint;
-        std::string multicast_endpoint;
+        platform::String<> unicast_endpoint;
+        platform::String<> multicast_endpoint;
         std::chrono::steady_clock::time_point last_offer_time;
-        std::vector<OfferedEventGroup> eventgroups;
+        platform::Vector<OfferedEventGroup> eventgroups;
     };
 
-    static bool parse_endpoint_string(const std::string& endpoint_str,
-                                       std::string& ip_out, uint16_t& port_out) {
+    static bool parse_endpoint_string(const platform::String<>& endpoint_str,
+                                       platform::String<>& ip_out, uint16_t& port_out) {
         const size_t colon_pos = endpoint_str.find(':');
-        if (colon_pos == std::string::npos || colon_pos == 0) {
+        if (colon_pos == platform::String<>::npos || colon_pos == 0) {
             return false;
         }
 
-        const std::string ip_str = endpoint_str.substr(0, colon_pos);
-        const std::string port_str = endpoint_str.substr(colon_pos + 1);
+        const platform::String<> ip_str = endpoint_str.substr(0, colon_pos);
+        const platform::String<> port_str = endpoint_str.substr(colon_pos + 1);
 
         if (port_str.empty()) {
             return false;
@@ -447,7 +448,7 @@ private:
 
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
 
-        std::string ep_ip;
+        platform::String<> ep_ip;
         uint16_t ep_port = 0;
         if (parse_endpoint_string(service.unicast_endpoint, ep_ip, ep_port)) {
             endpoint_option->set_ipv4_address_from_string(ep_ip);
@@ -605,7 +606,7 @@ private:
             }
         }
 
-        std::string client_ip = sender.get_address();
+        platform::String<> client_ip = sender.get_address();
         uint16_t client_port = sender.get_port();
         uint8_t client_protocol = 0x11;
 
@@ -716,7 +717,7 @@ private:
 
         auto endpoint_option = std::make_unique<IPv4EndpointOption>();
 
-        std::string ep_ip;
+        platform::String<> ep_ip;
         uint16_t ep_port = 0;
         if (parse_endpoint_string(service.unicast_endpoint, ep_ip, ep_port)) {
             endpoint_option->set_ipv4_address_from_string(ep_ip);
@@ -744,7 +745,7 @@ private:
     SdConfig config_;
     std::shared_ptr<transport::UdpTransport> transport_;
 
-    std::vector<OfferedService> offered_services_;
+    platform::Vector<OfferedService> offered_services_;
     mutable platform::Mutex offered_services_mutex_;
 
     std::unique_ptr<platform::Thread> offer_timer_thread_;
@@ -782,9 +783,9 @@ void SdServer::shutdown() {
 }
 
 bool SdServer::offer_service(const ServiceInstance& instance,
-                            const std::string& unicast_endpoint,
-                            const std::string& multicast_endpoint,
-                            const std::vector<uint16_t>& eventgroup_ids) {
+                            const platform::String<>& unicast_endpoint,
+                            const platform::String<>& multicast_endpoint,
+                            const platform::Vector<uint16_t>& eventgroup_ids) {
     return impl_->offer_service(instance, unicast_endpoint, multicast_endpoint, eventgroup_ids);
 }
 
@@ -797,13 +798,13 @@ bool SdServer::update_service_ttl(uint16_t service_id, uint16_t instance_id, uin
 }
 
 bool SdServer::handle_eventgroup_subscription(uint16_t service_id, uint16_t instance_id,
-                                             uint16_t eventgroup_id, const std::string& client_address,
+                                             uint16_t eventgroup_id, const platform::String<>& client_address,
                                              bool acknowledge) {
     return impl_->handle_eventgroup_subscription(service_id, instance_id, eventgroup_id,
                                                 client_address, acknowledge, 3600);
 }
 
-std::vector<ServiceInstance> SdServer::get_offered_services() const {
+platform::Vector<ServiceInstance> SdServer::get_offered_services() const {
     return impl_->get_offered_services();
 }
 

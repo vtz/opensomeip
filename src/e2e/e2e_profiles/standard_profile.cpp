@@ -19,6 +19,8 @@
 #include "e2e/e2e_profile_registry.h"
 #include "someip/message.h"
 #include "common/result.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/thread.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_htonl macro from byteorder_impl.h
 #include "platform/byteorder.h"
@@ -28,10 +30,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <string>
-#include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::e2e {
 // NOLINTBEGIN(misc-include-cleaner) - someip_htonl macro from platform/byteorder.h -> byteorder_impl.h
@@ -70,19 +69,13 @@ public:
      uint32_t crc = 0;
      if (config.enable_crc) {
          // Build data for CRC: header + payload (without E2E header)
-         std::vector<uint8_t> crc_data;
+         platform::ByteBuffer crc_data;
          crc_data.reserve(16 + msg.get_payload().size());
 
-         // Serialize header fields manually (without E2E header)
          uint32_t message_id_be = someip_htonl(msg.get_message_id().to_uint32());
          crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&message_id_be),
                          reinterpret_cast<const uint8_t*>(&message_id_be) + sizeof(uint32_t));
 
-         // Length includes: 8 bytes (client_id to return_code) + E2E header + payload
-         // But for CRC calculation, we use the length that will be in the serialized message
-         // which includes E2E header. However, we need to be careful - the actual length
-         // in the message will be set by update_length() after we set the E2E header.
-         // For now, calculate what the length will be:
         size_t const e2e_size = E2EHeader::get_header_size();
         const uint32_t length = 8 + e2e_size + static_cast<uint32_t>(msg.get_payload().size());
          uint32_t length_be = someip_htonl(length);
@@ -98,7 +91,6 @@ public:
          crc_data.push_back(static_cast<uint8_t>(msg.get_message_type()));
          crc_data.push_back(static_cast<uint8_t>(msg.get_return_code()));
 
-         // Include payload
          const auto& payload = msg.get_payload();
          crc_data.insert(crc_data.end(), payload.begin(), payload.end());
 
@@ -160,8 +152,7 @@ public:
 
         // Validate CRC
         if (config.enable_crc) {
-            // Build data for CRC calculation (same as protect)
-            std::vector<uint8_t> crc_data;
+            platform::ByteBuffer crc_data;
             crc_data.reserve(16 + msg.get_payload().size());
 
             // Serialize header fields manually
@@ -290,8 +281,8 @@ public:
         return E2EHeader::get_header_size();  // 12 bytes
     }
 
-    std::string get_profile_name() const override {
-        return "basic";
+    platform::String<> get_profile_name() const override {
+        return platform::String<>("basic");
     }
 
     uint32_t get_profile_id() const override {
@@ -301,8 +292,8 @@ public:
 private:
     mutable platform::Mutex counter_mutex_;
     mutable platform::Mutex freshness_mutex_;
-    std::unordered_map<uint16_t, uint32_t> counters_;  // Per data ID
-    std::unordered_map<uint16_t, uint16_t> freshness_values_;  // Per data ID
+    platform::UnorderedMap<uint16_t, uint32_t> counters_;
+    platform::UnorderedMap<uint16_t, uint16_t> freshness_values_;
 };
 
 // Initialize and register basic profile (reference implementation)

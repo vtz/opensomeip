@@ -15,6 +15,10 @@
 #define SOMEIP_TP_SEGMENTER_H
 
 #include "tp_types.h"
+
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <someip/message.h>
 #include <someip/types.h>
 
@@ -52,7 +56,7 @@ public:
      * @param segments Output vector for the created segments
      * @return SUCCESS if segmentation successful, error code otherwise
      */
-    TpResult segment_message(const Message& message, std::vector<TpSegment>& segments);
+    TpResult segment_message(const Message& message, platform::Vector<TpSegment>& segments);
 
     /**
      * @brief Segment raw message data into TP segments
@@ -61,7 +65,7 @@ public:
      * @param segments Output vector for the created segments
      * @return SUCCESS if segmentation successful, error code otherwise
      */
-    TpResult segment_data(const std::vector<uint8_t>& message_data, std::vector<TpSegment>& segments);
+    TpResult segment_data(const platform::ByteBuffer& message_data, platform::Vector<TpSegment>& segments);
 
     /**
      * @brief Update segmentation configuration
@@ -75,10 +79,10 @@ private:
     uint8_t next_sequence_number_{0};
 
     TpResult create_multi_segments(const Message& message,
-                                 const std::vector<uint8_t>& payload,
-                                 std::vector<TpSegment>& segments);
+                                 const platform::ByteBuffer& payload,
+                                 platform::Vector<TpSegment>& segments);
 
-    void serialize_tp_header(std::vector<uint8_t>& payload, uint32_t offset, bool more_segments);
+    void serialize_tp_header(platform::ByteBuffer& payload, uint32_t offset, bool more_segments);
     MessageType add_tp_flag(MessageType type) const;
 };
 

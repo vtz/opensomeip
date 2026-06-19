@@ -15,11 +15,11 @@
 #define SOMEIP_EVENTS_SUBSCRIBER_H
 
 #include "event_types.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "transport/endpoint.h"
-#include <functional>
+
 #include <memory>
-#include <string>
-#include <vector>
 
 namespace someip::events {
 
@@ -69,13 +69,13 @@ public:
      * @param address Service IP address
      * @param port    Service port
      */
-    void set_default_endpoint(const std::string& address, uint16_t port);
+    void set_default_endpoint(const platform::String<>& address, uint16_t port);
 
     /**
      * @brief Set a resolver function that maps (service_id, instance_id) to an endpoint.
      * @param resolver Callable returning an Endpoint for the given service+instance
      */
-    using EndpointResolver = std::function<transport::Endpoint(uint16_t, uint16_t)>;
+    using EndpointResolver = platform::Function<transport::Endpoint(uint16_t, uint16_t)>;
     void set_endpoint_resolver(EndpointResolver resolver);
 
     /**
@@ -92,7 +92,7 @@ public:
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                             EventNotificationCallback notification_callback,
                             SubscriptionStatusCallback status_callback = nullptr,
-                            const std::vector<EventFilter>& filters = {});
+                            const platform::Vector<EventFilter>& filters = {});
 
     /**
      * @brief Unsubscribe from an event group
@@ -126,14 +126,14 @@ public:
      * @return true if filters updated, false on error
      */
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
-                         const std::vector<EventFilter>& filters);
+                         const platform::Vector<EventFilter>& filters);
 
     /**
      * @brief Get active subscriptions
      *
      * @return Vector of active event subscriptions
      */
-    std::vector<EventSubscription> get_active_subscriptions() const;
+    platform::Vector<EventSubscription> get_active_subscriptions() const;
 
     /**
      * @brief Get subscription status for an event group

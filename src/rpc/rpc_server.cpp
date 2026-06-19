@@ -22,13 +22,14 @@
 #include "transport/transport.h"
 #include "transport/udp_transport.h"
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <atomic>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::rpc {
 
@@ -110,9 +111,9 @@ public:
         return method_handlers_.find(method_id) != method_handlers_.end();
     }
 
-    std::vector<MethodId> get_registered_methods() const {
+    platform::Vector<MethodId> get_registered_methods() const {
         platform::ScopedLock const lock(methods_mutex_);
-        std::vector<MethodId> methods;
+        platform::Vector<MethodId> methods;
         methods.reserve(method_handlers_.size());
         for (const auto& pair : method_handlers_) {
             methods.push_back(pair.first);
@@ -151,7 +152,7 @@ private:
         }
 
         // Process the method call
-        std::vector<uint8_t> output_params;
+        platform::ByteBuffer output_params;
         const RpcResult result = handler(message->get_client_id(), message->get_session_id(),
                                   message->get_payload(), output_params);
 
@@ -177,7 +178,7 @@ private:
 
     /** @implements REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01 */
     void send_success_response(MessagePtr const& request, const transport::Endpoint& sender,
-                              const std::vector<uint8_t>& return_values) {
+                              const platform::ByteBuffer& return_values) {
         const MessageId response_msg_id(request->get_service_id(), request->get_method_id());
         Message response(response_msg_id, request->get_request_id(),
                         MessageType::RESPONSE, ReturnCode::E_OK);
@@ -254,7 +255,7 @@ bool RpcServer::is_method_registered(MethodId method_id) const {
     return impl_->is_method_registered(method_id);
 }
 
-std::vector<MethodId> RpcServer::get_registered_methods() const {
+platform::Vector<MethodId> RpcServer::get_registered_methods() const {
     return impl_->get_registered_methods();
 }
 

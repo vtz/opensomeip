@@ -19,7 +19,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <vector>
 
 namespace someip::e2e {
 // NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from platform/byteorder.h -> byteorder_impl.h
@@ -30,8 +29,8 @@ namespace someip::e2e {
  * @satisfies feat_req_someip_102
  * @satisfies feat_req_someip_103
  */
-std::vector<uint8_t> E2EHeader::serialize() const {
-    std::vector<uint8_t> data;
+platform::ByteBuffer E2EHeader::serialize() const {
+    platform::ByteBuffer data;
     data.reserve(get_header_size());
 
     // Serialize in big-endian format (network byte order)
@@ -60,7 +59,7 @@ std::vector<uint8_t> E2EHeader::serialize() const {
  * @satisfies feat_req_someip_102
  * @satisfies feat_req_someip_103
  */
-bool E2EHeader::deserialize(const std::vector<uint8_t>& data, size_t offset) {
+bool E2EHeader::deserialize(const platform::ByteBuffer& data, size_t offset) {
     const size_t header_size = get_header_size();
     if (data.size() < offset + header_size) {
         return false;

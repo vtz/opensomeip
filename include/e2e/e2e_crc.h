@@ -14,10 +14,11 @@
 #ifndef E2E_CRC_H
 #define E2E_CRC_H
 
+#include "platform/buffer_pool.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <vector>
 
 /**
  * @brief CRC calculation utilities using publicly available standards
@@ -38,7 +39,7 @@ namespace someip::e2e::e2ecrc {
  * @param data Data to calculate CRC for
  * @return 8-bit CRC value
  */
-uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data);
+uint8_t calculate_crc8_sae_j1850(const platform::ByteBuffer& data);
 
 /**
  * @brief Calculate 16-bit CRC using ITU-T X.25 / CCITT algorithm
@@ -50,7 +51,7 @@ uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data);
  * @param data Data to calculate CRC for
  * @return 16-bit CRC value
  */
-uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data);
+uint16_t calculate_crc16_itu_x25(const platform::ByteBuffer& data);
 
 /**
  * @brief Calculate 32-bit CRC using standard CRC32 algorithm
@@ -60,7 +61,7 @@ uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data);
  * @param data Data to calculate CRC for
  * @return 32-bit CRC value
  */
-uint32_t calculate_crc32(const std::vector<uint8_t>& data);
+uint32_t calculate_crc32(const platform::ByteBuffer& data);
 
 /**
  * @brief Calculate CRC for a specific range of data
@@ -70,7 +71,7 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data);
  * @param crc_type 0 = SAE-J1850 (8-bit), 1 = ITU-T X.25 (16-bit), 2 = CRC32
  * @return CRC value (size depends on crc_type)
  */
-std::optional<uint32_t> calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type);
+std::optional<uint32_t> calculate_crc(const platform::ByteBuffer& data, size_t offset, size_t length, uint8_t crc_type);
 
 }  // namespace someip::e2e::e2ecrc
 

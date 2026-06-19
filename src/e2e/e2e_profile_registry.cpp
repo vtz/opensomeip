@@ -14,11 +14,11 @@
 #include "e2e/e2e_profile_registry.h"
 
 #include "e2e/e2e_profile.h"
+#include "platform/containers.h"
 #include "platform/thread.h"
 
 #include <cstdint>
 #include <memory>
-#include <string>
 #include <utility>
 
 namespace someip::e2e {
@@ -45,7 +45,7 @@ bool E2EProfileRegistry::register_profile(E2EProfilePtr profile) {
     platform::ScopedLock const lock(mutex_);
 
     uint32_t const profile_id = profile->get_profile_id();
-    std::string const profile_name = profile->get_profile_name();
+    platform::String<> const profile_name = profile->get_profile_name();
 
     // Check if profile ID already exists
     if (profiles_by_id_.find(profile_id) != profiles_by_id_.end()) {
@@ -80,7 +80,7 @@ E2EProfile* E2EProfileRegistry::get_profile(uint32_t profile_id) {
     return nullptr;
 }
 
-E2EProfile* E2EProfileRegistry::get_profile(const std::string& profile_name) {
+E2EProfile* E2EProfileRegistry::get_profile(const platform::String<>& profile_name) {
     platform::ScopedLock const lock(mutex_);
 
     auto it = profiles_by_name_.find(profile_name);
@@ -100,7 +100,7 @@ bool E2EProfileRegistry::unregister_profile(uint32_t profile_id) {
     }
 
     // Remove from name map
-    std::string const profile_name = it->second->get_profile_name();
+    platform::String<> const profile_name = it->second->get_profile_name();
     profiles_by_name_.erase(profile_name);
 
     // Remove from ID map

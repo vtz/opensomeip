@@ -18,8 +18,8 @@
 #include "e2e_header.h"
 #include "someip/message.h"
 #include "common/result.h"
+#include "platform/containers.h"
 #include <cstdint>
-#include <string>
 #include <memory>
 
 namespace someip::e2e {
@@ -65,7 +65,7 @@ public:
      * @brief Get the profile name
      * @return Profile name string
      */
-    virtual std::string get_profile_name() const = 0;
+    virtual platform::String<> get_profile_name() const = 0;
 
     /**
      * @brief Get the profile ID

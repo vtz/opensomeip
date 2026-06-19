@@ -23,16 +23,15 @@
 #include "transport/transport.h"
 #include "transport/udp_transport.h"
 
+#include "platform/containers.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <functional>
 #include <memory>
-#include <string>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::sd {
 
@@ -270,9 +269,9 @@ public:
         return sent;
     }
 
-    std::vector<ServiceInstance> get_available_services(uint16_t service_id) const {
+    platform::Vector<ServiceInstance> get_available_services(uint16_t service_id) const {
         platform::ScopedLock const lock(available_services_mutex_);
-        std::vector<ServiceInstance> result;
+        platform::Vector<ServiceInstance> result;
 
         for (const auto& service : available_services_) {
             if (service_id == 0 || service.service_id == service_id) {
@@ -333,7 +332,7 @@ private:
     }
 
     void process_find_timeouts() {
-        std::vector<FindServiceCallback> timed_out_cbs;
+        platform::Vector<FindServiceCallback> timed_out_cbs;
         {
             platform::ScopedLock const lock(pending_finds_mutex_);
             auto const now = std::chrono::steady_clock::now();
@@ -351,12 +350,12 @@ private:
             }
         }
         for (const auto& cb : timed_out_cbs) {
-            cb(std::vector<ServiceInstance>{});
+            cb(platform::Vector<ServiceInstance>{});
         }
     }
 
     void process_ttl_expiry() {
-        std::vector<ServiceInstance> expired;
+        platform::Vector<ServiceInstance> expired;
         {
             platform::ScopedLock const lock(available_services_mutex_);
             auto const now = std::chrono::steady_clock::now();
@@ -549,7 +548,7 @@ private:
             }
         }
 
-        std::vector<FindServiceCallback> find_cbs;
+        platform::Vector<FindServiceCallback> find_cbs;
         {
             platform::ScopedLock const lock(pending_finds_mutex_);
             for (auto it = pending_finds_.begin(); it != pending_finds_.end(); ) {
@@ -568,7 +567,7 @@ private:
             avail_cb(instance);
         }
         for (const auto& cb : find_cbs) {
-            const std::vector<ServiceInstance> found_services = {instance};
+            const platform::Vector<ServiceInstance> found_services = {instance};
             cb(found_services);
         }
     }
@@ -609,7 +608,7 @@ private:
     std::unordered_map<uint16_t, ServiceSubscription> service_subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;
 
-    std::vector<ServiceInstance> available_services_;
+    platform::Vector<ServiceInstance> available_services_;
     mutable platform::Mutex available_services_mutex_;
 
     std::unordered_map<uint32_t, PendingFind> pending_finds_;
@@ -651,7 +650,7 @@ private:
     }
 
     void replay_subscriptions(uint16_t service_id, uint16_t instance_id) {
-        std::vector<EventGroupSubscription> subs_to_renew;
+        platform::Vector<EventGroupSubscription> subs_to_renew;
 
         {
             platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
@@ -709,7 +708,7 @@ bool SdClient::unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id,
     return impl_->unsubscribe_eventgroup(service_id, instance_id, eventgroup_id);
 }
 
-std::vector<ServiceInstance> SdClient::get_available_services(uint16_t service_id) const {
+platform::Vector<ServiceInstance> SdClient::get_available_services(uint16_t service_id) const {
     return impl_->get_available_services(service_id);
 }
 

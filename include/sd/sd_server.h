@@ -15,8 +15,8 @@
 #define SOMEIP_SD_SERVER_H
 
 #include "sd_types.h"
+
 #include <memory>
-#include <vector>
 
 namespace someip::sd {
 
@@ -71,9 +71,9 @@ public:
      * @return true if service offered, false on error
      */
     bool offer_service(const ServiceInstance& instance,
-                      const std::string& unicast_endpoint,
-                      const std::string& multicast_endpoint = "",
-                      const std::vector<uint16_t>& eventgroup_ids = {});
+                      const platform::String<>& unicast_endpoint,
+                      const platform::String<>& multicast_endpoint = "",
+                      const platform::Vector<uint16_t>& eventgroup_ids = {});
 
     /**
      * @brief Stop offering a service instance
@@ -105,7 +105,7 @@ public:
      * @return true if handled, false on error
      */
     bool handle_eventgroup_subscription(uint16_t service_id, uint16_t instance_id,
-                                       uint16_t eventgroup_id, const std::string& client_address,
+                                       uint16_t eventgroup_id, const platform::String<>& client_address,
                                        bool acknowledge = true);
 
     /**
@@ -113,7 +113,7 @@ public:
      *
      * @return Vector of offered service instances
      */
-    std::vector<ServiceInstance> get_offered_services() const;
+    platform::Vector<ServiceInstance> get_offered_services() const;
 
     /**
      * @brief Check if server is initialized and ready

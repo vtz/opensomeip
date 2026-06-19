@@ -15,7 +15,6 @@
 #define SOMEIP_TYPES_H
 
 #include <cstdint>
-#include <vector>
 #include <string>
 
 namespace someip {

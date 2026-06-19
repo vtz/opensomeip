@@ -14,11 +14,12 @@
 #ifndef SOMEIP_RPC_TYPES_H
 #define SOMEIP_RPC_TYPES_H
 
-#include <cstdint>
-#include <vector>
-#include <memory>
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <chrono>
-#include <functional>
+#include <cstdint>
+#include <memory>
 
 namespace someip::rpc {
 
@@ -61,7 +62,7 @@ struct RpcRequest {
     MethodId method_id;
     uint16_t client_id;
     uint16_t session_id;
-    std::vector<uint8_t> parameters;
+    platform::ByteBuffer parameters;
     RpcTimeout timeout;
 
     RpcRequest(uint16_t svc_id, MethodId meth_id, uint16_t cli_id, uint16_t sess_id)
@@ -77,7 +78,7 @@ struct RpcResponse {
     uint16_t client_id;
     uint16_t session_id;
     RpcResult result;
-    std::vector<uint8_t> return_values;
+    platform::ByteBuffer return_values;
 
     RpcResponse(uint16_t svc_id, MethodId meth_id, uint16_t cli_id, uint16_t sess_id, RpcResult res)
         : service_id(svc_id), method_id(meth_id), client_id(cli_id), session_id(sess_id), result(res) {}
@@ -86,14 +87,14 @@ struct RpcResponse {
 /**
  * @brief Asynchronous RPC completion callback
  */
-using RpcCallback = std::function<void(const RpcResponse&)>;
+using RpcCallback = platform::Function<void(const RpcResponse&)>;
 
 /**
  * @brief Synchronous RPC call result
  */
 struct RpcSyncResult {
     RpcResult result;
-    std::vector<uint8_t> return_values;
+    platform::ByteBuffer return_values;
     std::chrono::milliseconds response_time{0};
 };
 

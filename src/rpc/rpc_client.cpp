@@ -23,15 +23,16 @@
 #include "transport/transport.h"
 #include "transport/udp_transport.h"
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::rpc {
 
@@ -93,7 +94,7 @@ public:
 
         running_ = false;
 
-        std::vector<std::pair<RpcCallback, RpcResponse>> shutdown_cbs;
+        platform::Vector<std::pair<RpcCallback, RpcResponse>> shutdown_cbs;
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
             for (auto& pair : pending_calls_) {
@@ -114,7 +115,7 @@ public:
     }
 
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
-                                   const std::vector<uint8_t>& parameters,
+                                   const platform::ByteBuffer& parameters,
                                    const RpcTimeout& timeout) {
 
         struct SyncState {
@@ -156,7 +157,7 @@ public:
 
     /** @implements REQ_MSG_114, REQ_MSG_114_E01, REQ_MSG_114_E02, REQ_MSG_118, REQ_MSG_118_E01, REQ_MSG_120, REQ_MSG_120_E01 */
     RpcCallHandle call_method_async(uint16_t service_id, MethodId method_id,
-                                    const std::vector<uint8_t>& parameters,
+                                    const platform::ByteBuffer& parameters,
                                     RpcCallback callback,
                                     const RpcTimeout& timeout) {
 
@@ -311,13 +312,13 @@ void RpcClient::shutdown() {
 }
 
 RpcSyncResult RpcClient::call_method_sync(uint16_t service_id, MethodId method_id,
-                                         const std::vector<uint8_t>& parameters,
+                                         const platform::ByteBuffer& parameters,
                                          const RpcTimeout& timeout) {
     return impl_->call_method_sync(service_id, method_id, parameters, timeout);
 }
 
 RpcCallHandle RpcClient::call_method_async(uint16_t service_id, MethodId method_id,
-                                          const std::vector<uint8_t>& parameters,
+                                          const platform::ByteBuffer& parameters,
                                           RpcCallback callback,
                                           const RpcTimeout& timeout) {
     return impl_->call_method_async(service_id, method_id, parameters, std::move(callback), timeout);

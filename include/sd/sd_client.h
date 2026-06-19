@@ -15,8 +15,8 @@
 #define SOMEIP_SD_CLIENT_H
 
 #include "sd_types.h"
+
 #include <memory>
-#include <vector>
 
 namespace someip::sd {
 
@@ -119,7 +119,7 @@ public:
      * @param service_id Service to query (0 = all services)
      * @return Vector of available service instances
      */
-    std::vector<ServiceInstance> get_available_services(uint16_t service_id = 0) const;
+    platform::Vector<ServiceInstance> get_available_services(uint16_t service_id = 0) const;
 
     /**
      * @brief Check if client is initialized and ready

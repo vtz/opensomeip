@@ -15,8 +15,10 @@
 #define SOMEIP_RPC_SERVER_H
 
 #include "rpc/rpc_types.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <memory>
-#include <functional>
 
 namespace someip::rpc {
 
@@ -31,11 +33,11 @@ class RpcServerImpl;
  * Function signature for handling RPC method calls on the server side.
  * Receives method parameters and returns result with output parameters.
  */
-using MethodHandler = std::function<RpcResult(
+using MethodHandler = platform::Function<RpcResult(
     uint16_t client_id,
     uint16_t session_id,
-    const std::vector<uint8_t>& input_params,
-    std::vector<uint8_t>& output_params
+    const platform::ByteBuffer& input_params,
+    platform::ByteBuffer& output_params
 )>;
 
 /**
@@ -104,7 +106,7 @@ public:
      *
      * @return Vector of all registered method IDs
      */
-    std::vector<MethodId> get_registered_methods() const;
+    platform::Vector<MethodId> get_registered_methods() const;
 
     /**
      * @brief Check if server is initialized and ready

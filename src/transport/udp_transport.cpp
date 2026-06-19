@@ -14,6 +14,8 @@
 #include "transport/udp_transport.h"
 
 #include "common/result.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
 #include "platform/memory.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - socket/POSIX types and someip_* helpers from net_impl.h
@@ -30,8 +32,6 @@
 #include <cstring>
 #include <memory>
 #include <stdexcept>
-#include <string>
-#include <vector>
 
 namespace someip::transport {
 
@@ -78,7 +78,7 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
     }
 
     // Serialize message
-    const std::vector<uint8_t> data = message.serialize();
+    const platform::ByteBuffer data = message.serialize();
 
     if (data.size() > MAX_UDP_PAYLOAD) {
         return Result::BUFFER_OVERFLOW;
@@ -190,7 +190,7 @@ bool UdpTransport::is_running() const {
 }
 
 /** @implements REQ_TRANSPORT_011, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02 */
-Result UdpTransport::join_multicast_group(const std::string& multicast_address) {
+Result UdpTransport::join_multicast_group(const platform::String<>& multicast_address) {
     platform::ScopedLock const lock(socket_mutex_);
 
     if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
@@ -239,7 +239,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
 }
 
 /** @implements REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02 */
-Result UdpTransport::leave_multicast_group(const std::string& multicast_address) {
+Result UdpTransport::leave_multicast_group(const platform::String<>& multicast_address) {
     platform::ScopedLock const lock(socket_mutex_);
 
     if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
@@ -368,7 +368,7 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
 }
 
 void UdpTransport::receive_loop() {
-    std::vector<uint8_t> buffer(config_.receive_buffer_size);
+    platform::ByteBuffer buffer(config_.receive_buffer_size);
 
     while (running_) {
         Endpoint sender;
@@ -412,7 +412,7 @@ void UdpTransport::receive_loop() {
 }
 
 /** @implements REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03 */
-Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint& endpoint) {
+Result UdpTransport::send_data(const platform::ByteBuffer& data, const Endpoint& endpoint) {
     platform::ScopedLock const lock(socket_mutex_);
 
     if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
@@ -441,7 +441,7 @@ Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint&
 }
 
 /** @implements REQ_TRANSPORT_010 */
-Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender, size_t& bytes_received) {
+Result UdpTransport::receive_data(platform::ByteBuffer& data, Endpoint& sender, size_t& bytes_received) {
     sockaddr_in src_addr = {};
     socklen_t addr_len = sizeof(src_addr);
 
@@ -491,7 +491,7 @@ Endpoint UdpTransport::sockaddr_to_endpoint(const sockaddr_in& addr) const {
     return Endpoint(ip_str.data(), ntohs(addr.sin_port), TransportProtocol::UDP);
 }
 
-bool UdpTransport::is_multicast_address(const std::string& address) const {
+bool UdpTransport::is_multicast_address(const platform::String<>& address) const {
     in_addr_t const addr = someip_inet_addr(address.c_str());
     if (addr == INADDR_NONE) {
         return false;

@@ -15,8 +15,10 @@
 #define SOMEIP_SD_MESSAGE_H
 
 #include "sd_types.h"
-#include <string>
-#include <vector>
+
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
 #include <memory>
 
 namespace someip::sd {
@@ -48,8 +50,8 @@ public:
     uint8_t get_num_opts2() const { return num_opts2_; }
     void set_num_opts2(uint8_t n) { num_opts2_ = n; }
 
-    virtual std::vector<uint8_t> serialize() const = 0;
-    virtual bool deserialize(const std::vector<uint8_t>& data, size_t& offset) = 0;
+    virtual platform::ByteBuffer serialize() const = 0;
+    virtual bool deserialize(const platform::ByteBuffer& data, size_t& offset) = 0;
 
 protected:
     EntryType type_{EntryType::FIND_SERVICE};
@@ -78,8 +80,8 @@ public:
     uint32_t get_minor_version() const { return minor_version_; }
     void set_minor_version(uint32_t version) { minor_version_ = version; }
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
     uint16_t service_id_{0};
@@ -108,8 +110,8 @@ public:
     uint8_t get_major_version() const { return major_version_; }
     void set_major_version(uint8_t version) { major_version_ = version; }
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
     uint16_t service_id_{0};
@@ -134,8 +136,8 @@ public:
     OptionType get_type() const { return type_; }
     uint16_t get_length() const { return length_; }
 
-    virtual std::vector<uint8_t> serialize() const = 0;
-    virtual bool deserialize(const std::vector<uint8_t>& data, size_t& offset) = 0;
+    virtual platform::ByteBuffer serialize() const = 0;
+    virtual bool deserialize(const platform::ByteBuffer& data, size_t& offset) = 0;
 
 protected:
     OptionType type_{OptionType::IPV4_ENDPOINT};
@@ -159,11 +161,11 @@ public:
     void set_port(uint16_t port) { port_ = port; }
 
     // Helper methods
-    void set_ipv4_address_from_string(const std::string& ip_address);
-    std::string get_ipv4_address_string() const;
+    void set_ipv4_address_from_string(const platform::String<>& ip_address);
+    platform::String<> get_ipv4_address_string() const;
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
     uint8_t protocol_{0};      // 0x06 = TCP, 0x11 = UDP
@@ -187,8 +189,8 @@ public:
     uint16_t get_port() const { return port_; }
     void set_port(uint16_t port) { port_ = port; }
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
     uint32_t ipv4_address_{0}; // IPv4 address in network byte order
@@ -203,14 +205,14 @@ class ConfigurationOption : public SdOption {
 public:
     ConfigurationOption() : SdOption(OptionType::CONFIGURATION) {}
 
-    const std::string& get_configuration_string() const { return config_string_; }
-    void set_configuration_string(const std::string& config) { config_string_ = config; }
+    const platform::String<>& get_configuration_string() const { return config_string_; }
+    void set_configuration_string(const platform::String<>& config) { config_string_ = config; }
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
-    std::string config_string_;
+    platform::String<> config_string_;
 };
 
 /** @implements REQ_SD_200A, REQ_SD_200C, REQ_MSG_113 */
@@ -224,14 +226,14 @@ public:
     uint32_t get_reserved() const { return reserved_; }
     void set_reserved(uint32_t reserved) { reserved_ = reserved; }
 
-    const std::vector<std::unique_ptr<SdEntry>>& get_entries() const { return entries_; }
+    const platform::Vector<std::unique_ptr<SdEntry>>& get_entries() const { return entries_; }
     void add_entry(std::unique_ptr<SdEntry> entry);
 
-    const std::vector<std::unique_ptr<SdOption>>& get_options() const { return options_; }
+    const platform::Vector<std::unique_ptr<SdOption>>& get_options() const { return options_; }
     void add_option(std::unique_ptr<SdOption> option);
 
-    std::vector<uint8_t> serialize() const;
-    bool deserialize(const std::vector<uint8_t>& data);
+    platform::ByteBuffer serialize() const;
+    bool deserialize(const platform::ByteBuffer& data);
 
     // Helper methods
     bool is_reboot() const { return (static_cast<uint32_t>(flags_) & 0x80U) != 0; }
@@ -263,8 +265,8 @@ private:
     uint32_t reserved_{0};
     uint16_t session_id_{0};
 
-    std::vector<std::unique_ptr<SdEntry>> entries_;
-    std::vector<std::unique_ptr<SdOption>> options_;
+    platform::Vector<std::unique_ptr<SdEntry>> entries_;
+    platform::Vector<std::unique_ptr<SdOption>> options_;
 };
 
 // Type aliases for convenience
