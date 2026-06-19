@@ -19,8 +19,6 @@
 #include "e2e/e2e_profile_registry.h"
 #include "someip/message.h"
 #include "common/result.h"
-#include "platform/buffer_pool.h"
-#include "platform/containers.h"
 #include "platform/thread.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_htonl macro from byteorder_impl.h
 #include "platform/byteorder.h"

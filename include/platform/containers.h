@@ -22,6 +22,6 @@
  * directory (include/platform/static/ or include/platform/dynamic/).
  */
 
-#include "containers_impl.h"
+#include "containers_impl.h" // IWYU pragma: export
 
 #endif // SOMEIP_PLATFORM_CONTAINERS_H

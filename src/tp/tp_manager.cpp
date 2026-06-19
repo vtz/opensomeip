@@ -13,8 +13,6 @@
 
 #include "tp/tp_manager.h"
 
-#include "platform/buffer_pool.h"
-#include "platform/containers.h"
 #include "platform/thread.h"
 #include "someip/message.h"
 #include "tp/tp_reassembler.h"

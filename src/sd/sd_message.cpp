@@ -19,9 +19,6 @@
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_inet_*/AF_INET/in_addr via net_impl.h
 #include "platform/net.h"
 
-#include "platform/buffer_pool.h"
-#include "platform/containers.h"
-
 #include <array>
 #include <cstddef>
 #include <cstdint>

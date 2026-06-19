@@ -206,7 +206,7 @@ platform::ByteBuffer Message::serialize() const {
  */
 bool Message::deserialize(const uint8_t* data_ptr, size_t data_size, bool expect_e2e) {
     platform::ByteBuffer tmp(data_size);
-    if (data_ptr && data_size > 0) { std::memcpy(tmp.data(), data_ptr, data_size); }
+    if (data_ptr != nullptr && data_size > 0) { std::memcpy(tmp.data(), data_ptr, data_size); }
     return deserialize(tmp, expect_e2e);
 }
 

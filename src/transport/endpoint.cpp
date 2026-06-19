@@ -13,8 +13,6 @@
 
 #include "transport/endpoint.h"
 
-#include "platform/containers.h"
-
 #include <cctype>
 #include <cstdint>
 #include <cstdlib>
@@ -22,6 +20,7 @@
 #include <functional>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace someip::transport {
@@ -126,7 +125,7 @@ bool Endpoint::operator<(const Endpoint& other) const {
 
 size_t Endpoint::Hash::operator()(const Endpoint& endpoint) const {
     size_t hash = 0;
-    hash = std::hash<platform::String<>>()(endpoint.address_);
+    hash = std::hash<std::string_view>()(std::string_view(endpoint.address_.data(), endpoint.address_.size()));
     hash = hash * 31 + std::hash<uint16_t>()(endpoint.port_);
     hash = hash * 31 + std::hash<int>()(static_cast<int>(endpoint.protocol_));
     return hash;
@@ -271,7 +270,7 @@ bool Endpoint::is_multicast_ipv4(const platform::String<>& address) const {
         return false;
     }
 
-    int const first_octet = std::stoi(address.substr(0, first_dot));
+    int const first_octet = std::atoi(address.substr(0, first_dot).c_str());
 
     // IPv4 multicast range: 224.0.0.0 to 239.255.255.255
     return first_octet >= 224 && first_octet <= 239;

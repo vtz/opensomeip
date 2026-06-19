@@ -16,6 +16,6 @@
  *   - static/   → platform::IntrusivePtr<Message>
  */
 
-#include "message_ptr_impl.h"
+#include "message_ptr_impl.h" // IWYU pragma: export
 
 #endif // SOMEIP_PLATFORM_MESSAGE_PTR_H

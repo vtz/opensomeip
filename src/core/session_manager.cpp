@@ -13,7 +13,6 @@
 
 #include "core/session_manager.h"
 
-#include "platform/containers.h"
 #include "platform/thread.h"
 
 #include <chrono>

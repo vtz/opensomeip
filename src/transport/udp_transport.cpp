@@ -14,8 +14,6 @@
 #include "transport/udp_transport.h"
 
 #include "common/result.h"
-#include "platform/buffer_pool.h"
-#include "platform/containers.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
 #include "platform/memory.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - socket/POSIX types and someip_* helpers from net_impl.h

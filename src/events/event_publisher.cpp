@@ -22,9 +22,6 @@
 #include "transport/transport.h"
 #include "transport/udp_transport.h"
 
-#include "platform/buffer_pool.h"
-#include "platform/containers.h"
-
 #include <algorithm>
 #include <atomic>
 #include <chrono>

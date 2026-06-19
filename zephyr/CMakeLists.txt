@@ -14,6 +14,7 @@ set(SOMEIP_INC  ${SOMEIP_ROOT}/include)
 set(SOMEIP_SRC  ${SOMEIP_ROOT}/src)
 
 zephyr_include_directories(${SOMEIP_INC})
+zephyr_include_directories(${SOMEIP_INC}/platform/dynamic)
 if(CONFIG_ARCH_POSIX)
     zephyr_include_directories(${SOMEIP_INC}/platform/posix)
 else()

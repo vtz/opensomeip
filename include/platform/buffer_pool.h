@@ -21,6 +21,6 @@
  * The build system sets -I to the correct backend directory.
  */
 
-#include "buffer_pool_impl.h"
+#include "buffer_pool_impl.h" // IWYU pragma: export
 
 #endif // SOMEIP_PLATFORM_BUFFER_POOL_H

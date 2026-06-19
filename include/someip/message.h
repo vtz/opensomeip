@@ -99,7 +99,7 @@ public:
     void set_payload(platform::ByteBuffer&& payload) { payload_ = std::move(payload); update_length(); }
     void set_payload(const uint8_t* data, size_t size) {
         payload_.resize(size);
-        if (data && size > 0) { std::memcpy(payload_.data(), data, size); }
+        if (data != nullptr && size > 0) { std::memcpy(payload_.data(), data, size); }
         update_length();
     }
 

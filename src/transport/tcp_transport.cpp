@@ -14,8 +14,6 @@
 #include "transport/tcp_transport.h"
 
 #include "common/result.h"
-#include "platform/buffer_pool.h"
-#include "platform/containers.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_ntohs for portable byte order
 #include "platform/byteorder.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
