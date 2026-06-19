@@ -661,19 +661,23 @@ private:
 
         (void)client_protocol;
 
+        platform::String<> client_addr(client_ip);
+        client_addr.append(":");
+        client_addr.append(std::to_string(client_port).c_str());
         handle_eventgroup_subscription(
             service_id, instance_id, eventgroup_id,
-            client_ip + ":" + std::to_string(client_port),
-            true, ttl
+            client_addr, true, ttl
         );
     }
 
     void handle_stop_subscribe(uint16_t service_id, uint16_t instance_id,
                                uint16_t eventgroup_id, const transport::Endpoint& sender) {
+        platform::String<> client_addr(sender.get_address());
+        client_addr.append(":");
+        client_addr.append(std::to_string(sender.get_port()).c_str());
         handle_eventgroup_subscription(
             service_id, instance_id, eventgroup_id,
-            sender.get_address() + ":" + std::to_string(sender.get_port()),
-            true, 0
+            client_addr, true, 0
         );
     }
 
@@ -759,9 +763,9 @@ private:
         return multicast_session_id_.next();
     }
 
-    uint16_t next_unicast_session_id(const std::string& peer) {
+    uint16_t next_unicast_session_id(const platform::String<>& peer) {
         platform::ScopedLock const lock(session_id_mutex_);
-        return unicast_session_ids_[peer].next();
+        return unicast_session_ids_[std::string(peer.c_str(), peer.size())].next();
     }
 };
 
