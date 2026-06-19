@@ -444,8 +444,8 @@ bool ConfigurationOption::deserialize(const platform::ByteBuffer& data, size_t& 
     }
 
     // Extract configuration string
-    const auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
-    config_string_.assign(first, first + static_cast<std::ptrdiff_t>(config_len));
+    const auto* str_start = reinterpret_cast<const char*>(data.data() + offset);
+    config_string_.assign(str_start, str_start + static_cast<std::ptrdiff_t>(config_len));
     offset += config_len;
 
     return true;
