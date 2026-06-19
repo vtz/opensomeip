@@ -375,8 +375,7 @@ void UdpTransport::receive_loop() {
 
         if (result == Result::SUCCESS && bytes_received > 0) {
             MessagePtr const message = platform::allocate_message();
-            const uint8_t* begin = buffer.data();
-            if (message->deserialize({begin, begin + bytes_received})) {
+            if (message->deserialize(buffer.data(), bytes_received)) {
                 // Add to queue
                 {
                     platform::ScopedLock const lock(queue_mutex_);
