@@ -76,6 +76,17 @@ public:
         }
     }
 
+    ByteBuffer(const uint8_t* first, const uint8_t* last) {
+        if (first && last > first) {
+            size_t count = static_cast<size_t>(last - first);
+            ensure_capacity(count);
+            if (slot_) {
+                std::memcpy(slot_->data, first, count);
+                slot_->size = count;
+            }
+        }
+    }
+
     ~ByteBuffer() {
         if (slot_) {
             release_buffer(slot_);
@@ -182,6 +193,19 @@ public:
         }
         std::memcpy(slot_->data + offset, first, insert_count);
         slot_->size = new_size;
+    }
+
+    iterator erase(const_iterator first, const_iterator last) {
+        if (!slot_ || first == last) { return const_cast<iterator>(first); }
+        size_t erase_start = static_cast<size_t>(first - slot_->data);
+        size_t erase_count = static_cast<size_t>(last - first);
+        size_t tail = slot_->size - erase_start - erase_count;
+        if (tail > 0) {
+            std::memmove(slot_->data + erase_start,
+                         slot_->data + erase_start + erase_count, tail);
+        }
+        slot_->size -= erase_count;
+        return slot_->data + erase_start;
     }
 
     uint8_t& operator[](size_t i) noexcept { return slot_->data[i]; }
