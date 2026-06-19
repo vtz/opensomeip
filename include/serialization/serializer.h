@@ -289,7 +289,7 @@ void Serializer::serialize_array(const platform::Vector<T>& array) {
         } else if constexpr (std::is_same_v<T, double>) {
             serialize_double(element);
         } else if constexpr (std::is_same_v<T, std::string>) {
-            serialize_string(element);
+            serialize_string(platform::String<>(element.c_str()));
         } else {
             static_assert(sizeof(T) == 0, "Unsupported array element type for serialization");
         }
