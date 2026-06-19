@@ -289,11 +289,23 @@ private:
     }
 
     platform::String<> make_subscription_key(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) const {
-        return std::to_string(service_id) + ":" + std::to_string(instance_id) + ":" + std::to_string(eventgroup_id);
+        platform::String<> key;
+        key.append(std::to_string(service_id).c_str());
+        key.append(":");
+        key.append(std::to_string(instance_id).c_str());
+        key.append(":");
+        key.append(std::to_string(eventgroup_id).c_str());
+        return key;
     }
 
     platform::String<> make_field_key(uint16_t service_id, uint16_t instance_id, uint16_t event_id) {
-        return std::to_string(service_id) + ":" + std::to_string(instance_id) + ":" + std::to_string(event_id);
+        platform::String<> key;
+        key.append(std::to_string(service_id).c_str());
+        key.append(":");
+        key.append(std::to_string(instance_id).c_str());
+        key.append(":");
+        key.append(std::to_string(event_id).c_str());
+        return key;
     }
 
     void on_message_received(MessagePtr message, const transport::Endpoint& /*sender*/) override {
@@ -375,10 +387,10 @@ private:
     EndpointResolver endpoint_resolver_;
     std::shared_ptr<transport::UdpTransport> transport_;
 
-    std::unordered_map<platform::String<>, SubscriptionInfo> subscriptions_;
+    platform::UnorderedMap<platform::String<>, SubscriptionInfo> subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;  // Lock order: acquire before field_requests_mutex_
 
-    std::unordered_map<platform::String<>, EventNotificationCallback> field_requests_;
+    platform::UnorderedMap<platform::String<>, EventNotificationCallback> field_requests_;
     mutable platform::Mutex field_requests_mutex_;  // Lock order: acquire after subscriptions_mutex_
 
     std::atomic<bool> running_;
