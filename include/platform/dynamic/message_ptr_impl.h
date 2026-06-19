@@ -7,7 +7,11 @@
 #ifndef SOMEIP_PLATFORM_DYNAMIC_MESSAGE_PTR_IMPL_H
 #define SOMEIP_PLATFORM_DYNAMIC_MESSAGE_PTR_IMPL_H
 
+#include <memory>
+
 namespace someip {
+
+class Message;
 
 using MessagePtr = std::shared_ptr<Message>;
 using MessageConstPtr = std::shared_ptr<const Message>;

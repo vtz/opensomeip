@@ -17,6 +17,10 @@
 #include <thread>
 #include <chrono>
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
+using namespace someip;
 using namespace someip::events;
 
 /**
@@ -180,7 +184,7 @@ TEST_F(EventsTest, SubscriptionStateTransitions) {
 TEST_F(EventsTest, EventNotificationData) {
     EventNotification notification(0x1234, 0x0001, 0x8001);
 
-    std::vector<uint8_t> test_data = {0x01, 0x02, 0x03, 0x04, 0x05};
+    platform::ByteBuffer test_data = {0x01, 0x02, 0x03, 0x04, 0x05};
     notification.event_data = test_data;
     notification.client_id = 0xABCD;
     notification.session_id = 0x1234;

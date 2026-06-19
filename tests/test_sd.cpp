@@ -20,10 +20,14 @@
 #include <someip/types.h>
 #include <transport/udp_transport.h>
 #include <platform/byteorder.h>
+#include <platform/buffer_pool.h>
+#include <platform/containers.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <cstdio>
 
+using namespace someip;
 using namespace someip::sd;
 
 /**
@@ -185,7 +189,7 @@ TEST_F(SdTest, IPv4EndpointOptionDeserialization) {
     bool success = deserialized_option.deserialize(data, offset);
 
     EXPECT_TRUE(success);
-    EXPECT_EQ(deserialized_option.get_ipv4_address_string(), std::string("192.168.1.100"));
+    EXPECT_EQ(deserialized_option.get_ipv4_address_string(), "192.168.1.100");
     EXPECT_EQ(deserialized_option.get_port(), 30509);
     EXPECT_EQ(deserialized_option.get_protocol(), 0x11);
 }
@@ -496,7 +500,7 @@ TEST_F(SdTest, IPv4EndpointOptionSerializesAddressNBO) {
  */
 TEST_F(SdTest, IPv4EndpointOptionDeserializesSpecCompliantPacket) {
     // Hand-crafted spec-compliant IPv4 Endpoint Option for 10.0.3.1:30509/UDP
-    const std::vector<uint8_t> wire = {
+    const platform::ByteBuffer wire = {
         0x00, 0x09,       // Length = 9 (spec-correct)
         0x04,             // Type = IPv4 Endpoint
         0x00,             // Reserved
@@ -565,7 +569,7 @@ TEST_F(SdTest, IPv4EndpointOptionSpecCompliantRoundTrip) {
 TEST_F(SdTest, VsomeipInteropScenario) {
     // Exact wire bytes that vsomeip sends for server at 10.10.10.20:30510/UDP
     // per AUTOSAR SOME/IP-SD wire format
-    const std::vector<uint8_t> vsomeip_wire = {
+    const platform::ByteBuffer vsomeip_wire = {
         0x00, 0x09,                   // Length = 9 (AUTOSAR-compliant)
         0x04,                         // Type = IPv4 Endpoint (0x04)
         0x00,                         // Reserved
@@ -759,7 +763,9 @@ TEST_F(SdIntegrationTest, ServerOfferMultipleServices) {
     for (uint16_t i = 0; i < 3; ++i) {
         ServiceInstance instance(0x1000 + i, 0x0001, 1, 0);
         instance.ttl_seconds = 30;
-        EXPECT_TRUE(server.offer_service(instance, "127.0.0.1:" + std::to_string(30500 + i)));
+        char endpoint_buf[32];
+        snprintf(endpoint_buf, sizeof(endpoint_buf), "127.0.0.1:%d", 30500 + i);
+        EXPECT_TRUE(server.offer_service(instance, endpoint_buf));
     }
 
     auto offered = server.get_offered_services();
@@ -925,7 +931,7 @@ TEST_F(SdTest, IPv4AddressConversion) {
     IPv4EndpointOption option;
 
     // Test various IP addresses
-    std::vector<std::string> test_addresses = {
+    const char* test_addresses[] = {
         "0.0.0.0",
         "127.0.0.1",
         "192.168.1.100",
@@ -933,7 +939,7 @@ TEST_F(SdTest, IPv4AddressConversion) {
         "255.255.255.255"
     };
 
-    for (const auto& addr : test_addresses) {
+    for (const auto* addr : test_addresses) {
         option.set_ipv4_address_from_string(addr);
         EXPECT_EQ(option.get_ipv4_address_string(), addr)
             << "Round-trip failed for: " << addr;
@@ -964,7 +970,7 @@ TEST_F(SdTest, PortConversion) {
  */
 TEST_F(SdTest, DeserializeEmptyBuffer) {
     SdMessage msg;
-    std::vector<uint8_t> empty;
+    platform::ByteBuffer empty;
     EXPECT_FALSE(msg.deserialize(empty));
 }
 
@@ -975,7 +981,7 @@ TEST_F(SdTest, DeserializeEmptyBuffer) {
  */
 TEST_F(SdTest, DeserializeTruncatedHeader) {
     SdMessage msg;
-    std::vector<uint8_t> short_data = {0x00, 0x01, 0x02};
+    platform::ByteBuffer short_data = {0x00, 0x01, 0x02};
     EXPECT_FALSE(msg.deserialize(short_data));
 }
 
@@ -987,7 +993,7 @@ TEST_F(SdTest, DeserializeTruncatedHeader) {
 TEST_F(SdTest, DeserializeInvalidLength) {
     SdMessage msg;
     // 8 bytes of header but length field claims more data than available
-    std::vector<uint8_t> data = {
+    platform::ByteBuffer data = {
         0x00, 0x00, 0x00, 0x00,  // flags + reserved
         0x00, 0x00, 0x01, 0x00,  // entries length = 256 (but no data follows)
     };
@@ -1001,7 +1007,7 @@ TEST_F(SdTest, DeserializeInvalidLength) {
  */
 TEST_F(SdTest, ServiceEntryDeserializeTruncated) {
     ServiceEntry entry;
-    std::vector<uint8_t> short_data = {0x00, 0x01, 0x02};
+    platform::ByteBuffer short_data = {0x00, 0x01, 0x02};
     size_t offset = 0;
     EXPECT_FALSE(entry.deserialize(short_data, offset));
 }
@@ -1013,7 +1019,7 @@ TEST_F(SdTest, ServiceEntryDeserializeTruncated) {
  */
 TEST_F(SdTest, EventGroupEntryDeserializeTruncated) {
     EventGroupEntry entry;
-    std::vector<uint8_t> short_data = {0x00, 0x01, 0x02};
+    platform::ByteBuffer short_data = {0x00, 0x01, 0x02};
     size_t offset = 0;
     EXPECT_FALSE(entry.deserialize(short_data, offset));
 }
@@ -1025,7 +1031,7 @@ TEST_F(SdTest, EventGroupEntryDeserializeTruncated) {
  */
 TEST_F(SdTest, IPv4EndpointOptionDeserializeTruncated) {
     IPv4EndpointOption option;
-    std::vector<uint8_t> short_data = {0x00, 0x01};
+    platform::ByteBuffer short_data = {0x00, 0x01};
     size_t offset = 0;
     EXPECT_FALSE(option.deserialize(short_data, offset));
 }
@@ -1037,7 +1043,7 @@ TEST_F(SdTest, IPv4EndpointOptionDeserializeTruncated) {
  */
 TEST_F(SdTest, MulticastOptionDeserializeTruncated) {
     IPv4MulticastOption option;
-    std::vector<uint8_t> short_data = {0x00};
+    platform::ByteBuffer short_data = {0x00};
     size_t offset = 0;
     EXPECT_FALSE(option.deserialize(short_data, offset));
 }
@@ -1118,7 +1124,7 @@ TEST_F(SdTest, ClientDoubleSubscribe) {
  * @brief Test SD message with invalid header
  */
 TEST_F(SdTest, InvalidSdMessageHeader) {
-    std::vector<uint8_t> raw_sd_msg = {
+    platform::ByteBuffer raw_sd_msg = {
         0xFF, 0xFF, 0x81, 0x00,
         0x00, 0x00, 0x00, 0x08,
         0x00, 0x00, 0x00, 0x00,
@@ -1139,7 +1145,7 @@ TEST_F(SdTest, InvalidSdMessageHeader) {
  * @brief Test SD with truncated entries array
  */
 TEST_F(SdTest, TruncatedEntriesArray) {
-    std::vector<uint8_t> truncated = {
+    platform::ByteBuffer truncated = {
         0xC0, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x20,
         0x01, 0x00, 0x00
@@ -1188,7 +1194,7 @@ TEST_F(SdTest, FindServiceWildcard) {
  * @brief Test SD option with invalid length
  */
 TEST_F(SdTest, InvalidOptionLength) {
-    std::vector<uint8_t> invalid_option = {
+    platform::ByteBuffer invalid_option = {
         0xFF, 0xFF,
         0x04,
         0x00,
@@ -1234,7 +1240,7 @@ TEST_F(SdTest, EmptyEntriesArray) {
     sd_msg.set_flags(0xC0);
     EXPECT_EQ(sd_msg.get_entries().size(), 0u);
 
-    std::vector<uint8_t> serialized = sd_msg.serialize();
+    auto serialized = sd_msg.serialize();
     EXPECT_FALSE(serialized.empty());
 
     SdMessage deserialized;
@@ -1309,7 +1315,7 @@ TEST_F(SdTest, MalformedOptionIndex) {
  */
 TEST_F(SdTest, UnsupportedEntryType) {
     // Build a minimal 16-byte SD entry with an unknown type (0xFF)
-    std::vector<uint8_t> unknown_type_data(16, 0x00);
+    platform::ByteBuffer unknown_type_data(16, 0x00);
     unknown_type_data[0] = 0xFF;  // type byte
 
     ServiceEntry entry(EntryType::FIND_SERVICE);
@@ -1348,7 +1354,7 @@ TEST_F(SdTest, ServiceEntryMinorVersion32Bit) {
     entry.set_minor_version(0x00010002);
     entry.set_ttl(3600);
 
-    std::vector<uint8_t> serialized = entry.serialize();
+    auto serialized = entry.serialize();
     ASSERT_EQ(serialized.size(), 16u);
 
     // Bytes 12-15 must carry the full 32-bit minor version in big-endian
@@ -1376,7 +1382,7 @@ TEST_F(SdTest, ServiceEntryMinorVersionMax) {
     entry.set_minor_version(0xFFFFFFFF);
     entry.set_ttl(100);
 
-    std::vector<uint8_t> serialized = entry.serialize();
+    auto serialized = entry.serialize();
     ServiceEntry deserialized;
     size_t offset = 0;
     EXPECT_TRUE(deserialized.deserialize(serialized, offset));
@@ -1395,7 +1401,7 @@ TEST_F(SdTest, ConfigurationOptionLengthIncludesReserved) {
     ConfigurationOption opt;
     opt.set_configuration_string("test=value");
 
-    std::vector<uint8_t> serialized = opt.serialize();
+    auto serialized = opt.serialize();
     ASSERT_GE(serialized.size(), 4u);
 
     // Length field (bytes 0-1) must be 1 + strlen("test=value") = 11
@@ -1425,7 +1431,7 @@ TEST_F(SdTest, ConfigurationOptionInteropDeserialize) {
     // Type(1)  = 0x01 (CONFIGURATION)
     // Reserved(1) = 0x00
     // Data(5)  = "hello"
-    std::vector<uint8_t> wire = {
+    platform::ByteBuffer wire = {
         0x00, 0x06,  // Length = 6 (reserved + "hello")
         0x01,        // Type = CONFIGURATION
         0x00,        // Reserved
@@ -1465,7 +1471,7 @@ TEST_F(SdTest, UnknownOptionSkipCorrectBytes) {
     ep_opt->set_port(30501);
     sd_msg.add_option(std::move(ep_opt));
 
-    std::vector<uint8_t> serialized = sd_msg.serialize();
+    auto serialized = sd_msg.serialize();
 
     // Insert an unknown option (type 0x99) BEFORE the IPv4 endpoint option
     // in the options array. Find the options start.
@@ -1475,12 +1481,12 @@ TEST_F(SdTest, UnknownOptionSkipCorrectBytes) {
     size_t options_start = options_len_offset + 4;
 
     // Build a new message with an unknown option followed by the IPv4 endpoint
-    std::vector<uint8_t> modified;
+    platform::ByteBuffer modified;
     modified.insert(modified.end(), serialized.begin(),
                     serialized.begin() + static_cast<std::ptrdiff_t>(options_start));
 
     // Unknown option: Length=0x0003 (reserved + 2 data bytes), Type=0x99, Reserved=0x00, Data=0xAA 0xBB
-    std::vector<uint8_t> unknown_opt = {0x00, 0x03, 0x99, 0x00, 0xAA, 0xBB};
+    platform::ByteBuffer unknown_opt = {0x00, 0x03, 0x99, 0x00, 0xAA, 0xBB};
     modified.insert(modified.end(), unknown_opt.begin(), unknown_opt.end());
 
     // Append the original IPv4 endpoint option
@@ -1529,7 +1535,7 @@ TEST_F(SdTest, FullMessageMinorVersion32BitRoundTrip) {
     opt->set_port(8080);
     sd_msg.add_option(std::move(opt));
 
-    std::vector<uint8_t> serialized = sd_msg.serialize();
+    auto serialized = sd_msg.serialize();
 
     SdMessage deserialized;
     EXPECT_TRUE(deserialized.deserialize(serialized));
@@ -1576,7 +1582,7 @@ TEST_F(SdTest, MinorVersionPreservedThroughOfferPath) {
     sd_msg.add_option(std::move(opt));
 
     // Serialize → wire → deserialize (client path)
-    std::vector<uint8_t> wire = sd_msg.serialize();
+    auto wire = sd_msg.serialize();
     SdMessage received;
     ASSERT_TRUE(received.deserialize(wire));
     ASSERT_EQ(received.get_entries().size(), 1u);
@@ -1612,7 +1618,7 @@ TEST_F(SdTest, ZeroLengthOptions) {
 
     EXPECT_EQ(sd_msg.get_options().size(), 0u) << "No options added";
 
-    std::vector<uint8_t> serialized = sd_msg.serialize();
+    auto serialized = sd_msg.serialize();
     EXPECT_FALSE(serialized.empty()) << "Serialized message with entries and zero options";
 
     SdMessage deserialized;
@@ -1713,9 +1719,9 @@ TEST_F(SdTest, SdMessageSessionIdAccessor) {
  * contains a SubscribeEventgroup entry with the given TTL and an
  * IPv4EndpointOption pointing to the client.
  */
-static someip::Message build_subscribe_eventgroup_message(
+static Message build_subscribe_eventgroup_message(
     uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
-    uint32_t ttl, const std::string& client_ip, uint16_t client_port) {
+    uint32_t ttl, const char* client_ip, uint16_t client_port) {
 
     auto entry = std::make_unique<EventGroupEntry>(EntryType::SUBSCRIBE_EVENTGROUP);
     entry->set_service_id(service_id);
@@ -1736,11 +1742,11 @@ static someip::Message build_subscribe_eventgroup_message(
     sd_msg.add_entry(std::move(entry));
     sd_msg.add_option(std::move(option));
 
-    someip::Message someip_msg(
-        someip::MessageId(0xFFFF, someip::SOMEIP_SD_METHOD_ID),
-        someip::RequestId(someip::SOMEIP_SD_CLIENT_ID, 0x0001),
-        someip::MessageType::NOTIFICATION,
-        someip::ReturnCode::E_OK);
+    Message someip_msg(
+        MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+        RequestId(SOMEIP_SD_CLIENT_ID, 0x0001),
+        MessageType::NOTIFICATION,
+        ReturnCode::E_OK);
     someip_msg.set_payload(sd_msg.serialize());
     return someip_msg;
 }
@@ -1750,7 +1756,7 @@ static someip::Message build_subscribe_eventgroup_message(
  *        extract the first EventGroupEntry from it.
  * @return true if a SubscribeEventgroup ACK/NACK entry was received.
  */
-static bool receive_sd_ack(someip::transport::UdpTransport& transport,
+static bool receive_sd_ack(transport::UdpTransport& transport,
                            EventGroupEntry& out_entry,
                            std::chrono::milliseconds timeout = std::chrono::milliseconds(2000)) {
     auto deadline = std::chrono::steady_clock::now() + timeout;
@@ -1805,19 +1811,19 @@ TEST_F(SdIntegrationTest, SubscriptionACKReflectsRequestedTTL) {
     svc.ttl_seconds = 30;
     ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {0x0001}));
 
-    someip::transport::UdpTransportConfig client_cfg;
+    transport::UdpTransportConfig client_cfg;
     client_cfg.blocking = false;
-    someip::transport::UdpTransport client_transport(
-        someip::transport::Endpoint("0.0.0.0", client_port), client_cfg);
-    ASSERT_EQ(client_transport.start(), someip::Result::SUCCESS);
+    transport::UdpTransport client_transport(
+        transport::Endpoint("0.0.0.0", client_port), client_cfg);
+    ASSERT_EQ(client_transport.start(), Result::SUCCESS);
 
     const uint32_t requested_ttl = 1800;
     auto subscribe_msg = build_subscribe_eventgroup_message(
         0x1234, 0x0001, 0x0001, requested_ttl, "127.0.0.1", client_port);
 
-    someip::transport::Endpoint server_ep("127.0.0.1", server_port);
+    transport::Endpoint server_ep("127.0.0.1", server_port);
     ASSERT_EQ(client_transport.send_message(subscribe_msg, server_ep),
-              someip::Result::SUCCESS);
+              Result::SUCCESS);
 
     EventGroupEntry ack_entry;
     bool received = receive_sd_ack(client_transport, ack_entry);
@@ -1855,18 +1861,18 @@ TEST_F(SdIntegrationTest, StopSubscribeEventgroupTTLZero) {
     svc.ttl_seconds = 30;
     ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {0x0001}));
 
-    someip::transport::UdpTransportConfig client_cfg;
+    transport::UdpTransportConfig client_cfg;
     client_cfg.blocking = false;
-    someip::transport::UdpTransport client_transport(
-        someip::transport::Endpoint("0.0.0.0", client_port), client_cfg);
-    ASSERT_EQ(client_transport.start(), someip::Result::SUCCESS);
+    transport::UdpTransport client_transport(
+        transport::Endpoint("0.0.0.0", client_port), client_cfg);
+    ASSERT_EQ(client_transport.start(), Result::SUCCESS);
 
     auto stop_msg = build_subscribe_eventgroup_message(
         0x1234, 0x0001, 0x0001, 0, "127.0.0.1", client_port);
 
-    someip::transport::Endpoint server_ep("127.0.0.1", server_port);
+    transport::Endpoint server_ep("127.0.0.1", server_port);
     ASSERT_EQ(client_transport.send_message(stop_msg, server_ep),
-              someip::Result::SUCCESS);
+              Result::SUCCESS);
 
     EventGroupEntry ack_entry;
     bool received = receive_sd_ack(client_transport, ack_entry);
@@ -1890,13 +1896,13 @@ TEST_F(SdIntegrationTest, StopSubscribeEventgroupTTLZero) {
  * whose TTL has elapsed — the core behavior the bug report described.
  */
 TEST_F(SdIntegrationTest, EventPublisherStopsEventsAfterTTLExpiry) {
-    someip::events::EventPublisher publisher(0x1234, 0x0001);
+    events::EventPublisher publisher(0x1234, 0x0001);
     publisher.set_default_client_endpoint("127.0.0.1", 50000);
 
-    someip::events::EventConfig cfg;
+    events::EventConfig cfg;
     cfg.event_id = 0x8001;
     cfg.eventgroup_id = 0x0001;
-    cfg.notification_type = someip::events::NotificationType::ON_CHANGE;
+    cfg.notification_type = events::NotificationType::ON_CHANGE;
     publisher.register_event(cfg);
 
     ASSERT_TRUE(publisher.handle_subscription(0x0001, 0x0100, 1u));

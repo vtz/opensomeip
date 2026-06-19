@@ -17,6 +17,8 @@
 #include <tp/tp_reassembler.h>
 #include <someip/message.h>
 #include <thread>
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 
 using namespace someip;
 using namespace someip::tp;
@@ -67,7 +69,7 @@ TEST_F(TpTest, SingleSegmentMessage) {
     // Create small message that fits in one segment
     Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                    MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> small_payload(256, 0xAA);
+    platform::ByteBuffer small_payload(256, 0xAA);
     message.set_payload(small_payload);
 
     // Should not need segmentation
@@ -84,7 +86,7 @@ TEST_F(TpTest, SingleSegmentMessage) {
     ASSERT_EQ(segment.header.message_type, TpMessageType::SINGLE_MESSAGE);
 
     // Single segment contains full serialized message
-    std::vector<uint8_t> expected_data = message.serialize();
+    platform::ByteBuffer expected_data = message.serialize();
     ASSERT_EQ(segment.payload.size(), expected_data.size());
     ASSERT_EQ(segment.payload, expected_data);
 
@@ -103,7 +105,7 @@ TEST_F(TpTest, MultiSegmentMessage) {
     // Create large message that needs segmentation
     Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                    MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> large_payload(1500, 0xBB); // Larger than segment size
+    platform::ByteBuffer large_payload(1500, 0xBB);
     message.set_payload(large_payload);
 
     // Should need segmentation
@@ -154,7 +156,7 @@ TEST_F(TpTest, MessageReassembly) {
     // Create large message
     Message original_message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                             MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> original_payload(1024, 0xCC);
+    platform::ByteBuffer original_payload(1024, 0xCC);
     original_message.set_payload(original_payload);
 
     // Segment the message
@@ -176,11 +178,11 @@ TEST_F(TpTest, MessageReassembly) {
     ASSERT_GT(segments.size(), 1u);
 
     // Simulate receiving and reassembling
-    std::vector<uint8_t> reassembled_payload;
+    platform::ByteBuffer reassembled_payload;
     bool reassembly_complete = false;
 
     for (const auto& seg : segments) {
-        std::vector<uint8_t> complete_payload;
+        platform::ByteBuffer complete_payload;
         if (tp_manager.handle_received_segment(seg, complete_payload)) {
             if (!complete_payload.empty()) {
                 reassembled_payload = complete_payload;
@@ -213,9 +215,9 @@ TEST_F(TpTest, TimeoutHandling) {
     seg.header.segment_length = 500;
     seg.header.sequence_number = 1;
     seg.header.message_type = TpMessageType::FIRST_SEGMENT;
-    seg.payload.assign(500, 0x11);
+    seg.payload.resize(500, 0x11);
 
-    std::vector<uint8_t> complete_message;
+    platform::ByteBuffer complete_message;
     ASSERT_TRUE(reassembler.process_segment(seg, complete_message));
     ASSERT_TRUE(complete_message.empty());
 
@@ -242,9 +244,9 @@ TEST_F(TpTest, InvalidSegmentHandling) {
     invalid_seg.header.segment_length = 300; // 300 + 300 = 600 > 500
     invalid_seg.header.sequence_number = 1;
     invalid_seg.header.message_type = TpMessageType::CONSECUTIVE_SEGMENT;
-    invalid_seg.payload.assign(300, 0x22);
+    invalid_seg.payload.resize(300, 0x22);
 
-    std::vector<uint8_t> complete_message;
+    platform::ByteBuffer complete_message;
     ASSERT_FALSE(reassembler.process_segment(invalid_seg, complete_message));
 }
 
@@ -255,7 +257,7 @@ TEST_F(TpTest, StatisticsTracking) {
     // Create and segment a message
     Message message(MessageId(0x1111, 0x2222), RequestId(0x3333, 0x4444),
                    MessageType::REQUEST, ReturnCode::E_OK);
-    message.set_payload(std::vector<uint8_t>(800, 0x55));
+    message.set_payload(platform::ByteBuffer(800, 0x55));
 
     uint32_t transfer_id;
     TpResult result = tp_manager.segment_message(message, transfer_id);
@@ -294,10 +296,10 @@ TEST_F(TpTest, MaximumSegmentSize) {
 
     Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                    MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> large_payload(1393, 0xAA); // Just over 1392 bytes
+    platform::ByteBuffer large_payload(1393, 0xAA);
     message.set_payload(large_payload);
 
-    std::vector<TpSegment> segments;
+    platform::Vector<TpSegment> segments;
     TpResult result = segmenter.segment_message(message, segments);
     EXPECT_EQ(result, TpResult::SUCCESS);
     EXPECT_GT(segments.size(), 1u);
@@ -313,10 +315,10 @@ TEST_F(TpTest, SegmentAlignment) {
 
     Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                    MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> large_payload(2000, 0xBB); // Large payload
+    platform::ByteBuffer large_payload(2000, 0xBB);
     message.set_payload(large_payload);
 
-    std::vector<TpSegment> segments;
+    platform::Vector<TpSegment> segments;
     TpResult result = segmenter.segment_message(message, segments);
     ASSERT_EQ(result, TpResult::SUCCESS);
     ASSERT_GT(segments.size(), 1u);
@@ -345,10 +347,10 @@ TEST_F(TpTest, SameSessionId) {
 
     Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                    MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> large_payload(1500, 0xCC);
+    platform::ByteBuffer large_payload(1500, 0xCC);
     message.set_payload(large_payload);
 
-    std::vector<TpSegment> segments;
+    platform::Vector<TpSegment> segments;
     TpResult result = segmenter.segment_message(message, segments);
     ASSERT_EQ(result, TpResult::SUCCESS);
     ASSERT_GT(segments.size(), 1u);
@@ -370,10 +372,10 @@ TEST_F(TpTest, TpFlagInMessageType) {
 
     Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                    MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> large_payload(1500, 0xDD);
+    platform::ByteBuffer large_payload(1500, 0xDD);
     message.set_payload(large_payload);
 
-    std::vector<TpSegment> segments;
+    platform::Vector<TpSegment> segments;
     TpResult result = segmenter.segment_message(message, segments);
     ASSERT_EQ(result, TpResult::SUCCESS);
     ASSERT_GT(segments.size(), 1u);
@@ -397,10 +399,10 @@ TEST_F(TpTest, PreserveMessageTypeWithTpFlag) {
 
     Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                    MessageType::REQUEST_NO_RETURN, ReturnCode::E_OK);
-    std::vector<uint8_t> large_payload(1500, 0xEE);
+    platform::ByteBuffer large_payload(1500, 0xEE);
     message.set_payload(large_payload);
 
-    std::vector<TpSegment> segments;
+    platform::Vector<TpSegment> segments;
     TpResult result = segmenter.segment_message(message, segments);
     ASSERT_EQ(result, TpResult::SUCCESS);
     ASSERT_GT(segments.size(), 1u);
@@ -436,10 +438,10 @@ TEST_F(TpTest, MessageTooLarge) {
     TpSegmenter segmenter(small_config);
 
     Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001));
-    std::vector<uint8_t> oversized_payload(2000, 0xAA);
+    platform::ByteBuffer oversized_payload(2000, 0xAA);
     message.set_payload(oversized_payload);
 
-    std::vector<TpSegment> segments;
+    platform::Vector<TpSegment> segments;
     TpResult result = segmenter.segment_message(message, segments);
     EXPECT_EQ(result, TpResult::MESSAGE_TOO_LARGE);
     EXPECT_TRUE(segments.empty());
@@ -459,10 +461,10 @@ TEST_F(TpTest, ManagerResourceExhausted) {
     ASSERT_TRUE(manager.initialize());
 
     Message msg1(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001));
-    msg1.set_payload(std::vector<uint8_t>(1500, 0xAA));
+    msg1.set_payload(platform::ByteBuffer(1500, 0xAA));
 
     Message msg2(MessageId(0x1234, 0x5679), RequestId(0xABCD, 0x0002));
-    msg2.set_payload(std::vector<uint8_t>(1500, 0xBB));
+    msg2.set_payload(platform::ByteBuffer(1500, 0xBB));
 
     uint32_t transfer_id1 = 0, transfer_id2 = 0;
     EXPECT_EQ(manager.segment_message(msg1, transfer_id1), TpResult::SUCCESS);
@@ -531,7 +533,7 @@ TEST_F(TpTest, ReassemblerInvalidSegment) {
     // Payload too short - less than 20 bytes (SOME/IP header + TP header)
     invalid_segment.payload.resize(10, 0xAA);
 
-    std::vector<uint8_t> reassembled;
+    platform::ByteBuffer reassembled;
     EXPECT_FALSE(reassembler.process_segment(invalid_segment, reassembled));
 }
 
@@ -592,7 +594,7 @@ TEST_F(TpTest, InvalidOffsetAlignment) {
     segment.header.message_type = TpMessageType::CONSECUTIVE_SEGMENT;
     segment.payload.resize(256, 0xBB);
 
-    std::vector<uint8_t> complete_message;
+    platform::ByteBuffer complete_message;
     bool result = tp_manager.handle_received_segment(segment, complete_message);
     EXPECT_FALSE(result) << "Non-aligned offset should be rejected";
 
@@ -611,7 +613,7 @@ TEST_F(TpTest, ReassemblyTimeout) {
 
     Message large_msg(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                      MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> payload(2048, 0xCC);
+    platform::ByteBuffer payload(2048, 0xCC);
     large_msg.set_payload(payload);
 
     uint32_t transfer_id;
@@ -622,7 +624,7 @@ TEST_F(TpTest, ReassemblyTimeout) {
     result = tp_manager.get_next_segment(transfer_id, first_segment);
     ASSERT_EQ(result, TpResult::SUCCESS);
 
-    std::vector<uint8_t> complete_message;
+    platform::ByteBuffer complete_message;
     bool handle_result = tp_manager.handle_received_segment(first_segment, complete_message);
     EXPECT_TRUE(handle_result);
 
@@ -632,7 +634,7 @@ TEST_F(TpTest, ReassemblyTimeout) {
     TpSegment second_segment;
     result = tp_manager.get_next_segment(transfer_id, second_segment);
     if (result == TpResult::SUCCESS) {
-        std::vector<uint8_t> complete_msg2;
+        platform::ByteBuffer complete_msg2;
         handle_result = tp_manager.handle_received_segment(second_segment, complete_msg2);
         EXPECT_FALSE(handle_result) << "Should fail after timeout";
     }
@@ -655,7 +657,7 @@ TEST_F(TpTest, ZeroLengthSegmentPayload) {
     empty_segment.header.message_type = TpMessageType::FIRST_SEGMENT;
     empty_segment.payload.clear();
 
-    std::vector<uint8_t> complete_message;
+    platform::ByteBuffer complete_message;
     bool result = tp_manager.handle_received_segment(empty_segment, complete_message);
     EXPECT_FALSE(result) << "Segment with segment_length != payload.size() should be rejected";
 
@@ -674,7 +676,7 @@ TEST_F(TpTest, MessageExceedsMaxSize) {
 
     Message oversized(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                      MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> payload(2000, 0xDD);
+    platform::ByteBuffer payload(2000, 0xDD);
     oversized.set_payload(payload);
 
     uint32_t transfer_id;
@@ -717,10 +719,10 @@ TEST_F(TpTest, SingleMessageMismatchedLengthRejected) {
     TpSegment segment;
     segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
     segment.header.segment_length = 100;
-    segment.payload = std::vector<uint8_t>(50, 0xAA);
+    segment.payload = platform::ByteBuffer(50, 0xAA);
     segment.header.message_length = 50;
 
-    std::vector<uint8_t> complete;
+    platform::ByteBuffer complete;
     EXPECT_FALSE(tp_manager.handle_received_segment(segment, complete))
         << "Segment with length mismatch must be rejected";
 }
@@ -741,7 +743,7 @@ TEST_F(TpTest, SingleMessageEmptyPayloadRejected) {
     segment.payload.clear();
     segment.header.message_length = 0;
 
-    std::vector<uint8_t> complete;
+    platform::ByteBuffer complete;
     EXPECT_FALSE(tp_manager.handle_received_segment(segment, complete))
         << "Empty SINGLE_MESSAGE must be rejected";
 }
@@ -758,11 +760,11 @@ TEST_F(TpTest, SingleMessageValidAccepted) {
 
     TpSegment segment;
     segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
-    segment.payload = std::vector<uint8_t>(20, 0xBB);
+    segment.payload = platform::ByteBuffer(20, 0xBB);
     segment.header.segment_length = 20;
     segment.header.message_length = 20;
 
-    std::vector<uint8_t> complete;
+    platform::ByteBuffer complete;
     EXPECT_TRUE(tp_manager.handle_received_segment(segment, complete));
     EXPECT_EQ(complete.size(), 20u);
 }
@@ -780,11 +782,11 @@ TEST_F(TpTest, SingleMessageExceedsMaxSizeRejected) {
 
     TpSegment segment;
     segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
-    segment.payload = std::vector<uint8_t>(50, 0xCC);
+    segment.payload = platform::ByteBuffer(50, 0xCC);
     segment.header.segment_length = 50;
     segment.header.message_length = 200;
 
-    std::vector<uint8_t> complete;
+    platform::ByteBuffer complete;
     EXPECT_FALSE(tp_manager.handle_received_segment(segment, complete))
         << "Message exceeding max_message_size must be rejected";
 }
@@ -801,11 +803,11 @@ TEST_F(TpTest, SingleMessageSegmentLengthSmallerThanPayloadRejected) {
 
     TpSegment segment;
     segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
-    segment.payload = std::vector<uint8_t>(50, 0xDD);
+    segment.payload = platform::ByteBuffer(50, 0xDD);
     segment.header.segment_length = 30;
     segment.header.message_length = 50;
 
-    std::vector<uint8_t> complete;
+    platform::ByteBuffer complete;
     EXPECT_FALSE(tp_manager.handle_received_segment(segment, complete))
         << "Segment with segment_length < payload.size() must be rejected";
 }
