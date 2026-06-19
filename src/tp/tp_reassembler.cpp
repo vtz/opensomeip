@@ -13,6 +13,7 @@
 
 #include "tp/tp_reassembler.h"
 
+#include "platform/buffer_pool.h"
 #include "platform/thread.h"
 #include "tp/tp_types.h"
 

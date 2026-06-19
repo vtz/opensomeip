@@ -13,6 +13,8 @@
 
 #include "tp/tp_segmenter.h"
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "someip/message.h"
 #include "someip/types.h"
 #include "tp/tp_types.h"

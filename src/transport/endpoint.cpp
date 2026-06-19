@@ -270,7 +270,7 @@ bool Endpoint::is_multicast_ipv4(const platform::String<>& address) const {
         return false;
     }
 
-    int const first_octet = std::atoi(address.substr(0, first_dot).c_str());
+    int const first_octet = static_cast<int>(std::strtol(address.substr(0, first_dot).c_str(), nullptr, 10));
 
     // IPv4 multicast range: 224.0.0.0 to 239.255.255.255
     return first_octet >= 224 && first_octet <= 239;

@@ -14,6 +14,7 @@
 #include "e2e/e2e_profile_registry.h"
 
 #include "e2e/e2e_profile.h"
+#include "platform/containers.h"
 #include "platform/thread.h"
 
 #include <cstdint>

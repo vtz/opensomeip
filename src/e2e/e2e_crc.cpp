@@ -13,6 +13,8 @@
 
 #include "e2e/e2e_crc.h"
 
+#include "platform/buffer_pool.h"
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
