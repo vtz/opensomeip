@@ -206,6 +206,7 @@ jobs:
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           -DCMAKE_BUILD_TYPE=Release
           -DSOMEIP_USE_STATIC_ALLOC=ON
+          -DBUILD_EXAMPLES=OFF
           -DENABLE_WERROR=ON
 
       - name: Build
