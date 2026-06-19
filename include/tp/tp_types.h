@@ -94,7 +94,7 @@ struct TpReassemblyBuffer {
     uint32_t message_id{0};                    // SOME/IP message ID
     uint32_t total_length{0};                  // Total expected message length
     platform::ByteBuffer received_data;     // Buffer for received data
-    platform::Vector<bool> received_segments;    // Track which segments received
+    platform::Vector<bool, 16384> received_segments;    // Per-byte reception tracking
     std::chrono::steady_clock::time_point start_time{std::chrono::steady_clock::now()};
     uint8_t last_sequence_number{0};
     bool complete{false};

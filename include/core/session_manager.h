@@ -138,7 +138,7 @@ public:
     SessionManager& operator=(SessionManager&&) = delete;
 
 private:
-    platform::UnorderedMap<uint16_t, std::shared_ptr<Session>> sessions_;
+    platform::UnorderedMap<uint16_t, std::shared_ptr<Session>, 256> sessions_;
     mutable platform::Mutex sessions_mutex_;
     uint16_t next_session_id_{1};
 };

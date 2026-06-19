@@ -573,6 +573,9 @@ TEST_F(UdpTransportTest, MaxUdpPayloadSize) {
 
     // Create payload that fits within UDP max (accounting for SOME/IP header of 16 bytes)
     platform::ByteBuffer large_payload(60000, 0xBB);  // ~60KB
+    if (large_payload.empty()) {
+        GTEST_SKIP() << "Static allocation backend cannot allocate 60 KB payload";
+    }
     large_message.set_payload(large_payload);
 
     EXPECT_EQ(sender.send_message(large_message, receiver_endpoint), Result::SUCCESS);
@@ -747,6 +750,9 @@ TEST_F(UdpTransportTest, MessageExceedsMtu) {
     msg.set_service_id(0x1234);
     msg.set_method_id(0x0001);
     platform::ByteBuffer payload(65508, 0xAA);
+    if (payload.empty()) {
+        GTEST_SKIP() << "Static allocation backend cannot allocate 65 KB payload";
+    }
     msg.set_payload(payload);
 
     Endpoint remote{"127.0.0.1", 12345};
