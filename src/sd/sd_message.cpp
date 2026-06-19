@@ -414,7 +414,8 @@ platform::ByteBuffer ConfigurationOption::serialize() const {
     platform::ByteBuffer data = SdOption::serialize();
 
     // Configuration string
-    data.insert(data.end(), config_string_.begin(), config_string_.end());
+    const auto* str_begin = reinterpret_cast<const uint8_t*>(config_string_.data());
+    data.insert(data.end(), str_begin, str_begin + config_string_.size());
 
     // Length covers everything after Length(2) and Type(1) fields:
     // Reserved(1) + config_string = 1 + config_string_.size()
