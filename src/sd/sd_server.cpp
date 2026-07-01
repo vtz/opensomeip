@@ -14,6 +14,8 @@
 #include "sd/sd_server.h"
 
 #include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::String via containers dispatch header
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "sd/sd_message.h"
 #include "sd/sd_types.h"
@@ -50,11 +52,11 @@ void uint16_to_str(uint16_t val, platform::String<>& out) {
     int pos = 5;
     while (val > 0) {
         --pos;
-        digits[static_cast<size_t>(pos)] = static_cast<char>('0' + (val % 10));
+        digits.at(static_cast<size_t>(pos)) = static_cast<char>('0' + (val % 10));
         val /= 10;
     }
-    out.append(&digits[static_cast<size_t>(pos)],
-               &digits[5]);
+    out.append(digits.data() + pos,
+               digits.data() + 5);
 }
 }  // namespace
 
