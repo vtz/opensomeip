@@ -193,7 +193,7 @@ public:
         }
 
         platform::ScopedLock const field_lock(field_requests_mutex_);
-        const platform::String<> key = make_field_key(service_id, instance_id, event_id);
+        const platform::String<> key = make_field_key(service_id, 0, event_id);
         field_requests_[key] = std::move(callback);
 
         MessageId const msg_id(service_id, 0x0003);

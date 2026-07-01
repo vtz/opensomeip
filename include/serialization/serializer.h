@@ -312,6 +312,9 @@ void Serializer::serialize_array(const platform::Vector<T>& array) {
 template<typename T>
 DeserializationResult<platform::Vector<T>> Deserializer::deserialize_array(size_t length) {
     platform::Vector<T> result;
+    if (length > result.max_size()) {
+        return DeserializationResult<platform::Vector<T>>::error(Result::MALFORMED_MESSAGE);
+    }
 
     for (size_t i = 0; i < length; ++i) {
         DeserializationResult<T> element_result;
