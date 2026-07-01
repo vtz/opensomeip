@@ -29,7 +29,7 @@ jobs:
             build_type: Release
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
 
       - name: Install ccache
         if: matrix.c_compiler != 'cl'
@@ -37,7 +37,7 @@ jobs:
 
       - name: Cache ccache
         if: matrix.c_compiler != 'cl'
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
           key: ccache-${{ runner.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}-${{ github.sha }}
@@ -51,7 +51,7 @@ jobs:
           echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
       - name: Cache CMake FetchContent
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.strings.outputs.build-output-dir }}/_deps
           key: fetchcontent-${{ runner.os }}-${{ matrix.c_compiler }}-${{ hashFiles('CMakeLists.txt') }}
@@ -99,7 +99,7 @@ jobs:
           ctest --build-config ${{ matrix.build_type }} --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-host-${{ matrix.os }}-${{ matrix.c_compiler }}
@@ -107,7 +107,7 @@ jobs:
           retention-days: 14
 
       - name: Upload GTest detailed results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: gtest-results-host-${{ matrix.os }}-${{ matrix.c_compiler }}
@@ -126,10 +126,10 @@ jobs:
           dnf install -y --setopt=install_weak_deps=False \
             gcc gcc-c++ cmake ninja-build git ccache
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
 
       - name: Cache ccache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
           key: ccache-Linux-fedora42-gcc-Release-${{ github.sha }}
@@ -137,7 +137,7 @@ jobs:
             ccache-Linux-fedora42-gcc-Release-
 
       - name: Cache CMake FetchContent
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: build/_deps
           key: fetchcontent-fedora42-gcc-${{ hashFiles('CMakeLists.txt') }}
@@ -165,7 +165,7 @@ jobs:
           ctest --build-config Release --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-host-fedora42-gcc
@@ -173,7 +173,7 @@ jobs:
           retention-days: 14
 
       - name: Upload GTest detailed results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: gtest-results-host-fedora42-gcc
@@ -185,13 +185,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
 
       - name: Install ccache
         run: sudo apt-get update -qq && sudo apt-get install -y ccache
 
       - name: Cache ccache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
           key: ccache-${{ runner.os }}-static-alloc-${{ github.sha }}
@@ -199,7 +199,7 @@ jobs:
             ccache-${{ runner.os }}-static-alloc-
 
       - name: Cache CMake FetchContent
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: build/_deps
           key: fetchcontent-${{ runner.os }}-static-alloc-${{ hashFiles('CMakeLists.txt') }}
@@ -229,7 +229,7 @@ jobs:
           ctest --build-config Release --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-host-static-alloc
@@ -237,7 +237,7 @@ jobs:
           retention-days: 14
 
       - name: Upload GTest detailed results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: gtest-results-host-static-alloc
@@ -250,7 +250,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
@@ -258,7 +258,7 @@ jobs:
         run: sudo apt-get update -qq && sudo apt-get install -y ccache
 
       - name: Cache ccache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
           key: ccache-${{ runner.os }}-gcc-Debug-coverage-${{ github.sha }}
@@ -266,7 +266,7 @@ jobs:
             ccache-${{ runner.os }}-gcc-Debug-coverage-
 
       - name: Cache CMake FetchContent
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: build/_deps
           key: fetchcontent-${{ runner.os }}-coverage-${{ hashFiles('CMakeLists.txt') }}
@@ -313,7 +313,7 @@ jobs:
             --print-summary
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report-host
@@ -324,7 +324,7 @@ jobs:
           retention-days: 14
 
       - name: Upload coverage test results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-host-coverage
@@ -332,7 +332,7 @@ jobs:
           retention-days: 14
 
       - name: Upload GTest detailed results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: gtest-results-host-coverage
@@ -350,7 +350,7 @@ jobs:
           fail_below_min: false
 
       - name: Upload coverage summary
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-summary-host
@@ -380,13 +380,13 @@ jobs:
             cpp_compiler: clang++
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
 
       - name: Install ccache
         run: sudo apt-get update -qq && sudo apt-get install -y ccache
 
       - name: Cache ccache
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/ccache
           key: ccache-${{ runner.os }}-sanitizers-${{ matrix.c_compiler }}-Debug-${{ github.sha }}
@@ -394,7 +394,7 @@ jobs:
             ccache-${{ runner.os }}-sanitizers-${{ matrix.c_compiler }}-Debug-
 
       - name: Cache CMake FetchContent
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@v4
         with:
           path: build/_deps
           key: fetchcontent-${{ runner.os }}-sanitizers-${{ matrix.c_compiler }}-${{ hashFiles('CMakeLists.txt') }}
@@ -423,7 +423,7 @@ jobs:
         run: ctest --output-on-failure --timeout 60 --no-tests=error --output-junit junit_results.xml
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6db9a8b9c8c4d3e7957b5f7e35738 # v4.6.2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-sanitizers-${{ matrix.c_compiler }}
@@ -439,7 +439,7 @@ jobs:
       checks: write
     steps:
       - name: Download GTest detailed results
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@v4
         with:
           pattern: gtest-results-host-*
           path: gtest-downloads
