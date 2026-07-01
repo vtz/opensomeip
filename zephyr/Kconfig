@@ -60,6 +60,13 @@ config SOMEIP_TP
 	help
 	  Enable SOME/IP-TP message segmentation and reassembly.
 
+config SOMEIP_USE_STATIC_ALLOC
+	bool "Use static allocation backend (no-heap)"
+	default n
+	help
+	  When enabled, the SOME/IP stack uses fixed-size static pools and ETL
+	  containers instead of heap allocation. Required for ASIL-B no-heap builds.
+
 config SOMEIP_THREAD_STACK_SIZE
 	int "Thread stack size (bytes)"
 	default 4096

@@ -69,6 +69,11 @@ TpResult TpSegmenter::segment_message(const Message& message, platform::Vector<T
         segment.header.sequence_number = next_sequence_number_++;
         segment.payload = std::move(message_data);  // Full message for single segment
 
+#ifdef SOMEIP_STATIC_ALLOC
+        if (segments.full()) {
+            return TpResult::MESSAGE_TOO_LARGE;
+        }
+#endif
         segments.push_back(std::move(segment));
         return TpResult::SUCCESS;
     }
@@ -132,6 +137,11 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         segment.header.segment_length = static_cast<uint16_t>(header.size());
         segment.payload = std::move(header);
 
+#ifdef SOMEIP_STATIC_ALLOC
+        if (segments.full()) {
+            return TpResult::MESSAGE_TOO_LARGE;
+        }
+#endif
         segments.push_back(std::move(segment));
         payload_offset = first_payload_size;
     }
@@ -182,6 +192,11 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         segment.header.segment_length = static_cast<uint16_t>(segment_data.size());
         segment.payload = std::move(segment_data);
 
+#ifdef SOMEIP_STATIC_ALLOC
+        if (segments.full()) {
+            return TpResult::MESSAGE_TOO_LARGE;
+        }
+#endif
         segments.push_back(std::move(segment));
         payload_offset += payload_size;
     }

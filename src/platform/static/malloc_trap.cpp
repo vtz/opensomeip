@@ -91,6 +91,27 @@ void* realloc(void* ptr, size_t size) {  // NOLINT(cert-dcl58-cpp)
     return __libc_realloc(ptr, size);
 }
 
+void* aligned_alloc(size_t alignment, size_t size) {  // NOLINT(cert-dcl58-cpp)
+    if (someip::platform::g_trap_armed) {
+        std::fprintf(stderr,
+                     "MALLOC TRAP: aligned_alloc(%zu, %zu) detected\n", alignment, size);
+        std::abort();
+    }
+    return __libc_malloc(size);
+}
+
+int posix_memalign(void** memptr, size_t alignment, size_t size) {  // NOLINT(cert-dcl58-cpp)
+    if (someip::platform::g_trap_armed) {
+        std::fprintf(stderr,
+                     "MALLOC TRAP: posix_memalign(%zu, %zu) detected\n", alignment, size);
+        std::abort();
+    }
+    void* p = __libc_malloc(size);
+    if (!p) { return 12; }  // ENOMEM
+    *memptr = p;
+    return 0;
+}
+
 // NOLINTEND(readability-identifier-naming,cert-dcl58-cpp)
 
 }  // extern "C"
@@ -117,6 +138,24 @@ void* operator new[](std::size_t size) {
     void* p = __libc_malloc(size);
     if (!p) { throw std::bad_alloc(); }
     return p;
+}
+
+void* operator new(std::size_t size, const std::nothrow_t&) noexcept {
+    if (someip::platform::g_trap_armed) {
+        std::fprintf(stderr,
+                     "MALLOC TRAP: operator new(%zu, nothrow) detected\n", size);
+        std::abort();
+    }
+    return __libc_malloc(size);
+}
+
+void* operator new[](std::size_t size, const std::nothrow_t&) noexcept {
+    if (someip::platform::g_trap_armed) {
+        std::fprintf(stderr,
+                     "MALLOC TRAP: operator new[](%zu, nothrow) detected\n", size);
+        std::abort();
+    }
+    return __libc_malloc(size);
 }
 
 void operator delete(void* ptr) noexcept {

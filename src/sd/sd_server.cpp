@@ -285,7 +285,11 @@ public:
                                                next_unicast_session_id(client_ip)),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
-        someip_message.set_payload(response_message.serialize());
+        auto serialized = response_message.serialize();
+        if (serialized.empty()) {
+            return false;
+        }
+        someip_message.set_payload(std::move(serialized));
 
         const Result result = transport_->send_message(someip_message, client_endpoint);
         return result == Result::SUCCESS;
@@ -479,12 +483,17 @@ private:
 
         sd_message.add_option(std::move(endpoint_option));
 
+        auto serialized = sd_message.serialize();
+        if (serialized.empty()) {
+            return;
+        }
+
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
                                      RequestId(SOMEIP_SD_CLIENT_ID,
                                                next_multicast_session_id()),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
-        someip_message.set_payload(sd_message.serialize());
+        someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         const Result result = transport_->send_message(someip_message, multicast_endpoint);
@@ -506,12 +515,17 @@ private:
         SdMessage sd_message;
         sd_message.add_entry(std::move(stop_entry));
 
+        auto serialized = sd_message.serialize();
+        if (serialized.empty()) {
+            return;
+        }
+
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
                                      RequestId(SOMEIP_SD_CLIENT_ID,
                                                next_multicast_session_id()),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
-        someip_message.set_payload(sd_message.serialize());
+        someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         const Result result = transport_->send_message(someip_message, multicast_endpoint);
@@ -718,7 +732,11 @@ private:
                                                next_unicast_session_id(client.get_address())),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
-        someip_message.set_payload(response.serialize());
+        auto serialized = response.serialize();
+        if (serialized.empty()) {
+            return;
+        }
+        someip_message.set_payload(std::move(serialized));
         static_cast<void>(transport_->send_message(someip_message, client));
     }
 
@@ -752,12 +770,17 @@ private:
 
         sd_message.add_option(std::move(endpoint_option));
 
+        auto serialized = sd_message.serialize();
+        if (serialized.empty()) {
+            return;
+        }
+
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
                                      RequestId(SOMEIP_SD_CLIENT_ID,
                                                next_unicast_session_id(client.get_address())),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
-        someip_message.set_payload(sd_message.serialize());
+        someip_message.set_payload(std::move(serialized));
 
         const Result result = transport_->send_message(someip_message, client);
         if (result != Result::SUCCESS) {

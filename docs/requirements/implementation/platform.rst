@@ -991,7 +991,7 @@ Static Configuration Interface
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: ``test_static_alloc.cpp`` — TC_NO_HEAP_VERIFY. The ``test_static_alloc`` binary links ``$<TARGET_OBJECTS:someip_malloc_trap>`` which overrides ``malloc``, ``free``, ``operator new``, and ``operator delete`` with traps. All test cases (pool, container, intrusive-ptr, concurrency) run under this interception; any heap call triggers ``abort()``, so a passing test run verifies zero heap allocations.
+   :verification: Unit test: ``test_static_alloc.cpp`` — TC_NO_HEAP_VERIFY. The ``TC_NO_HEAP_VERIFY`` test case exercises core protocol operations (message pool allocation, buffer pool acquire/release, intrusive pointer lifecycle) under malloc/new interception. Any heap call during this scenario triggers ``abort()``, proving the static backend is heap-free for these operations.
 
    When ``SOMEIP_USE_STATIC_ALLOC`` is enabled, the build shall link a
    heap-interception layer that aborts or records any call to ``malloc``,

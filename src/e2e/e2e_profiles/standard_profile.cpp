@@ -99,28 +99,44 @@ public:
          crc = crc_result.value();
      }
 
-     // Update counter (per data ID)
-     uint32_t counter = 0;
-     if (config.enable_counter) {
-         platform::ScopedLock const lock(counter_mutex_);
-         uint32_t& last_counter = counters_[config.data_id];
-         last_counter++;
-         if (last_counter > config.max_counter_value) {
-             last_counter = 1;  // Rollover
-         }
-         counter = last_counter;
-     }
+    // Update counter (per data ID)
+    uint32_t counter = 0;
+    if (config.enable_counter) {
+        platform::ScopedLock const lock(counter_mutex_);
+        auto it = counters_.find(config.data_id);
+        if (it == counters_.end()) {
+            auto [ins_it, inserted] = counters_.insert({config.data_id, 0});
+            if (!inserted) {
+                return Result::RESOURCE_EXHAUSTED;
+            }
+            it = ins_it;
+        }
+        uint32_t& last_counter = it->second;
+        last_counter++;
+        if (last_counter > config.max_counter_value) {
+            last_counter = 1;  // Rollover
+        }
+        counter = last_counter;
+    }
 
-     // Update freshness value (per data ID)
-     uint16_t freshness = 0;
-     if (config.enable_freshness) {
-         platform::ScopedLock const lock(freshness_mutex_);
-         auto now = std::chrono::steady_clock::now();
-         auto ms =
-             std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-         freshness = static_cast<uint16_t>(static_cast<uint64_t>(ms) & 0xFFFFULL);
-         freshness_values_[config.data_id] = freshness;
-     }
+    // Update freshness value (per data ID)
+    uint16_t freshness = 0;
+    if (config.enable_freshness) {
+        platform::ScopedLock const lock(freshness_mutex_);
+        auto now = std::chrono::steady_clock::now();
+        auto ms =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+        freshness = static_cast<uint16_t>(static_cast<uint64_t>(ms) & 0xFFFFULL);
+        auto it = freshness_values_.find(config.data_id);
+        if (it == freshness_values_.end()) {
+            auto [ins_it, inserted] = freshness_values_.insert({config.data_id, freshness});
+            if (!inserted) {
+                return Result::RESOURCE_EXHAUSTED;
+            }
+        } else {
+            it->second = freshness;
+        }
+    }
 
      // Create E2E header
      E2EHeader const header(crc, counter, config.data_id, freshness);
@@ -199,7 +215,15 @@ public:
         // Validate counter (sequence check, per data ID)
         if (config.enable_counter) {
             platform::ScopedLock const lock(counter_mutex_);
-            uint32_t& last_counter = counters_[config.data_id];
+            auto it = counters_.find(config.data_id);
+            if (it == counters_.end()) {
+                auto [ins_it, inserted] = counters_.insert({config.data_id, 0});
+                if (!inserted) {
+                    return Result::RESOURCE_EXHAUSTED;
+                }
+                it = ins_it;
+            }
+            uint32_t& last_counter = it->second;
 
             // protect() and validate() share counters_; after protect() bumps
             // counter to N the immediate validate() will see header.counter == last_counter.

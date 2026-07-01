@@ -487,6 +487,9 @@ platform::ByteBuffer SdMessage::serialize() const {
     const size_t entries_start = data.size();
     for (const auto& entry : entries_) {
         auto entry_data = entry->serialize();
+        if (entry_data.empty()) {
+            return {};
+        }
         data.insert(data.end(), entry_data.begin(), entry_data.end());
     }
     auto const entries_length = static_cast<uint32_t>(data.size() - entries_start);
@@ -508,6 +511,9 @@ platform::ByteBuffer SdMessage::serialize() const {
     const size_t options_start = data.size();
     for (const auto& option : options_) {
         auto option_data = option->serialize();
+        if (option_data.empty()) {
+            return {};
+        }
         data.insert(data.end(), option_data.begin(), option_data.end());
     }
     auto const options_length = static_cast<uint32_t>(data.size() - options_start);

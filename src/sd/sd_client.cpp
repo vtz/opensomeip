@@ -139,7 +139,11 @@ public:
                                      RequestId(SOMEIP_SD_CLIENT_ID, next_multicast_session_id()),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
-        someip_message.set_payload(sd_message.serialize());
+        auto serialized = sd_message.serialize();
+        if (serialized.empty()) {
+            return false;
+        }
+        someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         if (transport_->send_message(someip_message, multicast_endpoint) != Result::SUCCESS) {
@@ -208,11 +212,16 @@ public:
         endpoint_option->set_protocol(0x11);  // UDP
         sd_message.add_option(std::move(endpoint_option));
 
+        auto serialized = sd_message.serialize();
+        if (serialized.empty()) {
+            return false;
+        }
+
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
                                      RequestId(SOMEIP_SD_CLIENT_ID, next_multicast_session_id()),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
-        someip_message.set_payload(sd_message.serialize());
+        someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         const bool sent = transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
@@ -248,11 +257,16 @@ public:
         SdMessage sd_message;
         sd_message.add_entry(std::move(unsubscribe_entry));
 
+        auto serialized = sd_message.serialize();
+        if (serialized.empty()) {
+            return false;
+        }
+
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
                                      RequestId(SOMEIP_SD_CLIENT_ID, next_multicast_session_id()),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
-        someip_message.set_payload(sd_message.serialize());
+        someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
         const bool sent = transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
