@@ -66,6 +66,11 @@ jobs:
         if: matrix.c_compiler == 'cl'
         uses: ilammy/msvc-dev-cmd@v1
 
+      - name: Clean stale FetchContent subbuilds (Windows)
+        if: matrix.c_compiler == 'cl'
+        shell: bash
+        run: rm -rf "${{ steps.strings.outputs.build-output-dir }}/_deps/"*-subbuild || true
+
       - name: Configure CMake (MSVC)
         if: matrix.c_compiler == 'cl'
         run: >
