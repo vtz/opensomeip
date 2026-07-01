@@ -258,6 +258,7 @@ jobs:
     name: FreeRTOS Cortex-M4 Renode Tests
     if: inputs.rtos_paths_changed || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       RENODE_VERSION: "1.15.3"
     steps:
