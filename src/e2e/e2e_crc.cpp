@@ -124,6 +124,9 @@ std::optional<uint32_t> calculate_crc(const platform::ByteBuffer& data, size_t o
 
     auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
     const platform::ByteBuffer slice(first, first + static_cast<std::ptrdiff_t>(length));
+    if (slice.size() != length) {
+        return std::nullopt;
+    }
 
     switch (crc_type) {
         case 0:  // SAE-J1850 (8-bit)

@@ -25,6 +25,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <memory>
 #include <unordered_map>
 #include <utility>
@@ -288,27 +289,33 @@ private:
         return transport::Endpoint(default_service_address_, default_service_port_);
     }
 
-    // NOLINTBEGIN(readability-redundant-string-cstr) .c_str() required for ETL backend
     platform::String<> make_subscription_key(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) const {
+        char buf[8];
         platform::String<> key;
-        key.append(std::to_string(service_id).c_str());
+        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(service_id));
+        key.append(buf);
         key.append(":");
-        key.append(std::to_string(instance_id).c_str());
+        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(instance_id));
+        key.append(buf);
         key.append(":");
-        key.append(std::to_string(eventgroup_id).c_str());
+        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(eventgroup_id));
+        key.append(buf);
         return key;
     }
 
     platform::String<> make_field_key(uint16_t service_id, uint16_t instance_id, uint16_t event_id) {
+        char buf[8];
         platform::String<> key;
-        key.append(std::to_string(service_id).c_str());
+        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(service_id));
+        key.append(buf);
         key.append(":");
-        key.append(std::to_string(instance_id).c_str());
+        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(instance_id));
+        key.append(buf);
         key.append(":");
-        key.append(std::to_string(event_id).c_str());
+        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(event_id));
+        key.append(buf);
         return key;
     }
-    // NOLINTEND(readability-redundant-string-cstr)
 
     void on_message_received(MessagePtr message, const transport::Endpoint& /*sender*/) override {
         // Check if this is an event notification

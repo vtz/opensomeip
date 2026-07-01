@@ -442,6 +442,9 @@ bool ConfigurationOption::deserialize(const platform::ByteBuffer& data, size_t& 
     if (offset + config_len > data.size()) {
         return false;
     }
+    if (config_len > config_string_.max_size()) {
+        return false;
+    }
 
     // Extract configuration string
     const auto* str_start = reinterpret_cast<const char*>(data.data() + offset);

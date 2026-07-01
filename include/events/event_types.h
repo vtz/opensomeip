@@ -122,7 +122,7 @@ struct EventConfig {
  * @brief Event filter for selective notifications
  */
 struct EventFilter {
-    uint16_t event_id;
+    uint16_t event_id{0};
     platform::ByteBuffer filter_data;
     bool operator==(const EventFilter& other) const {
         return event_id == other.event_id && filter_data == other.filter_data;

@@ -61,7 +61,7 @@ platform::ByteBuffer E2EHeader::serialize() const {
  */
 bool E2EHeader::deserialize(const platform::ByteBuffer& data, size_t offset) {
     const size_t header_size = get_header_size();
-    if (data.size() < offset + header_size) {
+    if (header_size > data.size() || offset > data.size() - header_size) {
         return false;
     }
 

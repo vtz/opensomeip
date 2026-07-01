@@ -31,6 +31,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <cstdio>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -663,7 +664,9 @@ private:
 
         platform::String<> client_addr(client_ip);
         client_addr.append(":");
-        client_addr.append(std::to_string(client_port).c_str()); // NOLINT(readability-redundant-string-cstr) ETL compat
+        char port_buf[6];
+        std::snprintf(port_buf, sizeof(port_buf), "%u", static_cast<unsigned>(client_port));
+        client_addr.append(port_buf);
         handle_eventgroup_subscription(
             service_id, instance_id, eventgroup_id,
             client_addr, true, ttl
@@ -674,7 +677,9 @@ private:
                                uint16_t eventgroup_id, const transport::Endpoint& sender) {
         platform::String<> client_addr(sender.get_address());
         client_addr.append(":");
-        client_addr.append(std::to_string(sender.get_port()).c_str()); // NOLINT(readability-redundant-string-cstr) ETL compat
+        char port_buf[6];
+        std::snprintf(port_buf, sizeof(port_buf), "%u", static_cast<unsigned>(sender.get_port()));
+        client_addr.append(port_buf);
         handle_eventgroup_subscription(
             service_id, instance_id, eventgroup_id,
             client_addr, true, 0

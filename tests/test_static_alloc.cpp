@@ -580,7 +580,11 @@ TEST(NoHeapTest, ProtocolOperationsUnderTrap) {
     malloc_trap_arm();
 
     auto msg = allocate_message();
-    ASSERT_NE(msg, nullptr);
+    if (msg == nullptr) {
+        malloc_trap_disarm();
+        FAIL() << "allocate_message() returned nullptr";
+        return;
+    }
     msg->set_service_id(0xABCD);
     EXPECT_EQ(msg->get_service_id(), 0xABCD);
 
@@ -592,7 +596,11 @@ TEST(NoHeapTest, ProtocolOperationsUnderTrap) {
     msg.reset();
 
     BufferSlot* slot = acquire_buffer(64);
-    ASSERT_NE(slot, nullptr);
+    if (slot == nullptr) {
+        malloc_trap_disarm();
+        FAIL() << "acquire_buffer(64) returned nullptr";
+        return;
+    }
     slot->data[0] = 0x42;
     release_buffer(slot);
 
