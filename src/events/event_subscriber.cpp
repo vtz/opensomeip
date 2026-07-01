@@ -22,15 +22,33 @@
 #include "transport/transport.h"
 #include "transport/udp_transport.h"
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <cstdio>
 #include <memory>
 #include <unordered_map>
 #include <utility>
 
 namespace someip::events {
+
+namespace {
+void uint16_to_str(uint16_t val, platform::String<>& out) {
+    if (val == 0) {
+        out.append("0");
+        return;
+    }
+    std::array<char, 6> digits{};
+    int pos = 5;
+    while (val > 0) {
+        --pos;
+        digits[static_cast<size_t>(pos)] = static_cast<char>('0' + (val % 10));
+        val /= 10;
+    }
+    out.append(&digits[static_cast<size_t>(pos)],
+               &digits[5]);
+}
+}  // namespace
 
 // NOLINTBEGIN(misc-include-cleaner) - platform::Mutex from platform/thread.h (IWYU false positives in impl).
 
@@ -290,30 +308,22 @@ private:
     }
 
     platform::String<> make_subscription_key(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) const {
-        char buf[8];
         platform::String<> key;
-        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(service_id));
-        key.append(buf);
+        uint16_to_str(service_id, key);
         key.append(":");
-        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(instance_id));
-        key.append(buf);
+        uint16_to_str(instance_id, key);
         key.append(":");
-        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(eventgroup_id));
-        key.append(buf);
+        uint16_to_str(eventgroup_id, key);
         return key;
     }
 
     platform::String<> make_field_key(uint16_t service_id, uint16_t instance_id, uint16_t event_id) {
-        char buf[8];
         platform::String<> key;
-        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(service_id));
-        key.append(buf);
+        uint16_to_str(service_id, key);
         key.append(":");
-        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(instance_id));
-        key.append(buf);
+        uint16_to_str(instance_id, key);
         key.append(":");
-        std::snprintf(buf, sizeof(buf), "%u", static_cast<unsigned>(event_id));
-        key.append(buf);
+        uint16_to_str(event_id, key);
         return key;
     }
 

@@ -28,10 +28,10 @@
 #include "platform/net.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
-#include <cstdio>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -39,6 +39,24 @@
 #include <utility>
 
 namespace someip::sd {
+
+namespace {
+void uint16_to_str(uint16_t val, platform::String<>& out) {
+    if (val == 0) {
+        out.append("0");
+        return;
+    }
+    std::array<char, 6> digits{};
+    int pos = 5;
+    while (val > 0) {
+        --pos;
+        digits[static_cast<size_t>(pos)] = static_cast<char>('0' + (val % 10));
+        val /= 10;
+    }
+    out.append(&digits[static_cast<size_t>(pos)],
+               &digits[5]);
+}
+}  // namespace
 
 // NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_inet_*/in_addr_t are macros/types from
 // platform/byteorder.h and platform/net.h that misc-include-cleaner cannot trace.
@@ -664,9 +682,7 @@ private:
 
         platform::String<> client_addr(client_ip);
         client_addr.append(":");
-        char port_buf[6];
-        std::snprintf(port_buf, sizeof(port_buf), "%u", static_cast<unsigned>(client_port));
-        client_addr.append(port_buf);
+        uint16_to_str(client_port, client_addr);
         handle_eventgroup_subscription(
             service_id, instance_id, eventgroup_id,
             client_addr, true, ttl
@@ -677,9 +693,7 @@ private:
                                uint16_t eventgroup_id, const transport::Endpoint& sender) {
         platform::String<> client_addr(sender.get_address());
         client_addr.append(":");
-        char port_buf[6];
-        std::snprintf(port_buf, sizeof(port_buf), "%u", static_cast<unsigned>(sender.get_port()));
-        client_addr.append(port_buf);
+        uint16_to_str(sender.get_port(), client_addr);
         handle_eventgroup_subscription(
             service_id, instance_id, eventgroup_id,
             client_addr, true, 0
