@@ -28,7 +28,6 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
-#include <memory>
 #include <stdexcept>
 
 namespace someip::transport {

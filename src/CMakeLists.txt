@@ -110,6 +110,14 @@ if(SOMEIP_USE_STATIC_ALLOC)
         ETL_THROW_EXCEPTIONS=0
     )
 
+    # GCC 13 false-positive: std::variant move-constructor inlining triggers
+    # -Wmaybe-uninitialized on SD option members despite default initializers.
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set_source_files_properties(
+            ${CMAKE_CURRENT_SOURCE_DIR}/sd/sd_message.cpp
+            PROPERTIES COMPILE_OPTIONS "-Wno-maybe-uninitialized")
+    endif()
+
     # Malloc trap object library (linked into verification tests, not into main lib)
     add_library(someip_malloc_trap OBJECT
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/malloc_trap.cpp)

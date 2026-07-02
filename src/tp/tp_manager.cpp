@@ -76,8 +76,10 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
 
     TpTransfer transfer(transfer_id, message_id);
 
-    // Segment the message
     platform::Vector<TpSegment> segments;
+    if (!segmenter_) {
+        return TpResult::RESOURCE_EXHAUSTED;
+    }
     TpResult const result = segmenter_->segment_message(message, segments);
 
     if (result != TpResult::SUCCESS) {
@@ -145,7 +147,9 @@ bool TpManager::handle_received_segment(const TpSegment& segment, platform::Byte
         return true;
     }
 
-    // Handle multi-segment message
+    if (!reassembler_) {
+        return false;
+    }
     return reassembler_->process_segment(segment, complete_message);
 }
 
@@ -230,7 +234,9 @@ void TpManager::process_timeouts() {
             }
         }
 
-        reassembler_->process_timeouts();
+        if (reassembler_) {
+            reassembler_->process_timeouts();
+        }
         cleanup_completed_transfers();
     }
 
@@ -256,8 +262,12 @@ TpStatistics TpManager::get_statistics() const {
  */
 void TpManager::update_config(const TpConfig& config) {
     config_ = config;
-    segmenter_->update_config(config);
-    reassembler_->update_config(config);
+    if (segmenter_) {
+        segmenter_->update_config(config);
+    }
+    if (reassembler_) {
+        reassembler_->update_config(config);
+    }
 }
 
 void TpManager::cleanup_completed_transfers() {

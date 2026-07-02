@@ -19,6 +19,7 @@
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 
+#include <utility>
 #include <variant>
 
 namespace someip::sd {
@@ -70,8 +71,9 @@ public:
     ~ServiceEntry() override = default;
     ServiceEntry(const ServiceEntry&) = default;
     ServiceEntry& operator=(const ServiceEntry&) = default;
+    // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved) trivial derived members
     ServiceEntry(ServiceEntry&& o) noexcept
-        : SdEntry(o),
+        : SdEntry(std::move(o)),
           service_id_(o.service_id_),
           instance_id_(o.instance_id_),
           major_version_(o.major_version_),
@@ -110,8 +112,9 @@ public:
     ~EventGroupEntry() override = default;
     EventGroupEntry(const EventGroupEntry&) = default;
     EventGroupEntry& operator=(const EventGroupEntry&) = default;
+    // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved) trivial derived members
     EventGroupEntry(EventGroupEntry&& o) noexcept
-        : SdEntry(o),
+        : SdEntry(std::move(o)),
           service_id_(o.service_id_),
           instance_id_(o.instance_id_),
           eventgroup_id_(o.eventgroup_id_),
@@ -173,8 +176,9 @@ public:
     ~IPv4EndpointOption() override = default;
     IPv4EndpointOption(const IPv4EndpointOption&) = default;
     IPv4EndpointOption& operator=(const IPv4EndpointOption&) = default;
+    // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved) trivial derived members
     IPv4EndpointOption(IPv4EndpointOption&& o) noexcept
-        : SdOption(o),
+        : SdOption(std::move(o)),
           protocol_(o.protocol_),
           ipv4_address_(o.ipv4_address_),
           port_(o.port_) {}
@@ -210,8 +214,9 @@ public:
     ~IPv4MulticastOption() override = default;
     IPv4MulticastOption(const IPv4MulticastOption&) = default;
     IPv4MulticastOption& operator=(const IPv4MulticastOption&) = default;
+    // NOLINTNEXTLINE(bugprone-use-after-move,hicpp-invalid-access-moved) trivial derived members
     IPv4MulticastOption(IPv4MulticastOption&& o) noexcept
-        : SdOption(o),
+        : SdOption(std::move(o)),
           ipv4_address_(o.ipv4_address_),
           protocol_(o.protocol_),
           port_(o.port_) {}
