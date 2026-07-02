@@ -11,6 +11,12 @@
  * SPDX-License-Identifier: Apache-2.0
  ********************************************************************************/
 
+// GCC 13 emits false-positive -Wmaybe-uninitialized through std::variant
+// move-constructor inlining despite all members having default initializers.
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
 #include "sd/sd_message.h"
 
 #include "sd/sd_types.h"

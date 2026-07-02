@@ -13,7 +13,9 @@
 
 #include "rpc/rpc_client.h"
 
+#ifdef SOMEIP_STATIC_ALLOC
 #include <new>
+#endif
 
 #include "common/result.h"
 #include "core/session_manager.h"
