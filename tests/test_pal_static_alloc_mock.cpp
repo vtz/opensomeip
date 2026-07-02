@@ -29,4 +29,18 @@
 // allocate_message() / release_message() come from the linked
 // static/memory.cpp — no stub needed.
 
+#include <gtest/gtest.h>
+#include "platform/memory.h"
+
+namespace {
+class StaticAllocPalEnv : public ::testing::Environment {
+public:
+    void SetUp() override {
+        someip::platform::init_static_allocator();
+    }
+};
+[[maybe_unused]] auto* const g_env =
+    ::testing::AddGlobalTestEnvironment(new StaticAllocPalEnv());
+}  // namespace
+
 #include "pal_conformance_tests.inc"

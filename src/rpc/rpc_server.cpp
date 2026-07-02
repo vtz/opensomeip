@@ -13,7 +13,11 @@
 
 #include "rpc/rpc_server.h"
 
+#include <new>
+
 #include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "rpc/rpc_types.h"
 #include "someip/message.h"
@@ -44,6 +48,7 @@ class RpcServerImpl : public transport::ITransportListener {
 public:
     explicit RpcServerImpl(uint16_t service_id)
         : service_id_(service_id),
+          // TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
           transport_(std::make_shared<transport::UdpTransport>(transport::Endpoint("127.0.0.1", 30490))),
           running_(false) {
 
@@ -219,49 +224,64 @@ private:
     uint16_t service_id_;
     std::shared_ptr<transport::UdpTransport> transport_;
 
-    std::unordered_map<MethodId, MethodHandler> method_handlers_;
+    platform::UnorderedMap<MethodId, MethodHandler, 32> method_handlers_;
     mutable platform::Mutex methods_mutex_;
 
     std::atomic<bool> running_;
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(RpcServerImpl) <= SOMEIP_PIMPL_RPCSERVER_SIZE,
+              "RpcServerImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_RPCSERVER_SIZE");
+#endif
+
 // RpcServer implementation
 RpcServer::RpcServer(uint16_t service_id)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) RpcServerImpl(service_id);
+}
+#else
     : impl_(std::make_unique<RpcServerImpl>(service_id)) {
 }
+#endif
 
-RpcServer::~RpcServer() = default;
+RpcServer::~RpcServer() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~RpcServerImpl();
+#endif
+}
 
 bool RpcServer::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void RpcServer::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 bool RpcServer::register_method(MethodId method_id, MethodHandler handler) {
-    return impl_->register_method(method_id, std::move(handler));
+    return impl()->register_method(method_id, std::move(handler));
 }
 
 bool RpcServer::unregister_method(MethodId method_id) {
-    return impl_->unregister_method(method_id);
+    return impl()->unregister_method(method_id);
 }
 
 bool RpcServer::is_method_registered(MethodId method_id) const {
-    return impl_->is_method_registered(method_id);
+    return impl()->is_method_registered(method_id);
 }
 
 platform::Vector<MethodId> RpcServer::get_registered_methods() const {
-    return impl_->get_registered_methods();
+    return impl()->get_registered_methods();
 }
 
 bool RpcServer::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 RpcServer::Statistics RpcServer::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
 // NOLINTEND(misc-include-cleaner)

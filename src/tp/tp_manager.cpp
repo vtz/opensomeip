@@ -23,8 +23,6 @@
 
 #include <chrono>
 #include <cstdint>
-#include <memory>
-#include <unordered_map>
 #include <utility>
 
 namespace someip::tp {
@@ -36,8 +34,8 @@ namespace someip::tp {
  */
 TpManager::TpManager(const TpConfig& config)
     : config_(config),
-      segmenter_(std::make_unique<TpSegmenter>(config)),
-      reassembler_(std::make_unique<TpReassembler>(config)) {
+      segmenter_(std::in_place, config),
+      reassembler_(std::in_place, config) {
 }
 
 TpManager::~TpManager() = default;

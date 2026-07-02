@@ -19,7 +19,11 @@
 #include "platform/containers.h"
 #include "transport/endpoint.h"
 
+#ifdef SOMEIP_STATIC_ALLOC
+#include "static_config.h"
+#else
 #include <memory>
+#endif
 
 namespace someip::events {
 
@@ -168,7 +172,15 @@ public:
     Statistics get_statistics() const;
 
 private:
+#ifdef SOMEIP_STATIC_ALLOC
+    alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_EVENTSUB_SIZE];
+    EventSubscriberImpl* impl() noexcept { return reinterpret_cast<EventSubscriberImpl*>(impl_storage_); }
+    const EventSubscriberImpl* impl() const noexcept { return reinterpret_cast<const EventSubscriberImpl*>(impl_storage_); }
+#else
     std::unique_ptr<EventSubscriberImpl> impl_;
+    EventSubscriberImpl* impl() noexcept { return impl_.get(); }
+    const EventSubscriberImpl* impl() const noexcept { return impl_.get(); }
+#endif
 };
 
 }  // namespace someip::events

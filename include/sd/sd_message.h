@@ -19,7 +19,7 @@
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 
-#include <memory>
+#include <variant>
 
 namespace someip::sd {
 
@@ -31,10 +31,10 @@ public:
 
     virtual ~SdEntry() = default;
 
-    SdEntry(const SdEntry&) = delete;
-    SdEntry& operator=(const SdEntry&) = delete;
-    SdEntry(SdEntry&&) = delete;
-    SdEntry& operator=(SdEntry&&) = delete;
+    SdEntry(const SdEntry&) = default;
+    SdEntry& operator=(const SdEntry&) = default;
+    SdEntry(SdEntry&&) = default;
+    SdEntry& operator=(SdEntry&&) = default;
 
     EntryType get_type() const { return type_; }
     uint32_t get_ttl() const { return ttl_; }
@@ -128,10 +128,10 @@ public:
     explicit SdOption(OptionType type) : type_(type) {}
     virtual ~SdOption() = default;
 
-    SdOption(const SdOption&) = delete;
-    SdOption& operator=(const SdOption&) = delete;
-    SdOption(SdOption&&) = delete;
-    SdOption& operator=(SdOption&&) = delete;
+    SdOption(const SdOption&) = default;
+    SdOption& operator=(const SdOption&) = default;
+    SdOption(SdOption&&) = default;
+    SdOption& operator=(SdOption&&) = default;
 
     OptionType get_type() const { return type_; }
     uint16_t get_length() const { return length_; }
@@ -215,6 +215,22 @@ private:
     platform::String<> config_string_;
 };
 
+using SdEntryStorage = std::variant<ServiceEntry, EventGroupEntry>;
+using SdOptionStorage = std::variant<ConfigurationOption, IPv4EndpointOption, IPv4MulticastOption>;
+
+inline const SdEntry* get_entry_ptr(const SdEntryStorage& v) {
+    return std::visit([](const auto& e) -> const SdEntry* { return &e; }, v);
+}
+inline SdEntry* get_entry_ptr(SdEntryStorage& v) {
+    return std::visit([](auto& e) -> SdEntry* { return &e; }, v);
+}
+inline const SdOption* get_option_ptr(const SdOptionStorage& v) {
+    return std::visit([](const auto& o) -> const SdOption* { return &o; }, v);
+}
+inline SdOption* get_option_ptr(SdOptionStorage& v) {
+    return std::visit([](auto& o) -> SdOption* { return &o; }, v);
+}
+
 /** @implements REQ_SD_200A, REQ_SD_200C, REQ_MSG_113 */
 class SdMessage {
 public:
@@ -226,11 +242,11 @@ public:
     uint32_t get_reserved() const { return reserved_; }
     void set_reserved(uint32_t reserved) { reserved_ = reserved; }
 
-    const platform::Vector<std::unique_ptr<SdEntry>>& get_entries() const { return entries_; }
-    void add_entry(std::unique_ptr<SdEntry> entry);
+    const platform::Vector<SdEntryStorage>& get_entries() const { return entries_; }
+    void add_entry(SdEntryStorage entry);
 
-    const platform::Vector<std::unique_ptr<SdOption>>& get_options() const { return options_; }
-    void add_option(std::unique_ptr<SdOption> option);
+    const platform::Vector<SdOptionStorage>& get_options() const { return options_; }
+    void add_option(SdOptionStorage option);
 
     platform::ByteBuffer serialize() const;
     bool deserialize(const platform::ByteBuffer& data);
@@ -265,17 +281,13 @@ private:
     uint32_t reserved_{0};
     uint16_t session_id_{0};
 
-    platform::Vector<std::unique_ptr<SdEntry>> entries_;
-    platform::Vector<std::unique_ptr<SdOption>> options_;
+    platform::Vector<SdEntryStorage> entries_;
+    platform::Vector<SdOptionStorage> options_;
 };
 
 // Type aliases for convenience
-using SdEntryPtr = std::unique_ptr<SdEntry>;
-using SdOptionPtr = std::unique_ptr<SdOption>;
-using ServiceEntryPtr = std::unique_ptr<ServiceEntry>;
-using EventGroupEntryPtr = std::unique_ptr<EventGroupEntry>;
-using IPv4EndpointOptionPtr = std::unique_ptr<IPv4EndpointOption>;
-using IPv4MulticastOptionPtr = std::unique_ptr<IPv4MulticastOption>;
+using SdEntryPtr = SdEntryStorage;
+using SdOptionPtr = SdOptionStorage;
 
 }  // namespace someip::sd
 

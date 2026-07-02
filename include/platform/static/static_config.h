@@ -18,6 +18,8 @@
  * @brief Compile-time capacity limits for the static-allocation PAL backend.
  *
  * All values are overridable via -D on the compiler command line.
+ *
+ * @implements REQ_PAL_STATIC_CONFIG
  */
 
 #ifndef SOMEIP_MAX_PAYLOAD_SIZE
@@ -101,27 +103,27 @@
 #endif
 
 #ifndef SOMEIP_PIMPL_EVENTPUB_SIZE
-#define SOMEIP_PIMPL_EVENTPUB_SIZE 512
+#define SOMEIP_PIMPL_EVENTPUB_SIZE 1048576
 #endif
 
 #ifndef SOMEIP_PIMPL_EVENTSUB_SIZE
-#define SOMEIP_PIMPL_EVENTSUB_SIZE 512
+#define SOMEIP_PIMPL_EVENTSUB_SIZE 32768
 #endif
 
 #ifndef SOMEIP_PIMPL_RPCCLIENT_SIZE
-#define SOMEIP_PIMPL_RPCCLIENT_SIZE 512
+#define SOMEIP_PIMPL_RPCCLIENT_SIZE 32768
 #endif
 
 #ifndef SOMEIP_PIMPL_RPCSERVER_SIZE
-#define SOMEIP_PIMPL_RPCSERVER_SIZE 512
+#define SOMEIP_PIMPL_RPCSERVER_SIZE 4096
 #endif
 
 #ifndef SOMEIP_PIMPL_SDCLIENT_SIZE
-#define SOMEIP_PIMPL_SDCLIENT_SIZE 512
+#define SOMEIP_PIMPL_SDCLIENT_SIZE 32768
 #endif
 
 #ifndef SOMEIP_PIMPL_SDSERVER_SIZE
-#define SOMEIP_PIMPL_SDSERVER_SIZE 512
+#define SOMEIP_PIMPL_SDSERVER_SIZE 32768
 #endif
 
 static_assert(SOMEIP_MESSAGE_POOL_SIZE > 0 &&

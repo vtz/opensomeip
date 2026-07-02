@@ -20,7 +20,6 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
 
 namespace someip {
 
@@ -90,7 +89,7 @@ public:
      * @param session_id The session ID to look up
      * @return Pointer to session or nullptr if not found
      */
-    std::shared_ptr<Session> get_session(uint16_t session_id);
+    Session* get_session(uint16_t session_id);
 
     /**
      * @brief Remove a session
@@ -138,7 +137,7 @@ public:
     SessionManager& operator=(SessionManager&&) = delete;
 
 private:
-    platform::UnorderedMap<uint16_t, std::shared_ptr<Session>, 256> sessions_;
+    platform::UnorderedMap<uint16_t, Session, 256> sessions_;
     mutable platform::Mutex sessions_mutex_;
     uint16_t next_session_id_{1};
 };

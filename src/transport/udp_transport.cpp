@@ -153,7 +153,7 @@ Result UdpTransport::start() {
     }
 
     running_ = true;
-    receive_thread_ = std::make_unique<platform::Thread>(&UdpTransport::receive_loop, this);
+    receive_thread_.emplace(&UdpTransport::receive_loop, this);
 
     return Result::SUCCESS;
 }

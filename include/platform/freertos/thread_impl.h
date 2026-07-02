@@ -38,7 +38,8 @@
 #include <task.h>
 #include <semphr.h>
 
-#include <functional>
+#include "platform/containers.h"
+
 #include <chrono>
 #include <cstdint>
 #include <tuple>
@@ -149,7 +150,7 @@ public:
         join_sem_ = xSemaphoreCreateBinary();
         configASSERT(join_sem_ != nullptr);
 
-        ctx_ = new std::function<void()>(
+        ctx_ = platform::Function<void()>(
             [f = std::forward<Fn>(fn),
              a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
                 std::apply(std::move(f), std::move(a));
@@ -164,8 +165,7 @@ public:
             &task_handle_);
 
         if (rc != pdPASS) {
-            delete ctx_;
-            ctx_ = nullptr;
+            ctx_ = {};
             vSemaphoreDelete(join_sem_);
             join_sem_ = nullptr;
             return;
@@ -177,8 +177,7 @@ public:
     ~Thread() {
         if (joinable()) {
             if (task_handle_) vTaskDelete(task_handle_);
-            delete ctx_;
-            ctx_ = nullptr;
+            ctx_ = {};
             if (join_sem_) vSemaphoreDelete(join_sem_);
             join_sem_ = nullptr;
             started_ = false;
@@ -196,8 +195,7 @@ public:
         if (!joinable()) return;
         xSemaphoreTake(join_sem_, portMAX_DELAY);
         joined_ = true;
-        delete ctx_;
-        ctx_ = nullptr;
+        ctx_ = {};
         vSemaphoreDelete(join_sem_);
         join_sem_ = nullptr;
         task_handle_ = nullptr;
@@ -211,8 +209,8 @@ public:
 private:
     static void trampoline(void* param) {
         auto* self = static_cast<Thread*>(param);
-        if (self->ctx_ && *(self->ctx_)) {
-            (*(self->ctx_))();
+        if (self->ctx_) {
+            self->ctx_();
         }
         if (self->join_sem_) {
             xSemaphoreGive(self->join_sem_);
@@ -222,7 +220,7 @@ private:
 
     TaskHandle_t task_handle_{nullptr};
     SemaphoreHandle_t join_sem_{nullptr};
-    std::function<void()>* ctx_{nullptr};
+    platform::Function<void()> ctx_;
     bool started_{false};
     bool joined_{false};
 };

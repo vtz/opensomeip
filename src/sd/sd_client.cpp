@@ -13,7 +13,11 @@
 
 #include "sd/sd_client.h"
 
+#include <new>
+
 #include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "sd/sd_message.h"
 #include "sd/sd_types.h"
@@ -28,6 +32,7 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 
@@ -37,6 +42,7 @@ namespace someip::sd {
 
 namespace {
 
+// TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
 std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
     transport::UdpTransportConfig cfg;
     cfg.reuse_port = true;
@@ -125,11 +131,11 @@ public:
         }
 
         // Create find service entry
-        auto find_entry = std::make_unique<ServiceEntry>(EntryType::FIND_SERVICE);
-        find_entry->set_service_id(service_id);
-        find_entry->set_instance_id(0xFFFF);  // Find any instance
-        find_entry->set_major_version(0xFF);  // Any version
-        find_entry->set_ttl(3);  // 3 seconds TTL for find
+        ServiceEntry find_entry(EntryType::FIND_SERVICE);
+        find_entry.set_service_id(service_id);
+        find_entry.set_instance_id(0xFFFF);  // Find any instance
+        find_entry.set_major_version(0xFF);  // Any version
+        find_entry.set_ttl(3);  // 3 seconds TTL for find
 
         // Create SD message
         SdMessage sd_message;
@@ -193,23 +199,23 @@ public:
             return false;
         }
 
-        auto subscribe_entry = std::make_unique<EventGroupEntry>(EntryType::SUBSCRIBE_EVENTGROUP);
-        subscribe_entry->set_service_id(service_id);
-        subscribe_entry->set_instance_id(instance_id);
-        subscribe_entry->set_eventgroup_id(eventgroup_id);
-        subscribe_entry->set_major_version(0x01);
-        subscribe_entry->set_ttl(3600);
+        EventGroupEntry subscribe_entry(EntryType::SUBSCRIBE_EVENTGROUP);
+        subscribe_entry.set_service_id(service_id);
+        subscribe_entry.set_instance_id(instance_id);
+        subscribe_entry.set_eventgroup_id(eventgroup_id);
+        subscribe_entry.set_major_version(0x01);
+        subscribe_entry.set_ttl(3600);
 
-        subscribe_entry->set_index1(0);
-        subscribe_entry->set_num_opts1(1);
+        subscribe_entry.set_index1(0);
+        subscribe_entry.set_num_opts1(1);
 
         SdMessage sd_message;
         sd_message.add_entry(std::move(subscribe_entry));
 
-        auto endpoint_option = std::make_unique<IPv4EndpointOption>();
-        endpoint_option->set_ipv4_address_from_string(config_.unicast_address);
-        endpoint_option->set_port(transport_->get_local_endpoint().get_port());
-        endpoint_option->set_protocol(0x11);  // UDP
+        IPv4EndpointOption endpoint_option;
+        endpoint_option.set_ipv4_address_from_string(config_.unicast_address);
+        endpoint_option.set_port(transport_->get_local_endpoint().get_port());
+        endpoint_option.set_protocol(0x11);  // UDP
         sd_message.add_option(std::move(endpoint_option));
 
         auto serialized = sd_message.serialize();
@@ -247,12 +253,12 @@ public:
             return false;
         }
 
-        auto unsubscribe_entry = std::make_unique<EventGroupEntry>(EntryType::STOP_SUBSCRIBE_EVENTGROUP);
-        unsubscribe_entry->set_service_id(service_id);
-        unsubscribe_entry->set_instance_id(instance_id);
-        unsubscribe_entry->set_eventgroup_id(eventgroup_id);
-        unsubscribe_entry->set_major_version(0x01);
-        unsubscribe_entry->set_ttl(0);  // TTL = 0 means unsubscribe
+        EventGroupEntry unsubscribe_entry(EntryType::STOP_SUBSCRIBE_EVENTGROUP);
+        unsubscribe_entry.set_service_id(service_id);
+        unsubscribe_entry.set_instance_id(instance_id);
+        unsubscribe_entry.set_eventgroup_id(eventgroup_id);
+        unsubscribe_entry.set_major_version(0x01);
+        unsubscribe_entry.set_ttl(0);  // TTL = 0 means unsubscribe
 
         SdMessage sd_message;
         sd_message.add_entry(std::move(unsubscribe_entry));
@@ -327,7 +333,7 @@ private:
         if (maintenance_thread_ && maintenance_thread_->joinable()) {
             return;
         }
-        maintenance_thread_ = std::make_unique<platform::Thread>([this]() {
+        maintenance_thread_.emplace([this]() {
             while (running_) {
                 platform::this_thread::sleep_for(std::chrono::milliseconds(500));
                 if (!running_) { break; }
@@ -456,20 +462,19 @@ private:
 
     /** @implements REQ_SD_311, REQ_SD_331 */
     void process_sd_entries(const SdMessage& message) {
-        for (const auto& entry : message.get_entries()) {
+        for (const auto& entry_var : message.get_entries()) {
+            const SdEntry* entry = get_entry_ptr(entry_var);
             switch (entry->get_type()) {
                 case EntryType::OFFER_SERVICE:
-                    // Check TTL to distinguish between offer and stop offer
-                    if (entry->get_ttl() == 0) {
-                        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                        handle_service_stop_offer(*static_cast<const ServiceEntry*>(entry.get()));
-                    } else {
-                        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                        handle_service_offer(*static_cast<const ServiceEntry*>(entry.get()), message);
+                    if (const auto* se = std::get_if<ServiceEntry>(&entry_var)) {
+                        if (entry->get_ttl() == 0) {
+                            handle_service_stop_offer(*se);
+                        } else {
+                            handle_service_offer(*se, message);
+                        }
                     }
                     break;
                 default:
-                    // Other entry types not handled by client
                     break;
             }
         }
@@ -490,10 +495,8 @@ private:
         uint8_t const run1 = entry.get_num_opts1();
 
         for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
-            const auto& option = options[index1 + i];
-            if (option->get_type() == OptionType::IPV4_ENDPOINT) {
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
+            const auto& option_var = options[index1 + i];
+            if (const auto* ep = std::get_if<IPv4EndpointOption>(&option_var)) {
                 instance.ip_address = ep->get_ipv4_address_string();
                 instance.port = ep->get_port();
                 instance.protocol = ep->get_protocol();
@@ -617,22 +620,22 @@ private:
     SdConfig config_;
     std::shared_ptr<transport::UdpTransport> transport_;
 
-    std::unordered_map<uint16_t, ServiceSubscription> service_subscriptions_;
+    platform::UnorderedMap<uint16_t, ServiceSubscription, 32> service_subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;
 
     platform::Vector<ServiceInstance> available_services_;
     mutable platform::Mutex available_services_mutex_;
 
-    std::unordered_map<uint32_t, PendingFind> pending_finds_;
+    platform::UnorderedMap<uint32_t, PendingFind, 16> pending_finds_;
     mutable platform::Mutex pending_finds_mutex_;
 
     std::atomic<uint32_t> next_request_id_;
     std::atomic<bool> running_;
 
-    std::unique_ptr<platform::Thread> maintenance_thread_;
+    std::optional<platform::Thread> maintenance_thread_;
 
-    std::unordered_map<uint64_t, CachedService> cached_services_;
-    std::unordered_map<uint64_t, EventGroupSubscription> eventgroup_subscriptions_;
+    platform::UnorderedMap<uint64_t, CachedService, 32> cached_services_;
+    platform::UnorderedMap<uint64_t, EventGroupSubscription, 32> eventgroup_subscriptions_;
     mutable platform::Mutex eventgroup_subscriptions_mutex_;
 
     SdSessionIdCounter multicast_session_id_;
@@ -681,55 +684,70 @@ private:
     }
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(SdClientImpl) <= SOMEIP_PIMPL_SDCLIENT_SIZE,
+              "SdClientImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_SDCLIENT_SIZE");
+#endif
+
 // SdClient implementation
 SdClient::SdClient(const SdConfig& config)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) SdClientImpl(config);
+}
+#else
     : impl_(std::make_unique<SdClientImpl>(config)) {
 }
+#endif
 
-SdClient::~SdClient() = default;
+SdClient::~SdClient() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~SdClientImpl();
+#endif
+}
 
 bool SdClient::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void SdClient::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 bool SdClient::find_service(uint16_t service_id, FindServiceCallback callback,
                            std::chrono::milliseconds timeout) {
-    return impl_->find_service(service_id, std::move(callback), timeout);
+    return impl()->find_service(service_id, std::move(callback), timeout);
 }
 
 bool SdClient::subscribe_service(uint16_t service_id,
                                 ServiceAvailableCallback available_callback,
                                 ServiceUnavailableCallback unavailable_callback) {
-    return impl_->subscribe_service(service_id, std::move(available_callback),
+    return impl()->subscribe_service(service_id, std::move(available_callback),
                                    std::move(unavailable_callback));
 }
 
 bool SdClient::unsubscribe_service(uint16_t service_id) {
-    return impl_->unsubscribe_service(service_id);
+    return impl()->unsubscribe_service(service_id);
 }
 
 bool SdClient::subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
-    return impl_->subscribe_eventgroup(service_id, instance_id, eventgroup_id);
+    return impl()->subscribe_eventgroup(service_id, instance_id, eventgroup_id);
 }
 
 bool SdClient::unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
-    return impl_->unsubscribe_eventgroup(service_id, instance_id, eventgroup_id);
+    return impl()->unsubscribe_eventgroup(service_id, instance_id, eventgroup_id);
 }
 
 platform::Vector<ServiceInstance> SdClient::get_available_services(uint16_t service_id) const {
-    return impl_->get_available_services(service_id);
+    return impl()->get_available_services(service_id);
 }
 
 bool SdClient::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 SdClient::Statistics SdClient::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
 // NOLINTEND(misc-include-cleaner)

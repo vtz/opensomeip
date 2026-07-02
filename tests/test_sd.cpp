@@ -26,6 +26,7 @@
 #include <chrono>
 #include <atomic>
 #include <cstdio>
+#include "static_pool_init.h"
 
 using namespace someip;
 using namespace someip::sd;
@@ -355,17 +356,17 @@ TEST_F(SdTest, SdMessageEntries) {
     SdMessage message;
 
     // Add service entry
-    auto service_entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
-    service_entry->set_service_id(0x1234);
+    ServiceEntry service_entry(EntryType::OFFER_SERVICE);
+    service_entry.set_service_id(0x1234);
     message.add_entry(std::move(service_entry));
 
     EXPECT_EQ(message.get_entries().size(), 1u);
-    EXPECT_EQ(message.get_entries()[0]->get_type(), EntryType::OFFER_SERVICE);
+    EXPECT_EQ(get_entry_ptr(message.get_entries()[0])->get_type(), EntryType::OFFER_SERVICE);
 
     // Add event group entry
-    auto event_entry = std::make_unique<EventGroupEntry>(EntryType::SUBSCRIBE_EVENTGROUP);
-    event_entry->set_service_id(0x1234);
-    event_entry->set_eventgroup_id(0x0001);
+    EventGroupEntry event_entry(EntryType::SUBSCRIBE_EVENTGROUP);
+    event_entry.set_service_id(0x1234);
+    event_entry.set_eventgroup_id(0x0001);
     message.add_entry(std::move(event_entry));
 
     EXPECT_EQ(message.get_entries().size(), 2u);
@@ -375,18 +376,18 @@ TEST_F(SdTest, SdMessageOptions) {
     SdMessage message;
 
     // Add IPv4 endpoint option
-    auto endpoint_option = std::make_unique<IPv4EndpointOption>();
-    endpoint_option->set_ipv4_address(0x7F000001);  // 127.0.0.1
-    endpoint_option->set_port(30500);
+    IPv4EndpointOption endpoint_option;
+    endpoint_option.set_ipv4_address(0x7F000001);  // 127.0.0.1
+    endpoint_option.set_port(30500);
     message.add_option(std::move(endpoint_option));
 
     EXPECT_EQ(message.get_options().size(), 1u);
-    EXPECT_EQ(message.get_options()[0]->get_type(), OptionType::IPV4_ENDPOINT);
+    EXPECT_EQ(get_option_ptr(message.get_options()[0])->get_type(), OptionType::IPV4_ENDPOINT);
 
     // Add IPv4 multicast option
-    auto multicast_option = std::make_unique<IPv4MulticastOption>();
-    multicast_option->set_ipv4_address(0xEFFFFFFB);  // 239.255.255.251
-    multicast_option->set_port(30490);
+    IPv4MulticastOption multicast_option;
+    multicast_option.set_ipv4_address(0xEFFFFFFB);  // 239.255.255.251
+    multicast_option.set_port(30490);
     message.add_option(std::move(multicast_option));
 
     EXPECT_EQ(message.get_options().size(), 2u);
@@ -654,17 +655,17 @@ TEST_F(SdTest, SdMessageSerialization) {
     original.set_reboot(true);
     original.set_unicast(false);
 
-    auto entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
-    entry->set_service_id(0x1234);
-    entry->set_instance_id(0x5678);
-    entry->set_major_version(1);
-    entry->set_ttl(30);
+    ServiceEntry entry(EntryType::OFFER_SERVICE);
+    entry.set_service_id(0x1234);
+    entry.set_instance_id(0x5678);
+    entry.set_major_version(1);
+    entry.set_ttl(30);
     original.add_entry(std::move(entry));
 
-    auto option = std::make_unique<IPv4EndpointOption>();
-    option->set_ipv4_address_from_string("192.168.1.100");
-    option->set_port(30509);
-    option->set_protocol(0x11);
+    IPv4EndpointOption option;
+    option.set_ipv4_address_from_string("192.168.1.100");
+    option.set_port(30509);
+    option.set_protocol(0x11);
     original.add_option(std::move(option));
 
     auto serialized = original.serialize();
@@ -1456,19 +1457,19 @@ TEST_F(SdTest, UnknownOptionSkipCorrectBytes) {
     SdMessage sd_msg;
     sd_msg.set_flags(0xC0);
 
-    auto entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
-    entry->set_service_id(0x1234);
-    entry->set_instance_id(0x0001);
-    entry->set_major_version(1);
-    entry->set_ttl(3600);
-    entry->set_index1(0);
-    entry->set_num_opts1(2);
+    ServiceEntry entry(EntryType::OFFER_SERVICE);
+    entry.set_service_id(0x1234);
+    entry.set_instance_id(0x0001);
+    entry.set_major_version(1);
+    entry.set_ttl(3600);
+    entry.set_index1(0);
+    entry.set_num_opts1(2);
     sd_msg.add_entry(std::move(entry));
 
-    auto ep_opt = std::make_unique<IPv4EndpointOption>();
-    ep_opt->set_ipv4_address_from_string("192.168.1.100");
-    ep_opt->set_protocol(0x11);
-    ep_opt->set_port(30501);
+    IPv4EndpointOption ep_opt;
+    ep_opt.set_ipv4_address_from_string("192.168.1.100");
+    ep_opt.set_protocol(0x11);
+    ep_opt.set_port(30501);
     sd_msg.add_option(std::move(ep_opt));
 
     auto serialized = sd_msg.serialize();
@@ -1507,7 +1508,7 @@ TEST_F(SdTest, UnknownOptionSkipCorrectBytes) {
 
     // The unknown option should be skipped; the IPv4 endpoint should be parsed
     ASSERT_GE(deserialized.get_options().size(), 1u);
-    auto* ipv4_opt = dynamic_cast<IPv4EndpointOption*>(deserialized.get_options()[0].get());
+    const auto* ipv4_opt = std::get_if<IPv4EndpointOption>(&deserialized.get_options()[0]);
     ASSERT_NE(ipv4_opt, nullptr);
     EXPECT_EQ(ipv4_opt->get_port(), 30501);
     EXPECT_EQ(ipv4_opt->get_protocol(), 0x11);
@@ -1521,18 +1522,18 @@ TEST_F(SdTest, FullMessageMinorVersion32BitRoundTrip) {
     SdMessage sd_msg;
     sd_msg.set_flags(0xC0);
 
-    auto entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
-    entry->set_service_id(0xABCD);
-    entry->set_instance_id(0x0001);
-    entry->set_major_version(3);
-    entry->set_minor_version(0x00020003);
-    entry->set_ttl(7200);
+    ServiceEntry entry(EntryType::OFFER_SERVICE);
+    entry.set_service_id(0xABCD);
+    entry.set_instance_id(0x0001);
+    entry.set_major_version(3);
+    entry.set_minor_version(0x00020003);
+    entry.set_ttl(7200);
     sd_msg.add_entry(std::move(entry));
 
-    auto opt = std::make_unique<IPv4EndpointOption>();
-    opt->set_ipv4_address_from_string("10.0.0.1");
-    opt->set_protocol(0x06);
-    opt->set_port(8080);
+    IPv4EndpointOption opt;
+    opt.set_ipv4_address_from_string("10.0.0.1");
+    opt.set_protocol(0x06);
+    opt.set_port(8080);
     sd_msg.add_option(std::move(opt));
 
     auto serialized = sd_msg.serialize();
@@ -1541,7 +1542,7 @@ TEST_F(SdTest, FullMessageMinorVersion32BitRoundTrip) {
     EXPECT_TRUE(deserialized.deserialize(serialized));
     ASSERT_EQ(deserialized.get_entries().size(), 1u);
 
-    auto* de = dynamic_cast<ServiceEntry*>(deserialized.get_entries()[0].get());
+    const auto* de = std::get_if<ServiceEntry>(&deserialized.get_entries()[0]);
     ASSERT_NE(de, nullptr);
     EXPECT_EQ(de->get_minor_version(), 0x00020003u);
     EXPECT_EQ(de->get_major_version(), 3);
@@ -1562,23 +1563,23 @@ TEST_F(SdTest, MinorVersionPreservedThroughOfferPath) {
     const uint32_t expected_minor = 0x00030007;
 
     // Construct the SD message as SdServer::send_service_offer would
-    auto entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
-    entry->set_service_id(0xBEEF);
-    entry->set_instance_id(0x0001);
-    entry->set_major_version(2);
-    entry->set_minor_version(expected_minor);
-    entry->set_ttl(3600);
-    entry->set_index1(0);
-    entry->set_num_opts1(1);
+    ServiceEntry entry(EntryType::OFFER_SERVICE);
+    entry.set_service_id(0xBEEF);
+    entry.set_instance_id(0x0001);
+    entry.set_major_version(2);
+    entry.set_minor_version(expected_minor);
+    entry.set_ttl(3600);
+    entry.set_index1(0);
+    entry.set_num_opts1(1);
 
     SdMessage sd_msg;
     sd_msg.set_flags(0xC0);
     sd_msg.add_entry(std::move(entry));
 
-    auto opt = std::make_unique<IPv4EndpointOption>();
-    opt->set_ipv4_address_from_string("10.0.0.1");
-    opt->set_protocol(0x11);
-    opt->set_port(30509);
+    IPv4EndpointOption opt;
+    opt.set_ipv4_address_from_string("10.0.0.1");
+    opt.set_protocol(0x11);
+    opt.set_port(30509);
     sd_msg.add_option(std::move(opt));
 
     // Serialize → wire → deserialize (client path)
@@ -1588,7 +1589,7 @@ TEST_F(SdTest, MinorVersionPreservedThroughOfferPath) {
     ASSERT_EQ(received.get_entries().size(), 1u);
 
     // Simulate what SdClient::handle_service_offer now does
-    auto* svc = dynamic_cast<ServiceEntry*>(received.get_entries()[0].get());
+    const auto* svc = std::get_if<ServiceEntry>(&received.get_entries()[0]);
     ASSERT_NE(svc, nullptr);
 
     ServiceInstance instance;
@@ -1609,11 +1610,11 @@ TEST_F(SdTest, ZeroLengthOptions) {
     SdMessage sd_msg;
     sd_msg.set_flags(0xC0);
 
-    auto entry = std::make_unique<ServiceEntry>(EntryType::FIND_SERVICE);
-    entry->set_service_id(0x1234);
-    entry->set_instance_id(0xFFFF);
-    entry->set_major_version(0xFF);
-    entry->set_ttl(3);
+    ServiceEntry entry(EntryType::FIND_SERVICE);
+    entry.set_service_id(0x1234);
+    entry.set_instance_id(0xFFFF);
+    entry.set_major_version(0xFF);
+    entry.set_ttl(3);
     sd_msg.add_entry(std::move(entry));
 
     EXPECT_EQ(sd_msg.get_options().size(), 0u) << "No options added";
@@ -1627,7 +1628,7 @@ TEST_F(SdTest, ZeroLengthOptions) {
     EXPECT_EQ(deserialized.get_options().size(), 0u) << "Options array should be empty";
     ASSERT_EQ(deserialized.get_entries().size(), 1u) << "Should have one entry";
 
-    auto* de = dynamic_cast<ServiceEntry*>(deserialized.get_entries()[0].get());
+    const auto* de = std::get_if<ServiceEntry>(&deserialized.get_entries()[0]);
     ASSERT_NE(de, nullptr);
     EXPECT_EQ(de->get_service_id(), 0x1234);
     EXPECT_EQ(de->get_instance_id(), 0xFFFF);
@@ -1723,19 +1724,19 @@ static Message build_subscribe_eventgroup_message(
     uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
     uint32_t ttl, const char* client_ip, uint16_t client_port) {
 
-    auto entry = std::make_unique<EventGroupEntry>(EntryType::SUBSCRIBE_EVENTGROUP);
-    entry->set_service_id(service_id);
-    entry->set_instance_id(instance_id);
-    entry->set_eventgroup_id(eventgroup_id);
-    entry->set_major_version(0x01);
-    entry->set_ttl(ttl);
-    entry->set_index1(0);
-    entry->set_num_opts1(1);
+    EventGroupEntry entry(EntryType::SUBSCRIBE_EVENTGROUP);
+    entry.set_service_id(service_id);
+    entry.set_instance_id(instance_id);
+    entry.set_eventgroup_id(eventgroup_id);
+    entry.set_major_version(0x01);
+    entry.set_ttl(ttl);
+    entry.set_index1(0);
+    entry.set_num_opts1(1);
 
-    auto option = std::make_unique<IPv4EndpointOption>();
-    option->set_ipv4_address_from_string(client_ip);
-    option->set_port(client_port);
-    option->set_protocol(0x11);
+    IPv4EndpointOption option;
+    option.set_ipv4_address_from_string(client_ip);
+    option.set_port(client_port);
+    option.set_protocol(0x11);
 
     SdMessage sd_msg;
     sd_msg.set_reboot(true);
@@ -1777,15 +1778,17 @@ static bool receive_sd_ack(transport::UdpTransport& transport,
             continue;
         }
 
-        for (const auto& entry : sd_msg.get_entries()) {
+        for (const auto& entry_var : sd_msg.get_entries()) {
+            const SdEntry* entry = get_entry_ptr(entry_var);
             if (entry->get_type() == EntryType::SUBSCRIBE_EVENTGROUP_ACK) {
-                const auto* eg = static_cast<const EventGroupEntry*>(entry.get());
-                out_entry.set_service_id(eg->get_service_id());
-                out_entry.set_instance_id(eg->get_instance_id());
-                out_entry.set_eventgroup_id(eg->get_eventgroup_id());
-                out_entry.set_major_version(eg->get_major_version());
-                out_entry.set_ttl(eg->get_ttl());
-                return true;
+                if (const auto* eg = std::get_if<EventGroupEntry>(&entry_var)) {
+                    out_entry.set_service_id(eg->get_service_id());
+                    out_entry.set_instance_id(eg->get_instance_id());
+                    out_entry.set_eventgroup_id(eg->get_eventgroup_id());
+                    out_entry.set_major_version(eg->get_major_version());
+                    out_entry.set_ttl(eg->get_ttl());
+                    return true;
+                }
             }
         }
     }

@@ -19,6 +19,7 @@
 #include <thread>
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
+#include "static_pool_init.h"
 
 using namespace someip;
 using namespace someip::tp;

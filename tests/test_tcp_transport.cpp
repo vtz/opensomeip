@@ -19,6 +19,7 @@
 #include <platform/containers.h>
 #include <thread>
 #include <chrono>
+#include "static_pool_init.h"
 
 using namespace someip;
 using namespace someip::transport;

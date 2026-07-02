@@ -13,6 +13,8 @@
 
 #include "sd/sd_server.h"
 
+#include <new>
+
 #include "common/result.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::String via containers dispatch header
 #include "platform/containers.h"
@@ -36,6 +38,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -65,6 +68,7 @@ void uint16_to_str(uint16_t val, platform::String<>& out) {
 
 namespace {
 
+// TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
 std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
     transport::UdpTransportConfig cfg;
     cfg.reuse_port = true;
@@ -248,25 +252,25 @@ public:
                                        bool acknowledge, uint32_t ttl_seconds = 3600) {
 
         // Create subscription response
-        auto response_entry = std::make_unique<EventGroupEntry>(
+        EventGroupEntry response_entry(
             acknowledge ? EntryType::SUBSCRIBE_EVENTGROUP_ACK : EntryType::SUBSCRIBE_EVENTGROUP_NACK);
-        response_entry->set_service_id(service_id);
-        response_entry->set_instance_id(instance_id);
-        response_entry->set_eventgroup_id(eventgroup_id);
-        response_entry->set_major_version(0x01);
-        response_entry->set_ttl(acknowledge ? ttl_seconds : 0);
-        response_entry->set_index1(0);
-        response_entry->set_num_opts1(1);
+        response_entry.set_service_id(service_id);
+        response_entry.set_instance_id(instance_id);
+        response_entry.set_eventgroup_id(eventgroup_id);
+        response_entry.set_major_version(0x01);
+        response_entry.set_ttl(acknowledge ? ttl_seconds : 0);
+        response_entry.set_index1(0);
+        response_entry.set_num_opts1(1);
 
         SdMessage response_message;
         response_message.add_entry(std::move(response_entry));
 
         // Add IPv4 multicast option (spec requires multicast option for ACK)
-        auto multicast_option = std::make_unique<IPv4MulticastOption>();
+        IPv4MulticastOption multicast_option;
         // Convert multicast address to network byte order
         const in_addr_t multicast_addr = someip_inet_addr(config_.multicast_address.c_str());
-        multicast_option->set_ipv4_address(multicast_addr);
-        multicast_option->set_port(config_.multicast_port);
+        multicast_option.set_ipv4_address(multicast_addr);
+        multicast_option.set_port(config_.multicast_port);
         response_message.add_option(std::move(multicast_option));
 
         platform::String<> client_ip = client_address;
@@ -403,7 +407,7 @@ private:
             return;
         }
 
-        offer_timer_thread_ = std::make_unique<platform::Thread>([this]() {
+        offer_timer_thread_.emplace([this]() {
             while (running_) {
                 platform::this_thread::sleep_for(next_offer_delay_);
 
@@ -457,26 +461,26 @@ private:
     /** @implements REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152 */
     void send_service_offer(const OfferedService& service) {
         // Create offer service entry
-        auto offer_entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
-        offer_entry->set_service_id(service.instance.service_id);
-        offer_entry->set_instance_id(service.instance.instance_id);
-        offer_entry->set_major_version(service.instance.major_version);
-        offer_entry->set_minor_version(service.instance.minor_version);
-        offer_entry->set_ttl(service.instance.ttl_seconds);
-        offer_entry->set_index1(0);
-        offer_entry->set_num_opts1(1);
+        ServiceEntry offer_entry(EntryType::OFFER_SERVICE);
+        offer_entry.set_service_id(service.instance.service_id);
+        offer_entry.set_instance_id(service.instance.instance_id);
+        offer_entry.set_major_version(service.instance.major_version);
+        offer_entry.set_minor_version(service.instance.minor_version);
+        offer_entry.set_ttl(service.instance.ttl_seconds);
+        offer_entry.set_index1(0);
+        offer_entry.set_num_opts1(1);
 
         SdMessage sd_message;
         sd_message.add_entry(std::move(offer_entry));
 
-        auto endpoint_option = std::make_unique<IPv4EndpointOption>();
+        IPv4EndpointOption endpoint_option;
 
         platform::String<> ep_ip;
         uint16_t ep_port = 0;
         if (parse_endpoint_string(service.unicast_endpoint, ep_ip, ep_port)) {
-            endpoint_option->set_ipv4_address_from_string(ep_ip);
-            endpoint_option->set_port(ep_port);
-            endpoint_option->set_protocol(0x11);
+            endpoint_option.set_ipv4_address_from_string(ep_ip);
+            endpoint_option.set_port(ep_port);
+            endpoint_option.set_protocol(0x11);
         } else {
             return;
         }
@@ -505,12 +509,12 @@ private:
     /** @implements REQ_SD_220, REQ_SD_221, REQ_SD_222, REQ_SD_223 */
     void send_service_stop_offer(const OfferedService& service) {
         // Create stop offer service entry
-        auto stop_entry = std::make_unique<ServiceEntry>(EntryType::STOP_OFFER_SERVICE);
-        stop_entry->set_service_id(service.instance.service_id);
-        stop_entry->set_instance_id(service.instance.instance_id);
-        stop_entry->set_major_version(service.instance.major_version);
-        stop_entry->set_minor_version(service.instance.minor_version);
-        stop_entry->set_ttl(0);  // TTL = 0 means stop offering
+        ServiceEntry stop_entry(EntryType::STOP_OFFER_SERVICE);
+        stop_entry.set_service_id(service.instance.service_id);
+        stop_entry.set_instance_id(service.instance.instance_id);
+        stop_entry.set_major_version(service.instance.major_version);
+        stop_entry.set_minor_version(service.instance.minor_version);
+        stop_entry.set_ttl(0);  // TTL = 0 means stop offering
 
         SdMessage sd_message;
         sd_message.add_entry(std::move(stop_entry));
@@ -565,19 +569,20 @@ private:
 
     /** @implements REQ_SD_300, REQ_SD_312 */
     void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender) {
-        for (const auto& entry : message.get_entries()) {
+        for (const auto& entry_var : message.get_entries()) {
+            const SdEntry* entry = get_entry_ptr(entry_var);
             switch (entry->get_type()) {
                 case EntryType::FIND_SERVICE:
-                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                    handle_find_service(*static_cast<const ServiceEntry*>(entry.get()), sender);
+                    if (const auto* se = std::get_if<ServiceEntry>(&entry_var)) {
+                        handle_find_service(*se, sender);
+                    }
                     break;
                 case EntryType::SUBSCRIBE_EVENTGROUP:
-                    handle_eventgroup_subscription_request(
-                        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                        *static_cast<const EventGroupEntry*>(entry.get()), message, sender);
+                    if (const auto* eg = std::get_if<EventGroupEntry>(&entry_var)) {
+                        handle_eventgroup_subscription_request(*eg, message, sender);
+                    }
                     break;
                 default:
-                    // Other entry types not handled by server
                     break;
             }
         }
@@ -651,14 +656,12 @@ private:
         bool has_conflicting_options = false;
 
         for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
-            const auto& option = options[index1 + i];
-            if (option->get_type() == OptionType::IPV4_ENDPOINT) {
+            const auto& option_var = options[index1 + i];
+            if (const auto* ep = std::get_if<IPv4EndpointOption>(&option_var)) {
                 if (has_endpoint) {
                     has_conflicting_options = true;
                     break;
                 }
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
                 client_ip = ep->get_ipv4_address_string();
                 client_port = ep->get_port();
                 client_protocol = ep->get_protocol();
@@ -669,14 +672,12 @@ private:
         const uint8_t index2 = subscription_entry.get_index2();
         const uint8_t run2 = subscription_entry.get_num_opts2();
         for (uint8_t i = 0; i < run2 && (index2 + i) < options.size(); ++i) {
-            const auto& option = options[index2 + i];
-            if (option->get_type() == OptionType::IPV4_ENDPOINT) {
+            const auto& option_var = options[index2 + i];
+            if (const auto* ep = std::get_if<IPv4EndpointOption>(&option_var)) {
                 if (has_endpoint) {
                     has_conflicting_options = true;
                     break;
                 }
-                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
-                const auto* ep = static_cast<const IPv4EndpointOption*>(option.get());
                 client_ip = ep->get_ipv4_address_string();
                 client_port = ep->get_port();
                 client_protocol = ep->get_protocol();
@@ -717,12 +718,12 @@ private:
     }
 
     void send_subscribe_nack(const EventGroupEntry& entry, const transport::Endpoint& client) {
-        auto nack_entry = std::make_unique<EventGroupEntry>(EntryType::SUBSCRIBE_EVENTGROUP_NACK);
-        nack_entry->set_service_id(entry.get_service_id());
-        nack_entry->set_instance_id(entry.get_instance_id());
-        nack_entry->set_eventgroup_id(entry.get_eventgroup_id());
-        nack_entry->set_major_version(entry.get_major_version());
-        nack_entry->set_ttl(0);
+        EventGroupEntry nack_entry(EntryType::SUBSCRIBE_EVENTGROUP_NACK);
+        nack_entry.set_service_id(entry.get_service_id());
+        nack_entry.set_instance_id(entry.get_instance_id());
+        nack_entry.set_eventgroup_id(entry.get_eventgroup_id());
+        nack_entry.set_major_version(entry.get_major_version());
+        nack_entry.set_ttl(0);
 
         SdMessage response;
         response.add_entry(std::move(nack_entry));
@@ -743,27 +744,27 @@ private:
     /** @implements REQ_SD_280, REQ_SD_283 */
     void send_service_offer_to_client(const OfferedService& service, const transport::Endpoint& client) {
         // Create unicast offer message (similar to multicast but unicast)
-        auto offer_entry = std::make_unique<ServiceEntry>(EntryType::OFFER_SERVICE);
-        offer_entry->set_service_id(service.instance.service_id);
-        offer_entry->set_instance_id(service.instance.instance_id);
-        offer_entry->set_major_version(service.instance.major_version);
-        offer_entry->set_minor_version(service.instance.minor_version);
-        offer_entry->set_ttl(service.instance.ttl_seconds);
-        offer_entry->set_index1(0);
-        offer_entry->set_num_opts1(1);
+        ServiceEntry offer_entry(EntryType::OFFER_SERVICE);
+        offer_entry.set_service_id(service.instance.service_id);
+        offer_entry.set_instance_id(service.instance.instance_id);
+        offer_entry.set_major_version(service.instance.major_version);
+        offer_entry.set_minor_version(service.instance.minor_version);
+        offer_entry.set_ttl(service.instance.ttl_seconds);
+        offer_entry.set_index1(0);
+        offer_entry.set_num_opts1(1);
 
         SdMessage sd_message;
         sd_message.set_unicast(true);  // Unicast response
         sd_message.add_entry(std::move(offer_entry));
 
-        auto endpoint_option = std::make_unique<IPv4EndpointOption>();
+        IPv4EndpointOption endpoint_option;
 
         platform::String<> ep_ip;
         uint16_t ep_port = 0;
         if (parse_endpoint_string(service.unicast_endpoint, ep_ip, ep_port)) {
-            endpoint_option->set_ipv4_address_from_string(ep_ip);
-            endpoint_option->set_port(ep_port);
-            endpoint_option->set_protocol(0x11);
+            endpoint_option.set_ipv4_address_from_string(ep_ip);
+            endpoint_option.set_port(ep_port);
+            endpoint_option.set_protocol(0x11);
         } else {
             return;
         }
@@ -794,12 +795,12 @@ private:
     platform::Vector<OfferedService> offered_services_;
     mutable platform::Mutex offered_services_mutex_;
 
-    std::unique_ptr<platform::Thread> offer_timer_thread_;
+    std::optional<platform::Thread> offer_timer_thread_;
     std::chrono::milliseconds next_offer_delay_;
     std::atomic<bool> running_;
 
     SdSessionIdCounter multicast_session_id_;
-    std::unordered_map<std::string, SdSessionIdCounter> unicast_session_ids_;
+    platform::UnorderedMap<platform::String<>, SdSessionIdCounter, 16> unicast_session_ids_;
     mutable platform::Mutex session_id_mutex_;
 
     uint16_t next_multicast_session_id() {
@@ -809,57 +810,72 @@ private:
 
     uint16_t next_unicast_session_id(const platform::String<>& peer) {
         platform::ScopedLock const lock(session_id_mutex_);
-        return unicast_session_ids_[std::string(peer.c_str(), peer.size())].next();
+        return unicast_session_ids_[peer].next();
     }
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(SdServerImpl) <= SOMEIP_PIMPL_SDSERVER_SIZE,
+              "SdServerImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_SDSERVER_SIZE");
+#endif
+
 // SdServer implementation
 SdServer::SdServer(const SdConfig& config)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) SdServerImpl(config);
+}
+#else
     : impl_(std::make_unique<SdServerImpl>(config)) {
 }
+#endif
 
-SdServer::~SdServer() = default;
+SdServer::~SdServer() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~SdServerImpl();
+#endif
+}
 
 bool SdServer::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void SdServer::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 bool SdServer::offer_service(const ServiceInstance& instance,
                             const platform::String<>& unicast_endpoint,
                             const platform::String<>& multicast_endpoint,
                             const platform::Vector<uint16_t>& eventgroup_ids) {
-    return impl_->offer_service(instance, unicast_endpoint, multicast_endpoint, eventgroup_ids);
+    return impl()->offer_service(instance, unicast_endpoint, multicast_endpoint, eventgroup_ids);
 }
 
 bool SdServer::stop_offer_service(uint16_t service_id, uint16_t instance_id) {
-    return impl_->stop_offer_service(service_id, instance_id);
+    return impl()->stop_offer_service(service_id, instance_id);
 }
 
 bool SdServer::update_service_ttl(uint16_t service_id, uint16_t instance_id, uint32_t ttl_seconds) {
-    return impl_->update_service_ttl(service_id, instance_id, ttl_seconds);
+    return impl()->update_service_ttl(service_id, instance_id, ttl_seconds);
 }
 
 bool SdServer::handle_eventgroup_subscription(uint16_t service_id, uint16_t instance_id,
                                              uint16_t eventgroup_id, const platform::String<>& client_address,
                                              bool acknowledge) {
-    return impl_->handle_eventgroup_subscription(service_id, instance_id, eventgroup_id,
+    return impl()->handle_eventgroup_subscription(service_id, instance_id, eventgroup_id,
                                                 client_address, acknowledge, 3600);
 }
 
 platform::Vector<ServiceInstance> SdServer::get_offered_services() const {
-    return impl_->get_offered_services();
+    return impl()->get_offered_services();
 }
 
 bool SdServer::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 SdServer::Statistics SdServer::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
 // NOLINTEND(misc-include-cleaner)

@@ -13,8 +13,12 @@
 
 #include "rpc/rpc_client.h"
 
+#include <new>
+
 #include "common/result.h"
 #include "core/session_manager.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "rpc/rpc_types.h"
 #include "someip/message.h"
@@ -47,7 +51,7 @@ class RpcClientImpl : public transport::ITransportListener {
 public:
     explicit RpcClientImpl(uint16_t client_id)
         : client_id_(client_id),
-          session_manager_(std::make_unique<SessionManager>()),
+          // TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
           transport_(std::make_shared<transport::UdpTransport>(transport::Endpoint("127.0.0.1", 0))),
           next_call_handle_(1),
           running_(false) {
@@ -163,7 +167,7 @@ public:
         }
 
         // Create session for this call
-        const uint16_t session_id = session_manager_->create_session(client_id_);
+        const uint16_t session_id = session_manager_.create_session(client_id_);
 
         // Create request message
         MessageId const msg_id(service_id, method_id);
@@ -284,53 +288,68 @@ private:
     }
 
     uint16_t client_id_;
-    std::unique_ptr<SessionManager> session_manager_;
+    SessionManager session_manager_;
     std::shared_ptr<transport::UdpTransport> transport_;
 
-    std::unordered_map<RpcCallHandle, PendingCall> pending_calls_;
+    platform::UnorderedMap<RpcCallHandle, PendingCall, 32> pending_calls_;
     mutable platform::Mutex pending_calls_mutex_;
     std::atomic<RpcCallHandle> next_call_handle_;
     std::atomic<bool> running_;
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(RpcClientImpl) <= SOMEIP_PIMPL_RPCCLIENT_SIZE,
+              "RpcClientImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_RPCCLIENT_SIZE");
+#endif
+
 // RpcClient implementation
 RpcClient::RpcClient(uint16_t client_id)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) RpcClientImpl(client_id);
+}
+#else
     : impl_(std::make_unique<RpcClientImpl>(client_id)) {
 }
+#endif
 
-RpcClient::~RpcClient() = default;
+RpcClient::~RpcClient() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~RpcClientImpl();
+#endif
+}
 
 bool RpcClient::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void RpcClient::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 RpcSyncResult RpcClient::call_method_sync(uint16_t service_id, MethodId method_id,
                                          const platform::ByteBuffer& parameters,
                                          const RpcTimeout& timeout) {
-    return impl_->call_method_sync(service_id, method_id, parameters, timeout);
+    return impl()->call_method_sync(service_id, method_id, parameters, timeout);
 }
 
 RpcCallHandle RpcClient::call_method_async(uint16_t service_id, MethodId method_id,
                                           const platform::ByteBuffer& parameters,
                                           RpcCallback callback,
                                           const RpcTimeout& timeout) {
-    return impl_->call_method_async(service_id, method_id, parameters, std::move(callback), timeout);
+    return impl()->call_method_async(service_id, method_id, parameters, std::move(callback), timeout);
 }
 
 bool RpcClient::cancel_call(RpcCallHandle handle) {
-    return impl_->cancel_call(handle);
+    return impl()->cancel_call(handle);
 }
 
 bool RpcClient::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 RpcClient::Statistics RpcClient::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
 // NOLINTEND(misc-include-cleaner)

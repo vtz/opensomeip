@@ -396,25 +396,25 @@ DeserializationResult<double> Deserializer::deserialize_double() {
  * @implements REQ_SER_043, REQ_SER_044, REQ_SER_045
  * @implements REQ_SER_043_E01, REQ_SER_047_E01
  */
-DeserializationResult<std::string> Deserializer::deserialize_string() {
+DeserializationResult<platform::String<>> Deserializer::deserialize_string() {
     // Deserialize string length
     auto length_result = deserialize_uint32();
     if (length_result.is_error()) {
-        return DeserializationResult<std::string>::error(length_result.get_error());
+        return DeserializationResult<platform::String<>>::error(length_result.get_error());
     }
     const uint32_t length = length_result.get_value();
 
     if (position_ + length > buffer_.size()) {
-        return DeserializationResult<std::string>::error(Result::MALFORMED_MESSAGE);
+        return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
     }
 
-    std::string result(reinterpret_cast<const char*>(buffer_.data() + position_), length);
+    platform::String<> result(reinterpret_cast<const char*>(buffer_.data() + position_), length);
     position_ += length;
 
     // Skip padding to align to 4-byte boundary
     align_to(4);
 
-    return DeserializationResult<std::string>::success(std::move(result));
+    return DeserializationResult<platform::String<>>::success(std::move(result));
 }
 
 /**

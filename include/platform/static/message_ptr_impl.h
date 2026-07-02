@@ -7,6 +7,10 @@
 #ifndef SOMEIP_PLATFORM_STATIC_MESSAGE_PTR_IMPL_H
 #define SOMEIP_PLATFORM_STATIC_MESSAGE_PTR_IMPL_H
 
+/**
+ * @implements REQ_PAL_INTRUSIVE_PTR
+ */
+
 #include "platform/intrusive_ptr.h"
 
 namespace someip {

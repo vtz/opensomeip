@@ -13,8 +13,12 @@
 
 #include "events/event_publisher.h"
 
+#include <new>
+
 #include "common/result.h"
 #include "events/event_types.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "someip/message.h"
 #include "someip/types.h"
@@ -27,6 +31,7 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 
 namespace someip::events {
@@ -44,6 +49,7 @@ class EventPublisherImpl : public transport::ITransportListener {
 public:
     EventPublisherImpl(uint16_t service_id, uint16_t instance_id)
         : service_id_(service_id), instance_id_(instance_id),
+          // TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
           transport_(std::make_shared<transport::UdpTransport>(
               transport::Endpoint("0.0.0.0", 0))),
           next_session_id_(1), running_(false) {
@@ -340,7 +346,7 @@ private:
             return;
         }
 
-        publish_timer_thread_ = std::make_unique<platform::Thread>([this]() {
+        publish_timer_thread_.emplace([this]() {
             uint32_t tick_count = 0;
             while (running_) {
                 platform::this_thread::sleep_for(std::chrono::milliseconds(100));  // 100ms check
@@ -442,90 +448,105 @@ private:
     uint16_t default_client_port_{0};
     std::shared_ptr<transport::UdpTransport> transport_;
 
-    std::unordered_map<uint16_t, EventConfig> registered_events_;
+    platform::UnorderedMap<uint16_t, EventConfig, 32> registered_events_;
     mutable platform::Mutex events_mutex_;
 
-    std::unordered_map<uint16_t, platform::Vector<ClientInfo>> subscriptions_;
+    platform::UnorderedMap<uint16_t, platform::Vector<ClientInfo>, 32> subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;
 
-    std::unordered_map<uint16_t, std::chrono::steady_clock::time_point> last_publish_times_;
-    std::unique_ptr<platform::Thread> publish_timer_thread_;
+    platform::UnorderedMap<uint16_t, std::chrono::steady_clock::time_point, 32> last_publish_times_;
+    std::optional<platform::Thread> publish_timer_thread_;
     std::atomic<uint16_t> next_session_id_;
     std::atomic<bool> running_;
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(EventPublisherImpl) <= SOMEIP_PIMPL_EVENTPUB_SIZE,
+              "EventPublisherImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_EVENTPUB_SIZE");
+#endif
+
 // EventPublisher implementation
 EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) EventPublisherImpl(service_id, instance_id);
+}
+#else
     : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id)) {
 }
+#endif
 
-EventPublisher::~EventPublisher() = default;
+EventPublisher::~EventPublisher() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~EventPublisherImpl();
+#endif
+}
 
 bool EventPublisher::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void EventPublisher::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 bool EventPublisher::register_event(const EventConfig& config) {
-    return impl_->register_event(config);
+    return impl()->register_event(config);
 }
 
 bool EventPublisher::unregister_event(uint16_t event_id) {
-    return impl_->unregister_event(event_id);
+    return impl()->unregister_event(event_id);
 }
 
 bool EventPublisher::update_event_config(uint16_t event_id, const EventConfig& config) {
-    return impl_->update_event_config(event_id, config);
+    return impl()->update_event_config(event_id, config);
 }
 
 bool EventPublisher::publish_event(uint16_t event_id, const platform::ByteBuffer& data) {
-    return impl_->publish_event(event_id, data);
+    return impl()->publish_event(event_id, data);
 }
 
 bool EventPublisher::publish_field(uint16_t event_id, const platform::ByteBuffer& data) {
-    return impl_->publish_field(event_id, data);
+    return impl()->publish_field(event_id, data);
 }
 
 void EventPublisher::set_default_client_endpoint(const platform::String<>& address, uint16_t port) {
-    impl_->set_default_client_endpoint(address, port);
+    impl()->set_default_client_endpoint(address, port);
 }
 
 bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                                        const platform::Vector<EventFilter>& filters) {
-    return impl_->handle_subscription(eventgroup_id, client_id, filters);
+    return impl()->handle_subscription(eventgroup_id, client_id, filters);
 }
 
 bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                                        uint32_t ttl_seconds,
                                        const platform::Vector<EventFilter>& filters) {
-    return impl_->handle_subscription(eventgroup_id, client_id, ttl_seconds, filters);
+    return impl()->handle_subscription(eventgroup_id, client_id, ttl_seconds, filters);
 }
 
 bool EventPublisher::handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id) {
-    return impl_->handle_unsubscription(eventgroup_id, client_id);
+    return impl()->handle_unsubscription(eventgroup_id, client_id);
 }
 
 size_t EventPublisher::cleanup_expired_subscriptions() {
-    return impl_->cleanup_expired_subscriptions();
+    return impl()->cleanup_expired_subscriptions();
 }
 
 platform::Vector<uint16_t> EventPublisher::get_registered_events() const {
-    return impl_->get_registered_events();
+    return impl()->get_registered_events();
 }
 
 platform::Vector<uint16_t> EventPublisher::get_subscriptions(uint16_t eventgroup_id) const {
-    return impl_->get_subscriptions(eventgroup_id);
+    return impl()->get_subscriptions(eventgroup_id);
 }
 
 bool EventPublisher::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 EventPublisher::Statistics EventPublisher::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
 // NOLINTEND(misc-include-cleaner)

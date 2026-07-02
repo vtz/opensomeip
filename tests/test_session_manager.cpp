@@ -16,6 +16,7 @@
 #include <thread>
 #include <chrono>
 #include <unordered_set>
+#include "static_pool_init.h"
 
 using namespace someip;
 

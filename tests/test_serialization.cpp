@@ -18,6 +18,7 @@
 #include "serialization/serializer.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
+#include "static_pool_init.h"
 
 using namespace someip::serialization;
 using namespace someip;
@@ -644,7 +645,7 @@ TEST_F(SerializationTest, SerializeDeserializeStringArray) {
     Serializer serializer;
     Deserializer deserializer({});
 
-    platform::Vector<std::string> test_array = {"hello", "world", "SOME/IP", ""};
+    platform::Vector<platform::String<>> test_array = {"hello", "world", "SOME/IP", ""};
 
     serializer.reset();
     serializer.serialize_array(test_array);
@@ -656,7 +657,7 @@ TEST_F(SerializationTest, SerializeDeserializeStringArray) {
     EXPECT_EQ(byte_length, serializer.get_size() - sizeof(uint32_t))
         << "Byte length prefix must equal total serialized element data size";
 
-    auto array_result = deserializer.deserialize_array<std::string>(test_array.size());
+    auto array_result = deserializer.deserialize_array<platform::String<>>(test_array.size());
     EXPECT_TRUE(array_result.is_success());
     auto result = array_result.get_value();
     EXPECT_EQ(result, test_array);

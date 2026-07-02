@@ -110,11 +110,27 @@ target_link_libraries(test_e2e someip-core gtest_main)
 
     # ---- Static Allocation Tests ----
     if(SOMEIP_USE_STATIC_ALLOC)
-        add_executable(test_static_alloc test_static_alloc.cpp
+        add_executable(test_buffer_pool test_buffer_pool.cpp)
+        target_link_libraries(test_buffer_pool opensomeip gtest_main)
+        add_test(NAME BufferPoolTest COMMAND test_buffer_pool)
+
+        add_executable(test_static_message_pool test_static_message_pool.cpp)
+        target_link_libraries(test_static_message_pool opensomeip gtest_main)
+        add_test(NAME StaticMessagePoolTest COMMAND test_static_message_pool)
+
+        add_executable(test_platform_containers test_platform_containers.cpp)
+        target_link_libraries(test_platform_containers opensomeip gtest_main)
+        add_test(NAME PlatformContainersTest COMMAND test_platform_containers)
+
+        add_executable(test_static_alloc_integration test_static_alloc_integration.cpp
             $<TARGET_OBJECTS:someip_malloc_trap>)
-        target_link_libraries(test_static_alloc opensomeip gtest_main)
-        add_test(NAME StaticAllocTest COMMAND test_static_alloc)
-        set_tests_properties(StaticAllocTest PROPERTIES TIMEOUT 30)
+        target_link_libraries(test_static_alloc_integration opensomeip gtest_main)
+        add_test(NAME StaticAllocIntegrationTest COMMAND test_static_alloc_integration)
+
+        set_tests_properties(
+            BufferPoolTest StaticMessagePoolTest
+            PlatformContainersTest StaticAllocIntegrationTest
+            PROPERTIES TIMEOUT 30)
 
         # PAL conformance for the static-alloc backend.
         # Uses real static pools (memory.cpp, buffer_pool.cpp) + POSIX threading.

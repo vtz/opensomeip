@@ -11,6 +11,10 @@
  * @brief Static (no-heap) container type aliases backed by ETL.
  *
  * Default capacities come from static_config.h and may be overridden via -D.
+ *
+ * @implements REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING,
+ *             REQ_PAL_CONTAINER_MAP, REQ_PAL_CONTAINER_QUEUE,
+ *             REQ_PAL_CONTAINER_FUNCTION, REQ_PLATFORM_STATIC_001
  */
 
 #include "static_config.h"

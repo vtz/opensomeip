@@ -23,8 +23,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
-#include <memory>
 #include <utility>
+#include <variant>
 
 namespace someip::sd {
 
@@ -455,11 +455,11 @@ bool ConfigurationOption::deserialize(const platform::ByteBuffer& data, size_t& 
 }
 
 // SdMessage implementation
-void SdMessage::add_entry(std::unique_ptr<SdEntry> entry) {
+void SdMessage::add_entry(SdEntryStorage entry) {
     entries_.push_back(std::move(entry));
 }
 
-void SdMessage::add_option(std::unique_ptr<SdOption> option) {
+void SdMessage::add_option(SdOptionStorage option) {
     options_.push_back(std::move(option));
 }
 
@@ -485,8 +485,8 @@ platform::ByteBuffer SdMessage::serialize() const {
 
     // Entries Array
     const size_t entries_start = data.size();
-    for (const auto& entry : entries_) {
-        auto entry_data = entry->serialize();
+    for (const auto& entry_var : entries_) {
+        auto entry_data = std::visit([](const auto& e) { return e.serialize(); }, entry_var);
         if (entry_data.empty()) {
             return {};
         }
@@ -509,8 +509,8 @@ platform::ByteBuffer SdMessage::serialize() const {
 
     // Options Array
     const size_t options_start = data.size();
-    for (const auto& option : options_) {
-        auto option_data = option->serialize();
+    for (const auto& option_var : options_) {
+        auto option_data = std::visit([](const auto& o) { return o.serialize(); }, option_var);
         if (option_data.empty()) {
             return {};
         }
@@ -561,19 +561,21 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
     while (offset + 16 <= entries_end) {
         const uint8_t raw_entry_type = data[offset];
 
-        std::unique_ptr<SdEntry> entry;
         if (raw_entry_type == 0x00 || raw_entry_type == 0x01) {
-            entry = std::make_unique<ServiceEntry>();
+            ServiceEntry entry;
+            if (!entry.deserialize(data, offset)) {
+                return false;
+            }
+            entries_.push_back(std::move(entry));
         } else if (raw_entry_type == 0x06 || raw_entry_type == 0x07) {
-            entry = std::make_unique<EventGroupEntry>();
+            EventGroupEntry entry;
+            if (!entry.deserialize(data, offset)) {
+                return false;
+            }
+            entries_.push_back(std::move(entry));
         } else {
             return false;
         }
-
-        if (!entry->deserialize(data, offset)) {
-            return false;
-        }
-        entries_.push_back(std::move(entry));
     }
 
     // Length of Options Array (4 bytes)
@@ -601,14 +603,25 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
         // Peek at the type byte (offset + 2) to determine the option kind.
         const uint8_t type_byte = data[offset + 2];
         auto const option_type = static_cast<OptionType>(type_byte);
-        std::unique_ptr<SdOption> option;
 
         if (option_type == OptionType::CONFIGURATION) {
-            option = std::make_unique<ConfigurationOption>();
+            ConfigurationOption option;
+            if (!option.deserialize(data, offset)) {
+                return false;
+            }
+            options_.push_back(std::move(option));
         } else if (option_type == OptionType::IPV4_ENDPOINT) {
-            option = std::make_unique<IPv4EndpointOption>();
+            IPv4EndpointOption option;
+            if (!option.deserialize(data, offset)) {
+                return false;
+            }
+            options_.push_back(std::move(option));
         } else if (option_type == OptionType::IPV4_MULTICAST) {
-            option = std::make_unique<IPv4MulticastOption>();
+            IPv4MulticastOption option;
+            if (!option.deserialize(data, offset)) {
+                return false;
+            }
+            options_.push_back(std::move(option));
         } else {
             // Total option size = Length(2) + Type(1) + length_value
             // where length_value includes Reserved(1) + option-specific data
@@ -620,11 +633,6 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
             offset += 3 + option_len;
             continue;
         }
-
-        if (!option->deserialize(data, offset)) {
-            return false;
-        }
-        options_.push_back(std::move(option));
     }
 
     return true;

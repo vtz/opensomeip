@@ -22,7 +22,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
-#include <memory>
 #include <utility>
 
 namespace someip::tp {
@@ -159,20 +158,19 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
     auto it = reassembly_buffers_.find(segment.header.sequence_number);
 
     if (it == reassembly_buffers_.end()) {
-        // Create new buffer for first segment
         if (segment.header.message_type == TpMessageType::FIRST_SEGMENT ||
             segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
 
-            auto buffer = std::make_unique<TpReassemblyBuffer>(
-                segment.header.sequence_number, segment.header.message_length);
-            it = reassembly_buffers_.emplace(segment.header.sequence_number, std::move(buffer)).first;
+            auto result = reassembly_buffers_.insert(
+                std::make_pair(segment.header.sequence_number,
+                               TpReassemblyBuffer(segment.header.sequence_number, segment.header.message_length)));
+            it = result.first;
         } else {
-            // Received consecutive/last segment without first segment
             return nullptr;
         }
     }
 
-    return it->second.get();
+    return &it->second;
 }
 
 /**
@@ -262,7 +260,7 @@ bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& recei
         return false;
     }
 
-    const auto& buffer = *it->second;
+    const auto& buffer = it->second;
     total_bytes = buffer.total_length;
 
     // Count received bytes
@@ -321,7 +319,7 @@ void TpReassembler::cleanup_timed_out_buffers(const TpConfig& config) {
 
     for (auto it = reassembly_buffers_.begin(); it != reassembly_buffers_.end(); ) {
         auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - it->second->start_time);
+            now - it->second.start_time);
 
         if (elapsed > config.reassembly_timeout) {
             it = reassembly_buffers_.erase(it);

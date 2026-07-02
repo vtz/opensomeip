@@ -22,7 +22,6 @@
 #include "platform/intrusive_ptr.h"
 #include "someip/message.h"
 
-#include <atomic>
 #include <cstdint>
 #include <new>
 
@@ -37,29 +36,23 @@ static uint16_t free_stack[SOMEIP_MESSAGE_POOL_SIZE];
 static uint16_t stack_top{0};
 
 static Mutex pool_mutex;
-static std::atomic<bool> pool_initialized{false};
 
-void init_pool() {
+}  // namespace
+
+void init_static_allocator() {
+    init_buffer_pool();
+    init_message_pool();
+}
+
+void init_message_pool() {
+    ScopedLock lk(pool_mutex);
     for (uint16_t i = 0; i < SOMEIP_MESSAGE_POOL_SIZE; ++i) {
         free_stack[i] = i;
     }
     stack_top = SOMEIP_MESSAGE_POOL_SIZE;
-    pool_initialized.store(true, std::memory_order_release);
 }
-
-void ensure_init() {
-    if (!pool_initialized.load(std::memory_order_acquire)) {
-        ScopedLock lk(pool_mutex);
-        if (!pool_initialized.load(std::memory_order_relaxed)) {
-            init_pool();
-        }
-    }
-}
-
-}  // namespace
 
 MessagePtr allocate_message() {
-    ensure_init();
     ScopedLock lk(pool_mutex);
 
     if (stack_top == 0) {
@@ -74,7 +67,6 @@ MessagePtr allocate_message() {
 
 void release_message(Message* msg) {
     if (!msg) { return; }
-    ensure_init();
 
     auto* raw = reinterpret_cast<uint8_t*>(msg);
     auto* base = &message_slab[0][0];

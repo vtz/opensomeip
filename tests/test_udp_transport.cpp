@@ -21,6 +21,7 @@
 #include <chrono>
 #include <atomic>
 #include <vector>
+#include "static_pool_init.h"
 
 using namespace someip;
 using namespace someip::transport;

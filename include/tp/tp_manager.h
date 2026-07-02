@@ -21,16 +21,12 @@
 #include "platform/thread.h"
 
 #include "../someip/message.h"
-#include <memory>
-#include <unordered_map>
+#include <optional>
+
+#include "tp_segmenter.h"
+#include "tp_reassembler.h"
 
 namespace someip::tp {
-
-/**
- * @brief Forward declarations
- */
-class TpSegmenter;
-class TpReassembler;
 
 /**
  * @brief SOME/IP Transport Protocol Manager
@@ -171,10 +167,10 @@ public:
 
 private:
     TpConfig config_;
-    std::unique_ptr<TpSegmenter> segmenter_;
-    std::unique_ptr<TpReassembler> reassembler_;
+    std::optional<TpSegmenter> segmenter_;
+    std::optional<TpReassembler> reassembler_;
 
-    std::unordered_map<uint32_t, TpTransfer> active_transfers_;
+    platform::UnorderedMap<uint32_t, TpTransfer> active_transfers_;
     mutable platform::Mutex transfers_mutex_;
 
     TpCompletionCallback completion_callback_;

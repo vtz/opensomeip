@@ -20,6 +20,7 @@
 #include "platform/net.h"
 #include "platform/thread.h"
 #include <atomic>
+#include <optional>
 
 namespace someip::transport {
 
@@ -95,7 +96,7 @@ private:
     UdpTransportConfig config_;
     someip_socket_t socket_fd_{SOMEIP_INVALID_SOCKET};
     std::atomic<bool> running_;
-    std::unique_ptr<platform::Thread> receive_thread_;
+    std::optional<platform::Thread> receive_thread_;
     std::atomic<ITransportListener*> listener_{nullptr};
 
     platform::Queue<MessagePtr> receive_queue_;

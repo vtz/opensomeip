@@ -20,7 +20,6 @@
 #include "platform/buffer_pool.h"
 #include "platform/thread.h"
 
-#include <atomic>
 #include <cstdint>
 #include <cstring>
 
@@ -68,32 +67,6 @@ static uint16_t*   free_stack_ptrs[kNumTiers]  = {free_stack_0, free_stack_1, fr
 static bool*       in_use_ptrs[kNumTiers]      = {in_use_0, in_use_1, in_use_2};
 
 static Mutex pool_mutex;
-static std::atomic<bool> pool_initialized{false};
-
-void init_pool() {
-    for (size_t t = 0; t < kNumTiers; ++t) {
-        for (size_t i = 0; i < kTierCount[t]; ++i) {
-            slot_arrays[t][i].data     = slab_ptrs[t] + i * kTierSize[t];
-            slot_arrays[t][i].capacity = kTierSize[t];
-            slot_arrays[t][i].size     = 0;
-            slot_arrays[t][i].tier     = static_cast<uint8_t>(t);
-            slot_arrays[t][i].index    = static_cast<uint16_t>(i);
-            free_stack_ptrs[t][i]      = static_cast<uint16_t>(i);
-            in_use_ptrs[t][i]          = false;
-        }
-        stack_top[t] = static_cast<uint16_t>(kTierCount[t]);
-    }
-    pool_initialized.store(true, std::memory_order_release);
-}
-
-void ensure_init() {
-    if (!pool_initialized.load(std::memory_order_acquire)) {
-        ScopedLock lk(pool_mutex);
-        if (!pool_initialized.load(std::memory_order_relaxed)) {
-            init_pool();
-        }
-    }
-}
 
 size_t select_tier(size_t requested) {
     for (size_t t = 0; t < kNumTiers; ++t) {
@@ -106,11 +79,26 @@ size_t select_tier(size_t requested) {
 
 }  // namespace
 
+void init_buffer_pool() {
+    ScopedLock lk(pool_mutex);
+    for (size_t t = 0; t < kNumTiers; ++t) {
+        for (size_t i = 0; i < kTierCount[t]; ++i) {
+            slot_arrays[t][i].data     = slab_ptrs[t] + i * kTierSize[t];
+            slot_arrays[t][i].capacity = kTierSize[t];
+            slot_arrays[t][i].size     = 0;
+            slot_arrays[t][i].tier     = static_cast<uint8_t>(t);
+            slot_arrays[t][i].index    = static_cast<uint16_t>(i);
+            free_stack_ptrs[t][i]      = static_cast<uint16_t>(i);
+            in_use_ptrs[t][i]          = false;
+        }
+        stack_top[t] = static_cast<uint16_t>(kTierCount[t]);
+    }
+}
+
 BufferSlot* acquire_buffer(size_t requested_size) {
     if (requested_size == 0) {
         requested_size = 1;
     }
-    ensure_init();
     ScopedLock lk(pool_mutex);
 
     size_t best = select_tier(requested_size);
@@ -129,7 +117,6 @@ BufferSlot* acquire_buffer(size_t requested_size) {
 
 void release_buffer(BufferSlot* slot) {
     if (!slot) { return; }
-    ensure_init();
     ScopedLock lk(pool_mutex);
 
     uint8_t t = slot->tier;

@@ -220,7 +220,7 @@ public:
     DeserializationResult<int64_t> deserialize_int64();
     DeserializationResult<float> deserialize_float();
     DeserializationResult<double> deserialize_double();
-    DeserializationResult<std::string> deserialize_string();
+    DeserializationResult<platform::String<>> deserialize_string();
 
     // Array deserialization
     template<typename T>
@@ -288,8 +288,8 @@ void Serializer::serialize_array(const platform::Vector<T>& array) {
             serialize_float(element);
         } else if constexpr (std::is_same_v<T, double>) {
             serialize_double(element);
-        } else if constexpr (std::is_same_v<T, std::string>) {
-            serialize_string(platform::String<>(element.c_str()));
+        } else if constexpr (std::is_same_v<T, platform::String<>>) {
+            serialize_string(element);
         } else {
             static_assert(sizeof(T) == 0, "Unsupported array element type for serialization");
         }
@@ -341,7 +341,7 @@ DeserializationResult<platform::Vector<T>> Deserializer::deserialize_array(size_
             element_result = deserialize_float();
         } else if constexpr (std::is_same_v<T, double>) {
             element_result = deserialize_double();
-        } else if constexpr (std::is_same_v<T, std::string>) {
+        } else if constexpr (std::is_same_v<T, platform::String<>>) {
             element_result = deserialize_string();
         } else {
             // For complex types, static_assert will catch this at compile time

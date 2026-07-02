@@ -13,6 +13,8 @@
 
 #include "events/event_subscriber.h"
 
+#include <new>
+
 #include "common/result.h"
 #include "events/event_types.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::String via containers dispatch header
@@ -66,6 +68,7 @@ class EventSubscriberImpl : public transport::ITransportListener {
 public:
     explicit EventSubscriberImpl(uint16_t client_id)
         : client_id_(client_id),
+          // TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
           transport_(std::make_shared<transport::UdpTransport>(
               transport::Endpoint("0.0.0.0", 0))),
           running_(false) {
@@ -418,66 +421,81 @@ private:
     std::atomic<bool> running_;
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(EventSubscriberImpl) <= SOMEIP_PIMPL_EVENTSUB_SIZE,
+              "EventSubscriberImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_EVENTSUB_SIZE");
+#endif
+
 // EventSubscriber implementation
 EventSubscriber::EventSubscriber(uint16_t client_id)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) EventSubscriberImpl(client_id);
+}
+#else
     : impl_(std::make_unique<EventSubscriberImpl>(client_id)) {
 }
+#endif
 
-EventSubscriber::~EventSubscriber() = default;
+EventSubscriber::~EventSubscriber() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~EventSubscriberImpl();
+#endif
+}
 
 void EventSubscriber::set_default_endpoint(const platform::String<>& address, uint16_t port) {
-    impl_->set_default_endpoint(address, port);
+    impl()->set_default_endpoint(address, port);
 }
 
 void EventSubscriber::set_endpoint_resolver(EndpointResolver resolver) {
-    impl_->set_endpoint_resolver(std::move(resolver));
+    impl()->set_endpoint_resolver(std::move(resolver));
 }
 
 bool EventSubscriber::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void EventSubscriber::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 bool EventSubscriber::subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                                          EventNotificationCallback notification_callback,
                                          SubscriptionStatusCallback status_callback,
                                          const platform::Vector<EventFilter>& filters) {
-    return impl_->subscribe_eventgroup(service_id, instance_id, eventgroup_id,
+    return impl()->subscribe_eventgroup(service_id, instance_id, eventgroup_id,
                                      std::move(notification_callback), std::move(status_callback), filters);
 }
 
 bool EventSubscriber::unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
-    return impl_->unsubscribe_eventgroup(service_id, instance_id, eventgroup_id);
+    return impl()->unsubscribe_eventgroup(service_id, instance_id, eventgroup_id);
 }
 
 bool EventSubscriber::request_field(uint16_t service_id, uint16_t instance_id, uint16_t event_id,
                                    EventNotificationCallback callback) {
-    return impl_->request_field(service_id, instance_id, event_id, std::move(callback));
+    return impl()->request_field(service_id, instance_id, event_id, std::move(callback));
 }
 
 bool EventSubscriber::set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                                       const platform::Vector<EventFilter>& filters) {
-    return impl_->set_event_filters(service_id, instance_id, eventgroup_id, filters);
+    return impl()->set_event_filters(service_id, instance_id, eventgroup_id, filters);
 }
 
 platform::Vector<EventSubscription> EventSubscriber::get_active_subscriptions() const {
-    return impl_->get_active_subscriptions();
+    return impl()->get_active_subscriptions();
 }
 
 SubscriptionState EventSubscriber::get_subscription_status(uint16_t service_id, uint16_t instance_id,
                                                          uint16_t eventgroup_id) const {
-    return impl_->get_subscription_status(service_id, instance_id, eventgroup_id);
+    return impl()->get_subscription_status(service_id, instance_id, eventgroup_id);
 }
 
 bool EventSubscriber::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 EventSubscriber::Statistics EventSubscriber::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
 // NOLINTEND(misc-include-cleaner)

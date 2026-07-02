@@ -149,10 +149,10 @@ Result TcpTransport::start() {
     running_ = true;
 
     // Start receive thread
-    receive_thread_ = std::make_unique<platform::Thread>(&TcpTransport::receive_loop, this);
+    receive_thread_.emplace(&TcpTransport::receive_loop, this);
 
     // Start connection monitor thread
-    connection_thread_ = std::make_unique<platform::Thread>(&TcpTransport::connection_monitor_loop, this);
+    connection_thread_.emplace(&TcpTransport::connection_monitor_loop, this);
 
     return Result::SUCCESS;
 }

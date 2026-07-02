@@ -17,7 +17,11 @@
 #include "rpc/rpc_types.h"
 #include "platform/buffer_pool.h"
 
+#ifdef SOMEIP_STATIC_ALLOC
+#include "static_config.h"
+#else
 #include <memory>
+#endif
 
 namespace someip::rpc {
 
@@ -120,7 +124,15 @@ public:
     Statistics get_statistics() const;
 
 private:
+#ifdef SOMEIP_STATIC_ALLOC
+    alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_RPCCLIENT_SIZE];
+    RpcClientImpl* impl() noexcept { return reinterpret_cast<RpcClientImpl*>(impl_storage_); }
+    const RpcClientImpl* impl() const noexcept { return reinterpret_cast<const RpcClientImpl*>(impl_storage_); }
+#else
     std::unique_ptr<RpcClientImpl> impl_;
+    RpcClientImpl* impl() noexcept { return impl_.get(); }
+    const RpcClientImpl* impl() const noexcept { return impl_.get(); }
+#endif
 };
 
 }  // namespace someip::rpc

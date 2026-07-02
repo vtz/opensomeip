@@ -105,6 +105,7 @@ if(SOMEIP_USE_STATIC_ALLOC)
     # The custom error handler (when registered) surfaces container overflow
     # as a return code rather than abort() — required for FMEA compliance.
     target_compile_definitions(opensomeip PUBLIC
+        SOMEIP_STATIC_ALLOC
         ETL_LOG_ERRORS=1
         ETL_THROW_EXCEPTIONS=0
     )

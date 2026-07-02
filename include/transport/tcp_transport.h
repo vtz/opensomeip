@@ -21,6 +21,7 @@
 #include "platform/thread.h"
 #include <atomic>
 #include <cstddef>
+#include <optional>
 
 namespace someip::transport {
 
@@ -211,8 +212,8 @@ private:
     std::atomic<ITransportListener*> listener_{nullptr};
 
     std::atomic<bool> running_{false};
-    std::unique_ptr<platform::Thread> receive_thread_;
-    std::unique_ptr<platform::Thread> connection_thread_;
+    std::optional<platform::Thread> receive_thread_;
+    std::optional<platform::Thread> connection_thread_;
 
     std::atomic<size_t> active_connections_{0};
 

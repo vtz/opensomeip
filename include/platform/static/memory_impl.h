@@ -27,6 +27,20 @@ class Message;
 
 namespace platform {
 
+/**
+ * @brief Initialize all static allocator pools deterministically.
+ *
+ * Must be called once at system startup before any allocate_message()
+ * or ByteBuffer operations. Guarantees O(1) WCET on subsequent
+ * allocations by removing all lazy-initialization paths.
+ *
+ * @implements REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_003
+ */
+void init_static_allocator();
+
+void init_message_pool();
+void init_buffer_pool();
+
 MessagePtr allocate_message();
 void release_message(Message* msg);
 
