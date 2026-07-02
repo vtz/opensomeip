@@ -19,6 +19,7 @@
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 
+#include <utility>
 #include <variant>
 
 namespace someip::sd {
@@ -67,6 +68,15 @@ class ServiceEntry : public SdEntry {
 public:
     explicit ServiceEntry(EntryType type = EntryType::FIND_SERVICE)
         : SdEntry(type) {}
+    ServiceEntry(const ServiceEntry&) = default;
+    ServiceEntry& operator=(const ServiceEntry&) = default;
+    ServiceEntry(ServiceEntry&& o) noexcept
+        : SdEntry(std::move(o)),
+          service_id_(o.service_id_),
+          instance_id_(o.instance_id_),
+          major_version_(o.major_version_),
+          minor_version_(o.minor_version_) {}
+    ServiceEntry& operator=(ServiceEntry&&) = default;
 
     uint16_t get_service_id() const { return service_id_; }
     void set_service_id(uint16_t id) { service_id_ = id; }
@@ -97,6 +107,15 @@ class EventGroupEntry : public SdEntry {
 public:
     explicit EventGroupEntry(EntryType type = EntryType::SUBSCRIBE_EVENTGROUP)
         : SdEntry(type) {}
+    EventGroupEntry(const EventGroupEntry&) = default;
+    EventGroupEntry& operator=(const EventGroupEntry&) = default;
+    EventGroupEntry(EventGroupEntry&& o) noexcept
+        : SdEntry(std::move(o)),
+          service_id_(o.service_id_),
+          instance_id_(o.instance_id_),
+          eventgroup_id_(o.eventgroup_id_),
+          major_version_(o.major_version_) {}
+    EventGroupEntry& operator=(EventGroupEntry&&) = default;
 
     uint16_t get_service_id() const { return service_id_; }
     void set_service_id(uint16_t id) { service_id_ = id; }
@@ -150,6 +169,14 @@ protected:
 class IPv4EndpointOption : public SdOption {
 public:
     IPv4EndpointOption() : SdOption(OptionType::IPV4_ENDPOINT) {}
+    IPv4EndpointOption(const IPv4EndpointOption&) = default;
+    IPv4EndpointOption& operator=(const IPv4EndpointOption&) = default;
+    IPv4EndpointOption(IPv4EndpointOption&& o) noexcept
+        : SdOption(std::move(o)),
+          protocol_(o.protocol_),
+          ipv4_address_(o.ipv4_address_),
+          port_(o.port_) {}
+    IPv4EndpointOption& operator=(IPv4EndpointOption&&) = default;
 
     uint8_t get_protocol() const { return protocol_; }
     void set_protocol(uint8_t protocol) { protocol_ = protocol; }
@@ -160,7 +187,6 @@ public:
     uint16_t get_port() const { return port_; }
     void set_port(uint16_t port) { port_ = port; }
 
-    // Helper methods
     void set_ipv4_address_from_string(const platform::String<>& ip_address);
     platform::String<> get_ipv4_address_string() const;
 
@@ -168,9 +194,9 @@ public:
     bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
-    uint8_t protocol_{0};      // 0x06 = TCP, 0x11 = UDP
-    uint32_t ipv4_address_{0}; // IPv4 address in network byte order
-    uint16_t port_{0};         // Port in network byte order
+    uint8_t protocol_{0};
+    uint32_t ipv4_address_{0};
+    uint16_t port_{0};
 };
 
 /**
@@ -179,6 +205,14 @@ private:
 class IPv4MulticastOption : public SdOption {
 public:
     IPv4MulticastOption() : SdOption(OptionType::IPV4_MULTICAST) {}
+    IPv4MulticastOption(const IPv4MulticastOption&) = default;
+    IPv4MulticastOption& operator=(const IPv4MulticastOption&) = default;
+    IPv4MulticastOption(IPv4MulticastOption&& o) noexcept
+        : SdOption(std::move(o)),
+          ipv4_address_(o.ipv4_address_),
+          protocol_(o.protocol_),
+          port_(o.port_) {}
+    IPv4MulticastOption& operator=(IPv4MulticastOption&&) = default;
 
     uint32_t get_ipv4_address() const { return ipv4_address_; }
     void set_ipv4_address(uint32_t address) { ipv4_address_ = address; }
@@ -193,8 +227,8 @@ public:
     bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
-    uint32_t ipv4_address_{0}; // IPv4 address in network byte order
-    uint8_t protocol_{0x11};   // L4 protocol (default UDP per spec)
+    uint32_t ipv4_address_{0};
+    uint8_t protocol_{0x11};
     uint16_t port_{0};
 };
 
