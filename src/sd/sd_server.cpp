@@ -13,9 +13,8 @@
 
 #include "sd/sd_server.h"
 
-#ifdef SOMEIP_STATIC_ALLOC
+// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
 #include <new>
-#endif
 
 #include "common/result.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::String via containers dispatch header

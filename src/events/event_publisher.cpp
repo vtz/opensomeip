@@ -13,9 +13,8 @@
 
 #include "events/event_publisher.h"
 
-#ifdef SOMEIP_STATIC_ALLOC
+// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
 #include <new>
-#endif
 
 #include "common/result.h"
 #include "events/event_types.h"
