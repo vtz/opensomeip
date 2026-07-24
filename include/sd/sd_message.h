@@ -19,7 +19,6 @@
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 
-#include <utility>
 #include <variant>
 
 namespace someip::sd {
@@ -71,15 +70,8 @@ public:
     ~ServiceEntry() override = default;
     ServiceEntry(const ServiceEntry&) = default;
     ServiceEntry& operator=(const ServiceEntry&) = default;
-    // NOLINTBEGIN(bugprone-use-after-move,hicpp-invalid-access-moved) trivial derived members
-    ServiceEntry(ServiceEntry&& o) noexcept
-        : SdEntry(std::move(o)),
-          service_id_(o.service_id_),
-          instance_id_(o.instance_id_),
-          major_version_(o.major_version_),
-          minor_version_(o.minor_version_) {}
-    // NOLINTEND(bugprone-use-after-move,hicpp-invalid-access-moved)
-    ServiceEntry& operator=(ServiceEntry&&) = default;
+    ServiceEntry(ServiceEntry&&) noexcept = default;
+    ServiceEntry& operator=(ServiceEntry&&) noexcept = default;
 
     uint16_t get_service_id() const { return service_id_; }
     void set_service_id(uint16_t id) { service_id_ = id; }
@@ -113,15 +105,8 @@ public:
     ~EventGroupEntry() override = default;
     EventGroupEntry(const EventGroupEntry&) = default;
     EventGroupEntry& operator=(const EventGroupEntry&) = default;
-    // NOLINTBEGIN(bugprone-use-after-move,hicpp-invalid-access-moved) trivial derived members
-    EventGroupEntry(EventGroupEntry&& o) noexcept
-        : SdEntry(std::move(o)),
-          service_id_(o.service_id_),
-          instance_id_(o.instance_id_),
-          eventgroup_id_(o.eventgroup_id_),
-          major_version_(o.major_version_) {}
-    // NOLINTEND(bugprone-use-after-move,hicpp-invalid-access-moved)
-    EventGroupEntry& operator=(EventGroupEntry&&) = default;
+    EventGroupEntry(EventGroupEntry&&) noexcept = default;
+    EventGroupEntry& operator=(EventGroupEntry&&) noexcept = default;
 
     uint16_t get_service_id() const { return service_id_; }
     void set_service_id(uint16_t id) { service_id_ = id; }
@@ -178,14 +163,8 @@ public:
     ~IPv4EndpointOption() override = default;
     IPv4EndpointOption(const IPv4EndpointOption&) = default;
     IPv4EndpointOption& operator=(const IPv4EndpointOption&) = default;
-    // NOLINTBEGIN(bugprone-use-after-move,hicpp-invalid-access-moved) trivial derived members
-    IPv4EndpointOption(IPv4EndpointOption&& o) noexcept
-        : SdOption(std::move(o)),
-          protocol_(o.protocol_),
-          ipv4_address_(o.ipv4_address_),
-          port_(o.port_) {}
-    // NOLINTEND(bugprone-use-after-move,hicpp-invalid-access-moved)
-    IPv4EndpointOption& operator=(IPv4EndpointOption&&) = default;
+    IPv4EndpointOption(IPv4EndpointOption&&) noexcept = default;
+    IPv4EndpointOption& operator=(IPv4EndpointOption&&) noexcept = default;
 
     uint8_t get_protocol() const { return protocol_; }
     void set_protocol(uint8_t protocol) { protocol_ = protocol; }
@@ -217,14 +196,8 @@ public:
     ~IPv4MulticastOption() override = default;
     IPv4MulticastOption(const IPv4MulticastOption&) = default;
     IPv4MulticastOption& operator=(const IPv4MulticastOption&) = default;
-    // NOLINTBEGIN(bugprone-use-after-move,hicpp-invalid-access-moved) trivial derived members
-    IPv4MulticastOption(IPv4MulticastOption&& o) noexcept
-        : SdOption(std::move(o)),
-          ipv4_address_(o.ipv4_address_),
-          protocol_(o.protocol_),
-          port_(o.port_) {}
-    // NOLINTEND(bugprone-use-after-move,hicpp-invalid-access-moved)
-    IPv4MulticastOption& operator=(IPv4MulticastOption&&) = default;
+    IPv4MulticastOption(IPv4MulticastOption&&) noexcept = default;
+    IPv4MulticastOption& operator=(IPv4MulticastOption&&) noexcept = default;
 
     uint32_t get_ipv4_address() const { return ipv4_address_; }
     void set_ipv4_address(uint32_t address) { ipv4_address_ = address; }

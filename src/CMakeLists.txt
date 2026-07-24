@@ -110,11 +110,14 @@ if(SOMEIP_USE_STATIC_ALLOC)
         ETL_THROW_EXCEPTIONS=0
     )
 
-    # GCC 13 false-positive: std::variant move-constructor inlining triggers
-    # -Wmaybe-uninitialized on SD option members despite default initializers.
+    # GCC 13 false-positive (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109561):
+    # std::variant move-constructor inlining triggers -Wmaybe-uninitialized on
+    # SD entry/option members despite {0} default member initializers.
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set_source_files_properties(
             ${CMAKE_CURRENT_SOURCE_DIR}/sd/sd_message.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/sd/sd_client.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/sd/sd_server.cpp
             PROPERTIES COMPILE_OPTIONS "-Wno-maybe-uninitialized")
     endif()
 
