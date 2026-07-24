@@ -51,12 +51,12 @@ DEFAULT_DEFINES: dict[str, int] = {
     "SOMEIP_BYTE_POOL_SMALL_SIZE": 256,
     "SOMEIP_BYTE_POOL_MEDIUM_SIZE": 1500,
     "SOMEIP_BYTE_POOL_LARGE_SIZE": 65536,
-    "SOMEIP_PIMPL_EVENTPUB_SIZE": 512,
-    "SOMEIP_PIMPL_EVENTSUB_SIZE": 512,
-    "SOMEIP_PIMPL_RPCCLIENT_SIZE": 512,
-    "SOMEIP_PIMPL_RPCSERVER_SIZE": 512,
-    "SOMEIP_PIMPL_SDCLIENT_SIZE": 512,
-    "SOMEIP_PIMPL_SDSERVER_SIZE": 512,
+    "SOMEIP_PIMPL_EVENTPUB_SIZE": 65536,
+    "SOMEIP_PIMPL_EVENTSUB_SIZE": 32768,
+    "SOMEIP_PIMPL_RPCCLIENT_SIZE": 32768,
+    "SOMEIP_PIMPL_RPCSERVER_SIZE": 4096,
+    "SOMEIP_PIMPL_SDCLIENT_SIZE": 32768,
+    "SOMEIP_PIMPL_SDSERVER_SIZE": 32768,
 }
 
 PIMPL_DEFINE_KEYS = (
@@ -134,13 +134,18 @@ def format_total(total: int) -> str:
 
 
 def parse_numeric_value(raw: str) -> int:
-    """Parse a C preprocessor numeric literal."""
+    """Parse a C preprocessor numeric literal.
+
+    Raises ValueError if the string is empty or non-numeric after stripping.
+    """
     token = raw.strip()
     if "//" in token:
         token = token.split("//", 1)[0].strip()
     if "/*" in token:
         token = token.split("/*", 1)[0].strip()
     token = token.rstrip("uUlL")
+    if not token:
+        raise ValueError(f"empty token after stripping: {raw!r}")
     if token.startswith(("0x", "0X")):
         return int(token, 16)
     return int(token, 10)
@@ -168,7 +173,10 @@ def parse_static_config(text: str) -> dict[str, int]:
         re.MULTILINE,
     )
     for match in ifndef_block.finditer(text):
-        defines[match.group(1)] = parse_numeric_value(match.group(2))
+        try:
+            defines[match.group(1)] = parse_numeric_value(match.group(2))
+        except ValueError:
+            continue
 
     define_line = re.compile(r"^\s*#define\s+(\w+)\s+([^\n]+)", re.MULTILINE)
     for match in define_line.finditer(text):
@@ -176,7 +184,7 @@ def parse_static_config(text: str) -> dict[str, int]:
         if key in defines:
             continue
         value = match.group(2).strip()
-        if not value or value.startswith("("):
+        if not value or value.startswith(("(", "/*", "//")):
             continue
         try:
             defines[key] = parse_numeric_value(value)

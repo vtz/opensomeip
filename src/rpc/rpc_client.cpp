@@ -52,12 +52,11 @@ class RpcClientImpl : public transport::ITransportListener {
 public:
     explicit RpcClientImpl(uint16_t client_id)
         : client_id_(client_id),
-          // TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
-          transport_(std::make_shared<transport::UdpTransport>(transport::Endpoint("127.0.0.1", 0))),
+          transport_(transport::Endpoint("127.0.0.1", 0)),
           next_call_handle_(1),
           running_(false) {
 
-        transport_->set_listener(this);
+        transport_.set_listener(this);
     }
 
     ~RpcClientImpl() noexcept override
@@ -81,7 +80,7 @@ public:
             return true;
         }
 
-        if (transport_->start() != Result::SUCCESS) {
+        if (transport_.start() != Result::SUCCESS) {
             return false;
         }
 
@@ -113,7 +112,7 @@ public:
             cb(resp);
         }
 
-        transport_->stop();
+        transport_.stop();
     }
 
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
@@ -122,16 +121,16 @@ public:
 
         struct SyncState {
             platform::Mutex mtx;
-            std::shared_ptr<RpcResponse> resp;
+            std::optional<RpcResponse> resp;
             std::atomic<bool> ready{false};
         };
-        const auto state = std::make_shared<SyncState>();
+        SyncState state;
 
         const auto handle = call_method_async(service_id, method_id, parameters,
-            [state](const RpcResponse& response) {
-                platform::ScopedLock const lk(state->mtx);
-                state->resp = std::make_shared<RpcResponse>(response);
-                state->ready.store(true);
+            [&state](const RpcResponse& response) {
+                platform::ScopedLock const lk(state.mtx);
+                state.resp.emplace(response);
+                state.ready.store(true);
             }, timeout);
 
         if (handle == 0) {
@@ -140,7 +139,7 @@ public:
 
         const auto deadline = std::chrono::steady_clock::now()
                        + std::chrono::milliseconds(timeout.response_timeout);
-        while (!state->ready.load()) {
+        while (!state.ready.load()) {
             auto now = std::chrono::steady_clock::now();
             if (now >= deadline) {
                 cancel_call(handle);
@@ -152,8 +151,8 @@ public:
         }
 
         {
-            platform::ScopedLock const lk(state->mtx);
-            return {state->resp->result, state->resp->return_values, std::chrono::milliseconds(0)};
+            platform::ScopedLock const lk(state.mtx);
+            return {state.resp->result, state.resp->return_values, std::chrono::milliseconds(0)};
         }
     }
 
@@ -195,7 +194,7 @@ public:
 
         // Send request
         const transport::Endpoint server_endpoint("127.0.0.1", 30490); // TODO: Make configurable
-        if (transport_->send_message(request, server_endpoint) != Result::SUCCESS) {
+        if (transport_.send_message(request, server_endpoint) != Result::SUCCESS) {
             platform::ScopedLock const lock(pending_calls_mutex_);
             pending_calls_.erase(handle);
             return 0;
@@ -227,7 +226,7 @@ public:
     }
 
     bool is_ready() const {
-        return running_ && transport_->is_connected();
+        return running_ && transport_.is_connected();
     }
 
     RpcClient::Statistics get_statistics() const {
@@ -293,7 +292,7 @@ private:
 
     uint16_t client_id_;
     SessionManager session_manager_;
-    std::shared_ptr<transport::UdpTransport> transport_;
+    transport::UdpTransport transport_;
 
     platform::UnorderedMap<RpcCallHandle, PendingCall, 32> pending_calls_;
     mutable platform::Mutex pending_calls_mutex_;
