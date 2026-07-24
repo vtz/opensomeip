@@ -126,15 +126,19 @@ target_link_libraries(test_e2e someip-core gtest_main)
         target_link_libraries(test_etl_error_handler opensomeip gtest_main)
         add_test(NAME EtlErrorHandlerTest COMMAND test_etl_error_handler)
 
-        add_executable(test_static_alloc_integration test_static_alloc_integration.cpp
-            $<TARGET_OBJECTS:someip_malloc_trap>)
-        target_link_libraries(test_static_alloc_integration opensomeip gtest_main)
-        add_test(NAME StaticAllocIntegrationTest COMMAND test_static_alloc_integration)
-
         set_tests_properties(
             BufferPoolTest StaticMessagePoolTest
-            PlatformContainersTest EtlErrorHandlerTest StaticAllocIntegrationTest
+            PlatformContainersTest EtlErrorHandlerTest
             PROPERTIES TIMEOUT 30)
+
+        # Malloc trap integration tests — host-only (requires dlsym/dlfcn.h)
+        if(TARGET someip_malloc_trap)
+            add_executable(test_static_alloc_integration test_static_alloc_integration.cpp
+                $<TARGET_OBJECTS:someip_malloc_trap>)
+            target_link_libraries(test_static_alloc_integration opensomeip gtest_main)
+            add_test(NAME StaticAllocIntegrationTest COMMAND test_static_alloc_integration)
+            set_tests_properties(StaticAllocIntegrationTest PROPERTIES TIMEOUT 30)
+        endif()
 
         # PAL conformance for the static-alloc backend.
         # Uses real static pools (memory.cpp, buffer_pool.cpp) + POSIX threading.

@@ -122,10 +122,13 @@ if(SOMEIP_USE_STATIC_ALLOC)
             PROPERTIES COMPILE_OPTIONS "-Wno-maybe-uninitialized")
     endif()
 
-    # Malloc trap object library (linked into verification tests, not into main lib)
-    add_library(someip_malloc_trap OBJECT
-        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/malloc_trap.cpp)
-    target_compile_definitions(someip_malloc_trap PRIVATE SOMEIP_MALLOC_TRAP)
+    # Malloc trap object library (linked into verification tests, not into main lib).
+    # Only built on hosted platforms — requires <dlfcn.h> (unavailable on bare-metal).
+    if(NOT CMAKE_CROSSCOMPILING)
+        add_library(someip_malloc_trap OBJECT
+            ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/malloc_trap.cpp)
+        target_compile_definitions(someip_malloc_trap PRIVATE SOMEIP_MALLOC_TRAP)
+    endif()
 endif()
 
 # Backward-compatible aliases so existing target_link_libraries() calls
