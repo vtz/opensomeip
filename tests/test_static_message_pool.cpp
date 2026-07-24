@@ -253,5 +253,56 @@ TEST_F(IntrusivePtrTest, Comparison) {
     EXPECT_NE(a, nullptr);
 }
 
+/**
+ * @test_case TC_MSGPOOL_DOUBLE_RELEASE
+ * @tests REQ_PAL_MEM_ALLOC
+ * @tests REQ_PLATFORM_STATIC_002
+ *
+ * Double-releasing a message must not corrupt the pool — the second
+ * release must be a safe no-op (the slot is already free).
+ * Hold other messages so the pool has room to accept the duplicate push.
+ */
+TEST_F(MessagePoolTest, DoubleReleaseIsSafe) {
+    std::vector<MessagePtr> held;
+    for (int i = 0; i < 3; ++i) {
+        auto m = allocate_message();
+        ASSERT_TRUE(m) << "setup alloc " << i;
+        held.push_back(std::move(m));
+    }
+
+    auto victim = allocate_message();
+    ASSERT_TRUE(victim);
+    Message* raw = victim.get();
+
+    victim.reset();
+    release_message(raw);
+
+    auto b = allocate_message();
+    auto c = allocate_message();
+    ASSERT_TRUE(b);
+    ASSERT_TRUE(c);
+    EXPECT_NE(b.get(), c.get())
+        << "Double-release must not cause the same slot to be handed out twice";
+}
+
+/**
+ * @test_case TC_MSGPOOL_NULL_RELEASE
+ * @tests REQ_PAL_MEM_ALLOC
+ */
+TEST_F(MessagePoolTest, NullReleaseIsSafe) {
+    release_message(nullptr);
+}
+
+/**
+ * @test_case TC_MSGPOOL_FOREIGN_PTR_RELEASE
+ * @tests REQ_PAL_MEM_ALLOC
+ *
+ * Releasing a pointer that does not belong to the pool must be a no-op.
+ */
+TEST_F(MessagePoolTest, ForeignPtrReleaseIsSafe) {
+    uint8_t stack_buf[sizeof(Message)];
+    release_message(reinterpret_cast<Message*>(stack_buf));
+}
+
 }  // namespace
 }  // namespace someip::platform

@@ -17,6 +17,7 @@
  */
 
 #include "static_config.h"
+#include "etl_error_handler.h"
 #include "platform/memory.h"
 #include "platform/thread.h"
 #include "platform/intrusive_ptr.h"
@@ -33,6 +34,7 @@ alignas(alignof(Message)) static uint8_t
     message_slab[SOMEIP_MESSAGE_POOL_SIZE][sizeof(Message)];
 
 static uint16_t free_stack[SOMEIP_MESSAGE_POOL_SIZE];
+static bool     in_use[SOMEIP_MESSAGE_POOL_SIZE];
 static uint16_t stack_top{0};
 
 static Mutex pool_mutex;
@@ -40,6 +42,7 @@ static Mutex pool_mutex;
 }  // namespace
 
 void init_static_allocator() {
+    register_etl_error_handler();
     init_buffer_pool();
     init_message_pool();
 }
@@ -48,6 +51,7 @@ void init_message_pool() {
     ScopedLock lk(pool_mutex);
     for (uint16_t i = 0; i < SOMEIP_MESSAGE_POOL_SIZE; ++i) {
         free_stack[i] = i;
+        in_use[i] = false;
     }
     stack_top = SOMEIP_MESSAGE_POOL_SIZE;
 }
@@ -60,6 +64,7 @@ MessagePtr allocate_message() {
     }
     --stack_top;
     uint16_t idx = free_stack[stack_top];
+    in_use[idx] = true;
 
     auto* msg = new (&message_slab[idx][0]) Message();
     return MessagePtr(msg, true);
@@ -78,9 +83,12 @@ void release_message(Message* msg) {
     if (offset % sizeof(Message) != 0) { return; }
     auto idx = static_cast<uint16_t>(offset / sizeof(Message));
 
+    ScopedLock lk(pool_mutex);
+    if (!in_use[idx]) { return; }
+
     msg->~Message();
 
-    ScopedLock lk(pool_mutex);
+    in_use[idx] = false;
     if (stack_top < SOMEIP_MESSAGE_POOL_SIZE) {
         free_stack[stack_top] = idx;
         ++stack_top;

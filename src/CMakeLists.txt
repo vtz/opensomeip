@@ -98,7 +98,8 @@ endif()
 if(SOMEIP_USE_STATIC_ALLOC)
     target_sources(opensomeip PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/memory.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/buffer_pool.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/buffer_pool.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/etl_error_handler.cpp)
     target_link_libraries(opensomeip PUBLIC etl::etl)
 
     # ETL safety configuration: disable exceptions, enable error logging.
@@ -107,7 +108,7 @@ if(SOMEIP_USE_STATIC_ALLOC)
     target_compile_definitions(opensomeip PUBLIC
         SOMEIP_STATIC_ALLOC
         ETL_LOG_ERRORS=1
-        ETL_THROW_EXCEPTIONS=0
+        ETL_CHECK_PUSH_POP
     )
 
     # GCC 13 false-positive (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109561):

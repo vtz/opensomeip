@@ -122,6 +122,10 @@ target_link_libraries(test_e2e someip-core gtest_main)
         target_link_libraries(test_platform_containers opensomeip gtest_main)
         add_test(NAME PlatformContainersTest COMMAND test_platform_containers)
 
+        add_executable(test_etl_error_handler test_etl_error_handler.cpp)
+        target_link_libraries(test_etl_error_handler opensomeip gtest_main)
+        add_test(NAME EtlErrorHandlerTest COMMAND test_etl_error_handler)
+
         add_executable(test_static_alloc_integration test_static_alloc_integration.cpp
             $<TARGET_OBJECTS:someip_malloc_trap>)
         target_link_libraries(test_static_alloc_integration opensomeip gtest_main)
@@ -129,7 +133,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
 
         set_tests_properties(
             BufferPoolTest StaticMessagePoolTest
-            PlatformContainersTest StaticAllocIntegrationTest
+            PlatformContainersTest EtlErrorHandlerTest StaticAllocIntegrationTest
             PROPERTIES TIMEOUT 30)
 
         # PAL conformance for the static-alloc backend.
@@ -140,6 +144,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
                 ${PAL_MOCK_CORE_SOURCES}
                 ${CMAKE_SOURCE_DIR}/src/platform/static/memory.cpp
                 ${CMAKE_SOURCE_DIR}/src/platform/static/buffer_pool.cpp
+                ${CMAKE_SOURCE_DIR}/src/platform/static/etl_error_handler.cpp
             )
             target_include_directories(test_pal_static_alloc_mock BEFORE PRIVATE
                 ${CMAKE_SOURCE_DIR}/include
