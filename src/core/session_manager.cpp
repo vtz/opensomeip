@@ -38,22 +38,36 @@ SessionManager::SessionManager() = default;
 uint16_t SessionManager::create_session(uint16_t client_id) {
     platform::ScopedLock const lock(sessions_mutex_);
 
-    uint16_t const session_id = get_next_session_id();
+    if (sessions_.size() >= sessions_.max_size()) {
+        return 0;
+    }
 
-    sessions_[session_id] = Session(session_id, client_id);
+    uint16_t const session_id = get_next_session_id();
+    sessions_.insert({session_id, Session(session_id, client_id)});
 
     return session_id;
 }
 
-Session* SessionManager::get_session(uint16_t session_id) {
+std::optional<Session> SessionManager::get_session(uint16_t session_id) {
     platform::ScopedLock const lock(sessions_mutex_);
 
     auto it = sessions_.find(session_id);
     if (it != sessions_.end()) {
-        return &it->second;
+        return it->second;
     }
 
-    return nullptr;
+    return std::nullopt;
+}
+
+bool SessionManager::set_session_state(uint16_t session_id, SessionState state) {
+    platform::ScopedLock const lock(sessions_mutex_);
+
+    auto it = sessions_.find(session_id);
+    if (it == sessions_.end()) {
+        return false;
+    }
+    it->second.state = state;
+    return true;
 }
 
 void SessionManager::remove_session(uint16_t session_id) {
@@ -82,7 +96,7 @@ void SessionManager::update_session_activity(uint16_t session_id) {
     }
 }
 
-size_t SessionManager::cleanup_expired_sessions(std::chrono::seconds timeout) {
+size_t SessionManager::cleanup_expired_sessions(std::chrono::steady_clock::duration timeout) {
     platform::ScopedLock const lock(sessions_mutex_);
 
     size_t cleaned_count = 0;
