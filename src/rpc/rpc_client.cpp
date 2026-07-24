@@ -186,6 +186,9 @@ public:
         RpcCallHandle handle = 0;
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
+            if (pending_calls_.size() >= pending_calls_.max_size()) {
+                return 0;
+            }
             handle = next_call_handle_++;
             pending_calls_[handle] = std::move(call_info);
         }

@@ -109,6 +109,9 @@ public:
         // Check if already registered
         bool const already_exists = registered_events_.count(config.event_id) > 0;
         if (!already_exists) {
+            if (registered_events_.size() >= registered_events_.max_size()) {
+                return false;
+            }
             registered_events_[config.event_id] = config;
         }
         return !already_exists;
@@ -235,6 +238,10 @@ public:
         client_info.ttl_seconds = ttl_seconds;
         client_info.subscribed_at = std::chrono::steady_clock::now();
 
+        if (subscriptions_.size() >= subscriptions_.max_size() &&
+            subscriptions_.find(eventgroup_id) == subscriptions_.end()) {
+            return false;
+        }
         auto& clients = subscriptions_[eventgroup_id];
         auto it = std::find_if(clients.begin(), clients.end(),
             [client_id](const ClientInfo& info) {
@@ -242,6 +249,9 @@ public:
             });
 
         if (it == clients.end()) {
+            if (clients.size() >= clients.max_size()) {
+                return false;
+            }
             clients.push_back(client_info);
         } else {
             *it = client_info;
@@ -384,6 +394,10 @@ private:
                 if (config.notification_type == NotificationType::PERIODIC &&
                     config.cycle_time.count() > 0) {
 
+                    if (last_publish_times_.size() >= last_publish_times_.max_size() &&
+                        last_publish_times_.find(config.event_id) == last_publish_times_.end()) {
+                        continue;
+                    }
                     auto const time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(
                         now - last_publish_times_[config.event_id]);
 

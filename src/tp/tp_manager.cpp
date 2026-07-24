@@ -89,6 +89,9 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
     transfer.segments = std::move(segments);
     transfer.state = TpTransferState::SENDING;
 
+    if (active_transfers_.size() >= active_transfers_.max_size()) {
+        return TpResult::RESOURCE_EXHAUSTED;
+    }
     active_transfers_[transfer_id] = std::move(transfer);
     statistics_.messages_segmented++;
 

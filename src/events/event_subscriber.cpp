@@ -137,6 +137,10 @@ public:
         // Store subscription
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
         const platform::String<> key = make_subscription_key(service_id, instance_id, eventgroup_id);
+        if (subscriptions_.size() >= subscriptions_.max_size() &&
+            subscriptions_.find(key) == subscriptions_.end()) {
+            return false;
+        }
         subscriptions_[key] = std::move(sub_info);
 
         const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
@@ -219,6 +223,10 @@ public:
 
         platform::ScopedLock const field_lock(field_requests_mutex_);
         const platform::String<> key = make_field_key(service_id, 0, event_id);
+        if (field_requests_.size() >= field_requests_.max_size() &&
+            field_requests_.find(key) == field_requests_.end()) {
+            return false;
+        }
         field_requests_[key] = std::move(callback);
 
         MessageId const msg_id(service_id, 0x0003);

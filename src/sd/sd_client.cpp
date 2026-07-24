@@ -161,6 +161,9 @@ public:
         const uint32_t request_id = next_request_id_++;
         {
             platform::ScopedLock const lock(pending_finds_mutex_);
+            if (pending_finds_.size() >= pending_finds_.max_size()) {
+                return false;
+            }
             pending_finds_[request_id] = {
                 service_id, std::move(callback),
                 std::chrono::steady_clock::now(),
@@ -180,6 +183,9 @@ public:
         // Check if already subscribed
         bool const already_exists = service_subscriptions_.count(service_id) > 0;
         if (!already_exists) {
+            if (service_subscriptions_.size() >= service_subscriptions_.max_size()) {
+                return false;
+            }
             service_subscriptions_[service_id] = {
                 std::move(available_callback),
                 std::move(unavailable_callback)
@@ -238,6 +244,10 @@ public:
             const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
                                  (static_cast<uint64_t>(instance_id) << 16U) |
                                  eventgroup_id;
+            if (eventgroup_subscriptions_.size() >= eventgroup_subscriptions_.max_size() &&
+                eventgroup_subscriptions_.find(key) == eventgroup_subscriptions_.end()) {
+                return false;
+            }
             EventGroupSubscription sub;
             sub.service_id = service_id;
             sub.instance_id = instance_id;
@@ -538,17 +548,22 @@ private:
                            svc.instance_id == instance.instance_id;
                 });
             if (it == available_services_.end()) {
-                available_services_.push_back(instance);
+                if (available_services_.size() < available_services_.max_size()) {
+                    available_services_.push_back(instance);
+                }
             } else {
                 *it = instance;
             }
 
-            cached_services_[key] = CachedService{
-                instance,
-                std::chrono::steady_clock::now(),
-                incoming_session,
-                incoming_reboot_flag
-            };
+            if (cached_services_.size() < cached_services_.max_size() ||
+                cached_services_.find(key) != cached_services_.end()) {
+                cached_services_[key] = CachedService{
+                    instance,
+                    std::chrono::steady_clock::now(),
+                    incoming_session,
+                    incoming_reboot_flag
+                };
+            }
         }
 
         if (rebooted) {

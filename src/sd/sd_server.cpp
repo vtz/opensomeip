@@ -187,6 +187,10 @@ public:
             }
         }
 
+        if (offered_services_.size() >= offered_services_.max_size()) {
+            return false;
+        }
+
         OfferedService offered;
         offered.instance = instance;
         offered.unicast_endpoint = unicast_endpoint;
@@ -809,6 +813,10 @@ private:
 
     uint16_t next_unicast_session_id(const platform::String<>& peer) {
         platform::ScopedLock const lock(session_id_mutex_);
+        if (unicast_session_ids_.size() >= unicast_session_ids_.max_size() &&
+            unicast_session_ids_.find(peer) == unicast_session_ids_.end()) {
+            return 0;
+        }
         return unicast_session_ids_[peer].next();
     }
 };

@@ -99,6 +99,9 @@ public:
         // Check if already registered
         const bool already_exists = method_handlers_.count(method_id) > 0;
         if (!already_exists) {
+            if (method_handlers_.size() >= method_handlers_.max_size()) {
+                return false;
+            }
             method_handlers_[method_id] = std::move(handler);
         }
         return !already_exists;
