@@ -32,6 +32,7 @@ jobs:
       freertos: ${{ steps.filter.outputs.freertos }}
       threadx: ${{ steps.filter.outputs.threadx }}
       zephyr: ${{ steps.filter.outputs.zephyr }}
+      static_alloc: ${{ steps.filter.outputs.static_alloc }}
       python: ${{ steps.filter.outputs.python }}
       requirements: ${{ steps.filter.outputs.requirements }}
       rpm: ${{ steps.filter.outputs.rpm }}
@@ -109,6 +110,15 @@ jobs:
               - '.github/workflows/threadx.yml'
               - 'scripts/run_threadx_renode_test.sh'
               - 'scripts/run_renode_test.sh'
+            static_alloc:
+              - 'src/platform/static/**'
+              - 'include/platform/static/**'
+              - 'tests/test_static_alloc*.cpp'
+              - 'tests/test_buffer_pool.cpp'
+              - 'tests/test_static_message_pool.cpp'
+              - 'tests/test_platform_containers.cpp'
+              - 'tests/test_etl_error_handler.cpp'
+              - '.github/workflows/host.yml'
             zephyr:
               - 'src/platform/zephyr/**'
               - 'include/platform/zephyr/**'
@@ -196,6 +206,7 @@ jobs:
           FREERTOS: ${{ steps.filter.outputs.freertos }}
           THREADX: ${{ steps.filter.outputs.threadx }}
           ZEPHYR: ${{ steps.filter.outputs.zephyr }}
+          STATIC_ALLOC: ${{ steps.filter.outputs.static_alloc }}
           PYTHON: ${{ steps.filter.outputs.python }}
           REQUIREMENTS: ${{ steps.filter.outputs.requirements }}
           RPM: ${{ steps.filter.outputs.rpm }}
@@ -208,6 +219,7 @@ jobs:
           echo "  freertos=$FREERTOS"
           echo "  threadx=$THREADX"
           echo "  zephyr=$ZEPHYR"
+          echo "  static_alloc=$STATIC_ALLOC"
           echo "  python=$PYTHON"
           echo "  requirements=$REQUIREMENTS"
           echo "  rpm=$RPM"
@@ -219,6 +231,7 @@ jobs:
                 "$FREERTOS" == "false" && \
                 "$THREADX" == "false" && \
                 "$ZEPHYR" == "false" && \
+                "$STATIC_ALLOC" == "false" && \
                 "$PYTHON" == "false" && \
                 "$REQUIREMENTS" == "false" && \
                 "$RPM" == "false" && \

@@ -181,6 +181,24 @@
         "BUILD_TESTS": "ON",
         "BUILD_EXAMPLES": "OFF"
       }
+    },
+    {
+      "name": "freertos-cortexm4-renode-static",
+      "displayName": "FreeRTOS Cortex-M4 (Renode STM32F4, Static Alloc)",
+      "description": "Cross-compile FreeRTOS tests for ARM Cortex-M4 with static allocation backend, runnable on Renode STM32F407 simulator",
+      "inherits": "freertos-cortexm4-renode",
+      "cacheVariables": {
+        "SOMEIP_USE_STATIC_ALLOC": "ON"
+      }
+    },
+    {
+      "name": "threadx-cortexm4-renode-static",
+      "displayName": "ThreadX Cortex-M4 (Renode STM32F4, Static Alloc)",
+      "description": "Cross-compile ThreadX tests for ARM Cortex-M4 with static allocation backend, runnable on Renode STM32F407 simulator",
+      "inherits": "threadx-cortexm4-renode",
+      "cacheVariables": {
+        "SOMEIP_USE_STATIC_ALLOC": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -247,6 +265,14 @@
     {
       "name": "static-alloc-linux-tests",
       "configurePreset": "static-alloc-linux-tests"
+    },
+    {
+      "name": "freertos-cortexm4-renode-static",
+      "configurePreset": "freertos-cortexm4-renode-static"
+    },
+    {
+      "name": "threadx-cortexm4-renode-static",
+      "configurePreset": "threadx-cortexm4-renode-static"
     }
   ],
   "testPresets": [
