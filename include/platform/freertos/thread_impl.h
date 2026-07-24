@@ -150,11 +150,7 @@ public:
         join_sem_ = xSemaphoreCreateBinary();
         configASSERT(join_sem_ != nullptr);
 
-        ctx_ = platform::Function<void()>(
-            [f = std::forward<Fn>(fn),
-             a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
-                std::apply(std::move(f), std::move(a));
-            });
+        store_callable(std::forward<Fn>(fn), std::forward<Args>(args)...);
 
         BaseType_t rc = xTaskCreate(
             trampoline,
@@ -165,7 +161,7 @@ public:
             &task_handle_);
 
         if (rc != pdPASS) {
-            ctx_ = {};
+            ctx_ = nullptr;
             vSemaphoreDelete(join_sem_);
             join_sem_ = nullptr;
             return;
@@ -177,7 +173,7 @@ public:
     ~Thread() {
         if (joinable()) {
             if (task_handle_) vTaskDelete(task_handle_);
-            ctx_ = {};
+            ctx_ = nullptr;
             if (join_sem_) vSemaphoreDelete(join_sem_);
             join_sem_ = nullptr;
             started_ = false;
@@ -195,7 +191,7 @@ public:
         if (!joinable()) return;
         xSemaphoreTake(join_sem_, portMAX_DELAY);
         joined_ = true;
-        ctx_ = {};
+        ctx_ = nullptr;
         vSemaphoreDelete(join_sem_);
         join_sem_ = nullptr;
         task_handle_ = nullptr;
@@ -216,6 +212,22 @@ private:
             xSemaphoreGive(self->join_sem_);
         }
         vTaskDelete(nullptr);
+    }
+
+    // Member-function-pointer + object: sizeof is 2 pointers (8 bytes on 32-bit ARM)
+    template <typename Ret, typename Cls>
+    void store_callable(Ret (Cls::*mfn)(), Cls* obj) {
+        ctx_ = platform::Function<void()>([mfn, obj]() { (obj->*mfn)(); });
+    }
+
+    // General case: pack args into a tuple (may be larger)
+    template <typename Fn, typename... Args>
+    void store_callable(Fn&& fn, Args&&... args) {
+        ctx_ = platform::Function<void()>(
+            [f = std::forward<Fn>(fn),
+             a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
+                std::apply(std::move(f), std::move(a));
+            });
     }
 
     TaskHandle_t task_handle_{nullptr};

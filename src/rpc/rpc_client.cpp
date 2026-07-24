@@ -152,6 +152,9 @@ public:
 
         {
             platform::ScopedLock const lk(state.mtx);
+            if (!state.resp.has_value()) {
+                return {RpcResult::INTERNAL_ERROR, {}, std::chrono::milliseconds(0)};
+            }
             return {state.resp->result, state.resp->return_values, std::chrono::milliseconds(0)};
         }
     }
