@@ -50,12 +50,10 @@ class EventPublisherImpl : public transport::ITransportListener {
 public:
     EventPublisherImpl(uint16_t service_id, uint16_t instance_id)
         : service_id_(service_id), instance_id_(instance_id),
-          // TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
-          transport_(std::make_shared<transport::UdpTransport>(
-              transport::Endpoint("0.0.0.0", 0))),
+          transport_(transport::Endpoint("0.0.0.0", 0)),
           next_session_id_(1), running_(false) {
 
-        transport_->set_listener(this);
+        transport_.set_listener(this);
     }
 
     ~EventPublisherImpl() override
@@ -73,7 +71,7 @@ public:
             return true;
         }
 
-        if (transport_->start() != Result::SUCCESS) {
+        if (transport_.start() != Result::SUCCESS) {
             return false;
         }
 
@@ -100,7 +98,7 @@ public:
             subscriptions_.clear();
         }
 
-        transport_->stop();
+        transport_.stop();
     }
 
     bool register_event(const EventConfig& config) {
@@ -327,7 +325,7 @@ public:
     }
 
     bool is_ready() const {
-        return running_ && transport_->is_connected();
+        return running_ && transport_.is_connected();
     }
 
     EventPublisher::Statistics get_statistics() const {
@@ -427,7 +425,7 @@ private:
                                MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(notification.event_data);
 
-        Result const result = transport_->send_message(someip_message, client_endpoint);
+        Result const result = transport_.send_message(someip_message, client_endpoint);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
         }
@@ -464,7 +462,7 @@ private:
     uint16_t instance_id_;
     platform::String<> default_client_address_{"0.0.0.0"};
     uint16_t default_client_port_{0};
-    std::shared_ptr<transport::UdpTransport> transport_;
+    transport::UdpTransport transport_;
 
     platform::UnorderedMap<uint16_t, EventConfig, 16> registered_events_;
     mutable platform::Mutex events_mutex_;

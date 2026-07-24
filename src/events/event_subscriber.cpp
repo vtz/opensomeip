@@ -69,12 +69,10 @@ class EventSubscriberImpl : public transport::ITransportListener {
 public:
     explicit EventSubscriberImpl(uint16_t client_id)
         : client_id_(client_id),
-          // TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
-          transport_(std::make_shared<transport::UdpTransport>(
-              transport::Endpoint("0.0.0.0", 0))),
+          transport_(transport::Endpoint("0.0.0.0", 0)),
           running_(false) {
 
-        transport_->set_listener(this);
+        transport_.set_listener(this);
     }
 
     ~EventSubscriberImpl() override
@@ -92,7 +90,7 @@ public:
             return true;
         }
 
-        if (transport_->start() != Result::SUCCESS) {
+        if (transport_.start() != Result::SUCCESS) {
             return false;
         }
 
@@ -111,7 +109,7 @@ public:
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
         subscriptions_.clear();
 
-        transport_->stop();
+        transport_.stop();
     }
 
     /** @implements REQ_MSG_122 */
@@ -159,7 +157,7 @@ public:
         payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
         subscription_msg.set_payload(payload);
 
-        const Result send_result = transport_->send_message(subscription_msg, service_endpoint);
+        const Result send_result = transport_.send_message(subscription_msg, service_endpoint);
         bool const success = (send_result == Result::SUCCESS);
         if (!success) {
             subscriptions_.erase(key);
@@ -195,7 +193,7 @@ public:
         payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
         unsubscription_msg.set_payload(payload);
 
-        const Result result = transport_->send_message(unsubscription_msg, service_endpoint);
+        const Result result = transport_.send_message(unsubscription_msg, service_endpoint);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
         }
@@ -239,7 +237,7 @@ public:
         payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(event_id) & 0xFFU));
         field_msg.set_payload(payload);
 
-        return transport_->send_message(field_msg, service_endpoint) == Result::SUCCESS;
+        return transport_.send_message(field_msg, service_endpoint) == Result::SUCCESS;
     }
 
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
@@ -283,7 +281,7 @@ public:
     }
 
     bool is_ready() const {
-        return running_ && transport_->is_connected();
+        return running_ && transport_.is_connected();
     }
 
     EventSubscriber::Statistics get_statistics() const {
@@ -419,7 +417,7 @@ private:
     platform::String<> default_service_address_{"0.0.0.0"};
     uint16_t default_service_port_{0};
     EndpointResolver endpoint_resolver_;
-    std::shared_ptr<transport::UdpTransport> transport_;
+    transport::UdpTransport transport_;
 
     platform::UnorderedMap<platform::String<>, SubscriptionInfo> subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;  // Lock order: acquire before field_requests_mutex_

@@ -49,11 +49,10 @@ class RpcServerImpl : public transport::ITransportListener {
 public:
     explicit RpcServerImpl(uint16_t service_id)
         : service_id_(service_id),
-          // TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
-          transport_(std::make_shared<transport::UdpTransport>(transport::Endpoint("127.0.0.1", 30490))),
+          transport_(transport::Endpoint("127.0.0.1", 30490)),
           running_(false) {
 
-        transport_->set_listener(this);
+        transport_.set_listener(this);
     }
 
     ~RpcServerImpl() override
@@ -71,7 +70,7 @@ public:
             return true;
         }
 
-        if (transport_->start() != Result::SUCCESS) {
+        if (transport_.start() != Result::SUCCESS) {
             return false;
         }
 
@@ -90,7 +89,7 @@ public:
         platform::ScopedLock const lock(methods_mutex_);
         method_handlers_.clear();
 
-        transport_->stop();
+        transport_.stop();
     }
 
     bool register_method(MethodId method_id, MethodHandler handler) {
@@ -128,7 +127,7 @@ public:
     }
 
     bool is_ready() const {
-        return running_ && transport_->is_connected();
+        return running_ && transport_.is_connected();
     }
 
     RpcServer::Statistics get_statistics() const {
@@ -190,7 +189,7 @@ private:
                         MessageType::RESPONSE, ReturnCode::E_OK);
         response.set_payload(return_values);
 
-        const Result result = transport_->send_message(response, sender);
+        const Result result = transport_.send_message(response, sender);
         if (result != Result::SUCCESS) {
             // Log error or handle send failure
         }
@@ -202,7 +201,7 @@ private:
         Message const response(response_msg_id, request->get_request_id(),
                         MessageType::ERROR, error_code);
 
-        const Result result = transport_->send_message(response, sender);
+        const Result result = transport_.send_message(response, sender);
         if (result != Result::SUCCESS) {
             // Log error or handle send failure
         }
@@ -226,7 +225,7 @@ private:
     }
 
     uint16_t service_id_;
-    std::shared_ptr<transport::UdpTransport> transport_;
+    transport::UdpTransport transport_;
 
     platform::UnorderedMap<MethodId, MethodHandler, 32> method_handlers_;
     mutable platform::Mutex methods_mutex_;

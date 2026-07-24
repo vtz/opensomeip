@@ -43,13 +43,11 @@ namespace someip::sd {
 
 namespace {
 
-// TODO: Replace with pool-based or aligned-storage transport for full no-heap compliance
-std::shared_ptr<transport::UdpTransport> create_sd_transport(const SdConfig& config) {
+transport::UdpTransportConfig make_sd_transport_config(const SdConfig& config) {
     transport::UdpTransportConfig cfg;
     cfg.reuse_port = true;
     cfg.multicast_interface = config.unicast_address;
-    return std::make_shared<transport::UdpTransport>(
-        transport::Endpoint("0.0.0.0", config.multicast_port), cfg);
+    return cfg;
 }
 
 }  // namespace
@@ -66,11 +64,12 @@ class SdClientImpl : public transport::ITransportListener {
 public:
     explicit SdClientImpl(const SdConfig& config)
         : config_(config),
-          transport_(create_sd_transport(config)),
+          transport_(transport::Endpoint("0.0.0.0", config.multicast_port),
+                     make_sd_transport_config(config)),
           next_request_id_(1),
           running_(false) {
 
-        transport_->set_listener(this);
+        transport_.set_listener(this);
     }
 
     ~SdClientImpl() override
@@ -89,12 +88,12 @@ public:
             return true;
         }
 
-        if (transport_->start() != Result::SUCCESS) {
+        if (transport_.start() != Result::SUCCESS) {
             return false;
         }
 
         if (!join_multicast_group()) {
-            transport_->stop();
+            transport_.stop();
             return false;
         }
 
@@ -120,7 +119,7 @@ public:
 
         leave_multicast_group();
 
-        transport_->stop();
+        transport_.stop();
     }
 
     /** @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_127, REQ_SD_131, REQ_SD_210, REQ_SD_211, REQ_SD_212 */
@@ -153,7 +152,7 @@ public:
         someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
-        if (transport_->send_message(someip_message, multicast_endpoint) != Result::SUCCESS) {
+        if (transport_.send_message(someip_message, multicast_endpoint) != Result::SUCCESS) {
             return false;
         }
 
@@ -221,7 +220,7 @@ public:
 
         IPv4EndpointOption endpoint_option;
         endpoint_option.set_ipv4_address_from_string(config_.unicast_address);
-        endpoint_option.set_port(transport_->get_local_endpoint().get_port());
+        endpoint_option.set_port(transport_.get_local_endpoint().get_port());
         endpoint_option.set_protocol(0x11);  // UDP
         sd_message.add_option(std::move(endpoint_option));
 
@@ -237,7 +236,7 @@ public:
         someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
-        const bool sent = transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
+        const bool sent = transport_.send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
 
         if (sent) {
             platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
@@ -286,7 +285,7 @@ public:
         someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
-        const bool sent = transport_->send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
+        const bool sent = transport_.send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
 
         if (sent) {
             platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
@@ -312,7 +311,7 @@ public:
     }
 
     bool is_ready() const {
-        return running_ && transport_->is_connected();
+        return running_ && transport_.is_connected();
     }
 
     SdClient::Statistics get_statistics() const {
@@ -428,19 +427,11 @@ private:
     }
 
     bool join_multicast_group() {
-        const auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
-        if (!udp_transport) {
-            return false;
-        }
-
-        return udp_transport->join_multicast_group(config_.multicast_address) == Result::SUCCESS;
+        return transport_.join_multicast_group(config_.multicast_address) == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
-        const auto udp_transport = std::dynamic_pointer_cast<transport::UdpTransport>(transport_);
-        if (udp_transport) {
-            udp_transport->leave_multicast_group(config_.multicast_address);
-        }
+        transport_.leave_multicast_group(config_.multicast_address);
     }
 
     /** @implements REQ_SD_116_E01, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_311, REQ_SD_331 */
@@ -634,7 +625,7 @@ private:
     }
 
     SdConfig config_;
-    std::shared_ptr<transport::UdpTransport> transport_;
+    transport::UdpTransport transport_;
 
     platform::UnorderedMap<uint16_t, ServiceSubscription, 32> service_subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;
