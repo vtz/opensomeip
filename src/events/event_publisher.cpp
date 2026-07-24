@@ -234,7 +234,10 @@ public:
         ClientInfo client_info;
         client_info.client_id = client_id;
         client_info.endpoint = client_endpoint;
-        client_info.filters = filters;
+        for (const auto& f : filters) {
+            if (client_info.filters.size() >= client_info.filters.max_size()) { break; }
+            client_info.filters.push_back(f);
+        }
         client_info.ttl_seconds = ttl_seconds;
         client_info.subscribed_at = std::chrono::steady_clock::now();
 
@@ -338,7 +341,7 @@ private:
     struct ClientInfo {
         uint16_t client_id{};
         transport::Endpoint endpoint;
-        platform::Vector<EventFilter> filters;
+        platform::Vector<EventFilter, 4> filters;
         uint32_t ttl_seconds{TTL_INFINITE};
         std::chrono::steady_clock::time_point subscribed_at{std::chrono::steady_clock::now()};
 
@@ -463,13 +466,13 @@ private:
     uint16_t default_client_port_{0};
     std::shared_ptr<transport::UdpTransport> transport_;
 
-    platform::UnorderedMap<uint16_t, EventConfig, 32> registered_events_;
+    platform::UnorderedMap<uint16_t, EventConfig, 16> registered_events_;
     mutable platform::Mutex events_mutex_;
 
-    platform::UnorderedMap<uint16_t, platform::Vector<ClientInfo>, 32> subscriptions_;
+    platform::UnorderedMap<uint16_t, platform::Vector<ClientInfo, 8>, 16> subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;
 
-    platform::UnorderedMap<uint16_t, std::chrono::steady_clock::time_point, 32> last_publish_times_;
+    platform::UnorderedMap<uint16_t, std::chrono::steady_clock::time_point, 16> last_publish_times_;
     std::optional<platform::Thread> publish_timer_thread_;
     std::atomic<uint16_t> next_session_id_;
     std::atomic<bool> running_;
