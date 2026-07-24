@@ -214,18 +214,25 @@ private:
         vTaskDelete(nullptr);
     }
 
-    // Member-function-pointer + object: sizeof is 2 pointers (8 bytes on 32-bit ARM)
+    // Member-function-pointer + object: 2 pointers (8 bytes on 32-bit ARM)
     template <typename Ret, typename Cls>
     void store_callable(Ret (Cls::*mfn)(), Cls* obj) {
         ctx_ = platform::Function<void()>([mfn, obj]() { (obj->*mfn)(); });
     }
 
-    // General case: pack args into a tuple (may be larger)
-    template <typename Fn, typename... Args>
-    void store_callable(Fn&& fn, Args&&... args) {
+    // Zero-arg callable (lambda, functor): assign directly
+    template <typename Fn>
+    void store_callable(Fn&& fn) {
+        ctx_ = platform::Function<void()>(std::forward<Fn>(fn));
+    }
+
+    // Multi-arg case: pack args into a tuple
+    template <typename Fn, typename Arg, typename... Rest>
+    void store_callable(Fn&& fn, Arg&& arg, Rest&&... rest) {
         ctx_ = platform::Function<void()>(
             [f = std::forward<Fn>(fn),
-             a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
+             a = std::make_tuple(std::forward<Arg>(arg),
+                                 std::forward<Rest>(rest)...)]() mutable {
                 std::apply(std::move(f), std::move(a));
             });
     }
