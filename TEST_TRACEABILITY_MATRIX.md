@@ -19,21 +19,30 @@ This matrix maps individual test cases to specific requirements from the Open SO
 
 ## Test File Structure
 
-- **test_e2e.cpp**: End-to-End protection, CRC algorithms, header serialization, MC/DC validation (36 tests)
-- **test_endpoint.cpp**: IPv4/IPv6 address validation with MC/DC coverage, multicast, comparison, hash (75 tests)
-- **test_events.cpp**: Event subscription, notification, and event groups (14 tests)
-- **test_message.cpp**: Message format and validation tests (23 tests)
-- **test_pal_freertos_mock.cpp**: FreeRTOS PAL conformance (25 tests)
-- **test_pal_threadx_mock.cpp**: ThreadX PAL conformance (25 tests)
-- **test_pal_zephyr_mock.cpp**: Zephyr PAL conformance (25 tests)
-- **test_platform_threading.cpp**: Threading, mutex, condition variable primitives (21 tests)
-- **test_rpc.cpp**: RPC request/response handling (8 tests)
-- **test_sd.cpp**: Service Discovery protocol tests (52 tests)
-- **test_serialization.cpp**: Data serialization/deserialization tests (49 tests)
-- **test_session_manager.cpp**: Session lifecycle, expiry, state transitions with MC/DC (23 tests)
+- **test_sd.cpp**: Service Discovery protocol tests (57 tests)
+- **test_serialization.cpp**: Data serialization/deserialization tests (37 tests)
+- **test_e2e.cpp**: End-to-End protection, CRC algorithms, header serialization, MC/DC validation (31 tests)
+- **test_message.cpp**: Message format and validation tests (27 tests)
+- **test_tp.cpp**: Transport Protocol segmentation tests (25 tests)
+- **test_platform_containers.cpp**: Platform container abstractions (21 tests)
+- **test_session_manager.cpp**: Session lifecycle, expiry, state transitions with MC/DC (19 tests)
 - **test_tcp_transport.cpp**: TCP transport binding tests (17 tests)
-- **test_tp.cpp**: Transport Protocol segmentation tests (23 tests)
-- **test_udp_transport.cpp**: UDP transport binding tests (27 tests)
+- **test_static_message_pool.cpp**: Static message pool allocation (16 tests)
+- **test_platform_threading.cpp**: Threading, mutex, condition variable primitives (15 tests)
+- **test_buffer_pool.cpp**: Buffer pool management tests (14 tests)
+- **test_static_alloc_integration.cpp**: Static allocation integration tests (14 tests)
+- **test_events.cpp**: Event subscription, notification, and event groups (10 tests)
+- **test_udp_transport.cpp**: UDP transport binding tests (6 tests)
+- **test_etl_error_handler.cpp**: ETL error handler tests (4 tests)
+- **test_someip_system.cpp**: System-level integration tests (4 tests)
+- **test_endpoint.cpp**: IPv4/IPv6 address validation with MC/DC coverage (1 test)
+- **test_pal_freertos_mock.cpp**: FreeRTOS PAL conformance (1 test)
+- **test_pal_threadx_mock.cpp**: ThreadX PAL conformance (1 test)
+- **test_pal_zephyr_mock.cpp**: Zephyr PAL conformance (1 test)
+- **test_pal_static_alloc_mock.cpp**: Static allocation PAL conformance (1 test)
+- **test_rpc.cpp**: RPC request/response handling (1 test)
+- **test_freertos_core.cpp**: FreeRTOS core platform tests (1 test)
+- **test_threadx_core.cpp**: ThreadX core platform tests (1 test)
 
 ---
 
@@ -202,36 +211,44 @@ This matrix maps individual test cases to specific requirements from the Open SO
 >
 > **Methodology**: "Fully traced" = requirement has both `@implements` code annotation
 > and `@tests` test annotation.  "Orphaned" = requirement defined in RST but has no
-> code annotation.  Counts reflect the full RST requirement set (327 requirements).
+> code annotation.  Counts reflect the full RST requirement set (669 requirements).
 
 ### Validated Traceability Summary
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| Total requirements (RST) | 649 | - |
-| Fully traced (code + tests) | 585 (90.1%) | Good |
-| Requirements with code refs | 587 | Good |
-| Requirements with test coverage | 647 | Good |
-| Orphaned (no code annotation) | 62 | Needs improvement |
+| Total requirements (RST) | 669 | - |
+| Fully traced (code + tests) | 594 (88.8%) | Good |
+| Requirements with code refs | 596 | Good |
+| Requirements with test coverage | 662 | Good |
+| Orphaned (no code annotation) | 73 | Needs improvement |
 | Missing spec links | 0 | Resolved |
 
 ### Test Execution Results (Current Environment)
 
 | Test Suite | Tests | Passing | Notes |
 |------------|-------|---------|-------|
-| Message Tests | 23 | 23 | |
-| Serialization Tests | 49 | 49 | |
-| SD Tests | 52 | 52 | |
-| TP Tests | 23 | 23 | |
-| TCP Transport Tests | 16 | 16 | |
-| UDP Transport Tests | 27 | 27 | |
-| Platform Threading | 21 | 21 | |
-| E2E Tests | 11 | 11 | |
-| RPC Tests | 8 | 8 | |
-| Events Tests | 14 | 14 | |
-| PAL FreeRTOS Mock | 22 | 22 | |
-| PAL ThreadX Mock | 22 | 22 | |
-| PAL Zephyr Mock | 22 | 22 | |
+| SD Tests | 57 | 57 | |
+| Serialization Tests | 37 | 37 | |
+| E2E Tests | 31 | 31 | |
+| Message Tests | 27 | 27 | |
+| TP Tests | 25 | 25 | |
+| Platform Containers | 21 | 21 | |
+| Session Manager Tests | 19 | 19 | |
+| TCP Transport Tests | 17 | 17 | |
+| Static Message Pool | 16 | 16 | |
+| Platform Threading | 15 | 15 | |
+| Buffer Pool Tests | 14 | 14 | |
+| Static Alloc Integration | 14 | 14 | |
+| Events Tests | 10 | 10 | |
+| UDP Transport Tests | 6 | 6 | |
+| ETL Error Handler | 4 | 4 | |
+| System Tests | 4 | 4 | |
+| PAL FreeRTOS Mock | 1 | 1 | |
+| PAL ThreadX Mock | 1 | 1 | |
+| PAL Zephyr Mock | 1 | 1 | |
+| PAL Static Alloc Mock | 1 | 1 | |
+| RPC Tests | 1 | 1 | |
 
 ---
 
@@ -239,16 +256,17 @@ This matrix maps individual test cases to specific requirements from the Open SO
 
 ### Remaining Gaps
 
-- **Annotation gap**: 62 requirements have no `@implements` annotation in code.
+- **Annotation gap**: 73 requirements have no `@implements` annotation in code.
   Many are likely implemented but unannotated.
-- **Test annotation gap**: 2 requirements have no `@tests` annotation
-  (REQ_PAL_MEM_THREADSAFE_E01, REQ_PAL_MEM_EXHAUST_E01).
+- **Test annotation gap**: 7 requirements have no `@tests` annotation
+  (REQ_PAL_MEM_THREADSAFE_E01, REQ_PAL_CONTAINER_CAPACITY_E01, REQ_PAL_BUFPOOL_THREADSAFE_E01,
+   REQ_PAL_STATIC_CONFIG, REQ_PLATFORM_STATIC_001, REQ_PLATFORM_STATIC_005, REQ_ARCH_008).
 
 ### Recommended Improvements
 
-1. Add `@implements` annotations to the 62 unannotated requirements
-2. Add `@tests` annotations for the 2 remaining untested requirements
-3. Write new tests for genuinely untested requirements
+1. Add `@implements` annotations to the 73 unannotated requirements
+2. Add `@tests` annotations for the 7 remaining untested requirements
+3. Implement remaining serialization requirements (REQ_SER_090-107)
 4. Performance, stress, and fault-injection testing
 5. Cross-platform and fuzzing tests
 
@@ -260,10 +278,10 @@ This matrix maps individual test cases to specific requirements from the Open SO
 
 | Traceability Level | Validated | Method |
 |-------------------|-----------|--------|
-| Requirements with code refs | 587/649 | `extract_code_requirements.py` |
-| Requirements with test refs | 647/649 | `extract_code_requirements.py` |
-| Fully traced (code + tests) | 90.1% (585/649) | `validate_requirements.py` |
-| Spec-linked implementation reqs | 649/649 | `validate_requirements.py` |
+| Requirements with code refs | 596/669 | `extract_code_requirements.py` |
+| Requirements with test refs | 662/669 | `extract_code_requirements.py` |
+| Fully traced (code + tests) | 88.8% (594/669) | `validate_requirements.py` |
+| Spec-linked implementation reqs | 669/669 | `validate_requirements.py` |
 
 ---
 
