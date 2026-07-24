@@ -622,6 +622,73 @@ TEST_F(MessageTest, TruncatedBufferDeserialization) {
     EXPECT_FALSE(result) << "Should reject truncated buffer";
 }
 
+// ============================================================================
+// PayloadView tests
+// ============================================================================
+
+/**
+ * @test_case TC_PAYLOADVIEW_001
+ * @tests REQ_API_PAYLOAD_VIEW
+ * @brief PayloadView provides zero-copy access to message payload
+ */
+TEST_F(MessageTest, PayloadViewBasic) {
+    Message msg;
+    platform::ByteBuffer payload = {0xDE, 0xAD, 0xBE, 0xEF};
+    msg.set_payload(payload);
+
+    auto view = msg.payload_view();
+    EXPECT_EQ(view.size(), 4u);
+    EXPECT_FALSE(view.empty());
+    EXPECT_EQ(view[0], 0xDE);
+    EXPECT_EQ(view[3], 0xEF);
+    EXPECT_EQ(view.data(), msg.get_payload().data());
+}
+
+/**
+ * @test_case TC_PAYLOADVIEW_002
+ * @tests REQ_API_PAYLOAD_VIEW
+ * @brief Empty payload yields empty PayloadView
+ */
+TEST_F(MessageTest, PayloadViewEmpty) {
+    Message msg;
+    auto view = msg.payload_view();
+    EXPECT_TRUE(view.empty());
+    EXPECT_EQ(view.size(), 0u);
+}
+
+/**
+ * @test_case TC_PAYLOADVIEW_003
+ * @tests REQ_API_PAYLOAD_VIEW
+ * @brief PayloadView::subview returns a sub-range
+ */
+TEST_F(MessageTest, PayloadViewSubview) {
+    Message msg;
+    platform::ByteBuffer payload = {0x01, 0x02, 0x03, 0x04, 0x05};
+    msg.set_payload(payload);
+
+    auto sub = msg.payload_view().subview(1, 3);
+    EXPECT_EQ(sub.size(), 3u);
+    EXPECT_EQ(sub[0], 0x02);
+    EXPECT_EQ(sub[2], 0x04);
+}
+
+/**
+ * @test_case TC_PAYLOADVIEW_004
+ * @tests REQ_API_PAYLOAD_VIEW
+ * @brief PayloadView supports range-based for loop
+ */
+TEST_F(MessageTest, PayloadViewIterable) {
+    Message msg;
+    platform::ByteBuffer payload = {0x10, 0x20, 0x30};
+    msg.set_payload(payload);
+
+    uint8_t sum = 0;
+    for (auto byte : msg.payload_view()) {
+        sum += byte;
+    }
+    EXPECT_EQ(sum, 0x60);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

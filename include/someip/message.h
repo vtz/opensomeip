@@ -15,6 +15,7 @@
 #define SOMEIP_MESSAGE_H
 
 #include "someip/types.h"
+#include "someip/payload_view.h"
 #include "e2e/e2e_header.h"
 #include "platform/buffer_pool.h"
 #include "platform/intrusive_ptr.h"
@@ -95,6 +96,7 @@ public:
 
     // Payload accessors
     const platform::ByteBuffer& get_payload() const { return payload_; }
+    PayloadView payload_view() const { return PayloadView(payload_); }
     void set_payload(const platform::ByteBuffer& payload) { payload_ = payload; update_length(); }
     void set_payload(platform::ByteBuffer&& payload) { payload_ = std::move(payload); update_length(); }
     void set_payload(const uint8_t* data, size_t size) {
