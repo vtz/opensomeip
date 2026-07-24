@@ -7,6 +7,12 @@
 #ifndef SOMEIP_PLATFORM_STATIC_MALLOC_TRAP_H
 #define SOMEIP_PLATFORM_STATIC_MALLOC_TRAP_H
 
+/**
+ * @brief Armable heap trap API for verifying zero-heap operation.
+ *
+ * @implements REQ_PAL_NOOP_HEAP_VERIFY
+ */
+
 namespace someip::platform {
 
 void malloc_trap_arm();

@@ -15,7 +15,7 @@
  * This module registers a callback that logs and returns (no abort) so the
  * system degrades gracefully per FMEA §3.2.
  *
- * @implements REQ_PLATFORM_STATIC_ETL_HANDLER
+ * @implements REQ_PAL_ETL_ERROR_HANDLER
  */
 
 #include <cstdint>

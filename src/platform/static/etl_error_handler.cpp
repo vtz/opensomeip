@@ -5,7 +5,7 @@
  ********************************************************************************/
 
 /**
- * @implements REQ_PLATFORM_STATIC_ETL_HANDLER
+ * @implements REQ_PAL_ETL_ERROR_HANDLER
  */
 
 #include "etl_error_handler.h"
