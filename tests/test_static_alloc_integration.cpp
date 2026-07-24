@@ -17,6 +17,9 @@
  * Each test arms the malloc trap around protocol operations to prove
  * zero heap usage.  Pools are warmed up BEFORE arming so that lazy
  * first-use initialisation (if any) doesn't trip the trap.
+ *
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ * @tests REQ_PLATFORM_STATIC_002
  */
 
 #include <gtest/gtest.h>
@@ -26,7 +29,14 @@
 #include "platform/containers.h"
 #include "platform/intrusive_ptr.h"
 #include "platform/memory.h"
+#include "rpc/rpc_client.h"
+#include "rpc/rpc_server.h"
+#include "events/event_publisher.h"
+#include "events/event_subscriber.h"
+#include "sd/sd_client.h"
+#include "sd/sd_server.h"
 #include "someip/message.h"
+#include "someip/payload_view.h"
 #include "static_config.h"
 
 #include <cstring>
@@ -224,6 +234,124 @@ TEST_F(StaticAllocIntegrationTest, FullStackUnderTrap) {
     EXPECT_EQ(decoded.get_payload().size(), sizeof(payload));
 
     msg.reset();
+
+    malloc_trap_disarm();
+}
+
+// ============================================================================
+// API Object Construction Tests — prove pimpl placement new is heap-free
+// ============================================================================
+
+/**
+ * @test_case TC_STATIC_INT_RPCCLIENT_CTOR
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ * @tests REQ_PLATFORM_STATIC_002
+ * @brief RpcClient construction + destruction uses no heap under static alloc
+ */
+TEST_F(StaticAllocIntegrationTest, RpcClientConstructDestroyUnderTrap) {
+    malloc_trap_arm();
+    {
+        rpc::RpcClient client(0x0001);
+    }
+    malloc_trap_disarm();
+}
+
+/**
+ * @test_case TC_STATIC_INT_RPCSERVER_CTOR
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ * @tests REQ_PLATFORM_STATIC_002
+ * @brief RpcServer construction + destruction uses no heap under static alloc
+ */
+TEST_F(StaticAllocIntegrationTest, RpcServerConstructDestroyUnderTrap) {
+    malloc_trap_arm();
+    {
+        rpc::RpcServer server(0x1234);
+    }
+    malloc_trap_disarm();
+}
+
+/**
+ * @test_case TC_STATIC_INT_EVENTPUB_CTOR
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ * @tests REQ_PLATFORM_STATIC_002
+ * @brief EventPublisher construction + destruction uses no heap under static alloc
+ */
+TEST_F(StaticAllocIntegrationTest, EventPublisherConstructDestroyUnderTrap) {
+    malloc_trap_arm();
+    {
+        events::EventPublisher publisher(0x1234, 0x0001);
+    }
+    malloc_trap_disarm();
+}
+
+/**
+ * @test_case TC_STATIC_INT_EVENTSUB_CTOR
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ * @tests REQ_PLATFORM_STATIC_002
+ * @brief EventSubscriber construction + destruction uses no heap under static alloc
+ */
+TEST_F(StaticAllocIntegrationTest, EventSubscriberConstructDestroyUnderTrap) {
+    malloc_trap_arm();
+    {
+        events::EventSubscriber subscriber(0x0001);
+    }
+    malloc_trap_disarm();
+}
+
+/**
+ * @test_case TC_STATIC_INT_SDCLIENT_CTOR
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ * @tests REQ_PLATFORM_STATIC_002
+ * @brief SdClient construction + destruction uses no heap under static alloc
+ */
+TEST_F(StaticAllocIntegrationTest, SdClientConstructDestroyUnderTrap) {
+    malloc_trap_arm();
+    {
+        sd::SdClient client;
+    }
+    malloc_trap_disarm();
+}
+
+/**
+ * @test_case TC_STATIC_INT_SDSERVER_CTOR
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ * @tests REQ_PLATFORM_STATIC_002
+ * @brief SdServer construction + destruction uses no heap under static alloc
+ */
+TEST_F(StaticAllocIntegrationTest, SdServerConstructDestroyUnderTrap) {
+    malloc_trap_arm();
+    {
+        sd::SdServer server;
+    }
+    malloc_trap_disarm();
+}
+
+/**
+ * @test_case TC_STATIC_INT_PAYLOADVIEW
+ * @tests REQ_API_PAYLOAD_VIEW
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ * @brief PayloadView operations under malloc trap prove zero-copy access
+ */
+TEST_F(StaticAllocIntegrationTest, PayloadViewUnderTrap) {
+    auto msg = allocate_message();
+    ASSERT_NE(msg.get(), nullptr);
+    const uint8_t payload[] = {0xCA, 0xFE, 0xBA, 0xBE};
+    msg->set_payload(payload, sizeof(payload));
+
+    malloc_trap_arm();
+
+    auto view = msg->payload_view();
+    EXPECT_EQ(view.size(), 4u);
+    EXPECT_EQ(view[0], 0xCA);
+    EXPECT_EQ(view[3], 0xBE);
+
+    auto sub = view.subview(1, 2);
+    EXPECT_EQ(sub.size(), 2u);
+    EXPECT_EQ(sub[0], 0xFE);
+
+    uint8_t sum = 0;
+    for (auto b : view) { sum += b; }
+    EXPECT_GT(sum, 0);
 
     malloc_trap_disarm();
 }
