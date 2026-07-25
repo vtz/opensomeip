@@ -92,10 +92,10 @@ struct TpSegment {
 // bit-packed), so this directly controls the inline memory footprint of
 // each reassembly entry.  Defaults are set in static_config.h; dynamic
 // builds fall back to a generous value that std::vector ignores anyway.
-#ifndef SOMEIP_MAX_TP_REASSEMBLY_SIZE
-#define SOMEIP_MAX_TP_REASSEMBLY_SIZE 16384
+#ifndef SOMEIP_MAX_TP_REASSEMBLY_SIZE          // NOLINT(cppcoreguidelines-macro-usage)
+#define SOMEIP_MAX_TP_REASSEMBLY_SIZE 16384    // NOLINT(cppcoreguidelines-macro-usage)
 #endif
-inline constexpr size_t kMaxTpReassemblySize = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
+inline constexpr size_t MAX_TP_REASSEMBLY_SIZE = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
 
 /**
  * @brief TP message being reassembled
@@ -104,7 +104,7 @@ struct TpReassemblyBuffer {
     uint32_t message_id{0};
     uint32_t total_length{0};
     platform::ByteBuffer received_data;
-    platform::Vector<bool, kMaxTpReassemblySize> received_segments;
+    platform::Vector<bool, MAX_TP_REASSEMBLY_SIZE> received_segments;
     std::chrono::steady_clock::time_point start_time{std::chrono::steady_clock::now()};
     uint8_t last_sequence_number{0};
     bool complete{false};
@@ -142,12 +142,12 @@ enum class TpTransferState : uint8_t {
 /// Capacity for TP segment vectors.  Under static alloc this is
 /// capped by SOMEIP_MAX_TP_SEGMENTS from static_config.h.
 #ifdef SOMEIP_MAX_TP_SEGMENTS
-inline constexpr size_t kMaxTpSegments = SOMEIP_MAX_TP_SEGMENTS;
+inline constexpr size_t MAX_TP_SEGMENTS = SOMEIP_MAX_TP_SEGMENTS;
 #else
-inline constexpr size_t kMaxTpSegments = 64;
+inline constexpr size_t MAX_TP_SEGMENTS = 64;
 #endif
 
-using TpSegmentVector = platform::Vector<TpSegment, kMaxTpSegments>;
+using TpSegmentVector = platform::Vector<TpSegment, MAX_TP_SEGMENTS>;
 
 struct TpTransfer {
     uint32_t transfer_id{0};
