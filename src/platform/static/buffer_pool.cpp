@@ -84,6 +84,7 @@ size_t select_tier(size_t requested) {
 }  // namespace
 
 void init_buffer_pool() {
+    if (pool_initialized) { return; }
     pool_mutex_ptr = new (&pool_mutex_storage) Mutex();
     ScopedLock lk(*pool_mutex_ptr);
     for (size_t t = 0; t < kNumTiers; ++t) {

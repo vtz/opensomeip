@@ -48,6 +48,7 @@ static Mutex* pool_mutex_ptr{nullptr};
 }  // namespace
 
 void init_static_allocator() {
+    if (pool_initialized) { return; }
     register_etl_error_handler();
     pool_mutex_ptr = new (&pool_mutex_storage) Mutex();
     init_buffer_pool();
