@@ -21,8 +21,16 @@
 
 // ETL 20.47.x string_view.h uses char8_t unconditionally; older GCC (< 11)
 // in C++17 mode lacks that type.  Provide a typedef so the ETL header compiles.
+// Suppress -Wc++20-compat because char8_t becomes a keyword in C++20.
 #if !defined(__cpp_char8_t) && !defined(char8_t)
+#  if defined(__GNUC__) && !defined(__clang__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wc++20-compat"
+#  endif
 using char8_t = unsigned char;
+#  if defined(__GNUC__) && !defined(__clang__)
+#    pragma GCC diagnostic pop
+#  endif
 #endif
 
 #include <etl/inplace_function.h>
