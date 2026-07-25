@@ -30,9 +30,15 @@ namespace platform {
 /**
  * @brief Initialize all static allocator pools deterministically.
  *
- * Must be called once at system startup before any allocate_message()
- * or ByteBuffer operations. Guarantees O(1) WCET on subsequent
- * allocations by removing all lazy-initialization paths.
+ * @warning MUST be called exactly once at system startup, before any call to
+ *          allocate_message() or acquire_buffer(). In debug builds,
+ *          calling those functions before initialization triggers an
+ *          assertion failure. Typical call sites:
+ *          - main() or RTOS entry task for firmware
+ *          - GTest ::testing::Environment::SetUp() for host tests
+ *
+ * Guarantees O(1) WCET on subsequent allocations by removing all
+ * lazy-initialization paths.
  *
  * @implements REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_003
  */
@@ -41,6 +47,10 @@ void init_static_allocator();
 void init_message_pool();
 void init_buffer_pool();
 
+/**
+ * @pre init_static_allocator() has been called.
+ *      Debug builds assert on this precondition.
+ */
 MessagePtr allocate_message();
 void release_message(Message* msg);
 

@@ -455,12 +455,20 @@ bool ConfigurationOption::deserialize(const platform::ByteBuffer& data, size_t& 
 }
 
 // SdMessage implementation
-void SdMessage::add_entry(SdEntryStorage entry) {
+bool SdMessage::add_entry(SdEntryStorage entry) {
+    if (entries_.size() >= entries_.max_size()) {
+        return false;
+    }
     entries_.emplace_back(std::move(entry));
+    return true;
 }
 
-void SdMessage::add_option(SdOptionStorage option) {
+bool SdMessage::add_option(SdOptionStorage option) {
+    if (options_.size() >= options_.max_size()) {
+        return false;
+    }
     options_.emplace_back(std::move(option));
+    return true;
 }
 
 /** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320 */
@@ -566,10 +574,16 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
             if (!entry.deserialize(data, offset)) {
                 return false;
             }
+            if (entries_.size() >= entries_.max_size()) {
+                return false;
+            }
             entries_.emplace_back(std::move(entry));
         } else if (raw_entry_type == 0x06 || raw_entry_type == 0x07) {
             EventGroupEntry entry;
             if (!entry.deserialize(data, offset)) {
+                return false;
+            }
+            if (entries_.size() >= entries_.max_size()) {
                 return false;
             }
             entries_.emplace_back(std::move(entry));
@@ -609,16 +623,25 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
             if (!option.deserialize(data, offset)) {
                 return false;
             }
+            if (options_.size() >= options_.max_size()) {
+                return false;
+            }
             options_.emplace_back(std::move(option));
         } else if (option_type == OptionType::IPV4_ENDPOINT) {
             IPv4EndpointOption option;
             if (!option.deserialize(data, offset)) {
                 return false;
             }
+            if (options_.size() >= options_.max_size()) {
+                return false;
+            }
             options_.emplace_back(std::move(option));
         } else if (option_type == OptionType::IPV4_MULTICAST) {
             IPv4MulticastOption option;
             if (!option.deserialize(data, offset)) {
+                return false;
+            }
+            if (options_.size() >= options_.max_size()) {
                 return false;
             }
             options_.emplace_back(std::move(option));

@@ -56,7 +56,7 @@ public:
      * @param segments Output vector for the created segments
      * @return SUCCESS if segmentation successful, error code otherwise
      */
-    TpResult segment_message(const Message& message, platform::Vector<TpSegment>& segments);
+    TpResult segment_message(const Message& message, TpSegmentVector& segments);
 
     /**
      * @brief Segment raw message data into TP segments
@@ -65,7 +65,7 @@ public:
      * @param segments Output vector for the created segments
      * @return SUCCESS if segmentation successful, error code otherwise
      */
-    TpResult segment_data(const platform::ByteBuffer& message_data, platform::Vector<TpSegment>& segments);
+    TpResult segment_data(const platform::ByteBuffer& message_data, TpSegmentVector& segments);
 
     /**
      * @brief Update segmentation configuration
@@ -80,7 +80,7 @@ private:
 
     TpResult create_multi_segments(const Message& message,
                                  const platform::ByteBuffer& payload,
-                                 platform::Vector<TpSegment>& segments);
+                                 TpSegmentVector& segments);
 
     void serialize_tp_header(platform::ByteBuffer& payload, uint32_t offset, bool more_segments);
     MessageType add_tp_flag(MessageType type) const;

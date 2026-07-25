@@ -23,6 +23,7 @@
 #include "platform/intrusive_ptr.h"
 #include "someip/message.h"
 
+#include <cassert>
 #include <cstdint>
 #include <new>
 
@@ -36,28 +37,37 @@ alignas(alignof(Message)) static uint8_t
 static uint16_t free_stack[SOMEIP_MESSAGE_POOL_SIZE];
 static bool     in_use[SOMEIP_MESSAGE_POOL_SIZE];
 static uint16_t stack_top{0};
+static bool     pool_initialized{false};
 
-static Mutex pool_mutex;
+// Mutex must not be constructed as a file-scope static on bare-metal RTOS
+// targets because its constructor calls xSemaphoreCreateMutex(), which
+// requires a working heap — unavailable during C++ static initialization.
+alignas(Mutex) static uint8_t pool_mutex_storage[sizeof(Mutex)];
+static Mutex* pool_mutex_ptr{nullptr};
 
 }  // namespace
 
 void init_static_allocator() {
     register_etl_error_handler();
+    pool_mutex_ptr = new (&pool_mutex_storage) Mutex();
     init_buffer_pool();
     init_message_pool();
 }
 
 void init_message_pool() {
-    ScopedLock lk(pool_mutex);
+    ScopedLock lk(*pool_mutex_ptr);
     for (uint16_t i = 0; i < SOMEIP_MESSAGE_POOL_SIZE; ++i) {
         free_stack[i] = i;
         in_use[i] = false;
     }
     stack_top = SOMEIP_MESSAGE_POOL_SIZE;
+    pool_initialized = true;
 }
 
 MessagePtr allocate_message() {
-    ScopedLock lk(pool_mutex);
+    ScopedLock lk(*pool_mutex_ptr);
+    assert(pool_initialized &&
+           "init_static_allocator() must be called before allocate_message()");
 
     if (stack_top == 0) {
         return MessagePtr{};
@@ -83,7 +93,7 @@ void release_message(Message* msg) {
     if (offset % sizeof(Message) != 0) { return; }
     auto idx = static_cast<uint16_t>(offset / sizeof(Message));
 
-    ScopedLock lk(pool_mutex);
+    ScopedLock lk(*pool_mutex_ptr);
     if (!in_use[idx]) { return; }
 
     msg->~Message();

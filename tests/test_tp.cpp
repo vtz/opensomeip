@@ -300,7 +300,7 @@ TEST_F(TpTest, MaximumSegmentSize) {
     platform::ByteBuffer large_payload(1393, 0xAA);
     message.set_payload(large_payload);
 
-    platform::Vector<TpSegment> segments;
+    TpSegmentVector segments;
     TpResult result = segmenter.segment_message(message, segments);
     EXPECT_EQ(result, TpResult::SUCCESS);
     EXPECT_GT(segments.size(), 1u);
@@ -319,7 +319,7 @@ TEST_F(TpTest, SegmentAlignment) {
     platform::ByteBuffer large_payload(2000, 0xBB);
     message.set_payload(large_payload);
 
-    platform::Vector<TpSegment> segments;
+    TpSegmentVector segments;
     TpResult result = segmenter.segment_message(message, segments);
     ASSERT_EQ(result, TpResult::SUCCESS);
     ASSERT_GT(segments.size(), 1u);
@@ -351,7 +351,7 @@ TEST_F(TpTest, SameSessionId) {
     platform::ByteBuffer large_payload(1500, 0xCC);
     message.set_payload(large_payload);
 
-    platform::Vector<TpSegment> segments;
+    TpSegmentVector segments;
     TpResult result = segmenter.segment_message(message, segments);
     ASSERT_EQ(result, TpResult::SUCCESS);
     ASSERT_GT(segments.size(), 1u);
@@ -376,7 +376,7 @@ TEST_F(TpTest, TpFlagInMessageType) {
     platform::ByteBuffer large_payload(1500, 0xDD);
     message.set_payload(large_payload);
 
-    platform::Vector<TpSegment> segments;
+    TpSegmentVector segments;
     TpResult result = segmenter.segment_message(message, segments);
     ASSERT_EQ(result, TpResult::SUCCESS);
     ASSERT_GT(segments.size(), 1u);
@@ -403,7 +403,7 @@ TEST_F(TpTest, PreserveMessageTypeWithTpFlag) {
     platform::ByteBuffer large_payload(1500, 0xEE);
     message.set_payload(large_payload);
 
-    platform::Vector<TpSegment> segments;
+    TpSegmentVector segments;
     TpResult result = segmenter.segment_message(message, segments);
     ASSERT_EQ(result, TpResult::SUCCESS);
     ASSERT_GT(segments.size(), 1u);
@@ -442,7 +442,7 @@ TEST_F(TpTest, MessageTooLarge) {
     platform::ByteBuffer oversized_payload(2000, 0xAA);
     message.set_payload(oversized_payload);
 
-    platform::Vector<TpSegment> segments;
+    TpSegmentVector segments;
     TpResult result = segmenter.segment_message(message, segments);
     EXPECT_EQ(result, TpResult::MESSAGE_TOO_LARGE);
     EXPECT_TRUE(segments.empty());

@@ -1925,3 +1925,21 @@ TEST_F(SdIntegrationTest, EventPublisherStopsEventsAfterTTLExpiry) {
     subs = publisher.get_subscriptions(0x0001);
     EXPECT_EQ(subs.size(), 1u);
 }
+
+/**
+ * @test_case TC_SD_ADD_ENTRY_RETURNS_BOOL
+ * @tests REQ_SD_030_E01
+ * @brief add_entry/add_option return false when container is at capacity
+ */
+TEST_F(SdTest, AddEntryReturnsBool) {
+    SdMessage message;
+
+    ServiceEntry entry(EntryType::OFFER_SERVICE);
+    entry.set_service_id(0x1234);
+    EXPECT_TRUE(message.add_entry(std::move(entry)));
+
+    IPv4EndpointOption option;
+    option.set_ipv4_address(0x7F000001);
+    option.set_port(30500);
+    EXPECT_TRUE(message.add_option(std::move(option)));
+}

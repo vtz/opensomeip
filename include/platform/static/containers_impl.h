@@ -19,6 +19,12 @@
 
 #include "static_config.h"
 
+// ETL 20.47.x string_view.h uses char8_t unconditionally; older GCC (< 11)
+// in C++17 mode lacks that type.  Provide a typedef so the ETL header compiles.
+#if !defined(__cpp_char8_t) && !defined(char8_t)
+using char8_t = unsigned char;
+#endif
+
 #include <etl/inplace_function.h>
 #include <etl/queue.h>
 #include <etl/string.h>

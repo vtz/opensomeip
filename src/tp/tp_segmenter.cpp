@@ -42,7 +42,7 @@ TpSegmenter::TpSegmenter(const TpConfig& config)
  * @implements REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_004
  * @implements REQ_TP_001_E01, REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075
  */
-TpResult TpSegmenter::segment_message(const Message& message, platform::Vector<TpSegment>& segments) {
+TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& segments) {
     // Get the message payload (without headers - TP handles payload only)
     const platform::ByteBuffer& payload = message.get_payload();
 
@@ -92,7 +92,7 @@ TpResult TpSegmenter::segment_message(const Message& message, platform::Vector<T
  */
 TpResult TpSegmenter::create_multi_segments(const Message& message,
                                           const platform::ByteBuffer& payload,
-                                          platform::Vector<TpSegment>& segments) {
+                                          TpSegmentVector& segments) {
 
     auto const total_length = static_cast<uint32_t>(payload.size());
     uint32_t payload_offset = 0;  // Offset into the payload data

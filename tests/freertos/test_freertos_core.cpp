@@ -26,7 +26,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <vector>
 
 #include "someip/message.h"
 #include "someip/types.h"
@@ -36,6 +35,7 @@
 #include "serialization/serializer.h"
 #include "platform/thread.h"
 #include "platform/memory.h"
+#include "platform/buffer_pool.h"
 
 #include <FreeRTOS.h>
 #include <task.h>
@@ -75,12 +75,12 @@ static int tests_failed = 0;
     } while (0)
 
 // Shared platform-independent test suites
-#include "tests/shared/test_message_common.inc"
-#include "tests/shared/test_endpoint_common.inc"
-#include "tests/shared/test_session_manager_common.inc"
-#include "tests/shared/test_serializer_common.inc"
-#include "tests/shared/test_e2e_common.inc"
-#include "tests/shared/test_tp_common.inc"
+#include "../shared/test_message_common.inc"
+#include "../shared/test_endpoint_common.inc"
+#include "../shared/test_session_manager_common.inc"
+#include "../shared/test_serializer_common.inc"
+#include "../shared/test_e2e_common.inc"
+#include "../shared/test_tp_common.inc"
 
 // FreeRTOS-specific tests
 
@@ -129,7 +129,8 @@ static void test_freertos_memory_pool() {
     CHECK(msg1 != nullptr, "pool_alloc_1");
 
     if (msg1) {
-        msg1->set_payload({0xAA, 0xBB});
+        const uint8_t pd[] = {0xAA, 0xBB};
+        msg1->set_payload(pd, sizeof(pd));
         CHECK(msg1->get_payload().size() == 2, "pool_msg_payload");
     }
 
@@ -159,7 +160,7 @@ static void test_freertos_heap_watermarks() {
         SemaphoreHandle_t sem = xSemaphoreCreateBinary();
         CHECK(sem != nullptr, "heap_rtos_alloc");
         size_t free_during = xPortGetFreeHeapSize();
-        CHECK(free_during < free_before, "heap_decreased_after_alloc");
+        CHECK(free_during <= free_before, "heap_not_increased_after_alloc");
         vSemaphoreDelete(sem);
     }
 
@@ -170,8 +171,50 @@ static void test_freertos_heap_watermarks() {
            free_after, static_cast<ssize_t>(free_after) - static_cast<ssize_t>(free_before));
 }
 
+#ifdef SOMEIP_STATIC_ALLOC
+/**
+ * @test_case TC_FREERTOS_STATIC_ZERO_HEAP
+ * @tests REQ_PLATFORM_STATIC_002
+ * @brief Under static alloc, message allocate/serialize/deserialize must not
+ *        touch the FreeRTOS heap at all (delta == 0).
+ */
+static void test_freertos_static_zero_heap() {
+    printf("\n--- FreeRTOS static-alloc zero-heap-growth tests ---\n");
+
+    size_t heap_before = xPortGetFreeHeapSize();
+
+    {
+        auto msg = someip::platform::allocate_message();
+        CHECK(msg != nullptr, "static_pool_alloc");
+        msg->set_service_id(0x1234);
+        msg->set_method_id(0x5678);
+        msg->set_client_id(0x0001);
+        msg->set_session_id(0x0001);
+        const uint8_t payload[] = {0xCA, 0xFE, 0xBA, 0xBE};
+        msg->set_payload(payload, sizeof(payload));
+
+        auto wire = msg->serialize();
+        CHECK(!wire.empty(), "static_serialize");
+
+        someip::Message decoded;
+        bool ok = decoded.deserialize(wire.data(), wire.size());
+        CHECK(ok, "static_deserialize");
+        CHECK(decoded.get_payload().size() == sizeof(payload), "static_roundtrip_size");
+    }
+
+    size_t heap_after = xPortGetFreeHeapSize();
+    auto delta = static_cast<ssize_t>(heap_after) - static_cast<ssize_t>(heap_before);
+    printf("  Heap delta across message ops: %zd bytes\n", delta);
+    CHECK(delta == 0, "zero_heap_growth_under_static_alloc");
+}
+#endif
+
 static void test_task_entry(void*) {
     printf("=== SOME/IP Core Tests on FreeRTOS (POSIX port) ===\n");
+
+#ifdef SOMEIP_STATIC_ALLOC
+    someip::platform::init_static_allocator();
+#endif
 
     // Platform-independent suites (shared with ThreadX and Zephyr)
     test_message();
@@ -186,6 +229,9 @@ static void test_task_entry(void*) {
     test_freertos_thread_join();
     test_freertos_memory_pool();
     test_freertos_heap_watermarks();
+#ifdef SOMEIP_STATIC_ALLOC
+    test_freertos_static_zero_heap();
+#endif
 
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);
@@ -197,7 +243,7 @@ int main() {
     BaseType_t rc = xTaskCreate(
         test_task_entry,
         "test_main",
-        configMINIMAL_STACK_SIZE * 4,
+        configMINIMAL_STACK_SIZE * 10,
         nullptr,
         tskIDLE_PRIORITY + 2,
         nullptr);

@@ -262,10 +262,12 @@ public:
     void set_reserved(uint32_t reserved) { reserved_ = reserved; }
 
     const platform::Vector<SdEntryStorage>& get_entries() const { return entries_; }
-    void add_entry(SdEntryStorage entry);
+    /// @return false if the entry vector is full (static alloc capacity limit).
+    bool add_entry(SdEntryStorage entry);
 
     const platform::Vector<SdOptionStorage>& get_options() const { return options_; }
-    void add_option(SdOptionStorage option);
+    /// @return false if the option vector is full (static alloc capacity limit).
+    bool add_option(SdOptionStorage option);
 
     platform::ByteBuffer serialize() const;
     bool deserialize(const platform::ByteBuffer& data);

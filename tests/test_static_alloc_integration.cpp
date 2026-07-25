@@ -44,6 +44,16 @@
 namespace someip::platform {
 namespace {
 
+/// RAII guard: arms the malloc trap on construction, disarms on destruction.
+/// Prevents the trap from staying armed when ASSERT_* macros abort a test.
+class MallocTrapGuard {
+public:
+    MallocTrapGuard()  { malloc_trap_arm(); }
+    ~MallocTrapGuard() { malloc_trap_disarm(); }
+    MallocTrapGuard(const MallocTrapGuard&) = delete;
+    MallocTrapGuard& operator=(const MallocTrapGuard&) = delete;
+};
+
 class StaticAllocEnv : public ::testing::Environment {
 public:
     void SetUp() override { init_static_allocator(); }
@@ -77,7 +87,7 @@ TEST_F(StaticAllocIntegrationTest, MessageSerializeDeserializeRoundTrip) {
     const uint8_t payload[] = {0x01, 0x02, 0x03, 0x04};
     msg->set_payload(payload, sizeof(payload));
 
-    malloc_trap_arm();
+    MallocTrapGuard guard;
 
     auto wire = msg->serialize();
     ASSERT_FALSE(wire.empty());
@@ -86,8 +96,6 @@ TEST_F(StaticAllocIntegrationTest, MessageSerializeDeserializeRoundTrip) {
     ASSERT_TRUE(deserialized.deserialize(wire.data(), wire.size()));
     EXPECT_EQ(deserialized.get_service_id(), 0x1234);
     EXPECT_EQ(deserialized.get_method_id(), 0x5678);
-
-    malloc_trap_disarm();
 }
 
 /**
@@ -96,14 +104,10 @@ TEST_F(StaticAllocIntegrationTest, MessageSerializeDeserializeRoundTrip) {
  * @tests REQ_PAL_MEM_ALLOC
  */
 TEST_F(StaticAllocIntegrationTest, MessagePoolAllocReleaseUnderTrap) {
-    malloc_trap_arm();
+    MallocTrapGuard guard;
 
     auto msg = allocate_message();
-    if (msg == nullptr) {
-        malloc_trap_disarm();
-        FAIL() << "allocate_message() returned nullptr";
-        return;
-    }
+    ASSERT_NE(msg.get(), nullptr);
     msg->set_service_id(0xABCD);
     EXPECT_EQ(msg->get_service_id(), 0xABCD);
 
@@ -113,8 +117,6 @@ TEST_F(StaticAllocIntegrationTest, MessagePoolAllocReleaseUnderTrap) {
     }
 
     msg.reset();
-
-    malloc_trap_disarm();
 }
 
 /**
@@ -124,14 +126,10 @@ TEST_F(StaticAllocIntegrationTest, MessagePoolAllocReleaseUnderTrap) {
  * @tests REQ_PAL_BUFPOOL_RELEASE
  */
 TEST_F(StaticAllocIntegrationTest, BufferPoolOperationsUnderTrap) {
-    malloc_trap_arm();
+    MallocTrapGuard guard;
 
     BufferSlot* slot = acquire_buffer(64);
-    if (slot == nullptr) {
-        malloc_trap_disarm();
-        FAIL() << "acquire_buffer(64) returned nullptr";
-        return;
-    }
+    ASSERT_NE(slot, nullptr);
 
     slot->data[0] = 0x42;
     EXPECT_EQ(slot->data[0], 0x42);
@@ -141,8 +139,6 @@ TEST_F(StaticAllocIntegrationTest, BufferPoolOperationsUnderTrap) {
     BufferSlot* reused = acquire_buffer(64);
     ASSERT_NE(reused, nullptr);
     release_buffer(reused);
-
-    malloc_trap_disarm();
 }
 
 /**
@@ -162,13 +158,13 @@ TEST_F(StaticAllocIntegrationTest, SerializerWithStaticBuffer) {
     const uint8_t payload[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE};
     msg->set_payload(payload, sizeof(payload));
 
-    malloc_trap_arm();
-
-    auto wire = msg->serialize();
-    ASSERT_FALSE(wire.empty());
-    EXPECT_GE(wire.size(), someip::Message::get_header_size() + sizeof(payload));
-
-    malloc_trap_disarm();
+    platform::ByteBuffer wire;
+    {
+        MallocTrapGuard guard;
+        wire = msg->serialize();
+        ASSERT_FALSE(wire.empty());
+        EXPECT_GE(wire.size(), someip::Message::get_header_size() + sizeof(payload));
+    }
 
     EXPECT_EQ(std::memcmp(wire.data() + someip::Message::get_header_size(),
                           payload, sizeof(payload)), 0);
@@ -181,7 +177,7 @@ TEST_F(StaticAllocIntegrationTest, SerializerWithStaticBuffer) {
  * @tests REQ_PAL_CONTAINER_STRING
  */
 TEST_F(StaticAllocIntegrationTest, ContainerOperationsUnderTrap) {
-    malloc_trap_arm();
+    MallocTrapGuard guard;
 
     Vector<int, 8> v;
     for (int i = 0; i < 4; ++i) {
@@ -193,8 +189,6 @@ TEST_F(StaticAllocIntegrationTest, ContainerOperationsUnderTrap) {
     String<32> s;
     s.append("static");
     EXPECT_EQ(s.size(), 6U);
-
-    malloc_trap_disarm();
 }
 
 /**
@@ -206,14 +200,10 @@ TEST_F(StaticAllocIntegrationTest, ContainerOperationsUnderTrap) {
  * and use containers — all under the malloc trap.
  */
 TEST_F(StaticAllocIntegrationTest, FullStackUnderTrap) {
-    malloc_trap_arm();
+    MallocTrapGuard guard;
 
     auto msg = allocate_message();
-    if (msg == nullptr) {
-        malloc_trap_disarm();
-        FAIL() << "allocate_message() returned nullptr under trap";
-        return;
-    }
+    ASSERT_NE(msg.get(), nullptr);
 
     msg->set_service_id(0xFACE);
     msg->set_method_id(0xFEED);
@@ -234,8 +224,6 @@ TEST_F(StaticAllocIntegrationTest, FullStackUnderTrap) {
     EXPECT_EQ(decoded.get_payload().size(), sizeof(payload));
 
     msg.reset();
-
-    malloc_trap_disarm();
 }
 
 // ============================================================================
@@ -249,11 +237,8 @@ TEST_F(StaticAllocIntegrationTest, FullStackUnderTrap) {
  * @brief RpcClient construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, RpcClientConstructDestroyUnderTrap) {
-    malloc_trap_arm();
-    {
-        rpc::RpcClient client(0x0001);
-    }
-    malloc_trap_disarm();
+    MallocTrapGuard guard;
+    { rpc::RpcClient client(0x0001); }
 }
 
 /**
@@ -263,11 +248,8 @@ TEST_F(StaticAllocIntegrationTest, RpcClientConstructDestroyUnderTrap) {
  * @brief RpcServer construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, RpcServerConstructDestroyUnderTrap) {
-    malloc_trap_arm();
-    {
-        rpc::RpcServer server(0x1234);
-    }
-    malloc_trap_disarm();
+    MallocTrapGuard guard;
+    { rpc::RpcServer server(0x1234); }
 }
 
 /**
@@ -277,11 +259,8 @@ TEST_F(StaticAllocIntegrationTest, RpcServerConstructDestroyUnderTrap) {
  * @brief EventPublisher construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, EventPublisherConstructDestroyUnderTrap) {
-    malloc_trap_arm();
-    {
-        events::EventPublisher publisher(0x1234, 0x0001);
-    }
-    malloc_trap_disarm();
+    MallocTrapGuard guard;
+    { events::EventPublisher publisher(0x1234, 0x0001); }
 }
 
 /**
@@ -291,11 +270,8 @@ TEST_F(StaticAllocIntegrationTest, EventPublisherConstructDestroyUnderTrap) {
  * @brief EventSubscriber construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, EventSubscriberConstructDestroyUnderTrap) {
-    malloc_trap_arm();
-    {
-        events::EventSubscriber subscriber(0x0001);
-    }
-    malloc_trap_disarm();
+    MallocTrapGuard guard;
+    { events::EventSubscriber subscriber(0x0001); }
 }
 
 /**
@@ -305,11 +281,8 @@ TEST_F(StaticAllocIntegrationTest, EventSubscriberConstructDestroyUnderTrap) {
  * @brief SdClient construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, SdClientConstructDestroyUnderTrap) {
-    malloc_trap_arm();
-    {
-        sd::SdClient client;
-    }
-    malloc_trap_disarm();
+    MallocTrapGuard guard;
+    { sd::SdClient client; }
 }
 
 /**
@@ -319,11 +292,8 @@ TEST_F(StaticAllocIntegrationTest, SdClientConstructDestroyUnderTrap) {
  * @brief SdServer construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, SdServerConstructDestroyUnderTrap) {
-    malloc_trap_arm();
-    {
-        sd::SdServer server;
-    }
-    malloc_trap_disarm();
+    MallocTrapGuard guard;
+    { sd::SdServer server; }
 }
 
 /**
@@ -338,7 +308,7 @@ TEST_F(StaticAllocIntegrationTest, PayloadViewUnderTrap) {
     const uint8_t payload[] = {0xCA, 0xFE, 0xBA, 0xBE};
     msg->set_payload(payload, sizeof(payload));
 
-    malloc_trap_arm();
+    MallocTrapGuard guard;
 
     auto view = msg->payload_view();
     EXPECT_EQ(view.size(), 4u);
@@ -352,8 +322,6 @@ TEST_F(StaticAllocIntegrationTest, PayloadViewUnderTrap) {
     uint8_t sum = 0;
     for (auto b : view) { sum += b; }
     EXPECT_GT(sum, 0);
-
-    malloc_trap_disarm();
 }
 
 }  // namespace

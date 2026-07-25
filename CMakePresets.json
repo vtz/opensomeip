@@ -185,19 +185,36 @@
     {
       "name": "freertos-cortexm4-renode-static",
       "displayName": "FreeRTOS Cortex-M4 (Renode STM32F4, Static Alloc)",
-      "description": "Cross-compile FreeRTOS tests for ARM Cortex-M4 with static allocation backend, runnable on Renode STM32F407 simulator",
+      "description": "Cross-compile FreeRTOS tests for ARM Cortex-M4 with static allocation backend, runnable on Renode STM32F407 simulator. Pool sizes are tuned for the STM32F407's 256 KB SRAM.",
       "inherits": "freertos-cortexm4-renode",
       "cacheVariables": {
-        "SOMEIP_USE_STATIC_ALLOC": "ON"
+        "SOMEIP_USE_STATIC_ALLOC": "ON",
+        "SOMEIP_MESSAGE_POOL_SIZE": "8",
+        "SOMEIP_BYTE_POOL_SMALL_COUNT": "16",
+        "SOMEIP_BYTE_POOL_MEDIUM_COUNT": "16",
+        "SOMEIP_BYTE_POOL_LARGE_COUNT": "8",
+        "SOMEIP_BYTE_POOL_LARGE_SIZE": "4096",
+        "SOMEIP_MAX_TP_SEGMENTS": "16",
+        "SOMEIP_MAX_TP_REASSEMBLY_SIZE": "1500",
+        "SOMEIP_DEFAULT_MAP_CAPACITY": "4",
+        "SOMEIP_FREERTOS_HEAP_SIZE": "40960"
       }
     },
     {
       "name": "threadx-cortexm4-renode-static",
       "displayName": "ThreadX Cortex-M4 (Renode STM32F4, Static Alloc)",
-      "description": "Cross-compile ThreadX tests for ARM Cortex-M4 with static allocation backend, runnable on Renode STM32F407 simulator",
+      "description": "Cross-compile ThreadX tests for ARM Cortex-M4 with static allocation backend, runnable on Renode STM32F407 simulator. Pool sizes are tuned for the STM32F407's 256 KB SRAM.",
       "inherits": "threadx-cortexm4-renode",
       "cacheVariables": {
-        "SOMEIP_USE_STATIC_ALLOC": "ON"
+        "SOMEIP_USE_STATIC_ALLOC": "ON",
+        "SOMEIP_MESSAGE_POOL_SIZE": "8",
+        "SOMEIP_BYTE_POOL_SMALL_COUNT": "16",
+        "SOMEIP_BYTE_POOL_MEDIUM_COUNT": "16",
+        "SOMEIP_BYTE_POOL_LARGE_COUNT": "8",
+        "SOMEIP_BYTE_POOL_LARGE_SIZE": "4096",
+        "SOMEIP_MAX_TP_SEGMENTS": "16",
+        "SOMEIP_MAX_TP_REASSEMBLY_SIZE": "1500",
+        "SOMEIP_DEFAULT_MAP_CAPACITY": "4"
       }
     }
   ],

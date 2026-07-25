@@ -76,7 +76,7 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
 
     TpTransfer transfer(transfer_id, message_id);
 
-    platform::Vector<TpSegment> segments;
+    TpSegmentVector segments;
     if (!segmenter_) {
         return TpResult::RESOURCE_EXHAUSTED;
     }

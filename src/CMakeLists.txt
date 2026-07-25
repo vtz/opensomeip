@@ -111,6 +111,36 @@ if(SOMEIP_USE_STATIC_ALLOC)
         ETL_CHECK_PUSH_POP
     )
 
+    # Propagate optional pool-sizing cache variables as compile definitions so
+    # static_config.h picks them up.  This avoids stuffing -D flags into
+    # CMAKE_CXX_FLAGS (which overrides CMAKE_CXX_FLAGS_INIT from the
+    # toolchain and can strip essential -mcpu / -mthumb flags).
+    foreach(_pool_var
+        SOMEIP_MESSAGE_POOL_SIZE
+        SOMEIP_BYTE_POOL_SMALL_COUNT
+        SOMEIP_BYTE_POOL_SMALL_SIZE
+        SOMEIP_BYTE_POOL_MEDIUM_COUNT
+        SOMEIP_BYTE_POOL_MEDIUM_SIZE
+        SOMEIP_BYTE_POOL_LARGE_COUNT
+        SOMEIP_BYTE_POOL_LARGE_SIZE
+        SOMEIP_MAX_TP_SEGMENTS
+        SOMEIP_MAX_TP_REASSEMBLY_SIZE
+        SOMEIP_MAX_SD_OPTIONS
+        SOMEIP_DEFAULT_MAP_CAPACITY
+        SOMEIP_DEFAULT_VECTOR_CAPACITY
+        SOMEIP_DEFAULT_QUEUE_CAPACITY
+        SOMEIP_PIMPL_EVENTPUB_SIZE
+        SOMEIP_PIMPL_EVENTSUB_SIZE
+        SOMEIP_PIMPL_RPCCLIENT_SIZE
+        SOMEIP_PIMPL_RPCSERVER_SIZE
+        SOMEIP_PIMPL_SDCLIENT_SIZE
+        SOMEIP_PIMPL_SDSERVER_SIZE
+        SOMEIP_FREERTOS_HEAP_SIZE)
+        if(DEFINED ${_pool_var})
+            target_compile_definitions(opensomeip PUBLIC ${_pool_var}=${${_pool_var}})
+        endif()
+    endforeach()
+
     # GCC 13 false-positive (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109561):
     # std::variant move-constructor inlining triggers -Wmaybe-uninitialized on
     # SD entry/option members despite {0} default member initializers.

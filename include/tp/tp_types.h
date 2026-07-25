@@ -87,14 +87,24 @@ struct TpSegment {
     TpSegment() = default;
 };
 
+// Capacity for the per-byte reception bitvector inside TpReassemblyBuffer.
+// Under static alloc, etl::vector<bool> stores one byte per element (not
+// bit-packed), so this directly controls the inline memory footprint of
+// each reassembly entry.  Defaults are set in static_config.h; dynamic
+// builds fall back to a generous value that std::vector ignores anyway.
+#ifndef SOMEIP_MAX_TP_REASSEMBLY_SIZE
+#define SOMEIP_MAX_TP_REASSEMBLY_SIZE 16384
+#endif
+inline constexpr size_t kMaxTpReassemblySize = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
+
 /**
  * @brief TP message being reassembled
  */
 struct TpReassemblyBuffer {
-    uint32_t message_id{0};                    // SOME/IP message ID
-    uint32_t total_length{0};                  // Total expected message length
-    platform::ByteBuffer received_data;     // Buffer for received data
-    platform::Vector<bool, 16384> received_segments;    // Per-byte reception tracking
+    uint32_t message_id{0};
+    uint32_t total_length{0};
+    platform::ByteBuffer received_data;
+    platform::Vector<bool, kMaxTpReassemblySize> received_segments;
     std::chrono::steady_clock::time_point start_time{std::chrono::steady_clock::now()};
     uint8_t last_sequence_number{0};
     bool complete{false};
@@ -129,11 +139,21 @@ enum class TpTransferState : uint8_t {
 /**
  * @brief TP transfer information
  */
+/// Capacity for TP segment vectors.  Under static alloc this is
+/// capped by SOMEIP_MAX_TP_SEGMENTS from static_config.h.
+#ifdef SOMEIP_MAX_TP_SEGMENTS
+inline constexpr size_t kMaxTpSegments = SOMEIP_MAX_TP_SEGMENTS;
+#else
+inline constexpr size_t kMaxTpSegments = 64;
+#endif
+
+using TpSegmentVector = platform::Vector<TpSegment, kMaxTpSegments>;
+
 struct TpTransfer {
     uint32_t transfer_id{0};
     uint32_t message_id{0};
     TpTransferState state{TpTransferState::IDLE};
-    platform::Vector<TpSegment> segments;
+    TpSegmentVector segments;
     size_t next_segment_to_send{0};
     std::chrono::steady_clock::time_point start_time{std::chrono::steady_clock::now()};
     std::chrono::steady_clock::time_point last_activity{std::chrono::steady_clock::now()};

@@ -21,7 +21,10 @@
 #define configUSE_DAEMON_TASK_STARTUP_HOOK       0
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
 #define configMINIMAL_STACK_SIZE                 ((unsigned short)512)
-#define configTOTAL_HEAP_SIZE                    ((size_t)(128 * 1024))
+#ifndef SOMEIP_FREERTOS_HEAP_SIZE
+#define SOMEIP_FREERTOS_HEAP_SIZE (128 * 1024)
+#endif
+#define configTOTAL_HEAP_SIZE                    ((size_t)SOMEIP_FREERTOS_HEAP_SIZE)
 #define configMAX_TASK_NAME_LEN                  16
 #define configUSE_TRACE_FACILITY                 0
 #define configUSE_16_BIT_TICKS                   0

@@ -136,15 +136,11 @@ public:
     explicit Thread(Fn&& fn, Args&&... args) {
         tx_event_flags_create(&join_ev_, const_cast<CHAR*>("someip_join"));
 
-        ctx_ = platform::Function<void()>(
-            [f = std::forward<Fn>(fn),
-             a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
-                std::apply(std::move(f), std::move(a));
-            });
+        store_callable(std::forward<Fn>(fn), std::forward<Args>(args)...);
 
         slot_ = alloc_slot(this);
         if (slot_ == kInvalidSlot) {
-            ctx_ = {};
+            ctx_ = nullptr;
             tx_event_flags_delete(&join_ev_);
             return;
         }
@@ -163,7 +159,7 @@ public:
 
         if (rc != TX_SUCCESS) {
             release_slot_if_owner();
-            ctx_ = {};
+            ctx_ = nullptr;
             tx_event_flags_delete(&join_ev_);
             return;
         }
@@ -176,7 +172,7 @@ public:
             tx_thread_terminate(&tcb_);
             release_slot_if_owner();
             tx_thread_delete(&tcb_);
-            ctx_ = {};
+            ctx_ = nullptr;
             tx_event_flags_delete(&join_ev_);
             started_ = false;
         }
@@ -196,7 +192,7 @@ public:
         release_slot_if_owner();
         joined_ = true;
         tx_thread_delete(&tcb_);
-        ctx_ = {};
+        ctx_ = nullptr;
         tx_event_flags_delete(&join_ev_);
     }
 
@@ -253,6 +249,29 @@ private:
             self->ctx_();
         }
         if (self) tx_event_flags_set(&self->join_ev_, 0x1, TX_OR);
+    }
+
+    // Member-function-pointer + object: 2 pointers (8 bytes on 32-bit ARM)
+    template <typename Ret, typename Cls>
+    void store_callable(Ret (Cls::*mfn)(), Cls* obj) {
+        ctx_ = platform::Function<void()>([mfn, obj]() { (obj->*mfn)(); });
+    }
+
+    // Zero-arg callable (lambda, functor): assign directly
+    template <typename Fn>
+    void store_callable(Fn&& fn) {
+        ctx_ = platform::Function<void()>(std::forward<Fn>(fn));
+    }
+
+    // Multi-arg case: pack args into a tuple
+    template <typename Fn, typename Arg, typename... Rest>
+    void store_callable(Fn&& fn, Arg&& arg, Rest&&... rest) {
+        ctx_ = platform::Function<void()>(
+            [f = std::forward<Fn>(fn),
+             a = std::make_tuple(std::forward<Arg>(arg),
+                                 std::forward<Rest>(rest)...)]() mutable {
+                std::apply(std::move(f), std::move(a));
+            });
     }
 
     TX_THREAD tcb_{};
