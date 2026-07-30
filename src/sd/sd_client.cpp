@@ -130,33 +130,6 @@ public:
             return false;
         }
 
-        // Create find service entry
-        ServiceEntry find_entry(EntryType::FIND_SERVICE);
-        find_entry.set_service_id(service_id);
-        find_entry.set_instance_id(0xFFFF);  // Find any instance
-        find_entry.set_major_version(0xFF);  // Any version
-        find_entry.set_ttl(3);  // 3 seconds TTL for find
-
-        // Create SD message
-        SdMessage sd_message;
-        sd_message.add_entry(std::move(find_entry));
-
-        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(SOMEIP_SD_CLIENT_ID, next_multicast_session_id()),
-                                     MessageType::NOTIFICATION,
-                                     ReturnCode::E_OK);
-        auto serialized = sd_message.serialize();
-        if (serialized.empty()) {
-            return false;
-        }
-        someip_message.set_payload(std::move(serialized));
-
-        transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
-        if (transport_.send_message(someip_message, multicast_endpoint) != Result::SUCCESS) {
-            return false;
-        }
-
-        // Store callback for responses
         const uint32_t request_id = next_request_id_++;
         {
             platform::ScopedLock const lock(pending_finds_mutex_);
@@ -168,6 +141,34 @@ public:
                 std::chrono::steady_clock::now(),
                 timeout.count() == 0 ? std::chrono::milliseconds(5000) : timeout
             };
+        }
+
+        ServiceEntry find_entry(EntryType::FIND_SERVICE);
+        find_entry.set_service_id(service_id);
+        find_entry.set_instance_id(0xFFFF);
+        find_entry.set_major_version(0xFF);
+        find_entry.set_ttl(3);
+
+        SdMessage sd_message;
+        sd_message.add_entry(std::move(find_entry));
+
+        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                                     RequestId(SOMEIP_SD_CLIENT_ID, next_multicast_session_id()),
+                                     MessageType::NOTIFICATION,
+                                     ReturnCode::E_OK);
+        auto serialized = sd_message.serialize();
+        if (serialized.empty()) {
+            platform::ScopedLock const lock(pending_finds_mutex_);
+            pending_finds_.erase(request_id);
+            return false;
+        }
+        someip_message.set_payload(std::move(serialized));
+
+        transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
+        if (transport_.send_message(someip_message, multicast_endpoint) != Result::SUCCESS) {
+            platform::ScopedLock const lock(pending_finds_mutex_);
+            pending_finds_.erase(request_id);
+            return false;
         }
 
         return true;
@@ -205,6 +206,24 @@ public:
             return false;
         }
 
+        const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
+                             (static_cast<uint64_t>(instance_id) << 16U) |
+                             eventgroup_id;
+
+        {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            if (eventgroup_subscriptions_.size() >= eventgroup_subscriptions_.max_size() &&
+                eventgroup_subscriptions_.find(key) == eventgroup_subscriptions_.end()) {
+                return false;
+            }
+            EventGroupSubscription sub;
+            sub.service_id = service_id;
+            sub.instance_id = instance_id;
+            sub.eventgroup_id = eventgroup_id;
+            sub.major_version = 0x01;
+            eventgroup_subscriptions_[key] = sub;
+        }
+
         EventGroupEntry subscribe_entry(EntryType::SUBSCRIBE_EVENTGROUP);
         subscribe_entry.set_service_id(service_id);
         subscribe_entry.set_instance_id(instance_id);
@@ -226,6 +245,8 @@ public:
 
         auto serialized = sd_message.serialize();
         if (serialized.empty()) {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            eventgroup_subscriptions_.erase(key);
             return false;
         }
 
@@ -236,25 +257,13 @@ public:
         someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
-        const bool sent = transport_.send_message(someip_message, multicast_endpoint) == Result::SUCCESS;
-
-        if (sent) {
+        if (transport_.send_message(someip_message, multicast_endpoint) != Result::SUCCESS) {
             platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
-            const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
-                                 (static_cast<uint64_t>(instance_id) << 16U) |
-                                 eventgroup_id;
-            if (eventgroup_subscriptions_.size() >= eventgroup_subscriptions_.max_size() &&
-                eventgroup_subscriptions_.find(key) == eventgroup_subscriptions_.end()) {
-                return false;
-            }
-            EventGroupSubscription sub;
-            sub.service_id = service_id;
-            sub.instance_id = instance_id;
-            sub.eventgroup_id = eventgroup_id;
-            sub.major_version = 0x01;
-            eventgroup_subscriptions_[key] = sub;
+            eventgroup_subscriptions_.erase(key);
+            return false;
         }
-        return sent;
+
+        return true;
     }
 
     /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240 */

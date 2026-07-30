@@ -232,8 +232,10 @@ public:
         ClientInfo client_info;
         client_info.client_id = client_id;
         client_info.endpoint = client_endpoint;
+        if (filters.size() > client_info.filters.max_size()) {
+            return false;
+        }
         for (const auto& f : filters) {
-            if (client_info.filters.size() >= client_info.filters.max_size()) { break; }
             client_info.filters.push_back(f);
         }
         client_info.ttl_seconds = ttl_seconds;

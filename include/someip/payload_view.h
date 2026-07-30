@@ -17,11 +17,20 @@
  * @implements REQ_API_PAYLOAD_VIEW
  */
 
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
 
 namespace someip {
 
+/**
+ * @brief Non-owning, span-like view over a contiguous byte range.
+ *
+ * `operator[]` does **not** perform bounds checking (same contract as
+ * `std::span::operator[]`).  In debug builds an assertion fires on
+ * out-of-range access; in release builds the caller is responsible for
+ * staying within `[0, size())`.  Use `subview()` for safe sub-ranging.
+ */
 class PayloadView {
 public:
     constexpr PayloadView() noexcept = default;
@@ -38,6 +47,7 @@ public:
     [[nodiscard]] constexpr bool empty() const noexcept { return size_ == 0; }
 
     [[nodiscard]] constexpr const uint8_t& operator[](size_t i) const noexcept {
+        assert(i < size_);  // NOLINT(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
         return data_[i];
     }
 

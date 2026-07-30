@@ -286,9 +286,13 @@ public:
 
         const transport::Endpoint client_endpoint(client_ip, client_port);
 
+        const uint16_t session_id = next_unicast_session_id(client_ip);
+        if (session_id == 0) {
+            return false;
+        }
+
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(SOMEIP_SD_CLIENT_ID,
-                                               next_unicast_session_id(client_ip)),
+                                     RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         auto serialized = response_message.serialize();
@@ -712,6 +716,11 @@ private:
     }
 
     void send_subscribe_nack(const EventGroupEntry& entry, const transport::Endpoint& client) {
+        const uint16_t session_id = next_unicast_session_id(client.get_address());
+        if (session_id == 0) {
+            return;
+        }
+
         EventGroupEntry nack_entry(EntryType::SUBSCRIBE_EVENTGROUP_NACK);
         nack_entry.set_service_id(entry.get_service_id());
         nack_entry.set_instance_id(entry.get_instance_id());
@@ -723,8 +732,7 @@ private:
         response.add_entry(std::move(nack_entry));
 
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(SOMEIP_SD_CLIENT_ID,
-                                               next_unicast_session_id(client.get_address())),
+                                     RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         auto serialized = response.serialize();
@@ -770,9 +778,13 @@ private:
             return;
         }
 
+        const uint16_t unicast_sid = next_unicast_session_id(client.get_address());
+        if (unicast_sid == 0) {
+            return;
+        }
+
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(SOMEIP_SD_CLIENT_ID,
-                                               next_unicast_session_id(client.get_address())),
+                                     RequestId(SOMEIP_SD_CLIENT_ID, unicast_sid),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(std::move(serialized));
