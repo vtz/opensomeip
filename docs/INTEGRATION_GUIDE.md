@@ -278,7 +278,24 @@ private:
 
 ## Transport Layer Integration
 
-### UDP Transport Usage
+### Receive Model: Listener vs Polling
+
+Transports support two **mutually exclusive** receive modes:
+
+| Mode | Activation | How messages arrive |
+|------|-----------|---------------------|
+| **Listener (async)** | Call `set_listener(ptr)` with a non-null `ITransportListener*` | `on_message_received()` callback on the transport's receive thread |
+| **Polling (sync)** | Never call `set_listener()`, or pass `nullptr` | Call `receive_message()` (or `receive_message_with_sender()` for UDP) |
+
+**Key rules:**
+
+- When a listener is installed, incoming messages are dispatched **only** to the listener. They are *not* enqueued, so `receive_message()` returns `nullptr`.
+- When no listener is set, incoming messages are enqueued for polling via `receive_message()`.
+- Messages already queued before a listener is installed remain drainable via `receive_message()`; only new arrivals go to the listener.
+- Clearing the listener (`set_listener(nullptr)`) restores polling mode for subsequent messages.
+- **Do not** mix listener and polling for the same traffic. Prior to v0.2.0, messages were both enqueued and dispatched, causing memory leaks (POSIX) or pool exhaustion (FreeRTOS).
+
+#### Listener Mode (recommended for most applications)
 
 ```cpp
 #include "transport/udp_transport.h"
@@ -297,18 +314,50 @@ public:
     }
 
 private:
-    void on_message_received(MessagePtr message) override {
-        // Handle incoming message
+    void on_message_received(MessagePtr message, const Endpoint& sender) override {
         process_message(*message);
     }
 
     void on_connection_lost(const Endpoint& endpoint) override {
-        // Handle disconnection
         handle_disconnect(endpoint);
     }
 
+    void on_connection_established(const Endpoint& /*endpoint*/) override {}
+    void on_error(Result /*error*/) override {}
+
     std::unique_ptr<UdpTransport> transport_;
 };
+```
+
+#### Polling Mode (for simple request/response or event loops)
+
+```cpp
+#include "transport/udp_transport.h"
+
+// No listener — messages are enqueued for polling
+UdpTransport transport(Endpoint{"127.0.0.1", 0});
+transport.start();
+
+// Send a request
+transport.send_message(request, server_endpoint);
+
+// Poll for response
+while (running) {
+    MessagePtr msg = transport.receive_message();
+    if (msg) {
+        process(msg);
+        break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+}
+
+// UDP-specific: poll with sender endpoint for reply addressing
+Endpoint sender;
+MessagePtr msg = transport.receive_message_with_sender(sender);
+if (msg) {
+    // sender contains the originating address/port
+    transport.send_message(reply, sender);
+}
 ```
 
 ### Custom Transport Implementation

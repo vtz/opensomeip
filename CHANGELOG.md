@@ -13,6 +13,35 @@
 
 # Changelog
 
+## Unreleased
+
+### Breaking Changes
+
+- **Transport receive model: listener and polling are now mutually
+  exclusive.**  When `set_listener()` is installed, incoming messages are
+  dispatched only via `ITransportListener::on_message_received()` and are
+  **no longer enqueued** into the internal receive queue.
+  `receive_message()` returns `nullptr` in listener mode.  Previously,
+  messages were both enqueued and dispatched, causing unbounded queue
+  growth — memory leaks on POSIX or fixed-pool exhaustion on FreeRTOS
+  ([#269](https://github.com/vtz/opensomeip/issues/269)).
+  Code that relied on draining `receive_message()` while a listener was
+  set must be updated to consume messages exclusively through one path.
+
+### New Features
+
+- `UdpTransport::receive_message_with_sender(Endpoint& sender)` — polling
+  mode variant that also returns the sender's endpoint for reply
+  addressing without requiring a listener.
+
+### Bug Fixes
+
+- UDP/TCP: listener-only mode no longer retains `MessagePtr` in the
+  internal queue, preventing memory leaks and pool exhaustion (#269).
+- TCP: listener callback is now invoked outside `connection_mutex_`,
+  eliminating a potential deadlock when the listener calls
+  `disconnect()`.
+
 ## Unreleased — Static Allocation Backend (`feature/no-heap-static-alloc`)
 
 ### Breaking Changes

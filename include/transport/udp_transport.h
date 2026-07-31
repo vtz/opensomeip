@@ -76,8 +76,14 @@ public:
 
     /**
      * @brief Receive a message with sender endpoint (non-blocking, polling mode)
+     *
+     * Like receive_message(), this only returns messages when no listener is
+     * installed. Use this variant when the caller needs the originating
+     * endpoint for reply addressing without requiring a full listener.
+     *
      * @param[out] sender Filled with the sender's endpoint on success
      * @return Received message or nullptr if no message available
+     * @see ITransport::set_listener(), ITransport::receive_message()
      */
     MessagePtr receive_message_with_sender(Endpoint& sender);
 

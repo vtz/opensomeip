@@ -451,21 +451,33 @@ void TcpTransport::receive_loop() {
         }
 
         if (result == Result::SUCCESS) {
-            platform::ScopedLock const conn_lock(connection_mutex_);
-            while (!connection_.receive_buffer.empty()) {
-                MessagePtr message;
-                if (!parse_message_from_buffer(connection_.receive_buffer, message)) {
-                    break;
+            platform::Vector<std::pair<MessagePtr, Endpoint>, 8> parsed_for_listener;
+            {
+                platform::ScopedLock const conn_lock(connection_mutex_);
+                while (!connection_.receive_buffer.empty()) {
+                    MessagePtr message;
+                    if (!parse_message_from_buffer(connection_.receive_buffer, message)) {
+                        break;
+                    }
+
+                    connection_.update_activity();
+
+                    auto* l = listener_.load(std::memory_order_acquire);
+                    if (l != nullptr) {
+                        parsed_for_listener.push_back({message, connection_.remote_endpoint});
+                    } else {
+                        platform::ScopedLock const q_lock(queue_mutex_);
+                        message_queue_.emplace(message, connection_.remote_endpoint);
+                    }
                 }
-
-                connection_.update_activity();
-
+            }
+            for (const auto& [message, endpoint] : parsed_for_listener) {
                 auto* l = listener_.load(std::memory_order_acquire);
                 if (l != nullptr) {
-                    l->on_message_received(message, connection_.remote_endpoint);
+                    l->on_message_received(message, endpoint);
                 } else {
                     platform::ScopedLock const q_lock(queue_mutex_);
-                    message_queue_.emplace(message, connection_.remote_endpoint);
+                    message_queue_.emplace(message, endpoint);
                 }
             }
         } else if (result != Result::SUCCESS) {
