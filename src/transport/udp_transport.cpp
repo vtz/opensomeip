@@ -96,7 +96,7 @@ MessagePtr UdpTransport::receive_message() {
         return nullptr;
     }
 
-    auto [message, sender] = receive_queue_.front();
+    MessagePtr message = receive_queue_.front().first;
     receive_queue_.pop();
     return message;
 }
@@ -107,10 +107,11 @@ MessagePtr UdpTransport::receive_message_with_sender(Endpoint& sender) {
         return nullptr;
     }
 
-    auto entry = receive_queue_.front();
-    receive_queue_.pop();
+    const auto& entry = receive_queue_.front();
+    MessagePtr message = entry.first;
     sender = entry.second;
-    return entry.first;
+    receive_queue_.pop();
+    return message;
 }
 
 /** @implements REQ_TRANSPORT_006_E01 */

@@ -103,6 +103,14 @@ public:
         return cv_.wait_for(lock, timeout, [this]() { return error_count_ > 0; });
     }
 
+    bool wait_for_messages(size_t expected_count,
+                           std::chrono::milliseconds timeout = std::chrono::milliseconds(1000)) {
+        std::unique_lock lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this, expected_count]() {
+            return received_messages_.size() >= expected_count;
+        });
+    }
+
     void reset() {
         std::scoped_lock lock(mutex_);
         received_messages_.clear();
@@ -812,9 +820,7 @@ TEST_F(UdpTransportTest, ListenerOnlyDoesNotRetainQueueMessages) {
         EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-    ASSERT_EQ(receiver_listener.received_messages_.size(), NUM_MESSAGES)
+    ASSERT_TRUE(receiver_listener.wait_for_messages(NUM_MESSAGES))
         << "Listener should have received all messages";
 
     MessagePtr queued = receiver.receive_message();
@@ -857,9 +863,13 @@ TEST_F(UdpTransportTest, PollingModeWithoutListenerWorks) {
 
     EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
-    MessagePtr received = receiver.receive_message();
+    MessagePtr received;
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (std::chrono::steady_clock::now() < deadline) {
+        received = receiver.receive_message();
+        if (received) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
     ASSERT_NE(received, nullptr)
         << "Polling mode must still enqueue messages when no listener is set";
     EXPECT_EQ(received->get_service_id(), 0x1234);
@@ -902,10 +912,14 @@ TEST_F(UdpTransportTest, ReceiveMessageWithSenderEndpoint) {
 
     EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
     Endpoint actual_sender;
-    MessagePtr received = receiver.receive_message_with_sender(actual_sender);
+    MessagePtr received;
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (std::chrono::steady_clock::now() < deadline) {
+        received = receiver.receive_message_with_sender(actual_sender);
+        if (received) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
     ASSERT_NE(received, nullptr);
     EXPECT_EQ(received->get_service_id(), 0xAAAA);
     EXPECT_EQ(actual_sender.get_address(), sender_endpoint.get_address());
