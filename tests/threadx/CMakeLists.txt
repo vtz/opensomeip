@@ -5,7 +5,6 @@ add_executable(test_threadx_core test_threadx_core.cpp)
 
 target_include_directories(test_threadx_core PRIVATE
     ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}
     ${SOMEIP_THREADING_IMPL_DIR}
     ${SOMEIP_NET_IMPL_DIR}
 )

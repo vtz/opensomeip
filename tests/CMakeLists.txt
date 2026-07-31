@@ -78,6 +78,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
             target_include_directories(${TEST_NAME} BEFORE PRIVATE
                 ${MOCK_DIR}
                 ${CMAKE_SOURCE_DIR}/include
+                ${CMAKE_SOURCE_DIR}/include/platform/dynamic
                 ${BACKEND_DIR}
             )
             target_link_libraries(${TEST_NAME} PRIVATE gtest_main Threads::Threads)
@@ -105,6 +106,65 @@ target_link_libraries(test_e2e someip-core gtest_main)
             ${CMAKE_CURRENT_SOURCE_DIR}/mocks/zephyr
             ${CMAKE_SOURCE_DIR}/include/platform/zephyr
         )
+    endif()
+
+    # ---- Static Allocation Tests ----
+    if(SOMEIP_USE_STATIC_ALLOC)
+        add_executable(test_buffer_pool test_buffer_pool.cpp)
+        target_link_libraries(test_buffer_pool opensomeip gtest_main)
+        add_test(NAME BufferPoolTest COMMAND test_buffer_pool)
+
+        add_executable(test_static_message_pool test_static_message_pool.cpp)
+        target_link_libraries(test_static_message_pool opensomeip gtest_main)
+        add_test(NAME StaticMessagePoolTest COMMAND test_static_message_pool)
+
+        add_executable(test_platform_containers test_platform_containers.cpp)
+        target_link_libraries(test_platform_containers opensomeip gtest_main)
+        add_test(NAME PlatformContainersTest COMMAND test_platform_containers)
+
+        add_executable(test_etl_error_handler test_etl_error_handler.cpp)
+        target_link_libraries(test_etl_error_handler opensomeip gtest_main)
+        add_test(NAME EtlErrorHandlerTest COMMAND test_etl_error_handler)
+
+        set_tests_properties(
+            BufferPoolTest StaticMessagePoolTest
+            PlatformContainersTest EtlErrorHandlerTest
+            PROPERTIES TIMEOUT 30)
+
+        # Malloc trap integration tests — host-only (requires dlsym/dlfcn.h)
+        if(TARGET someip_malloc_trap)
+            add_executable(test_static_alloc_integration test_static_alloc_integration.cpp
+                $<TARGET_OBJECTS:someip_malloc_trap>)
+            target_link_libraries(test_static_alloc_integration opensomeip gtest_main)
+            add_test(NAME StaticAllocIntegrationTest COMMAND test_static_alloc_integration)
+            set_tests_properties(StaticAllocIntegrationTest PROPERTIES TIMEOUT 30)
+        endif()
+
+        # PAL conformance for the static-alloc backend.
+        # Uses real static pools (memory.cpp, buffer_pool.cpp) + POSIX threading.
+        if(NOT WIN32)
+            add_executable(test_pal_static_alloc_mock
+                test_pal_static_alloc_mock.cpp
+                ${PAL_MOCK_CORE_SOURCES}
+                ${CMAKE_SOURCE_DIR}/src/platform/static/memory.cpp
+                ${CMAKE_SOURCE_DIR}/src/platform/static/buffer_pool.cpp
+                ${CMAKE_SOURCE_DIR}/src/platform/static/etl_error_handler.cpp
+            )
+            target_include_directories(test_pal_static_alloc_mock BEFORE PRIVATE
+                ${CMAKE_SOURCE_DIR}/include
+                ${CMAKE_SOURCE_DIR}/include/platform/static
+                ${CMAKE_SOURCE_DIR}/include/platform/posix
+            )
+            target_link_libraries(test_pal_static_alloc_mock PRIVATE
+                gtest_main Threads::Threads etl::etl)
+            target_compile_features(test_pal_static_alloc_mock PRIVATE cxx_std_17)
+            # DestructorWithoutJoinSafe expects non-terminating destruction,
+            # but the POSIX Thread correctly calls std::terminate per
+            # REQ_PAL_THREAD_DTOR_E01. Exclude it from this target.
+            add_test(NAME test_pal_static_alloc_mock COMMAND test_pal_static_alloc_mock
+                --gtest_filter=-ThreadConformance.DestructorWithoutJoinSafe)
+            set_tests_properties(test_pal_static_alloc_mock PROPERTIES TIMEOUT 30)
+        endif()
     endif()
 
     # Register available tests

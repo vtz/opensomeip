@@ -13,6 +13,7 @@
 
 #include "tp/tp_reassembler.h"
 
+#include "platform/buffer_pool.h"
 #include "platform/thread.h"
 #include "tp/tp_types.h"
 
@@ -21,9 +22,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
-#include <memory>
 #include <utility>
-#include <vector>
 
 namespace someip::tp {
 
@@ -52,7 +51,7 @@ TpReassembler::~TpReassembler() {
  * @implements REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
  * @implements REQ_TP_082
  */
-bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
+bool TpReassembler::parse_tp_header(const platform::ByteBuffer& payload,
                                    uint32_t& offset, bool& more_segments) {
     if (payload.size() < 20) {  // SOME/IP header (16) + TP header (4) minimum
         return false;
@@ -89,7 +88,7 @@ bool TpReassembler::parse_tp_header(const std::vector<uint8_t>& payload,
  * @implements REQ_TP_030_E01, REQ_TP_076, REQ_TP_077, REQ_TP_078
  * @implements REQ_TP_079, REQ_TP_080, REQ_TP_081, REQ_TP_082
  */
-bool TpReassembler::process_segment(const TpSegment& segment, std::vector<uint8_t>& complete_message) {
+bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message) {
     if (!validate_segment(segment)) {
         return false;
     }
@@ -159,20 +158,19 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
     auto it = reassembly_buffers_.find(segment.header.sequence_number);
 
     if (it == reassembly_buffers_.end()) {
-        // Create new buffer for first segment
         if (segment.header.message_type == TpMessageType::FIRST_SEGMENT ||
             segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
 
-            auto buffer = std::make_unique<TpReassemblyBuffer>(
-                segment.header.sequence_number, segment.header.message_length);
-            it = reassembly_buffers_.emplace(segment.header.sequence_number, std::move(buffer)).first;
+            auto result = reassembly_buffers_.insert(
+                std::make_pair(segment.header.sequence_number,
+                               TpReassemblyBuffer(segment.header.sequence_number, segment.header.message_length)));
+            it = result.first;
         } else {
-            // Received consecutive/last segment without first segment
             return nullptr;
         }
     }
 
-    return it->second.get();
+    return &it->second;
 }
 
 /**
@@ -262,7 +260,7 @@ bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& recei
         return false;
     }
 
-    const auto& buffer = *it->second;
+    const auto& buffer = it->second;
     total_bytes = buffer.total_length;
 
     // Count received bytes
@@ -321,7 +319,7 @@ void TpReassembler::cleanup_timed_out_buffers(const TpConfig& config) {
 
     for (auto it = reassembly_buffers_.begin(); it != reassembly_buffers_.end(); ) {
         auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            now - it->second->start_time);
+            now - it->second.start_time);
 
         if (elapsed > config.reassembly_timeout) {
             it = reassembly_buffers_.erase(it);
@@ -375,7 +373,7 @@ bool TpReassemblyBuffer::is_complete() const {
     return true;
 }
 
-std::vector<uint8_t> TpReassemblyBuffer::get_complete_message() const {
+platform::ByteBuffer TpReassemblyBuffer::get_complete_message() const {
     if (!is_complete()) {
         return {};
     }

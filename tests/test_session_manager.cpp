@@ -16,6 +16,7 @@
 #include <thread>
 #include <chrono>
 #include <unordered_set>
+#include "static_pool_init.h"
 
 using namespace someip;
 
@@ -77,7 +78,7 @@ TEST_F(SessionManagerTest, GetSessionInfo) {
     uint16_t session_id = session_mgr_->create_session(client_id);
 
     auto session = session_mgr_->get_session(session_id);
-    ASSERT_NE(session, nullptr);
+    ASSERT_TRUE(session.has_value());
     EXPECT_EQ(session->session_id, session_id);
     EXPECT_EQ(session->client_id, client_id);
     EXPECT_EQ(session->state, SessionState::ACTIVE);
@@ -98,7 +99,7 @@ TEST_F(SessionManagerTest, RemoveSession) {
 
     session_mgr_->remove_session(session_id);
     EXPECT_FALSE(session_mgr_->validate_session(session_id));
-    EXPECT_EQ(session_mgr_->get_session(session_id), nullptr);
+    EXPECT_FALSE(session_mgr_->get_session(session_id).has_value());
 }
 
 /**
@@ -121,8 +122,8 @@ TEST_F(SessionManagerTest, RemoveNonexistentSession) {
  * @brief get_session returns nullptr for nonexistent session
  */
 TEST_F(SessionManagerTest, GetSession_InvalidId) {
-    EXPECT_EQ(session_mgr_->get_session(0), nullptr);
-    EXPECT_EQ(session_mgr_->get_session(0xFFFF), nullptr);
+    EXPECT_FALSE(session_mgr_->get_session(0).has_value());
+    EXPECT_FALSE(session_mgr_->get_session(0xFFFF).has_value());
 }
 
 // ============================================================================
@@ -150,7 +151,7 @@ TEST_F(SessionManagerTest, SameClientMultipleSessions) {
     EXPECT_TRUE(session_mgr_->validate_session(s3));
 
     auto sess = session_mgr_->get_session(s2);
-    ASSERT_NE(sess, nullptr);
+    ASSERT_TRUE(sess.has_value());
     EXPECT_EQ(sess->client_id, client_id);
 }
 
@@ -169,12 +170,9 @@ TEST_F(SessionManagerTest, SameClientMultipleSessions) {
  */
 TEST_F(SessionManagerTest, ValidateSession_InactiveState) {
     uint16_t session_id = session_mgr_->create_session(0x1001);
-
-    auto session = session_mgr_->get_session(session_id);
-    ASSERT_NE(session, nullptr);
     EXPECT_TRUE(session_mgr_->validate_session(session_id));
 
-    session->state = SessionState::INACTIVE;
+    EXPECT_TRUE(session_mgr_->set_session_state(session_id, SessionState::INACTIVE));
     EXPECT_FALSE(session_mgr_->validate_session(session_id));
 }
 
@@ -186,9 +184,7 @@ TEST_F(SessionManagerTest, ValidateSession_InactiveState) {
 TEST_F(SessionManagerTest, ValidateSession_ErrorState) {
     uint16_t session_id = session_mgr_->create_session(0x1001);
 
-    auto session = session_mgr_->get_session(session_id);
-    ASSERT_NE(session, nullptr);
-    session->state = SessionState::ERROR;
+    EXPECT_TRUE(session_mgr_->set_session_state(session_id, SessionState::ERROR));
     EXPECT_FALSE(session_mgr_->validate_session(session_id));
 }
 
@@ -199,14 +195,15 @@ TEST_F(SessionManagerTest, ValidateSession_ErrorState) {
  */
 TEST_F(SessionManagerTest, UpdateActivity) {
     uint16_t session_id = session_mgr_->create_session(0x1001);
-    auto session = session_mgr_->get_session(session_id);
-    ASSERT_NE(session, nullptr);
-    auto original_time = session->last_activity;
+    auto before = session_mgr_->get_session(session_id);
+    ASSERT_TRUE(before.has_value());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     session_mgr_->update_session_activity(session_id);
 
-    EXPECT_GT(session->last_activity, original_time);
+    auto after = session_mgr_->get_session(session_id);
+    ASSERT_TRUE(after.has_value());
+    EXPECT_GT(after->last_activity, before->last_activity);
 }
 
 /**
@@ -257,18 +254,12 @@ TEST_F(SessionManagerTest, CleanupKeepsFreshSessions) {
  */
 TEST_F(SessionManagerTest, CleanupMixedSessions) {
     uint16_t s1 = session_mgr_->create_session(0x1001);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     uint16_t s2 = session_mgr_->create_session(0x1002);
 
-    auto stale = session_mgr_->get_session(s1);
-    auto fresh = session_mgr_->get_session(s2);
-    ASSERT_NE(stale, nullptr);
-    ASSERT_NE(fresh, nullptr);
-
-    // Artificially age s1 by shifting its last_activity back
-    stale->last_activity -= std::chrono::seconds(2);
-
-    // Timeout of 1s: s1 (2s old) should be expired, s2 (fresh) should not
-    size_t cleaned = session_mgr_->cleanup_expired_sessions(std::chrono::seconds(1));
+    // s1 is 100ms+ old; s2 is fresh. Use 50ms timeout.
+    size_t cleaned = session_mgr_->cleanup_expired_sessions(
+        std::chrono::milliseconds(50));
     EXPECT_EQ(cleaned, 1u);
     EXPECT_FALSE(session_mgr_->validate_session(s1));
     EXPECT_TRUE(session_mgr_->validate_session(s2));
@@ -300,9 +291,7 @@ TEST_F(SessionManagerTest, SessionCount_ExcludesNonActive) {
 
     EXPECT_EQ(session_mgr_->get_active_session_count(), 2u);
 
-    auto session = session_mgr_->get_session(s1);
-    ASSERT_NE(session, nullptr);
-    session->state = SessionState::INACTIVE;
+    EXPECT_TRUE(session_mgr_->set_session_state(s1, SessionState::INACTIVE));
 
     EXPECT_EQ(session_mgr_->get_active_session_count(), 1u);
 }
@@ -379,6 +368,24 @@ TEST_F(SessionManagerTest, Session_UpdateActivity) {
  * @tests REQ_MSG_118
  * @brief Sequential session IDs are unique and nonzero
  */
+#ifdef SOMEIP_STATIC_ALLOC
+/**
+ * @test_case TC_SM_CAPACITY_001
+ * @tests REQ_ARCH_002
+ * @brief create_session returns 0 when session map is full (static alloc only)
+ */
+TEST_F(SessionManagerTest, CreateSession_CapacityLimit) {
+    constexpr size_t capacity = 256;
+    for (size_t i = 0; i < capacity; ++i) {
+        uint16_t sid = session_mgr_->create_session(0x1001);
+        ASSERT_NE(sid, 0u) << "Failed at allocation " << i;
+    }
+    uint16_t overflow = session_mgr_->create_session(0x1001);
+    EXPECT_EQ(overflow, 0u)
+        << "create_session must return 0 when capacity is exhausted";
+}
+#endif
+
 TEST_F(SessionManagerTest, SessionIdGeneration_NeverZero) {
     for (int i = 0; i < 100; ++i) {
         uint16_t sid = session_mgr_->create_session(0x1001);

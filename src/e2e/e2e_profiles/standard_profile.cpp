@@ -28,10 +28,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <string>
-#include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::e2e {
 // NOLINTBEGIN(misc-include-cleaner) - someip_htonl macro from platform/byteorder.h -> byteorder_impl.h
@@ -70,19 +67,13 @@ public:
      uint32_t crc = 0;
      if (config.enable_crc) {
          // Build data for CRC: header + payload (without E2E header)
-         std::vector<uint8_t> crc_data;
+         platform::ByteBuffer crc_data;
          crc_data.reserve(16 + msg.get_payload().size());
 
-         // Serialize header fields manually (without E2E header)
          uint32_t message_id_be = someip_htonl(msg.get_message_id().to_uint32());
          crc_data.insert(crc_data.end(), reinterpret_cast<const uint8_t*>(&message_id_be),
                          reinterpret_cast<const uint8_t*>(&message_id_be) + sizeof(uint32_t));
 
-         // Length includes: 8 bytes (client_id to return_code) + E2E header + payload
-         // But for CRC calculation, we use the length that will be in the serialized message
-         // which includes E2E header. However, we need to be careful - the actual length
-         // in the message will be set by update_length() after we set the E2E header.
-         // For now, calculate what the length will be:
         size_t const e2e_size = E2EHeader::get_header_size();
         const uint32_t length = 8 + e2e_size + static_cast<uint32_t>(msg.get_payload().size());
          uint32_t length_be = someip_htonl(length);
@@ -98,7 +89,6 @@ public:
          crc_data.push_back(static_cast<uint8_t>(msg.get_message_type()));
          crc_data.push_back(static_cast<uint8_t>(msg.get_return_code()));
 
-         // Include payload
          const auto& payload = msg.get_payload();
          crc_data.insert(crc_data.end(), payload.begin(), payload.end());
 
@@ -109,28 +99,44 @@ public:
          crc = crc_result.value();
      }
 
-     // Update counter (per data ID)
-     uint32_t counter = 0;
-     if (config.enable_counter) {
-         platform::ScopedLock const lock(counter_mutex_);
-         uint32_t& last_counter = counters_[config.data_id];
-         last_counter++;
-         if (last_counter > config.max_counter_value) {
-             last_counter = 1;  // Rollover
-         }
-         counter = last_counter;
-     }
+    // Update counter (per data ID)
+    uint32_t counter = 0;
+    if (config.enable_counter) {
+        platform::ScopedLock const lock(counter_mutex_);
+        auto it = counters_.find(config.data_id);
+        if (it == counters_.end()) {
+            auto [ins_it, inserted] = counters_.insert({config.data_id, 0});
+            if (!inserted) {
+                return Result::RESOURCE_EXHAUSTED;
+            }
+            it = ins_it;
+        }
+        uint32_t& last_counter = it->second;
+        last_counter++;
+        if (last_counter > config.max_counter_value) {
+            last_counter = 1;  // Rollover
+        }
+        counter = last_counter;
+    }
 
-     // Update freshness value (per data ID)
-     uint16_t freshness = 0;
-     if (config.enable_freshness) {
-         platform::ScopedLock const lock(freshness_mutex_);
-         auto now = std::chrono::steady_clock::now();
-         auto ms =
-             std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-         freshness = static_cast<uint16_t>(static_cast<uint64_t>(ms) & 0xFFFFULL);
-         freshness_values_[config.data_id] = freshness;
-     }
+    // Update freshness value (per data ID)
+    uint16_t freshness = 0;
+    if (config.enable_freshness) {
+        platform::ScopedLock const lock(freshness_mutex_);
+        auto now = std::chrono::steady_clock::now();
+        auto ms =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+        freshness = static_cast<uint16_t>(static_cast<uint64_t>(ms) & 0xFFFFULL);
+        auto it = freshness_values_.find(config.data_id);
+        if (it == freshness_values_.end()) {
+            auto [ins_it, inserted] = freshness_values_.insert({config.data_id, freshness});
+            if (!inserted) {
+                return Result::RESOURCE_EXHAUSTED;
+            }
+        } else {
+            it->second = freshness;
+        }
+    }
 
      // Create E2E header
      E2EHeader const header(crc, counter, config.data_id, freshness);
@@ -160,8 +166,7 @@ public:
 
         // Validate CRC
         if (config.enable_crc) {
-            // Build data for CRC calculation (same as protect)
-            std::vector<uint8_t> crc_data;
+            platform::ByteBuffer crc_data;
             crc_data.reserve(16 + msg.get_payload().size());
 
             // Serialize header fields manually
@@ -210,7 +215,15 @@ public:
         // Validate counter (sequence check, per data ID)
         if (config.enable_counter) {
             platform::ScopedLock const lock(counter_mutex_);
-            uint32_t& last_counter = counters_[config.data_id];
+            auto it = counters_.find(config.data_id);
+            if (it == counters_.end()) {
+                auto [ins_it, inserted] = counters_.insert({config.data_id, 0});
+                if (!inserted) {
+                    return Result::RESOURCE_EXHAUSTED;
+                }
+                it = ins_it;
+            }
+            uint32_t& last_counter = it->second;
 
             // protect() and validate() share counters_; after protect() bumps
             // counter to N the immediate validate() will see header.counter == last_counter.
@@ -290,8 +303,8 @@ public:
         return E2EHeader::get_header_size();  // 12 bytes
     }
 
-    std::string get_profile_name() const override {
-        return "basic";
+    platform::String<> get_profile_name() const override {
+        return platform::String<>("basic");
     }
 
     uint32_t get_profile_id() const override {
@@ -301,8 +314,8 @@ public:
 private:
     mutable platform::Mutex counter_mutex_;
     mutable platform::Mutex freshness_mutex_;
-    std::unordered_map<uint16_t, uint32_t> counters_;  // Per data ID
-    std::unordered_map<uint16_t, uint16_t> freshness_values_;  // Per data ID
+    platform::UnorderedMap<uint16_t, uint32_t> counters_;
+    platform::UnorderedMap<uint16_t, uint16_t> freshness_values_;
 };
 
 // Initialize and register basic profile (reference implementation)

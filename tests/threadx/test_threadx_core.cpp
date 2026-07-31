@@ -26,7 +26,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <vector>
 
 #include "someip/message.h"
 #include "someip/types.h"
@@ -36,6 +35,7 @@
 #include "serialization/serializer.h"
 #include "platform/thread.h"
 #include "platform/memory.h"
+#include "platform/buffer_pool.h"
 #include "platform/threadx/memory_internal.h"
 
 extern "C" {
@@ -60,12 +60,12 @@ static int tests_failed = 0;
     } while (0)
 
 // Shared platform-independent test suites
-#include "tests/shared/test_message_common.inc"
-#include "tests/shared/test_endpoint_common.inc"
-#include "tests/shared/test_session_manager_common.inc"
-#include "tests/shared/test_serializer_common.inc"
-#include "tests/shared/test_e2e_common.inc"
-#include "tests/shared/test_tp_common.inc"
+#include "../shared/test_message_common.inc"
+#include "../shared/test_endpoint_common.inc"
+#include "../shared/test_session_manager_common.inc"
+#include "../shared/test_serializer_common.inc"
+#include "../shared/test_e2e_common.inc"
+#include "../shared/test_tp_common.inc"
 
 // ThreadX-specific tests
 
@@ -92,7 +92,8 @@ static void test_threadx_memory_pool() {
     CHECK(msg1 != nullptr, "pool_alloc_1");
 
     if (msg1) {
-        msg1->set_payload({0xAA, 0xBB});
+        const uint8_t pd[] = {0xAA, 0xBB};
+        msg1->set_payload(pd, sizeof(pd));
         CHECK(msg1->get_payload().size() == 2, "pool_msg_payload");
     }
 
@@ -152,10 +153,43 @@ static void test_threadx_pool_diagnostics() {
 }
 
 static TX_THREAD test_thread;
-static UCHAR test_stack[8192];
+static UCHAR test_stack[20480];
+
+#ifdef SOMEIP_STATIC_ALLOC
+/**
+ * @test_case TC_THREADX_STATIC_ROUNDTRIP
+ * @tests REQ_PLATFORM_STATIC_002
+ * @brief Under static alloc, message allocate/serialize/deserialize must
+ *        succeed using the static pool (no ThreadX block pool).
+ */
+static void test_threadx_static_roundtrip() {
+    printf("\n--- ThreadX static-alloc roundtrip tests ---\n");
+
+    auto msg = someip::platform::allocate_message();
+    CHECK(msg != nullptr, "static_pool_alloc");
+    msg->set_service_id(0x1234);
+    msg->set_method_id(0x5678);
+    msg->set_client_id(0x0001);
+    msg->set_session_id(0x0001);
+    const uint8_t payload[] = {0xCA, 0xFE, 0xBA, 0xBE};
+    msg->set_payload(payload, sizeof(payload));
+
+    auto wire = msg->serialize();
+    CHECK(!wire.empty(), "static_serialize");
+
+    someip::Message decoded;
+    bool ok = decoded.deserialize(wire.data(), wire.size());
+    CHECK(ok, "static_deserialize");
+    CHECK(decoded.get_payload().size() == sizeof(payload), "static_roundtrip_size");
+}
+#endif
 
 static void test_thread_entry(ULONG) {
     printf("=== SOME/IP Core Tests on ThreadX (linux port) ===\n");
+
+#ifdef SOMEIP_STATIC_ALLOC
+    someip::platform::init_static_allocator();
+#endif
 
     // Platform-independent suites (shared with FreeRTOS and Zephyr)
     test_message();
@@ -168,7 +202,11 @@ static void test_thread_entry(ULONG) {
     // ThreadX-specific suites
     test_threadx_threading();
     test_threadx_memory_pool();
+#ifndef SOMEIP_STATIC_ALLOC
     test_threadx_pool_diagnostics();
+#else
+    test_threadx_static_roundtrip();
+#endif
 
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);

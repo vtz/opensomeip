@@ -15,10 +15,13 @@
 #include <transport/udp_transport.h>
 #include <transport/transport.h>
 #include <someip/message.h>
+#include <platform/buffer_pool.h>
+#include <platform/containers.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
 #include <vector>
+#include "static_pool_init.h"
 
 using namespace someip;
 using namespace someip::transport;
@@ -251,7 +254,7 @@ TEST_F(UdpTransportTest, MessageRoundTrip) {
     message.set_return_code(ReturnCode::E_OK);
 
     // Add some payload
-    std::vector<uint8_t> payload = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer payload = {0x01, 0x02, 0x03, 0x04};
     message.set_payload(payload);
 
     // Send message from sender to receiver
@@ -527,7 +530,7 @@ TEST_F(UdpTransportTest, MessageSizeLimit) {
     small_message.set_message_type(MessageType::REQUEST);
     small_message.set_return_code(ReturnCode::E_OK);
 
-    std::vector<uint8_t> small_payload(100, 0xAA);  // 100 bytes
+    platform::ByteBuffer small_payload(100, 0xAA);  // 100 bytes
     small_message.set_payload(small_payload);
 
     EXPECT_EQ(sender.send_message(small_message, receiver_endpoint), Result::SUCCESS);
@@ -542,6 +545,9 @@ TEST_F(UdpTransportTest, MessageSizeLimit) {
 
 // Test maximum message size (64KB limit for UDP)
 TEST_F(UdpTransportTest, MaxUdpPayloadSize) {
+#ifdef SOMEIP_BYTE_POOL_LARGE_COUNT
+    GTEST_SKIP() << "Static allocation: large payload round-trip exhausts pool";
+#endif
     config.max_message_size = 0;  // Disable size check to test raw UDP limit
 
     UdpTransport sender(local_endpoint, config);
@@ -570,7 +576,10 @@ TEST_F(UdpTransportTest, MaxUdpPayloadSize) {
     large_message.set_return_code(ReturnCode::E_OK);
 
     // Create payload that fits within UDP max (accounting for SOME/IP header of 16 bytes)
-    std::vector<uint8_t> large_payload(60000, 0xBB);  // ~60KB
+    platform::ByteBuffer large_payload(60000, 0xBB);  // ~60KB
+    if (large_payload.empty()) {
+        GTEST_SKIP() << "Static allocation backend cannot allocate 60 KB payload";
+    }
     large_message.set_payload(large_payload);
 
     EXPECT_EQ(sender.send_message(large_message, receiver_endpoint), Result::SUCCESS);
@@ -629,7 +638,7 @@ TEST_F(UdpTransportTest, MultipleMessagesRapidFire) {
         message.set_message_type(MessageType::REQUEST);
         message.set_return_code(ReturnCode::E_OK);
 
-        std::vector<uint8_t> payload = {static_cast<uint8_t>(i)};
+        platform::ByteBuffer payload = {static_cast<uint8_t>(i)};
         message.set_payload(payload);
 
         EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
@@ -691,7 +700,7 @@ TEST_F(UdpTransportTest, SendToInvalidAddress) {
     Message msg;
     msg.set_service_id(0x1234);
     msg.set_method_id(0x0001);
-    std::vector<uint8_t> payload = {0x01, 0x02, 0x03};
+    platform::ByteBuffer payload = {0x01, 0x02, 0x03};
     msg.set_payload(payload);
 
     Endpoint invalid_endpoint{"0.0.0.0", 0};
@@ -736,6 +745,9 @@ TEST_F(UdpTransportTest, InvalidMulticastGroup) {
  * @brief Test UDP message size exceeding max UDP payload
  */
 TEST_F(UdpTransportTest, MessageExceedsMtu) {
+#ifdef SOMEIP_BYTE_POOL_LARGE_COUNT
+    GTEST_SKIP() << "Static allocation: large payload exhausts pool";
+#endif
     // Disable the configurable size check to test the raw UDP max-payload rejection
     config.max_message_size = 0;
     UdpTransport transport(local_endpoint, config);
@@ -744,7 +756,10 @@ TEST_F(UdpTransportTest, MessageExceedsMtu) {
     Message msg;
     msg.set_service_id(0x1234);
     msg.set_method_id(0x0001);
-    std::vector<uint8_t> payload(65508, 0xAA);
+    platform::ByteBuffer payload(65508, 0xAA);
+    if (payload.empty()) {
+        GTEST_SKIP() << "Static allocation backend cannot allocate 65 KB payload";
+    }
     msg.set_payload(payload);
 
     Endpoint remote{"127.0.0.1", 12345};

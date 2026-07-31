@@ -15,8 +15,12 @@
 #define SOMEIP_SD_SERVER_H
 
 #include "sd_types.h"
+
+#ifdef SOMEIP_STATIC_ALLOC
+#include "static_config.h"
+#else
 #include <memory>
-#include <vector>
+#endif
 
 namespace someip::sd {
 
@@ -71,9 +75,9 @@ public:
      * @return true if service offered, false on error
      */
     bool offer_service(const ServiceInstance& instance,
-                      const std::string& unicast_endpoint,
-                      const std::string& multicast_endpoint = "",
-                      const std::vector<uint16_t>& eventgroup_ids = {});
+                      const platform::String<>& unicast_endpoint,
+                      const platform::String<>& multicast_endpoint = "",
+                      const platform::Vector<uint16_t>& eventgroup_ids = {});
 
     /**
      * @brief Stop offering a service instance
@@ -105,7 +109,7 @@ public:
      * @return true if handled, false on error
      */
     bool handle_eventgroup_subscription(uint16_t service_id, uint16_t instance_id,
-                                       uint16_t eventgroup_id, const std::string& client_address,
+                                       uint16_t eventgroup_id, const platform::String<>& client_address,
                                        bool acknowledge = true);
 
     /**
@@ -113,7 +117,7 @@ public:
      *
      * @return Vector of offered service instances
      */
-    std::vector<ServiceInstance> get_offered_services() const;
+    platform::Vector<ServiceInstance> get_offered_services() const;
 
     /**
      * @brief Check if server is initialized and ready
@@ -137,7 +141,15 @@ public:
     Statistics get_statistics() const;
 
 private:
+#ifdef SOMEIP_STATIC_ALLOC
+    alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_SDSERVER_SIZE];
+    SdServerImpl* impl() noexcept { return reinterpret_cast<SdServerImpl*>(impl_storage_); }
+    const SdServerImpl* impl() const noexcept { return reinterpret_cast<const SdServerImpl*>(impl_storage_); }
+#else
     std::unique_ptr<SdServerImpl> impl_;
+    SdServerImpl* impl() noexcept { return impl_.get(); }
+    const SdServerImpl* impl() const noexcept { return impl_.get(); }
+#endif
 };
 
 }  // namespace someip::sd

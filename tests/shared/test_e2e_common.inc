@@ -29,8 +29,8 @@
 #include "e2e/e2e_profiles/standard_profile.h"
 #include "someip/message.h"
 #include "common/result.h"
+#include "platform/buffer_pool.h"
 #include <cstdio>
-#include <vector>
 
 static void test_e2e() {
     using namespace someip;
@@ -43,7 +43,7 @@ static void test_e2e() {
     // Header serialization/deserialization roundtrip
     {
         E2EHeader header(0x12345678, 0xABCDEF00, 0x1234, 0x5678);
-        std::vector<uint8_t> serialized = header.serialize();
+        platform::ByteBuffer serialized = header.serialize();
         CHECK(serialized.size() == E2EHeader::get_header_size(),
               "e2e_header_serialize_size");
 
@@ -78,17 +78,17 @@ static void test_e2e() {
     // Header deserialization fails on short buffer
     {
         E2EHeader header;
-        std::vector<uint8_t> short_buf(8, 0x00);
+        platform::ByteBuffer short_buf(8, 0x00);
         CHECK(!header.deserialize(short_buf), "e2e_short_buffer_fails");
     }
 
     // CRC-8 SAE-J1850
     {
-        std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+        platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
         uint8_t crc = e2ecrc::calculate_crc8_sae_j1850(data);
         CHECK(crc != 0, "crc8_nonzero");
 
-        std::vector<uint8_t> empty;
+        platform::ByteBuffer empty;
         uint8_t crc_empty = e2ecrc::calculate_crc8_sae_j1850(empty);
         CHECK(crc_empty == 0xFF, "crc8_empty_init_value");
 
@@ -99,25 +99,25 @@ static void test_e2e() {
 
     // CRC-16 ITU-T X.25
     {
-        std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+        platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
         uint16_t crc = e2ecrc::calculate_crc16_itu_x25(data);
         CHECK(crc != 0, "crc16_nonzero");
 
-        std::vector<uint8_t> empty;
+        platform::ByteBuffer empty;
         uint16_t crc_empty = e2ecrc::calculate_crc16_itu_x25(empty);
         CHECK(crc_empty == 0xFFFF, "crc16_empty_init_value");
     }
 
     // CRC-32
     {
-        std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+        platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
         uint32_t crc = e2ecrc::calculate_crc32(data);
         CHECK(crc != 0, "crc32_nonzero");
     }
 
     // CRC type dispatch and bounds guard
     {
-        std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+        platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
         auto crc8  = e2ecrc::calculate_crc(data, 0, 4, 0);
         auto crc16 = e2ecrc::calculate_crc(data, 0, 4, 1);
         auto crc32 = e2ecrc::calculate_crc(data, 0, 4, 2);
@@ -153,7 +153,8 @@ static void test_e2e() {
     {
         E2EProtection protection;
         Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-        msg.set_payload({0x01, 0x02, 0x03, 0x04});
+        const uint8_t pd_pv[] = {0x01, 0x02, 0x03, 0x04};
+        msg.set_payload(pd_pv, sizeof(pd_pv));
 
         E2EConfig config(0x1234);
         config.enable_crc = true;
@@ -173,7 +174,8 @@ static void test_e2e() {
     {
         E2EProtection protection;
         Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-        msg.set_payload({0x01, 0x02, 0x03, 0x04});
+        const uint8_t pd_cc[] = {0x01, 0x02, 0x03, 0x04};
+        msg.set_payload(pd_cc, sizeof(pd_cc));
 
         E2EConfig config(0x1234);
         config.enable_crc = true;
@@ -201,7 +203,8 @@ static void test_e2e() {
     {
         E2EProtection protection;
         Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-        msg.set_payload({0x01, 0x02});
+        const uint8_t pd_nh[] = {0x01, 0x02};
+        msg.set_payload(pd_nh, sizeof(pd_nh));
 
         E2EConfig config(0x4444);
         Result result = protection.validate(msg, config);
@@ -213,7 +216,8 @@ static void test_e2e() {
         for (uint8_t crc_type = 0; crc_type <= 2; ++crc_type) {
             E2EProtection protection;
             Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-            msg.set_payload({0x01, 0x02, 0x03, 0x04});
+            const uint8_t pd_all[] = {0x01, 0x02, 0x03, 0x04};
+            msg.set_payload(pd_all, sizeof(pd_all));
 
             E2EConfig config(static_cast<uint16_t>(0xAA00 + crc_type));
             config.enable_crc = true;

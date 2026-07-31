@@ -14,9 +14,14 @@
 #include <gtest/gtest.h>
 #include <cmath>
 #include <limits>
+#include <string>
 #include "serialization/serializer.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+#include "static_pool_init.h"
 
 using namespace someip::serialization;
+using namespace someip;
 
 /**
  * @brief SOME/IP Serialization unit tests
@@ -176,11 +181,11 @@ TEST_F(SerializationTest, SerializeDeserializeString) {
     Serializer serializer;
     Deserializer deserializer({});
 
-    std::string test_strings[] = {"", "hello", "world", "some/ip test string"};
+    const char* test_strings[] = {"", "hello", "world", "some/ip test string"};
 
-    for (const std::string& str : test_strings) {
+    for (const char* str : test_strings) {
         serializer.reset();
-        serializer.serialize_string(str);
+        serializer.serialize_string(platform::String<>(str));
         deserializer = Deserializer(serializer.get_buffer());
         EXPECT_DESERIALIZE_SUCCESS(deserializer.deserialize_string(), str);
     }
@@ -195,7 +200,7 @@ TEST_F(SerializationTest, SerializeDeserializeArray) {
     Serializer serializer;
     Deserializer deserializer({});
 
-    std::vector<uint32_t> test_array = {1, 2, 3, 4, 5};
+    platform::Vector<uint32_t> test_array = {1, 2, 3, 4, 5};
 
     serializer.reset();
     serializer.serialize_array(test_array);
@@ -547,7 +552,7 @@ TEST_F(SerializationTest, SerializeDeserializeUint8Array) {
     Serializer serializer;
     Deserializer deserializer({});
 
-    std::vector<uint8_t> test_array = {0x01, 0x02, 0x03, 0x04, 0x05, 0xFE, 0xFF};
+    platform::Vector<uint8_t> test_array = {0x01, 0x02, 0x03, 0x04, 0x05, 0xFE, 0xFF};
 
     serializer.reset();
     serializer.serialize_array(test_array);
@@ -569,7 +574,7 @@ TEST_F(SerializationTest, SerializeDeserializeInt16Array) {
     Serializer serializer;
     Deserializer deserializer({});
 
-    std::vector<int16_t> test_array = {-32768, -1, 0, 1, 32767, 12345};
+    platform::Vector<int16_t> test_array = {-32768, -1, 0, 1, 32767, 12345};
 
     serializer.reset();
     serializer.serialize_array(test_array);
@@ -591,7 +596,7 @@ TEST_F(SerializationTest, SerializeDeserializeFloatArray) {
     Serializer serializer;
     Deserializer deserializer({});
 
-    std::vector<float> test_array = {0.0f, 1.0f, -1.0f, 3.14159f, 1000000.5f};
+    platform::Vector<float> test_array = {0.0f, 1.0f, -1.0f, 3.14159f, 1000000.5f};
 
     serializer.reset();
     serializer.serialize_array(test_array);
@@ -616,7 +621,7 @@ TEST_F(SerializationTest, SerializeDeserializeEmptyArray) {
     Serializer serializer;
     Deserializer deserializer({});
 
-    std::vector<uint32_t> empty_array;
+    platform::Vector<uint32_t> empty_array;
 
     serializer.reset();
     serializer.serialize_array(empty_array);
@@ -640,7 +645,7 @@ TEST_F(SerializationTest, SerializeDeserializeStringArray) {
     Serializer serializer;
     Deserializer deserializer({});
 
-    std::vector<std::string> test_array = {"hello", "world", "SOME/IP", ""};
+    platform::Vector<platform::String<>> test_array = {"hello", "world", "SOME/IP", ""};
 
     serializer.reset();
     serializer.serialize_array(test_array);
@@ -652,8 +657,7 @@ TEST_F(SerializationTest, SerializeDeserializeStringArray) {
     EXPECT_EQ(byte_length, serializer.get_size() - sizeof(uint32_t))
         << "Byte length prefix must equal total serialized element data size";
 
-    // For variable-length types, use deserialize_array with known element count
-    auto array_result = deserializer.deserialize_array<std::string>(test_array.size());
+    auto array_result = deserializer.deserialize_array<platform::String<>>(test_array.size());
     EXPECT_TRUE(array_result.is_success());
     auto result = array_result.get_value();
     EXPECT_EQ(result, test_array);
@@ -909,7 +913,7 @@ TEST_F(SerializationTest, NestedDataStructure) {
     serializer.serialize_float(25.5f);                      // temperature
     serializer.serialize_bool(true);                        // active
     serializer.serialize_string("Sensor01");                // name
-    std::vector<uint8_t> data = {0xAA, 0xBB, 0xCC, 0xDD};
+    platform::Vector<uint8_t> data = {0xAA, 0xBB, 0xCC, 0xDD};
     serializer.serialize_array(data);                       // data
 
     // Deserialize and verify
@@ -949,8 +953,7 @@ TEST_F(SerializationTest, MoveBuffer) {
     size_t size_before = serializer.get_size();
     EXPECT_EQ(size_before, 8u);
 
-    // Move buffer out
-    std::vector<uint8_t> moved_buffer = serializer.move_buffer();
+    platform::ByteBuffer moved_buffer = serializer.move_buffer();
 
     EXPECT_EQ(moved_buffer.size(), 8u);
 
@@ -971,7 +974,7 @@ TEST_F(SerializationTest, DeserializationErrorHandling) {
     Serializer serializer;
     serializer.serialize_bool(true);  // 1 byte of valid data
 
-    std::vector<uint8_t> buffer = serializer.get_buffer();
+    platform::ByteBuffer buffer = serializer.get_buffer();
     EXPECT_EQ(buffer.size(), 1u);
 
     Deserializer deserializer(buffer);
@@ -1013,7 +1016,7 @@ TEST_F(SerializationTest, DeserializationErrorHandling) {
 TEST_F(SerializationTest, StringLengthExceedsBuffer) {
     Serializer serializer;
     serializer.serialize_uint32(1000);
-    std::vector<uint8_t> partial_data(50, 'A');
+    platform::ByteBuffer partial_data(50, 'A');
     for (auto b : partial_data) serializer.serialize_uint8(b);
 
     // deserialize_string() reads the length prefix internally,
@@ -1029,7 +1032,7 @@ TEST_F(SerializationTest, StringLengthExceedsBuffer) {
  * @brief Test dynamic array with maximum length field to prevent DoS
  */
 TEST_F(SerializationTest, DynamicArrayLengthOverflow) {
-    std::vector<uint8_t> malicious = {0xFF, 0xFF, 0xFF, 0xFF};
+    platform::ByteBuffer malicious = {0xFF, 0xFF, 0xFF, 0xFF};
     Deserializer deserializer(malicious);
     auto length_result = deserializer.deserialize_uint32();
     EXPECT_TRUE(length_result.is_success());
@@ -1044,7 +1047,7 @@ TEST_F(SerializationTest, DynamicArrayLengthOverflow) {
  * @brief Test fixed array deserialization with insufficient buffer
  */
 TEST_F(SerializationTest, FixedArrayInsufficientBuffer) {
-    std::vector<uint8_t> small_buffer = {0x00, 0x00, 0x00, 0x01,
+    platform::ByteBuffer small_buffer = {0x00, 0x00, 0x00, 0x01,
                                           0x00, 0x00, 0x00, 0x02,
                                           0x00, 0x00, 0x00, 0x03,
                                           0x00, 0x00, 0x00, 0x04};
@@ -1088,7 +1091,7 @@ TEST_F(SerializationTest, ReadFromEmptyBuffer) {
  * @brief Test alignment padding exceeding buffer
  */
 TEST_F(SerializationTest, AlignmentExceedsBuffer) {
-    std::vector<uint8_t> small_buffer(4, 0);
+    platform::ByteBuffer small_buffer(4, 0);
     Deserializer deserializer(small_buffer);
     deserializer.deserialize_uint8();
     deserializer.deserialize_uint8();
@@ -1148,7 +1151,7 @@ TEST_F(SerializationTest, SignedIntegerOverflow) {
  */
 TEST_F(SerializationTest, StringEmbeddedNull) {
     Serializer serializer;
-    std::string with_null("hello\0world", 11);
+    platform::String<> with_null("hello\0world", 11);
     serializer.serialize_string(with_null);
 
     Deserializer deserializer(serializer.get_buffer());
@@ -1239,7 +1242,7 @@ TEST_F(SerializationTest, DeeplyNestedArray) {
  */
 TEST_F(SerializationTest, ArrayLengthPrefixIsByteCount) {
     Serializer serializer;
-    std::vector<uint32_t> array = {0x11111111, 0x22222222, 0x33333333};
+    platform::Vector<uint32_t> array = {0x11111111, 0x22222222, 0x33333333};
 
     serializer.serialize_array(array);
     const auto& buf = serializer.get_buffer();
@@ -1261,7 +1264,7 @@ TEST_F(SerializationTest, ArrayLengthPrefixIsByteCount) {
  */
 TEST_F(SerializationTest, DynamicArrayRoundTrip) {
     Serializer serializer;
-    std::vector<uint16_t> original = {0x1111, 0x2222, 0x3333, 0x4444};
+    platform::Vector<uint16_t> original = {0x1111, 0x2222, 0x3333, 0x4444};
 
     serializer.serialize_array(original);
     Deserializer deserializer(serializer.get_buffer());
@@ -1301,7 +1304,7 @@ TEST_F(SerializationTest, Uint64BigEndianWireBytes) {
  * @brief uint64 deserialization from known big-endian bytes
  */
 TEST_F(SerializationTest, Uint64DeserializeFromBigEndian) {
-    std::vector<uint8_t> be_bytes = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
+    platform::ByteBuffer be_bytes = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08};
     Deserializer deserializer(be_bytes);
     auto result = deserializer.deserialize_uint64();
     ASSERT_TRUE(result.is_success());
@@ -1330,7 +1333,7 @@ TEST_F(SerializationTest, Int64NegativeRoundTrip) {
  */
 TEST_F(SerializationTest, DynamicArrayUint8RoundTrip) {
     Serializer serializer;
-    std::vector<uint8_t> original = {0xAA, 0xBB, 0xCC};
+    platform::Vector<uint8_t> original = {0xAA, 0xBB, 0xCC};
 
     serializer.serialize_array(original);
     Deserializer deserializer(serializer.get_buffer());

@@ -19,6 +19,11 @@
 #include <chrono>
 #include <atomic>
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+#include "static_pool_init.h"
+
+using namespace someip;
 using namespace someip::rpc;
 
 /**
@@ -87,8 +92,8 @@ TEST_F(RpcTest, ServerMethodRegistration) {
 
     // Should be able to register a method
     auto handler = [](uint16_t /*client_id*/, uint16_t /*session_id*/,
-                     const std::vector<uint8_t>& /*input*/,
-                     std::vector<uint8_t>& output) -> RpcResult {
+                     const platform::ByteBuffer& /*input*/,
+                     platform::ByteBuffer& output) -> RpcResult {
         output = {0x01, 0x02, 0x03};
         return RpcResult::SUCCESS;
     };

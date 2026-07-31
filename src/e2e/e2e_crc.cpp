@@ -13,11 +13,12 @@
 
 #include "e2e/e2e_crc.h"
 
+#include "platform/buffer_pool.h"
+
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <vector>
 
 /**
  * @brief E2E CRC calculation functions
@@ -35,7 +36,7 @@ static constexpr uint8_t SAE_J1850_POLY = 0x1D;
 static constexpr uint8_t SAE_J1850_INIT = 0xFF;
 
 /** @implements REQ_E2E_PLUGIN_004 */
-uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data) {
+uint8_t calculate_crc8_sae_j1850(const platform::ByteBuffer& data) {
     uint32_t crc_reg = SAE_J1850_INIT;
 
     for (const uint8_t byte : data) {
@@ -56,7 +57,7 @@ uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data) {
 static constexpr uint16_t ITU_X25_POLY = 0x1021;
 static constexpr uint16_t ITU_X25_INIT = 0xFFFF;
 
-uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data) {
+uint16_t calculate_crc16_itu_x25(const platform::ByteBuffer& data) {
     uint32_t crc_reg = ITU_X25_INIT;
 
     for (const uint8_t byte : data) {
@@ -101,7 +102,7 @@ const std::array<uint32_t, 256>& get_crc32_table() {
 
 }  // namespace
 
-uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
+uint32_t calculate_crc32(const platform::ByteBuffer& data) {
     const auto& crc32_table = get_crc32_table();
 
     uint32_t crc = CRC32_INIT;
@@ -115,14 +116,17 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
     return crc;
 }
 
-std::optional<uint32_t> calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type) {
+std::optional<uint32_t> calculate_crc(const platform::ByteBuffer& data, size_t offset, size_t length, uint8_t crc_type) {
     if (offset > data.size() || length > data.size() || offset > data.size() - length ||
         offset > static_cast<size_t>(PTRDIFF_MAX) || length > static_cast<size_t>(PTRDIFF_MAX)) {
         return std::nullopt;
     }
 
     auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
-    const std::vector<uint8_t> slice(first, first + static_cast<std::ptrdiff_t>(length));
+    const platform::ByteBuffer slice(first, first + static_cast<std::ptrdiff_t>(length));
+    if (slice.size() != length) {
+        return std::nullopt;
+    }
 
     switch (crc_type) {
         case 0:  // SAE-J1850 (8-bit)

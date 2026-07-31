@@ -13,7 +13,12 @@
 
 #include "rpc/rpc_server.h"
 
+// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
+#include <new>
+
 #include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "rpc/rpc_types.h"
 #include "someip/message.h"
@@ -24,11 +29,9 @@
 
 #include <atomic>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::rpc {
 
@@ -46,10 +49,10 @@ class RpcServerImpl : public transport::ITransportListener {
 public:
     explicit RpcServerImpl(uint16_t service_id)
         : service_id_(service_id),
-          transport_(std::make_shared<transport::UdpTransport>(transport::Endpoint("127.0.0.1", 30490))),
+          transport_(transport::Endpoint("127.0.0.1", 30490)),
           running_(false) {
 
-        transport_->set_listener(this);
+        transport_.set_listener(this);
     }
 
     ~RpcServerImpl() override
@@ -67,7 +70,7 @@ public:
             return true;
         }
 
-        if (transport_->start() != Result::SUCCESS) {
+        if (transport_.start() != Result::SUCCESS) {
             return false;
         }
 
@@ -86,7 +89,7 @@ public:
         platform::ScopedLock const lock(methods_mutex_);
         method_handlers_.clear();
 
-        transport_->stop();
+        transport_.stop();
     }
 
     bool register_method(MethodId method_id, MethodHandler handler) {
@@ -95,6 +98,9 @@ public:
         // Check if already registered
         const bool already_exists = method_handlers_.count(method_id) > 0;
         if (!already_exists) {
+            if (method_handlers_.size() >= method_handlers_.max_size()) {
+                return false;
+            }
             method_handlers_[method_id] = std::move(handler);
         }
         return !already_exists;
@@ -110,9 +116,9 @@ public:
         return method_handlers_.find(method_id) != method_handlers_.end();
     }
 
-    std::vector<MethodId> get_registered_methods() const {
+    platform::Vector<MethodId> get_registered_methods() const {
         platform::ScopedLock const lock(methods_mutex_);
-        std::vector<MethodId> methods;
+        platform::Vector<MethodId> methods;
         methods.reserve(method_handlers_.size());
         for (const auto& pair : method_handlers_) {
             methods.push_back(pair.first);
@@ -121,7 +127,7 @@ public:
     }
 
     bool is_ready() const {
-        return running_ && transport_->is_connected();
+        return running_ && transport_.is_connected();
     }
 
     RpcServer::Statistics get_statistics() const {
@@ -151,7 +157,7 @@ private:
         }
 
         // Process the method call
-        std::vector<uint8_t> output_params;
+        platform::ByteBuffer output_params;
         const RpcResult result = handler(message->get_client_id(), message->get_session_id(),
                                   message->get_payload(), output_params);
 
@@ -177,13 +183,13 @@ private:
 
     /** @implements REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01 */
     void send_success_response(MessagePtr const& request, const transport::Endpoint& sender,
-                              const std::vector<uint8_t>& return_values) {
+                              const platform::ByteBuffer& return_values) {
         const MessageId response_msg_id(request->get_service_id(), request->get_method_id());
         Message response(response_msg_id, request->get_request_id(),
                         MessageType::RESPONSE, ReturnCode::E_OK);
         response.set_payload(return_values);
 
-        const Result result = transport_->send_message(response, sender);
+        const Result result = transport_.send_message(response, sender);
         if (result != Result::SUCCESS) {
             // Log error or handle send failure
         }
@@ -195,7 +201,7 @@ private:
         Message const response(response_msg_id, request->get_request_id(),
                         MessageType::ERROR, error_code);
 
-        const Result result = transport_->send_message(response, sender);
+        const Result result = transport_.send_message(response, sender);
         if (result != Result::SUCCESS) {
             // Log error or handle send failure
         }
@@ -219,51 +225,66 @@ private:
     }
 
     uint16_t service_id_;
-    std::shared_ptr<transport::UdpTransport> transport_;
+    transport::UdpTransport transport_;
 
-    std::unordered_map<MethodId, MethodHandler> method_handlers_;
+    platform::UnorderedMap<MethodId, MethodHandler, 32> method_handlers_;
     mutable platform::Mutex methods_mutex_;
 
     std::atomic<bool> running_;
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(RpcServerImpl) <= SOMEIP_PIMPL_RPCSERVER_SIZE,
+              "RpcServerImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_RPCSERVER_SIZE");
+#endif
+
 // RpcServer implementation
 RpcServer::RpcServer(uint16_t service_id)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) RpcServerImpl(service_id);
+}
+#else
     : impl_(std::make_unique<RpcServerImpl>(service_id)) {
 }
+#endif
 
-RpcServer::~RpcServer() = default;
+RpcServer::~RpcServer() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~RpcServerImpl();
+#endif
+}
 
 bool RpcServer::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void RpcServer::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 bool RpcServer::register_method(MethodId method_id, MethodHandler handler) {
-    return impl_->register_method(method_id, std::move(handler));
+    return impl()->register_method(method_id, std::move(handler));
 }
 
 bool RpcServer::unregister_method(MethodId method_id) {
-    return impl_->unregister_method(method_id);
+    return impl()->unregister_method(method_id);
 }
 
 bool RpcServer::is_method_registered(MethodId method_id) const {
-    return impl_->is_method_registered(method_id);
+    return impl()->is_method_registered(method_id);
 }
 
-std::vector<MethodId> RpcServer::get_registered_methods() const {
-    return impl_->get_registered_methods();
+platform::Vector<MethodId> RpcServer::get_registered_methods() const {
+    return impl()->get_registered_methods();
 }
 
 bool RpcServer::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 RpcServer::Statistics RpcServer::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
 // NOLINTEND(misc-include-cleaner)

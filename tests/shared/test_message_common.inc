@@ -16,7 +16,8 @@
 
 #include "someip/message.h"
 #include "someip/types.h"
-#include <vector>
+#include "platform/buffer_pool.h"
+#include <cstring>
 
 static void test_message() {
     using namespace someip;
@@ -31,8 +32,8 @@ static void test_message() {
     CHECK(msg.get_client_id() == 0x0010, "client_id");
     CHECK(msg.get_session_id() == 0x0001, "session_id");
 
-    std::vector<uint8_t> payload = {1, 2, 3, 4, 5};
-    msg.set_payload(payload);
+    const uint8_t payload_data[] = {1, 2, 3, 4, 5};
+    msg.set_payload(payload_data, sizeof(payload_data));
     CHECK(msg.get_payload().size() == 5, "payload_size");
 
     auto serialized = msg.serialize();
@@ -42,7 +43,10 @@ static void test_message() {
     bool ok = decoded.deserialize(serialized);
     CHECK(ok, "deserialize");
     CHECK(decoded.get_service_id() == 0x1234, "roundtrip_service_id");
-    CHECK(decoded.get_payload() == payload, "roundtrip_payload");
+    CHECK(decoded.get_payload().size() == sizeof(payload_data) &&
+          std::memcmp(decoded.get_payload().data(), payload_data,
+                      sizeof(payload_data)) == 0,
+          "roundtrip_payload");
 
     // Message type and return code defaults
     CHECK(msg.get_message_type() == MessageType::REQUEST, "default_message_type");

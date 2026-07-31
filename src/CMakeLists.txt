@@ -48,10 +48,18 @@ else()
     set(SOMEIP_NET_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/posix)
 endif()
 
+# Allocation backend (listed before threading so static memory_impl.h shadows RTOS headers)
+if(SOMEIP_USE_STATIC_ALLOC)
+    set(SOMEIP_ALLOC_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/static)
+else()
+    set(SOMEIP_ALLOC_IMPL_DIR ${PROJECT_SOURCE_DIR}/include/platform/dynamic)
+endif()
+
 # Library type follows BUILD_SHARED_LIBS (default: STATIC)
 add_library(opensomeip ${OPENSOMEIP_SOURCES})
 target_include_directories(opensomeip PUBLIC
     ${PROJECT_SOURCE_DIR}/include
+    ${SOMEIP_ALLOC_IMPL_DIR}
     ${SOMEIP_THREADING_IMPL_DIR}
     ${SOMEIP_NET_IMPL_DIR}
 )
@@ -74,16 +82,83 @@ if(WIN32)
     target_link_libraries(opensomeip PUBLIC ws2_32)
 endif()
 
-# FreeRTOS platform sources
-if(SOMEIP_USE_FREERTOS)
+# FreeRTOS platform sources (skipped when static allocation owns memory backend)
+if(SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_STATIC_ALLOC)
     target_sources(opensomeip PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/freertos/memory.cpp)
 endif()
 
-# ThreadX platform sources
-if(SOMEIP_USE_THREADX)
+# ThreadX platform sources (skipped when static allocation owns memory backend)
+if(SOMEIP_USE_THREADX AND NOT SOMEIP_USE_STATIC_ALLOC)
     target_sources(opensomeip PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/threadx/memory.cpp)
+endif()
+
+# Static allocation platform sources
+if(SOMEIP_USE_STATIC_ALLOC)
+    target_sources(opensomeip PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/memory.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/buffer_pool.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/etl_error_handler.cpp)
+    target_link_libraries(opensomeip PUBLIC etl::etl)
+
+    # ETL safety configuration: disable exceptions, enable error logging.
+    # The custom error handler (when registered) surfaces container overflow
+    # as a return code rather than abort() — required for FMEA compliance.
+    target_compile_definitions(opensomeip PUBLIC
+        SOMEIP_STATIC_ALLOC
+        ETL_LOG_ERRORS=1
+        ETL_CHECK_PUSH_POP
+    )
+
+    # Propagate optional pool-sizing cache variables as compile definitions so
+    # static_config.h picks them up.  This avoids stuffing -D flags into
+    # CMAKE_CXX_FLAGS (which overrides CMAKE_CXX_FLAGS_INIT from the
+    # toolchain and can strip essential -mcpu / -mthumb flags).
+    foreach(_pool_var
+        SOMEIP_MESSAGE_POOL_SIZE
+        SOMEIP_BYTE_POOL_SMALL_COUNT
+        SOMEIP_BYTE_POOL_SMALL_SIZE
+        SOMEIP_BYTE_POOL_MEDIUM_COUNT
+        SOMEIP_BYTE_POOL_MEDIUM_SIZE
+        SOMEIP_BYTE_POOL_LARGE_COUNT
+        SOMEIP_BYTE_POOL_LARGE_SIZE
+        SOMEIP_MAX_TP_SEGMENTS
+        SOMEIP_MAX_TP_REASSEMBLY_SIZE
+        SOMEIP_MAX_SD_OPTIONS
+        SOMEIP_DEFAULT_MAP_CAPACITY
+        SOMEIP_DEFAULT_VECTOR_CAPACITY
+        SOMEIP_DEFAULT_QUEUE_CAPACITY
+        SOMEIP_PIMPL_EVENTPUB_SIZE
+        SOMEIP_PIMPL_EVENTSUB_SIZE
+        SOMEIP_PIMPL_RPCCLIENT_SIZE
+        SOMEIP_PIMPL_RPCSERVER_SIZE
+        SOMEIP_PIMPL_SDCLIENT_SIZE
+        SOMEIP_PIMPL_SDSERVER_SIZE
+        SOMEIP_FREERTOS_HEAP_SIZE)
+        if(DEFINED ${_pool_var})
+            target_compile_definitions(opensomeip PUBLIC ${_pool_var}=${${_pool_var}})
+        endif()
+    endforeach()
+
+    # GCC 13 false-positive (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109561):
+    # std::variant move-constructor inlining triggers -Wmaybe-uninitialized on
+    # SD entry/option members despite {0} default member initializers.
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set_source_files_properties(
+            ${CMAKE_CURRENT_SOURCE_DIR}/sd/sd_message.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/sd/sd_client.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}/sd/sd_server.cpp
+            PROPERTIES COMPILE_OPTIONS "-Wno-maybe-uninitialized")
+    endif()
+
+    # Malloc trap object library (linked into verification tests, not into main lib).
+    # Only built on hosted platforms — requires <dlfcn.h> (unavailable on bare-metal).
+    if(NOT CMAKE_CROSSCOMPILING)
+        add_library(someip_malloc_trap OBJECT
+            ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/malloc_trap.cpp)
+        target_compile_definitions(someip_malloc_trap PRIVATE SOMEIP_MALLOC_TRAP)
+    endif()
 endif()
 
 # Backward-compatible aliases so existing target_link_libraries() calls

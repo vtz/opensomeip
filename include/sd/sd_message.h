@@ -15,9 +15,11 @@
 #define SOMEIP_SD_MESSAGE_H
 
 #include "sd_types.h"
-#include <string>
-#include <vector>
-#include <memory>
+
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
+#include <variant>
 
 namespace someip::sd {
 
@@ -29,10 +31,10 @@ public:
 
     virtual ~SdEntry() = default;
 
-    SdEntry(const SdEntry&) = delete;
-    SdEntry& operator=(const SdEntry&) = delete;
-    SdEntry(SdEntry&&) = delete;
-    SdEntry& operator=(SdEntry&&) = delete;
+    SdEntry(const SdEntry&) = default;
+    SdEntry& operator=(const SdEntry&) = default;
+    SdEntry(SdEntry&&) = default;
+    SdEntry& operator=(SdEntry&&) = default;
 
     EntryType get_type() const { return type_; }
     uint32_t get_ttl() const { return ttl_; }
@@ -48,8 +50,8 @@ public:
     uint8_t get_num_opts2() const { return num_opts2_; }
     void set_num_opts2(uint8_t n) { num_opts2_ = n; }
 
-    virtual std::vector<uint8_t> serialize() const = 0;
-    virtual bool deserialize(const std::vector<uint8_t>& data, size_t& offset) = 0;
+    virtual platform::ByteBuffer serialize() const = 0;
+    virtual bool deserialize(const platform::ByteBuffer& data, size_t& offset) = 0;
 
 protected:
     EntryType type_{EntryType::FIND_SERVICE};
@@ -65,6 +67,11 @@ class ServiceEntry : public SdEntry {
 public:
     explicit ServiceEntry(EntryType type = EntryType::FIND_SERVICE)
         : SdEntry(type) {}
+    ~ServiceEntry() override = default;
+    ServiceEntry(const ServiceEntry&) = default;
+    ServiceEntry& operator=(const ServiceEntry&) = default;
+    ServiceEntry(ServiceEntry&&) noexcept = default;
+    ServiceEntry& operator=(ServiceEntry&&) noexcept = default;
 
     uint16_t get_service_id() const { return service_id_; }
     void set_service_id(uint16_t id) { service_id_ = id; }
@@ -78,8 +85,8 @@ public:
     uint32_t get_minor_version() const { return minor_version_; }
     void set_minor_version(uint32_t version) { minor_version_ = version; }
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
     uint16_t service_id_{0};
@@ -95,6 +102,11 @@ class EventGroupEntry : public SdEntry {
 public:
     explicit EventGroupEntry(EntryType type = EntryType::SUBSCRIBE_EVENTGROUP)
         : SdEntry(type) {}
+    ~EventGroupEntry() override = default;
+    EventGroupEntry(const EventGroupEntry&) = default;
+    EventGroupEntry& operator=(const EventGroupEntry&) = default;
+    EventGroupEntry(EventGroupEntry&&) noexcept = default;
+    EventGroupEntry& operator=(EventGroupEntry&&) noexcept = default;
 
     uint16_t get_service_id() const { return service_id_; }
     void set_service_id(uint16_t id) { service_id_ = id; }
@@ -108,8 +120,8 @@ public:
     uint8_t get_major_version() const { return major_version_; }
     void set_major_version(uint8_t version) { major_version_ = version; }
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
     uint16_t service_id_{0};
@@ -126,16 +138,16 @@ public:
     explicit SdOption(OptionType type) : type_(type) {}
     virtual ~SdOption() = default;
 
-    SdOption(const SdOption&) = delete;
-    SdOption& operator=(const SdOption&) = delete;
-    SdOption(SdOption&&) = delete;
-    SdOption& operator=(SdOption&&) = delete;
+    SdOption(const SdOption&) = default;
+    SdOption& operator=(const SdOption&) = default;
+    SdOption(SdOption&&) = default;
+    SdOption& operator=(SdOption&&) = default;
 
     OptionType get_type() const { return type_; }
     uint16_t get_length() const { return length_; }
 
-    virtual std::vector<uint8_t> serialize() const = 0;
-    virtual bool deserialize(const std::vector<uint8_t>& data, size_t& offset) = 0;
+    virtual platform::ByteBuffer serialize() const = 0;
+    virtual bool deserialize(const platform::ByteBuffer& data, size_t& offset) = 0;
 
 protected:
     OptionType type_{OptionType::IPV4_ENDPOINT};
@@ -148,6 +160,11 @@ protected:
 class IPv4EndpointOption : public SdOption {
 public:
     IPv4EndpointOption() : SdOption(OptionType::IPV4_ENDPOINT) {}
+    ~IPv4EndpointOption() override = default;
+    IPv4EndpointOption(const IPv4EndpointOption&) = default;
+    IPv4EndpointOption& operator=(const IPv4EndpointOption&) = default;
+    IPv4EndpointOption(IPv4EndpointOption&&) noexcept = default;
+    IPv4EndpointOption& operator=(IPv4EndpointOption&&) noexcept = default;
 
     uint8_t get_protocol() const { return protocol_; }
     void set_protocol(uint8_t protocol) { protocol_ = protocol; }
@@ -158,17 +175,16 @@ public:
     uint16_t get_port() const { return port_; }
     void set_port(uint16_t port) { port_ = port; }
 
-    // Helper methods
-    void set_ipv4_address_from_string(const std::string& ip_address);
-    std::string get_ipv4_address_string() const;
+    void set_ipv4_address_from_string(const platform::String<>& ip_address);
+    platform::String<> get_ipv4_address_string() const;
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
-    uint8_t protocol_{0};      // 0x06 = TCP, 0x11 = UDP
-    uint32_t ipv4_address_{0}; // IPv4 address in network byte order
-    uint16_t port_{0};         // Port in network byte order
+    uint8_t protocol_{0};
+    uint32_t ipv4_address_{0};
+    uint16_t port_{0};
 };
 
 /**
@@ -177,6 +193,11 @@ private:
 class IPv4MulticastOption : public SdOption {
 public:
     IPv4MulticastOption() : SdOption(OptionType::IPV4_MULTICAST) {}
+    ~IPv4MulticastOption() override = default;
+    IPv4MulticastOption(const IPv4MulticastOption&) = default;
+    IPv4MulticastOption& operator=(const IPv4MulticastOption&) = default;
+    IPv4MulticastOption(IPv4MulticastOption&&) noexcept = default;
+    IPv4MulticastOption& operator=(IPv4MulticastOption&&) noexcept = default;
 
     uint32_t get_ipv4_address() const { return ipv4_address_; }
     void set_ipv4_address(uint32_t address) { ipv4_address_ = address; }
@@ -187,12 +208,12 @@ public:
     uint16_t get_port() const { return port_; }
     void set_port(uint16_t port) { port_ = port; }
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
-    uint32_t ipv4_address_{0}; // IPv4 address in network byte order
-    uint8_t protocol_{0x11};   // L4 protocol (default UDP per spec)
+    uint32_t ipv4_address_{0};
+    uint8_t protocol_{0x11};
     uint16_t port_{0};
 };
 
@@ -203,15 +224,31 @@ class ConfigurationOption : public SdOption {
 public:
     ConfigurationOption() : SdOption(OptionType::CONFIGURATION) {}
 
-    const std::string& get_configuration_string() const { return config_string_; }
-    void set_configuration_string(const std::string& config) { config_string_ = config; }
+    const platform::String<>& get_configuration_string() const { return config_string_; }
+    void set_configuration_string(const platform::String<>& config) { config_string_ = config; }
 
-    std::vector<uint8_t> serialize() const override;
-    bool deserialize(const std::vector<uint8_t>& data, size_t& offset) override;
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
 private:
-    std::string config_string_;
+    platform::String<> config_string_;
 };
+
+using SdEntryStorage = std::variant<ServiceEntry, EventGroupEntry>;
+using SdOptionStorage = std::variant<ConfigurationOption, IPv4EndpointOption, IPv4MulticastOption>;
+
+inline const SdEntry* get_entry_ptr(const SdEntryStorage& v) {
+    return std::visit([](const auto& e) -> const SdEntry* { return &e; }, v);
+}
+inline SdEntry* get_entry_ptr(SdEntryStorage& v) {
+    return std::visit([](auto& e) -> SdEntry* { return &e; }, v);
+}
+inline const SdOption* get_option_ptr(const SdOptionStorage& v) {
+    return std::visit([](const auto& o) -> const SdOption* { return &o; }, v);
+}
+inline SdOption* get_option_ptr(SdOptionStorage& v) {
+    return std::visit([](auto& o) -> SdOption* { return &o; }, v);
+}
 
 /** @implements REQ_SD_200A, REQ_SD_200C, REQ_MSG_113 */
 class SdMessage {
@@ -224,14 +261,16 @@ public:
     uint32_t get_reserved() const { return reserved_; }
     void set_reserved(uint32_t reserved) { reserved_ = reserved; }
 
-    const std::vector<std::unique_ptr<SdEntry>>& get_entries() const { return entries_; }
-    void add_entry(std::unique_ptr<SdEntry> entry);
+    const platform::Vector<SdEntryStorage>& get_entries() const { return entries_; }
+    /// @return false if the entry vector is full (static alloc capacity limit).
+    bool add_entry(SdEntryStorage entry);
 
-    const std::vector<std::unique_ptr<SdOption>>& get_options() const { return options_; }
-    void add_option(std::unique_ptr<SdOption> option);
+    const platform::Vector<SdOptionStorage>& get_options() const { return options_; }
+    /// @return false if the option vector is full (static alloc capacity limit).
+    bool add_option(SdOptionStorage option);
 
-    std::vector<uint8_t> serialize() const;
-    bool deserialize(const std::vector<uint8_t>& data);
+    platform::ByteBuffer serialize() const;
+    bool deserialize(const platform::ByteBuffer& data);
 
     // Helper methods
     bool is_reboot() const { return (static_cast<uint32_t>(flags_) & 0x80U) != 0; }
@@ -263,17 +302,13 @@ private:
     uint32_t reserved_{0};
     uint16_t session_id_{0};
 
-    std::vector<std::unique_ptr<SdEntry>> entries_;
-    std::vector<std::unique_ptr<SdOption>> options_;
+    platform::Vector<SdEntryStorage> entries_;
+    platform::Vector<SdOptionStorage> options_;
 };
 
 // Type aliases for convenience
-using SdEntryPtr = std::unique_ptr<SdEntry>;
-using SdOptionPtr = std::unique_ptr<SdOption>;
-using ServiceEntryPtr = std::unique_ptr<ServiceEntry>;
-using EventGroupEntryPtr = std::unique_ptr<EventGroupEntry>;
-using IPv4EndpointOptionPtr = std::unique_ptr<IPv4EndpointOption>;
-using IPv4MulticastOptionPtr = std::unique_ptr<IPv4MulticastOption>;
+using SdEntryPtr = SdEntryStorage;
+using SdOptionPtr = SdOptionStorage;
 
 }  // namespace someip::sd
 

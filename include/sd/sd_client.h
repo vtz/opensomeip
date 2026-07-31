@@ -15,8 +15,12 @@
 #define SOMEIP_SD_CLIENT_H
 
 #include "sd_types.h"
+
+#ifdef SOMEIP_STATIC_ALLOC
+#include "static_config.h"
+#else
 #include <memory>
-#include <vector>
+#endif
 
 namespace someip::sd {
 
@@ -119,7 +123,7 @@ public:
      * @param service_id Service to query (0 = all services)
      * @return Vector of available service instances
      */
-    std::vector<ServiceInstance> get_available_services(uint16_t service_id = 0) const;
+    platform::Vector<ServiceInstance> get_available_services(uint16_t service_id = 0) const;
 
     /**
      * @brief Check if client is initialized and ready
@@ -143,7 +147,15 @@ public:
     Statistics get_statistics() const;
 
 private:
+#ifdef SOMEIP_STATIC_ALLOC
+    alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_SDCLIENT_SIZE];
+    SdClientImpl* impl() noexcept { return reinterpret_cast<SdClientImpl*>(impl_storage_); }
+    const SdClientImpl* impl() const noexcept { return reinterpret_cast<const SdClientImpl*>(impl_storage_); }
+#else
     std::unique_ptr<SdClientImpl> impl_;
+    SdClientImpl* impl() noexcept { return impl_.get(); }
+    const SdClientImpl* impl() const noexcept { return impl_.get(); }
+#endif
 };
 
 }  // namespace someip::sd

@@ -23,7 +23,6 @@
 #include <optional>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace someip::serialization {
 // NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from platform/byteorder.h -> byteorder_impl.h
@@ -139,12 +138,13 @@ void Serializer::serialize_double(double value) {
  * @implements REQ_SER_040_E01, REQ_SER_040_E02, REQ_SER_042_E01
  * @implements REQ_SER_050, REQ_SER_051, REQ_SER_050_E01, REQ_SER_050_E02
  */
-void Serializer::serialize_string(const std::string& value) {
+void Serializer::serialize_string(const platform::String<>& value) {
     // Serialize string length as uint32_t
     serialize_uint32(static_cast<uint32_t>(value.length()));
 
     // Serialize string data (no null terminator)
-    buffer_.insert(buffer_.end(), value.begin(), value.end());
+    const auto* str_data = reinterpret_cast<const uint8_t*>(value.data());
+    buffer_.insert(buffer_.end(), str_data, str_data + value.length());
 
     // Add padding to align to 4-byte boundary
     align_to(4);
@@ -240,11 +240,11 @@ void Serializer::append_be_double(double value) {
  * @implements REQ_SER_071, REQ_SER_072
  */
 
-Deserializer::Deserializer(const std::vector<uint8_t>& data)
+Deserializer::Deserializer(const platform::ByteBuffer& data)
     : buffer_(data), position_(0) {
 }
 
-Deserializer::Deserializer(std::vector<uint8_t>&& data)
+Deserializer::Deserializer(platform::ByteBuffer&& data)
     : buffer_(std::move(data)), position_(0) {
 }
 
@@ -396,26 +396,25 @@ DeserializationResult<double> Deserializer::deserialize_double() {
  * @implements REQ_SER_043, REQ_SER_044, REQ_SER_045
  * @implements REQ_SER_043_E01, REQ_SER_047_E01
  */
-DeserializationResult<std::string> Deserializer::deserialize_string() {
+DeserializationResult<platform::String<>> Deserializer::deserialize_string() {
     // Deserialize string length
     auto length_result = deserialize_uint32();
     if (length_result.is_error()) {
-        return DeserializationResult<std::string>::error(length_result.get_error());
+        return DeserializationResult<platform::String<>>::error(length_result.get_error());
     }
     const uint32_t length = length_result.get_value();
 
     if (position_ + length > buffer_.size()) {
-        return DeserializationResult<std::string>::error(Result::MALFORMED_MESSAGE);
+        return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
     }
 
-    const auto first = buffer_.begin() + static_cast<std::ptrdiff_t>(position_);
-    std::string result(first, first + static_cast<std::ptrdiff_t>(length));
+    platform::String<> result(reinterpret_cast<const char*>(buffer_.data() + position_), length);
     position_ += length;
 
     // Skip padding to align to 4-byte boundary
     align_to(4);
 
-    return DeserializationResult<std::string>::success(std::move(result));
+    return DeserializationResult<platform::String<>>::success(std::move(result));
 }
 
 /**

@@ -14,6 +14,9 @@
 #include <gtest/gtest.h>
 #include "someip/message.h"
 #include "serialization/serializer.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+#include "static_pool_init.h"
 
 using namespace someip;
 
@@ -131,7 +134,7 @@ TEST_F(MessageTest, SettersAndGetters) {
     msg.set_message_type(MessageType::NOTIFICATION);
     msg.set_return_code(ReturnCode::E_OK);
 
-    std::vector<uint8_t> payload = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer payload = {0x01, 0x02, 0x03, 0x04};
     msg.set_payload(payload);
 
     EXPECT_EQ(msg.get_service_id(), 0x1234);
@@ -160,11 +163,11 @@ TEST_F(MessageTest, SerializationRoundTrip) {
     RequestId req_id(0x9ABC, 0xDEF0);
     Message original(msg_id, req_id, MessageType::REQUEST, ReturnCode::E_OK);
 
-    std::vector<uint8_t> payload = {0x01, 0x02, 0x03, 0x04, 0x05};
+    platform::ByteBuffer payload = {0x01, 0x02, 0x03, 0x04, 0x05};
     original.set_payload(payload);
 
     // Serialize
-    std::vector<uint8_t> serialized = original.serialize();
+    platform::ByteBuffer serialized = original.serialize();
     EXPECT_FALSE(serialized.empty());
     EXPECT_EQ(serialized.size(), original.get_total_size());
 
@@ -401,7 +404,7 @@ TEST_F(MessageTest, CopyAndMove) {
     // Move constructor
     Message moved = std::move(original);
     EXPECT_EQ(moved.get_service_id(), 0x1234);
-    EXPECT_EQ(moved.get_payload(), (std::vector<uint8_t>{0x01, 0x02, 0x03}));
+    EXPECT_EQ(moved.get_payload(), (platform::ByteBuffer{0x01, 0x02, 0x03}));
 
     // Original should be in valid but unspecified state after move
     // For safety, moved-from SOME/IP messages are considered invalid
@@ -423,7 +426,7 @@ TEST_F(MessageTest, MoveAssignmentPreservesInterfaceVersion) {
 
     EXPECT_EQ(target.get_service_id(), 0x1234);
     EXPECT_EQ(target.get_interface_version(), 0x42);
-    EXPECT_EQ(target.get_payload(), (std::vector<uint8_t>{0xAA, 0xBB}));
+    EXPECT_EQ(target.get_payload(), (platform::ByteBuffer{0xAA, 0xBB}));
 }
 
 /**
@@ -454,7 +457,7 @@ TEST_F(MessageTest, MessageTypeHelpers) {
  * @brief Test rejection of messages with overflow length value
  */
 TEST_F(MessageTest, LengthOverflowRejection) {
-    std::vector<uint8_t> raw(16, 0);
+    platform::ByteBuffer raw(16, 0);
     raw[4] = 0xFF; raw[5] = 0xFF; raw[6] = 0xFF; raw[7] = 0xFF;
     raw[8] = 0x00; raw[9] = 0x00; raw[10] = 0x00; raw[11] = 0x01;
 
@@ -535,10 +538,13 @@ TEST_F(MessageTest, SerializationBufferOverflow) {
     // (length field is 32-bit minus 8 bytes of header = 0xFFFFFFF7 max payload).
     // We can't actually allocate that, so test with a 1 MiB payload to verify
     // normal large serialization still works (positive path).
-    std::vector<uint8_t> large_payload(1024 * 1024, 0xAA);
+    platform::ByteBuffer large_payload(1024 * 1024, 0xAA);
+    if (large_payload.empty()) {
+        GTEST_SKIP() << "Static allocation backend cannot allocate 1 MiB payload";
+    }
     msg.set_payload(large_payload);
 
-    std::vector<uint8_t> serialized = msg.serialize();
+    platform::ByteBuffer serialized = msg.serialize();
     EXPECT_FALSE(serialized.empty()) << "1 MiB payload should serialize successfully";
     EXPECT_EQ(serialized.size(), msg.get_total_size());
 }
@@ -554,7 +560,7 @@ TEST_F(MessageTest, PayloadSizeExceedsMaximum) {
     msg.set_method_id(0x0001);
 
     // Set a small payload then manually set an oversized length to avoid OOM
-    std::vector<uint8_t> small_payload = {0x01, 0x02, 0x03};
+    platform::ByteBuffer small_payload = {0x01, 0x02, 0x03};
     msg.set_payload(small_payload);
     // Force the internal length to exceed the SOME/IP maximum
     msg.set_length(0xFFFFFFF0);
@@ -610,10 +616,77 @@ TEST_F(MessageTest, SessionIdZeroWithActiveSession) {
  * @brief Test deserialization from truncated buffer
  */
 TEST_F(MessageTest, TruncatedBufferDeserialization) {
-    std::vector<uint8_t> truncated = {0x12, 0x34, 0x56, 0x78};
+    platform::ByteBuffer truncated = {0x12, 0x34, 0x56, 0x78};
     Message msg;
     bool result = msg.deserialize(truncated);
     EXPECT_FALSE(result) << "Should reject truncated buffer";
+}
+
+// ============================================================================
+// PayloadView tests
+// ============================================================================
+
+/**
+ * @test_case TC_PAYLOADVIEW_001
+ * @tests REQ_API_PAYLOAD_VIEW
+ * @brief PayloadView provides zero-copy access to message payload
+ */
+TEST_F(MessageTest, PayloadViewBasic) {
+    Message msg;
+    platform::ByteBuffer payload = {0xDE, 0xAD, 0xBE, 0xEF};
+    msg.set_payload(payload);
+
+    auto view = msg.payload_view();
+    EXPECT_EQ(view.size(), 4u);
+    EXPECT_FALSE(view.empty());
+    EXPECT_EQ(view[0], 0xDE);
+    EXPECT_EQ(view[3], 0xEF);
+    EXPECT_EQ(view.data(), msg.get_payload().data());
+}
+
+/**
+ * @test_case TC_PAYLOADVIEW_002
+ * @tests REQ_API_PAYLOAD_VIEW
+ * @brief Empty payload yields empty PayloadView
+ */
+TEST_F(MessageTest, PayloadViewEmpty) {
+    Message msg;
+    auto view = msg.payload_view();
+    EXPECT_TRUE(view.empty());
+    EXPECT_EQ(view.size(), 0u);
+}
+
+/**
+ * @test_case TC_PAYLOADVIEW_003
+ * @tests REQ_API_PAYLOAD_VIEW
+ * @brief PayloadView::subview returns a sub-range
+ */
+TEST_F(MessageTest, PayloadViewSubview) {
+    Message msg;
+    platform::ByteBuffer payload = {0x01, 0x02, 0x03, 0x04, 0x05};
+    msg.set_payload(payload);
+
+    auto sub = msg.payload_view().subview(1, 3);
+    EXPECT_EQ(sub.size(), 3u);
+    EXPECT_EQ(sub[0], 0x02);
+    EXPECT_EQ(sub[2], 0x04);
+}
+
+/**
+ * @test_case TC_PAYLOADVIEW_004
+ * @tests REQ_API_PAYLOAD_VIEW
+ * @brief PayloadView supports range-based for loop
+ */
+TEST_F(MessageTest, PayloadViewIterable) {
+    Message msg;
+    platform::ByteBuffer payload = {0x10, 0x20, 0x30};
+    msg.set_payload(payload);
+
+    uint8_t sum = 0;
+    for (auto byte : msg.payload_view()) {
+        sum += byte;
+    }
+    EXPECT_EQ(sum, 0x60);
 }
 
 int main(int argc, char **argv) {

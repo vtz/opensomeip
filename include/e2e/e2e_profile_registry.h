@@ -15,10 +15,10 @@
 #define E2E_PROFILE_REGISTRY_H
 
 #include "e2e_profile.h"
-#include <string>
-#include <memory>
-#include <unordered_map>
+#include "platform/containers.h"
 #include "platform/thread.h"
+
+#include <memory>
 
 namespace someip::e2e {
 
@@ -55,7 +55,7 @@ public:
      * @param profile_name Profile name
      * @return Pointer to profile or nullptr if not found
      */
-    E2EProfile* get_profile(const std::string& profile_name);
+    E2EProfile* get_profile(const platform::String<>& profile_name);
 
     /**
      * @brief Unregister a profile by ID
@@ -87,8 +87,8 @@ private:
     ~E2EProfileRegistry() = default;
 
     mutable platform::Mutex mutex_;
-    std::unordered_map<uint32_t, E2EProfilePtr> profiles_by_id_;
-    std::unordered_map<std::string, E2EProfile*> profiles_by_name_;
+    platform::UnorderedMap<uint32_t, E2EProfilePtr> profiles_by_id_;
+    platform::UnorderedMap<platform::String<>, E2EProfile*> profiles_by_name_;
 };
 
 }  // namespace someip::e2e

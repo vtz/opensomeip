@@ -13,6 +13,7 @@
 
 #include "tp/tp_segmenter.h"
 
+#include "platform/buffer_pool.h"
 #include "someip/message.h"
 #include "someip/types.h"
 #include "tp/tp_types.h"
@@ -22,7 +23,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <vector>
 
 namespace someip::tp {
 
@@ -41,9 +41,9 @@ TpSegmenter::TpSegmenter(const TpConfig& config)
  * @implements REQ_TP_001, REQ_TP_002, REQ_TP_003, REQ_TP_004
  * @implements REQ_TP_001_E01, REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075
  */
-TpResult TpSegmenter::segment_message(const Message& message, std::vector<TpSegment>& segments) {
+TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& segments) {
     // Get the message payload (without headers - TP handles payload only)
-    const std::vector<uint8_t>& payload = message.get_payload();
+    const platform::ByteBuffer& payload = message.get_payload();
 
     if (payload.size() > config_.max_message_size) {
         return TpResult::MESSAGE_TOO_LARGE;
@@ -58,7 +58,7 @@ TpResult TpSegmenter::segment_message(const Message& message, std::vector<TpSegm
         if (payload.size() > 1000) {  // Threshold for when to use TP even for single segments
             tp_message.set_message_type(add_tp_flag(message.get_message_type()));
         }
-        std::vector<uint8_t> message_data = tp_message.serialize();
+        platform::ByteBuffer message_data = tp_message.serialize();
 
         TpSegment segment;
         segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
@@ -68,6 +68,9 @@ TpResult TpSegmenter::segment_message(const Message& message, std::vector<TpSegm
         segment.header.sequence_number = next_sequence_number_++;
         segment.payload = std::move(message_data);  // Full message for single segment
 
+        if (segments.size() >= segments.max_size()) {
+            return TpResult::MESSAGE_TOO_LARGE;
+        }
         segments.push_back(std::move(segment));
         return TpResult::SUCCESS;
     }
@@ -87,8 +90,8 @@ TpResult TpSegmenter::segment_message(const Message& message, std::vector<TpSegm
  * @implements REQ_TP_076, REQ_TP_077, REQ_TP_078
  */
 TpResult TpSegmenter::create_multi_segments(const Message& message,
-                                          const std::vector<uint8_t>& payload,
-                                          std::vector<TpSegment>& segments) {
+                                          const platform::ByteBuffer& payload,
+                                          TpSegmentVector& segments) {
 
     auto const total_length = static_cast<uint32_t>(payload.size());
     uint32_t payload_offset = 0;  // Offset into the payload data
@@ -106,7 +109,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         segment.header.segment_offset = 0;  // Always 0 for first segment
         segment.header.sequence_number = sequence_number;
 
-        std::vector<uint8_t> header = tp_message.serialize();
+        platform::ByteBuffer header = tp_message.serialize();
         header.resize(16);  // Keep only header (16 bytes)
 
         size_t const first_overhead = 16 + 4;
@@ -131,6 +134,9 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         segment.header.segment_length = static_cast<uint16_t>(header.size());
         segment.payload = std::move(header);
 
+        if (segments.size() >= segments.max_size()) {
+            return TpResult::MESSAGE_TOO_LARGE;
+        }
         segments.push_back(std::move(segment));
         payload_offset = first_payload_size;
     }
@@ -157,7 +163,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
             std::min(segment_capacity, remaining_bytes));
 
         // Create segment with TP header
-        std::vector<uint8_t> segment_data;
+        platform::ByteBuffer segment_data;
         segment_data.reserve(4 + payload_size);  // TP header + payload
 
         // Add TP header first (REQ_TP_011-021)
@@ -181,6 +187,9 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         segment.header.segment_length = static_cast<uint16_t>(segment_data.size());
         segment.payload = std::move(segment_data);
 
+        if (segments.size() >= segments.max_size()) {
+            return TpResult::MESSAGE_TOO_LARGE;
+        }
         segments.push_back(std::move(segment));
         payload_offset += payload_size;
     }
@@ -204,7 +213,7 @@ void TpSegmenter::update_config(const TpConfig& config) {
  * @implements REQ_TP_016, REQ_TP_017, REQ_TP_019, REQ_TP_020, REQ_TP_021
  * @implements REQ_TP_013_E01, REQ_TP_015_E01
  */
-void TpSegmenter::serialize_tp_header(std::vector<uint8_t>& payload,
+void TpSegmenter::serialize_tp_header(platform::ByteBuffer& payload,
                                      uint32_t offset, bool more_segments) {
     // TP header is 4 bytes: [Offset (28 bits) | Reserved (3 bits) | More Segments (1 bit)]
     // Offset is in units of 16 bytes, so divide by 16

@@ -56,6 +56,7 @@
 #include "platform/memory.h"
 #include "platform/byteorder.h"
 #include "platform/net.h"
+#include "static_pool_init.h"
 
 using someip::platform::ConditionVariable;
 using someip::platform::Mutex;

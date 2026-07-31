@@ -18,9 +18,9 @@
 #define SOMEIP_TEST_SERIALIZER_COMMON_INC
 
 #include "serialization/serializer.h"
+#include "platform/buffer_pool.h"
 #include <cstdio>
-#include <string>
-#include <vector>
+#include <cstring>
 
 static void test_serializer() {
     using namespace someip::serialization;
@@ -89,7 +89,7 @@ static void test_serializer() {
 
     // Underflow: reading from empty buffer
     {
-        std::vector<uint8_t> empty;
+        someip::platform::ByteBuffer empty;
         Deserializer deser(empty);
         auto v = deser.deserialize_uint8();
         CHECK(!v.is_success(), "empty_buffer_fails");
@@ -98,13 +98,16 @@ static void test_serializer() {
     // String roundtrip
     {
         Serializer ser;
-        std::string input = "SOME/IP";
-        ser.serialize_string(input);
+        const char* input = "SOME/IP";
+        someip::platform::String<> input_str(input);
+        ser.serialize_string(input_str);
         auto data = ser.get_buffer();
 
         Deserializer deser(data);
         auto result = deser.deserialize_string();
-        CHECK(result.is_success() && result.get_value() == input,
+        CHECK(result.is_success() &&
+              result.get_value().size() == 7 &&
+              std::memcmp(result.get_value().data(), input, 7) == 0,
               "string_roundtrip");
     }
 }

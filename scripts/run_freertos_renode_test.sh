@@ -34,6 +34,7 @@ while [[ $# -gt 0 ]]; do
         --junit-output) JUNIT_OUTPUT="$2"; shift 2 ;;
         --build-only)  BUILD_ONLY=true; shift ;;
         --skip-build)  SKIP_BUILD=true; shift ;;
+        --build-dir)   BUILD_DIR="$2"; shift 2 ;;
         *)
             echo "ERROR: Unknown argument '$1'"
             exit 1

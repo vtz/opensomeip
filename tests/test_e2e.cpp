@@ -21,6 +21,9 @@
 #include "e2e/e2e_profiles/standard_profile.h"
 #include "someip/message.h"
 #include "common/result.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+#include "static_pool_init.h"
 
 using namespace someip;
 using namespace someip::e2e;
@@ -47,7 +50,7 @@ protected:
 TEST_F(E2ETest, HeaderSerialization) {
     E2EHeader header(0x12345678, 0xABCDEF00, 0x1234, 0x5678);
 
-    std::vector<uint8_t> serialized = header.serialize();
+    platform::ByteBuffer serialized = header.serialize();
     EXPECT_EQ(serialized.size(), E2EHeader::get_header_size());
 
     E2EHeader deserialized;
@@ -65,14 +68,14 @@ TEST_F(E2ETest, HeaderSerialization) {
  * @brief Test CRC calculation - SAE-J1850
  */
 TEST_F(E2ETest, CRC8SAEJ1850) {
-    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
     uint8_t crc = e2ecrc::calculate_crc8_sae_j1850(data);
 
     // CRC should be non-zero for non-empty data
     EXPECT_NE(crc, 0);
 
     // Test with empty data
-    std::vector<uint8_t> empty;
+    platform::ByteBuffer empty;
     uint8_t crc_empty = e2ecrc::calculate_crc8_sae_j1850(empty);
     EXPECT_EQ(crc_empty, 0xFF);  // SAE-J1850 init value
 }
@@ -83,21 +86,21 @@ TEST_F(E2ETest, CRC8SAEJ1850) {
  * @brief Test CRC calculation - ITU-T X.25
  */
 TEST_F(E2ETest, CRC16ITUX25) {
-    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
     uint16_t crc = e2ecrc::calculate_crc16_itu_x25(data);
 
     // CRC should be non-zero for non-empty data
     EXPECT_NE(crc, 0);
 
     // Test with empty data
-    std::vector<uint8_t> empty;
+    platform::ByteBuffer empty;
     uint16_t crc_empty = e2ecrc::calculate_crc16_itu_x25(empty);
     EXPECT_EQ(crc_empty, 0xFFFF);  // ITU-T X.25 init value
 }
 
 // Test CRC calculation - CRC32
 TEST_F(E2ETest, CRC32) {
-    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
     uint32_t crc = e2ecrc::calculate_crc32(data);
 
     // CRC should be non-zero for non-empty data
@@ -112,14 +115,14 @@ TEST_F(E2ETest, ProfileRegistry) {
     E2EProfile* default_profile = registry.get_default_profile();
     ASSERT_NE(default_profile, nullptr);
     EXPECT_EQ(default_profile->get_profile_id(), 0);
-    EXPECT_EQ(default_profile->get_profile_name(), "basic");
+    EXPECT_EQ(default_profile->get_profile_name(), platform::String<>("basic"));
 }
 
 // Test E2E protection - protect message
 TEST_F(E2ETest, ProtectMessage) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     E2EConfig config(0x1234);
     config.enable_crc = true;
@@ -142,7 +145,7 @@ TEST_F(E2ETest, ProtectMessage) {
 TEST_F(E2ETest, ValidateMessage) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     E2EConfig config(0x1234);
     config.enable_crc = true;
@@ -163,7 +166,7 @@ TEST_F(E2ETest, ValidateMessage) {
 TEST_F(E2ETest, InvalidCRC) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     E2EConfig config(0x1234);
     config.enable_crc = true;
@@ -191,7 +194,7 @@ TEST_F(E2ETest, InvalidCRC) {
 TEST_F(E2ETest, WrongDataID) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     E2EConfig config(0x1234);
     config.enable_crc = true;
@@ -212,13 +215,13 @@ TEST_F(E2ETest, WrongDataID) {
 // Test message serialization with E2E header
 TEST_F(E2ETest, MessageSerializationWithE2E) {
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     E2EHeader header(0x12345678, 0xABCDEF00, 0x1234, 0x5678);
     msg.set_e2e_header(header);
 
     // Serialize
-    std::vector<uint8_t> serialized = msg.serialize();
+    platform::ByteBuffer serialized = msg.serialize();
 
     // Deserialize — receiver knows this message carries E2E protection
     Message deserialized;
@@ -237,7 +240,7 @@ TEST_F(E2ETest, MessageSerializationWithE2E) {
 // Test message without E2E header
 TEST_F(E2ETest, MessageWithoutE2E) {
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     EXPECT_FALSE(msg.has_e2e_header());
 
@@ -262,7 +265,7 @@ TEST_F(E2ETest, MessageWithoutE2E) {
  * @brief calculate_crc: out-of-bounds range returns 0
  */
 TEST_F(E2ETest, CRC_OutOfBoundsRange) {
-    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
     auto crc = e2ecrc::calculate_crc(data, 2, 5, 0);  // offset+length=7 > size=4
     EXPECT_FALSE(crc.has_value());
 }
@@ -273,7 +276,7 @@ TEST_F(E2ETest, CRC_OutOfBoundsRange) {
  * @brief calculate_crc: size_t overflow in offset+length is caught
  */
 TEST_F(E2ETest, CRC_OverflowGuard) {
-    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
     auto crc = e2ecrc::calculate_crc(data, SIZE_MAX, 1, 0);
     EXPECT_FALSE(crc.has_value());
 }
@@ -284,7 +287,7 @@ TEST_F(E2ETest, CRC_OverflowGuard) {
  * @brief calculate_crc: all CRC type branches produce correct dispatch
  */
 TEST_F(E2ETest, CRC_AllTypeBranches) {
-    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
 
     auto crc8  = e2ecrc::calculate_crc(data, 0, 4, 0);
     auto crc16 = e2ecrc::calculate_crc(data, 0, 4, 1);
@@ -306,7 +309,7 @@ TEST_F(E2ETest, CRC_AllTypeBranches) {
  * @brief CRC-8 SAE-J1850: deterministic for same input
  */
 TEST_F(E2ETest, CRC8_Deterministic) {
-    std::vector<uint8_t> data = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer data = {0x01, 0x02, 0x03, 0x04};
 
     uint8_t crc_a = e2ecrc::calculate_crc8_sae_j1850(data);
     uint8_t crc_b = e2ecrc::calculate_crc8_sae_j1850(data);
@@ -320,7 +323,7 @@ TEST_F(E2ETest, CRC8_Deterministic) {
  * @brief CRC-16 ITU-T X.25: single-byte input
  */
 TEST_F(E2ETest, CRC16_SingleByte) {
-    std::vector<uint8_t> data = {0x42};
+    platform::ByteBuffer data = {0x42};
     uint16_t crc = e2ecrc::calculate_crc16_itu_x25(data);
     EXPECT_NE(crc, 0u);
     EXPECT_NE(crc, 0xFFFFu);
@@ -335,7 +338,7 @@ TEST_F(E2ETest, CRC16_SingleByte) {
  * results for all three CRC algorithms (SAE-J1850, ITU-T X.25, CRC-32).
  */
 TEST_F(E2ETest, CRC_AllTypesNonZeroForKnownPayload) {
-    std::vector<uint8_t> data = {0xDE, 0xAD, 0xBE, 0xEF};
+    platform::ByteBuffer data = {0xDE, 0xAD, 0xBE, 0xEF};
 
     EXPECT_NE(e2ecrc::calculate_crc8_sae_j1850(data), 0u);
     EXPECT_NE(e2ecrc::calculate_crc16_itu_x25(data), 0u);
@@ -348,10 +351,10 @@ TEST_F(E2ETest, CRC_AllTypesNonZeroForKnownPayload) {
  * @brief calculate_crc with sub-range of data
  */
 TEST_F(E2ETest, CRC_SubRange) {
-    std::vector<uint8_t> data = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+    platform::ByteBuffer data = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
 
     auto crc_sub = e2ecrc::calculate_crc(data, 2, 2, 0);
-    std::vector<uint8_t> sub = {0xCC, 0xDD};
+    platform::ByteBuffer sub = {0xCC, 0xDD};
     uint32_t crc_direct = e2ecrc::calculate_crc8_sae_j1850(sub);
     ASSERT_TRUE(crc_sub.has_value());
     EXPECT_EQ(crc_sub.value(), crc_direct);
@@ -368,7 +371,7 @@ TEST_F(E2ETest, CRC_SubRange) {
  */
 TEST_F(E2ETest, HeaderDeserialize_BufferTooShort) {
     E2EHeader header;
-    std::vector<uint8_t> short_buf(8, 0x00);
+    platform::ByteBuffer short_buf(8, 0x00);
     EXPECT_FALSE(header.deserialize(short_buf));
 }
 
@@ -379,10 +382,10 @@ TEST_F(E2ETest, HeaderDeserialize_BufferTooShort) {
  */
 TEST_F(E2ETest, HeaderDeserialize_WithOffset) {
     E2EHeader original(0xAABBCCDD, 0x11223344, 0x5566, 0x7788);
-    std::vector<uint8_t> serialized = original.serialize();
+    platform::ByteBuffer serialized = original.serialize();
 
     // Prefix with garbage, use offset to skip it
-    std::vector<uint8_t> padded = {0xFF, 0xFF, 0xFF, 0xFF};
+    platform::ByteBuffer padded = {0xFF, 0xFF, 0xFF, 0xFF};
     padded.insert(padded.end(), serialized.begin(), serialized.end());
 
     E2EHeader deserialized;
@@ -400,7 +403,7 @@ TEST_F(E2ETest, HeaderDeserialize_WithOffset) {
  */
 TEST_F(E2ETest, HeaderDeserialize_OffsetPastEnd) {
     E2EHeader header;
-    std::vector<uint8_t> buf(12, 0x00);
+    platform::ByteBuffer buf(12, 0x00);
     EXPECT_FALSE(header.deserialize(buf, 8));  // offset 8 + header 12 = 20 > 12
 }
 
@@ -483,7 +486,7 @@ TEST_F(E2ETest, HeaderRoundTrip_BoundaryValues) {
 TEST_F(E2ETest, ProtectValidate_CRCType0) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     E2EConfig config(0xAAAA);
     config.enable_crc = true;
@@ -503,7 +506,7 @@ TEST_F(E2ETest, ProtectValidate_CRCType0) {
 TEST_F(E2ETest, ProtectValidate_CRCType2) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     E2EConfig config(0xBBBB);
     config.enable_crc = true;
@@ -526,7 +529,7 @@ TEST_F(E2ETest, ProtectValidate_CRCType2) {
 TEST_F(E2ETest, CounterOnly_FirstMessage_ValidCounter) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02});
 
     E2EConfig config(0x1111);
     config.enable_crc = false;
@@ -554,7 +557,7 @@ TEST_F(E2ETest, CounterOnly_MonotonicIncrease) {
 
     for (int i = 0; i < 5; ++i) {
         Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-        msg.set_payload({0x01, 0x02});
+        msg.set_payload(platform::ByteBuffer{0x01, 0x02});
 
         EXPECT_EQ(protection.protect(msg, config), Result::SUCCESS);
         EXPECT_EQ(protection.validate(msg, config), Result::SUCCESS)
@@ -571,7 +574,7 @@ TEST_F(E2ETest, CounterOnly_MonotonicIncrease) {
 TEST_F(E2ETest, AllFeaturesDisabled) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02});
 
     E2EConfig config(0x3333);
     config.enable_crc = false;
@@ -590,7 +593,7 @@ TEST_F(E2ETest, AllFeaturesDisabled) {
 TEST_F(E2ETest, Validate_NoHeader) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02});
 
     E2EConfig config(0x4444);
     config.enable_crc = false;
@@ -609,7 +612,7 @@ TEST_F(E2ETest, Validate_NoHeader) {
 TEST_F(E2ETest, CRCType0_Corruption) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     E2EConfig config(0x5555);
     config.enable_crc = true;
@@ -636,7 +639,7 @@ TEST_F(E2ETest, CRCType0_Corruption) {
 TEST_F(E2ETest, ExtractHeader) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02});
 
     E2EConfig config(0x6666);
     config.enable_crc = true;
@@ -659,7 +662,7 @@ TEST_F(E2ETest, ExtractHeader) {
 TEST_F(E2ETest, ExtractHeader_NoHeader) {
     E2EProtection protection;
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x9ABC, 0xDEF0));
-    msg.set_payload({0x01, 0x02});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02});
 
     auto extracted = protection.extract_header(msg);
     EXPECT_FALSE(extracted.has_value());
@@ -688,7 +691,7 @@ TEST_F(E2ETest, ProfileRegistry_DefaultProfile) {
 TEST_F(E2ETest, ProfileRegistry_LookupByName) {
     E2EProfileRegistry& registry = E2EProfileRegistry::instance();
     E2EProfile* by_id = registry.get_profile(static_cast<uint32_t>(0));
-    E2EProfile* by_name = registry.get_profile(std::string("basic"));
+    E2EProfile* by_name = registry.get_profile(platform::String<>("basic"));
 
     ASSERT_NE(by_id, nullptr);
     ASSERT_NE(by_name, nullptr);
@@ -703,7 +706,7 @@ TEST_F(E2ETest, ProfileRegistry_LookupByName) {
 TEST_F(E2ETest, ProfileRegistry_UnknownProfile) {
     E2EProfileRegistry& registry = E2EProfileRegistry::instance();
     EXPECT_EQ(registry.get_profile(static_cast<uint32_t>(999)), nullptr);
-    EXPECT_EQ(registry.get_profile(std::string("nonexistent")), nullptr);
+    EXPECT_EQ(registry.get_profile(platform::String<>("nonexistent")), nullptr);
 }
 
 // =============================================================================
@@ -740,7 +743,7 @@ TEST_F(E2ETest, DefaultConfigProfileNameMatchesRegistered) {
  */
 TEST_F(E2ETest, ProtectValidateViaNameLookup) {
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x0001, 0x0001));
-    msg.set_payload({0x01, 0x02, 0x03, 0x04});
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
 
     E2EConfig config(0x1234);
     config.profile_id = 9999;  // Force ID lookup to fail
@@ -752,7 +755,7 @@ TEST_F(E2ETest, ProtectValidateViaNameLookup) {
         << "Name-based lookup for \"basic\" must succeed when ID lookup fails";
     EXPECT_TRUE(msg.has_e2e_header());
 
-    std::vector<uint8_t> wire = msg.serialize();
+    platform::ByteBuffer wire = msg.serialize();
     Message received;
     EXPECT_TRUE(received.deserialize(wire, true));
 
@@ -766,7 +769,7 @@ TEST_F(E2ETest, ProtectValidateViaNameLookup) {
  */
 TEST_F(E2ETest, HeaderFieldsPreservedAcrossWire) {
     E2EHeader header(0xDEADBEEF, 42, 0x1234, 0x5678);
-    std::vector<uint8_t> wire = header.serialize();
+    platform::ByteBuffer wire = header.serialize();
     EXPECT_EQ(wire.size(), E2EHeader::get_header_size());
 
     E2EHeader decoded;

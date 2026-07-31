@@ -13,8 +13,13 @@
 
 #include "rpc/rpc_client.h"
 
+// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
+#include <new>
+
 #include "common/result.h"
 #include "core/session_manager.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "rpc/rpc_types.h"
 #include "someip/message.h"
@@ -27,11 +32,9 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::rpc {
 
@@ -49,12 +52,11 @@ class RpcClientImpl : public transport::ITransportListener {
 public:
     explicit RpcClientImpl(uint16_t client_id)
         : client_id_(client_id),
-          session_manager_(std::make_unique<SessionManager>()),
-          transport_(std::make_shared<transport::UdpTransport>(transport::Endpoint("127.0.0.1", 0))),
+          transport_(transport::Endpoint("127.0.0.1", 0)),
           next_call_handle_(1),
           running_(false) {
 
-        transport_->set_listener(this);
+        transport_.set_listener(this);
     }
 
     ~RpcClientImpl() noexcept override
@@ -78,7 +80,7 @@ public:
             return true;
         }
 
-        if (transport_->start() != Result::SUCCESS) {
+        if (transport_.start() != Result::SUCCESS) {
             return false;
         }
 
@@ -93,7 +95,7 @@ public:
 
         running_ = false;
 
-        std::vector<std::pair<RpcCallback, RpcResponse>> shutdown_cbs;
+        platform::Vector<std::pair<RpcCallback, RpcResponse>> shutdown_cbs;
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
             for (auto& pair : pending_calls_) {
@@ -110,25 +112,25 @@ public:
             cb(resp);
         }
 
-        transport_->stop();
+        transport_.stop();
     }
 
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
-                                   const std::vector<uint8_t>& parameters,
+                                   const platform::ByteBuffer& parameters,
                                    const RpcTimeout& timeout) {
 
         struct SyncState {
             platform::Mutex mtx;
-            std::shared_ptr<RpcResponse> resp;
+            std::optional<RpcResponse> resp;
             std::atomic<bool> ready{false};
         };
-        const auto state = std::make_shared<SyncState>();
+        SyncState state;
 
         const auto handle = call_method_async(service_id, method_id, parameters,
-            [state](const RpcResponse& response) {
-                platform::ScopedLock const lk(state->mtx);
-                state->resp = std::make_shared<RpcResponse>(response);
-                state->ready.store(true);
+            [&state](const RpcResponse& response) {
+                platform::ScopedLock const lk(state.mtx);
+                state.resp.emplace(response);
+                state.ready.store(true);
             }, timeout);
 
         if (handle == 0) {
@@ -137,7 +139,7 @@ public:
 
         const auto deadline = std::chrono::steady_clock::now()
                        + std::chrono::milliseconds(timeout.response_timeout);
-        while (!state->ready.load()) {
+        while (!state.ready.load()) {
             auto now = std::chrono::steady_clock::now();
             if (now >= deadline) {
                 cancel_call(handle);
@@ -149,14 +151,17 @@ public:
         }
 
         {
-            platform::ScopedLock const lk(state->mtx);
-            return {state->resp->result, state->resp->return_values, std::chrono::milliseconds(0)};
+            platform::ScopedLock const lk(state.mtx);
+            if (!state.resp.has_value()) {
+                return {RpcResult::INTERNAL_ERROR, {}, std::chrono::milliseconds(0)};
+            }
+            return {state.resp->result, state.resp->return_values, std::chrono::milliseconds(0)};
         }
     }
 
     /** @implements REQ_MSG_114, REQ_MSG_114_E01, REQ_MSG_114_E02, REQ_MSG_118, REQ_MSG_118_E01, REQ_MSG_120, REQ_MSG_120_E01 */
     RpcCallHandle call_method_async(uint16_t service_id, MethodId method_id,
-                                    const std::vector<uint8_t>& parameters,
+                                    const platform::ByteBuffer& parameters,
                                     RpcCallback callback,
                                     const RpcTimeout& timeout) {
 
@@ -165,7 +170,7 @@ public:
         }
 
         // Create session for this call
-        const uint16_t session_id = session_manager_->create_session(client_id_);
+        const uint16_t session_id = session_manager_.create_session(client_id_);
 
         // Create request message
         MessageId const msg_id(service_id, method_id);
@@ -183,13 +188,16 @@ public:
         RpcCallHandle handle = 0;
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
+            if (pending_calls_.size() >= pending_calls_.max_size()) {
+                return 0;
+            }
             handle = next_call_handle_++;
             pending_calls_[handle] = std::move(call_info);
         }
 
         // Send request
         const transport::Endpoint server_endpoint("127.0.0.1", 30490); // TODO: Make configurable
-        if (transport_->send_message(request, server_endpoint) != Result::SUCCESS) {
+        if (transport_.send_message(request, server_endpoint) != Result::SUCCESS) {
             platform::ScopedLock const lock(pending_calls_mutex_);
             pending_calls_.erase(handle);
             return 0;
@@ -221,7 +229,7 @@ public:
     }
 
     bool is_ready() const {
-        return running_ && transport_->is_connected();
+        return running_ && transport_.is_connected();
     }
 
     RpcClient::Statistics get_statistics() const {
@@ -286,53 +294,68 @@ private:
     }
 
     uint16_t client_id_;
-    std::unique_ptr<SessionManager> session_manager_;
-    std::shared_ptr<transport::UdpTransport> transport_;
+    SessionManager session_manager_;
+    transport::UdpTransport transport_;
 
-    std::unordered_map<RpcCallHandle, PendingCall> pending_calls_;
+    platform::UnorderedMap<RpcCallHandle, PendingCall, 32> pending_calls_;
     mutable platform::Mutex pending_calls_mutex_;
     std::atomic<RpcCallHandle> next_call_handle_;
     std::atomic<bool> running_;
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(RpcClientImpl) <= SOMEIP_PIMPL_RPCCLIENT_SIZE,
+              "RpcClientImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_RPCCLIENT_SIZE");
+#endif
+
 // RpcClient implementation
 RpcClient::RpcClient(uint16_t client_id)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) RpcClientImpl(client_id);
+}
+#else
     : impl_(std::make_unique<RpcClientImpl>(client_id)) {
 }
+#endif
 
-RpcClient::~RpcClient() = default;
+RpcClient::~RpcClient() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~RpcClientImpl();
+#endif
+}
 
 bool RpcClient::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void RpcClient::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 RpcSyncResult RpcClient::call_method_sync(uint16_t service_id, MethodId method_id,
-                                         const std::vector<uint8_t>& parameters,
+                                         const platform::ByteBuffer& parameters,
                                          const RpcTimeout& timeout) {
-    return impl_->call_method_sync(service_id, method_id, parameters, timeout);
+    return impl()->call_method_sync(service_id, method_id, parameters, timeout);
 }
 
 RpcCallHandle RpcClient::call_method_async(uint16_t service_id, MethodId method_id,
-                                          const std::vector<uint8_t>& parameters,
+                                          const platform::ByteBuffer& parameters,
                                           RpcCallback callback,
                                           const RpcTimeout& timeout) {
-    return impl_->call_method_async(service_id, method_id, parameters, std::move(callback), timeout);
+    return impl()->call_method_async(service_id, method_id, parameters, std::move(callback), timeout);
 }
 
 bool RpcClient::cancel_call(RpcCallHandle handle) {
-    return impl_->cancel_call(handle);
+    return impl()->cancel_call(handle);
 }
 
 bool RpcClient::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 RpcClient::Statistics RpcClient::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
 // NOLINTEND(misc-include-cleaner)

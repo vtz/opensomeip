@@ -15,10 +15,14 @@
 #define SOMEIP_MESSAGE_H
 
 #include "someip/types.h"
+#include "someip/payload_view.h"
 #include "e2e/e2e_header.h"
-#include <vector>
-#include <memory>
+#include "platform/buffer_pool.h"
+#include "platform/intrusive_ptr.h"
+#include <atomic>
 #include <chrono>
+#include <cstring>
+#include <memory>
 #include <optional>
 
 namespace someip {
@@ -91,9 +95,15 @@ public:
     void set_return_code(ReturnCode code) { return_code_ = code; }
 
     // Payload accessors
-    const std::vector<uint8_t>& get_payload() const { return payload_; }
-    void set_payload(const std::vector<uint8_t>& payload) { payload_ = payload; update_length(); }
-    void set_payload(std::vector<uint8_t>&& payload) { payload_ = std::move(payload); update_length(); }
+    const platform::ByteBuffer& get_payload() const { return payload_; }
+    PayloadView payload_view() const { return PayloadView(payload_); }
+    void set_payload(const platform::ByteBuffer& payload) { payload_ = payload; update_length(); }
+    void set_payload(platform::ByteBuffer&& payload) { payload_ = std::move(payload); update_length(); }
+    void set_payload(const uint8_t* data, size_t size) {
+        payload_.resize(size);
+        if (data != nullptr && size > 0) { std::memcpy(payload_.data(), data, size); }
+        update_length();
+    }
 
     // Service and method ID convenience accessors
     uint16_t get_service_id() const { return message_id_.service_id; }
@@ -109,8 +119,9 @@ public:
     void set_session_id(uint16_t session_id) { request_id_.session_id = session_id; }
 
     // Serialization methods
-    std::vector<uint8_t> serialize() const;
-    bool deserialize(const std::vector<uint8_t>& data, bool expect_e2e = false);
+    platform::ByteBuffer serialize() const;
+    bool deserialize(const platform::ByteBuffer& data, bool expect_e2e = false);
+    bool deserialize(const uint8_t* data, size_t size, bool expect_e2e = false);
 
     // Validation methods
     bool is_valid() const;
@@ -163,13 +174,18 @@ private:
     ReturnCode return_code_;         // 1 byte
 
     // Payload
-    std::vector<uint8_t> payload_;
+    platform::ByteBuffer payload_;
 
     // E2E protection header (optional)
     std::optional<e2e::E2EHeader> e2e_header_;
 
     // Metadata
     std::chrono::steady_clock::time_point timestamp_;
+
+    mutable std::atomic<uint16_t> ref_count_{0};
+
+    friend void intrusive_ptr_add_ref(const Message* p);
+    friend void intrusive_ptr_release(const Message* p);
 
     // Constants
     static constexpr size_t HEADER_SIZE = 16;
@@ -183,10 +199,12 @@ private:
     bool validate_payload() const;
 };
 
-// Type aliases for convenience
-using MessagePtr = std::shared_ptr<Message>;
-using MessageConstPtr = std::shared_ptr<const Message>;
+void intrusive_ptr_add_ref(const Message* p);
+void intrusive_ptr_release(const Message* p);
 
-} // namespace someip
+}  // namespace someip
+
+// MessagePtr typedef is backend-specific; resolved by include-path shadowing.
+#include "platform/message_ptr.h"
 
 #endif // SOMEIP_MESSAGE_H

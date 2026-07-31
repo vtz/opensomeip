@@ -17,7 +17,11 @@
 #include "someip/types.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - release_message() resolved via memory_impl.h
+#include "platform/memory.h"
 
+#include <atomic>
+#include <cassert>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -28,7 +32,6 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace someip {
 // NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from platform/byteorder.h -> byteorder_impl.h
@@ -75,7 +78,20 @@ Message::Message(MessageId message_id, RequestId request_id,
     update_length();
 }
 
-Message::Message(const Message& other) = default;
+// std::atomic<uint16_t> ref_count_ is non-copyable, so the copy ctor must be
+// explicit.  A fresh copy always starts with ref_count_ = 0 (value-init).
+Message::Message(const Message& other)
+    : message_id_(other.message_id_),
+      length_(other.length_),
+      request_id_(other.request_id_),
+      protocol_version_(other.protocol_version_),
+      interface_version_(other.interface_version_),
+      message_type_(other.message_type_),
+      return_code_(other.return_code_),
+      payload_(other.payload_),
+      e2e_header_(other.e2e_header_),
+      timestamp_(other.timestamp_) {
+}
 
 Message::Message(Message&& other) noexcept
     : message_id_(other.message_id_),
@@ -141,8 +157,8 @@ Message& Message::operator=(Message&& other) noexcept {
  * @implements REQ_MSG_090, REQ_MSG_091
  * @satisfies feat_req_someip_45
  */
-std::vector<uint8_t> Message::serialize() const {
-    std::vector<uint8_t> data;
+platform::ByteBuffer Message::serialize() const {
+    platform::ByteBuffer data;
     data.reserve(get_total_size());
 
     // Serialize header in big-endian format (network byte order)
@@ -165,7 +181,7 @@ std::vector<uint8_t> Message::serialize() const {
 
     // Insert E2E header after Return Code if present (feat_req_someip_102)
     if (e2e_header_.has_value()) {
-        std::vector<uint8_t> e2e_data = e2e_header_->serialize();
+        platform::ByteBuffer e2e_data = e2e_header_->serialize();
         data.insert(data.end(), e2e_data.begin(), e2e_data.end());
     }
 
@@ -188,7 +204,13 @@ std::vector<uint8_t> Message::serialize() const {
  * @implements REQ_MSG_012_E01, REQ_MSG_014_E01, REQ_MSG_014_E02
  * @satisfies feat_req_someip_45, feat_req_someip_60, feat_req_someip_67
  */
-bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
+bool Message::deserialize(const uint8_t* data_ptr, size_t data_size, bool expect_e2e) {
+    platform::ByteBuffer tmp(data_size);
+    if (data_ptr != nullptr && data_size > 0) { std::memcpy(tmp.data(), data_ptr, data_size); }
+    return deserialize(tmp, expect_e2e);
+}
+
+bool Message::deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
     if (data.size() < MIN_MESSAGE_SIZE) {
         return false;
     }
@@ -273,7 +295,11 @@ bool Message::deserialize(const std::vector<uint8_t>& data, bool expect_e2e) {
     }
 
     // Copy payload
-    payload_.assign(data.begin() + static_cast<std::ptrdiff_t>(offset), data.end());
+    size_t const payload_len = data.size() - offset;
+    payload_.resize(payload_len);
+    if (payload_len > 0) {
+        std::memcpy(payload_.data(), data.data() + offset, payload_len);
+    }
 
     // Update timestamp
     update_timestamp();
@@ -532,6 +558,24 @@ std::string Message::to_string() const {
        << "}";
 
     return ss.str();
+}
+
+// NOLINTEND(misc-include-cleaner)
+
+// NOLINTBEGIN(misc-include-cleaner) - memory_order_* from <atomic>, release_message from memory_impl.h
+
+void intrusive_ptr_add_ref(const Message* p) {
+    if (p != nullptr) {
+        [[maybe_unused]] auto prev =
+            p->ref_count_.fetch_add(1, std::memory_order_relaxed);
+        assert(prev < UINT16_MAX && "ref_count_ saturated — likely a reference leak");
+    }
+}
+
+void intrusive_ptr_release(const Message* p) {
+    if (p != nullptr && p->ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
+        platform::release_message(const_cast<Message*>(p));  // NOLINT(cppcoreguidelines-pro-type-const-cast)
+    }
 }
 
 // NOLINTEND(misc-include-cleaner)

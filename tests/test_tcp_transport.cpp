@@ -15,8 +15,11 @@
 #include <transport/tcp_transport.h>
 #include <transport/transport.h>
 #include <someip/message.h>
+#include <platform/buffer_pool.h>
+#include <platform/containers.h>
 #include <thread>
 #include <chrono>
+#include "static_pool_init.h"
 
 using namespace someip;
 using namespace someip::transport;
@@ -193,11 +196,11 @@ TEST_F(TcpTransportTest, MessageSerialization) {
     // Test that TCP transport properly handles message serialization
     Message original_message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                            MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> test_payload = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer test_payload = {0x01, 0x02, 0x03, 0x04};
     original_message.set_payload(test_payload);
 
     // Serialize message
-    std::vector<uint8_t> serialized = original_message.serialize();
+    platform::ByteBuffer serialized = original_message.serialize();
     ASSERT_EQ(serialized.size(), 20u);  // 16 byte header + 4 byte payload
 
     // Verify serialization contains correct data
@@ -230,10 +233,10 @@ TEST_F(TcpTransportTest, MessageSerialization) {
     // Test that we can create a new message and verify round-trip works
     Message reconstructed_message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                                 MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> payload = {serialized[16], serialized[17], serialized[18], serialized[19]};
+    platform::ByteBuffer payload = {serialized[16], serialized[17], serialized[18], serialized[19]};
     reconstructed_message.set_payload(payload);
 
-    std::vector<uint8_t> re_serialized = reconstructed_message.serialize();
+    platform::ByteBuffer re_serialized = reconstructed_message.serialize();
 
     // Should be identical
     ASSERT_EQ(serialized, re_serialized);
@@ -541,7 +544,7 @@ TEST_F(TcpTransportTest, ZeroLengthMessage) {
     msg.set_service_id(0x1234);
     msg.set_method_id(0x0001);
 
-    std::vector<uint8_t> serialized = msg.serialize();
+    platform::ByteBuffer serialized = msg.serialize();
     EXPECT_FALSE(serialized.empty()) << "Even empty payload has header";
     EXPECT_GE(serialized.size(), 16u) << "Minimum SOME/IP header is 16 bytes";
 }
@@ -562,13 +565,13 @@ TEST_F(TcpTransportTest, ParseSingleCompleteMessage) {
                      MessageType::REQUEST, ReturnCode::E_OK);
     original.set_payload({0x01, 0x02, 0x03, 0x04});
 
-    std::vector<uint8_t> buffer = original.serialize();
+    platform::ByteBuffer buffer = original.serialize();
     MessagePtr parsed;
     ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed));
     ASSERT_NE(parsed, nullptr);
     EXPECT_EQ(parsed->get_service_id(), 0x1234);
     EXPECT_EQ(parsed->get_method_id(), 0x5678);
-    EXPECT_EQ(parsed->get_payload(), (std::vector<uint8_t>{0x01, 0x02, 0x03, 0x04}));
+    EXPECT_EQ(parsed->get_payload(), (platform::ByteBuffer{0x01, 0x02, 0x03, 0x04}));
     EXPECT_TRUE(buffer.empty()) << "Buffer should be consumed";
 }
 
@@ -584,8 +587,8 @@ TEST_F(TcpTransportTest, ParseIncompleteHeaderStaysInBuffer) {
                      MessageType::REQUEST, ReturnCode::E_OK);
     original.set_payload({0x01, 0x02, 0x03});
 
-    std::vector<uint8_t> full = original.serialize();
-    std::vector<uint8_t> buffer(full.begin(), full.begin() + 10);
+    platform::ByteBuffer full = original.serialize();
+    platform::ByteBuffer buffer(full.begin(), full.begin() + 10);
 
     MessagePtr parsed;
     EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed));
@@ -608,7 +611,7 @@ TEST_F(TcpTransportTest, ParseMultipleMessagesInBuffer) {
                  MessageType::REQUEST, ReturnCode::E_OK);
     msg2.set_payload({0xBB, 0xCC});
 
-    std::vector<uint8_t> buffer;
+    platform::ByteBuffer buffer;
     auto s1 = msg1.serialize();
     auto s2 = msg2.serialize();
     buffer.insert(buffer.end(), s1.begin(), s1.end());
@@ -623,7 +626,7 @@ TEST_F(TcpTransportTest, ParseMultipleMessagesInBuffer) {
     ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed2));
     ASSERT_NE(parsed2, nullptr);
     EXPECT_EQ(parsed2->get_service_id(), 0x3333);
-    EXPECT_EQ(parsed2->get_payload(), (std::vector<uint8_t>{0xBB, 0xCC}));
+    EXPECT_EQ(parsed2->get_payload(), (platform::ByteBuffer{0xBB, 0xCC}));
 
     EXPECT_TRUE(buffer.empty());
 }
@@ -647,7 +650,7 @@ TEST_F(TcpTransportTest, ParseCompleteMessagePlusIncompleteTail) {
     auto s1 = msg1.serialize();
     auto s2 = msg2.serialize();
 
-    std::vector<uint8_t> buffer;
+    platform::ByteBuffer buffer;
     buffer.insert(buffer.end(), s1.begin(), s1.end());
     buffer.insert(buffer.end(), s2.begin(), s2.begin() + 8);
 
@@ -674,10 +677,10 @@ TEST_F(TcpTransportTest, ChunkedArrivalReassembly) {
                      MessageType::REQUEST, ReturnCode::E_OK);
     original.set_payload({0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
 
-    std::vector<uint8_t> full = original.serialize();
+    platform::ByteBuffer full = original.serialize();
     ASSERT_EQ(full.size(), 24u);
 
-    std::vector<uint8_t> persistent_buffer;
+    platform::ByteBuffer persistent_buffer;
     MessagePtr parsed;
 
     persistent_buffer.insert(persistent_buffer.end(), full.begin(), full.begin() + 5);
@@ -743,7 +746,7 @@ TEST_F(TcpTransportTest, IsMagicCookieDetection) {
     EXPECT_TRUE(TcpTransport::is_magic_cookie(client_cookie));
     EXPECT_TRUE(TcpTransport::is_magic_cookie(server_cookie));
 
-    std::vector<uint8_t> not_cookie(16, 0x00);
+    platform::ByteBuffer not_cookie(16, 0x00);
     EXPECT_FALSE(TcpTransport::is_magic_cookie(not_cookie));
 }
 
@@ -759,9 +762,9 @@ TEST_F(TcpTransportTest, MagicCookieConsumedByParser) {
     Message msg(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                 MessageType::REQUEST, ReturnCode::E_OK);
     msg.set_payload({0x01, 0x02});
-    std::vector<uint8_t> msg_bytes = msg.serialize();
+    platform::ByteBuffer msg_bytes = msg.serialize();
 
-    std::vector<uint8_t> buffer;
+    platform::ByteBuffer buffer;
     buffer.insert(buffer.end(), cookie.begin(), cookie.end());
     buffer.insert(buffer.end(), msg_bytes.begin(), msg_bytes.end());
 
@@ -804,9 +807,9 @@ TEST_F(TcpTransportTest, MultipleMagicCookiesConsumed) {
     Message msg(MessageId(0xAAAA, 0xBBBB), RequestId(0xCCCC, 0x0001),
                 MessageType::REQUEST, ReturnCode::E_OK);
     msg.set_payload({0xDD});
-    std::vector<uint8_t> msg_bytes = msg.serialize();
+    platform::ByteBuffer msg_bytes = msg.serialize();
 
-    std::vector<uint8_t> buffer;
+    platform::ByteBuffer buffer;
     buffer.insert(buffer.end(), cookie_c.begin(), cookie_c.end());
     buffer.insert(buffer.end(), cookie_s.begin(), cookie_s.end());
     buffer.insert(buffer.end(), msg_bytes.begin(), msg_bytes.end());

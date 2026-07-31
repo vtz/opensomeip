@@ -29,6 +29,7 @@ jobs:
         preset:
           - host-linux
           - host-linux-tests
+          - static-alloc-linux-tests
           - freertos-compile-check
           - threadx-compile-check
     steps:

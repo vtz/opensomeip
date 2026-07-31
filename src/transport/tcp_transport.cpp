@@ -31,11 +31,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
-#include <queue>
-#include <string>
 #include <utility>
-#include <vector>
 
 namespace someip::transport {
 
@@ -89,7 +85,7 @@ Result TcpTransport::send_message(const Message& message, const Endpoint& /*endp
     }
 
     // Serialize message
-    const std::vector<uint8_t> data = message.serialize();
+    const platform::ByteBuffer data = message.serialize();
 
     // Send data
     const Result result = send_data(connection_.socket_fd, data);
@@ -152,10 +148,10 @@ Result TcpTransport::start() {
     running_ = true;
 
     // Start receive thread
-    receive_thread_ = std::make_unique<platform::Thread>(&TcpTransport::receive_loop, this);
+    receive_thread_.emplace(&TcpTransport::receive_loop, this);
 
     // Start connection monitor thread
-    connection_thread_ = std::make_unique<platform::Thread>(&TcpTransport::connection_monitor_loop, this);
+    connection_thread_.emplace(&TcpTransport::connection_monitor_loop, this);
 
     return Result::SUCCESS;
 }
@@ -535,7 +531,7 @@ void TcpTransport::send_periodic_magic_cookie() {
 }
 
 /** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04 */
-Result TcpTransport::send_data(someip_socket_t socket_fd, const std::vector<uint8_t>& data) {
+Result TcpTransport::send_data(someip_socket_t socket_fd, const platform::ByteBuffer& data) {
     size_t total_sent = 0;
     const uint8_t* buffer = data.data();
 
@@ -560,7 +556,7 @@ Result TcpTransport::send_data(someip_socket_t socket_fd, const std::vector<uint
 }
 
 /** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04 */
-Result TcpTransport::receive_data(someip_socket_t socket_fd, std::vector<uint8_t>& data) {
+Result TcpTransport::receive_data(someip_socket_t socket_fd, platform::ByteBuffer& data) {
     // Respect maximum receive buffer size from config
     const size_t max_chunk_size = std::min(static_cast<size_t>(4096), config_.max_receive_buffer - data.size());
     if (max_chunk_size == 0) {
@@ -584,7 +580,7 @@ Result TcpTransport::receive_data(someip_socket_t socket_fd, std::vector<uint8_t
     return Result::SUCCESS;
 }
 
-bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message) {
+bool TcpTransport::parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message) {
     // For TCP, we expect complete messages in the buffer since TCP is stream-oriented
     // but our current implementation receives data in chunks
 
@@ -651,7 +647,7 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
 
     // Extract message data
     const auto msg_end = buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size);
-    const std::vector<uint8_t> message_data(buffer.begin(), msg_end);
+    const platform::ByteBuffer message_data(buffer.begin(), msg_end);
     buffer.erase(buffer.begin(), msg_end);
 
     // Parse message
@@ -660,7 +656,7 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
 }
 
 /** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_025 */
-bool TcpTransport::is_magic_cookie(const std::vector<uint8_t>& data, size_t offset) {
+bool TcpTransport::is_magic_cookie(const platform::ByteBuffer& data, size_t offset) {
     if (offset + SOMEIP_HEADER_SIZE > data.size()) {
         return false;
     }
@@ -675,7 +671,7 @@ bool TcpTransport::is_magic_cookie(const std::vector<uint8_t>& data, size_t offs
            data[offset + 14] == 0xBE && data[offset + 15] == 0xEF;
 }
 
-std::vector<uint8_t> TcpTransport::make_magic_cookie_client() {
+platform::ByteBuffer TcpTransport::make_magic_cookie_client() {
     return {
         0xFF, 0xFF, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x08,
@@ -684,7 +680,7 @@ std::vector<uint8_t> TcpTransport::make_magic_cookie_client() {
     };
 }
 
-std::vector<uint8_t> TcpTransport::make_magic_cookie_server() {
+platform::ByteBuffer TcpTransport::make_magic_cookie_server() {
     return {
         0xFF, 0xFF, 0x80, 0x00,
         0x00, 0x00, 0x00, 0x08,

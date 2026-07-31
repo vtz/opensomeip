@@ -14,12 +14,13 @@
 #ifndef SOMEIP_CORE_SESSION_MANAGER_H
 #define SOMEIP_CORE_SESSION_MANAGER_H
 
+#include "platform/containers.h"
+#include "platform/thread.h"
+
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <memory>
-#include <unordered_map>
-#include "platform/thread.h"
-#include <chrono>
+#include <optional>
 
 namespace someip {
 
@@ -50,7 +51,7 @@ struct Session {
         last_activity = std::chrono::steady_clock::now();
     }
 
-    bool is_expired(std::chrono::seconds timeout) const {
+    bool is_expired(std::chrono::steady_clock::duration timeout) const {
         auto now = std::chrono::steady_clock::now();
         return (now - last_activity) >= timeout;
     }
@@ -85,11 +86,19 @@ public:
     uint16_t create_session(uint16_t client_id);
 
     /**
-     * @brief Get session information
+     * @brief Get session information (thread-safe snapshot)
      * @param session_id The session ID to look up
-     * @return Pointer to session or nullptr if not found
+     * @return Copy of session or nullopt if not found
      */
-    std::shared_ptr<Session> get_session(uint16_t session_id);
+    std::optional<Session> get_session(uint16_t session_id);
+
+    /**
+     * @brief Set session state (thread-safe mutation)
+     * @param session_id The session ID to modify
+     * @param state New state to set
+     * @return true if session exists and state was updated
+     */
+    bool set_session_state(uint16_t session_id, SessionState state);
 
     /**
      * @brief Remove a session
@@ -115,7 +124,7 @@ public:
      * @param timeout Timeout duration for session expiry
      * @return Number of sessions cleaned up
      */
-    size_t cleanup_expired_sessions(std::chrono::seconds timeout);
+    size_t cleanup_expired_sessions(std::chrono::steady_clock::duration timeout);
 
     /**
      * @brief Get the next available session ID
@@ -137,7 +146,7 @@ public:
     SessionManager& operator=(SessionManager&&) = delete;
 
 private:
-    std::unordered_map<uint16_t, std::shared_ptr<Session>> sessions_;
+    platform::UnorderedMap<uint16_t, Session, 256> sessions_;
     mutable platform::Mutex sessions_mutex_;
     uint16_t next_session_id_{1};
 };

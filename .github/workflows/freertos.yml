@@ -258,6 +258,7 @@ jobs:
     name: FreeRTOS Cortex-M4 Renode Tests
     if: inputs.rtos_paths_changed || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       RENODE_VERSION: "1.15.3"
     steps:
@@ -329,10 +330,87 @@ jobs:
           path: /tmp/freertos_renode_junit.xml
           retention-days: 14
 
+  renode-cortexm4-static:
+    name: FreeRTOS Cortex-M4 Renode Tests (Static Alloc)
+    if: inputs.rtos_paths_changed || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RENODE_VERSION: "1.15.3"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-freertos-renode-cortexm4-static-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-freertos-renode-cortexm4-static-
+
+      - name: Cache ARM toolchain apt packages
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          key: apt-arm-toolchain-${{ runner.os }}
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/freertos-cortexm4-renode-static/_deps
+          key: fetchcontent-freertos-renode-static-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-freertos-renode-static-
+
+      - name: Cache Renode
+        id: renode-cache
+        uses: actions/cache@v4
+        with:
+          path: /opt/renode
+          key: renode-${{ env.RENODE_VERSION }}-linux
+
+      - name: Install Renode
+        if: steps.renode-cache.outputs.cache-hit != 'true'
+        run: |
+          wget -q "https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz"
+          sudo mkdir -p /opt/renode
+          sudo tar xzf "renode-${RENODE_VERSION}.linux-portable.tar.gz" -C /opt/renode --strip-components=1
+
+      - name: Add Renode to PATH
+        run: sudo ln -sf /opt/renode/renode /usr/local/bin/renode
+
+      - name: Build & run FreeRTOS static-alloc tests on Renode
+        run: |
+          cmake --preset freertos-cortexm4-renode-static -S "$GITHUB_WORKSPACE" \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build "$GITHUB_WORKSPACE/build/freertos-cortexm4-renode-static" -j"$(nproc)"
+          ./scripts/run_freertos_renode_test.sh \
+            --skip-build \
+            --build-dir build/freertos-cortexm4-renode-static \
+            --timeout 60 \
+            --junit-output /tmp/freertos_renode_static_junit.xml
+
+      - name: Upload Renode test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-freertos-renode-static
+          path: /tmp/freertos_renode_static_junit.xml
+          retention-days: 14
+
   publish-test-results:
     name: Publish Test Results
     runs-on: ubuntu-latest
-    needs: [runtime-tests, memory-checks, renode-cortexm4]
+    needs: [runtime-tests, memory-checks, renode-cortexm4, renode-cortexm4-static]
     if: always()
     permissions:
       checks: write

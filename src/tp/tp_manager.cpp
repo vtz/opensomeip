@@ -13,6 +13,8 @@
 
 #include "tp/tp_manager.h"
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "someip/message.h"
 #include "tp/tp_reassembler.h"
@@ -21,11 +23,7 @@
 
 #include <chrono>
 #include <cstdint>
-#include <functional>
-#include <memory>
-#include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace someip::tp {
 
@@ -36,8 +34,8 @@ namespace someip::tp {
  */
 TpManager::TpManager(const TpConfig& config)
     : config_(config),
-      segmenter_(std::make_unique<TpSegmenter>(config)),
-      reassembler_(std::make_unique<TpReassembler>(config)) {
+      segmenter_(std::in_place, config),
+      reassembler_(std::in_place, config) {
 }
 
 TpManager::~TpManager() = default;
@@ -53,7 +51,7 @@ void TpManager::shutdown() {
 }
 
 bool TpManager::needs_segmentation(const Message& message) const {
-    std::vector<uint8_t> const data = message.serialize();
+    platform::ByteBuffer const data = message.serialize();
     return data.size() > config_.max_segment_size;
 }
 
@@ -78,8 +76,10 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
 
     TpTransfer transfer(transfer_id, message_id);
 
-    // Segment the message
-    std::vector<TpSegment> segments;
+    TpSegmentVector segments;
+    if (!segmenter_) {
+        return TpResult::RESOURCE_EXHAUSTED;
+    }
     TpResult const result = segmenter_->segment_message(message, segments);
 
     if (result != TpResult::SUCCESS) {
@@ -89,6 +89,9 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
     transfer.segments = std::move(segments);
     transfer.state = TpTransferState::SENDING;
 
+    if (active_transfers_.size() >= active_transfers_.max_size()) {
+        return TpResult::RESOURCE_EXHAUSTED;
+    }
     active_transfers_[transfer_id] = std::move(transfer);
     statistics_.messages_segmented++;
 
@@ -129,7 +132,7 @@ TpResult TpManager::get_next_segment(uint32_t transfer_id, TpSegment& segment) {
  * @implements REQ_TP_055, REQ_TP_056, REQ_TP_057
  * @implements REQ_TP_050_E02
  */
-bool TpManager::handle_received_segment(const TpSegment& segment, std::vector<uint8_t>& complete_message) {
+bool TpManager::handle_received_segment(const TpSegment& segment, platform::ByteBuffer& complete_message) {
     // Update statistics
     statistics_.segments_received++;
 
@@ -147,11 +150,13 @@ bool TpManager::handle_received_segment(const TpSegment& segment, std::vector<ui
         return true;
     }
 
-    // Handle multi-segment message
+    if (!reassembler_) {
+        return false;
+    }
     return reassembler_->process_segment(segment, complete_message);
 }
 
-TpResult TpManager::acknowledge_segments(uint32_t transfer_id, const std::vector<uint16_t>& /*segments_acknowledged*/) {
+TpResult TpManager::acknowledge_segments(uint32_t transfer_id, const platform::Vector<uint16_t>& /*segments_acknowledged*/) {
     platform::ScopedLock const lock(transfers_mutex_);
 
     auto it = active_transfers_.find(transfer_id);
@@ -207,7 +212,7 @@ void TpManager::set_message_callback(TpMessageCallback callback) {
 }
 
 void TpManager::process_timeouts() {
-    std::vector<std::pair<uint32_t, TpResult>> timed_out;
+    platform::Vector<std::pair<uint32_t, TpResult>> timed_out;
     TpCompletionCallback cb;
 
     {
@@ -232,7 +237,9 @@ void TpManager::process_timeouts() {
             }
         }
 
-        reassembler_->process_timeouts();
+        if (reassembler_) {
+            reassembler_->process_timeouts();
+        }
         cleanup_completed_transfers();
     }
 
@@ -258,8 +265,12 @@ TpStatistics TpManager::get_statistics() const {
  */
 void TpManager::update_config(const TpConfig& config) {
     config_ = config;
-    segmenter_->update_config(config);
-    reassembler_->update_config(config);
+    if (segmenter_) {
+        segmenter_->update_config(config);
+    }
+    if (reassembler_) {
+        reassembler_->update_config(config);
+    }
 }
 
 void TpManager::cleanup_completed_transfers() {

@@ -170,6 +170,52 @@
         "SOMEIP_THREADX_RENODE_TESTS": "ON",
         "ARM_FLOAT_ABI": "soft"
       }
+    },
+    {
+      "name": "static-alloc-linux-tests",
+      "displayName": "Static Allocation (No-Heap) with Tests",
+      "description": "Host build with static allocation backend and unit tests. Exercises slab pools, ETL containers, malloc trap, and PAL conformance for no-heap lockstep mode.",
+      "inherits": "base",
+      "cacheVariables": {
+        "SOMEIP_USE_STATIC_ALLOC": "ON",
+        "BUILD_TESTS": "ON",
+        "BUILD_EXAMPLES": "OFF"
+      }
+    },
+    {
+      "name": "freertos-cortexm4-renode-static",
+      "displayName": "FreeRTOS Cortex-M4 (Renode STM32F4, Static Alloc)",
+      "description": "Cross-compile FreeRTOS tests for ARM Cortex-M4 with static allocation backend, runnable on Renode STM32F407 simulator. Pool sizes are tuned for the STM32F407's 256 KB SRAM.",
+      "inherits": "freertos-cortexm4-renode",
+      "cacheVariables": {
+        "SOMEIP_USE_STATIC_ALLOC": "ON",
+        "SOMEIP_MESSAGE_POOL_SIZE": "8",
+        "SOMEIP_BYTE_POOL_SMALL_COUNT": "16",
+        "SOMEIP_BYTE_POOL_MEDIUM_COUNT": "16",
+        "SOMEIP_BYTE_POOL_LARGE_COUNT": "8",
+        "SOMEIP_BYTE_POOL_LARGE_SIZE": "4096",
+        "SOMEIP_MAX_TP_SEGMENTS": "16",
+        "SOMEIP_MAX_TP_REASSEMBLY_SIZE": "1500",
+        "SOMEIP_DEFAULT_MAP_CAPACITY": "4",
+        "SOMEIP_FREERTOS_HEAP_SIZE": "40960"
+      }
+    },
+    {
+      "name": "threadx-cortexm4-renode-static",
+      "displayName": "ThreadX Cortex-M4 (Renode STM32F4, Static Alloc)",
+      "description": "Cross-compile ThreadX tests for ARM Cortex-M4 with static allocation backend, runnable on Renode STM32F407 simulator. Pool sizes are tuned for the STM32F407's 256 KB SRAM.",
+      "inherits": "threadx-cortexm4-renode",
+      "cacheVariables": {
+        "SOMEIP_USE_STATIC_ALLOC": "ON",
+        "SOMEIP_MESSAGE_POOL_SIZE": "8",
+        "SOMEIP_BYTE_POOL_SMALL_COUNT": "16",
+        "SOMEIP_BYTE_POOL_MEDIUM_COUNT": "16",
+        "SOMEIP_BYTE_POOL_LARGE_COUNT": "8",
+        "SOMEIP_BYTE_POOL_LARGE_SIZE": "4096",
+        "SOMEIP_MAX_TP_SEGMENTS": "16",
+        "SOMEIP_MAX_TP_REASSEMBLY_SIZE": "1500",
+        "SOMEIP_DEFAULT_MAP_CAPACITY": "4"
+      }
     }
   ],
   "buildPresets": [
@@ -232,6 +278,18 @@
     {
       "name": "threadx-cortexm4-renode",
       "configurePreset": "threadx-cortexm4-renode"
+    },
+    {
+      "name": "static-alloc-linux-tests",
+      "configurePreset": "static-alloc-linux-tests"
+    },
+    {
+      "name": "freertos-cortexm4-renode-static",
+      "configurePreset": "freertos-cortexm4-renode-static"
+    },
+    {
+      "name": "threadx-cortexm4-renode-static",
+      "configurePreset": "threadx-cortexm4-renode-static"
     }
   ],
   "testPresets": [
@@ -282,6 +340,17 @@
     {
       "name": "threadx-linux-tests",
       "configurePreset": "threadx-linux-tests",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "timeout": 30,
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "static-alloc-linux-tests",
+      "configurePreset": "static-alloc-linux-tests",
       "output": {
         "outputOnFailure": true
       },

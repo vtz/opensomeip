@@ -15,11 +15,13 @@
 #define SOMEIP_TRANSPORT_TCP_TRANSPORT_H
 
 #include "transport/transport.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/net.h"
 #include "platform/thread.h"
-#include <cstddef>
 #include <atomic>
-#include <queue>
+#include <cstddef>
+#include <optional>
 
 namespace someip::transport {
 
@@ -41,7 +43,7 @@ struct TcpConnection {
     Endpoint remote_endpoint;
     TcpConnectionState state{TcpConnectionState::DISCONNECTED};
     std::chrono::steady_clock::time_point last_activity{std::chrono::steady_clock::now()};
-    std::vector<uint8_t> receive_buffer;
+    platform::ByteBuffer receive_buffer;
 
     TcpConnection() = default;
 
@@ -193,15 +195,15 @@ public:
      * @param message [out] Parsed message on success
      * @return true if a complete message was extracted
      */
-    bool parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message);
+    bool parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message);
 
     static constexpr size_t SOMEIP_HEADER_SIZE = 16;
     static constexpr size_t MAX_MESSAGE_SIZE = 65535;
 
     /** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_025 */
-    static bool is_magic_cookie(const std::vector<uint8_t>& data, size_t offset = 0);
-    static std::vector<uint8_t> make_magic_cookie_client();
-    static std::vector<uint8_t> make_magic_cookie_server();
+    static bool is_magic_cookie(const platform::ByteBuffer& data, size_t offset = 0);
+    static platform::ByteBuffer make_magic_cookie_client();
+    static platform::ByteBuffer make_magic_cookie_server();
 
 private:
     TcpTransportConfig config_;
@@ -210,12 +212,12 @@ private:
     std::atomic<ITransportListener*> listener_{nullptr};
 
     std::atomic<bool> running_{false};
-    std::unique_ptr<platform::Thread> receive_thread_;
-    std::unique_ptr<platform::Thread> connection_thread_;
+    std::optional<platform::Thread> receive_thread_;
+    std::optional<platform::Thread> connection_thread_;
 
     std::atomic<size_t> active_connections_{0};
 
-    std::queue<std::pair<MessagePtr, Endpoint>> message_queue_;
+    platform::Queue<std::pair<MessagePtr, Endpoint>> message_queue_;
     platform::Mutex queue_mutex_;
     platform::ConditionVariable queue_cv_;
 
@@ -232,8 +234,8 @@ private:
     void receive_loop();
     void connection_monitor_loop();
     void send_periodic_magic_cookie();
-    Result send_data(someip_socket_t socket_fd, const std::vector<uint8_t>& data);
-    Result receive_data(someip_socket_t socket_fd, std::vector<uint8_t>& data);
+    Result send_data(someip_socket_t socket_fd, const platform::ByteBuffer& data);
+    Result receive_data(someip_socket_t socket_fd, platform::ByteBuffer& data);
 
     std::chrono::steady_clock::time_point last_magic_cookie_time_{std::chrono::steady_clock::now()};
 };
