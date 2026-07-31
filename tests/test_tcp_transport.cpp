@@ -901,6 +901,10 @@ TEST_F(TcpTransportTest, ModeSwitchPollingToListenerAndBack) {
     Endpoint server_bind("127.0.0.1", 0);
     ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
     ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    // Use a temporary listener to detect connection establishment
+    TestTcpListener setup_listener;
+    server.set_listener(&setup_listener);
     ASSERT_EQ(server.start(), Result::SUCCESS);
     Endpoint server_ep = server.get_local_endpoint();
 
@@ -909,8 +913,11 @@ TEST_F(TcpTransportTest, ModeSwitchPollingToListenerAndBack) {
     ASSERT_EQ(client.start(), Result::SUCCESS);
     ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
 
-    // Wait for server to see the connection
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ASSERT_TRUE(setup_listener.wait_for_connection_established())
+        << "Server must accept the connection";
+
+    // Remove the setup listener — start in polling mode for phase 1
+    server.set_listener(nullptr);
 
     // --- Phase 1: polling mode (no listener) ---
     {
@@ -1040,8 +1047,9 @@ TEST_F(TcpTransportTest, ListenerCallingDisconnectDoesNotDeadlock) {
         std::atomic<bool>& disconnect_completed_;
     };
 
-    DisconnectOnReceiveListener disconnector(server, callback_fired, disconnect_completed);
-    server.set_listener(&disconnector);
+    // Use a temporary listener for connection establishment
+    TestTcpListener setup_listener;
+    server.set_listener(&setup_listener);
     ASSERT_EQ(server.start(), Result::SUCCESS);
 
     Endpoint server_ep = server.get_local_endpoint();
@@ -1051,7 +1059,12 @@ TEST_F(TcpTransportTest, ListenerCallingDisconnectDoesNotDeadlock) {
     ASSERT_EQ(client.start(), Result::SUCCESS);
     ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    ASSERT_TRUE(setup_listener.wait_for_connection_established())
+        << "Server must accept the connection";
+
+    // Now install the real listener that will call disconnect()
+    DisconnectOnReceiveListener disconnector(server, callback_fired, disconnect_completed);
+    server.set_listener(&disconnector);
 
     Message msg;
     msg.set_service_id(0xDEAD);
