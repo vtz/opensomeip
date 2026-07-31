@@ -68,7 +68,7 @@ implementation, covering modularity, thread safety, and memory management.</p>
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h2>
 <section id="modularity">
 <h3>Modularity<a class="headerlink" href="#modularity" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-bdd4e50d">
+<div class="need_container docutils container" id="SNCB-bd2f113b">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -81,7 +81,7 @@ implementation, covering modularity, thread safety, and memory management.</p>
 <div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
 </span></span></div>
 <div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><span class="needs_dead_link forbidden">feat_req_someip_2</span>, <span class="needs_dead_link forbidden">feat_req_someip_3</span>, <span class="needs_dead_link forbidden">feat_req_someip_4</span>, <span class="needs_dead_link forbidden">feat_req_someip_14</span>, <span class="needs_dead_link forbidden">feat_req_someip_15</span>, <span class="needs_dead_link forbidden">feat_req_someip_697</span></span></span></div>
-<div class="line">satisfied_by: <span class="satisfies"><span><a class="reference internal" href="platform.html#REQ_PAL_MUTEX_LOCK" title="REQ_ARCH_001">REQ_PAL_MUTEX_LOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_UNLOCK" title="REQ_ARCH_001">REQ_PAL_MUTEX_UNLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_TRYLOCK" title="REQ_ARCH_001">REQ_PAL_MUTEX_TRYLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_NONCOPY" title="REQ_ARCH_001">REQ_PAL_MUTEX_NONCOPY</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_WAIT" title="REQ_ARCH_001">REQ_PAL_CV_WAIT</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_WAIT_PRED" title="REQ_ARCH_001">REQ_PAL_CV_WAIT_PRED</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_NOTIFY_ONE" title="REQ_ARCH_001">REQ_PAL_CV_NOTIFY_ONE</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_NOTIFY_ALL" title="REQ_ARCH_001">REQ_PAL_CV_NOTIFY_ALL</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_OWNERSHIP" title="REQ_ARCH_001">REQ_PAL_CV_OWNERSHIP</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_CREATE" title="REQ_ARCH_001">REQ_PAL_THREAD_CREATE</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_JOINABLE" title="REQ_ARCH_001">REQ_PAL_THREAD_JOINABLE</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_JOIN" title="REQ_ARCH_001">REQ_PAL_THREAD_JOIN</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_NONCOPY" title="REQ_ARCH_001">REQ_PAL_THREAD_NONCOPY</a>, <a class="reference internal" href="platform.html#REQ_PAL_LOCK_ACQUIRE" title="REQ_ARCH_001">REQ_PAL_LOCK_ACQUIRE</a>, <a class="reference internal" href="platform.html#REQ_PAL_LOCK_RELEASE" title="REQ_ARCH_001">REQ_PAL_LOCK_RELEASE</a>, <a class="reference internal" href="platform.html#REQ_PAL_LOCK_NONCOPY" title="REQ_ARCH_001">REQ_PAL_LOCK_NONCOPY</a>, <a class="reference internal" href="platform.html#REQ_PAL_SLEEP_DURATION" title="REQ_ARCH_001">REQ_PAL_SLEEP_DURATION</a>, <a class="reference internal" href="platform.html#REQ_PAL_SLEEP_ZERO" title="REQ_ARCH_001">REQ_PAL_SLEEP_ZERO</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_ALLOC" title="REQ_ARCH_001">REQ_PAL_MEM_ALLOC</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_INDEPENDENT" title="REQ_ARCH_001">REQ_PAL_MEM_INDEPENDENT</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_CLOSE" title="REQ_ARCH_001">REQ_PAL_NET_CLOSE</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_SHUTDOWN" title="REQ_ARCH_001">REQ_PAL_NET_SHUTDOWN</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_NONBLOCK" title="REQ_ARCH_001">REQ_PAL_NET_NONBLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_BLOCK" title="REQ_ARCH_001">REQ_PAL_NET_BLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_HTONS" title="REQ_ARCH_001">REQ_PAL_BYTE_HTONS</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_NTOHS" title="REQ_ARCH_001">REQ_PAL_BYTE_NTOHS</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_HTONL" title="REQ_ARCH_001">REQ_PAL_BYTE_HTONL</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_NTOHL" title="REQ_ARCH_001">REQ_PAL_BYTE_NTOHL</a></span></span></div>
+<div class="line">satisfied_by: <span class="satisfies"><span><a class="reference internal" href="platform.html#REQ_PAL_BYTE_HTONL" title="REQ_ARCH_001">REQ_PAL_BYTE_HTONL</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_HTONS" title="REQ_ARCH_001">REQ_PAL_BYTE_HTONS</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_NTOHL" title="REQ_ARCH_001">REQ_PAL_BYTE_NTOHL</a>, <a class="reference internal" href="platform.html#REQ_PAL_BYTE_NTOHS" title="REQ_ARCH_001">REQ_PAL_BYTE_NTOHS</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_NOTIFY_ALL" title="REQ_ARCH_001">REQ_PAL_CV_NOTIFY_ALL</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_NOTIFY_ONE" title="REQ_ARCH_001">REQ_PAL_CV_NOTIFY_ONE</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_OWNERSHIP" title="REQ_ARCH_001">REQ_PAL_CV_OWNERSHIP</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_WAIT" title="REQ_ARCH_001">REQ_PAL_CV_WAIT</a>, <a class="reference internal" href="platform.html#REQ_PAL_CV_WAIT_PRED" title="REQ_ARCH_001">REQ_PAL_CV_WAIT_PRED</a>, <a class="reference internal" href="platform.html#REQ_PAL_LOCK_ACQUIRE" title="REQ_ARCH_001">REQ_PAL_LOCK_ACQUIRE</a>, <a class="reference internal" href="platform.html#REQ_PAL_LOCK_NONCOPY" title="REQ_ARCH_001">REQ_PAL_LOCK_NONCOPY</a>, <a class="reference internal" href="platform.html#REQ_PAL_LOCK_RELEASE" title="REQ_ARCH_001">REQ_PAL_LOCK_RELEASE</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_ALLOC" title="REQ_ARCH_001">REQ_PAL_MEM_ALLOC</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_INDEPENDENT" title="REQ_ARCH_001">REQ_PAL_MEM_INDEPENDENT</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_LOCK" title="REQ_ARCH_001">REQ_PAL_MUTEX_LOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_NONCOPY" title="REQ_ARCH_001">REQ_PAL_MUTEX_NONCOPY</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_TRYLOCK" title="REQ_ARCH_001">REQ_PAL_MUTEX_TRYLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_MUTEX_UNLOCK" title="REQ_ARCH_001">REQ_PAL_MUTEX_UNLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_BLOCK" title="REQ_ARCH_001">REQ_PAL_NET_BLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_CLOSE" title="REQ_ARCH_001">REQ_PAL_NET_CLOSE</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_NONBLOCK" title="REQ_ARCH_001">REQ_PAL_NET_NONBLOCK</a>, <a class="reference internal" href="platform.html#REQ_PAL_NET_SHUTDOWN" title="REQ_ARCH_001">REQ_PAL_NET_SHUTDOWN</a>, <a class="reference internal" href="platform.html#REQ_PAL_SLEEP_DURATION" title="REQ_ARCH_001">REQ_PAL_SLEEP_DURATION</a>, <a class="reference internal" href="platform.html#REQ_PAL_SLEEP_ZERO" title="REQ_ARCH_001">REQ_PAL_SLEEP_ZERO</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_CREATE" title="REQ_ARCH_001">REQ_PAL_THREAD_CREATE</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_JOIN" title="REQ_ARCH_001">REQ_PAL_THREAD_JOIN</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_JOINABLE" title="REQ_ARCH_001">REQ_PAL_THREAD_JOINABLE</a>, <a class="reference internal" href="platform.html#REQ_PAL_THREAD_NONCOPY" title="REQ_ARCH_001">REQ_PAL_THREAD_NONCOPY</a></span></span></div>
 </span></div>
 </div>
 </td>
@@ -111,7 +111,7 @@ and selective deployment.</p>
 </section>
 <section id="thread-safety">
 <h3>Thread Safety<a class="headerlink" href="#thread-safety" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-e571abe7">
+<div class="need_container docutils container" id="SNCB-5a248cba">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -146,7 +146,7 @@ operation without data corruption.</p>
 </section>
 <section id="memory-management">
 <h3>Memory Management<a class="headerlink" href="#memory-management" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-f6620de2">
+<div class="need_container docutils container" id="SNCB-8fb005c1">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_003">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -158,7 +158,7 @@ operation without data corruption.</p>
 <div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
 <div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
 </span></span></div>
-<div class="line"><span><div class="line">satisfied_by: <span class="satisfies"><span><a class="reference internal" href="platform.html#REQ_PAL_MEM_ALLOC" title="REQ_ARCH_003">REQ_PAL_MEM_ALLOC</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_INDEPENDENT" title="REQ_ARCH_003">REQ_PAL_MEM_INDEPENDENT</a></span></span></div>
+<div class="line"><span><div class="line">satisfied_by: <span class="satisfies"><span><a class="reference internal" href="#REQ_ARCH_008" title="REQ_ARCH_003">REQ_ARCH_008</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_ALLOC" title="REQ_ARCH_003">REQ_PAL_MEM_ALLOC</a>, <a class="reference internal" href="platform.html#REQ_PAL_MEM_INDEPENDENT" title="REQ_ARCH_003">REQ_PAL_MEM_INDEPENDENT</a></span></span></div>
 </span></div>
 </div>
 </td>
@@ -182,7 +182,7 @@ aligns with safety-oriented design goals.</p>
 </section>
 <section id="error-handling">
 <h3>Error Handling<a class="headerlink" href="#error-handling" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-801c6032">
+<div class="need_container docutils container" id="SNCB-54242584">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_004">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -217,7 +217,7 @@ and debuggability.</p>
 </section>
 <section id="coding-standards">
 <h3>Coding Standards<a class="headerlink" href="#coding-standards" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-c6d80137">
+<div class="need_container docutils container" id="SNCB-922de4eb">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_005">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -253,7 +253,7 @@ and maintainability.</p>
 </section>
 <section id="build-system">
 <h3>Build System<a class="headerlink" href="#build-system" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-8332fa71">
+<div class="need_container docutils container" id="SNCB-57309a08">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_006">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -287,7 +287,7 @@ and maintainability.</p>
 </section>
 <section id="testing-infrastructure">
 <h3>Testing Infrastructure<a class="headerlink" href="#testing-infrastructure" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-4ef2f579">
+<div class="need_container docutils container" id="SNCB-cb2fc9a1">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_007">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -313,6 +313,39 @@ and maintainability.</p>
 </ul>
 <p><strong>Rationale</strong>: Testing ensures correctness and prevents regressions.</p>
 <p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">tests/</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="static-allocation">
+<h3>Static Allocation<a class="headerlink" href="#static-allocation" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-ca4d45ff">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_ARCH_008">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Static Allocation Policy</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_ARCH_008" title="REQ_ARCH_008">REQ_ARCH_008</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="#REQ_ARCH_003" title="REQ_ARCH_008">REQ_ARCH_003</a></span></span></div>
+<div class="line">satisfied_by: <span class="satisfies"><span><a class="reference internal" href="platform.html#REQ_PAL_BUFPOOL_ACQUIRE" title="REQ_ARCH_008">REQ_PAL_BUFPOOL_ACQUIRE</a>, <a class="reference internal" href="platform.html#REQ_PAL_BUFPOOL_RELEASE" title="REQ_ARCH_008">REQ_PAL_BUFPOOL_RELEASE</a>, <a class="reference internal" href="platform.html#REQ_PAL_BUFPOOL_TIERED" title="REQ_ARCH_008">REQ_PAL_BUFPOOL_TIERED</a>, <a class="reference internal" href="platform.html#REQ_PAL_CONTAINER_CAPACITY_E01" title="REQ_ARCH_008">REQ_PAL_CONTAINER_CAPACITY_E01</a>, <a class="reference internal" href="platform.html#REQ_PAL_CONTAINER_FUNCTION" title="REQ_ARCH_008">REQ_PAL_CONTAINER_FUNCTION</a>, <a class="reference internal" href="platform.html#REQ_PAL_CONTAINER_MAP" title="REQ_ARCH_008">REQ_PAL_CONTAINER_MAP</a>, <a class="reference internal" href="platform.html#REQ_PAL_CONTAINER_QUEUE" title="REQ_ARCH_008">REQ_PAL_CONTAINER_QUEUE</a>, <a class="reference internal" href="platform.html#REQ_PAL_CONTAINER_STRING" title="REQ_ARCH_008">REQ_PAL_CONTAINER_STRING</a>, <a class="reference internal" href="platform.html#REQ_PAL_CONTAINER_VECTOR" title="REQ_ARCH_008">REQ_PAL_CONTAINER_VECTOR</a>, <a class="reference internal" href="platform.html#REQ_PAL_INTRUSIVE_PTR" title="REQ_ARCH_008">REQ_PAL_INTRUSIVE_PTR</a>, <a class="reference internal" href="platform.html#REQ_PAL_NOOP_HEAP_VERIFY" title="REQ_ARCH_008">REQ_PAL_NOOP_HEAP_VERIFY</a>, <a class="reference internal" href="platform.html#REQ_PAL_STATIC_CONFIG" title="REQ_ARCH_008">REQ_PAL_STATIC_CONFIG</a>, <a class="reference internal" href="platform.html#REQ_PLATFORM_STATIC_002" title="REQ_ARCH_008">REQ_PLATFORM_STATIC_002</a>, <a class="reference internal" href="platform.html#REQ_PLATFORM_STATIC_005" title="REQ_ARCH_008">REQ_PLATFORM_STATIC_005</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>When <code class="docutils literal notranslate"><span class="pre">SOMEIP_USE_STATIC_ALLOC</span></code> is enabled, the stack shall not perform
+dynamic memory allocation (heap) at runtime. All buffers, containers, and
+object pools shall use compile-time-sized static storage.</p>
+<p><strong>Rationale</strong>: Freedom from interference per ISO 26262 Part 6 clause 7.4.6;
+WCET determinism per clause 7.4.11.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">CMakeLists.txt</span></code>, <code class="docutils literal notranslate"><span class="pre">include/platform/static/</span></code>,
+<code class="docutils literal notranslate"><span class="pre">src/platform/static/</span></code></p>
 </td>
 </tr>
 </tbody>

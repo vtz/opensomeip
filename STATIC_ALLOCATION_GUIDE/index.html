@@ -12,31 +12,27 @@
         <meta name="author" content="Vinicius Tadeu Zein">
       
       
-        <link rel="canonical" href="https://vtz.github.io/opensomeip/api/serialization/">
+        <link rel="canonical" href="https://vtz.github.io/opensomeip/STATIC_ALLOCATION_GUIDE/">
       
       
-        <link rel="prev" href="../e2e/">
-      
-      
-        <link rel="next" href="../../examples/">
       
       
         
       
       
-      <link rel="icon" href="../../images/favicon.png">
+      <link rel="icon" href="../images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Serialization - OpenSOME/IP</title>
+        <title>STATIC ALLOCATION GUIDE - OpenSOME/IP</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,9 +51,9 @@
       
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -77,15 +73,15 @@
   <meta name="author" content="Vinicius Tadeu Zein">
 
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://vtz.github.io/opensomeip/api/serialization/">
-  <meta property="og:title" content="Serialization">
+  <meta property="og:url" content="https://vtz.github.io/opensomeip/STATIC_ALLOCATION_GUIDE/">
+  <meta property="og:title" content="STATIC ALLOCATION GUIDE">
   <meta property="og:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
   <meta property="og:site_name" content="OpenSOME/IP">
   <meta property="og:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://vtz.github.io/opensomeip/api/serialization/">
-  <meta name="twitter:title" content="Serialization">
+  <meta name="twitter:url" content="https://vtz.github.io/opensomeip/STATIC_ALLOCATION_GUIDE/">
+  <meta name="twitter:title" content="STATIC ALLOCATION GUIDE">
   <meta name="twitter:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
   <meta name="twitter:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
@@ -113,7 +109,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#serialization" class="md-skip">
+        <a href="#static-allocation-integrator-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -129,7 +125,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="OpenSOME/IP" class="md-header__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
+    <a href=".." title="OpenSOME/IP" class="md-header__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 14h14l-1.5-4.5h-11zm12.5 5a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5m-11 0A1.5 1.5 0 0 0 8 17.5 1.5 1.5 0 0 0 6.5 16 1.5 1.5 0 0 0 5 17.5 1.5 1.5 0 0 0 6.5 19M18.92 9 21 15v8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8l2.08-6c.2-.58.77-1 1.42-1h11c.65 0 1.22.42 1.42 1M12 0c2.12 0 4.15.86 5.65 2.35l-1.42 1.42A6.02 6.02 0 0 0 12 2c-1.58 0-3.11.65-4.23 1.77L6.36 2.35A8 8 0 0 1 12 0m0 4c1.06 0 2.07.44 2.82 1.18L13.4 6.6c-.37-.37-.87-.6-1.4-.6-.5 0-1.03.23-1.4.6L9.18 5.18C9.93 4.44 10.94 4 12 4"/></svg>
@@ -149,7 +145,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Serialization
+              STATIC ALLOCATION GUIDE
             
           </span>
         </div>
@@ -256,7 +252,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -277,7 +273,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../getting-started/" class="md-tabs__link">
+        <a href="../getting-started/" class="md-tabs__link">
           
   
   
@@ -297,7 +293,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../project-overview/" class="md-tabs__link">
+        <a href="../project-overview/" class="md-tabs__link">
           
   
   
@@ -317,7 +313,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../gateways/" class="md-tabs__link">
+        <a href="../gateways/" class="md-tabs__link">
           
   
   
@@ -337,7 +333,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../supported-platforms/" class="md-tabs__link">
+        <a href="../supported-platforms/" class="md-tabs__link">
           
   
   
@@ -353,13 +349,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../api/" class="md-tabs__link">
           
   
   
@@ -379,7 +373,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../examples/" class="md-tabs__link">
+        <a href="../examples/" class="md-tabs__link">
           
   
   
@@ -399,7 +393,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-tabs__link">
+        <a href="../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-tabs__link">
           
   
   
@@ -419,7 +413,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../contributing/" class="md-tabs__link">
+        <a href="../contributing/" class="md-tabs__link">
           
   
   
@@ -439,7 +433,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../specification/" class="md-tabs__link">
+        <a href="../specification/" class="md-tabs__link">
           
   
   
@@ -479,7 +473,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="OpenSOME/IP" class="md-nav__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
+    <a href=".." title="OpenSOME/IP" class="md-nav__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 14h14l-1.5-4.5h-11zm12.5 5a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5m-11 0A1.5 1.5 0 0 0 8 17.5 1.5 1.5 0 0 0 6.5 16 1.5 1.5 0 0 0 5 17.5 1.5 1.5 0 0 0 6.5 19M18.92 9 21 15v8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8l2.08-6c.2-.58.77-1 1.42-1h11c.65 0 1.22.42 1.42 1M12 0c2.12 0 4.15.86 5.65 2.35l-1.42 1.42A6.02 6.02 0 0 0 12 2c-1.58 0-3.11.65-4.23 1.77L6.36 2.35A8 8 0 0 1 12 0m0 4c1.06 0 2.07.44 2.82 1.18L13.4 6.6c-.37-.37-.87-.6-1.4-.6-.5 0-1.03.23-1.4.6L9.18 5.18C9.93 4.44 10.94 4 12 4"/></svg>
@@ -509,7 +503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -590,7 +584,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -618,7 +612,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../BUILD/" class="md-nav__link">
+      <a href="../BUILD/" class="md-nav__link">
         
   
   
@@ -646,7 +640,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../INTEGRATION_GUIDE/" class="md-nav__link">
+      <a href="../INTEGRATION_GUIDE/" class="md-nav__link">
         
   
   
@@ -674,7 +668,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../SETUP_GIT_SUBMODULE/" class="md-nav__link">
+      <a href="../SETUP_GIT_SUBMODULE/" class="md-nav__link">
         
   
   
@@ -763,7 +757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../project-overview/" class="md-nav__link">
+      <a href="../project-overview/" class="md-nav__link">
         
   
   
@@ -791,7 +785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/e2e_protection/" class="md-nav__link">
+      <a href="../architecture/e2e_protection/" class="md-nav__link">
         
   
   
@@ -880,7 +874,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/" class="md-nav__link">
+      <a href="../gateways/" class="md-nav__link">
         
   
   
@@ -908,7 +902,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/architecture/" class="md-nav__link">
+      <a href="../gateways/architecture/" class="md-nav__link">
         
   
   
@@ -990,7 +984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/iceoryx2/" class="md-nav__link">
+      <a href="../gateways/iceoryx2/" class="md-nav__link">
         
   
   
@@ -1018,7 +1012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/mqtt/" class="md-nav__link">
+      <a href="../gateways/mqtt/" class="md-nav__link">
         
   
   
@@ -1046,7 +1040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/grpc/" class="md-nav__link">
+      <a href="../gateways/grpc/" class="md-nav__link">
         
   
   
@@ -1136,7 +1130,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/ros2/" class="md-nav__link">
+      <a href="../gateways/ros2/" class="md-nav__link">
         
   
   
@@ -1164,7 +1158,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/zenoh/" class="md-nav__link">
+      <a href="../gateways/zenoh/" class="md-nav__link">
         
   
   
@@ -1192,7 +1186,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/dbus/" class="md-nav__link">
+      <a href="../gateways/dbus/" class="md-nav__link">
         
   
   
@@ -1282,7 +1276,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/dds/" class="md-nav__link">
+      <a href="../gateways/dds/" class="md-nav__link">
         
   
   
@@ -1318,7 +1312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/supported-platforms/" class="md-nav__link">
+      <a href="../gateways/supported-platforms/" class="md-nav__link">
         
   
   
@@ -1346,7 +1340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gateways/contributing/" class="md-nav__link">
+      <a href="../gateways/contributing/" class="md-nav__link">
         
   
   
@@ -1435,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../supported-platforms/" class="md-nav__link">
+      <a href="../supported-platforms/" class="md-nav__link">
         
   
   
@@ -1463,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../ZEPHYR_PORT/" class="md-nav__link">
+      <a href="../ZEPHYR_PORT/" class="md-nav__link">
         
   
   
@@ -1491,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../FREERTOS_PORT/" class="md-nav__link">
+      <a href="../FREERTOS_PORT/" class="md-nav__link">
         
   
   
@@ -1519,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../THREADX_PORT/" class="md-nav__link">
+      <a href="../THREADX_PORT/" class="md-nav__link">
         
   
   
@@ -1547,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../cross-compilation/" class="md-nav__link">
+      <a href="../cross-compilation/" class="md-nav__link">
         
   
   
@@ -1575,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../PLATFORM_RISK_REGISTER/" class="md-nav__link">
+      <a href="../PLATFORM_RISK_REGISTER/" class="md-nav__link">
         
   
   
@@ -1607,31 +1601,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -1649,7 +1640,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1667,7 +1658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../api/" class="md-nav__link">
         
   
   
@@ -1695,7 +1686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../sd/" class="md-nav__link">
+      <a href="../api/sd/" class="md-nav__link">
         
   
   
@@ -1723,7 +1714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../rpc/" class="md-nav__link">
+      <a href="../api/rpc/" class="md-nav__link">
         
   
   
@@ -1751,7 +1742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tp/" class="md-nav__link">
+      <a href="../api/tp/" class="md-nav__link">
         
   
   
@@ -1779,7 +1770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../events/" class="md-nav__link">
+      <a href="../api/events/" class="md-nav__link">
         
   
   
@@ -1807,7 +1798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../e2e/" class="md-nav__link">
+      <a href="../api/e2e/" class="md-nav__link">
         
   
   
@@ -1832,37 +1823,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Serialization
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../api/serialization/" class="md-nav__link">
         
   
   
@@ -1878,48 +1842,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#headers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Headers
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Features
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1993,7 +1915,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/" class="md-nav__link">
+      <a href="../examples/" class="md-nav__link">
         
   
   
@@ -2082,7 +2004,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-nav__link">
+      <a href="../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -2110,7 +2032,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../TEST_PLAN_STATUS/" class="md-nav__link">
+      <a href="../TEST_PLAN_STATUS/" class="md-nav__link">
         
   
   
@@ -2138,7 +2060,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../TEST_REPORTING/" class="md-nav__link">
+      <a href="../TEST_REPORTING/" class="md-nav__link">
         
   
   
@@ -2194,7 +2116,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../CODING_GUIDELINES/" class="md-nav__link">
+      <a href="../CODING_GUIDELINES/" class="md-nav__link">
         
   
   
@@ -2283,7 +2205,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/" class="md-nav__link">
+      <a href="../contributing/" class="md-nav__link">
         
   
   
@@ -2311,7 +2233,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../changelog/" class="md-nav__link">
+      <a href="../changelog/" class="md-nav__link">
         
   
   
@@ -2400,7 +2322,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../specification/" class="md-nav__link">
+      <a href="../specification/" class="md-nav__link">
         
   
   
@@ -2428,7 +2350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../specification/gap-analysis/" class="md-nav__link">
+      <a href="../specification/gap-analysis/" class="md-nav__link">
         
   
   
@@ -2456,7 +2378,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../specification/implementation-report/" class="md-nav__link">
+      <a href="../specification/implementation-report/" class="md-nav__link">
         
   
   
@@ -2484,7 +2406,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../specification/implementation-verification/" class="md-nav__link">
+      <a href="../specification/implementation-verification/" class="md-nav__link">
         
   
   
@@ -2512,7 +2434,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../specification/spec-mapping-report/" class="md-nav__link">
+      <a href="../specification/spec-mapping-report/" class="md-nav__link">
         
   
   
@@ -2540,7 +2462,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../specification/requirements/" class="md-nav__link">
+      <a href="../specification/requirements/" class="md-nav__link">
         
   
   
@@ -2568,7 +2490,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../specification/traceability-matrix/" class="md-nav__link">
+      <a href="../specification/traceability-matrix/" class="md-nav__link">
         
   
   
@@ -2623,10 +2545,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#headers" class="md-nav__link">
+  <a href="#1-initialization-init_static_allocator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Headers
+        1. Initialization — init_static_allocator()
       
     </span>
   </a>
@@ -2634,10 +2556,82 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#2-pool-sizing-defaults-vs-constrained-targets" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        2. Pool Sizing — Defaults vs. Constrained Targets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Pool Sizing — Defaults vs. Constrained Targets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#host-defaults-suitable-for-linux-macos-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host Defaults (suitable for Linux / macOS / Windows)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#renode-stm32f407-256-kb-sram-tunings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Renode / STM32F407 (256 KB SRAM) Tunings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-build-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Build Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-known-heap-allocations-under-static-alloc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Known Heap Allocations Under Static-Alloc
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-thread-safety" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Thread Safety
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-capacity-exhaustion-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Capacity Exhaustion Behavior
       
     </span>
   </a>
@@ -2664,20 +2658,237 @@
   
 
 
-<h1 id="serialization">Serialization<a class="headerlink" href="#serialization" title="Permanent link">&para;</a></h1>
-<p>The serialization module provides SOME/IP data type serialization and deserialization
-with big-endian byte order handling per the SOME/IP specification.</p>
-<h2 id="headers">Headers<a class="headerlink" href="#headers" title="Permanent link">&para;</a></h2>
+<!--
+  Copyright (c) 2025 Vinicius Tadeu Zein
+
+  See the NOTICE file(s) distributed with this work for additional
+  information regarding copyright ownership.
+
+  This program and the accompanying materials are made available under the
+  terms of the Apache License Version 2.0 which is available at
+  https://www.apache.org/licenses/LICENSE-2.0
+
+  SPDX-License-Identifier: Apache-2.0
+-->
+
+<h1 id="static-allocation-integrator-guide">Static Allocation Integrator Guide<a class="headerlink" href="#static-allocation-integrator-guide" title="Permanent link">&para;</a></h1>
+<p>This document describes the contract integrators must follow when building
+OpenSOME/IP with the static allocation backend (<code>SOMEIP_USE_STATIC_ALLOC=ON</code>).</p>
+<h2 id="1-initialization-init_static_allocator">1. Initialization — <code>init_static_allocator()</code><a class="headerlink" href="#1-initialization-init_static_allocator" title="Permanent link">&para;</a></h2>
+<p><strong>You must call <code>someip::platform::init_static_allocator()</code> exactly once
+at system startup, before any call to <code>allocate_message()</code>,
+<code>acquire_buffer()</code>, or any API that internally allocates messages or
+buffers.</strong></p>
+<div class="language-cpp highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;platform/memory.h&quot;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="n">someip</span><span class="o">::</span><span class="n">platform</span><span class="o">::</span><span class="n">init_static_allocator</span><span class="p">();</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="c1">// ... application code ...</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>On FreeRTOS / ThreadX, call it at the beginning of your application task
+(after the scheduler is running), not from a C++ static constructor —
+the mutex backing the pools requires a live RTOS heap.</p>
+<p><code>init_static_allocator()</code> is <strong>idempotent</strong>: calling it more than once is
+safe (subsequent calls are no-ops).  This is useful in test harnesses where
+multiple test environments may each call init.</p>
+<p>In debug builds, calling <code>allocate_message()</code> or <code>acquire_buffer()</code> before
+initialization triggers an assertion failure.</p>
+<h2 id="2-pool-sizing-defaults-vs-constrained-targets">2. Pool Sizing — Defaults vs. Constrained Targets<a class="headerlink" href="#2-pool-sizing-defaults-vs-constrained-targets" title="Permanent link">&para;</a></h2>
+<p>All pool sizes are defined in <code>include/platform/static/static_config.h</code>
+and can be overridden via CMake <code>-D</code> flags or CMakePresets cache variables.</p>
+<h3 id="host-defaults-suitable-for-linux-macos-windows">Host Defaults (suitable for Linux / macOS / Windows)<a class="headerlink" href="#host-defaults-suitable-for-linux-macos-windows" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SOMEIP_MESSAGE_POOL_SIZE</code></td>
+<td>16</td>
+<td>Max concurrent <code>Message</code> objects</td>
+</tr>
+<tr>
+<td><code>SOMEIP_BYTE_POOL_SMALL_COUNT</code></td>
+<td>32</td>
+<td>Small buffer slots (256 B each)</td>
+</tr>
+<tr>
+<td><code>SOMEIP_BYTE_POOL_MEDIUM_COUNT</code></td>
+<td>16</td>
+<td>Medium buffer slots (1500 B each)</td>
+</tr>
+<tr>
+<td><code>SOMEIP_BYTE_POOL_LARGE_COUNT</code></td>
+<td>4</td>
+<td>Large buffer slots (64 KB each)</td>
+</tr>
+<tr>
+<td><code>SOMEIP_BYTE_POOL_LARGE_SIZE</code></td>
+<td>65536</td>
+<td>Large buffer tier size</td>
+</tr>
+<tr>
+<td><code>SOMEIP_MAX_TP_SEGMENTS</code></td>
+<td>64</td>
+<td>Max TP segments per transfer</td>
+</tr>
+<tr>
+<td><code>SOMEIP_MAX_TP_REASSEMBLY_SIZE</code></td>
+<td>2048</td>
+<td>Max TP reassembly byte tracking</td>
+</tr>
+<tr>
+<td><code>SOMEIP_DEFAULT_MAP_CAPACITY</code></td>
+<td>32</td>
+<td>Default <code>UnorderedMap</code> capacity</td>
+</tr>
+<tr>
+<td><code>SOMEIP_DEFAULT_VECTOR_CAPACITY</code></td>
+<td>32</td>
+<td>Default <code>Vector</code> capacity</td>
+</tr>
+<tr>
+<td><code>SOMEIP_DEFAULT_STRING_CAPACITY</code></td>
+<td>64</td>
+<td>Default <code>String</code> capacity</td>
+</tr>
+</tbody>
+</table>
+<h3 id="renode-stm32f407-256-kb-sram-tunings">Renode / STM32F407 (256 KB SRAM) Tunings<a class="headerlink" href="#renode-stm32f407-256-kb-sram-tunings" title="Permanent link">&para;</a></h3>
+<p>The CMakePresets <code>freertos-cortexm4-renode-static</code> and
+<code>threadx-cortexm4-renode-static</code> use reduced values to fit within 256 KB
+SRAM:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Renode Value</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SOMEIP_MESSAGE_POOL_SIZE</code></td>
+<td>8</td>
+<td>Halved to save BSS space</td>
+</tr>
+<tr>
+<td><code>SOMEIP_BYTE_POOL_SMALL_COUNT</code></td>
+<td>16</td>
+<td>Halved</td>
+</tr>
+<tr>
+<td><code>SOMEIP_BYTE_POOL_LARGE_COUNT</code></td>
+<td>8</td>
+<td>Increased count at smaller tier size</td>
+</tr>
+<tr>
+<td><code>SOMEIP_BYTE_POOL_LARGE_SIZE</code></td>
+<td>4096</td>
+<td>Reduced from 64 KB — avoids SRAM overflow</td>
+</tr>
+<tr>
+<td><code>SOMEIP_MAX_TP_SEGMENTS</code></td>
+<td>16</td>
+<td>Reduces per-transfer memory</td>
+</tr>
+<tr>
+<td><code>SOMEIP_MAX_TP_REASSEMBLY_SIZE</code></td>
+<td>1500</td>
+<td>Single-MTU reassembly tracking</td>
+</tr>
+<tr>
+<td><code>SOMEIP_DEFAULT_MAP_CAPACITY</code></td>
+<td>4</td>
+<td>Minimal map buckets</td>
+</tr>
+<tr>
+<td><code>SOMEIP_FREERTOS_HEAP_SIZE</code></td>
+<td>40960</td>
+<td>FreeRTOS heap for RTOS primitives</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Key rule:</strong> the defaults are designed for host builds with generous RAM.
+When targeting MCUs, you <strong>must</strong> tune these values for your SRAM budget.
+Use <code>scripts/static_memory_budget.py</code> to estimate total BSS footprint
+before building.</p>
+<h2 id="3-build-configuration">3. Build Configuration<a class="headerlink" href="#3-build-configuration" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Host static-alloc build</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>cmake<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DSOMEIP_USE_STATIC_ALLOC<span class="o">=</span>ON
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>ctest<span class="w"> </span>--test-dir<span class="w"> </span>build
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Cross-compile for Renode (using presets)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>cmake<span class="w"> </span>--preset<span class="w"> </span>freertos-cortexm4-renode-static
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>cmake<span class="w"> </span>--build<span class="w"> </span>--preset<span class="w"> </span>freertos-cortexm4-renode-static
+</span></code></pre></div>
+<p>When <code>SOMEIP_USE_STATIC_ALLOC=ON</code>:
+- The ETL (Embedded Template Library) submodule is required.
+- <code>BUILD_EXAMPLES</code> is set to <code>OFF</code> in all static presets — examples use
+  STL containers and are not compatible with the static backend.
+- The <code>someip_malloc_trap</code> object library is only built on non-cross-
+  compiling hosts (it requires <code>dlfcn.h</code>).</p>
+<h2 id="4-known-heap-allocations-under-static-alloc">4. Known Heap Allocations Under Static-Alloc<a class="headerlink" href="#4-known-heap-allocations-under-static-alloc" title="Permanent link">&para;</a></h2>
+<p>Even with <code>SOMEIP_USE_STATIC_ALLOC=ON</code>, these locations still use the
+heap intentionally:</p>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Allocation</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>e2e_profiles/standard_profile.cpp</code></td>
+<td><code>std::make_unique&lt;BasicE2EProfile&gt;()</code></td>
+<td>One-time startup registration; occurs before malloc trap is armed</td>
+</tr>
+<tr>
+<td><code>Message::to_string()</code>, <code>Endpoint::to_string()</code></td>
+<td><code>std::string</code> / <code>std::stringstream</code></td>
+<td>Debug / diagnostic only; not on data path</td>
+</tr>
+<tr>
+<td><code>to_string(Result)</code>, <code>to_string(MessageType)</code></td>
+<td><code>std::string</code></td>
+<td>Debug / diagnostic only</td>
+</tr>
+</tbody>
+</table>
+<p>These are not called on the hot path and do not violate the zero-heap
+guarantee for message allocation, serialization, and transport operations.</p>
+<h2 id="5-thread-safety">5. Thread Safety<a class="headerlink" href="#5-thread-safety" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>include/serialization/serializer.h</code></li>
+<li>All pool operations (<code>allocate_message</code>, <code>acquire_buffer</code>,
+  <code>release_message</code>, <code>release_buffer</code>) are mutex-protected and safe to
+  call from multiple threads / tasks.</li>
+<li>The pool mutex is created via placement-new inside
+  <code>init_static_allocator()</code>, not as a file-scope C++ static, to avoid
+  static initialization order issues on bare-metal RTOS targets.</li>
 </ul>
-<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+<h2 id="6-capacity-exhaustion-behavior">6. Capacity Exhaustion Behavior<a class="headerlink" href="#6-capacity-exhaustion-behavior" title="Permanent link">&para;</a></h2>
+<p>When a pool or bounded container is full:</p>
 <ul>
-<li>Big-endian byte order handling</li>
-<li>Array and complex type support</li>
-<li>String serialization</li>
-<li>Buffer management</li>
+<li><code>allocate_message()</code> returns a null <code>MessagePtr</code>.</li>
+<li><code>acquire_buffer()</code> returns <code>nullptr</code>.</li>
+<li><code>ByteBuffer::push_back()</code> / <code>resize()</code> / <code>insert()</code> leave the buffer
+  unchanged when the pool cannot provide a larger slot.</li>
+<li><code>SD add_entry()</code> / <code>add_option()</code> return <code>false</code>.</li>
+<li>Event publisher <code>handle_subscription_locked()</code> returns <code>false</code> if
+  filter count exceeds capacity.</li>
 </ul>
+<p>Callers must check return values.  In debug builds, ETL containers
+trigger the registered ETL error handler on overflow; in production
+builds with <code>ETL_THROW_EXCEPTIONS=0</code>, overflow is a silent no-op by
+default (the custom ETL error handler logs and increments a counter).</p>
 
 
 
@@ -2708,44 +2919,6 @@ with big-endian byte order handling per the SOME/IP specification.</p>
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../e2e/" class="md-footer__link md-footer__link--prev" aria-label="Previous: E2E Protection">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                E2E Protection
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../../examples/" class="md-footer__link md-footer__link--next" aria-label="Next: Overview">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Overview
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
@@ -2788,10 +2961,10 @@ with big-endian byte order handling per the SOME/IP specification.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
