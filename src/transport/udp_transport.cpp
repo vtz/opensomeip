@@ -393,7 +393,7 @@ void UdpTransport::receive_loop() {
                     l->on_message_received(message, sender);
                 } else {
                     platform::ScopedLock const lock(queue_mutex_);
-                    receive_queue_.push({message, sender});
+                    receive_queue_.emplace(message, sender);
                     queue_cv_.notify_one();
                 }
             }
