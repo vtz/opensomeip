@@ -768,3 +768,149 @@ TEST_F(UdpTransportTest, MessageExceedsMtu) {
 
     transport.stop();
 }
+
+/**
+ * @test_case TC_UDP_LISTENER_QUEUE_RETENTION
+ * @brief Listener-only mode must not retain messages in receive_queue_ (issue #269)
+ *
+ * When set_listener() is used without a receive_message() consumer, the internal
+ * queue must remain empty. Before the fix, every received datagram was enqueued
+ * AND dispatched to the listener, causing unbounded queue growth (memory leak on
+ * POSIX, pool exhaustion on FreeRTOS).
+ */
+TEST_F(UdpTransportTest, ListenerOnlyDoesNotRetainQueueMessages) {
+    config.blocking = true;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    TestUdpListener receiver_listener;
+
+    sender.set_listener(&sender_listener);
+    receiver.set_listener(&receiver_listener);
+
+    EXPECT_EQ(sender.start(), Result::SUCCESS);
+    EXPECT_EQ(receiver.start(), Result::SUCCESS);
+
+    Endpoint receiver_endpoint = receiver.get_local_endpoint();
+
+    constexpr int NUM_MESSAGES = 5;
+    for (int i = 0; i < NUM_MESSAGES; ++i) {
+        Message message;
+        message.set_service_id(0x1234);
+        message.set_method_id(0x5678);
+        message.set_client_id(0x9ABC);
+        message.set_session_id(static_cast<uint16_t>(i + 1));
+        message.set_protocol_version(1);
+        message.set_interface_version(1);
+        message.set_message_type(MessageType::REQUEST);
+        message.set_return_code(ReturnCode::E_OK);
+
+        platform::ByteBuffer payload = {static_cast<uint8_t>(i)};
+        message.set_payload(payload);
+
+        EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    ASSERT_EQ(receiver_listener.received_messages_.size(), NUM_MESSAGES)
+        << "Listener should have received all messages";
+
+    MessagePtr queued = receiver.receive_message();
+    EXPECT_EQ(queued, nullptr)
+        << "receive_queue_ must be empty in listener-only mode (issue #269)";
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_POLLING_STILL_WORKS
+ * @brief Polling mode (no listener) must still deliver messages via receive_message()
+ */
+TEST_F(UdpTransportTest, PollingModeWithoutListenerWorks) {
+    config.blocking = true;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    sender.set_listener(&sender_listener);
+
+    EXPECT_EQ(sender.start(), Result::SUCCESS);
+    EXPECT_EQ(receiver.start(), Result::SUCCESS);
+
+    Endpoint receiver_endpoint = receiver.get_local_endpoint();
+
+    Message message;
+    message.set_service_id(0x1234);
+    message.set_method_id(0x5678);
+    message.set_client_id(0x9ABC);
+    message.set_session_id(0x0001);
+    message.set_protocol_version(1);
+    message.set_interface_version(1);
+    message.set_message_type(MessageType::REQUEST);
+    message.set_return_code(ReturnCode::E_OK);
+
+    platform::ByteBuffer payload = {0x01, 0x02, 0x03};
+    message.set_payload(payload);
+
+    EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    MessagePtr received = receiver.receive_message();
+    ASSERT_NE(received, nullptr)
+        << "Polling mode must still enqueue messages when no listener is set";
+    EXPECT_EQ(received->get_service_id(), 0x1234);
+    EXPECT_EQ(received->get_session_id(), 0x0001);
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_RECEIVE_WITH_SENDER
+ * @brief receive_message_with_sender() exposes the sender endpoint in polling mode
+ */
+TEST_F(UdpTransportTest, ReceiveMessageWithSenderEndpoint) {
+    config.blocking = true;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    sender.set_listener(&sender_listener);
+
+    EXPECT_EQ(sender.start(), Result::SUCCESS);
+    EXPECT_EQ(receiver.start(), Result::SUCCESS);
+
+    Endpoint sender_endpoint = sender.get_local_endpoint();
+    Endpoint receiver_endpoint = receiver.get_local_endpoint();
+
+    Message message;
+    message.set_service_id(0xAAAA);
+    message.set_method_id(0xBBBB);
+    message.set_client_id(0xCCCC);
+    message.set_session_id(0x0001);
+    message.set_protocol_version(1);
+    message.set_interface_version(1);
+    message.set_message_type(MessageType::REQUEST);
+    message.set_return_code(ReturnCode::E_OK);
+
+    platform::ByteBuffer payload = {0x10, 0x20};
+    message.set_payload(payload);
+
+    EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    Endpoint actual_sender;
+    MessagePtr received = receiver.receive_message_with_sender(actual_sender);
+    ASSERT_NE(received, nullptr);
+    EXPECT_EQ(received->get_service_id(), 0xAAAA);
+    EXPECT_EQ(actual_sender.get_address(), sender_endpoint.get_address());
+    EXPECT_EQ(actual_sender.get_port(), sender_endpoint.get_port());
+
+    sender.stop();
+    receiver.stop();
+}

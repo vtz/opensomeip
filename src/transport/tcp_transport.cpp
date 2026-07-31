@@ -458,14 +458,14 @@ void TcpTransport::receive_loop() {
                     break;
                 }
 
-                {
-                    platform::ScopedLock const q_lock(queue_mutex_);
-                    message_queue_.emplace(message, connection_.remote_endpoint);
-                }
                 connection_.update_activity();
 
-                if (auto* l = listener_.load(std::memory_order_acquire)) {
+                auto* l = listener_.load(std::memory_order_acquire);
+                if (l != nullptr) {
                     l->on_message_received(message, connection_.remote_endpoint);
+                } else {
+                    platform::ScopedLock const q_lock(queue_mutex_);
+                    message_queue_.emplace(message, connection_.remote_endpoint);
                 }
             }
         } else if (result != Result::SUCCESS) {
