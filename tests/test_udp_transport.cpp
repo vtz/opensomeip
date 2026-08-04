@@ -111,6 +111,11 @@ public:
         });
     }
 
+    std::vector<std::pair<MessagePtr, Endpoint>> get_received_messages() {
+        std::scoped_lock lock(mutex_);
+        return received_messages_;
+    }
+
     void reset() {
         std::scoped_lock lock(mutex_);
         received_messages_.clear();
@@ -990,7 +995,10 @@ TEST_F(UdpTransportTest, ModeSwitchPollingToListenerAndBack) {
 
     ASSERT_TRUE(receiver_listener.wait_for_messages(1))
         << "Phase 2: listener must receive the message";
-    EXPECT_EQ(receiver_listener.received_messages_[0].first->get_service_id(), 0x2222);
+    {
+        auto msgs = receiver_listener.get_received_messages();
+        EXPECT_EQ(msgs[0].first->get_service_id(), 0x2222);
+    }
 
     MessagePtr stale = receiver.receive_message();
     EXPECT_EQ(stale, nullptr) << "Phase 2: queue must be empty for new listener traffic";
