@@ -93,8 +93,10 @@ public:
      * @brief Receive a message from the internal queue (non-blocking, polling mode)
      *
      * Only returns messages when no listener is installed via set_listener().
-     * In listener mode, all incoming messages are dispatched through
-     * ITransportListener::on_message_received and this method returns nullptr.
+     * In listener mode, new incoming messages are dispatched through
+     * ITransportListener::on_message_received and are not enqueued.
+     * Messages that were already queued before a listener was installed
+     * remain drainable via this method until the queue is empty.
      *
      * @return Received message or nullptr if no message available
      * @see set_listener()
@@ -140,6 +142,11 @@ public:
      *   listener.
      * - Clearing the listener (passing nullptr) restores polling mode
      *   for subsequent messages.
+     *
+     * @note The transport stores a non-owning raw pointer. The caller
+     *       must keep the listener alive until either set_listener(nullptr)
+     *       is called and all in-flight on_message_received() callbacks
+     *       have returned, or the transport is stopped and destroyed.
      *
      * @param listener The listener to receive events, or nullptr to
      *                 restore polling mode

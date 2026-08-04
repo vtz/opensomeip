@@ -38,8 +38,8 @@
 
 - UDP/TCP: listener-only mode no longer retains `MessagePtr` in the
   internal queue, preventing memory leaks and pool exhaustion (#269).
-- TCP: listener callback is now invoked outside `connection_mutex_`,
-  eliminating a potential deadlock when the listener calls
+- TCP: `on_message_received()` is now invoked outside `connection_mutex_`,
+  eliminating a potential deadlock when the callback calls
   `disconnect()`.
 
 ## Unreleased — Static Allocation Backend (`feature/no-heap-static-alloc`)

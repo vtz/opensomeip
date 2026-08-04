@@ -1021,7 +1021,10 @@ TEST_F(UdpTransportTest, ModeSwitchPollingToListenerAndBack) {
  * @brief Messages already queued before listener installation remain drainable via polling
  *
  * Verifies that installing a listener does not discard or redirect messages
- * that are already sitting in receive_queue_.
+ * that are already sitting in receive_queue_.  Two messages are sent before
+ * the listener is installed; the first is polled to confirm the receive path
+ * is active, leaving the second in the queue.  After listener installation
+ * the pre-existing message must still be returned by receive_message().
  */
 TEST_F(UdpTransportTest, QueuedMessagesPreservedWhenListenerInstalled) {
     config.blocking = true;
@@ -1036,35 +1039,62 @@ TEST_F(UdpTransportTest, QueuedMessagesPreservedWhenListenerInstalled) {
 
     Endpoint receiver_endpoint = receiver.get_local_endpoint();
 
-    Message msg;
-    msg.set_service_id(0xBEEF);
-    msg.set_method_id(0x0001);
-    msg.set_client_id(0x0001);
-    msg.set_session_id(0x0001);
-    msg.set_protocol_version(1);
-    msg.set_interface_version(1);
-    msg.set_message_type(MessageType::REQUEST);
-    msg.set_return_code(ReturnCode::E_OK);
+    auto make_msg = [](uint16_t service_id, uint16_t session_id) {
+        Message m;
+        m.set_service_id(service_id);
+        m.set_method_id(0x0001);
+        m.set_client_id(0x0001);
+        m.set_session_id(session_id);
+        m.set_protocol_version(1);
+        m.set_interface_version(1);
+        m.set_message_type(MessageType::REQUEST);
+        m.set_return_code(ReturnCode::E_OK);
+        return m;
+    };
 
-    EXPECT_EQ(sender.send_message(msg, receiver_endpoint), Result::SUCCESS);
+    // Send two messages while no listener is installed (both should be queued)
+    Message msg1 = make_msg(0xBEEF, 0x0001);
+    Message msg2 = make_msg(0xCAFE, 0x0002);
+    EXPECT_EQ(sender.send_message(msg1, receiver_endpoint), Result::SUCCESS);
+    EXPECT_EQ(sender.send_message(msg2, receiver_endpoint), Result::SUCCESS);
 
-    // Wait for it to be enqueued (no listener yet)
-    MessagePtr polled;
-    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
-    while (std::chrono::steady_clock::now() < deadline) {
-        polled = receiver.receive_message();
-        if (polled) { break; }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-    ASSERT_NE(polled, nullptr) << "Message should arrive before listener is set";
-    EXPECT_EQ(polled->get_service_id(), 0xBEEF);
+    // Poll msg1 to confirm the receive path is active; msg2 should also
+    // be enqueued by the time msg1 arrives (or shortly after).
+    auto poll_until = [&]() -> MessagePtr {
+        const auto dl = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+        while (std::chrono::steady_clock::now() < dl) {
+            MessagePtr m = receiver.receive_message();
+            if (m) { return m; }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        return nullptr;
+    };
 
-    // Now install a listener — the already-drained queue should not cause issues
+    MessagePtr polled1 = poll_until();
+    ASSERT_NE(polled1, nullptr) << "First message must arrive in polling mode";
+    EXPECT_EQ(polled1->get_service_id(), 0xBEEF);
+
+    // Brief wait to let the receive loop process msg2 into the queue
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Install listener — msg2 is already queued and must survive
     TestUdpListener receiver_listener;
     receiver.set_listener(&receiver_listener);
 
-    MessagePtr empty = receiver.receive_message();
-    EXPECT_EQ(empty, nullptr) << "Queue should already be empty after draining";
+    // Pre-existing queued message must still be drainable via polling
+    MessagePtr polled2 = receiver.receive_message();
+    ASSERT_NE(polled2, nullptr) << "Pre-existing queued message must survive listener installation";
+    EXPECT_EQ(polled2->get_service_id(), 0xCAFE);
+
+    // New traffic must go to the listener, not the queue
+    Message msg3 = make_msg(0xFACE, 0x0003);
+    EXPECT_EQ(sender.send_message(msg3, receiver_endpoint), Result::SUCCESS);
+    ASSERT_TRUE(receiver_listener.wait_for_messages(1))
+        << "New message must go to listener after installation";
+    {
+        auto msgs = receiver_listener.get_received_messages();
+        EXPECT_EQ(msgs[0].first->get_service_id(), 0xFACE);
+    }
 
     sender.stop();
     receiver.stop();

@@ -115,6 +115,7 @@ public:
      * @brief Receive a message from the internal queue (non-blocking, polling mode)
      *
      * Only returns messages when no listener is installed via set_listener().
+     * Messages queued before listener installation remain drainable.
      *
      * @return Received message or nullptr if no message available
      * @see set_listener()
