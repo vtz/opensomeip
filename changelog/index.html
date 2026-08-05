@@ -2302,15 +2302,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased-static-allocation-backend-featureno-heap-static-alloc" class="md-nav__link">
+  <a href="#unreleased" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Unreleased — Static Allocation Backend (feature/no-heap-static-alloc)
+        Unreleased
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Unreleased — Static Allocation Backend (feature/no-heap-static-alloc)">
+    <nav class="md-nav" aria-label="Unreleased">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2337,6 +2337,56 @@
         
           <li class="md-nav__item">
   <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased-static-allocation-backend-featureno-heap-static-alloc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased — Static Allocation Backend (feature/no-heap-static-alloc)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unreleased — Static Allocation Backend (feature/no-heap-static-alloc)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Bug Fixes
@@ -2662,15 +2712,15 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#unreleased-static-allocation-backend-featureno-heap-static-alloc" class="md-nav__link">
+  <a href="#unreleased" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Unreleased — Static Allocation Backend (feature/no-heap-static-alloc)
+        Unreleased
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Unreleased — Static Allocation Backend (feature/no-heap-static-alloc)">
+    <nav class="md-nav" aria-label="Unreleased">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2697,6 +2747,56 @@
         
           <li class="md-nav__item">
   <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased-static-allocation-backend-featureno-heap-static-alloc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unreleased — Static Allocation Backend (feature/no-heap-static-alloc)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unreleased — Static Allocation Backend (feature/no-heap-static-alloc)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#new-features_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Features
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bug-fixes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Bug Fixes
@@ -2743,8 +2843,36 @@
 
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
-<h2 id="unreleased-static-allocation-backend-featureno-heap-static-alloc">Unreleased — Static Allocation Backend (<code>feature/no-heap-static-alloc</code>)<a class="headerlink" href="#unreleased-static-allocation-backend-featureno-heap-static-alloc" title="Permanent link">&para;</a></h2>
+<h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Transport receive model: listener and polling are now mutually
+  exclusive.</strong>  When <code>set_listener()</code> is installed, incoming messages are
+  dispatched only via <code>ITransportListener::on_message_received()</code> and are
+  <strong>no longer enqueued</strong> into the internal receive queue.
+  <code>receive_message()</code> returns <code>nullptr</code> in listener mode.  Previously,
+  messages were both enqueued and dispatched, causing unbounded queue
+  growth — memory leaks on POSIX or fixed-pool exhaustion on FreeRTOS
+  (<a href="https://github.com/vtz/opensomeip/issues/269">#269</a>).
+  Code that relied on draining <code>receive_message()</code> while a listener was
+  set must be updated to consume messages exclusively through one path.</li>
+</ul>
+<h3 id="new-features">New Features<a class="headerlink" href="#new-features" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>UdpTransport::receive_message_with_sender(Endpoint&amp; sender)</code> — polling
+  mode variant that also returns the sender's endpoint for reply
+  addressing without requiring a listener.</li>
+</ul>
+<h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
+<ul>
+<li>UDP/TCP: listener-only mode no longer retains <code>MessagePtr</code> in the
+  internal queue, preventing memory leaks and pool exhaustion (#269).</li>
+<li>TCP: <code>on_message_received()</code> is now invoked outside <code>connection_mutex_</code>,
+  eliminating a potential deadlock when the callback calls
+  <code>disconnect()</code>.</li>
+</ul>
+<h2 id="unreleased-static-allocation-backend-featureno-heap-static-alloc">Unreleased — Static Allocation Backend (<code>feature/no-heap-static-alloc</code>)<a class="headerlink" href="#unreleased-static-allocation-backend-featureno-heap-static-alloc" title="Permanent link">&para;</a></h2>
+<h3 id="breaking-changes_1">Breaking Changes<a class="headerlink" href="#breaking-changes_1" title="Permanent link">&para;</a></h3>
 <p>This release introduces a compile-time static allocation backend.  When
 <code>SOMEIP_USE_STATIC_ALLOC=ON</code>, the following public types change their
 underlying representation:</p>
@@ -2798,7 +2926,7 @@ underlying representation:</p>
   calls <code>shared_ptr</code>-specific APIs (e.g. <code>use_count()</code>, <code>weak_ptr</code>)
   will not compile.  Use <code>MessagePtr</code> opaquely.</li>
 </ul>
-<h3 id="new-features">New Features<a class="headerlink" href="#new-features" title="Permanent link">&para;</a></h3>
+<h3 id="new-features_1">New Features<a class="headerlink" href="#new-features_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong><code>PayloadView</code></strong> — non-owning, span-like view over contiguous payload
   bytes.  Works identically across dynamic and static backends.
@@ -2813,7 +2941,7 @@ underlying representation:</p>
 <li><strong>SD capacity-aware contracts</strong> — <code>add_entry()</code> / <code>add_option()</code> return
   <code>bool</code>; <code>deserialize()</code> rejects messages that exceed container capacity.</li>
 </ul>
-<h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
+<h3 id="bug-fixes_1">Bug Fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li>SD client: reserve local tracking map slot <strong>before</strong> sending network
   traffic in <code>find_service()</code> and <code>subscribe_eventgroup()</code>.  Previously,
