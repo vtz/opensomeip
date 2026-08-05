@@ -405,7 +405,7 @@ void TcpTransport::disconnect_internal() {
 }
 
 /** @implements REQ_TRANSPORT_024 */
-void TcpTransport::deliver_or_enqueue(MessagePtr message, const Endpoint& sender) {
+void TcpTransport::deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender) {
     auto* l = listener_.load(std::memory_order_acquire);
     if (l != nullptr) {
         l->on_message_received(message, sender);
