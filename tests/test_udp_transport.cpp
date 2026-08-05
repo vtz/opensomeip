@@ -103,6 +103,19 @@ public:
         return cv_.wait_for(lock, timeout, [this]() { return error_count_ > 0; });
     }
 
+    bool wait_for_messages(size_t expected_count,
+                           std::chrono::milliseconds timeout = std::chrono::milliseconds(1000)) {
+        std::unique_lock lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this, expected_count]() {
+            return received_messages_.size() >= expected_count;
+        });
+    }
+
+    std::vector<std::pair<MessagePtr, Endpoint>> get_received_messages() {
+        std::scoped_lock lock(mutex_);
+        return received_messages_;
+    }
+
     void reset() {
         std::scoped_lock lock(mutex_);
         received_messages_.clear();
@@ -767,4 +780,325 @@ TEST_F(UdpTransportTest, MessageExceedsMtu) {
     EXPECT_NE(result, Result::SUCCESS) << "Message exceeding UDP max payload should be rejected";
 
     transport.stop();
+}
+
+/**
+ * @test_case TC_UDP_LISTENER_QUEUE_RETENTION
+ * @brief Listener-only mode must not retain messages in receive_queue_ (issue #269)
+ *
+ * When set_listener() is used without a receive_message() consumer, the internal
+ * queue must remain empty. Before the fix, every received datagram was enqueued
+ * AND dispatched to the listener, causing unbounded queue growth (memory leak on
+ * POSIX, pool exhaustion on FreeRTOS).
+ */
+TEST_F(UdpTransportTest, ListenerOnlyDoesNotRetainQueueMessages) {
+    config.blocking = true;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    TestUdpListener receiver_listener;
+
+    sender.set_listener(&sender_listener);
+    receiver.set_listener(&receiver_listener);
+
+    EXPECT_EQ(sender.start(), Result::SUCCESS);
+    EXPECT_EQ(receiver.start(), Result::SUCCESS);
+
+    Endpoint receiver_endpoint = receiver.get_local_endpoint();
+
+    constexpr int NUM_MESSAGES = 5;
+    for (int i = 0; i < NUM_MESSAGES; ++i) {
+        Message message;
+        message.set_service_id(0x1234);
+        message.set_method_id(0x5678);
+        message.set_client_id(0x9ABC);
+        message.set_session_id(static_cast<uint16_t>(i + 1));
+        message.set_protocol_version(1);
+        message.set_interface_version(1);
+        message.set_message_type(MessageType::REQUEST);
+        message.set_return_code(ReturnCode::E_OK);
+
+        platform::ByteBuffer payload = {static_cast<uint8_t>(i)};
+        message.set_payload(payload);
+
+        EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
+    }
+
+    ASSERT_TRUE(receiver_listener.wait_for_messages(NUM_MESSAGES))
+        << "Listener should have received all messages";
+
+    MessagePtr queued = receiver.receive_message();
+    EXPECT_EQ(queued, nullptr)
+        << "receive_queue_ must be empty in listener-only mode (issue #269)";
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_POLLING_STILL_WORKS
+ * @brief Polling mode (no listener) must still deliver messages via receive_message()
+ */
+TEST_F(UdpTransportTest, PollingModeWithoutListenerWorks) {
+    config.blocking = true;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    sender.set_listener(&sender_listener);
+
+    EXPECT_EQ(sender.start(), Result::SUCCESS);
+    EXPECT_EQ(receiver.start(), Result::SUCCESS);
+
+    Endpoint receiver_endpoint = receiver.get_local_endpoint();
+
+    Message message;
+    message.set_service_id(0x1234);
+    message.set_method_id(0x5678);
+    message.set_client_id(0x9ABC);
+    message.set_session_id(0x0001);
+    message.set_protocol_version(1);
+    message.set_interface_version(1);
+    message.set_message_type(MessageType::REQUEST);
+    message.set_return_code(ReturnCode::E_OK);
+
+    platform::ByteBuffer payload = {0x01, 0x02, 0x03};
+    message.set_payload(payload);
+
+    EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
+
+    MessagePtr received;
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (std::chrono::steady_clock::now() < deadline) {
+        received = receiver.receive_message();
+        if (received) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    ASSERT_NE(received, nullptr)
+        << "Polling mode must still enqueue messages when no listener is set";
+    EXPECT_EQ(received->get_service_id(), 0x1234);
+    EXPECT_EQ(received->get_session_id(), 0x0001);
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_RECEIVE_WITH_SENDER
+ * @brief receive_message_with_sender() exposes the sender endpoint in polling mode
+ */
+TEST_F(UdpTransportTest, ReceiveMessageWithSenderEndpoint) {
+    config.blocking = true;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    sender.set_listener(&sender_listener);
+
+    EXPECT_EQ(sender.start(), Result::SUCCESS);
+    EXPECT_EQ(receiver.start(), Result::SUCCESS);
+
+    Endpoint sender_endpoint = sender.get_local_endpoint();
+    Endpoint receiver_endpoint = receiver.get_local_endpoint();
+
+    Message message;
+    message.set_service_id(0xAAAA);
+    message.set_method_id(0xBBBB);
+    message.set_client_id(0xCCCC);
+    message.set_session_id(0x0001);
+    message.set_protocol_version(1);
+    message.set_interface_version(1);
+    message.set_message_type(MessageType::REQUEST);
+    message.set_return_code(ReturnCode::E_OK);
+
+    platform::ByteBuffer payload = {0x10, 0x20};
+    message.set_payload(payload);
+
+    EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
+
+    Endpoint actual_sender;
+    MessagePtr received;
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (std::chrono::steady_clock::now() < deadline) {
+        received = receiver.receive_message_with_sender(actual_sender);
+        if (received) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    ASSERT_NE(received, nullptr);
+    EXPECT_EQ(received->get_service_id(), 0xAAAA);
+    EXPECT_EQ(actual_sender.get_address(), sender_endpoint.get_address());
+    EXPECT_EQ(actual_sender.get_port(), sender_endpoint.get_port());
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_MODE_SWITCH
+ * @brief Messages route correctly across no-listener → listener → cleared-listener transitions
+ *
+ * Phase 1: No listener set — messages are enqueued for polling.
+ * Phase 2: Listener installed — new messages go to listener only; queue empty for new traffic.
+ *          Already-queued messages from phase 1 remain drainable via polling.
+ * Phase 3: Listener cleared — messages enqueue again for polling.
+ */
+TEST_F(UdpTransportTest, ModeSwitchPollingToListenerAndBack) {
+    config.blocking = true;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    sender.set_listener(&sender_listener);
+
+    EXPECT_EQ(sender.start(), Result::SUCCESS);
+    EXPECT_EQ(receiver.start(), Result::SUCCESS);
+
+    Endpoint receiver_endpoint = receiver.get_local_endpoint();
+
+    auto send_msg = [&](uint16_t service_id, uint16_t session_id) {
+        Message message;
+        message.set_service_id(service_id);
+        message.set_method_id(0x0001);
+        message.set_client_id(0x0001);
+        message.set_session_id(session_id);
+        message.set_protocol_version(1);
+        message.set_interface_version(1);
+        message.set_message_type(MessageType::REQUEST);
+        message.set_return_code(ReturnCode::E_OK);
+        EXPECT_EQ(sender.send_message(message, receiver_endpoint), Result::SUCCESS);
+    };
+
+    auto poll_until = [&](std::chrono::milliseconds timeout = std::chrono::milliseconds(2000)) -> MessagePtr {
+        MessagePtr received;
+        const auto deadline = std::chrono::steady_clock::now() + timeout;
+        while (std::chrono::steady_clock::now() < deadline) {
+            received = receiver.receive_message();
+            if (received) { return received; }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        return nullptr;
+    };
+
+    // --- Phase 1: polling mode (no listener on receiver) ---
+    send_msg(0x1111, 0x0001);
+
+    MessagePtr polled = poll_until();
+    ASSERT_NE(polled, nullptr) << "Phase 1: polling must receive the message";
+    EXPECT_EQ(polled->get_service_id(), 0x1111);
+
+    // --- Phase 2: install listener ---
+    TestUdpListener receiver_listener;
+    receiver.set_listener(&receiver_listener);
+
+    send_msg(0x2222, 0x0002);
+
+    ASSERT_TRUE(receiver_listener.wait_for_messages(1))
+        << "Phase 2: listener must receive the message";
+    {
+        auto msgs = receiver_listener.get_received_messages();
+        EXPECT_EQ(msgs[0].first->get_service_id(), 0x2222);
+    }
+
+    MessagePtr stale = receiver.receive_message();
+    EXPECT_EQ(stale, nullptr) << "Phase 2: queue must be empty for new listener traffic";
+
+    // --- Phase 3: clear listener → polling resumes ---
+    receiver.set_listener(nullptr);
+
+    send_msg(0x3333, 0x0003);
+
+    MessagePtr polled3 = poll_until();
+    ASSERT_NE(polled3, nullptr) << "Phase 3: polling must resume after listener cleared";
+    EXPECT_EQ(polled3->get_service_id(), 0x3333);
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_QUEUED_BEFORE_LISTENER
+ * @brief Messages already queued before listener installation remain drainable via polling
+ *
+ * Verifies that installing a listener does not discard or redirect messages
+ * that are already sitting in receive_queue_.  Two messages are sent before
+ * the listener is installed; the first is polled to confirm the receive path
+ * is active, leaving the second in the queue.  After listener installation
+ * the pre-existing message must still be returned by receive_message().
+ */
+TEST_F(UdpTransportTest, QueuedMessagesPreservedWhenListenerInstalled) {
+    config.blocking = true;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    sender.set_listener(&sender_listener);
+
+    EXPECT_EQ(sender.start(), Result::SUCCESS);
+    EXPECT_EQ(receiver.start(), Result::SUCCESS);
+
+    Endpoint receiver_endpoint = receiver.get_local_endpoint();
+
+    auto make_msg = [](uint16_t service_id, uint16_t session_id) {
+        Message m;
+        m.set_service_id(service_id);
+        m.set_method_id(0x0001);
+        m.set_client_id(0x0001);
+        m.set_session_id(session_id);
+        m.set_protocol_version(1);
+        m.set_interface_version(1);
+        m.set_message_type(MessageType::REQUEST);
+        m.set_return_code(ReturnCode::E_OK);
+        return m;
+    };
+
+    // Send two messages while no listener is installed (both should be queued)
+    Message msg1 = make_msg(0xBEEF, 0x0001);
+    Message msg2 = make_msg(0xCAFE, 0x0002);
+    EXPECT_EQ(sender.send_message(msg1, receiver_endpoint), Result::SUCCESS);
+    EXPECT_EQ(sender.send_message(msg2, receiver_endpoint), Result::SUCCESS);
+
+    // Poll msg1 to confirm the receive path is active; msg2 should also
+    // be enqueued by the time msg1 arrives (or shortly after).
+    auto poll_until = [&]() -> MessagePtr {
+        const auto dl = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+        while (std::chrono::steady_clock::now() < dl) {
+            MessagePtr m = receiver.receive_message();
+            if (m) { return m; }
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        return nullptr;
+    };
+
+    MessagePtr polled1 = poll_until();
+    ASSERT_NE(polled1, nullptr) << "First message must arrive in polling mode";
+    EXPECT_EQ(polled1->get_service_id(), 0xBEEF);
+
+    // Brief wait to let the receive loop process msg2 into the queue
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Install listener — msg2 is already queued and must survive
+    TestUdpListener receiver_listener;
+    receiver.set_listener(&receiver_listener);
+
+    // Pre-existing queued message must still be drainable via polling
+    MessagePtr polled2 = receiver.receive_message();
+    ASSERT_NE(polled2, nullptr) << "Pre-existing queued message must survive listener installation";
+    EXPECT_EQ(polled2->get_service_id(), 0xCAFE);
+
+    // New traffic must go to the listener, not the queue
+    Message msg3 = make_msg(0xFACE, 0x0003);
+    EXPECT_EQ(sender.send_message(msg3, receiver_endpoint), Result::SUCCESS);
+    ASSERT_TRUE(receiver_listener.wait_for_messages(1))
+        << "New message must go to listener after installation";
+    {
+        auto msgs = receiver_listener.get_received_messages();
+        EXPECT_EQ(msgs[0].first->get_service_id(), 0xFACE);
+    }
+
+    MessagePtr leaked = receiver.receive_message();
+    EXPECT_EQ(leaked, nullptr) << "Listener traffic must not also be enqueued";
+
+    sender.stop();
+    receiver.stop();
 }

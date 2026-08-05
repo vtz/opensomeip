@@ -405,6 +405,16 @@ void TcpTransport::disconnect_internal() {
 }
 
 /** @implements REQ_TRANSPORT_024 */
+void TcpTransport::deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender) {
+    auto* l = listener_.load(std::memory_order_acquire);
+    if (l != nullptr) {
+        l->on_message_received(message, sender);
+    } else {
+        platform::ScopedLock const q_lock(queue_mutex_);
+        message_queue_.emplace(message, sender);
+    }
+}
+
 void TcpTransport::receive_loop() {
     while (running_) {
         if (server_mode_) {
@@ -451,22 +461,19 @@ void TcpTransport::receive_loop() {
         }
 
         if (result == Result::SUCCESS) {
-            platform::ScopedLock const conn_lock(connection_mutex_);
-            while (!connection_.receive_buffer.empty()) {
+            for (;;) {
                 MessagePtr message;
-                if (!parse_message_from_buffer(connection_.receive_buffer, message)) {
-                    break;
-                }
-
+                Endpoint sender_ep;
                 {
-                    platform::ScopedLock const q_lock(queue_mutex_);
-                    message_queue_.emplace(message, connection_.remote_endpoint);
+                    platform::ScopedLock const conn_lock(connection_mutex_);
+                    if (connection_.receive_buffer.empty()) { break; }
+                    if (!parse_message_from_buffer(connection_.receive_buffer, message)) {
+                        break;
+                    }
+                    connection_.update_activity();
+                    sender_ep = connection_.remote_endpoint;
                 }
-                connection_.update_activity();
-
-                if (auto* l = listener_.load(std::memory_order_acquire)) {
-                    l->on_message_received(message, connection_.remote_endpoint);
-                }
+                deliver_or_enqueue(message, sender_ep);
             }
         } else if (result != Result::SUCCESS) {
             {

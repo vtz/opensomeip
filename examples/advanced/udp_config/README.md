@@ -127,10 +127,20 @@ make
 
 ## Integration Notes
 
-When using non-blocking mode, ensure your application properly handles the receive loop:
+### Receive Mode
+
+The transport supports two mutually exclusive receive modes:
+
+- **Listener mode** (`set_listener()`): messages are delivered via callback. `receive_message()` returns `nullptr`.
+- **Polling mode** (no listener): messages are queued for `receive_message()` / `receive_message_with_sender()`.
+
+Do not rely on both modes simultaneously. See [INTEGRATION_GUIDE.md](../../../docs/INTEGRATION_GUIDE.md#receive-model-listener-vs-polling) for details.
+
+### Non-Blocking Polling Loop
+
+When using non-blocking mode without a listener, ensure your application properly handles the receive loop:
 
 ```cpp
-// For non-blocking UDP transport
 while (running) {
     MessagePtr msg = transport.receive_message();
     if (msg) {

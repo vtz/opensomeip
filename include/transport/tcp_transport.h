@@ -112,8 +112,13 @@ public:
     [[nodiscard]] Result send_message(const Message& message, const Endpoint& endpoint) override;
 
     /**
-     * @brief Receive a message (non-blocking)
+     * @brief Receive a message from the internal queue (non-blocking, polling mode)
+     *
+     * Only returns messages when no listener is installed via set_listener().
+     * Messages queued before listener installation remain drainable.
+     *
      * @return Received message or nullptr if no message available
+     * @see set_listener()
      */
     MessagePtr receive_message() override;
 
@@ -143,8 +148,9 @@ public:
     Endpoint get_local_endpoint() const override;
 
     /**
-     * @brief Set transport listener
-     * @param listener The listener to receive events
+     * @brief Set transport listener for asynchronous message delivery
+     *
+     * @copydetails ITransport::set_listener()
      */
     void set_listener(ITransportListener* listener) override;
 
@@ -225,6 +231,7 @@ private:
     bool server_mode_{false};
     someip_socket_t listen_socket_fd_{SOMEIP_INVALID_SOCKET};
 
+    void deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender);
     someip_socket_t accept_connection_with_peer(Endpoint& peer_endpoint);
     Result create_socket();
     Result bind_socket();

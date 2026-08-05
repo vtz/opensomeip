@@ -96,7 +96,20 @@ MessagePtr UdpTransport::receive_message() {
         return nullptr;
     }
 
-    MessagePtr message = receive_queue_.front();
+    MessagePtr message = receive_queue_.front().first;
+    receive_queue_.pop();
+    return message;
+}
+
+MessagePtr UdpTransport::receive_message_with_sender(Endpoint& sender) {
+    platform::ScopedLock const lock(queue_mutex_);
+    if (receive_queue_.empty()) {
+        return nullptr;
+    }
+
+    const auto& entry = receive_queue_.front();
+    MessagePtr message = entry.first;
+    sender = entry.second;
     receive_queue_.pop();
     return message;
 }
@@ -375,16 +388,14 @@ void UdpTransport::receive_loop() {
 
         if (result == Result::SUCCESS && bytes_received > 0) {
             MessagePtr const message = platform::allocate_message();
-            if (message->deserialize(buffer.data(), bytes_received)) {
-                // Add to queue
-                {
-                    platform::ScopedLock const lock(queue_mutex_);
-                    receive_queue_.push(message);
-                }
-                queue_cv_.notify_one();
-
-                if (auto* l = listener_.load(std::memory_order_acquire)) {
+            if (message && message->deserialize(buffer.data(), bytes_received)) {
+                auto* l = listener_.load(std::memory_order_acquire);
+                if (l != nullptr) {
                     l->on_message_received(message, sender);
+                } else {
+                    platform::ScopedLock const lock(queue_mutex_);
+                    receive_queue_.emplace(message, sender);
+                    queue_cv_.notify_one();
                 }
             }
         } else if (result == Result::NOT_CONNECTED) {

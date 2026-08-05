@@ -88,6 +88,14 @@ public:
         });
     }
 
+    bool wait_for_messages(size_t expected_count,
+                           std::chrono::milliseconds timeout = std::chrono::milliseconds(2000)) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this, expected_count]() {
+            return received_messages_.size() >= expected_count;
+        });
+    }
+
     bool wait_for_connection_lost(std::chrono::milliseconds timeout = std::chrono::milliseconds(1000)) {
         std::unique_lock<std::mutex> lock(mutex_);
         return cv_.wait_for(lock, timeout, [this]() {
@@ -821,4 +829,266 @@ TEST_F(TcpTransportTest, MultipleMagicCookiesConsumed) {
     ASSERT_NE(parsed, nullptr);
     EXPECT_EQ(parsed->get_service_id(), 0xAAAA);
     EXPECT_TRUE(buffer.empty());
+}
+
+// ============================================================================
+// Listener / Polling Mutual Exclusion Tests (Issue #269)
+// ============================================================================
+
+/**
+ * @test_case TC_TCP_LISTENER_QUEUE_RETENTION
+ * @brief Listener-only mode must not retain messages in message_queue_ (issue #269)
+ *
+ * When set_listener() is used, messages dispatched via on_message_received must
+ * not also be enqueued. This mirrors the UDP-side test
+ * ListenerOnlyDoesNotRetainQueueMessages.
+ */
+TEST_F(TcpTransportTest, ListenerOnlyDoesNotRetainQueueMessages) {
+    TcpTransport server(config);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+    Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+
+    ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
+    ASSERT_TRUE(server_listener.wait_for_connection_established());
+
+    constexpr int NUM_MESSAGES = 3;
+    for (int i = 0; i < NUM_MESSAGES; ++i) {
+        Message msg;
+        msg.set_service_id(0x1234);
+        msg.set_method_id(0x5678);
+        msg.set_client_id(0x9ABC);
+        msg.set_session_id(static_cast<uint16_t>(i + 1));
+        msg.set_protocol_version(1);
+        msg.set_interface_version(1);
+        msg.set_message_type(MessageType::REQUEST);
+        msg.set_return_code(ReturnCode::E_OK);
+
+        platform::ByteBuffer payload = {static_cast<uint8_t>(i)};
+        msg.set_payload(payload);
+
+        EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+    }
+
+    ASSERT_TRUE(server_listener.wait_for_messages(NUM_MESSAGES))
+        << "Listener should have received all messages";
+
+    MessagePtr queued = server.receive_message();
+    EXPECT_EQ(queued, nullptr)
+        << "message_queue_ must be empty in listener-only mode (issue #269)";
+
+    client.disconnect();
+    client.stop();
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_MODE_SWITCH
+ * @brief Messages route correctly across no-listener → listener → cleared-listener transitions
+ */
+TEST_F(TcpTransportTest, ModeSwitchPollingToListenerAndBack) {
+    TcpTransport server(config);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    // Use a temporary listener to detect connection establishment
+    TestTcpListener setup_listener;
+    server.set_listener(&setup_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+    Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+    ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
+
+    ASSERT_TRUE(setup_listener.wait_for_connection_established())
+        << "Server must accept the connection";
+
+    // Remove the setup listener — start in polling mode for phase 1
+    server.set_listener(nullptr);
+
+    // --- Phase 1: polling mode (no listener) ---
+    {
+        Message msg;
+        msg.set_service_id(0x1111);
+        msg.set_method_id(0x0001);
+        msg.set_client_id(0x0001);
+        msg.set_session_id(0x0001);
+        msg.set_protocol_version(1);
+        msg.set_interface_version(1);
+        msg.set_message_type(MessageType::REQUEST);
+        msg.set_return_code(ReturnCode::E_OK);
+
+        EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+    }
+
+    MessagePtr polled;
+    const auto deadline1 = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (std::chrono::steady_clock::now() < deadline1) {
+        polled = server.receive_message();
+        if (polled) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    ASSERT_NE(polled, nullptr) << "Phase 1: polling must receive the message";
+    EXPECT_EQ(polled->get_service_id(), 0x1111);
+
+    // --- Phase 2: install listener → messages go to listener only ---
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+
+    {
+        Message msg;
+        msg.set_service_id(0x2222);
+        msg.set_method_id(0x0001);
+        msg.set_client_id(0x0001);
+        msg.set_session_id(0x0002);
+        msg.set_protocol_version(1);
+        msg.set_interface_version(1);
+        msg.set_message_type(MessageType::REQUEST);
+        msg.set_return_code(ReturnCode::E_OK);
+
+        EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+    }
+
+    ASSERT_TRUE(server_listener.wait_for_messages(1))
+        << "Phase 2: listener must receive the message";
+    {
+        auto msgs = server_listener.get_received_messages();
+        EXPECT_EQ(msgs[0].first->get_service_id(), 0x2222);
+    }
+
+    MessagePtr stale = server.receive_message();
+    EXPECT_EQ(stale, nullptr) << "Phase 2: queue must be empty for new listener traffic";
+
+    // --- Phase 3: clear listener → messages enqueue again ---
+    server.set_listener(nullptr);
+
+    {
+        Message msg;
+        msg.set_service_id(0x3333);
+        msg.set_method_id(0x0001);
+        msg.set_client_id(0x0001);
+        msg.set_session_id(0x0003);
+        msg.set_protocol_version(1);
+        msg.set_interface_version(1);
+        msg.set_message_type(MessageType::REQUEST);
+        msg.set_return_code(ReturnCode::E_OK);
+
+        EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+    }
+
+    MessagePtr polled3;
+    const auto deadline3 = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (std::chrono::steady_clock::now() < deadline3) {
+        polled3 = server.receive_message();
+        if (polled3) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    ASSERT_NE(polled3, nullptr) << "Phase 3: polling must resume after listener cleared";
+    EXPECT_EQ(polled3->get_service_id(), 0x3333);
+
+    client.disconnect();
+    client.stop();
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_LISTENER_DISCONNECT_NO_DEADLOCK
+ * @brief Listener calling disconnect() must not deadlock (connection_mutex_ lock scope fix)
+ *
+ * Before the fix, on_message_received was called with connection_mutex_ held.
+ * A listener that called disconnect() would re-enter disconnect_internal() which
+ * also locks connection_mutex_, causing a deadlock. The lock-scope fix releases
+ * connection_mutex_ before invoking the listener.
+ *
+ * Note: calling stop() from the listener callback is inherently unsafe because
+ * stop() joins the receive thread (self-join). Only disconnect() is tested here.
+ */
+TEST_F(TcpTransportTest, ListenerCallingDisconnectDoesNotDeadlock) {
+    TcpTransport server(config);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    std::atomic<bool> callback_fired{false};
+    std::atomic<bool> disconnect_completed{false};
+
+    class DisconnectOnReceiveListener : public ITransportListener {
+    public:
+        DisconnectOnReceiveListener(TcpTransport& t,
+                                    std::atomic<bool>& fired,
+                                    std::atomic<bool>& done)
+            : transport_(t), callback_fired_(fired), disconnect_completed_(done) {}
+
+        void on_message_received(MessagePtr /*message*/, const Endpoint& /*sender*/) override {
+            callback_fired_.store(true, std::memory_order_release);
+            transport_.disconnect();
+            disconnect_completed_.store(true, std::memory_order_release);
+        }
+        void on_connection_lost(const Endpoint& /*endpoint*/) override {}
+        void on_connection_established(const Endpoint& /*endpoint*/) override {}
+        void on_error(Result /*error*/) override {}
+
+    private:
+        TcpTransport& transport_;
+        std::atomic<bool>& callback_fired_;
+        std::atomic<bool>& disconnect_completed_;
+    };
+
+    // Use a temporary listener for connection establishment
+    TestTcpListener setup_listener;
+    server.set_listener(&setup_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+
+    Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+    ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
+
+    ASSERT_TRUE(setup_listener.wait_for_connection_established())
+        << "Server must accept the connection";
+
+    // Now install the real listener that will call disconnect()
+    DisconnectOnReceiveListener disconnector(server, callback_fired, disconnect_completed);
+    server.set_listener(&disconnector);
+
+    Message msg;
+    msg.set_service_id(0xDEAD);
+    msg.set_method_id(0x0001);
+    msg.set_client_id(0x0001);
+    msg.set_session_id(0x0001);
+    msg.set_protocol_version(1);
+    msg.set_interface_version(1);
+    msg.set_message_type(MessageType::REQUEST);
+    msg.set_return_code(ReturnCode::E_OK);
+
+    EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (std::chrono::steady_clock::now() < deadline) {
+        if (disconnect_completed.load(std::memory_order_acquire)) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    EXPECT_TRUE(callback_fired.load()) << "Listener callback should have fired";
+    EXPECT_TRUE(disconnect_completed.load())
+        << "disconnect() from listener must complete without deadlock";
+
+    client.disconnect();
+    client.stop();
+    server.stop();
 }

@@ -21,6 +21,7 @@
 #include "platform/thread.h"
 #include <atomic>
 #include <optional>
+#include <utility>
 
 namespace someip::transport {
 
@@ -72,6 +73,20 @@ public:
     // ITransport interface implementation
     [[nodiscard]] Result send_message(const Message& message, const Endpoint& endpoint) override;
     MessagePtr receive_message() override;
+
+    /**
+     * @brief Receive a message with sender endpoint (non-blocking, polling mode)
+     *
+     * Like receive_message(), this only returns messages when no listener is
+     * installed. Use this variant when the caller needs the originating
+     * endpoint for reply addressing without requiring a full listener.
+     *
+     * @param[out] sender Filled with the sender's endpoint on success
+     * @return Received message or nullptr if no message available
+     * @see ITransport::set_listener(), ITransport::receive_message()
+     */
+    MessagePtr receive_message_with_sender(Endpoint& sender);
+
     Result connect(const Endpoint& endpoint) override;
     Result disconnect() override;
     bool is_connected() const override;
@@ -99,7 +114,7 @@ private:
     std::optional<platform::Thread> receive_thread_;
     std::atomic<ITransportListener*> listener_{nullptr};
 
-    platform::Queue<MessagePtr> receive_queue_;
+    platform::Queue<std::pair<MessagePtr, Endpoint>> receive_queue_;
     platform::Mutex queue_mutex_;
     platform::ConditionVariable queue_cv_;
 

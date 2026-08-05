@@ -90,8 +90,16 @@ public:
     [[nodiscard]] virtual Result send_message(const Message& message, const Endpoint& endpoint) = 0;
 
     /**
-     * @brief Receive a message (non-blocking)
+     * @brief Receive a message from the internal queue (non-blocking, polling mode)
+     *
+     * Only returns messages when no listener is installed via set_listener().
+     * In listener mode, new incoming messages are dispatched through
+     * ITransportListener::on_message_received and are not enqueued.
+     * Messages that were already queued before a listener was installed
+     * remain drainable via this method until the queue is empty.
+     *
      * @return Received message or nullptr if no message available
+     * @see set_listener()
      */
     virtual MessagePtr receive_message() = 0;
 
@@ -121,8 +129,28 @@ public:
     virtual Endpoint get_local_endpoint() const = 0;
 
     /**
-     * @brief Set transport listener
-     * @param listener The listener to receive events
+     * @brief Set transport listener for asynchronous message delivery
+     *
+     * Listener mode and polling mode are mutually exclusive:
+     * - When a non-null listener is set, incoming messages are dispatched
+     *   exclusively through ITransportListener::on_message_received.
+     *   They are **not** enqueued, so receive_message() returns nullptr.
+     * - When listener is nullptr (or never set), incoming messages are
+     *   enqueued for retrieval via receive_message().
+     * - Messages already queued before a listener is installed remain
+     *   drainable via receive_message(); only new arrivals go to the
+     *   listener.
+     * - Clearing the listener (passing nullptr) restores polling mode
+     *   for subsequent messages.
+     *
+     * @note The transport stores a non-owning raw pointer. The caller
+     *       must keep the listener alive until either set_listener(nullptr)
+     *       is called and all in-flight on_message_received() callbacks
+     *       have returned, or the transport is stopped and destroyed.
+     *
+     * @param listener The listener to receive events, or nullptr to
+     *                 restore polling mode
+     * @see receive_message()
      */
     virtual void set_listener(ITransportListener* listener) = 0;
 
