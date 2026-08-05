@@ -1096,6 +1096,9 @@ TEST_F(UdpTransportTest, QueuedMessagesPreservedWhenListenerInstalled) {
         EXPECT_EQ(msgs[0].first->get_service_id(), 0xFACE);
     }
 
+    MessagePtr leaked = receiver.receive_message();
+    EXPECT_EQ(leaked, nullptr) << "Listener traffic must not also be enqueued";
+
     sender.stop();
     receiver.stop();
 }
