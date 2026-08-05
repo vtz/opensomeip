@@ -405,6 +405,16 @@ void TcpTransport::disconnect_internal() {
 }
 
 /** @implements REQ_TRANSPORT_024 */
+void TcpTransport::deliver_or_enqueue(MessagePtr message, const Endpoint& sender) {
+    auto* l = listener_.load(std::memory_order_acquire);
+    if (l != nullptr) {
+        l->on_message_received(message, sender);
+    } else {
+        platform::ScopedLock const q_lock(queue_mutex_);
+        message_queue_.emplace(message, sender);
+    }
+}
+
 void TcpTransport::receive_loop() {
     while (running_) {
         if (server_mode_) {
@@ -463,13 +473,7 @@ void TcpTransport::receive_loop() {
                     connection_.update_activity();
                     sender_ep = connection_.remote_endpoint;
                 }
-                auto* l = listener_.load(std::memory_order_acquire);
-                if (l != nullptr) {
-                    l->on_message_received(message, sender_ep);
-                } else {
-                    platform::ScopedLock const q_lock(queue_mutex_);
-                    message_queue_.emplace(message, sender_ep);
-                }
+                deliver_or_enqueue(message, sender_ep);
             }
         } else if (result != Result::SUCCESS) {
             {

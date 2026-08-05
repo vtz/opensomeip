@@ -231,6 +231,7 @@ private:
     bool server_mode_{false};
     someip_socket_t listen_socket_fd_{SOMEIP_INVALID_SOCKET};
 
+    void deliver_or_enqueue(MessagePtr message, const Endpoint& sender);
     someip_socket_t accept_connection_with_peer(Endpoint& peer_endpoint);
     Result create_socket();
     Result bind_socket();
