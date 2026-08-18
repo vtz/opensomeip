@@ -216,14 +216,18 @@ TEST_F(TpTest, TimeoutHandling) {
     seg.header.segment_length = 500;
     seg.header.sequence_number = 1;
     seg.header.message_type = TpMessageType::FIRST_SEGMENT;
+    seg.header.service_id = 0x0001;
+    seg.header.method_id = 0x0001;
     seg.payload.resize(500, 0x11);
+
+    const uint32_t expected_msg_id = (static_cast<uint32_t>(0x0001) << 16) | 0x0001;
 
     platform::ByteBuffer complete_message;
     ASSERT_TRUE(reassembler.process_segment(seg, complete_message));
     ASSERT_TRUE(complete_message.empty());
 
     // Should be actively reassembling
-    ASSERT_TRUE(reassembler.is_reassembling(1));
+    ASSERT_TRUE(reassembler.is_reassembling(expected_msg_id));
 
     // Wait for timeout
     std::this_thread::sleep_for(std::chrono::milliseconds(150));
@@ -232,7 +236,7 @@ TEST_F(TpTest, TimeoutHandling) {
     reassembler.process_timeouts();
 
     // Should no longer be reassembling
-    ASSERT_FALSE(reassembler.is_reassembling(1));
+    ASSERT_FALSE(reassembler.is_reassembling(expected_msg_id));
 }
 
 TEST_F(TpTest, InvalidSegmentHandling) {
@@ -326,15 +330,81 @@ TEST_F(TpTest, SegmentAlignment) {
 
     // Check alignment of all segments except the last
     for (size_t i = 0; i < segments.size() - 1; ++i) {
-        // Payload size should be multiple of 16 (excluding header for first segment)
-        if (i == 0) {
-            // First segment: payload_size - 16 (header) should be multiple of 16
-            size_t data_size = segments[i].payload.size() - 16;
-            EXPECT_EQ(data_size % 16, 0u) << "First segment data not 16-byte aligned";
-        } else {
-            // Other segments: entire payload should be multiple of 16
-            EXPECT_EQ(segments[i].payload.size() % 16, 0u) << "Segment " << i << " not 16-byte aligned";
-        }
+        // All segments: subtract 20 (SOME/IP header + TP header) to get payload
+        // Payload of non-last segments must be multiple of 16 (feat_req_someiptp_772)
+        ASSERT_GT(segments[i].payload.size(), 20u);
+        size_t data_size = segments[i].payload.size() - 20;
+        EXPECT_EQ(data_size % 16, 0u) << "Segment " << i << " payload not 16-byte aligned";
+    }
+}
+
+/**
+ * @test_case TC_TP_FULL_HEADER
+ * @tests feat_req_someiptp_765, feat_req_someiptp_766, feat_req_someiptp_774
+ * @brief Every TP segment must carry a full 16-byte SOME/IP header + 4-byte TP header
+ */
+TEST_F(TpTest, AllSegmentsHaveFullSomeIpHeader) {
+    TpSegmenter segmenter(config);
+
+    Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                   MessageType::REQUEST, ReturnCode::E_OK);
+    platform::ByteBuffer large_payload(2000, 0xAA);
+    message.set_payload(large_payload);
+
+    TpSegmentVector segments;
+    TpResult result = segmenter.segment_message(message, segments);
+    ASSERT_EQ(result, TpResult::SUCCESS);
+    ASSERT_GT(segments.size(), 1u);
+
+    for (size_t i = 0; i < segments.size(); ++i) {
+        const auto& seg = segments[i];
+        // Each segment must be at least 20 bytes (16 SOME/IP + 4 TP)
+        ASSERT_GE(seg.payload.size(), 20u) << "Segment " << i << " too small for headers";
+
+        // Verify Service ID preserved
+        uint16_t service_id = (static_cast<uint16_t>(seg.payload[0]) << 8) | seg.payload[1];
+        EXPECT_EQ(service_id, 0x1234) << "Segment " << i << " wrong Service ID";
+
+        // Verify Method ID preserved
+        uint16_t method_id = (static_cast<uint16_t>(seg.payload[2]) << 8) | seg.payload[3];
+        EXPECT_EQ(method_id, 0x5678) << "Segment " << i << " wrong Method ID";
+
+        // Verify TP flag set in Message Type (byte 14)
+        EXPECT_NE(seg.payload[14] & 0x20, 0u) << "Segment " << i << " TP flag not set";
+
+        // Verify SOME/IP Length = 8 + 4 + payload_data_size
+        uint32_t someip_length = (static_cast<uint32_t>(seg.payload[4]) << 24) |
+                                 (static_cast<uint32_t>(seg.payload[5]) << 16) |
+                                 (static_cast<uint32_t>(seg.payload[6]) << 8) |
+                                 static_cast<uint32_t>(seg.payload[7]);
+        uint32_t expected_length = 8 + 4 + static_cast<uint32_t>(seg.payload.size() - 20);
+        EXPECT_EQ(someip_length, expected_length) << "Segment " << i << " wrong SOME/IP Length";
+    }
+}
+
+/**
+ * @test_case TC_TP_UNIFORM_SIZE
+ * @tests feat_req_someiptp_778, feat_req_someiptp_779
+ * @brief All MS=1 segments must have the same payload size
+ */
+TEST_F(TpTest, MoreSegmentsUniformSize) {
+    TpSegmenter segmenter(config);
+
+    Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                   MessageType::REQUEST, ReturnCode::E_OK);
+    platform::ByteBuffer large_payload(3000, 0xBB);
+    message.set_payload(large_payload);
+
+    TpSegmentVector segments;
+    TpResult result = segmenter.segment_message(message, segments);
+    ASSERT_EQ(result, TpResult::SUCCESS);
+    ASSERT_GT(segments.size(), 2u);
+
+    // All non-last segments should have the same total size
+    size_t first_size = segments[0].payload.size();
+    for (size_t i = 1; i < segments.size() - 1; ++i) {
+        EXPECT_EQ(segments[i].payload.size(), first_size)
+            << "Segment " << i << " size differs from first segment";
     }
 }
 
@@ -811,4 +881,95 @@ TEST_F(TpTest, SingleMessageSegmentLengthSmallerThanPayloadRejected) {
     platform::ByteBuffer complete;
     EXPECT_FALSE(tp_manager.handle_received_segment(segment, complete))
         << "Segment with segment_length < payload.size() must be rejected";
+}
+
+/**
+ * @test_case TC_TP_REASSEMBLY_KEY
+ * @tests feat_req_someiptp_781, feat_req_someiptp_794
+ * @brief Reassembly uses composite key, not internal sequence number
+ */
+TEST_F(TpTest, ReassemblyCompositeKey) {
+    TpReassembler reassembler(config);
+
+    // Two segments from different services should go to different buffers
+    TpSegment seg1;
+    seg1.header.message_length = 100;
+    seg1.header.segment_offset = 0;
+    seg1.header.segment_length = 40;
+    seg1.header.sequence_number = 1;
+    seg1.header.message_type = TpMessageType::FIRST_SEGMENT;
+    seg1.header.service_id = 0x1111;
+    seg1.header.method_id = 0x2222;
+    seg1.header.client_id = 0xAAAA;
+    seg1.header.session_id = 0x0001;
+    seg1.header.protocol_version = 1;
+    seg1.header.interface_version = 1;
+    seg1.payload.resize(40, 0x11);
+
+    TpSegment seg2;
+    seg2.header.message_length = 100;
+    seg2.header.segment_offset = 0;
+    seg2.header.segment_length = 40;
+    seg2.header.sequence_number = 1;  // Same sequence_number!
+    seg2.header.message_type = TpMessageType::FIRST_SEGMENT;
+    seg2.header.service_id = 0x3333;  // Different service
+    seg2.header.method_id = 0x4444;
+    seg2.header.client_id = 0xBBBB;
+    seg2.header.session_id = 0x0001;
+    seg2.header.protocol_version = 1;
+    seg2.header.interface_version = 1;
+    seg2.payload.resize(40, 0x22);
+
+    platform::ByteBuffer complete;
+    EXPECT_TRUE(reassembler.process_segment(seg1, complete));
+    EXPECT_TRUE(reassembler.process_segment(seg2, complete));
+    EXPECT_EQ(reassembler.get_active_reassemblies(), 2u)
+        << "Different Message IDs must create separate buffers";
+}
+
+/**
+ * @test_case TC_TP_REASSEMBLY_SESSION_DISCARD
+ * @tests feat_req_someiptp_795, feat_req_someiptp_793
+ * @brief New Session ID discards stale reassembly buffer
+ */
+TEST_F(TpTest, ReassemblySessionIdDiscard) {
+    TpReassembler reassembler(config);
+
+    // Start reassembly with session 1
+    TpSegment seg1;
+    seg1.header.message_length = 100;
+    seg1.header.segment_offset = 0;
+    seg1.header.segment_length = 40;
+    seg1.header.sequence_number = 1;
+    seg1.header.message_type = TpMessageType::FIRST_SEGMENT;
+    seg1.header.service_id = 0x1111;
+    seg1.header.method_id = 0x2222;
+    seg1.header.client_id = 0xAAAA;
+    seg1.header.session_id = 0x0001;
+    seg1.header.protocol_version = 1;
+    seg1.header.interface_version = 1;
+    seg1.payload.resize(40, 0x11);
+
+    platform::ByteBuffer complete;
+    EXPECT_TRUE(reassembler.process_segment(seg1, complete));
+    EXPECT_EQ(reassembler.get_active_reassemblies(), 1u);
+
+    // New segment with different session ID for same key → discard old
+    TpSegment seg2;
+    seg2.header.message_length = 200;
+    seg2.header.segment_offset = 0;
+    seg2.header.segment_length = 40;
+    seg2.header.sequence_number = 1;
+    seg2.header.message_type = TpMessageType::FIRST_SEGMENT;
+    seg2.header.service_id = 0x1111;
+    seg2.header.method_id = 0x2222;
+    seg2.header.client_id = 0xAAAA;
+    seg2.header.session_id = 0x0002;  // Different session
+    seg2.header.protocol_version = 1;
+    seg2.header.interface_version = 1;
+    seg2.payload.resize(40, 0x22);
+
+    EXPECT_TRUE(reassembler.process_segment(seg2, complete));
+    EXPECT_EQ(reassembler.get_active_reassemblies(), 1u)
+        << "Stale buffer must be replaced, not accumulated";
 }

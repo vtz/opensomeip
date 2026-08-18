@@ -94,108 +94,82 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
                                           TpSegmentVector& segments) {
 
     auto const total_length = static_cast<uint32_t>(payload.size());
-    uint32_t payload_offset = 0;  // Offset into the payload data
-    uint8_t const sequence_number = next_sequence_number_;
 
     // Create a copy of the message with TP flag added to message type
     Message tp_message = message;
     tp_message.set_message_type(add_tp_flag(message.get_message_type()));
 
-    // First segment: header + first part of payload
-    {
-        TpSegment segment;
-        segment.header.message_type = TpMessageType::FIRST_SEGMENT;
-        segment.header.message_length = total_length;
-        segment.header.segment_offset = 0;  // Always 0 for first segment
-        segment.header.sequence_number = sequence_number;
-
-        platform::ByteBuffer header = tp_message.serialize();
-        header.resize(16);  // Keep only header (16 bytes)
-
-        size_t const first_overhead = 16 + 4;
-        size_t const first_capacity = config_.max_segment_size > first_overhead
-            ? config_.max_segment_size - first_overhead : 0;
-        size_t const first_payload_size = std::min(first_capacity,
-                                           static_cast<size_t>(total_length));
-        header.insert(header.end(), payload.begin(),
-                      payload.begin() + static_cast<std::ptrdiff_t>(first_payload_size));
-
-        // Add TP header (REQ_TP_011-021)
-        bool const more_segments = (payload_offset + first_payload_size) < total_length;
-        serialize_tp_header(header, 0, more_segments);  // First segment offset = 0
-
-        // Update SOME/IP length field (REQ_TP_022): 8 + 4 + payload_size
-        uint32_t const segment_length = 8 + 4 + first_payload_size;
-        header[4] = static_cast<uint8_t>((segment_length >> 24U) & 0xFFU);  // Length field in SOME/IP header
-        header[5] = static_cast<uint8_t>((segment_length >> 16U) & 0xFFU);
-        header[6] = static_cast<uint8_t>((segment_length >> 8U) & 0xFFU);
-        header[7] = static_cast<uint8_t>(segment_length & 0xFFU);
-
-        segment.header.segment_length = static_cast<uint16_t>(header.size());
-        segment.payload = std::move(header);
-
-        if (segments.size() >= segments.max_size()) {
-            return TpResult::MESSAGE_TOO_LARGE;
-        }
-        segments.push_back(std::move(segment));
-        payload_offset = first_payload_size;
+    // Every segment has 16-byte SOME/IP header + 4-byte TP header = 20 bytes overhead
+    constexpr size_t SEGMENT_OVERHEAD = 16 + 4;
+    if (config_.max_segment_size <= SEGMENT_OVERHEAD) {
+        return TpResult::SEGMENTATION_FAILED;
     }
 
-    // Subsequent segments
-    while (payload_offset < total_length) {
-        TpSegment segment;
+    // Per spec (feat_req_someiptp_772, 778, 779): non-last segment payload
+    // must be multiple of 16 and all MS=1 segments must have equal size.
+    size_t raw_capacity = config_.max_segment_size - SEGMENT_OVERHEAD;
+    size_t uniform_payload = (raw_capacity / 16) * 16;  // Round down to multiple of 16
+    if (uniform_payload == 0) {
+        return TpResult::SEGMENTATION_FAILED;
+    }
 
-        // Determine segment type
-        uint32_t const remaining_bytes = total_length - payload_offset;
-        if (remaining_bytes <= config_.max_segment_size) {
+    uint8_t const sequence_number = next_sequence_number_;
+    uint32_t payload_offset = 0;
+
+    while (payload_offset < total_length) {
+        uint32_t remaining = total_length - payload_offset;
+        bool more_segments = remaining > uniform_payload;
+        uint32_t seg_payload_size = more_segments
+            ? static_cast<uint32_t>(uniform_payload)
+            : remaining;
+
+        TpSegment segment;
+        if (payload_offset == 0) {
+            segment.header.message_type = TpMessageType::FIRST_SEGMENT;
+        } else if (!more_segments) {
             segment.header.message_type = TpMessageType::LAST_SEGMENT;
         } else {
             segment.header.message_type = TpMessageType::CONSECUTIVE_SEGMENT;
         }
-
         segment.header.message_length = total_length;
         segment.header.segment_offset = payload_offset;
         segment.header.sequence_number = sequence_number;
 
-        uint32_t const segment_capacity = config_.max_segment_size > 4
-            ? config_.max_segment_size - 4 : 0;
-        auto const payload_size = static_cast<uint16_t>(
-            std::min(segment_capacity, remaining_bytes));
+        // Build full SOME/IP header (16 bytes) from the tp_message
+        platform::ByteBuffer seg_data = tp_message.serialize();
+        seg_data.resize(16);  // Keep only header
 
-        // Create segment with TP header
-        platform::ByteBuffer segment_data;
-        segment_data.reserve(4 + payload_size);  // TP header + payload
+        // Update SOME/IP length field: 8 + 4 + seg_payload_size
+        uint32_t someip_length = 8 + 4 + seg_payload_size;
+        seg_data[4] = static_cast<uint8_t>((someip_length >> 24U) & 0xFFU);
+        seg_data[5] = static_cast<uint8_t>((someip_length >> 16U) & 0xFFU);
+        seg_data[6] = static_cast<uint8_t>((someip_length >> 8U) & 0xFFU);
+        seg_data[7] = static_cast<uint8_t>(someip_length & 0xFFU);
 
-        // Add TP header first (REQ_TP_011-021)
-        bool const more_segments = (payload_offset + payload_size) < total_length;
-        // Build TP header bytes directly (no SOME/IP header for subsequent segments)
-        uint32_t const offset_units = payload_offset / 16;
-        uint32_t const tp_header = (offset_units << 4U) | (more_segments ? 0x01U : 0x00U);
-        segment_data.push_back(static_cast<uint8_t>((tp_header >> 24U) & 0xFFU));
-        segment_data.push_back(static_cast<uint8_t>((tp_header >> 16U) & 0xFFU));
-        segment_data.push_back(static_cast<uint8_t>((tp_header >> 8U) & 0xFFU));
-        segment_data.push_back(static_cast<uint8_t>(tp_header & 0xFFU));
-        // Add payload data
-        segment_data.insert(segment_data.end(), payload.begin() + payload_offset,
-                           payload.begin() + payload_offset + payload_size);
+        // Insert 4-byte TP header after SOME/IP header
+        uint32_t offset_units = payload_offset / 16;
+        uint32_t tp_header = (offset_units << 4U) | (more_segments ? 0x01U : 0x00U);
+        seg_data.push_back(static_cast<uint8_t>((tp_header >> 24U) & 0xFFU));
+        seg_data.push_back(static_cast<uint8_t>((tp_header >> 16U) & 0xFFU));
+        seg_data.push_back(static_cast<uint8_t>((tp_header >> 8U) & 0xFFU));
+        seg_data.push_back(static_cast<uint8_t>(tp_header & 0xFFU));
 
-        // Update SOME/IP length field (REQ_TP_022): 8 + 4 + payload_size
-        // For subsequent segments, we need to create the SOME/IP header first
-        // Actually, wait - subsequent segments don't have a SOME/IP header,
-        // they only have TP header + payload. The length field is only in the first segment.
+        // Append payload data
+        seg_data.insert(seg_data.end(),
+                       payload.begin() + payload_offset,
+                       payload.begin() + payload_offset + seg_payload_size);
 
-        segment.header.segment_length = static_cast<uint16_t>(segment_data.size());
-        segment.payload = std::move(segment_data);
+        segment.header.segment_length = static_cast<uint16_t>(seg_data.size());
+        segment.payload = std::move(seg_data);
 
         if (segments.size() >= segments.max_size()) {
             return TpResult::MESSAGE_TOO_LARGE;
         }
         segments.push_back(std::move(segment));
-        payload_offset += payload_size;
+        payload_offset += seg_payload_size;
     }
 
     next_sequence_number_ = (next_sequence_number_ + 1) % 256;
-
     return TpResult::SUCCESS;
 }
 

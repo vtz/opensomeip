@@ -15,7 +15,38 @@
 
 ## Unreleased
 
-### Breaking Changes
+### Breaking Changes (Wire Format)
+
+- **String serialization now includes UTF-8 BOM and NUL terminator.**
+  Dynamic UTF-8 strings are now serialized as
+  `[length u32][BOM EF BB BF][utf8 data][0x00]` per the Open SOME/IP
+  Specification (`feat_req_someip_662`, `800`, `687`).  Length =
+  BOM(3) + data + NUL(1).  The unconditional 4-byte alignment after
+  strings has been removed; alignment is now caller-controlled.
+  ([#274](https://github.com/vtz/opensomeip/issues/274))
+
+- **TP segments now carry a full 16-byte SOME/IP header.**  Every
+  SOME/IP-TP segment (not just the first) includes a full SOME/IP
+  header with TP-Flag set, followed by a 4-byte TP header, then
+  payload.  Non-last segment payloads are now always a multiple of
+  16 bytes, and all More-Segments=1 segments have uniform size
+  (`feat_req_someiptp_765`, `772`, `778`).
+  ([#275](https://github.com/vtz/opensomeip/issues/275))
+
+- **TP reassembly buffer keyed by spec-mandated composite key.**
+  Reassembly buffers are now keyed by Message ID + Protocol Version +
+  Interface Version + Message Type (sans TP flag) + Client ID, with
+  Session ID change detection to discard stale buffers
+  (`feat_req_someiptp_781`, `795`).
+  ([#276](https://github.com/vtz/opensomeip/issues/276))
+
+- **TCP Magic Cookie field layout corrected.**  Session ID is now
+  `0xBEEF` (was misplaced as `0x0001`), MessageType is `0x01`/`0x02`
+  (was `0xBE`), and ReturnCode is `0x00` (was `0xEF`), matching
+  `feat_req_someip_609`.
+  ([#277](https://github.com/vtz/opensomeip/issues/277))
+
+### Other Breaking Changes
 
 - **Transport receive model: listener and polling are now mutually
   exclusive.**  When `set_listener()` is installed, incoming messages are
@@ -36,11 +67,36 @@
 
 ### Bug Fixes
 
+- **Serialization**: string wire format now matches Open SOME/IP spec
+  with UTF-8 BOM, NUL terminator, and correct length semantics (#274).
+- **SOME/IP-TP**: every segment now carries a full SOME/IP header;
+  non-last segment payloads are 16-byte aligned and uniformly sized (#275).
+- **SOME/IP-TP**: reassembly buffer uses spec-mandated composite key
+  for interoperability; stale sessions are discarded on Session ID
+  change (#276).
+- **TCP**: Magic Cookie byte layout corrected — Session ID, MessageType,
+  and ReturnCode now match `feat_req_someip_609` (#277).
 - UDP/TCP: listener-only mode no longer retains `MessagePtr` in the
   internal queue, preventing memory leaks and pool exhaustion (#269).
 - TCP: `on_message_received()` is now invoked outside `connection_mutex_`,
   eliminating a potential deadlock when the callback calls
   `disconnect()`.
+
+### Interop Notes
+
+The following intentional extensions remain vs. the Open SOME/IP spec:
+
+- **nPDU batching**: not yet implemented — each UDP datagram / TCP write
+  carries exactly one SOME/IP message.  Multiple-message-per-datagram
+  demux is a P1 follow-up.
+- **TCP Magic Cookie insertion**: cookies are sent on a 10-second timer
+  rather than at the start of each TCP segment.  Per-segment insertion
+  is a follow-up.
+- **UTF-16 strings**: only UTF-8 strings are supported; UTF-16 BOM
+  detection and endianness validation is a P1 follow-up.
+- **Configurable length-field widths**: strings and arrays use 32-bit
+  length fields only; 8/16/0-bit variants are a P1 follow-up.
+- **TP traffic shaping**: no inter-segment delay is applied.
 
 ## Unreleased — Static Allocation Backend (`feature/no-heap-static-alloc`)
 

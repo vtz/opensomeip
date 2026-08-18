@@ -719,16 +719,28 @@ TEST_F(TcpTransportTest, ChunkedArrivalReassembly) {
 TEST_F(TcpTransportTest, MagicCookieClientFormat) {
     auto cookie = TcpTransport::make_magic_cookie_client();
     ASSERT_EQ(cookie.size(), 16u);
-    EXPECT_EQ(cookie[0], 0xFF);  // Service ID high
-    EXPECT_EQ(cookie[1], 0xFF);  // Service ID low
-    EXPECT_EQ(cookie[2], 0x00);  // Method ID high (client)
-    EXPECT_EQ(cookie[3], 0x00);  // Method ID low
-    EXPECT_EQ(cookie[4], 0x00);  // Length high
-    EXPECT_EQ(cookie[7], 0x08);  // Length = 8
-    EXPECT_EQ(cookie[8], 0xDE);  // Client ID high
-    EXPECT_EQ(cookie[9], 0xAD);  // Client ID low
-    EXPECT_EQ(cookie[14], 0xBE); // Session ID high
-    EXPECT_EQ(cookie[15], 0xEF); // Session ID low
+    // Service ID = 0xFFFF
+    EXPECT_EQ(cookie[0], 0xFF);
+    EXPECT_EQ(cookie[1], 0xFF);
+    // Method ID = 0x0000 (client→server)
+    EXPECT_EQ(cookie[2], 0x00);
+    EXPECT_EQ(cookie[3], 0x00);
+    // Length = 0x00000008
+    EXPECT_EQ(cookie[4], 0x00);
+    EXPECT_EQ(cookie[7], 0x08);
+    // Client ID = 0xDEAD
+    EXPECT_EQ(cookie[8], 0xDE);
+    EXPECT_EQ(cookie[9], 0xAD);
+    // Session ID = 0xBEEF (feat_req_someip_609)
+    EXPECT_EQ(cookie[10], 0xBE);
+    EXPECT_EQ(cookie[11], 0xEF);
+    // Protocol Version = 0x01, Interface Version = 0x01
+    EXPECT_EQ(cookie[12], 0x01);
+    EXPECT_EQ(cookie[13], 0x01);
+    // Message Type = 0x01 (REQUEST_NO_RETURN, client->server)
+    EXPECT_EQ(cookie[14], 0x01);
+    // Return Code = 0x00
+    EXPECT_EQ(cookie[15], 0x00);
 }
 
 /**
@@ -739,8 +751,16 @@ TEST_F(TcpTransportTest, MagicCookieClientFormat) {
 TEST_F(TcpTransportTest, MagicCookieServerFormat) {
     auto cookie = TcpTransport::make_magic_cookie_server();
     ASSERT_EQ(cookie.size(), 16u);
-    EXPECT_EQ(cookie[2], 0x80);  // Method ID high (server)
-    EXPECT_EQ(cookie[3], 0x00);  // Method ID low
+    // Method ID = 0x8000 (server->client)
+    EXPECT_EQ(cookie[2], 0x80);
+    EXPECT_EQ(cookie[3], 0x00);
+    // Session ID = 0xBEEF
+    EXPECT_EQ(cookie[10], 0xBE);
+    EXPECT_EQ(cookie[11], 0xEF);
+    // Message Type = 0x02 (NOTIFICATION, server->client)
+    EXPECT_EQ(cookie[14], 0x02);
+    // Return Code = 0x00
+    EXPECT_EQ(cookie[15], 0x00);
 }
 
 /**

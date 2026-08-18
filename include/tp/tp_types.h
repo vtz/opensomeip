@@ -20,6 +20,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 
 namespace someip::tp {
@@ -71,6 +72,12 @@ struct TpSegmentHeader {
     uint16_t segment_length{0};     // Length of this segment's payload
     uint8_t sequence_number{0};     // Sequence number for ordering
     TpMessageType message_type{TpMessageType::SINGLE_MESSAGE};  // Type of TP message
+    uint16_t service_id{0};         // For reassembly key
+    uint16_t method_id{0};          // For reassembly key
+    uint16_t client_id{0};          // For reassembly key
+    uint16_t session_id{0};         // For reassembly key + stale detection
+    uint8_t protocol_version{0};    // For reassembly key
+    uint8_t interface_version{0};   // For reassembly key
 
     TpSegmentHeader() = default;
 };
@@ -98,6 +105,47 @@ struct TpSegment {
 inline constexpr size_t MAX_TP_REASSEMBLY_SIZE = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
 
 /**
+ * @brief Composite key for TP reassembly per Open SOME/IP-TP spec
+ * @satisfies feat_req_someiptp_781, feat_req_someiptp_794
+ *
+ * Key: Message ID + Protocol Version + Interface Version +
+ *      Message Type (without TP flag) + Request ID (Client+Session)
+ */
+struct TpReassemblyKey {
+    uint32_t message_id{0};          // Service ID << 16 | Method ID
+    uint8_t protocol_version{0};
+    uint8_t interface_version{0};
+    uint8_t message_type{0};         // Without TP flag (& ~0x20)
+    uint32_t request_id{0};          // Client ID (without Session ID, for stale detection)
+
+    bool operator==(const TpReassemblyKey& other) const {
+        return message_id == other.message_id &&
+               protocol_version == other.protocol_version &&
+               interface_version == other.interface_version &&
+               message_type == other.message_type &&
+               request_id == other.request_id;
+    }
+
+    bool operator!=(const TpReassemblyKey& other) const {
+        return !(*this == other);
+    }
+};
+
+/**
+ * @brief Hash function for TpReassemblyKey for use in unordered_map
+ */
+struct TpReassemblyKeyHash {
+    size_t operator()(const TpReassemblyKey& k) const {
+        size_t h = std::hash<uint32_t>{}(k.message_id);
+        h ^= std::hash<uint8_t>{}(k.protocol_version) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<uint8_t>{}(k.interface_version) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<uint8_t>{}(k.message_type) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<uint32_t>{}(k.request_id) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        return h;
+    }
+};
+
+/**
  * @brief TP message being reassembled
  */
 struct TpReassemblyBuffer {
@@ -107,10 +155,11 @@ struct TpReassemblyBuffer {
     platform::Vector<bool, MAX_TP_REASSEMBLY_SIZE> received_segments;
     std::chrono::steady_clock::time_point start_time{std::chrono::steady_clock::now()};
     uint8_t last_sequence_number{0};
+    uint16_t session_id{0};  // Track Session ID for stale detection (feat_req_someiptp_795)
     bool complete{false};
 
-    TpReassemblyBuffer(uint32_t msg_id, uint32_t length)
-        : message_id(msg_id), total_length(length) {
+    TpReassemblyBuffer(uint32_t msg_id, uint32_t length, uint16_t sess_id = 0)
+        : message_id(msg_id), total_length(length), session_id(sess_id) {
         received_data.resize(length);
         start_time = std::chrono::steady_clock::now();
     }
