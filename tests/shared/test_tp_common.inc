@@ -178,11 +178,8 @@ static void test_tp() {
             bool aligned = true;
             for (size_t i = 0; i + 1 < segments.size(); ++i) {
                 size_t sz = segments[i].payload.size();
-                if (i == 0) {
-                    if (sz < 16 || (sz - 16) % 16 != 0) { aligned = false; break; }
-                } else {
-                    if (sz % 16 != 0) { aligned = false; break; }
-                }
+                // All segments: 20-byte header (16 SOME/IP + 4 TP), payload must be multiple of 16
+                if (sz < 20 || (sz - 20) % 16 != 0) { aligned = false; break; }
             }
             CHECK(aligned, "tp_segments_16byte_aligned");
         }
