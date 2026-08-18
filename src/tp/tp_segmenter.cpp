@@ -119,7 +119,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
     while (payload_offset < total_length) {
         uint32_t remaining = total_length - payload_offset;
         bool more_segments = remaining > uniform_payload;
-        uint32_t seg_payload_size = more_segments
+        const uint32_t seg_payload_size = more_segments
             ? static_cast<uint32_t>(uniform_payload)
             : remaining;
 
@@ -140,15 +140,15 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         seg_data.resize(16);  // Keep only header
 
         // Update SOME/IP length field: 8 + 4 + seg_payload_size
-        uint32_t someip_length = 8 + 4 + seg_payload_size;
+        const uint32_t someip_length = 8 + 4 + seg_payload_size;
         seg_data[4] = static_cast<uint8_t>((someip_length >> 24U) & 0xFFU);
         seg_data[5] = static_cast<uint8_t>((someip_length >> 16U) & 0xFFU);
         seg_data[6] = static_cast<uint8_t>((someip_length >> 8U) & 0xFFU);
         seg_data[7] = static_cast<uint8_t>(someip_length & 0xFFU);
 
         // Insert 4-byte TP header after SOME/IP header
-        uint32_t offset_units = payload_offset / 16;
-        uint32_t tp_header = (offset_units << 4U) | (more_segments ? 0x01U : 0x00U);
+        const uint32_t offset_units = payload_offset / 16;
+        const uint32_t tp_header = (offset_units << 4U) | (more_segments ? 0x01U : 0x00U);
         seg_data.push_back(static_cast<uint8_t>((tp_header >> 24U) & 0xFFU));
         seg_data.push_back(static_cast<uint8_t>((tp_header >> 16U) & 0xFFU));
         seg_data.push_back(static_cast<uint8_t>((tp_header >> 8U) & 0xFFU));

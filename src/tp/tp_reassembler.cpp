@@ -97,8 +97,8 @@ bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuff
 
     // Build composite key for this segment (feat_req_someiptp_781, 794)
     TpReassemblyKey key;
-    key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16) |
-                     segment.header.method_id;
+    key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16U) |
+                     static_cast<uint32_t>(segment.header.method_id);
     key.protocol_version = segment.header.protocol_version;
     key.interface_version = segment.header.interface_version;
     key.message_type = 0;
@@ -169,8 +169,8 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
     // not the original SOME/IP message type. The other key fields provide uniqueness.
     // request_id uses only client_id; session_id is tracked separately for stale detection.
     TpReassemblyKey key;
-    key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16) |
-                     segment.header.method_id;
+    key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16U) |
+                     static_cast<uint32_t>(segment.header.method_id);
     key.protocol_version = segment.header.protocol_version;
     key.interface_version = segment.header.interface_version;
     key.message_type = 0;

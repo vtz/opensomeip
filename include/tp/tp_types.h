@@ -137,10 +137,10 @@ struct TpReassemblyKey {
 struct TpReassemblyKeyHash {
     size_t operator()(const TpReassemblyKey& k) const {
         size_t h = std::hash<uint32_t>{}(k.message_id);
-        h ^= std::hash<uint8_t>{}(k.protocol_version) + 0x9e3779b9 + (h << 6) + (h >> 2);
-        h ^= std::hash<uint8_t>{}(k.interface_version) + 0x9e3779b9 + (h << 6) + (h >> 2);
-        h ^= std::hash<uint8_t>{}(k.message_type) + 0x9e3779b9 + (h << 6) + (h >> 2);
-        h ^= std::hash<uint32_t>{}(k.request_id) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<uint8_t>{}(k.protocol_version) + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
+        h ^= std::hash<uint8_t>{}(k.interface_version) + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
+        h ^= std::hash<uint8_t>{}(k.message_type) + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
+        h ^= std::hash<uint32_t>{}(k.request_id) + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
         return h;
     }
 };
