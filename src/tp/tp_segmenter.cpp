@@ -18,7 +18,6 @@
 #include "someip/types.h"
 #include "tp/tp_types.h"
 
-#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
@@ -100,15 +99,15 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
     tp_message.set_message_type(add_tp_flag(message.get_message_type()));
 
     // Every segment has 16-byte SOME/IP header + 4-byte TP header = 20 bytes overhead
-    constexpr size_t SEGMENT_OVERHEAD = 16 + 4;
-    if (config_.max_segment_size <= SEGMENT_OVERHEAD) {
+    constexpr size_t kSegmentOverhead = 16 + 4;
+    if (config_.max_segment_size <= kSegmentOverhead) {
         return TpResult::SEGMENTATION_FAILED;
     }
 
     // Per spec (feat_req_someiptp_772, 778, 779): non-last segment payload
     // must be multiple of 16 and all MS=1 segments must have equal size.
-    size_t raw_capacity = config_.max_segment_size - SEGMENT_OVERHEAD;
-    size_t uniform_payload = (raw_capacity / 16) * 16;  // Round down to multiple of 16
+    const size_t raw_capacity = config_.max_segment_size - kSegmentOverhead;
+    const size_t uniform_payload = (raw_capacity / 16) * 16;
     if (uniform_payload == 0) {
         return TpResult::SEGMENTATION_FAILED;
     }
@@ -117,8 +116,8 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
     uint32_t payload_offset = 0;
 
     while (payload_offset < total_length) {
-        uint32_t remaining = total_length - payload_offset;
-        bool more_segments = remaining > uniform_payload;
+        const uint32_t remaining = total_length - payload_offset;
+        const bool more_segments = remaining > uniform_payload;
         const uint32_t seg_payload_size = more_segments
             ? static_cast<uint32_t>(uniform_payload)
             : remaining;
