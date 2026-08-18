@@ -99,14 +99,14 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
     tp_message.set_message_type(add_tp_flag(message.get_message_type()));
 
     // Every segment has 16-byte SOME/IP header + 4-byte TP header = 20 bytes overhead
-    constexpr size_t kSegmentOverhead = 16 + 4;
-    if (config_.max_segment_size <= kSegmentOverhead) {
+    constexpr size_t segment_overhead = 16 + 4;
+    if (config_.max_segment_size <= segment_overhead) {
         return TpResult::SEGMENTATION_FAILED;
     }
 
     // Per spec (feat_req_someiptp_772, 778, 779): non-last segment payload
     // must be multiple of 16 and all MS=1 segments must have equal size.
-    const size_t raw_capacity = config_.max_segment_size - kSegmentOverhead;
+    const size_t raw_capacity = config_.max_segment_size - segment_overhead;
     const size_t uniform_payload = (raw_capacity / 16) * 16;
     if (uniform_payload == 0) {
         return TpResult::SEGMENTATION_FAILED;
