@@ -21,7 +21,6 @@
 #include "platform/thread.h"
 
 #include <cstddef>
-#include <unordered_map>
 
 namespace someip::tp {
 
@@ -106,7 +105,7 @@ public:
 
 private:
     TpConfig config_;
-    std::unordered_map<TpReassemblyKey, TpReassemblyBuffer, TpReassemblyKeyHash> reassembly_buffers_;
+    platform::UnorderedMap<TpReassemblyKey, TpReassemblyBuffer, 16, TpReassemblyKeyHash> reassembly_buffers_;
     mutable platform::Mutex config_mutex_;
     mutable platform::Mutex buffers_mutex_;
 

@@ -49,8 +49,9 @@ using Vector = etl::vector<T, N>;
 template <std::size_t N = SOMEIP_DEFAULT_STRING_CAPACITY>
 using String = etl::string<N>;
 
-template <typename K, typename V, std::size_t N = SOMEIP_DEFAULT_MAP_CAPACITY>
-using UnorderedMap = etl::unordered_map<K, V, N>;
+template <typename K, typename V, std::size_t N = SOMEIP_DEFAULT_MAP_CAPACITY,
+          typename Hash = etl::hash<K>>
+using UnorderedMap = etl::unordered_map<K, V, N, etl::equal_to<K>, Hash>;
 
 template <typename T, std::size_t N = SOMEIP_DEFAULT_QUEUE_CAPACITY>
 using Queue = etl::queue<T, N>;

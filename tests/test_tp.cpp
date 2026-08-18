@@ -379,6 +379,14 @@ TEST_F(TpTest, AllSegmentsHaveFullSomeIpHeader) {
                                  static_cast<uint32_t>(seg.payload[7]);
         uint32_t expected_length = 8 + 4 + static_cast<uint32_t>(seg.payload.size() - 20);
         EXPECT_EQ(someip_length, expected_length) << "Segment " << i << " wrong SOME/IP Length";
+
+        // Identity fields must be populated for composite-key reassembly
+        EXPECT_EQ(seg.header.service_id, 0x1234) << "Segment " << i << " header service_id";
+        EXPECT_EQ(seg.header.method_id, 0x5678) << "Segment " << i << " header method_id";
+        EXPECT_EQ(seg.header.client_id, 0xABCD) << "Segment " << i << " header client_id";
+        EXPECT_EQ(seg.header.session_id, 0x0001) << "Segment " << i << " header session_id";
+        EXPECT_EQ(seg.header.protocol_version, 0x01) << "Segment " << i << " header protocol_version";
+        EXPECT_EQ(seg.header.interface_version, 0x01) << "Segment " << i << " header interface_version";
     }
 }
 
@@ -972,4 +980,32 @@ TEST_F(TpTest, ReassemblySessionIdDiscard) {
     EXPECT_TRUE(reassembler.process_segment(seg2, complete));
     EXPECT_EQ(reassembler.get_active_reassemblies(), 1u)
         << "Stale buffer must be replaced, not accumulated";
+
+    // Verify the replacement buffer carries the new session's total length
+    uint32_t received_bytes = 0;
+    uint32_t total_bytes = 0;
+    const uint32_t msg_id = (static_cast<uint32_t>(seg2.header.service_id) << 16U) |
+                            seg2.header.method_id;
+    EXPECT_TRUE(reassembler.get_reassembly_progress(msg_id, received_bytes, total_bytes));
+    EXPECT_EQ(total_bytes, 200u) << "Replacement buffer must use new session's message_length";
+
+    // Mid-stream segment with a different Session ID must NOT create a new buffer
+    TpSegment seg3;
+    seg3.header.message_length = 300;
+    seg3.header.segment_offset = 40;
+    seg3.header.segment_length = 40;
+    seg3.header.sequence_number = 1;
+    seg3.header.message_type = TpMessageType::CONSECUTIVE_SEGMENT;
+    seg3.header.service_id = 0x1111;
+    seg3.header.method_id = 0x2222;
+    seg3.header.client_id = 0xAAAA;
+    seg3.header.session_id = 0x9999;  // Stale/spoofed session
+    seg3.header.protocol_version = 1;
+    seg3.header.interface_version = 1;
+    seg3.payload.resize(40, 0x33);
+
+    EXPECT_FALSE(reassembler.process_segment(seg3, complete))
+        << "Mid-stream segment with mismatched Session ID must be rejected";
+    EXPECT_EQ(reassembler.get_active_reassemblies(), 1u)
+        << "Stale mid-stream segment must not destroy existing buffer";
 }

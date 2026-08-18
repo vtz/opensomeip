@@ -108,15 +108,18 @@ inline constexpr size_t MAX_TP_REASSEMBLY_SIZE = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
  * @brief Composite key for TP reassembly per Open SOME/IP-TP spec
  * @satisfies feat_req_someiptp_781, feat_req_someiptp_794
  *
- * Key: Message ID + Protocol Version + Interface Version +
- *      Message Type (without TP flag) + Request ID (Client+Session)
+ * Key fields: Message ID, Protocol Version, Interface Version,
+ * Message Type (always 0 — TpMessageType encodes segment position, not
+ * the wire message type; uniqueness comes from the other fields), and
+ * Client ID (Session ID is tracked separately in TpReassemblyBuffer
+ * for stale-detection per feat_req_someiptp_795).
  */
 struct TpReassemblyKey {
     uint32_t message_id{0};          // Service ID << 16 | Method ID
     uint8_t protocol_version{0};
     uint8_t interface_version{0};
-    uint8_t message_type{0};         // Without TP flag (& ~0x20)
-    uint32_t request_id{0};          // Client ID (without Session ID, for stale detection)
+    uint8_t message_type{0};         // Always 0; see class doc
+    uint32_t request_id{0};          // Client ID only; Session ID tracked separately
 
     bool operator==(const TpReassemblyKey& other) const {
         return message_id == other.message_id &&
@@ -135,12 +138,16 @@ struct TpReassemblyKey {
  * @brief Hash function for TpReassemblyKey for use in unordered_map
  */
 struct TpReassemblyKeyHash {
+    static void combine(size_t& h, size_t v) {
+        h ^= v + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
+    }
+
     size_t operator()(const TpReassemblyKey& k) const {
         size_t h = std::hash<uint32_t>{}(k.message_id);
-        h ^= std::hash<uint8_t>{}(k.protocol_version) + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
-        h ^= std::hash<uint8_t>{}(k.interface_version) + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
-        h ^= std::hash<uint8_t>{}(k.message_type) + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
-        h ^= std::hash<uint32_t>{}(k.request_id) + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
+        combine(h, std::hash<uint8_t>{}(k.protocol_version));
+        combine(h, std::hash<uint8_t>{}(k.interface_version));
+        combine(h, std::hash<uint8_t>{}(k.message_type));
+        combine(h, std::hash<uint32_t>{}(k.request_id));
         return h;
     }
 };

@@ -176,12 +176,15 @@ static void test_tp() {
         CHECK(align_multi, "tp_alignment_multi");
         if (align_multi) {
             bool aligned = true;
+            bool uniform = true;
+            const size_t first_sz = segments.front().payload.size();
             for (size_t i = 0; i + 1 < segments.size(); ++i) {
                 size_t sz = segments[i].payload.size();
-                // All segments: 20-byte header (16 SOME/IP + 4 TP), payload must be multiple of 16
                 if (sz < 20 || (sz - 20) % 16 != 0) { aligned = false; break; }
+                if (sz != first_sz) { uniform = false; }
             }
             CHECK(aligned, "tp_segments_16byte_aligned");
+            CHECK(uniform, "tp_nonfinal_segments_uniform_size");
         }
     }
 

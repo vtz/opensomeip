@@ -26,6 +26,21 @@
 
 namespace someip::tp {
 
+namespace {
+
+TpReassemblyKey make_reassembly_key(const TpSegment& segment) {
+    TpReassemblyKey key;
+    key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16U) |
+                     static_cast<uint32_t>(segment.header.method_id);
+    key.protocol_version = segment.header.protocol_version;
+    key.interface_version = segment.header.interface_version;
+    key.message_type = 0;
+    key.request_id = segment.header.client_id;
+    return key;
+}
+
+}  // namespace
+
 /**
  * @brief SOME/IP-TP Reassembler implementation
  * @satisfies feat_req_someiptp_410
@@ -95,14 +110,7 @@ bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuff
 
     platform::ScopedLock const lock(buffers_mutex_);
 
-    // Build composite key for this segment (feat_req_someiptp_781, 794)
-    TpReassemblyKey key;
-    key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16U) |
-                     static_cast<uint32_t>(segment.header.method_id);
-    key.protocol_version = segment.header.protocol_version;
-    key.interface_version = segment.header.interface_version;
-    key.message_type = 0;
-    key.request_id = segment.header.client_id;
+    const TpReassemblyKey key = make_reassembly_key(segment);
 
     TpReassemblyBuffer* buffer = find_or_create_buffer(segment);
     if (buffer == nullptr) {
@@ -164,35 +172,34 @@ bool TpReassembler::validate_segment(const TpSegment& segment) const {
  * @satisfies feat_req_someiptp_781, feat_req_someiptp_794, feat_req_someiptp_795, feat_req_someiptp_793
  */
 TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segment) {
-    // Build composite key per spec (feat_req_someiptp_781, 794)
-    // message_type uses 0 because TpMessageType represents segment position,
-    // not the original SOME/IP message type. The other key fields provide uniqueness.
-    // request_id uses only client_id; session_id is tracked separately for stale detection.
-    TpReassemblyKey key;
-    key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16U) |
-                     static_cast<uint32_t>(segment.header.method_id);
-    key.protocol_version = segment.header.protocol_version;
-    key.interface_version = segment.header.interface_version;
-    key.message_type = 0;
-    key.request_id = segment.header.client_id;
+    const TpReassemblyKey key = make_reassembly_key(segment);
 
     auto it = reassembly_buffers_.find(key);
 
     if (it != reassembly_buffers_.end()) {
-        // Check Session ID change (feat_req_someiptp_795, 793)
+        // Session ID change: only restart on first/single segments (feat_req_someiptp_795, 793).
+        // Mid-stream segments with a different session ID are stale; discard them.
         if (it->second.session_id != segment.header.session_id) {
-            reassembly_buffers_.erase(it);
-            auto result = reassembly_buffers_.insert(
-                std::make_pair(key,
-                    TpReassemblyBuffer(key.message_id, segment.header.message_length,
-                                       segment.header.session_id)));
-            return &result.first->second;
+            if (segment.header.message_type == TpMessageType::FIRST_SEGMENT ||
+                segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
+                reassembly_buffers_.erase(it);
+                auto result = reassembly_buffers_.insert(
+                    std::make_pair(key,
+                        TpReassemblyBuffer(key.message_id, segment.header.message_length,
+                                           segment.header.session_id)));
+                return &result.first->second;
+            }
+            return nullptr;
         }
         return &it->second;
     }
 
     if (segment.header.message_type == TpMessageType::FIRST_SEGMENT ||
         segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
+        const auto config = get_config_copy();
+        if (reassembly_buffers_.size() >= config.max_concurrent_transfers) {
+            return nullptr;
+        }
         auto result = reassembly_buffers_.insert(
             std::make_pair(key,
                 TpReassemblyBuffer(key.message_id, segment.header.message_length,
@@ -233,33 +240,20 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
 
     size_t bytes_received = 0;
 
-    // Handle different segment types
-    if (segment.header.message_type == TpMessageType::FIRST_SEGMENT) {
-        // First segment: SOME/IP header (16) + TP header (4) + data
-        const size_t someip_header_size = 16;
-        const size_t tp_header_size = 4;
-        const size_t total_header_size = someip_header_size + tp_header_size;
-        if (segment.payload.size() > total_header_size) {
-            bytes_received = segment.payload.size() - total_header_size;
-            std::copy(segment.payload.begin() + total_header_size,
-                     segment.payload.end(),
-                     buffer.received_data.begin() + segment.header.segment_offset);
-        }
-    } else if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
-        // Single message contains full SOME/IP message, extract payload only
-        const size_t header_size = 16;  // SOME/IP header size
+    if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
+        const size_t header_size = 16;
         if (segment.payload.size() > header_size) {
             bytes_received = segment.payload.size() - header_size;
-            std::copy(segment.payload.begin() + header_size,
+            std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(header_size),
                      segment.payload.end(),
                      buffer.received_data.begin());
         }
     } else {
-        // All TP segments: SOME/IP header (16) + TP header (4) + payload data
-        const size_t total_header_size = 16 + 4;
-        if (segment.payload.size() > total_header_size) {
-            bytes_received = segment.payload.size() - total_header_size;
-            std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(total_header_size),
+        // All TP segments (FIRST, CONSECUTIVE, LAST): 16 SOME/IP + 4 TP header
+        constexpr size_t tp_header_size = 16 + 4;
+        if (segment.payload.size() > tp_header_size) {
+            bytes_received = segment.payload.size() - tp_header_size;
+            std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(tp_header_size),
                      segment.payload.end(),
                      buffer.received_data.begin() + segment.header.segment_offset);
         }

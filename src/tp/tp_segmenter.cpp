@@ -98,19 +98,29 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
     Message tp_message = message;
     tp_message.set_message_type(add_tp_flag(message.get_message_type()));
 
-    // Every segment has 16-byte SOME/IP header + 4-byte TP header = 20 bytes overhead
     constexpr size_t segment_overhead = 16 + 4;
     if (config_.max_segment_size <= segment_overhead) {
         return TpResult::SEGMENTATION_FAILED;
     }
 
-    // Per spec (feat_req_someiptp_772, 778, 779): non-last segment payload
-    // must be multiple of 16 and all MS=1 segments must have equal size.
+    // Reject configurations where the total segment size exceeds uint16_t range,
+    // since segment_length is stored as uint16_t in TpSegmentHeader.
+    if (config_.max_segment_size > UINT16_MAX) {
+        return TpResult::SEGMENTATION_FAILED;
+    }
+
     const size_t raw_capacity = config_.max_segment_size - segment_overhead;
     const size_t uniform_payload = (raw_capacity / 16) * 16;
     if (uniform_payload == 0) {
         return TpResult::SEGMENTATION_FAILED;
     }
+
+    // Serialize the common 16-byte SOME/IP header once, then reuse per segment.
+    const platform::ByteBuffer common_header = [&] {
+        platform::ByteBuffer hdr = tp_message.serialize();
+        hdr.resize(16);
+        return hdr;
+    }();
 
     uint8_t const sequence_number = next_sequence_number_;
     uint32_t payload_offset = 0;
@@ -133,25 +143,25 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         segment.header.message_length = total_length;
         segment.header.segment_offset = payload_offset;
         segment.header.sequence_number = sequence_number;
+        segment.header.service_id = message.get_service_id();
+        segment.header.method_id = message.get_method_id();
+        segment.header.client_id = message.get_client_id();
+        segment.header.session_id = message.get_session_id();
+        segment.header.protocol_version = message.get_protocol_version();
+        segment.header.interface_version = message.get_interface_version();
 
-        // Build full SOME/IP header (16 bytes) from the tp_message
-        platform::ByteBuffer seg_data = tp_message.serialize();
-        seg_data.resize(16);  // Keep only header
+        // Copy the pre-built 16-byte SOME/IP header
+        platform::ByteBuffer seg_data(common_header);
 
-        // Update SOME/IP length field: 8 + 4 + seg_payload_size
+        // Patch the SOME/IP Length field: 8 + 4 + seg_payload_size
         const uint32_t someip_length = 8 + 4 + seg_payload_size;
         seg_data[4] = static_cast<uint8_t>((someip_length >> 24U) & 0xFFU);
         seg_data[5] = static_cast<uint8_t>((someip_length >> 16U) & 0xFFU);
         seg_data[6] = static_cast<uint8_t>((someip_length >> 8U) & 0xFFU);
         seg_data[7] = static_cast<uint8_t>(someip_length & 0xFFU);
 
-        // Insert 4-byte TP header after SOME/IP header
-        const uint32_t offset_units = payload_offset / 16;
-        const uint32_t tp_header = (offset_units << 4U) | (more_segments ? 0x01U : 0x00U);
-        seg_data.push_back(static_cast<uint8_t>((tp_header >> 24U) & 0xFFU));
-        seg_data.push_back(static_cast<uint8_t>((tp_header >> 16U) & 0xFFU));
-        seg_data.push_back(static_cast<uint8_t>((tp_header >> 8U) & 0xFFU));
-        seg_data.push_back(static_cast<uint8_t>(tp_header & 0xFFU));
+        // Append 4-byte TP header via the existing helper
+        serialize_tp_header(seg_data, payload_offset, more_segments);
 
         // Append payload data
         seg_data.insert(seg_data.end(),

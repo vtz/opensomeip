@@ -29,8 +29,8 @@ using Vector = std::vector<T>;
 template <std::size_t N = 0>
 using String = std::string;
 
-template <typename K, typename V, std::size_t N = 0>
-using UnorderedMap = std::unordered_map<K, V>;
+template <typename K, typename V, std::size_t N = 0, typename Hash = std::hash<K>>
+using UnorderedMap = std::unordered_map<K, V, Hash>;
 
 template <typename T, std::size_t N = 0>
 using Queue = std::queue<T>;
