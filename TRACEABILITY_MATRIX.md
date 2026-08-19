@@ -191,7 +191,7 @@ This document provides a comprehensive traceability matrix mapping requirements 
 | Requirement ID | Requirement Description | Implementation Status | Test Coverage |
 |----------------|------------------------|----------------------|---------------|
 | feat_req_someiptp_410 | First segment includes SOME/IP header | ✅ | 🧪 |
-| feat_req_someiptp_411 | Subsequent segments payload only | ✅ | 🧪 |
+| feat_req_someiptp_411 | ~~Subsequent segments payload only~~ — **Inverted**: all segments now carry full SOME/IP header | ❌ (superseded) | 🧪 |
 | feat_req_someiptp_412 | Segment size limits | ✅ | 🧪 |
 | feat_req_someiptp_413 | Out-of-order delivery handling | ✅ | 🧪 |
 | feat_req_someiptp_414 | Duplicate segment handling | ✅ | 🧪 |

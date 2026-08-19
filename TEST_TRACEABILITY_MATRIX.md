@@ -140,7 +140,7 @@ This matrix maps individual test cases to specific requirements from the Open SO
 | `TpTest.OffsetFieldHandling` | feat_req_someiptp_400 | TP offset field processing | ✅ |
 | `TpTest.MoreSegmentsFlag` | feat_req_someiptp_401 | More segments flag handling | ✅ |
 | `TpTest.FirstSegmentHeader` | feat_req_someiptp_410 | First segment header inclusion | ✅ |
-| `TpTest.SubsequentSegments` | feat_req_someiptp_411 | Subsequent segment payload only | ✅ |
+| `TpTest.AllSegmentsHaveFullSomeIpHeader` | feat_req_someiptp_411 | ~~Subsequent segments payload only~~ — inverted: all segments carry full SOME/IP header | ✅ |
 
 **Test File**: `tests/test_tp.cpp`
 **Coverage**: 23 test cases covering all TP requirements

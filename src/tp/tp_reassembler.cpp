@@ -28,14 +28,30 @@ namespace someip::tp {
 
 namespace {
 
+/**
+ * Build the spec-mandated reassembly key from the wire payload.
+ * Key = Message ID + Protocol Version + Interface Version
+ *     + Message Type (SOME/IP byte 14, TP-flag masked off)
+ *     + Request ID (Client ID << 16 | Session ID)
+ * @satisfies feat_req_someiptp_781
+ */
 TpReassemblyKey make_reassembly_key(const TpSegment& segment) {
     TpReassemblyKey key;
     key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16U) |
                      static_cast<uint32_t>(segment.header.method_id);
     key.protocol_version = segment.header.protocol_version;
     key.interface_version = segment.header.interface_version;
-    key.message_type = 0;
-    key.request_id = segment.header.client_id;
+
+    // Extract SOME/IP Message Type from the wire header, mask off TP-Flag (0x20).
+    if (segment.payload.size() >= 15) {
+        key.message_type = segment.payload[14] & static_cast<uint8_t>(~0x20U);
+    } else {
+        key.message_type = 0;
+    }
+
+    // Full Request ID: Client ID << 16 | Session ID
+    key.request_id = (static_cast<uint32_t>(segment.header.client_id) << 16U) |
+                     static_cast<uint32_t>(segment.header.session_id);
     return key;
 }
 
@@ -44,7 +60,6 @@ TpReassemblyKey make_reassembly_key(const TpSegment& segment) {
 /**
  * @brief SOME/IP-TP Reassembler implementation
  * @satisfies feat_req_someiptp_410
- * @satisfies feat_req_someiptp_411
  * @satisfies feat_req_someiptp_412
  */
 TpReassembler::TpReassembler(const TpConfig& config)
@@ -140,29 +155,29 @@ bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuff
 bool TpReassembler::validate_segment(const TpSegment& segment) const {
     const auto config = get_config_copy();
 
-    // Validate segment header: segment_length should match payload size
     if (segment.header.segment_length != segment.payload.size()) {
         return false;
     }
 
-    // Validate message length
     if (segment.header.message_length > config.max_message_size) {
         return false;
     }
 
-    // Calculate the actual payload bytes (excluding headers)
-    // All TP segments have SOME/IP header (16 bytes) + TP header (4 bytes)
-    uint16_t header_overhead = 0;
-    if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
-        header_overhead = 16;  // SOME/IP header only
-    } else {
-        header_overhead = 16 + 4;  // SOME/IP header + TP header for ALL TP segments
+    const uint16_t header_overhead =
+        (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) ? 16 : 20;
+
+    // Reject segments that are too short to contain the required headers.
+    if (segment.header.segment_length < header_overhead) {
+        return false;
     }
 
-    // Validate offset: the actual payload portion should fit within message bounds
-    uint16_t const actual_payload_bytes = segment.header.segment_length > header_overhead
-                                              ? segment.header.segment_length - header_overhead
-                                              : 0;
+    const uint16_t actual_payload_bytes = segment.header.segment_length - header_overhead;
+
+    // Zero-payload TP segments are invalid (they would be vacuously "received").
+    if (actual_payload_bytes == 0) {
+        return false;
+    }
+
     return segment.header.segment_offset + actual_payload_bytes <= segment.header.message_length;
 }
 
@@ -175,39 +190,41 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
     const TpReassemblyKey key = make_reassembly_key(segment);
 
     auto it = reassembly_buffers_.find(key);
-
     if (it != reassembly_buffers_.end()) {
-        // Session ID change: only restart on first/single segments (feat_req_someiptp_795, 793).
-        // Mid-stream segments with a different session ID are stale; discard them.
-        if (it->second.session_id != segment.header.session_id) {
-            if (segment.header.message_type == TpMessageType::FIRST_SEGMENT ||
-                segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
-                reassembly_buffers_.erase(it);
-                auto result = reassembly_buffers_.insert(
-                    std::make_pair(key,
-                        TpReassemblyBuffer(key.message_id, segment.header.message_length,
-                                           segment.header.session_id)));
-                return &result.first->second;
-            }
-            return nullptr;
-        }
         return &it->second;
     }
 
-    if (segment.header.message_type == TpMessageType::FIRST_SEGMENT ||
-        segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
-        const auto config = get_config_copy();
-        if (reassembly_buffers_.size() >= config.max_concurrent_transfers) {
-            return nullptr;
-        }
-        auto result = reassembly_buffers_.insert(
-            std::make_pair(key,
-                TpReassemblyBuffer(key.message_id, segment.header.message_length,
-                                   segment.header.session_id)));
-        return &result.first->second;
+    // No exact key match (includes Session ID).
+    // Only FIRST/SINGLE may create a new buffer.
+    if (segment.header.message_type != TpMessageType::FIRST_SEGMENT &&
+        segment.header.message_type != TpMessageType::SINGLE_MESSAGE) {
+        return nullptr;
     }
 
-    return nullptr;
+    // Stale detection (feat_req_someiptp_795, 793): discard any existing buffer
+    // that matches on everything except Session ID (same Client ID, different Session).
+    const uint16_t client_id_bits = static_cast<uint16_t>(key.request_id >> 16U);
+    for (auto stale = reassembly_buffers_.begin(); stale != reassembly_buffers_.end(); ++stale) {
+        if (stale->first.message_id == key.message_id &&
+            stale->first.protocol_version == key.protocol_version &&
+            stale->first.interface_version == key.interface_version &&
+            stale->first.message_type == key.message_type &&
+            static_cast<uint16_t>(stale->first.request_id >> 16U) == client_id_bits &&
+            stale->first.request_id != key.request_id) {
+            reassembly_buffers_.erase(stale);
+            break;
+        }
+    }
+
+    const auto config = get_config_copy();
+    if (reassembly_buffers_.size() >= config.max_concurrent_transfers) {
+        return nullptr;
+    }
+    auto result = reassembly_buffers_.insert(
+        std::make_pair(key,
+            TpReassemblyBuffer(key.message_id, segment.header.message_length,
+                               segment.header.session_id)));
+    return &result.first->second;
 }
 
 /**
@@ -216,55 +233,54 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
  * @implements REQ_TP_039_E01, REQ_TP_080, REQ_TP_081
  */
 bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment) {
-    // Calculate actual payload bytes (excluding headers)
-    size_t header_overhead = 0;
     if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
-        header_overhead = 16;  // SOME/IP header only
-    } else {
-        header_overhead = 16 + 4;  // SOME/IP header + TP header for ALL TP segments
-    }
-
-    size_t const actual_payload_bytes = segment.payload.size() > header_overhead
-                                  ? segment.payload.size() - header_overhead
-                                  : 0;
-
-    // Check if this segment was already received
-    if (buffer.is_segment_received(segment.header.segment_offset, actual_payload_bytes)) {
-        return true;  // Duplicate segment, ignore
-    }
-
-    // Check bounds using actual payload bytes
-    if (segment.header.segment_offset + actual_payload_bytes > buffer.total_length) {
-        return false;  // Segment exceeds message bounds
-    }
-
-    size_t bytes_received = 0;
-
-    if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
-        const size_t header_size = 16;
-        if (segment.payload.size() > header_size) {
-            bytes_received = segment.payload.size() - header_size;
-            std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(header_size),
-                     segment.payload.end(),
-                     buffer.received_data.begin());
+        constexpr size_t header_size = 16;
+        if (segment.payload.size() <= header_size) {
+            return false;
         }
-    } else {
-        // All TP segments (FIRST, CONSECUTIVE, LAST): 16 SOME/IP + 4 TP header
-        constexpr size_t tp_header_size = 16 + 4;
-        if (segment.payload.size() > tp_header_size) {
-            bytes_received = segment.payload.size() - tp_header_size;
-            std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(tp_header_size),
-                     segment.payload.end(),
-                     buffer.received_data.begin() + segment.header.segment_offset);
+        const size_t bytes = segment.payload.size() - header_size;
+
+        if (buffer.is_segment_received(0, bytes)) {
+            return true;
         }
+        if (bytes > buffer.total_length) {
+            return false;
+        }
+
+        std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(header_size),
+                 segment.payload.end(),
+                 buffer.received_data.begin());
+        buffer.mark_segment_received(0, bytes);
+        buffer.last_sequence_number = segment.header.sequence_number;
+        return true;
     }
 
-    // Mark the received bytes
-    buffer.mark_segment_received(segment.header.segment_offset, bytes_received);
+    // TP segments: parse wire TP offset from payload bytes [16..19].
+    constexpr size_t tp_header_size = 16 + 4;
+    if (segment.payload.size() <= tp_header_size) {
+        return false;
+    }
 
-    // Update sequence tracking
+    uint32_t wire_offset = 0;
+    bool wire_more = false;
+    if (!parse_tp_header(segment.payload, wire_offset, wire_more)) {
+        return false;
+    }
+
+    const size_t bytes = segment.payload.size() - tp_header_size;
+
+    if (buffer.is_segment_received(wire_offset, bytes)) {
+        return true;
+    }
+    if (wire_offset + bytes > buffer.total_length) {
+        return false;
+    }
+
+    std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(tp_header_size),
+             segment.payload.end(),
+             buffer.received_data.begin() + wire_offset);
+    buffer.mark_segment_received(wire_offset, bytes);
     buffer.last_sequence_number = segment.header.sequence_number;
-
     return true;
 }
 
@@ -369,6 +385,9 @@ TpConfig TpReassembler::get_config_copy() const {
 
 // TpReassemblyBuffer implementation
 bool TpReassemblyBuffer::is_segment_received(uint32_t offset, uint32_t length) const {
+    if (length == 0) {
+        return false;
+    }
     for (uint32_t i = 0; i < length; ++i) {
         size_t const bit_index = offset + i;
         if (bit_index >= received_segments.size() || !received_segments[bit_index]) {
@@ -396,7 +415,10 @@ bool TpReassemblyBuffer::is_complete() const {
         return true;
     }
 
-    // Check if all segments received
+    if (total_length == 0 || received_segments.size() < total_length) {
+        return false;
+    }
+
     for (bool const received : received_segments) {
         if (!received) {
             return false;

@@ -108,18 +108,20 @@ inline constexpr size_t MAX_TP_REASSEMBLY_SIZE = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
  * @brief Composite key for TP reassembly per Open SOME/IP-TP spec
  * @satisfies feat_req_someiptp_781, feat_req_someiptp_794
  *
- * Key fields: Message ID, Protocol Version, Interface Version,
- * Message Type (always 0 — TpMessageType encodes segment position, not
- * the wire message type; uniqueness comes from the other fields), and
- * Client ID (Session ID is tracked separately in TpReassemblyBuffer
- * for stale-detection per feat_req_someiptp_795).
+ * Key fields (per someip-tp.rst):
+ *   Message ID + Protocol Version + Interface Version
+ *   + Message Type (SOME/IP wire byte 14, TP-flag 0x20 masked off)
+ *   + Request ID (Client ID << 16 | Session ID)
+ *
+ * Session ID changes for the same Client ID trigger stale-buffer discard
+ * in find_or_create_buffer (feat_req_someiptp_795).
  */
 struct TpReassemblyKey {
     uint32_t message_id{0};          // Service ID << 16 | Method ID
     uint8_t protocol_version{0};
     uint8_t interface_version{0};
-    uint8_t message_type{0};         // Always 0; see class doc
-    uint32_t request_id{0};          // Client ID only; Session ID tracked separately
+    uint8_t message_type{0};         // Wire Message Type with TP-flag masked off
+    uint32_t request_id{0};          // Client ID << 16 | Session ID
 
     bool operator==(const TpReassemblyKey& other) const {
         return message_id == other.message_id &&

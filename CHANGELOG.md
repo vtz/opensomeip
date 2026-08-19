@@ -33,12 +33,30 @@
   (`feat_req_someiptp_765`, `772`, `778`).
   ([#275](https://github.com/vtz/opensomeip/issues/275))
 
+- **TP segment payload maximized at `max_segment_size` (default 1392).**
+  `max_segment_size` now means segment *payload* bytes, not total
+  wire size.  Non-last segments produce payloads of exactly
+  `(max_segment_size / 16) * 16` bytes (1392 with default config).
+  Previously 20 bytes were reserved for headers, capping payload at
+  1360.
+
+- **Folklore 1000-byte TP-Flag path removed.**  Messages that fit in
+  a single non-TP SOME/IP message are sent without TP-Flag and without
+  a TP header.  The vsomeip-style `> 1000` threshold that set TP-Flag
+  without appending a TP header has been deleted.
+
 - **TP reassembly buffer keyed by spec-mandated composite key.**
   Reassembly buffers are now keyed by Message ID + Protocol Version +
-  Interface Version + Message Type (sans TP flag) + Client ID, with
-  Session ID change detection to discard stale buffers
-  (`feat_req_someiptp_781`, `795`).
+  Interface Version + Message Type (wire byte 14, TP-flag masked off) +
+  Request ID (Client ID + Session ID), per `feat_req_someiptp_781`.
+  Session ID change detection discards stale buffers
+  (`feat_req_someiptp_795`).
   ([#276](https://github.com/vtz/opensomeip/issues/276))
+
+- **Undersized / zero-payload TP segments are rejected.**  Segments
+  shorter than the required header overhead (20 bytes for TP) are
+  rejected.  Zero-payload segments no longer vacuously complete a
+  reassembly buffer.
 
 - **TCP Magic Cookie field layout corrected.**  Session ID is now
   `0xBEEF` (was misplaced as `0x0001`), MessageType is `0x01`/`0x02`
@@ -72,8 +90,14 @@
 - **SOME/IP-TP**: every segment now carries a full SOME/IP header;
   non-last segment payloads are 16-byte aligned and uniformly sized (#275).
 - **SOME/IP-TP**: reassembly buffer uses spec-mandated composite key
-  for interoperability; stale sessions are discarded on Session ID
-  change (#276).
+  (incl. wire Message Type and full Request ID) for interoperability;
+  stale sessions are discarded on Session ID change (#276).
+- **SOME/IP-TP**: undersized and zero-payload segments are now rejected
+  instead of vacuously completing a reassembly buffer.
+- **SOME/IP-TP**: `max_segment_size` now correctly represents payload
+  capacity; non-last segments produce maximum-size payloads (1392 default).
+- **SOME/IP-TP**: removed folklore 1000-byte threshold that set TP-Flag
+  without appending a TP header.
 - **TCP**: Magic Cookie byte layout corrected — Session ID, MessageType,
   and ReturnCode now match `feat_req_someip_609` (#277).
 - UDP/TCP: listener-only mode no longer retains `MessagePtr` in the
@@ -97,6 +121,12 @@ The following intentional extensions remain vs. the Open SOME/IP spec:
 - **Configurable length-field widths**: strings and arrays use 32-bit
   length fields only; 8/16/0-bit variants are a P1 follow-up.
 - **TP traffic shaping**: no inter-segment delay is applied.
+- **TP + E2E protection**: the TP segmenter calls `serialize()` and
+  truncates the result to 16 bytes to extract the SOME/IP header,
+  which discards any E2E protection suffix.  E2E-protected messages
+  **must not** be passed to the TP segmenter until a combined
+  TP+E2E path is implemented.  This is a known limitation tracked
+  for a future release.
 
 ## Unreleased — Static Allocation Backend (`feature/no-heap-static-alloc`)
 

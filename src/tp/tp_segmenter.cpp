@@ -41,23 +41,15 @@ TpSegmenter::TpSegmenter(const TpConfig& config)
  * @implements REQ_TP_001_E01, REQ_TP_070, REQ_TP_071, REQ_TP_072, REQ_TP_073, REQ_TP_074, REQ_TP_075
  */
 TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& segments) {
-    // Get the message payload (without headers - TP handles payload only)
     const platform::ByteBuffer& payload = message.get_payload();
 
     if (payload.size() > config_.max_message_size) {
         return TpResult::MESSAGE_TOO_LARGE;
     }
 
-    // Check if segmentation is needed
     if (payload.size() <= config_.max_segment_size) {
-        // Single segment message - still need to include SOME/IP header
-        // For single segment messages, we still add the TP flag if the payload is large
-        // enough to indicate this should use TP (though it fits in one segment)
-        Message tp_message = message;
-        if (payload.size() > 1000) {  // Threshold for when to use TP even for single segments
-            tp_message.set_message_type(add_tp_flag(message.get_message_type()));
-        }
-        platform::ByteBuffer message_data = tp_message.serialize();
+        // Payload fits in one non-TP SOME/IP message: no TP-Flag, no TP header.
+        platform::ByteBuffer message_data = message.serialize();
 
         TpSegment segment;
         segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
@@ -65,7 +57,13 @@ TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& s
         segment.header.segment_offset = 0;
         segment.header.segment_length = static_cast<uint16_t>(message_data.size());
         segment.header.sequence_number = next_sequence_number_++;
-        segment.payload = std::move(message_data);  // Full message for single segment
+        segment.header.service_id = message.get_service_id();
+        segment.header.method_id = message.get_method_id();
+        segment.header.client_id = message.get_client_id();
+        segment.header.session_id = message.get_session_id();
+        segment.header.protocol_version = message.get_protocol_version();
+        segment.header.interface_version = message.get_interface_version();
+        segment.payload = std::move(message_data);
 
         if (segments.size() >= segments.max_size()) {
             return TpResult::MESSAGE_TOO_LARGE;
@@ -74,7 +72,6 @@ TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& s
         return TpResult::SUCCESS;
     }
 
-    // Multi-segment message - segment the payload only
     return create_multi_segments(message, payload, segments);
 }
 
@@ -98,19 +95,19 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
     Message tp_message = message;
     tp_message.set_message_type(add_tp_flag(message.get_message_type()));
 
+    if (config_.max_segment_size == 0) {
+        return TpResult::SEGMENTATION_FAILED;
+    }
+
+    // segment_length (uint16_t) stores 20 + payload; guard against overflow.
     constexpr size_t segment_overhead = 16 + 4;
-    if (config_.max_segment_size <= segment_overhead) {
+    if (config_.max_segment_size + segment_overhead > UINT16_MAX) {
         return TpResult::SEGMENTATION_FAILED;
     }
 
-    // Reject configurations where the total segment size exceeds uint16_t range,
-    // since segment_length is stored as uint16_t in TpSegmentHeader.
-    if (config_.max_segment_size > UINT16_MAX) {
-        return TpResult::SEGMENTATION_FAILED;
-    }
-
-    const size_t raw_capacity = config_.max_segment_size - segment_overhead;
-    const size_t uniform_payload = (raw_capacity / 16) * 16;
+    // max_segment_size is the payload capacity (excluding headers).
+    // Round down to a multiple of 16 for non-last segments.
+    const size_t uniform_payload = (config_.max_segment_size / 16) * 16;
     if (uniform_payload == 0) {
         return TpResult::SEGMENTATION_FAILED;
     }
