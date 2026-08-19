@@ -203,7 +203,7 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
 
     // Stale detection (feat_req_someiptp_795, 793): discard any existing buffer
     // that matches on everything except Session ID (same Client ID, different Session).
-    const uint16_t client_id_bits = static_cast<uint16_t>(key.request_id >> 16U);
+    const auto client_id_bits = static_cast<uint16_t>(key.request_id >> 16U);
     for (auto stale = reassembly_buffers_.begin(); stale != reassembly_buffers_.end(); ++stale) {
         if (stale->first.message_id == key.message_id &&
             stale->first.protocol_version == key.protocol_version &&

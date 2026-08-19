@@ -107,7 +107,7 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
 
     // max_segment_size is the payload capacity (excluding headers).
     // Round down to a multiple of 16 for non-last segments.
-    const size_t uniform_payload = (config_.max_segment_size / 16) * 16;
+    const size_t uniform_payload = static_cast<size_t>(config_.max_segment_size / 16) * 16;
     if (uniform_payload == 0) {
         return TpResult::SEGMENTATION_FAILED;
     }
