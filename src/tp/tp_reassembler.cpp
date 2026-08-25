@@ -43,10 +43,10 @@ TpReassemblyKey make_reassembly_key(const TpSegment& segment) {
     // whether TpSegmentHeader was populated.
     if (segment.payload.size() >= 16) {
         const auto* p = segment.payload.data();
-        const auto service = static_cast<uint16_t>((static_cast<uint16_t>(p[0]) << 8U) | p[1]);
-        const auto method  = static_cast<uint16_t>((static_cast<uint16_t>(p[2]) << 8U) | p[3]);
-        const auto client  = static_cast<uint16_t>((static_cast<uint16_t>(p[8]) << 8U) | p[9]);
-        const auto session = static_cast<uint16_t>((static_cast<uint16_t>(p[10]) << 8U) | p[11]);
+        const auto service = static_cast<uint16_t>((static_cast<unsigned>(p[0]) << 8U) | static_cast<unsigned>(p[1]));
+        const auto method  = static_cast<uint16_t>((static_cast<unsigned>(p[2]) << 8U) | static_cast<unsigned>(p[3]));
+        const auto client  = static_cast<uint16_t>((static_cast<unsigned>(p[8]) << 8U) | static_cast<unsigned>(p[9]));
+        const auto session = static_cast<uint16_t>((static_cast<unsigned>(p[10]) << 8U) | static_cast<unsigned>(p[11]));
 
         key.message_id = (static_cast<uint32_t>(service) << 16U) | method;
         key.protocol_version = p[12];
