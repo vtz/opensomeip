@@ -189,13 +189,17 @@ bool TpReassembler::validate_segment(const TpSegment& segment) const {
 
     // Use the wire TP offset for bounds checking so validation agrees with
     // placement in add_segment_to_buffer (which also uses the wire offset).
+    // Overflow-safe: split into two comparisons to avoid uint32_t wrap.
     if (segment.header.message_type != TpMessageType::SINGLE_MESSAGE) {
         uint32_t wire_offset = 0;
         bool wire_more = false;
         if (!parse_tp_header(segment.payload, wire_offset, wire_more)) {
             return false;
         }
-        return wire_offset + actual_payload_bytes <= segment.header.message_length;
+        if (wire_offset > segment.header.message_length) {
+            return false;
+        }
+        return actual_payload_bytes <= segment.header.message_length - wire_offset;
     }
 
     return actual_payload_bytes <= segment.header.message_length;
@@ -292,7 +296,8 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
     if (buffer.is_segment_received(wire_offset, bytes)) {
         return true;
     }
-    if (wire_offset + bytes > buffer.total_length) {
+    if (wire_offset > buffer.total_length ||
+        bytes > static_cast<size_t>(buffer.total_length - wire_offset)) {
         return false;
     }
 
