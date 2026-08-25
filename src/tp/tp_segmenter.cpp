@@ -57,6 +57,10 @@ TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& s
         // Payload fits in one non-TP SOME/IP message: no TP-Flag, no TP header.
         platform::ByteBuffer message_data = message.serialize();
 
+        if (message_data.size() > UINT16_MAX) {
+            return TpResult::SEGMENTATION_FAILED;
+        }
+
         TpSegment segment;
         segment.header.message_type = TpMessageType::SINGLE_MESSAGE;
         segment.header.message_length = static_cast<uint32_t>(payload.size());
