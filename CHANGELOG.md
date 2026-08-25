@@ -121,12 +121,10 @@ The following intentional extensions remain vs. the Open SOME/IP spec:
 - **Configurable length-field widths**: strings and arrays use 32-bit
   length fields only; 8/16/0-bit variants are a P1 follow-up.
 - **TP traffic shaping**: no inter-segment delay is applied.
-- **TP + E2E protection**: the TP segmenter calls `serialize()` and
-  truncates the result to 16 bytes to extract the SOME/IP header,
-  which discards any E2E protection suffix.  E2E-protected messages
-  **must not** be passed to the TP segmenter until a combined
-  TP+E2E path is implemented.  This is a known limitation tracked
-  for a future release.
+- **TP + E2E protection**: the TP segmenter now **rejects**
+  E2E-protected messages (`SEGMENTATION_FAILED`) instead of silently
+  truncating the E2E suffix via `serialize()`+`resize(16)`.  A
+  combined TP+E2E path is tracked for a future release.
 
 ## Unreleased — Static Allocation Backend (`feature/no-heap-static-alloc`)
 

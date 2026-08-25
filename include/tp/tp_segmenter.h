@@ -82,7 +82,7 @@ private:
                                  const platform::ByteBuffer& payload,
                                  TpSegmentVector& segments);
 
-    void serialize_tp_header(platform::ByteBuffer& payload, uint32_t offset, bool more_segments);
+    bool serialize_tp_header(platform::ByteBuffer& payload, uint32_t offset, bool more_segments);
     MessageType add_tp_flag(MessageType type) const;
 };
 

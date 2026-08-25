@@ -16,6 +16,7 @@
 #include <tp/tp_segmenter.h>
 #include <tp/tp_reassembler.h>
 #include <someip/message.h>
+#include <e2e/e2e_header.h>
 #include <thread>
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
@@ -220,9 +221,17 @@ TEST_F(TpTest, TimeoutHandling) {
     seg.header.method_id = 0x0001;
     seg.header.session_id = 0x0001;
     seg.payload.resize(500, 0x11);
-    // Wire Message Type: REQUEST | TP-Flag
-    seg.payload[14] = 0x20;
-    // Wire TP header: offset=0, more=true → 0x00000001
+    // Wire SOME/IP header: Service=0x0001, Method=0x0001
+    seg.payload[0] = 0x00; seg.payload[1] = 0x01;
+    seg.payload[2] = 0x00; seg.payload[3] = 0x01;
+    // Client=0x0000, Session=0x0001
+    seg.payload[8] = 0x00; seg.payload[9] = 0x00;
+    seg.payload[10] = 0x00; seg.payload[11] = 0x01;
+    seg.payload[12] = 0x01;  // Protocol Version
+    seg.payload[13] = 0x01;  // Interface Version
+    seg.payload[14] = 0x20;  // REQUEST | TP-Flag
+    seg.payload[15] = 0x00;  // Return Code
+    // Wire TP header: offset=0, more=true
     seg.payload[16] = 0x00; seg.payload[17] = 0x00;
     seg.payload[18] = 0x00; seg.payload[19] = 0x01;
 
@@ -920,7 +929,19 @@ TEST_F(TpTest, ReassemblyCompositeKey) {
         seg.header.protocol_version = 1;
         seg.header.interface_version = 1;
         seg.payload.resize(40, 0xAA);
+        // Wire SOME/IP header
+        seg.payload[0] = static_cast<uint8_t>(service >> 8U);
+        seg.payload[1] = static_cast<uint8_t>(service & 0xFFU);
+        seg.payload[2] = static_cast<uint8_t>(method >> 8U);
+        seg.payload[3] = static_cast<uint8_t>(method & 0xFFU);
+        seg.payload[8] = static_cast<uint8_t>(client >> 8U);
+        seg.payload[9] = static_cast<uint8_t>(client & 0xFFU);
+        seg.payload[10] = static_cast<uint8_t>(session >> 8U);
+        seg.payload[11] = static_cast<uint8_t>(session & 0xFFU);
+        seg.payload[12] = 0x01;  // Protocol Version
+        seg.payload[13] = 0x01;  // Interface Version
         seg.payload[14] = 0x20;  // REQUEST | TP-Flag
+        seg.payload[15] = 0x00;  // Return Code
         // TP header: offset=0, more=true
         seg.payload[16] = 0x00; seg.payload[17] = 0x00;
         seg.payload[18] = 0x00; seg.payload[19] = 0x01;
@@ -960,9 +981,18 @@ TEST_F(TpTest, ReassemblySessionIdDiscard) {
         seg.header.session_id = session;
         seg.header.protocol_version = 1;
         seg.header.interface_version = 1;
-        seg.payload.resize(40, 0xAA);
+        seg.payload.resize(40, 0x00);
+        // Wire SOME/IP header
+        seg.payload[0] = 0x11; seg.payload[1] = 0x11;  // Service
+        seg.payload[2] = 0x22; seg.payload[3] = 0x22;  // Method
+        seg.payload[8] = 0xAA; seg.payload[9] = 0xAA;  // Client
+        seg.payload[10] = static_cast<uint8_t>(session >> 8U);
+        seg.payload[11] = static_cast<uint8_t>(session & 0xFFU);
+        seg.payload[12] = 0x01;  // Protocol Version
+        seg.payload[13] = 0x01;  // Interface Version
         seg.payload[14] = 0x20;  // REQUEST | TP-Flag
-        // TP header: (offset/16 << 4) | more_bit
+        seg.payload[15] = 0x00;  // Return Code
+        // TP header
         uint32_t tp_hdr = ((offset / 16) << 4U) | (more ? 0x01U : 0x00U);
         seg.payload[16] = static_cast<uint8_t>((tp_hdr >> 24U) & 0xFFU);
         seg.payload[17] = static_cast<uint8_t>((tp_hdr >> 16U) & 0xFFU);
@@ -1108,9 +1138,16 @@ TEST_F(TpTest, RequestVsNotificationDifferentBuffers) {
         seg.header.session_id = 0x0001;
         seg.header.protocol_version = 1;
         seg.header.interface_version = 1;
-        seg.payload.resize(40, 0xAA);
-        // Wire Message Type at byte 14 (with TP-Flag set)
+        seg.payload.resize(40, 0x00);
+        // Wire SOME/IP header
+        seg.payload[0] = 0x11; seg.payload[1] = 0x11;  // Service
+        seg.payload[2] = 0x22; seg.payload[3] = 0x22;  // Method
+        seg.payload[8] = 0xAA; seg.payload[9] = 0xAA;  // Client
+        seg.payload[10] = 0x00; seg.payload[11] = 0x01; // Session
+        seg.payload[12] = 0x01;  // Protocol Version
+        seg.payload[13] = 0x01;  // Interface Version
         seg.payload[14] = wire_message_type | 0x20;
+        seg.payload[15] = 0x00;
         // Wire TP header: offset=0, more=true
         seg.payload[16] = 0x00; seg.payload[17] = 0x00;
         seg.payload[18] = 0x00; seg.payload[19] = 0x01;
@@ -1211,4 +1248,120 @@ TEST_F(TpTest, NeedsSegmentationUsesPayloadSize) {
         << "101-byte payload must need segmentation with max_segment_size=100";
 
     tp_manager.shutdown();
+}
+
+/**
+ * @test_case TC_TP_PROGRESS_COUNTS_BYTES
+ * @tests REQ_TP_039
+ * @brief get_reassembly_progress reports per-byte received count, not N * max_segment_size
+ *
+ * After one FIRST_SEGMENT carrying 20 payload bytes (40 - 20 header overhead),
+ * received_bytes must be 20, not 20 * max_segment_size.
+ */
+TEST_F(TpTest, ReassemblyProgressCountsBytes) {
+    TpReassembler reassembler(config);
+
+    TpSegment seg;
+    seg.header.message_length = 100;
+    seg.header.segment_offset = 0;
+    seg.header.segment_length = 40;  // 20 header + 20 payload
+    seg.header.sequence_number = 1;
+    seg.header.message_type = TpMessageType::FIRST_SEGMENT;
+    seg.header.service_id = 0x1111;
+    seg.header.method_id = 0x2222;
+    seg.header.client_id = 0xAAAA;
+    seg.header.session_id = 0x0001;
+    seg.payload.resize(40, 0x00);
+    // Wire SOME/IP header
+    seg.payload[0] = 0x11; seg.payload[1] = 0x11;  // Service
+    seg.payload[2] = 0x22; seg.payload[3] = 0x22;  // Method
+    seg.payload[8] = 0xAA; seg.payload[9] = 0xAA;  // Client
+    seg.payload[10] = 0x00; seg.payload[11] = 0x01; // Session
+    seg.payload[12] = 0x01; seg.payload[13] = 0x01; // Proto, Iface
+    seg.payload[14] = 0x20;  // REQUEST | TP-Flag
+    seg.payload[15] = 0x00;
+    // TP header: offset=0, more=true
+    seg.payload[16] = 0x00; seg.payload[17] = 0x00;
+    seg.payload[18] = 0x00; seg.payload[19] = 0x01;
+
+    platform::ByteBuffer complete;
+    ASSERT_TRUE(reassembler.process_segment(seg, complete));
+
+    const uint32_t msg_id = (static_cast<uint32_t>(0x1111) << 16U) | 0x2222;
+    uint32_t received_bytes = 0;
+    uint32_t total_bytes = 0;
+    ASSERT_TRUE(reassembler.get_reassembly_progress(msg_id, received_bytes, total_bytes));
+    EXPECT_EQ(total_bytes, 100u);
+    EXPECT_EQ(received_bytes, 20u)
+        << "received_bytes must be the actual byte count, not bytes * max_segment_size";
+}
+
+/**
+ * @test_case TC_TP_WIRE_KEY_OVERRIDES_HEADER
+ * @tests feat_req_someiptp_781
+ * @brief Reassembly key is built from wire SOME/IP header, not TpSegmentHeader fields
+ *
+ * Two FIRST_SEGMENTs with header.service_id = 0 but payload bytes 0-1 set
+ * to different Service IDs must create two buffers.
+ */
+TEST_F(TpTest, WireKeyOverridesTpSegmentHeader) {
+    TpReassembler reassembler(config);
+
+    auto make_segment = [](uint16_t wire_service) {
+        TpSegment seg;
+        seg.header.message_length = 100;
+        seg.header.segment_offset = 0;
+        seg.header.segment_length = 40;
+        seg.header.sequence_number = 1;
+        seg.header.message_type = TpMessageType::FIRST_SEGMENT;
+        seg.header.service_id = 0;  // intentionally zero
+        seg.header.method_id = 0;
+        seg.header.client_id = 0xAAAA;
+        seg.header.session_id = 0x0001;
+        seg.payload.resize(40, 0x00);
+        // Wire Service ID at bytes 0-1
+        seg.payload[0] = static_cast<uint8_t>((wire_service >> 8U) & 0xFFU);
+        seg.payload[1] = static_cast<uint8_t>(wire_service & 0xFFU);
+        // Wire Message Type at byte 14: REQUEST | TP-Flag
+        seg.payload[14] = 0x20;
+        // Wire Client ID at 8-9, Session ID at 10-11
+        seg.payload[8] = 0xAA; seg.payload[9] = 0xAA;
+        seg.payload[10] = 0x00; seg.payload[11] = 0x01;
+        // TP header: offset=0, more=true
+        seg.payload[16] = 0x00; seg.payload[17] = 0x00;
+        seg.payload[18] = 0x00; seg.payload[19] = 0x01;
+        return seg;
+    };
+
+    TpSegment seg1 = make_segment(0x1111);
+    TpSegment seg2 = make_segment(0x2222);
+
+    platform::ByteBuffer complete;
+    EXPECT_TRUE(reassembler.process_segment(seg1, complete));
+    EXPECT_TRUE(reassembler.process_segment(seg2, complete));
+    EXPECT_EQ(reassembler.get_active_reassemblies(), 2u)
+        << "Different wire Service IDs must create separate buffers even when header.service_id=0";
+}
+
+/**
+ * @test_case TC_TP_E2E_REJECTED
+ * @brief E2E-protected message must not be segmented
+ *
+ * serialize()+resize(16) would silently drop E2E; the segmenter must
+ * reject with SEGMENTATION_FAILED.
+ */
+TEST_F(TpTest, E2eProtectedMessageRejected) {
+    TpConfig default_config;
+    TpSegmenter segmenter(default_config);
+
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+               MessageType::REQUEST, ReturnCode::E_OK);
+    msg.set_payload(platform::ByteBuffer(2000, 0xAA));
+    msg.set_e2e_header(someip::e2e::E2EHeader(0x12345678, 0xABCDEF00, 0x1234, 0x5678));
+
+    TpSegmentVector segments;
+    TpResult result = segmenter.segment_message(msg, segments);
+    EXPECT_EQ(result, TpResult::SEGMENTATION_FAILED)
+        << "E2E-protected message must be rejected by the segmenter";
+    EXPECT_TRUE(segments.empty());
 }

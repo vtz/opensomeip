@@ -37,21 +37,32 @@ namespace {
  */
 TpReassemblyKey make_reassembly_key(const TpSegment& segment) {
     TpReassemblyKey key;
-    key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16U) |
-                     static_cast<uint32_t>(segment.header.method_id);
-    key.protocol_version = segment.header.protocol_version;
-    key.interface_version = segment.header.interface_version;
 
-    // Extract SOME/IP Message Type from the wire header, mask off TP-Flag (0x20).
-    if (segment.payload.size() >= 15) {
-        key.message_type = segment.payload[14] & static_cast<uint8_t>(~0x20U);
+    // Parse ALL key fields from the wire 16-byte SOME/IP header when available,
+    // so a peer datagram stored in segment.payload keys correctly regardless of
+    // whether TpSegmentHeader was populated.
+    if (segment.payload.size() >= 16) {
+        const auto* p = segment.payload.data();
+        const auto service = static_cast<uint16_t>((static_cast<uint16_t>(p[0]) << 8U) | p[1]);
+        const auto method  = static_cast<uint16_t>((static_cast<uint16_t>(p[2]) << 8U) | p[3]);
+        const auto client  = static_cast<uint16_t>((static_cast<uint16_t>(p[8]) << 8U) | p[9]);
+        const auto session = static_cast<uint16_t>((static_cast<uint16_t>(p[10]) << 8U) | p[11]);
+
+        key.message_id = (static_cast<uint32_t>(service) << 16U) | method;
+        key.protocol_version = p[12];
+        key.interface_version = p[13];
+        key.message_type = p[14] & static_cast<uint8_t>(~0x20U);
+        key.request_id = (static_cast<uint32_t>(client) << 16U) | session;
     } else {
+        // Fallback for payloads too short (rejected by validate_segment for TP).
+        key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16U) |
+                         static_cast<uint32_t>(segment.header.method_id);
+        key.protocol_version = segment.header.protocol_version;
+        key.interface_version = segment.header.interface_version;
         key.message_type = 0;
+        key.request_id = (static_cast<uint32_t>(segment.header.client_id) << 16U) |
+                         static_cast<uint32_t>(segment.header.session_id);
     }
-
-    // Full Request ID: Client ID << 16 | Session ID
-    key.request_id = (static_cast<uint32_t>(segment.header.client_id) << 16U) |
-                     static_cast<uint32_t>(segment.header.session_id);
     return key;
 }
 
@@ -82,7 +93,7 @@ TpReassembler::~TpReassembler() {
  * @implements REQ_TP_082
  */
 bool TpReassembler::parse_tp_header(const platform::ByteBuffer& payload,
-                                   uint32_t& offset, bool& more_segments) {
+                                   uint32_t& offset, bool& more_segments) const {
     if (payload.size() < 20) {  // SOME/IP header (16) + TP header (4) minimum
         return false;
     }
@@ -94,9 +105,9 @@ bool TpReassembler::parse_tp_header(const platform::ByteBuffer& payload,
         (static_cast<uint32_t>(payload[18]) << 8U) |
         static_cast<uint32_t>(payload[19]);
 
-    // Extract offset (28 bits, divided by 4 to get byte offset)
+    // Upper 28 bits = byte_offset / 16; shift right by 4 to extract, then * 16 to get bytes.
     uint32_t const offset_units = tp_header >> 4U;
-    offset = offset_units * 16;  // Convert back to bytes
+    offset = offset_units * 16;
 
     // Check offset alignment (REQ_TP_015_E01)
     if (offset % 16 != 0) {
@@ -166,19 +177,28 @@ bool TpReassembler::validate_segment(const TpSegment& segment) const {
     const uint16_t header_overhead =
         (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) ? 16 : 20;
 
-    // Reject segments that are too short to contain the required headers.
     if (segment.header.segment_length < header_overhead) {
         return false;
     }
 
     const uint16_t actual_payload_bytes = segment.header.segment_length - header_overhead;
 
-    // Zero-payload TP segments are invalid (they would be vacuously "received").
     if (actual_payload_bytes == 0) {
         return false;
     }
 
-    return segment.header.segment_offset + actual_payload_bytes <= segment.header.message_length;
+    // Use the wire TP offset for bounds checking so validation agrees with
+    // placement in add_segment_to_buffer (which also uses the wire offset).
+    if (segment.header.message_type != TpMessageType::SINGLE_MESSAGE) {
+        uint32_t wire_offset = 0;
+        bool wire_more = false;
+        if (!parse_tp_header(segment.payload, wire_offset, wire_more)) {
+            return false;
+        }
+        return wire_offset + actual_payload_bytes <= segment.header.message_length;
+    }
+
+    return actual_payload_bytes <= segment.header.message_length;
 }
 
 /**
@@ -295,8 +315,6 @@ bool TpReassembler::is_reassembling(uint32_t message_id) const {
 }
 
 bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& received_bytes, uint32_t& total_bytes) const {
-    const auto config = get_config_copy();
-
     platform::ScopedLock const lock(buffers_mutex_);
 
     for (const auto& pair : reassembly_buffers_) {
@@ -304,15 +322,12 @@ bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& recei
             const auto& buffer = pair.second;
             total_bytes = buffer.total_length;
 
+            // received_segments is a per-byte bitmap; count set bits.
             received_bytes = 0;
             for (bool const received : buffer.received_segments) {
                 if (received) {
-                    received_bytes += config.max_segment_size;
+                    ++received_bytes;
                 }
-            }
-
-            if (received_bytes > total_bytes) {
-                received_bytes = total_bytes;
             }
 
             return true;

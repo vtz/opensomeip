@@ -47,6 +47,12 @@ TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& s
         return TpResult::MESSAGE_TOO_LARGE;
     }
 
+    // TP segmentation is incompatible with E2E protection: serialize()+resize(16)
+    // in create_multi_segments would silently drop the E2E suffix.
+    if (message.has_e2e_header()) {
+        return TpResult::SEGMENTATION_FAILED;
+    }
+
     if (payload.size() <= config_.max_segment_size) {
         // Payload fits in one non-TP SOME/IP message: no TP-Flag, no TP header.
         platform::ByteBuffer message_data = message.serialize();
@@ -100,8 +106,9 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
     }
 
     // segment_length (uint16_t) stores 20 + payload; guard against overflow.
+    // Compare without addition to avoid wrapping on 32-bit size_t.
     constexpr size_t segment_overhead = 16 + 4;
-    if (config_.max_segment_size + segment_overhead > UINT16_MAX) {
+    if (config_.max_segment_size > UINT16_MAX - segment_overhead) {
         return TpResult::SEGMENTATION_FAILED;
     }
 
@@ -157,8 +164,9 @@ TpResult TpSegmenter::create_multi_segments(const Message& message,
         seg_data[6] = static_cast<uint8_t>((someip_length >> 8U) & 0xFFU);
         seg_data[7] = static_cast<uint8_t>(someip_length & 0xFFU);
 
-        // Append 4-byte TP header via the existing helper
-        serialize_tp_header(seg_data, payload_offset, more_segments);
+        if (!serialize_tp_header(seg_data, payload_offset, more_segments)) {
+            return TpResult::SEGMENTATION_FAILED;
+        }
 
         // Append payload data
         seg_data.insert(seg_data.end(),
@@ -193,36 +201,29 @@ void TpSegmenter::update_config(const TpConfig& config) {
  * @implements REQ_TP_016, REQ_TP_017, REQ_TP_019, REQ_TP_020, REQ_TP_021
  * @implements REQ_TP_013_E01, REQ_TP_015_E01
  */
-void TpSegmenter::serialize_tp_header(platform::ByteBuffer& payload,
-                                     uint32_t offset, bool more_segments) {
-    // TP header is 4 bytes: [Offset (28 bits) | Reserved (3 bits) | More Segments (1 bit)]
-    // Offset is in units of 16 bytes, so divide by 16
-    uint32_t const offset_units = offset / 16;
-
-    // Check for offset overflow (REQ_TP_013_E01)
-    if (offset_units > 0x0FFFFFFFU) {  // 28 bits max
-        // This should not happen in practice with reasonable message sizes
-        // but we check for completeness
-    }
-
-    // Check offset alignment (REQ_TP_015_E01)
+bool TpSegmenter::serialize_tp_header(platform::ByteBuffer& payload,
+                                      uint32_t offset, bool more_segments) {
+    // TP header: [Offset (28 bits) | Reserved (3 bits) | More Segments (1 bit)]
+    // Offset field stores byte_offset / 16.
     if (offset % 16 != 0) {
-        // This should not happen with our segmenter logic
-        // but we could log a warning here
+        return false;  // REQ_TP_015_E01: offset must be 16-byte aligned
     }
 
-    // Build TP header: offset (28 bits) | reserved (3 bits = 0) | more_segments (1 bit)
+    uint32_t const offset_units = offset / 16;
+    if (offset_units > 0x0FFFFFFFU) {
+        return false;  // REQ_TP_013_E01: exceeds 28-bit field
+    }
+
     uint32_t const tp_header = (offset_units << 4U) | (more_segments ? 0x01U : 0x00U);
 
-    // Serialize in big-endian
     std::array<uint8_t, 4> header_bytes{};
     header_bytes[0] = static_cast<uint8_t>((tp_header >> 24U) & 0xFFU);
     header_bytes[1] = static_cast<uint8_t>((tp_header >> 16U) & 0xFFU);
     header_bytes[2] = static_cast<uint8_t>((tp_header >> 8U) & 0xFFU);
     header_bytes[3] = static_cast<uint8_t>(tp_header & 0xFFU);
 
-    // Insert TP header after SOME/IP header (16 bytes)
     payload.insert(payload.begin() + 16, header_bytes.begin(), header_bytes.end());
+    return true;
 }
 
 /**

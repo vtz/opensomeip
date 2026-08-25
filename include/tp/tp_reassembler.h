@@ -115,7 +115,7 @@ private:
     bool add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment);
     void cleanup_completed_buffers();
     void cleanup_timed_out_buffers(const TpConfig& config);
-    bool parse_tp_header(const platform::ByteBuffer& payload, uint32_t& offset, bool& more_segments);
+    bool parse_tp_header(const platform::ByteBuffer& payload, uint32_t& offset, bool& more_segments) const;
 };
 
 }  // namespace someip::tp
