@@ -779,6 +779,30 @@ TEST_F(TcpTransportTest, IsMagicCookieDetection) {
 }
 
 /**
+ * @test_case TC_TCP_MAGIC_CORRELATION
+ * @tests feat_req_someip_609
+ * @brief Method ID and Message Type must correlate: client 0x0000/0x01,
+ *        server 0x8000/0x02. Crossed combinations are NOT valid cookies.
+ */
+TEST_F(TcpTransportTest, MagicCookieMethodTypeCorrelation) {
+    // Client cookie with wrong message type (0x02 instead of 0x01)
+    auto bad_client = TcpTransport::make_magic_cookie_client();
+    bad_client[14] = 0x02;
+    EXPECT_FALSE(TcpTransport::is_magic_cookie(bad_client))
+        << "Client method 0x0000 + type 0x02 must NOT be a valid cookie";
+
+    // Server cookie with wrong message type (0x01 instead of 0x02)
+    auto bad_server = TcpTransport::make_magic_cookie_server();
+    bad_server[14] = 0x01;
+    EXPECT_FALSE(TcpTransport::is_magic_cookie(bad_server))
+        << "Server method 0x8000 + type 0x01 must NOT be a valid cookie";
+
+    // Correct cookies still match
+    EXPECT_TRUE(TcpTransport::is_magic_cookie(TcpTransport::make_magic_cookie_client()));
+    EXPECT_TRUE(TcpTransport::is_magic_cookie(TcpTransport::make_magic_cookie_server()));
+}
+
+/**
  * @test_case TC_TCP_MAGIC_004
  * @tests REQ_TRANSPORT_020
  * @brief Magic Cookie in stream is silently consumed by parser

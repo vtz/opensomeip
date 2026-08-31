@@ -59,37 +59,67 @@ public:
     bool process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message);
 
     /**
-     * @brief Check if a message is currently being reassembled
+     * @brief Check if any buffer with this message_id is being reassembled
      *
-     * @param message_id The message identifier (matches any buffer with this message_id)
-     * @return true if reassembly is in progress
+     * Scans all active buffers and returns true if at least one has a
+     * matching message_id.  When multiple transfers share a message_id
+     * (different client/session/message-type), this cannot distinguish
+     * them — use the TpReassemblyKey overload for per-transfer queries.
+     *
+     * @param message_id The message identifier
+     * @return true if at least one matching reassembly is in progress
      */
     bool is_reassembling(uint32_t message_id) const;
 
-    /** @brief Check if a specific reassembly key is active */
+    /**
+     * @brief Check if a specific transfer (exact composite key) is active
+     *
+     * O(1) lookup; unambiguous when multiple transfers share a message_id.
+     *
+     * @param key The full reassembly key
+     * @return true if the exact transfer is in progress
+     */
     bool is_reassembling(const TpReassemblyKey& key) const;
 
     /**
-     * @brief Get reassembly progress for a message
+     * @brief Get reassembly progress for the first buffer matching message_id
+     *
+     * When multiple buffers share message_id, returns the first match found
+     * (iteration order is unspecified).  Use the TpReassemblyKey overload
+     * for deterministic per-transfer progress.
      *
      * @param message_id The message identifier
-     * @param received_bytes Number of bytes received (output)
+     * @param received_bytes Number of bytes received so far (output)
      * @param total_bytes Total expected bytes (output)
-     * @return true if message found, false otherwise
+     * @return true if a matching buffer was found
      */
     bool get_reassembly_progress(uint32_t message_id, uint32_t& received_bytes, uint32_t& total_bytes) const;
 
-    /** @brief Get reassembly progress by exact key */
+    /**
+     * @brief Get reassembly progress for an exact transfer
+     *
+     * @param key The full reassembly key
+     * @param received_bytes Number of bytes received so far (output)
+     * @param total_bytes Total expected bytes (output)
+     * @return true if the transfer exists
+     */
     bool get_reassembly_progress(const TpReassemblyKey& key, uint32_t& received_bytes, uint32_t& total_bytes) const;
 
     /**
-     * @brief Cancel reassembly for a message
+     * @brief Cancel all reassembly buffers matching message_id
      *
-     * @param message_id The message identifier (cancels all buffers with this message_id)
+     * Erases every buffer whose key.message_id equals the argument.
+     * Use the TpReassemblyKey overload to cancel a single transfer.
+     *
+     * @param message_id The message identifier
      */
     void cancel_reassembly(uint32_t message_id);
 
-    /** @brief Cancel reassembly for an exact key */
+    /**
+     * @brief Cancel reassembly for one exact transfer
+     *
+     * @param key The full reassembly key
+     */
     void cancel_reassembly(const TpReassemblyKey& key);
 
     /**
