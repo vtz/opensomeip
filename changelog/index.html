@@ -2314,10 +2314,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+  <a href="#breaking-changes-wire-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Breaking Changes
+        Breaking Changes (Wire Format)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other Breaking Changes
       
     </span>
   </a>
@@ -2346,6 +2357,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#interop-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interop Notes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2364,7 +2386,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_1" class="md-nav__link">
+  <a href="#breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -2724,10 +2746,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+  <a href="#breaking-changes-wire-format" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Breaking Changes
+        Breaking Changes (Wire Format)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#other-breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other Breaking Changes
       
     </span>
   </a>
@@ -2756,6 +2789,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#interop-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interop Notes
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2774,7 +2818,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_1" class="md-nav__link">
+  <a href="#breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -2844,7 +2888,64 @@
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
-<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
+<h3 id="breaking-changes-wire-format">Breaking Changes (Wire Format)<a class="headerlink" href="#breaking-changes-wire-format" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong>String serialization now includes UTF-8 BOM and NUL terminator.</strong>
+  Dynamic UTF-8 strings are now serialized as
+  <code>[length u32][BOM EF BB BF][utf8 data][0x00]</code> per the Open SOME/IP
+  Specification (<code>feat_req_someip_662</code>, <code>800</code>, <code>687</code>).  Length =
+  BOM(3) + data + NUL(1).  The unconditional 4-byte alignment after
+  strings has been removed; alignment is now caller-controlled.
+  (<a href="https://github.com/vtz/opensomeip/issues/274">#274</a>)</p>
+</li>
+<li>
+<p><strong>TP segments now carry a full 16-byte SOME/IP header.</strong>  Every
+  SOME/IP-TP segment (not just the first) includes a full SOME/IP
+  header with TP-Flag set, followed by a 4-byte TP header, then
+  payload.  Non-last segment payloads are now always a multiple of
+  16 bytes, and all More-Segments=1 segments have uniform size
+  (<code>feat_req_someiptp_765</code>, <code>772</code>, <code>778</code>).
+  (<a href="https://github.com/vtz/opensomeip/issues/275">#275</a>)</p>
+</li>
+<li>
+<p><strong>TP segment payload maximized at <code>max_segment_size</code> (default 1392).</strong>
+  <code>max_segment_size</code> now means segment <em>payload</em> bytes, not total
+  wire size.  Non-last segments produce payloads of exactly
+  <code>(max_segment_size / 16) * 16</code> bytes (1392 with default config).
+  Previously 20 bytes were reserved for headers, capping payload at
+  1360.</p>
+</li>
+<li>
+<p><strong>Folklore 1000-byte TP-Flag path removed.</strong>  Messages that fit in
+  a single non-TP SOME/IP message are sent without TP-Flag and without
+  a TP header.  The vsomeip-style <code>&gt; 1000</code> threshold that set TP-Flag
+  without appending a TP header has been deleted.</p>
+</li>
+<li>
+<p><strong>TP reassembly buffer keyed by spec-mandated composite key.</strong>
+  Reassembly buffers are now keyed by Message ID + Protocol Version +
+  Interface Version + Message Type (wire byte 14, TP-flag masked off) +
+  Request ID (Client ID + Session ID), per <code>feat_req_someiptp_781</code>.
+  Session ID change detection discards stale buffers
+  (<code>feat_req_someiptp_795</code>).
+  (<a href="https://github.com/vtz/opensomeip/issues/276">#276</a>)</p>
+</li>
+<li>
+<p><strong>Undersized / zero-payload TP segments are rejected.</strong>  Segments
+  shorter than the required header overhead (20 bytes for TP) are
+  rejected.  Zero-payload segments no longer vacuously complete a
+  reassembly buffer.</p>
+</li>
+<li>
+<p><strong>TCP Magic Cookie field layout corrected.</strong>  Session ID is now
+  <code>0xBEEF</code> (was misplaced as <code>0x0001</code>), MessageType is <code>0x01</code>/<code>0x02</code>
+  (was <code>0xBE</code>), and ReturnCode is <code>0x00</code> (was <code>0xEF</code>), matching
+  <code>feat_req_someip_609</code>.
+  (<a href="https://github.com/vtz/opensomeip/issues/277">#277</a>)</p>
+</li>
+</ul>
+<h3 id="other-breaking-changes">Other Breaking Changes<a class="headerlink" href="#other-breaking-changes" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Transport receive model: listener and polling are now mutually
   exclusive.</strong>  When <code>set_listener()</code> is installed, incoming messages are
@@ -2865,14 +2966,48 @@
 </ul>
 <h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>Serialization</strong>: string wire format now matches Open SOME/IP spec
+  with UTF-8 BOM, NUL terminator, and correct length semantics (#274).</li>
+<li><strong>SOME/IP-TP</strong>: every segment now carries a full SOME/IP header;
+  non-last segment payloads are 16-byte aligned and uniformly sized (#275).</li>
+<li><strong>SOME/IP-TP</strong>: reassembly buffer uses spec-mandated composite key
+  (incl. wire Message Type and full Request ID) for interoperability;
+  stale sessions are discarded on Session ID change (#276).</li>
+<li><strong>SOME/IP-TP</strong>: undersized and zero-payload segments are now rejected
+  instead of vacuously completing a reassembly buffer.</li>
+<li><strong>SOME/IP-TP</strong>: <code>max_segment_size</code> now correctly represents payload
+  capacity; non-last segments produce maximum-size payloads (1392 default).</li>
+<li><strong>SOME/IP-TP</strong>: removed folklore 1000-byte threshold that set TP-Flag
+  without appending a TP header.</li>
+<li><strong>TCP</strong>: Magic Cookie byte layout corrected — Session ID, MessageType,
+  and ReturnCode now match <code>feat_req_someip_609</code> (#277).</li>
 <li>UDP/TCP: listener-only mode no longer retains <code>MessagePtr</code> in the
   internal queue, preventing memory leaks and pool exhaustion (#269).</li>
 <li>TCP: <code>on_message_received()</code> is now invoked outside <code>connection_mutex_</code>,
   eliminating a potential deadlock when the callback calls
   <code>disconnect()</code>.</li>
 </ul>
+<h3 id="interop-notes">Interop Notes<a class="headerlink" href="#interop-notes" title="Permanent link">&para;</a></h3>
+<p>The following intentional extensions remain vs. the Open SOME/IP spec:</p>
+<ul>
+<li><strong>nPDU batching</strong>: not yet implemented — each UDP datagram / TCP write
+  carries exactly one SOME/IP message.  Multiple-message-per-datagram
+  demux is a P1 follow-up.</li>
+<li><strong>TCP Magic Cookie insertion</strong>: cookies are sent on a 10-second timer
+  rather than at the start of each TCP segment.  Per-segment insertion
+  is a follow-up.</li>
+<li><strong>UTF-16 strings</strong>: only UTF-8 strings are supported; UTF-16 BOM
+  detection and endianness validation is a P1 follow-up.</li>
+<li><strong>Configurable length-field widths</strong>: strings and arrays use 32-bit
+  length fields only; 8/16/0-bit variants are a P1 follow-up.</li>
+<li><strong>TP traffic shaping</strong>: no inter-segment delay is applied.</li>
+<li><strong>TP + E2E protection</strong>: the TP segmenter now <strong>rejects</strong>
+  E2E-protected messages (<code>SEGMENTATION_FAILED</code>) instead of silently
+  truncating the E2E suffix via <code>serialize()</code>+<code>resize(16)</code>.  A
+  combined TP+E2E path is tracked for a future release.</li>
+</ul>
 <h2 id="unreleased-static-allocation-backend-featureno-heap-static-alloc">Unreleased — Static Allocation Backend (<code>feature/no-heap-static-alloc</code>)<a class="headerlink" href="#unreleased-static-allocation-backend-featureno-heap-static-alloc" title="Permanent link">&para;</a></h2>
-<h3 id="breaking-changes_1">Breaking Changes<a class="headerlink" href="#breaking-changes_1" title="Permanent link">&para;</a></h3>
+<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
 <p>This release introduces a compile-time static allocation backend.  When
 <code>SOMEIP_USE_STATIC_ALLOC=ON</code>, the following public types change their
 underlying representation:</p>
