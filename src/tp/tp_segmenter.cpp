@@ -47,12 +47,6 @@ TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& s
         return TpResult::MESSAGE_TOO_LARGE;
     }
 
-    // TP segmentation is incompatible with E2E protection: serialize()+resize(16)
-    // in create_multi_segments would silently drop the E2E suffix.
-    if (message.has_e2e_header()) {
-        return TpResult::SEGMENTATION_FAILED;
-    }
-
     if (payload.size() <= config_.max_segment_size) {
         // Payload fits in one non-TP SOME/IP message: no TP-Flag, no TP header.
         platform::ByteBuffer message_data = message.serialize();
@@ -80,6 +74,12 @@ TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& s
         }
         segments.push_back(std::move(segment));
         return TpResult::SUCCESS;
+    }
+
+    // TP segmentation is incompatible with E2E protection: create_multi_segments
+    // calls serialize()+resize(16) which silently drops the E2E suffix.
+    if (message.has_e2e_header()) {
+        return TpResult::SEGMENTATION_FAILED;
     }
 
     return create_multi_segments(message, payload, segments);

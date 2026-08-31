@@ -1362,6 +1362,30 @@ TEST_F(TpTest, E2eProtectedMessageRejected) {
     TpSegmentVector segments;
     TpResult result = segmenter.segment_message(msg, segments);
     EXPECT_EQ(result, TpResult::SEGMENTATION_FAILED)
-        << "E2E-protected message must be rejected by the segmenter";
+        << "E2E-protected message needing TP must be rejected by the segmenter";
     EXPECT_TRUE(segments.empty());
+}
+
+/**
+ * @test_case TC_TP_E2E_BELOW_THRESHOLD_OK
+ * @brief E2E-protected message below TP threshold passes as a single message
+ *
+ * When the payload fits in one non-TP SOME/IP message, E2E is preserved
+ * by serialize() and no TP framing is applied.
+ */
+TEST_F(TpTest, E2eBelowThresholdPassesSingleMessage) {
+    TpConfig default_config;
+    TpSegmenter segmenter(default_config);
+
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+               MessageType::REQUEST, ReturnCode::E_OK);
+    msg.set_payload(platform::ByteBuffer(100, 0xBB));
+    msg.set_e2e_header(someip::e2e::E2EHeader(0x12345678, 0xABCDEF00, 0x1234, 0x5678));
+
+    TpSegmentVector segments;
+    TpResult result = segmenter.segment_message(msg, segments);
+    EXPECT_EQ(result, TpResult::SUCCESS)
+        << "E2E-protected message below TP threshold must succeed as a single message";
+    ASSERT_EQ(segments.size(), 1u);
+    EXPECT_EQ(segments[0].header.message_type, TpMessageType::SINGLE_MESSAGE);
 }
