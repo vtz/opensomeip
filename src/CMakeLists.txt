@@ -58,10 +58,11 @@ endif()
 # Library type follows BUILD_SHARED_LIBS (default: STATIC)
 add_library(opensomeip ${OPENSOMEIP_SOURCES})
 target_include_directories(opensomeip PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-    ${SOMEIP_ALLOC_IMPL_DIR}
-    ${SOMEIP_THREADING_IMPL_DIR}
-    ${SOMEIP_NET_IMPL_DIR}
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${SOMEIP_ALLOC_IMPL_DIR}>
+    $<BUILD_INTERFACE:${SOMEIP_THREADING_IMPL_DIR}>
+    $<BUILD_INTERFACE:${SOMEIP_NET_IMPL_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/someip>
 )
 
 # Threading: only link pthreads on non-RTOS builds
@@ -158,6 +159,42 @@ if(SOMEIP_USE_STATIC_ALLOC)
         add_library(someip_malloc_trap OBJECT
             ${CMAKE_CURRENT_SOURCE_DIR}/platform/static/malloc_trap.cpp)
         target_compile_definitions(someip_malloc_trap PRIVATE SOMEIP_MALLOC_TRAP)
+    endif()
+endif()
+
+# C API wrapper library (extern "C" FFI boundary)
+if(BUILD_CAPI)
+    set(OPENSOMEIP_CAPI_SOURCES
+        capi/opensomeip_message.cpp
+        capi/opensomeip_serializer.cpp
+        capi/opensomeip_transport.cpp
+        capi/opensomeip_rpc.cpp
+        capi/opensomeip_sd.cpp
+        capi/opensomeip_events.cpp
+        capi/opensomeip_tp.cpp
+        capi/opensomeip_e2e.cpp
+    )
+
+    add_library(opensomeip_capi ${OPENSOMEIP_CAPI_SOURCES})
+    target_link_libraries(opensomeip_capi PUBLIC opensomeip)
+    target_include_directories(opensomeip_capi PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/someip>
+    )
+    target_include_directories(opensomeip_capi PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/capi
+    )
+    set_target_properties(opensomeip_capi PROPERTIES
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        POSITION_INDEPENDENT_CODE ON
+        C_STANDARD 11
+    )
+    if(BUILD_SHARED_LIBS)
+        set_target_properties(opensomeip_capi PROPERTIES
+            CXX_VISIBILITY_PRESET hidden
+            VISIBILITY_INLINES_HIDDEN ON
+        )
     endif()
 endif()
 
