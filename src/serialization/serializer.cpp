@@ -133,21 +133,31 @@ void Serializer::serialize_double(double value) {
 }
 
 /**
- * @brief Serialize string with length prefix and padding
+ * @brief Serialize dynamic UTF-8 string per Open SOME/IP spec
+ * @satisfies feat_req_someip_662, feat_req_someip_800, feat_req_someip_687, feat_req_someip_562
  * @implements REQ_SER_040, REQ_SER_041, REQ_SER_042
  * @implements REQ_SER_040_E01, REQ_SER_040_E02, REQ_SER_042_E01
  * @implements REQ_SER_050, REQ_SER_051, REQ_SER_050_E01, REQ_SER_050_E02
+ *
+ * Wire format: [length u32][BOM EF BB BF][utf8 data][0x00]
+ * Length = BOM(3) + data + NUL(1), excludes the length field itself.
  */
 void Serializer::serialize_string(const platform::String<>& value) {
-    // Serialize string length as uint32_t
-    serialize_uint32(static_cast<uint32_t>(value.length()));
+    const auto data_len = static_cast<uint32_t>(value.length());
+    const uint32_t wire_length = 3 + data_len + 1;  // BOM + data + NUL
+    serialize_uint32(wire_length);
 
-    // Serialize string data (no null terminator)
+    // UTF-8 BOM
+    buffer_.push_back(0xEF);
+    buffer_.push_back(0xBB);
+    buffer_.push_back(0xBF);
+
+    // String data
     const auto* str_data = reinterpret_cast<const uint8_t*>(value.data());
     buffer_.insert(buffer_.end(), str_data, str_data + value.length());
 
-    // Add padding to align to 4-byte boundary
-    align_to(4);
+    // NUL terminator
+    buffer_.push_back(0x00);
 }
 
 /**
@@ -392,27 +402,47 @@ DeserializationResult<double> Deserializer::deserialize_double() {
 }
 
 /**
- * @brief Deserialize string with length prefix
+ * @brief Deserialize dynamic UTF-8 string per Open SOME/IP spec
+ * @satisfies feat_req_someip_662, feat_req_someip_800, feat_req_someip_687, feat_req_someip_666, feat_req_someip_562
  * @implements REQ_SER_043, REQ_SER_044, REQ_SER_045
  * @implements REQ_SER_043_E01, REQ_SER_047_E01
+ *
+ * Wire format: [length u32][BOM EF BB BF][utf8 data][0x00]
+ * Length = BOM(3) + data + NUL(1), excludes the length field itself.
  */
 DeserializationResult<platform::String<>> Deserializer::deserialize_string() {
-    // Deserialize string length
     auto length_result = deserialize_uint32();
     if (length_result.is_error()) {
         return DeserializationResult<platform::String<>>::error(length_result.get_error());
     }
     const uint32_t length = length_result.get_value();
 
+    // Minimum: BOM(3) + NUL(1) = 4 bytes
+    if (length < 4) {
+        return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
+    }
+
     if (position_ + length > buffer_.size()) {
         return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
     }
 
-    platform::String<> result(reinterpret_cast<const char*>(buffer_.data() + position_), length);
-    position_ += length;
+    // Validate UTF-8 BOM (feat_req_someip_666)
+    if (buffer_[position_] != 0xEF ||
+        buffer_[position_ + 1] != 0xBB ||
+        buffer_[position_ + 2] != 0xBF) {
+        return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
+    }
 
-    // Skip padding to align to 4-byte boundary
-    align_to(4);
+    // Validate trailing NUL (feat_req_someip_687)
+    if (buffer_[position_ + length - 1] != 0x00) {
+        return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
+    }
+
+    // Extract string data: skip BOM(3), exclude trailing NUL(1)
+    const uint32_t str_len = length - 4;  // minus BOM(3) and NUL(1)
+    platform::String<> result(
+        reinterpret_cast<const char*>(buffer_.data() + position_ + 3), str_len);
+    position_ += length;
 
     return DeserializationResult<platform::String<>>::success(std::move(result));
 }

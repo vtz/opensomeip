@@ -1160,6 +1160,104 @@ TEST_F(SerializationTest, StringEmbeddedNull) {
 }
 
 /**
+ * @test_case TC_SER_STRING_BOM_001
+ * @tests feat_req_someip_662, feat_req_someip_800, feat_req_someip_687
+ * @brief Verify wire format: [len=8][BOM EF BB BF]["test"][00]
+ */
+TEST_F(SerializationTest, StringWireFormatWithBomAndNul) {
+    Serializer serializer;
+    serializer.serialize_string(platform::String<>("test"));
+
+    const auto& buf = serializer.get_buffer();
+    // Length field (u32 BE): BOM(3) + "test"(4) + NUL(1) = 8
+    ASSERT_EQ(buf.size(), 4 + 8u);  // 4-byte length + 8 bytes payload
+    // Length = 0x00000008
+    EXPECT_EQ(buf[0], 0x00);
+    EXPECT_EQ(buf[1], 0x00);
+    EXPECT_EQ(buf[2], 0x00);
+    EXPECT_EQ(buf[3], 0x08);
+    // BOM
+    EXPECT_EQ(buf[4], 0xEF);
+    EXPECT_EQ(buf[5], 0xBB);
+    EXPECT_EQ(buf[6], 0xBF);
+    // "test"
+    EXPECT_EQ(buf[7], 't');
+    EXPECT_EQ(buf[8], 'e');
+    EXPECT_EQ(buf[9], 's');
+    EXPECT_EQ(buf[10], 't');
+    // NUL
+    EXPECT_EQ(buf[11], 0x00);
+}
+
+/**
+ * @test_case TC_SER_STRING_BOM_002
+ * @tests feat_req_someip_662, feat_req_someip_800, feat_req_someip_687
+ * @brief Empty string wire format: [len=4][BOM EF BB BF][00]
+ */
+TEST_F(SerializationTest, EmptyStringWireFormat) {
+    Serializer serializer;
+    serializer.serialize_string(platform::String<>(""));
+
+    const auto& buf = serializer.get_buffer();
+    // Length = BOM(3) + NUL(1) = 4
+    ASSERT_EQ(buf.size(), 4 + 4u);
+    EXPECT_EQ(buf[0], 0x00);
+    EXPECT_EQ(buf[1], 0x00);
+    EXPECT_EQ(buf[2], 0x00);
+    EXPECT_EQ(buf[3], 0x04);
+    EXPECT_EQ(buf[4], 0xEF);
+    EXPECT_EQ(buf[5], 0xBB);
+    EXPECT_EQ(buf[6], 0xBF);
+    EXPECT_EQ(buf[7], 0x00);
+}
+
+/**
+ * @test_case TC_SER_STRING_BOM_003
+ * @tests feat_req_someip_666
+ * @brief Deserializing without BOM returns MALFORMED_MESSAGE
+ */
+TEST_F(SerializationTest, DeserializeStringMissingBomRejected) {
+    // Wire: [len=5][no BOM: 0x41 0x42 0x43 0x44][0x00]
+    platform::ByteBuffer bad_wire = {
+        0x00, 0x00, 0x00, 0x05,
+        0x41, 0x42, 0x43, 0x44, 0x00
+    };
+    Deserializer deserializer(bad_wire);
+    auto result = deserializer.deserialize_string();
+    EXPECT_TRUE(result.is_error());
+    EXPECT_EQ(result.get_error(), someip::Result::MALFORMED_MESSAGE);
+}
+
+/**
+ * @test_case TC_SER_STRING_BOM_004
+ * @tests feat_req_someip_687
+ * @brief Deserializing without trailing NUL returns MALFORMED_MESSAGE
+ */
+TEST_F(SerializationTest, DeserializeStringMissingNulRejected) {
+    // Wire: [len=7][BOM EF BB BF]["test"] — no NUL
+    platform::ByteBuffer no_nul = {
+        0x00, 0x00, 0x00, 0x07,
+        0xEF, 0xBB, 0xBF, 't', 'e', 's', 't'
+    };
+    Deserializer deserializer(no_nul);
+    auto result = deserializer.deserialize_string();
+    EXPECT_TRUE(result.is_error());
+    EXPECT_EQ(result.get_error(), someip::Result::MALFORMED_MESSAGE);
+}
+
+/**
+ * @test_case TC_SER_STRING_BOM_005
+ * @tests feat_req_someip_562
+ * @brief Verify no unconditional 4-byte alignment after string
+ */
+TEST_F(SerializationTest, StringNoUnconditionalPadding) {
+    Serializer serializer;
+    serializer.serialize_string(platform::String<>("hi"));  // BOM(3)+"hi"(2)+NUL(1) = 6
+    // Total: 4 (len) + 6 (payload) = 10 bytes — NOT padded to 12
+    EXPECT_EQ(serializer.get_size(), 10u);
+}
+
+/**
  * @test_case TC_SER_E09
  * @tests REQ_SER_080_E02
  * @brief Test multiple consecutive alignments

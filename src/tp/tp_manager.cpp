@@ -51,8 +51,7 @@ void TpManager::shutdown() {
 }
 
 bool TpManager::needs_segmentation(const Message& message) const {
-    platform::ByteBuffer const data = message.serialize();
-    return data.size() > config_.max_segment_size;
+    return message.get_payload().size() > config_.max_segment_size;
 }
 
 /**
