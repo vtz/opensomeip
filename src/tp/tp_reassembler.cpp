@@ -143,8 +143,15 @@ bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuff
         return false;
     }
 
+    // Reject follow-up segments whose message_length disagrees with the
+    // buffer created by the FIRST segment.  A rogue segment with a larger
+    // message_length would pass validate_segment (which uses the segment's
+    // own message_length) but could exceed the buffer allocation.
+    if (segment.header.message_length != buffer->total_length) {
+        return false;
+    }
+
     if (!add_segment_to_buffer(*buffer, segment)) {
-        reassembly_buffers_.erase(key);
         return false;
     }
 
@@ -319,6 +326,11 @@ bool TpReassembler::is_reassembling(uint32_t message_id) const {
     return false;
 }
 
+bool TpReassembler::is_reassembling(const TpReassemblyKey& key) const {
+    platform::ScopedLock const lock(buffers_mutex_);
+    return reassembly_buffers_.find(key) != reassembly_buffers_.end();
+}
+
 bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& received_bytes, uint32_t& total_bytes) const {
     platform::ScopedLock const lock(buffers_mutex_);
 
@@ -342,6 +354,27 @@ bool TpReassembler::get_reassembly_progress(uint32_t message_id, uint32_t& recei
     return false;
 }
 
+bool TpReassembler::get_reassembly_progress(const TpReassemblyKey& key, uint32_t& received_bytes, uint32_t& total_bytes) const {
+    platform::ScopedLock const lock(buffers_mutex_);
+
+    auto it = reassembly_buffers_.find(key);
+    if (it == reassembly_buffers_.end()) {
+        return false;
+    }
+
+    const auto& buffer = it->second;
+    total_bytes = buffer.total_length;
+
+    received_bytes = 0;
+    for (bool const received : buffer.received_segments) {
+        if (received) {
+            ++received_bytes;
+        }
+    }
+
+    return true;
+}
+
 /**
  * @brief Cancel reassembly for a message
  * @implements REQ_TP_079
@@ -355,6 +388,11 @@ void TpReassembler::cancel_reassembly(uint32_t message_id) {
             ++it;
         }
     }
+}
+
+void TpReassembler::cancel_reassembly(const TpReassemblyKey& key) {
+    platform::ScopedLock const lock(buffers_mutex_);
+    reassembly_buffers_.erase(key);
 }
 
 /**

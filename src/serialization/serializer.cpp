@@ -422,7 +422,7 @@ DeserializationResult<platform::String<>> Deserializer::deserialize_string() {
         return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
     }
 
-    if (position_ + length > buffer_.size()) {
+    if (position_ > buffer_.size() || length > buffer_.size() - position_) {
         return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
     }
 

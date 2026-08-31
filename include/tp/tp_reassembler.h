@@ -61,10 +61,13 @@ public:
     /**
      * @brief Check if a message is currently being reassembled
      *
-     * @param message_id The message identifier
+     * @param message_id The message identifier (matches any buffer with this message_id)
      * @return true if reassembly is in progress
      */
     bool is_reassembling(uint32_t message_id) const;
+
+    /** @brief Check if a specific reassembly key is active */
+    bool is_reassembling(const TpReassemblyKey& key) const;
 
     /**
      * @brief Get reassembly progress for a message
@@ -76,12 +79,18 @@ public:
      */
     bool get_reassembly_progress(uint32_t message_id, uint32_t& received_bytes, uint32_t& total_bytes) const;
 
+    /** @brief Get reassembly progress by exact key */
+    bool get_reassembly_progress(const TpReassemblyKey& key, uint32_t& received_bytes, uint32_t& total_bytes) const;
+
     /**
      * @brief Cancel reassembly for a message
      *
-     * @param message_id The message identifier
+     * @param message_id The message identifier (cancels all buffers with this message_id)
      */
     void cancel_reassembly(uint32_t message_id);
+
+    /** @brief Cancel reassembly for an exact key */
+    void cancel_reassembly(const TpReassemblyKey& key);
 
     /**
      * @brief Process timeouts and cleanup stale reassembly buffers
