@@ -58,6 +58,7 @@ Contents
    implementation/transport_protocol
    implementation/platform
    implementation/compatibility
+   implementation/c_api
 
 Indices and tables
 ==================
