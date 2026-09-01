@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-31T15:29:43.921327",
+  "generated": "2026-09-01T03:55:32.985843",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -6167,7 +6167,7 @@
         "feat_req_someiptp_783"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_161"
+        "CODE_tp_reassembler_tp_168"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -6184,7 +6184,7 @@
         "feat_req_someiptp_789"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_161"
+        "CODE_tp_reassembler_tp_168"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6199,7 +6199,7 @@
         "feat_req_someiptp_789"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_161"
+        "CODE_tp_reassembler_tp_168"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6213,7 +6213,7 @@
         "feat_req_someiptp_780"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_208"
+        "CODE_tp_reassembler_tp_215"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6227,7 +6227,7 @@
         "feat_req_someiptp_780"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_208"
+        "CODE_tp_reassembler_tp_215"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6243,7 +6243,7 @@
         "feat_req_someiptp_790"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_208"
+        "CODE_tp_reassembler_tp_215"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6258,7 +6258,7 @@
         "feat_req_someiptp_783"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_254"
+        "CODE_tp_reassembler_tp_261"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -6273,7 +6273,7 @@
         "feat_req_someiptp_774"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_254"
+        "CODE_tp_reassembler_tp_261"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6288,7 +6288,7 @@
         "feat_req_someiptp_783"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_254"
+        "CODE_tp_reassembler_tp_261"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6302,7 +6302,7 @@
         "feat_req_someiptp_774"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_254"
+        "CODE_tp_reassembler_tp_261"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6314,11 +6314,12 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_254"
+        "CODE_tp_reassembler_tp_261"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
-        "TC_TP_ERR_004"
+        "TC_TP_ERR_004",
+        "TC_TP_PLACEMENT_FAILURE_PRESERVES_BUFFER"
       ]
     },
     "REQ_TP_030_E01": {
@@ -6344,7 +6345,7 @@
         "feat_req_someiptp_792"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_254"
+        "CODE_tp_reassembler_tp_261"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6356,12 +6357,13 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_161"
+        "CODE_tp_reassembler_tp_168"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
         "TC_TP_ERR_004",
-        "TC_TP_ERR_007"
+        "TC_TP_ERR_007",
+        "TC_TP_MISMATCHED_MSG_LEN_REJECTED"
       ]
     },
     "REQ_TP_050": {
@@ -6735,8 +6737,8 @@
       ],
       "implemented_by": [
         "CODE_tp_reassembler_tp_126",
-        "CODE_tp_reassembler_tp_345",
-        "CODE_tp_reassembler_tp_360"
+        "CODE_tp_reassembler_tp_378",
+        "CODE_tp_reassembler_tp_398"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6752,7 +6754,7 @@
       ],
       "implemented_by": [
         "CODE_tp_reassembler_tp_126",
-        "CODE_tp_reassembler_tp_254"
+        "CODE_tp_reassembler_tp_261"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6769,7 +6771,7 @@
       ],
       "implemented_by": [
         "CODE_tp_reassembler_tp_126",
-        "CODE_tp_reassembler_tp_254"
+        "CODE_tp_reassembler_tp_261"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -6798,7 +6800,7 @@
       "satisfies": [],
       "implemented_by": [
         "CODE_tp_reassembler_tp_86",
-        "CODE_tp_reassembler_tp_161"
+        "CODE_tp_reassembler_tp_168"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -6812,7 +6814,7 @@
       "satisfies": [],
       "implemented_by": [
         "CODE_tp_reassembler_tp_86",
-        "CODE_tp_reassembler_tp_161"
+        "CODE_tp_reassembler_tp_168"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -6878,7 +6880,7 @@
       "satisfies": [],
       "implemented_by": [
         "CODE_tp_reassembler_tp_86",
-        "CODE_tp_reassembler_tp_161"
+        "CODE_tp_reassembler_tp_168"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -12309,9 +12311,9 @@
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_161": {
-      "id": "CODE_tp_reassembler_tp_161",
-      "location": "src/tp/tp_reassembler.cpp:161",
+    "CODE_tp_reassembler_tp_168": {
+      "id": "CODE_tp_reassembler_tp_168",
+      "location": "src/tp/tp_reassembler.cpp:168",
       "implements": [
         "REQ_TP_033",
         "REQ_TP_034",
@@ -12323,9 +12325,9 @@
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_208": {
-      "id": "CODE_tp_reassembler_tp_208",
-      "location": "src/tp/tp_reassembler.cpp:208",
+    "CODE_tp_reassembler_tp_215": {
+      "id": "CODE_tp_reassembler_tp_215",
+      "location": "src/tp/tp_reassembler.cpp:215",
       "implements": [
         "REQ_TP_036",
         "REQ_TP_037",
@@ -12338,9 +12340,9 @@
         "feat_req_someiptp_793"
       ]
     },
-    "CODE_tp_reassembler_tp_254": {
-      "id": "CODE_tp_reassembler_tp_254",
-      "location": "src/tp/tp_reassembler.cpp:254",
+    "CODE_tp_reassembler_tp_261": {
+      "id": "CODE_tp_reassembler_tp_261",
+      "location": "src/tp/tp_reassembler.cpp:261",
       "implements": [
         "REQ_TP_039",
         "REQ_TP_040",
@@ -12353,17 +12355,17 @@
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_345": {
-      "id": "CODE_tp_reassembler_tp_345",
-      "location": "src/tp/tp_reassembler.cpp:345",
+    "CODE_tp_reassembler_tp_378": {
+      "id": "CODE_tp_reassembler_tp_378",
+      "location": "src/tp/tp_reassembler.cpp:378",
       "implements": [
         "REQ_TP_079"
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_360": {
-      "id": "CODE_tp_reassembler_tp_360",
-      "location": "src/tp/tp_reassembler.cpp:360",
+    "CODE_tp_reassembler_tp_398": {
+      "id": "CODE_tp_reassembler_tp_398",
+      "location": "src/tp/tp_reassembler.cpp:398",
       "implements": [
         "REQ_TP_079"
       ],
@@ -16836,46 +16838,54 @@
         "REQ_TRANSPORT_020"
       ]
     },
+    "TC_TCP_MAGIC_CORRELATION": {
+      "id": "TC_TCP_MAGIC_CORRELATION",
+      "name": "TcpTransportTest.MagicCookieMethodTypeCorrelation (tests/test_tcp_transport.cpp:781)",
+      "location": "tests/test_tcp_transport.cpp:781",
+      "tests": [
+        "feat_req_someip_609"
+      ]
+    },
     "TC_TCP_MAGIC_004": {
       "id": "TC_TCP_MAGIC_004",
-      "name": "TcpTransportTest.MagicCookieConsumedByParser (tests/test_tcp_transport.cpp:781)",
-      "location": "tests/test_tcp_transport.cpp:781",
+      "name": "TcpTransportTest.MagicCookieConsumedByParser (tests/test_tcp_transport.cpp:805)",
+      "location": "tests/test_tcp_transport.cpp:805",
       "tests": [
         "REQ_TRANSPORT_020"
       ]
     },
     "TC_TCP_MAGIC_005": {
       "id": "TC_TCP_MAGIC_005",
-      "name": "TcpTransportTest.MagicCookieConfigControls (tests/test_tcp_transport.cpp:809)",
-      "location": "tests/test_tcp_transport.cpp:809",
+      "name": "TcpTransportTest.MagicCookieConfigControls (tests/test_tcp_transport.cpp:833)",
+      "location": "tests/test_tcp_transport.cpp:833",
       "tests": [
         "REQ_TRANSPORT_021"
       ]
     },
     "TC_TCP_MAGIC_006": {
       "id": "TC_TCP_MAGIC_006",
-      "name": "TcpTransportTest.MultipleMagicCookiesConsumed (tests/test_tcp_transport.cpp:825)",
-      "location": "tests/test_tcp_transport.cpp:825",
+      "name": "TcpTransportTest.MultipleMagicCookiesConsumed (tests/test_tcp_transport.cpp:849)",
+      "location": "tests/test_tcp_transport.cpp:849",
       "tests": [
         "REQ_TRANSPORT_021"
       ]
     },
     "TC_TCP_LISTENER_QUEUE_RETENTION": {
       "id": "TC_TCP_LISTENER_QUEUE_RETENTION",
-      "name": "TcpTransportTest.ListenerOnlyDoesNotRetainQueueMessages (tests/test_tcp_transport.cpp:858)",
-      "location": "tests/test_tcp_transport.cpp:858",
+      "name": "TcpTransportTest.ListenerOnlyDoesNotRetainQueueMessages (tests/test_tcp_transport.cpp:882)",
+      "location": "tests/test_tcp_transport.cpp:882",
       "tests": []
     },
     "TC_TCP_MODE_SWITCH": {
       "id": "TC_TCP_MODE_SWITCH",
-      "name": "TcpTransportTest.ModeSwitchPollingToListenerAndBack (tests/test_tcp_transport.cpp:915)",
-      "location": "tests/test_tcp_transport.cpp:915",
+      "name": "TcpTransportTest.ModeSwitchPollingToListenerAndBack (tests/test_tcp_transport.cpp:939)",
+      "location": "tests/test_tcp_transport.cpp:939",
       "tests": []
     },
     "TC_TCP_LISTENER_DISCONNECT_NO_DEADLOCK": {
       "id": "TC_TCP_LISTENER_DISCONNECT_NO_DEADLOCK",
-      "name": "TcpTransportTest.ListenerCallingDisconnectDoesNotDeadlock (tests/test_tcp_transport.cpp:1027)",
-      "location": "tests/test_tcp_transport.cpp:1027",
+      "name": "TcpTransportTest.ListenerCallingDisconnectDoesNotDeadlock (tests/test_tcp_transport.cpp:1051)",
+      "location": "tests/test_tcp_transport.cpp:1051",
       "tests": []
     },
     "TC_test_tp_TpTest": {
@@ -17282,6 +17292,30 @@
       "name": "TpTest.E2eBelowThresholdPassesSingleMessage (tests/test_tp.cpp:1369)",
       "location": "tests/test_tp.cpp:1369",
       "tests": []
+    },
+    "TC_TP_MISMATCHED_MSG_LEN_REJECTED": {
+      "id": "TC_TP_MISMATCHED_MSG_LEN_REJECTED",
+      "name": "TpTest.MismatchedMessageLengthRejectedBufferPreserved (tests/test_tp.cpp:1393)",
+      "location": "tests/test_tp.cpp:1393",
+      "tests": [
+        "REQ_TP_030_E02"
+      ]
+    },
+    "TC_TP_PLACEMENT_FAILURE_PRESERVES_BUFFER": {
+      "id": "TC_TP_PLACEMENT_FAILURE_PRESERVES_BUFFER",
+      "name": "TpTest.PlacementFailurePreservesBuffer (tests/test_tp.cpp:1445)",
+      "location": "tests/test_tp.cpp:1445",
+      "tests": [
+        "REQ_TP_039_E01"
+      ]
+    },
+    "TC_TP_KEY_API_TARGETS_EXACT_KEY": {
+      "id": "TC_TP_KEY_API_TARGETS_EXACT_KEY",
+      "name": "TpTest.KeyBasedApiTargetsExactKey (tests/test_tp.cpp:1496)",
+      "location": "tests/test_tp.cpp:1496",
+      "tests": [
+        "feat_req_someiptp_781"
+      ]
     },
     "TC_test_udp_transport_UdpTransportTest": {
       "id": "TC_test_udp_transport_UdpTransportTest",

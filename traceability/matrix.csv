@@ -577,21 +577,21 @@ REQ_TP_021,More Segments Flag Clear for Last,requirement,feat_req_someiptp_770,C
 REQ_TP_022,Segment Length Field,requirement,feat_req_someiptp_771,CODE_tp_segmenter_tp_88,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_030,Allocate Reassembly Buffer,requirement,feat_req_someiptp_774; feat_req_someiptp_782,CODE_tp_reassembler_tp_126,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_030_E01,Error - Buffer Overflow on Large Message,requirement,,CODE_tp_reassembler_tp_126,TC_test_tp_TpTest; TC_TP_ERR_003; TC_TP_ERR_007,Yes,Yes
-REQ_TP_030_E02,Error - Maximum Concurrent Transfers,requirement,,CODE_tp_reassembler_tp_161,TC_test_tp_TpTest; TC_TP_ERR_004; TC_TP_ERR_007,Yes,Yes
+REQ_TP_030_E02,Error - Maximum Concurrent Transfers,requirement,,CODE_tp_reassembler_tp_168,TC_test_tp_TpTest; TC_TP_ERR_004; TC_TP_ERR_007; TC_TP_MISMATCHED_MSG_LEN_REJECTED,Yes,Yes
 REQ_TP_031,Buffer Identification,requirement,feat_req_someiptp_781; feat_req_someiptp_794,CODE_tp_reassembler_tp_126,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_032,Buffer Size Estimation,requirement,feat_req_someiptp_787,CODE_tp_reassembler_tp_126,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_033,Buffer Resize on Final Segment,requirement,feat_req_someiptp_770; feat_req_someiptp_783,CODE_tp_reassembler_tp_161,TC_test_tp_TpTest; TC_TP_UNDERSIZED_FIRST_SEGMENT_REJECTED; TC_TP_ZERO_PAYLOAD_NO_COMPLETE,Yes,Yes
-REQ_TP_034,Store Segment by Offset,requirement,feat_req_someiptp_774; feat_req_someiptp_789,CODE_tp_reassembler_tp_161,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_035,Track Received Segments,requirement,feat_req_someiptp_774; feat_req_someiptp_789,CODE_tp_reassembler_tp_161,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_036,Detect Duplicate Segments,requirement,feat_req_someiptp_780,CODE_tp_reassembler_tp_208,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_037,Detect Overlapping Segments,requirement,feat_req_someiptp_780,CODE_tp_reassembler_tp_208,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_038,Handle Out-of-Order Segments,requirement,feat_req_someiptp_774; feat_req_someiptp_789; feat_req_someiptp_790,CODE_tp_reassembler_tp_208,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_039,Complete on Last Segment with No Gaps,requirement,feat_req_someiptp_774; feat_req_someiptp_783,CODE_tp_reassembler_tp_254,TC_test_tp_TpTest; TC_TP_PROGRESS_COUNTS_BYTES,Yes,Yes
-REQ_TP_039_E01,Error - Missing Segments at Completion,requirement,,CODE_tp_reassembler_tp_254,TC_test_tp_TpTest; TC_TP_ERR_004,Yes,Yes
-REQ_TP_040,Delayed Completion for Out-of-Order Last,requirement,feat_req_someiptp_774,CODE_tp_reassembler_tp_254,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_041,Deliver Reassembled Message,requirement,feat_req_someiptp_774; feat_req_someiptp_783,CODE_tp_reassembler_tp_254,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_042,Release Buffer After Delivery,requirement,feat_req_someiptp_774,CODE_tp_reassembler_tp_254,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_043,Error - Total Length Inconsistency,requirement,feat_req_someiptp_774; feat_req_someiptp_792,CODE_tp_reassembler_tp_254,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_033,Buffer Resize on Final Segment,requirement,feat_req_someiptp_770; feat_req_someiptp_783,CODE_tp_reassembler_tp_168,TC_test_tp_TpTest; TC_TP_UNDERSIZED_FIRST_SEGMENT_REJECTED; TC_TP_ZERO_PAYLOAD_NO_COMPLETE,Yes,Yes
+REQ_TP_034,Store Segment by Offset,requirement,feat_req_someiptp_774; feat_req_someiptp_789,CODE_tp_reassembler_tp_168,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_035,Track Received Segments,requirement,feat_req_someiptp_774; feat_req_someiptp_789,CODE_tp_reassembler_tp_168,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_036,Detect Duplicate Segments,requirement,feat_req_someiptp_780,CODE_tp_reassembler_tp_215,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_037,Detect Overlapping Segments,requirement,feat_req_someiptp_780,CODE_tp_reassembler_tp_215,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_038,Handle Out-of-Order Segments,requirement,feat_req_someiptp_774; feat_req_someiptp_789; feat_req_someiptp_790,CODE_tp_reassembler_tp_215,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_039,Complete on Last Segment with No Gaps,requirement,feat_req_someiptp_774; feat_req_someiptp_783,CODE_tp_reassembler_tp_261,TC_test_tp_TpTest; TC_TP_PROGRESS_COUNTS_BYTES,Yes,Yes
+REQ_TP_039_E01,Error - Missing Segments at Completion,requirement,,CODE_tp_reassembler_tp_261,TC_test_tp_TpTest; TC_TP_ERR_004; TC_TP_PLACEMENT_FAILURE_PRESERVES_BUFFER,Yes,Yes
+REQ_TP_040,Delayed Completion for Out-of-Order Last,requirement,feat_req_someiptp_774,CODE_tp_reassembler_tp_261,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_041,Deliver Reassembled Message,requirement,feat_req_someiptp_774; feat_req_someiptp_783,CODE_tp_reassembler_tp_261,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_042,Release Buffer After Delivery,requirement,feat_req_someiptp_774,CODE_tp_reassembler_tp_261,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_043,Error - Total Length Inconsistency,requirement,feat_req_someiptp_774; feat_req_someiptp_792,CODE_tp_reassembler_tp_261,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_050,Start Reassembly Timer,requirement,feat_req_someiptp_774; feat_req_someiptp_796,CODE_tp_manager_tp_57,TC_test_tp_TpTest; TC_TP_001,Yes,Yes
 REQ_TP_050_E01,Error - Timer Creation Failure,requirement,,CODE_tp_manager_tp_57,TC_test_tp_TpTest; TC_TP_ERR_005; TC_TP_ERR_008,Yes,Yes
 REQ_TP_050_E02,Error - Timer Already Active,requirement,,CODE_tp_manager_tp_129,TC_test_tp_TpTest; TC_TP_ERR_005,Yes,Yes
@@ -609,18 +609,18 @@ REQ_TP_063,Query Active Reassemblies,requirement,feat_req_someiptp_774,CODE_tp_m
 REQ_TP_070,Segment Only Configured Messages,requirement,feat_req_someiptp_788; feat_req_someiptp_775,CODE_tp_manager_tp_260; CODE_tp_segmenter_tp_38; CODE_tp_segmenter_tp_88; CODE_tp_segmenter_tp_194,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_071,Send Segments in Ascending Order,requirement,feat_req_someiptp_777,CODE_tp_manager_tp_260; CODE_tp_segmenter_tp_38; CODE_tp_segmenter_tp_88; CODE_tp_segmenter_tp_194,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_072,Uniform Segment Size,requirement,feat_req_someiptp_778; feat_req_someiptp_779,CODE_tp_manager_tp_260; CODE_tp_segmenter_tp_38; CODE_tp_segmenter_tp_88; CODE_tp_segmenter_tp_194,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_072_E01,Error - Segment Size Exceeds Maximum,requirement,,CODE_tp_reassembler_tp_86; CODE_tp_reassembler_tp_161,TC_test_tp_TpTest; TC_TP_E01,Yes,Yes
+REQ_TP_072_E01,Error - Segment Size Exceeds Maximum,requirement,,CODE_tp_reassembler_tp_86; CODE_tp_reassembler_tp_168,TC_test_tp_TpTest; TC_TP_E01,Yes,Yes
 REQ_TP_073,No Overlapping or Duplicate Segments,requirement,feat_req_someiptp_780,CODE_tp_manager_tp_260; CODE_tp_segmenter_tp_38; CODE_tp_segmenter_tp_88; CODE_tp_segmenter_tp_194,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_074,Configured Client IDs for TP,requirement,feat_req_someiptp_786,CODE_tp_manager_tp_260; CODE_tp_segmenter_tp_38; CODE_tp_segmenter_tp_88; CODE_tp_segmenter_tp_194,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_075,Traffic Shaping for Segments,requirement,feat_req_someiptp_801,CODE_tp_manager_tp_260; CODE_tp_segmenter_tp_38; CODE_tp_segmenter_tp_88; CODE_tp_segmenter_tp_194,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_076,Session ID Based Reassembly Detection,requirement,feat_req_someiptp_793; feat_req_someiptp_795; feat_req_someiptp_776,CODE_tp_manager_tp_260; CODE_tp_reassembler_tp_126; CODE_tp_segmenter_tp_88,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_076_E01,Error - Reassembly Buffer Full,requirement,,CODE_tp_reassembler_tp_86; CODE_tp_reassembler_tp_161,TC_test_tp_TpTest; TC_TP_E02,Yes,Yes
-REQ_TP_076_E02,Error - TP Reassembly Result Exceeds Maximum Message Size,requirement,,CODE_tp_reassembler_tp_86; CODE_tp_reassembler_tp_161,TC_test_tp_TpTest; TC_TP_E02,Yes,Yes
+REQ_TP_076_E01,Error - Reassembly Buffer Full,requirement,,CODE_tp_reassembler_tp_86; CODE_tp_reassembler_tp_168,TC_test_tp_TpTest; TC_TP_E02,Yes,Yes
+REQ_TP_076_E02,Error - TP Reassembly Result Exceeds Maximum Message Size,requirement,,CODE_tp_reassembler_tp_86; CODE_tp_reassembler_tp_168,TC_test_tp_TpTest; TC_TP_E02,Yes,Yes
 REQ_TP_077,Return Code from Last Segment,requirement,feat_req_someiptp_784,CODE_tp_manager_tp_260; CODE_tp_reassembler_tp_126; CODE_tp_segmenter_tp_88,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_078,Clear TP Flag After Reassembly,requirement,feat_req_someiptp_785,CODE_tp_manager_tp_260; CODE_tp_reassembler_tp_126; CODE_tp_segmenter_tp_88,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_079,Cancel Reassembly on Resource Exhaustion,requirement,feat_req_someiptp_796,CODE_tp_reassembler_tp_126; CODE_tp_reassembler_tp_345; CODE_tp_reassembler_tp_360,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_080,No Cross-Message Reordering,requirement,feat_req_someiptp_802; feat_req_someiptp_803,CODE_tp_reassembler_tp_126; CODE_tp_reassembler_tp_254,TC_test_tp_TpTest,Yes,Yes
-REQ_TP_081,Overlapping Segment Handling,requirement,feat_req_someiptp_810; feat_req_someiptp_797; feat_req_someiptp_820,CODE_tp_reassembler_tp_126; CODE_tp_reassembler_tp_254,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_079,Cancel Reassembly on Resource Exhaustion,requirement,feat_req_someiptp_796,CODE_tp_reassembler_tp_126; CODE_tp_reassembler_tp_378; CODE_tp_reassembler_tp_398,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_080,No Cross-Message Reordering,requirement,feat_req_someiptp_802; feat_req_someiptp_803,CODE_tp_reassembler_tp_126; CODE_tp_reassembler_tp_261,TC_test_tp_TpTest,Yes,Yes
+REQ_TP_081,Overlapping Segment Handling,requirement,feat_req_someiptp_810; feat_req_someiptp_797; feat_req_someiptp_820,CODE_tp_reassembler_tp_126; CODE_tp_reassembler_tp_261,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_082,TP Error Handling,requirement,feat_req_someiptp_792; feat_req_someiptp_832,CODE_tp_reassembler_tp_86; CODE_tp_reassembler_tp_126,TC_test_tp_TpTest,Yes,Yes
 REQ_TP_082_E01,Error - TP Message Type Mismatch,requirement,,CODE_tp_reassembler_tp_86,TC_test_tp_TpTest; TC_TP_E04,Yes,Yes
 REQ_TP_082_E02,Error - TP Segment With Wrong Protocol Version,requirement,,CODE_tp_reassembler_tp_86,TC_test_tp_TpTest; TC_TP_E04,Yes,Yes

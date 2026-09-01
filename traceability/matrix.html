@@ -21,14 +21,14 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-08-31 15:29:43</p>
+    <p>Generated: 2026-09-01 03:55:32</p>
 
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
             <li>Total Requirements: 669</li>
             <li>Code References: 278</li>
-            <li>Test Cases: 366</li>
+            <li>Test Cases: 370</li>
         </ul>
     </div>
 
@@ -4670,8 +4670,8 @@
             <td>REQ_TP_030_E02</td>
             <td>Error - Maximum Concurrent Transfers</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_161</td>
-            <td>TC_test_tp_TpTest, TC_TP_ERR_004, TC_TP_ERR_007</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_168</td>
+            <td>TC_test_tp_TpTest, TC_TP_ERR_004, TC_TP_ERR_007, TC_TP_MISMATCHED_MSG_LEN_REJECTED</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -4694,7 +4694,7 @@
             <td>REQ_TP_033</td>
             <td>Buffer Resize on Final Segment</td>
             <td>feat_req_someiptp_770, feat_req_someiptp_783</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_161</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_168</td>
             <td>TC_test_tp_TpTest, TC_TP_UNDERSIZED_FIRST_SEGMENT_REJECTED, TC_TP_ZERO_PAYLOAD_NO_COMPLETE</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4702,7 +4702,7 @@
             <td>REQ_TP_034</td>
             <td>Store Segment by Offset</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_789</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_161</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_168</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4710,7 +4710,7 @@
             <td>REQ_TP_035</td>
             <td>Track Received Segments</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_789</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_161</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_168</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4718,7 +4718,7 @@
             <td>REQ_TP_036</td>
             <td>Detect Duplicate Segments</td>
             <td>feat_req_someiptp_780</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_208</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_215</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4726,7 +4726,7 @@
             <td>REQ_TP_037</td>
             <td>Detect Overlapping Segments</td>
             <td>feat_req_someiptp_780</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_208</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_215</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4734,7 +4734,7 @@
             <td>REQ_TP_038</td>
             <td>Handle Out-of-Order Segments</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_789, feat_req_someiptp_790</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_208</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_215</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4742,7 +4742,7 @@
             <td>REQ_TP_039</td>
             <td>Complete on Last Segment with No Gaps</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_783</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_254</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_261</td>
             <td>TC_test_tp_TpTest, TC_TP_PROGRESS_COUNTS_BYTES</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4750,15 +4750,15 @@
             <td>REQ_TP_039_E01</td>
             <td>Error - Missing Segments at Completion</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_254</td>
-            <td>TC_test_tp_TpTest, TC_TP_ERR_004</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_261</td>
+            <td>TC_test_tp_TpTest, TC_TP_ERR_004, TC_TP_PLACEMENT_FAILURE_PRESERVES_BUFFER</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TP_040</td>
             <td>Delayed Completion for Out-of-Order Last</td>
             <td>feat_req_someiptp_774</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_254</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_261</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4766,7 +4766,7 @@
             <td>REQ_TP_041</td>
             <td>Deliver Reassembled Message</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_783</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_254</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_261</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4774,7 +4774,7 @@
             <td>REQ_TP_042</td>
             <td>Release Buffer After Delivery</td>
             <td>feat_req_someiptp_774</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_254</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_261</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4782,7 +4782,7 @@
             <td>REQ_TP_043</td>
             <td>Error - Total Length Inconsistency</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_792</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_254</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_261</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4926,7 +4926,7 @@
             <td>REQ_TP_072_E01</td>
             <td>Error - Segment Size Exceeds Maximum</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_86, CODE_tp_reassembler_tp_161</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_86, CODE_tp_reassembler_tp_168</td>
             <td>TC_test_tp_TpTest, TC_TP_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4966,7 +4966,7 @@
             <td>REQ_TP_076_E01</td>
             <td>Error - Reassembly Buffer Full</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_86, CODE_tp_reassembler_tp_161</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_86, CODE_tp_reassembler_tp_168</td>
             <td>TC_test_tp_TpTest, TC_TP_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4974,7 +4974,7 @@
             <td>REQ_TP_076_E02</td>
             <td>Error - TP Reassembly Result Exceeds Maximum Message Size</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_86, CODE_tp_reassembler_tp_161</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_86, CODE_tp_reassembler_tp_168</td>
             <td>TC_test_tp_TpTest, TC_TP_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4998,7 +4998,7 @@
             <td>REQ_TP_079</td>
             <td>Cancel Reassembly on Resource Exhaustion</td>
             <td>feat_req_someiptp_796</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_126, CODE_tp_reassembler_tp_345, CODE_tp_reassembler_tp_360</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_126, CODE_tp_reassembler_tp_378, CODE_tp_reassembler_tp_398</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5006,7 +5006,7 @@
             <td>REQ_TP_080</td>
             <td>No Cross-Message Reordering</td>
             <td>feat_req_someiptp_802, feat_req_someiptp_803</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_126, CODE_tp_reassembler_tp_254</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_126, CODE_tp_reassembler_tp_261</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5014,7 +5014,7 @@
             <td>REQ_TP_081</td>
             <td>Overlapping Segment Handling</td>
             <td>feat_req_someiptp_810, feat_req_someiptp_797, feat_req_someiptp_820</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_126, CODE_tp_reassembler_tp_254</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_126, CODE_tp_reassembler_tp_261</td>
             <td>TC_test_tp_TpTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -6887,20 +6887,20 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_161</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:161</td>
+            <td>CODE_tp_reassembler_tp_168</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:168</td>
             <td>REQ_TP_033, REQ_TP_034, REQ_TP_035, REQ_TP_030_E02, REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_208</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:208</td>
+            <td>CODE_tp_reassembler_tp_215</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:215</td>
             <td>REQ_TP_036, REQ_TP_037, REQ_TP_038</td>
             <td>feat_req_someiptp_781, feat_req_someiptp_794, feat_req_someiptp_795, feat_req_someiptp_793</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_254</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:254</td>
+            <td>CODE_tp_reassembler_tp_261</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:261</td>
             <td>REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043, REQ_TP_039_E01, REQ_TP_080, REQ_TP_081</td>
             <td>-</td>
         </tr>
@@ -6911,14 +6911,14 @@
             <td>feat_req_someiptp_781</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_345</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:345</td>
+            <td>CODE_tp_reassembler_tp_378</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:378</td>
             <td>REQ_TP_079</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_360</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:360</td>
+            <td>CODE_tp_reassembler_tp_398</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:398</td>
             <td>REQ_TP_079</td>
             <td>-</td>
         </tr>
@@ -8758,14 +8758,14 @@
         </tr>
         <tr>
             <td>TC_TCP_LISTENER_DISCONNECT_NO_DEADLOCK</td>
-            <td>TcpTransportTest.ListenerCallingDisconnectDoesNotDeadlock (tests/test_tcp_transport.cpp:1027)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1027</td>
+            <td>TcpTransportTest.ListenerCallingDisconnectDoesNotDeadlock (tests/test_tcp_transport.cpp:1051)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1051</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_TCP_LISTENER_QUEUE_RETENTION</td>
-            <td>TcpTransportTest.ListenerOnlyDoesNotRetainQueueMessages (tests/test_tcp_transport.cpp:858)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:858</td>
+            <td>TcpTransportTest.ListenerOnlyDoesNotRetainQueueMessages (tests/test_tcp_transport.cpp:882)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:882</td>
             <td>-</td>
         </tr>
         <tr>
@@ -8788,26 +8788,32 @@
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_004</td>
-            <td>TcpTransportTest.MagicCookieConsumedByParser (tests/test_tcp_transport.cpp:781)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:781</td>
+            <td>TcpTransportTest.MagicCookieConsumedByParser (tests/test_tcp_transport.cpp:805)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:805</td>
             <td>REQ_TRANSPORT_020</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_005</td>
-            <td>TcpTransportTest.MagicCookieConfigControls (tests/test_tcp_transport.cpp:809)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:809</td>
+            <td>TcpTransportTest.MagicCookieConfigControls (tests/test_tcp_transport.cpp:833)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:833</td>
             <td>REQ_TRANSPORT_021</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_006</td>
-            <td>TcpTransportTest.MultipleMagicCookiesConsumed (tests/test_tcp_transport.cpp:825)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:825</td>
+            <td>TcpTransportTest.MultipleMagicCookiesConsumed (tests/test_tcp_transport.cpp:849)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:849</td>
             <td>REQ_TRANSPORT_021</td>
         </tr>
         <tr>
+            <td>TC_TCP_MAGIC_CORRELATION</td>
+            <td>TcpTransportTest.MagicCookieMethodTypeCorrelation (tests/test_tcp_transport.cpp:781)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:781</td>
+            <td>feat_req_someip_609</td>
+        </tr>
+        <tr>
             <td>TC_TCP_MODE_SWITCH</td>
-            <td>TcpTransportTest.ModeSwitchPollingToListenerAndBack (tests/test_tcp_transport.cpp:915)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:915</td>
+            <td>TcpTransportTest.ModeSwitchPollingToListenerAndBack (tests/test_tcp_transport.cpp:939)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:939</td>
             <td>-</td>
         </tr>
         <tr>
@@ -8973,6 +8979,18 @@
             <td>feat_req_someiptp_765, feat_req_someiptp_766, feat_req_someiptp_774</td>
         </tr>
         <tr>
+            <td>TC_TP_KEY_API_TARGETS_EXACT_KEY</td>
+            <td>TpTest.KeyBasedApiTargetsExactKey (tests/test_tp.cpp:1496)</td>
+            <td class="code-ref">tests/test_tp.cpp:1496</td>
+            <td>feat_req_someiptp_781</td>
+        </tr>
+        <tr>
+            <td>TC_TP_MISMATCHED_MSG_LEN_REJECTED</td>
+            <td>TpTest.MismatchedMessageLengthRejectedBufferPreserved (tests/test_tp.cpp:1393)</td>
+            <td class="code-ref">tests/test_tp.cpp:1393</td>
+            <td>REQ_TP_030_E02</td>
+        </tr>
+        <tr>
             <td>TC_TP_NEEDS_SEGMENTATION_USES_PAYLOAD</td>
             <td>TpTest.NeedsSegmentationUsesPayloadSize (tests/test_tp.cpp:1226)</td>
             <td class="code-ref">tests/test_tp.cpp:1226</td>
@@ -8989,6 +9007,12 @@
             <td>TpTest.DefaultConfigProduces1392BytePayloads (tests/test_tp.cpp:1038)</td>
             <td class="code-ref">tests/test_tp.cpp:1038</td>
             <td>feat_req_someiptp_778, feat_req_someiptp_779</td>
+        </tr>
+        <tr>
+            <td>TC_TP_PLACEMENT_FAILURE_PRESERVES_BUFFER</td>
+            <td>TpTest.PlacementFailurePreservesBuffer (tests/test_tp.cpp:1445)</td>
+            <td class="code-ref">tests/test_tp.cpp:1445</td>
+            <td>REQ_TP_039_E01</td>
         </tr>
         <tr>
             <td>TC_TP_PROGRESS_COUNTS_BYTES</td>
