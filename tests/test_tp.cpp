@@ -1389,3 +1389,183 @@ TEST_F(TpTest, E2eBelowThresholdPassesSingleMessage) {
     ASSERT_EQ(segments.size(), 1u);
     EXPECT_EQ(segments[0].header.message_type, TpMessageType::SINGLE_MESSAGE);
 }
+
+/**
+ * @test_case TC_TP_MISMATCHED_MSG_LEN_REJECTED
+ * @tests REQ_TP_030_E02
+ * @brief Follow-up segment with mismatched message_length is rejected but
+ *        the active buffer is preserved.
+ */
+TEST_F(TpTest, MismatchedMessageLengthRejectedBufferPreserved) {
+    TpReassembler reassembler(config);
+
+    auto make_seg = [](uint32_t msg_len, uint32_t offset, bool more,
+                       TpMessageType tp_type, uint16_t session) {
+        TpSegment seg;
+        seg.header.message_length = msg_len;
+        seg.header.segment_offset = offset;
+        seg.header.segment_length = 40;
+        seg.header.sequence_number = 1;
+        seg.header.message_type = tp_type;
+        seg.header.service_id = 0x1111;
+        seg.header.method_id = 0x2222;
+        seg.header.client_id = 0xAAAA;
+        seg.header.session_id = session;
+        seg.header.protocol_version = 1;
+        seg.header.interface_version = 1;
+        seg.payload.resize(40, 0x00);
+        seg.payload[0] = 0x11; seg.payload[1] = 0x11;
+        seg.payload[2] = 0x22; seg.payload[3] = 0x22;
+        seg.payload[8] = 0xAA; seg.payload[9] = 0xAA;
+        seg.payload[10] = static_cast<uint8_t>(session >> 8U);
+        seg.payload[11] = static_cast<uint8_t>(session & 0xFFU);
+        seg.payload[12] = 0x01; seg.payload[13] = 0x01;
+        seg.payload[14] = 0x20; seg.payload[15] = 0x00;
+        uint32_t tp_hdr = ((offset / 16) << 4U) | (more ? 0x01U : 0x00U);
+        seg.payload[16] = static_cast<uint8_t>((tp_hdr >> 24U) & 0xFFU);
+        seg.payload[17] = static_cast<uint8_t>((tp_hdr >> 16U) & 0xFFU);
+        seg.payload[18] = static_cast<uint8_t>((tp_hdr >> 8U) & 0xFFU);
+        seg.payload[19] = static_cast<uint8_t>(tp_hdr & 0xFFU);
+        return seg;
+    };
+
+    // FIRST segment: message_length = 100
+    platform::ByteBuffer complete;
+    ASSERT_TRUE(reassembler.process_segment(
+        make_seg(100, 0, true, TpMessageType::FIRST_SEGMENT, 0x0001), complete));
+    ASSERT_EQ(reassembler.get_active_reassemblies(), 1u);
+
+    // CONSECUTIVE with mismatched message_length = 200
+    EXPECT_FALSE(reassembler.process_segment(
+        make_seg(200, 32, true, TpMessageType::CONSECUTIVE_SEGMENT, 0x0001), complete));
+    EXPECT_EQ(reassembler.get_active_reassemblies(), 1u)
+        << "Buffer must be preserved when a segment is rejected for message_length mismatch";
+}
+
+/**
+ * @test_case TC_TP_PLACEMENT_FAILURE_PRESERVES_BUFFER
+ * @tests REQ_TP_039_E01
+ * @brief Placement failure (offset past total_length) does not erase the buffer.
+ */
+TEST_F(TpTest, PlacementFailurePreservesBuffer) {
+    TpReassembler reassembler(config);
+
+    auto make_seg = [](uint32_t msg_len, uint32_t offset, bool more,
+                       TpMessageType tp_type) {
+        TpSegment seg;
+        seg.header.message_length = msg_len;
+        seg.header.segment_offset = offset;
+        seg.header.segment_length = 40;
+        seg.header.sequence_number = 1;
+        seg.header.message_type = tp_type;
+        seg.header.service_id = 0x1111;
+        seg.header.method_id = 0x2222;
+        seg.header.client_id = 0xAAAA;
+        seg.header.session_id = 0x0001;
+        seg.header.protocol_version = 1;
+        seg.header.interface_version = 1;
+        seg.payload.resize(40, 0x00);
+        seg.payload[0] = 0x11; seg.payload[1] = 0x11;
+        seg.payload[2] = 0x22; seg.payload[3] = 0x22;
+        seg.payload[8] = 0xAA; seg.payload[9] = 0xAA;
+        seg.payload[10] = 0x00; seg.payload[11] = 0x01;
+        seg.payload[12] = 0x01; seg.payload[13] = 0x01;
+        seg.payload[14] = 0x20; seg.payload[15] = 0x00;
+        uint32_t tp_hdr = ((offset / 16) << 4U) | (more ? 0x01U : 0x00U);
+        seg.payload[16] = static_cast<uint8_t>((tp_hdr >> 24U) & 0xFFU);
+        seg.payload[17] = static_cast<uint8_t>((tp_hdr >> 16U) & 0xFFU);
+        seg.payload[18] = static_cast<uint8_t>((tp_hdr >> 8U) & 0xFFU);
+        seg.payload[19] = static_cast<uint8_t>(tp_hdr & 0xFFU);
+        return seg;
+    };
+
+    // FIRST segment: message_length = 48, offset 0, 20 payload bytes
+    platform::ByteBuffer complete;
+    ASSERT_TRUE(reassembler.process_segment(
+        make_seg(48, 0, true, TpMessageType::FIRST_SEGMENT), complete));
+    ASSERT_EQ(reassembler.get_active_reassemblies(), 1u);
+
+    // CONSECUTIVE with wire offset 48 — past total_length, same message_length
+    // validate_segment will reject because 48 > 48 (wire_offset > message_length)
+    EXPECT_FALSE(reassembler.process_segment(
+        make_seg(48, 48, false, TpMessageType::LAST_SEGMENT), complete));
+    EXPECT_EQ(reassembler.get_active_reassemblies(), 1u)
+        << "Buffer must be preserved after placement failure";
+}
+
+/**
+ * @test_case TC_TP_KEY_API_TARGETS_EXACT_KEY
+ * @tests feat_req_someiptp_781
+ * @brief Key-based API targets only the exact transfer; a second transfer
+ *        with the same message_id but different client/session is unaffected.
+ */
+TEST_F(TpTest, KeyBasedApiTargetsExactKey) {
+    TpReassembler reassembler(config);
+
+    auto make_seg = [](uint16_t client, uint16_t session) {
+        TpSegment seg;
+        seg.header.message_length = 100;
+        seg.header.segment_offset = 0;
+        seg.header.segment_length = 40;
+        seg.header.sequence_number = 1;
+        seg.header.message_type = TpMessageType::FIRST_SEGMENT;
+        seg.header.service_id = 0x1111;
+        seg.header.method_id = 0x2222;
+        seg.header.client_id = client;
+        seg.header.session_id = session;
+        seg.header.protocol_version = 1;
+        seg.header.interface_version = 1;
+        seg.payload.resize(40, 0x00);
+        seg.payload[0] = 0x11; seg.payload[1] = 0x11;
+        seg.payload[2] = 0x22; seg.payload[3] = 0x22;
+        seg.payload[8] = static_cast<uint8_t>(client >> 8U);
+        seg.payload[9] = static_cast<uint8_t>(client & 0xFFU);
+        seg.payload[10] = static_cast<uint8_t>(session >> 8U);
+        seg.payload[11] = static_cast<uint8_t>(session & 0xFFU);
+        seg.payload[12] = 0x01; seg.payload[13] = 0x01;
+        seg.payload[14] = 0x20; seg.payload[15] = 0x00;
+        seg.payload[16] = 0x00; seg.payload[17] = 0x00;
+        seg.payload[18] = 0x00; seg.payload[19] = 0x01;
+        return seg;
+    };
+
+    platform::ByteBuffer complete;
+    ASSERT_TRUE(reassembler.process_segment(make_seg(0xAAAA, 0x0001), complete));
+    ASSERT_TRUE(reassembler.process_segment(make_seg(0xBBBB, 0x0002), complete));
+    ASSERT_EQ(reassembler.get_active_reassemblies(), 2u);
+
+    // Both share message_id = 0x11112222
+    const uint32_t msg_id = (0x1111u << 16U) | 0x2222u;
+    EXPECT_TRUE(reassembler.is_reassembling(msg_id));
+
+    // Build exact key for transfer A
+    TpReassemblyKey key_a;
+    key_a.message_id = msg_id;
+    key_a.protocol_version = 1;
+    key_a.interface_version = 1;
+    key_a.message_type = 0x00;
+    key_a.request_id = (static_cast<uint32_t>(0xAAAA) << 16U) | 0x0001;
+
+    TpReassemblyKey key_b;
+    key_b.message_id = msg_id;
+    key_b.protocol_version = 1;
+    key_b.interface_version = 1;
+    key_b.message_type = 0x00;
+    key_b.request_id = (static_cast<uint32_t>(0xBBBB) << 16U) | 0x0002;
+
+    EXPECT_TRUE(reassembler.is_reassembling(key_a));
+    EXPECT_TRUE(reassembler.is_reassembling(key_b));
+
+    uint32_t received = 0;
+    uint32_t total = 0;
+    EXPECT_TRUE(reassembler.get_reassembly_progress(key_a, received, total));
+    EXPECT_EQ(total, 100u);
+    EXPECT_EQ(received, 20u);
+
+    // Cancel only transfer A
+    reassembler.cancel_reassembly(key_a);
+    EXPECT_FALSE(reassembler.is_reassembling(key_a));
+    EXPECT_TRUE(reassembler.is_reassembling(key_b))
+        << "cancel_reassembly(key) must not affect other transfers with the same message_id";
+    EXPECT_EQ(reassembler.get_active_reassemblies(), 1u);
+}

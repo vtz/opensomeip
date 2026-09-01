@@ -667,16 +667,26 @@ bool TcpTransport::is_magic_cookie(const platform::ByteBuffer& data, size_t offs
     if (offset + SOMEIP_HEADER_SIZE > data.size()) {
         return false;
     }
-    return data[offset + 0] == 0xFF && data[offset + 1] == 0xFF &&
-           (data[offset + 2] == 0x00 || data[offset + 2] == 0x80) &&
-           data[offset + 3] == 0x00 &&
-           data[offset + 4] == 0x00 && data[offset + 5] == 0x00 &&
-           data[offset + 6] == 0x00 && data[offset + 7] == 0x08 &&
-           data[offset + 8] == 0xDE && data[offset + 9] == 0xAD &&
-           data[offset + 10] == 0xBE && data[offset + 11] == 0xEF &&
-           data[offset + 12] == 0x01 && data[offset + 13] == 0x01 &&
-           (data[offset + 14] == 0x01 || data[offset + 14] == 0x02) &&
-           data[offset + 15] == 0x00;
+    // Common fields: Service 0xFFFF, Length 8, Client 0xDEAD, Session 0xBEEF,
+    // Proto 1, Iface 1, RetCode 0.
+    // Method ID and Message Type must correlate:
+    //   Client cookie: Method 0x0000, MsgType 0x01 (REQUEST)
+    //   Server cookie: Method 0x8000, MsgType 0x02 (NOTIFICATION)
+    const bool common =
+        data[offset + 0] == 0xFF && data[offset + 1] == 0xFF &&
+        data[offset + 3] == 0x00 &&
+        data[offset + 4] == 0x00 && data[offset + 5] == 0x00 &&
+        data[offset + 6] == 0x00 && data[offset + 7] == 0x08 &&
+        data[offset + 8] == 0xDE && data[offset + 9] == 0xAD &&
+        data[offset + 10] == 0xBE && data[offset + 11] == 0xEF &&
+        data[offset + 12] == 0x01 && data[offset + 13] == 0x01 &&
+        data[offset + 15] == 0x00;
+    if (!common) {
+        return false;
+    }
+    const bool is_client = data[offset + 2] == 0x00 && data[offset + 14] == 0x01;
+    const bool is_server = data[offset + 2] == 0x80 && data[offset + 14] == 0x02;
+    return is_client || is_server;
 }
 
 platform::ByteBuffer TcpTransport::make_magic_cookie_client() {
