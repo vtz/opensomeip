@@ -139,11 +139,11 @@ int main() {
         return (val && *val) ? std::string(val) : std::string(def_val);
     };
     std::string bind_host = get_env("HELLO_BIND_HOST", "0.0.0.0");
-    uint16_t bind_port = 30490;
+    uint16_t bind_port = 30501;
     try {
-        bind_port = static_cast<uint16_t>(std::stoi(get_env("HELLO_BIND_PORT", "30490")));
+        bind_port = static_cast<uint16_t>(std::stoi(get_env("HELLO_BIND_PORT", "30501")));
     } catch (...) {
-        bind_port = 30490;
+        bind_port = 30501;
     }
 
     HelloServer server(bind_host, bind_port);

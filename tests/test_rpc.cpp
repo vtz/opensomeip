@@ -15,6 +15,11 @@
 #include <rpc/rpc_types.h>
 #include <rpc/rpc_client.h>
 #include <rpc/rpc_server.h>
+#include <someip/message.h>
+#include <someip/types.h>
+#include <transport/endpoint.h>
+#include <transport/udp_transport.h>
+#include <common/result.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -173,4 +178,186 @@ TEST_F(RpcTest, ServerStatistics) {
     EXPECT_EQ(stats.failed_calls, 0u);
     EXPECT_EQ(stats.method_not_found_errors, 0u);
     EXPECT_EQ(stats.average_processing_time, std::chrono::milliseconds(0));
+}
+
+namespace {
+
+MessagePtr wait_for_udp_message(transport::UdpTransport& transport, int retries = 80) {
+    for (int i = 0; i < retries; ++i) {
+        MessagePtr msg = transport.receive_message();
+        if (msg) {
+            return msg;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    return nullptr;
+}
+
+}  // namespace
+
+/**
+ * @tests REQ_MSG_041
+ * @brief RpcClient does not send to the SD port when no endpoint is configured
+ */
+TEST_F(RpcTest, ClientFailsWithoutRemoteEndpoint) {
+    RpcClient client(client_id_);
+    ASSERT_TRUE(client.initialize());
+
+    RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::milliseconds(200);
+    auto result = client.call_method_sync(test_service_id_, test_method_id_, {}, timeout);
+    EXPECT_EQ(result.result, RpcResult::SERVICE_NOT_AVAILABLE);
+
+    client.shutdown();
+}
+
+/**
+ * @tests feat_req_someip_92, REQ_MSG_041
+ * @brief Default RpcServer bind is not the SD port 30490
+ */
+TEST_F(RpcTest, ServerDefaultPortIsNotSdPort) {
+    RpcServer server(test_service_id_);
+    ASSERT_TRUE(server.initialize());
+    EXPECT_EQ(server.get_local_endpoint().get_port(), SOMEIP_DEFAULT_RPC_PORT);
+    EXPECT_NE(server.get_local_endpoint().get_port(), 30490);
+    server.shutdown();
+}
+
+/**
+ * @tests REQ_MSG_041, feat_req_someip_92
+ * @brief Interface Version 0x02 (service major) round-trips request/response
+ */
+TEST_F(RpcTest, InterfaceVersionTwoRoundTrip) {
+    const uint8_t major = 0x02;
+    RpcServer server(test_service_id_, major, transport::Endpoint("127.0.0.1", 0));
+    ASSERT_TRUE(server.register_method(test_method_id_,
+        [](uint16_t, uint16_t, const platform::ByteBuffer& in, platform::ByteBuffer& out) {
+            out = in;
+            return RpcResult::SUCCESS;
+        }));
+    ASSERT_TRUE(server.initialize());
+    EXPECT_NE(server.get_local_endpoint().get_port(), 30490);
+    EXPECT_NE(server.get_local_endpoint().get_port(), 0);
+
+    RpcClient client(client_id_, major);
+    ASSERT_TRUE(client.initialize());
+    client.set_remote_endpoint(server.get_local_endpoint());
+
+    platform::ByteBuffer params = {0x11, 0x22};
+    RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::milliseconds(2000);
+    auto result = client.call_method_sync(test_service_id_, test_method_id_, params, timeout);
+    EXPECT_EQ(result.result, RpcResult::SUCCESS);
+    EXPECT_EQ(result.return_values, params);
+
+    client.shutdown();
+    server.shutdown();
+}
+
+/**
+ * @tests REQ_MSG_042, feat_req_someip_92
+ * @brief RpcServer returns E_WRONG_INTERFACE_VERSION when request major mismatches
+ */
+TEST_F(RpcTest, WrongInterfaceVersionReturnsError) {
+    RpcServer server(test_service_id_, 0x02, transport::Endpoint("127.0.0.1", 0));
+    ASSERT_TRUE(server.register_method(test_method_id_,
+        [](uint16_t, uint16_t, const platform::ByteBuffer&, platform::ByteBuffer&) {
+            return RpcResult::SUCCESS;
+        }));
+    ASSERT_TRUE(server.initialize());
+
+    transport::UdpTransport probe(transport::Endpoint("127.0.0.1", 0));
+    ASSERT_EQ(probe.start(), Result::SUCCESS);
+
+    Message request(MessageId(test_service_id_, test_method_id_),
+                    RequestId(client_id_, 0x0001),
+                    MessageType::REQUEST, ReturnCode::E_OK);
+    request.set_interface_version(0x01);
+    ASSERT_EQ(probe.send_message(request, server.get_local_endpoint()), Result::SUCCESS);
+
+    MessagePtr reply = wait_for_udp_message(probe);
+    ASSERT_NE(reply, nullptr);
+    EXPECT_EQ(reply->get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(reply->get_return_code(), ReturnCode::E_WRONG_INTERFACE_VERSION);
+    EXPECT_EQ(reply->get_interface_version(), 0x02);
+
+    probe.stop();
+    server.shutdown();
+}
+
+/**
+ * @tests REQ_MSG_052
+ * @brief send_request_no_return writes message type 0x01 and does not wait
+ */
+TEST_F(RpcTest, FireAndForgetWireTypeNoWait) {
+    transport::UdpTransport spy(transport::Endpoint("127.0.0.1", 0));
+    ASSERT_EQ(spy.start(), Result::SUCCESS);
+
+    RpcClient client(client_id_, 0x02);
+    ASSERT_TRUE(client.initialize());
+
+    platform::ByteBuffer params = {0xAB};
+    const auto start = std::chrono::steady_clock::now();
+    EXPECT_TRUE(client.send_request_no_return(test_service_id_, test_method_id_,
+                                              params, spy.get_local_endpoint()));
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+    EXPECT_LT(elapsed, std::chrono::milliseconds(500));
+
+    MessagePtr got = wait_for_udp_message(spy);
+    ASSERT_NE(got, nullptr);
+    EXPECT_EQ(got->get_message_type(), MessageType::REQUEST_NO_RETURN);
+    EXPECT_EQ(static_cast<uint8_t>(got->get_message_type()), 0x01);
+    EXPECT_EQ(got->get_interface_version(), 0x02);
+    EXPECT_EQ(got->get_return_code(), ReturnCode::E_OK);
+    EXPECT_EQ(got->get_payload(), params);
+
+    auto extra = spy.receive_message();
+    EXPECT_EQ(extra, nullptr);
+
+    client.shutdown();
+    spy.stop();
+}
+
+/**
+ * @tests REQ_MSG_052
+ * @brief Fire-and-forget method does not send RESPONSE; REQUEST gets E_WRONG_MESSAGE_TYPE
+ */
+TEST_F(RpcTest, FireAndForgetServerDoesNotRespond) {
+    std::atomic<int> calls{0};
+    RpcServer server(test_service_id_, 0x01, transport::Endpoint("127.0.0.1", 0));
+    ASSERT_TRUE(server.register_method(test_method_id_,
+        [&calls](uint16_t, uint16_t, const platform::ByteBuffer&, platform::ByteBuffer&) {
+            calls.fetch_add(1);
+            return RpcResult::SUCCESS;
+        }, MethodSemantics::FireAndForget));
+    ASSERT_TRUE(server.initialize());
+
+    transport::UdpTransport probe(transport::Endpoint("127.0.0.1", 0));
+    ASSERT_EQ(probe.start(), Result::SUCCESS);
+
+    Message no_return(MessageId(test_service_id_, test_method_id_),
+                      RequestId(client_id_, 0x0002),
+                      MessageType::REQUEST_NO_RETURN, ReturnCode::E_OK);
+    ASSERT_EQ(probe.send_message(no_return, server.get_local_endpoint()), Result::SUCCESS);
+
+    for (int i = 0; i < 50 && calls.load() == 0; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    EXPECT_EQ(calls.load(), 1);
+
+    MessagePtr unexpected = wait_for_udp_message(probe, 20);
+    EXPECT_EQ(unexpected, nullptr);
+
+    Message request(MessageId(test_service_id_, test_method_id_),
+                    RequestId(client_id_, 0x0003),
+                    MessageType::REQUEST, ReturnCode::E_OK);
+    ASSERT_EQ(probe.send_message(request, server.get_local_endpoint()), Result::SUCCESS);
+
+    MessagePtr err = wait_for_udp_message(probe);
+    ASSERT_NE(err, nullptr);
+    EXPECT_EQ(err->get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(err->get_return_code(), ReturnCode::E_WRONG_MESSAGE_TYPE);
+
+    probe.stop();
+    server.shutdown();
 }

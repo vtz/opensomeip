@@ -605,10 +605,12 @@ Interface Version Parsing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Interface Version is passed to application layer for validation.
+   :verification: Unit test: Verify Interface Version 0x02 (service major) is passed through the header; RPC/application validates per service.
 
-   The software shall pass the Interface Version value to the application
-   layer for service-specific version validation.
+   The Interface Version field is the service major version. The stack
+   shall pass the Interface Version through the SOME/IP header without
+   rejecting values other than 0x01. Application and RPC layers validate
+   the value per service (see REQ_MSG_042).
 
    **Rationale**: Interface version compatibility is application-specific.
 
@@ -620,16 +622,18 @@ Interface Version Parsing
    :status: implemented
    :priority: medium
    :category: error_path
-   :verification: Unit test: Verify E_WRONG_INTERFACE_VERSION is returned when application rejects version.
+   :verification: Unit test: Verify RpcServer returns E_WRONG_INTERFACE_VERSION (0x08) when the request Interface Version does not match the offered service major.
 
-   The software shall return error code E_WRONG_INTERFACE_VERSION (0x08)
-   when the application rejects the Interface Version.
+   The RPC server shall return error code E_WRONG_INTERFACE_VERSION (0x08)
+   when the request Interface Version does not match the offered service
+   major version. The header layer does not drop the message for a
+   non-0x01 Interface Version.
 
    **Rationale**: Standard error code for interface version mismatch.
 
    **Error Handling**: Set return code to 0x08 in error response.
 
-   **Code Location**: ``src/someip/message.cpp``
+   **Code Location**: ``src/rpc/rpc_server.cpp``
 
 .. requirement:: Error - Log Interface Version Mismatch
    :id: REQ_MSG_042_E01
