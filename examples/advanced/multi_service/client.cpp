@@ -33,6 +33,7 @@
 
 #include <rpc/rpc_client.h>
 #include <rpc/rpc_types.h>
+#include <transport/endpoint.h>
 
 using namespace someip;
 using namespace someip::rpc;
@@ -82,6 +83,8 @@ public:
             std::cerr << "Failed to initialize RPC client" << std::endl;
             return false;
         }
+
+        client_.set_remote_endpoint(transport::Endpoint("127.0.0.1", SOMEIP_DEFAULT_RPC_PORT));
 
         std::cout << "Multi-Service Client initialized (ID: 0xABCD)" << std::endl;
         std::cout << "Connected to all available services" << std::endl;
