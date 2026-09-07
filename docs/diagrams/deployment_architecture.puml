@@ -120,7 +120,7 @@ note top of Switch
     - VLAN segregation
     - QoS for safety messages
     - SOME/IP multicast groups:
-      * 239.118.122.69:30490 (SD)
+      * 239.255.255.251:30490 (SD)
       * Service-specific groups
 end note
 

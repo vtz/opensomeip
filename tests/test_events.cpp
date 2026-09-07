@@ -14,6 +14,9 @@
 #include <gtest/gtest.h>
 #include <events/event_types.h>
 #include <events/event_publisher.h>
+#include <transport/udp_transport.h>
+#include <someip/message.h>
+#include <common/result.h>
 #include <thread>
 #include <chrono>
 
@@ -386,4 +389,115 @@ TEST_F(EventsSubscriptionTTLTest, MultipleSubscribersDifferentTTL) {
 TEST_F(EventsSubscriptionTTLTest, StopSubscribeNonExistentReturnsFalse) {
     bool result = publisher.handle_subscription(TEST_EVENTGROUP_ID, TEST_CLIENT_A, 0u);
     EXPECT_FALSE(result) << "StopSubscribe for unknown client should return false";
+}
+
+/**
+ * @test_case TC_EVT_FIELD_001
+ * @tests REQ_MSG_125
+ * @brief A new subscriber receives the current field value after Subscribe.
+ */
+TEST_F(EventsTest, EventPublisherSendsInitialFieldOnNewSubscription) {
+    transport::UdpTransportConfig rx_cfg;
+    rx_cfg.blocking = false;
+    transport::UdpTransport rx(transport::Endpoint("0.0.0.0", 0), rx_cfg);
+    ASSERT_EQ(rx.start(), Result::SUCCESS);
+    const uint16_t port = rx.get_local_endpoint().get_port();
+
+    EventPublisher publisher(0x1234, 0x0001);
+    publisher.set_default_client_endpoint("127.0.0.1", port);
+    ASSERT_TRUE(publisher.initialize());
+
+    EventConfig cfg;
+    cfg.event_id = 0x8001;
+    cfg.eventgroup_id = 0x0001;
+    cfg.is_field = true;
+    cfg.notification_type = NotificationType::ON_CHANGE;
+    ASSERT_TRUE(publisher.register_event(cfg));
+
+    platform::ByteBuffer payload;
+    payload.push_back(0x11);
+    payload.push_back(0x22);
+    payload.push_back(0x33);
+    ASSERT_TRUE(publisher.publish_field(0x8001, payload));
+
+    ASSERT_TRUE(publisher.handle_subscription(0x0001, 0x0100, 3600u));
+
+    bool got = false;
+    platform::ByteBuffer received;
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(1500);
+    while (std::chrono::steady_clock::now() < deadline && !got) {
+        auto msg = rx.receive_message();
+        if (!msg) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        if (msg->get_method_id() == 0x8001) {
+            received = msg->get_payload();
+            got = true;
+        }
+    }
+
+    publisher.shutdown();
+    rx.stop();
+    ASSERT_TRUE(got);
+    ASSERT_EQ(received.size(), 3u);
+    EXPECT_EQ(received[0], 0x11);
+    EXPECT_EQ(received[1], 0x22);
+    EXPECT_EQ(received[2], 0x33);
+}
+
+/**
+ * @test_case TC_EVT_FIELD_002
+ * @tests REQ_MSG_125
+ * @brief TTL refresh of an existing client_id does not resend the initial field burst.
+ */
+TEST_F(EventsTest, EventPublisherNoDuplicateInitialOnRefresh) {
+    transport::UdpTransportConfig rx_cfg;
+    rx_cfg.blocking = false;
+    transport::UdpTransport rx(transport::Endpoint("0.0.0.0", 0), rx_cfg);
+    ASSERT_EQ(rx.start(), Result::SUCCESS);
+    const uint16_t port = rx.get_local_endpoint().get_port();
+
+    EventPublisher publisher(0x1234, 0x0001);
+    publisher.set_default_client_endpoint("127.0.0.1", port);
+    ASSERT_TRUE(publisher.initialize());
+
+    EventConfig cfg;
+    cfg.event_id = 0x8001;
+    cfg.eventgroup_id = 0x0001;
+    cfg.is_field = true;
+    ASSERT_TRUE(publisher.register_event(cfg));
+
+    platform::ByteBuffer payload;
+    payload.push_back(0xAB);
+    ASSERT_TRUE(publisher.publish_field(0x8001, payload));
+    ASSERT_TRUE(publisher.handle_subscription(0x0001, 0x0100, 3600u));
+
+    int count = 0;
+    auto drain_until = std::chrono::steady_clock::now() + std::chrono::milliseconds(400);
+    while (std::chrono::steady_clock::now() < drain_until) {
+        auto msg = rx.receive_message();
+        if (msg && msg->get_method_id() == 0x8001) {
+            ++count;
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+    ASSERT_GE(count, 1);
+
+    ASSERT_TRUE(publisher.handle_subscription(0x0001, 0x0100, 3600u));
+    int extra = 0;
+    auto extra_until = std::chrono::steady_clock::now() + std::chrono::milliseconds(300);
+    while (std::chrono::steady_clock::now() < extra_until) {
+        auto msg = rx.receive_message();
+        if (msg && msg->get_method_id() == 0x8001) {
+            ++extra;
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+
+    publisher.shutdown();
+    rx.stop();
+    EXPECT_EQ(extra, 0) << "TTL refresh must not duplicate the initial field notification";
 }

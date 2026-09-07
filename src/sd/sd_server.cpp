@@ -90,7 +90,6 @@ public:
         : config_(config),
           transport_(transport::Endpoint("0.0.0.0", config.multicast_port),
                      make_sd_transport_config(config)),
-          next_offer_delay_(config.initial_delay),
           running_(false) {
 
         transport_.set_listener(this);
@@ -192,9 +191,19 @@ public:
 
         OfferedService offered;
         offered.instance = instance;
+        if (offered.instance.ttl_seconds == 0) {
+            const auto default_ttl_s = static_cast<uint32_t>(config_.ttl.count() / 1000);
+            if (default_ttl_s == 0) {
+                return false;
+            }
+            offered.instance.ttl_seconds = default_ttl_s;
+        }
         offered.unicast_endpoint = unicast_endpoint;
         offered.multicast_endpoint = multicast_endpoint;
         offered.last_offer_time = std::chrono::steady_clock::now();
+        offered.initial_offer_sent = false;
+        offered.initial_offer_due = offered.last_offer_time +
+            std::chrono::milliseconds(pick_initial_wait_ms(config_));
         for (const uint16_t eg_id : eventgroup_ids) {
             OfferedEventGroup eg;
             eg.eventgroup_id = eg_id;
@@ -202,9 +211,6 @@ public:
         }
 
         offered_services_.push_back(std::move(offered));
-
-        // Send initial offer immediately
-        send_service_offer(offered_services_.back());
 
         return true;
     }
@@ -248,61 +254,31 @@ public:
         return true;
     }
 
-    /** @implements REQ_SD_115, REQ_SD_115_E01, REQ_SD_115_E02, REQ_SD_117, REQ_SD_118, REQ_SD_119, REQ_SD_119_E01 */
+    /** @implements REQ_SD_115, REQ_SD_115_E01, REQ_SD_115_E02, REQ_SD_117, REQ_SD_118, REQ_SD_119, REQ_SD_119_E01, REQ_SD_272 */
     bool handle_eventgroup_subscription(uint16_t service_id, uint16_t instance_id,
                                        uint16_t eventgroup_id, const platform::String<>& client_address,
                                        bool acknowledge, uint32_t ttl_seconds = 3600) {
-
-        // Create subscription response
-        EventGroupEntry response_entry(
-            acknowledge ? EntryType::SUBSCRIBE_EVENTGROUP_ACK : EntryType::SUBSCRIBE_EVENTGROUP_NACK);
-        response_entry.set_service_id(service_id);
-        response_entry.set_instance_id(instance_id);
-        response_entry.set_eventgroup_id(eventgroup_id);
-        response_entry.set_major_version(0x01);
-        response_entry.set_ttl(acknowledge ? ttl_seconds : 0);
-        response_entry.set_index1(0);
-        response_entry.set_num_opts1(1);
-
-        SdMessage response_message;
-        response_message.add_entry(std::move(response_entry));
-
-        // Add IPv4 multicast option (spec requires multicast option for ACK)
-        IPv4MulticastOption multicast_option;
-        // Convert multicast address to network byte order
-        const in_addr_t multicast_addr = someip_inet_addr(config_.multicast_address.c_str());
-        multicast_option.set_ipv4_address(multicast_addr);
-        multicast_option.set_port(config_.multicast_port);
-        response_message.add_option(std::move(multicast_option));
+        EventGroupEntry request(EntryType::SUBSCRIBE_EVENTGROUP);
+        request.set_service_id(service_id);
+        request.set_instance_id(instance_id);
+        request.set_eventgroup_id(eventgroup_id);
+        request.set_major_version(0x01);
+        request.set_ttl(ttl_seconds);
 
         platform::String<> client_ip = client_address;
         uint16_t client_port = config_.unicast_port;
-
         if (client_address.find(':') != platform::String<>::npos) {
             if (!parse_endpoint_string(client_address, client_ip, client_port)) {
                 return false;
             }
         }
+        return send_subscribe_response(request, transport::Endpoint(client_ip, client_port),
+                                       acknowledge, ttl_seconds);
+    }
 
-        const transport::Endpoint client_endpoint(client_ip, client_port);
-
-        const uint16_t session_id = next_unicast_session_id(client_ip);
-        if (session_id == 0) {
-            return false;
-        }
-
-        Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(SOMEIP_SD_CLIENT_ID, session_id),
-                                     MessageType::NOTIFICATION,
-                                     ReturnCode::E_OK);
-        auto serialized = response_message.serialize();
-        if (serialized.empty()) {
-            return false;
-        }
-        someip_message.set_payload(std::move(serialized));
-
-        const Result result = transport_.send_message(someip_message, client_endpoint);
-        return result == Result::SUCCESS;
+    void set_subscription_accepted_callback(SdServer::SubscriptionAcceptedCallback callback) {
+        platform::ScopedLock const lock(callback_mutex_);
+        subscription_accepted_cb_ = std::move(callback);
     }
 
     platform::Vector<ServiceInstance> get_offered_services() const {
@@ -332,6 +308,8 @@ private:
         platform::String<> unicast_endpoint;
         platform::String<> multicast_endpoint;
         std::chrono::steady_clock::time_point last_offer_time;
+        std::chrono::steady_clock::time_point initial_offer_due;
+        bool initial_offer_sent{false};
         platform::Vector<OfferedEventGroup> eventgroups;
     };
 
@@ -407,21 +385,13 @@ private:
 
         offer_timer_thread_.emplace([this]() {
             while (running_) {
-                platform::this_thread::sleep_for(next_offer_delay_);
+                platform::this_thread::sleep_for(std::chrono::milliseconds(10));
 
                 if (!running_) {
                     break;
                 }
 
-                // Send periodic offers
-                send_periodic_offers();
-
-                // Update next delay (exponential backoff with max)
-                if (next_offer_delay_ < config_.repetition_max) {
-                    next_offer_delay_ = std::chrono::milliseconds(
-                        std::min(next_offer_delay_.count() * config_.repetition_multiplier,
-                                config_.repetition_max.count()));
-                }
+                send_due_offers();
             }
         });
     }
@@ -433,11 +403,20 @@ private:
     }
 
     /** @implements REQ_SD_250, REQ_SD_251, REQ_SD_260 */
-    void send_periodic_offers() {
+    void send_due_offers() {
         platform::ScopedLock const lock(offered_services_mutex_);
 
         const auto now = std::chrono::steady_clock::now();
         for (auto& service : offered_services_) {
+            if (!service.initial_offer_sent) {
+                if (now >= service.initial_offer_due) {
+                    send_service_offer(service);
+                    service.last_offer_time = now;
+                    service.initial_offer_sent = true;
+                }
+                continue;
+            }
+
             const auto time_since_last_offer = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now - service.last_offer_time);
 
@@ -458,6 +437,10 @@ private:
 
     /** @implements REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152 */
     void send_service_offer(const OfferedService& service) {
+        if (service.instance.ttl_seconds == 0) {
+            return;
+        }
+
         // Create offer service entry
         ServiceEntry offer_entry(EntryType::OFFER_SERVICE);
         offer_entry.set_service_id(service.instance.service_id);
@@ -485,14 +468,14 @@ private:
 
         sd_message.add_option(std::move(endpoint_option));
 
+        const uint16_t session_id = stamp_multicast_tx(sd_message);
         auto serialized = sd_message.serialize();
         if (serialized.empty()) {
             return;
         }
 
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(SOMEIP_SD_CLIENT_ID,
-                                               next_multicast_session_id()),
+                                     RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(std::move(serialized));
@@ -517,14 +500,14 @@ private:
         SdMessage sd_message;
         sd_message.add_entry(std::move(stop_entry));
 
+        const uint16_t session_id = stamp_multicast_tx(sd_message);
         auto serialized = sd_message.serialize();
         if (serialized.empty()) {
             return;
         }
 
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
-                                     RequestId(SOMEIP_SD_CLIENT_ID,
-                                               next_multicast_session_id()),
+                                     RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
         someip_message.set_payload(std::move(serialized));
@@ -536,8 +519,15 @@ private:
         }
     }
 
-    /** @implements REQ_SD_290, REQ_SD_292 */
+    /** @implements REQ_SD_290, REQ_SD_292, REQ_SD_818
+     *  @satisfies feat_req_someipsd_818
+     */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
+        on_message_received(message, sender, transport::Endpoint("", 0));
+    }
+
+    void on_message_received(MessagePtr message, const transport::Endpoint& sender,
+                            const transport::Endpoint& destination) override {
         // Check if this is an SD message (service ID 0xFFFF)
         if (message->get_service_id() != 0xFFFF) {
             return;
@@ -549,8 +539,12 @@ private:
             return;
         }
 
+        const bool dest_unknown = destination.get_address().empty();
+        const bool via_multicast = !dest_unknown &&
+            (destination.is_multicast() || destination.get_address() == config_.multicast_address);
+
         // Process SD entries
-        process_sd_entries(sd_message, sender);
+        process_sd_entries(sd_message, sender, via_multicast);
     }
 
     void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {
@@ -565,8 +559,9 @@ private:
         // TODO: Handle transport errors
     }
 
-    /** @implements REQ_SD_300, REQ_SD_312 */
-    void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender) {
+    /** @implements REQ_SD_300, REQ_SD_312, REQ_SD_818 */
+    void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender,
+                           bool via_multicast) {
         for (const auto& entry_var : message.get_entries()) {
             const SdEntry* entry = get_entry_ptr(entry_var);
             switch (entry->get_type()) {
@@ -576,6 +571,9 @@ private:
                     }
                     break;
                 case EntryType::SUBSCRIBE_EVENTGROUP:
+                    if (via_multicast) {
+                        break;
+                    }
                     if (const auto* eg = std::get_if<EventGroupEntry>(&entry_var)) {
                         handle_eventgroup_subscription_request(*eg, message, sender);
                     }
@@ -613,10 +611,11 @@ private:
         const uint32_t ttl = subscription_entry.get_ttl();
 
         if (ttl == 0) {
-            handle_stop_subscribe(service_id, instance_id, eventgroup_id, sender);
+            handle_stop_subscribe(subscription_entry, sender);
             return;
         }
 
+        bool nack = false;
         {
             platform::ScopedLock const lock(offered_services_mutex_);
             const auto svc_it = std::find_if(offered_services_.begin(), offered_services_.end(),
@@ -625,21 +624,23 @@ private:
                            svc.instance.instance_id == instance_id;
                 });
             if (svc_it == offered_services_.end()) {
-                send_subscribe_nack(subscription_entry, sender);
-                return;
-            }
-
-            bool eventgroup_found = false;
-            for (const auto& eg : svc_it->eventgroups) {
-                if (eg.eventgroup_id == eventgroup_id) {
-                    eventgroup_found = true;
-                    break;
+                nack = true;
+            } else {
+                bool eventgroup_found = false;
+                for (const auto& eg : svc_it->eventgroups) {
+                    if (eg.eventgroup_id == eventgroup_id) {
+                        eventgroup_found = true;
+                        break;
+                    }
+                }
+                if (!eventgroup_found && !svc_it->eventgroups.empty()) {
+                    nack = true;
                 }
             }
-            if (!eventgroup_found && !svc_it->eventgroups.empty()) {
-                send_subscribe_nack(subscription_entry, sender);
-                return;
-            }
+        }
+        if (nack) {
+            send_subscribe_nack(subscription_entry, sender);
+            return;
         }
 
         platform::String<> client_ip = sender.get_address();
@@ -698,54 +699,103 @@ private:
         platform::String<> client_addr(client_ip);
         client_addr.append(":");
         uint16_to_str(client_port, client_addr);
-        handle_eventgroup_subscription(
-            service_id, instance_id, eventgroup_id,
-            client_addr, true, ttl
-        );
+        (void)client_addr;
+        send_subscribe_response(
+            subscription_entry, transport::Endpoint(client_ip, client_port), true, ttl);
     }
 
-    void handle_stop_subscribe(uint16_t service_id, uint16_t instance_id,
-                               uint16_t eventgroup_id, const transport::Endpoint& sender) {
-        platform::String<> client_addr(sender.get_address());
-        client_addr.append(":");
-        uint16_to_str(sender.get_port(), client_addr);
-        handle_eventgroup_subscription(
-            service_id, instance_id, eventgroup_id,
-            client_addr, true, 0
-        );
+    void handle_stop_subscribe(const EventGroupEntry& subscription_entry,
+                               const transport::Endpoint& sender) {
+        send_subscribe_response(subscription_entry, sender, true, 0);
     }
 
     void send_subscribe_nack(const EventGroupEntry& entry, const transport::Endpoint& client) {
-        const uint16_t session_id = next_unicast_session_id(client.get_address());
-        if (session_id == 0) {
-            return;
+        send_subscribe_response(entry, client, false, 0);
+    }
+
+    /** @implements REQ_SD_272 */
+    bool send_subscribe_response(const EventGroupEntry& request,
+                                 const transport::Endpoint& client,
+                                 bool acknowledge, uint32_t ttl_seconds) {
+        EventGroupEntry response_entry(
+            acknowledge ? EntryType::SUBSCRIBE_EVENTGROUP_ACK : EntryType::SUBSCRIBE_EVENTGROUP_NACK);
+        response_entry.set_service_id(request.get_service_id());
+        response_entry.set_instance_id(request.get_instance_id());
+        response_entry.set_eventgroup_id(request.get_eventgroup_id());
+        response_entry.set_major_version(request.get_major_version());
+        response_entry.set_reserved_12bit(request.get_reserved_12bit());
+        response_entry.set_counter(request.get_counter());
+        response_entry.set_ttl(acknowledge ? ttl_seconds : 0);
+
+        SdMessage response_message;
+        platform::String<> eventgroup_multicast;
+        {
+            platform::ScopedLock const lock(offered_services_mutex_);
+            const auto svc_it = std::find_if(offered_services_.begin(), offered_services_.end(),
+                [&](const OfferedService& svc) {
+                    return svc.instance.service_id == request.get_service_id() &&
+                           svc.instance.instance_id == request.get_instance_id();
+                });
+            if (svc_it != offered_services_.end()) {
+                eventgroup_multicast = svc_it->multicast_endpoint;
+            }
         }
 
-        EventGroupEntry nack_entry(EntryType::SUBSCRIBE_EVENTGROUP_NACK);
-        nack_entry.set_service_id(entry.get_service_id());
-        nack_entry.set_instance_id(entry.get_instance_id());
-        nack_entry.set_eventgroup_id(entry.get_eventgroup_id());
-        nack_entry.set_major_version(entry.get_major_version());
-        nack_entry.set_ttl(0);
+        if (acknowledge && ttl_seconds > 0 && !eventgroup_multicast.empty()) {
+            platform::String<> mc_ip;
+            uint16_t mc_port = 0;
+            if (parse_endpoint_string(eventgroup_multicast, mc_ip, mc_port)) {
+                IPv4MulticastOption multicast_option;
+                multicast_option.set_ipv4_address_from_string(mc_ip);
+                multicast_option.set_port(mc_port);
+                multicast_option.set_protocol(0x11);
+                response_entry.set_index1(0);
+                response_entry.set_num_opts1(1);
+                response_message.add_entry(std::move(response_entry));
+                response_message.add_option(std::move(multicast_option));
+            } else {
+                response_message.add_entry(std::move(response_entry));
+            }
+        } else {
+            response_message.add_entry(std::move(response_entry));
+        }
 
-        SdMessage response;
-        response.add_entry(std::move(nack_entry));
+        const uint16_t session_id = stamp_unicast_tx(response_message, client.get_address());
+        if (session_id == 0) {
+            return false;
+        }
 
         Message someip_message(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
                                      RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
-        auto serialized = response.serialize();
+        auto serialized = response_message.serialize();
         if (serialized.empty()) {
-            return;
+            return false;
         }
         someip_message.set_payload(std::move(serialized));
-        static_cast<void>(transport_.send_message(someip_message, client));
+
+        const Result result = transport_.send_message(someip_message, client);
+        if (result == Result::SUCCESS && acknowledge && ttl_seconds > 0) {
+            SdServer::SubscriptionAcceptedCallback cb;
+            {
+                platform::ScopedLock const lock(callback_mutex_);
+                cb = subscription_accepted_cb_;
+            }
+            if (cb) {
+                cb(request.get_service_id(), request.get_instance_id(),
+                   request.get_eventgroup_id(), client);
+            }
+        }
+        return result == Result::SUCCESS;
     }
 
     /** @implements REQ_SD_280, REQ_SD_283 */
     void send_service_offer_to_client(const OfferedService& service, const transport::Endpoint& client) {
-        // Create unicast offer message (similar to multicast but unicast)
+        if (service.instance.ttl_seconds == 0) {
+            return;
+        }
+
         ServiceEntry offer_entry(EntryType::OFFER_SERVICE);
         offer_entry.set_service_id(service.instance.service_id);
         offer_entry.set_instance_id(service.instance.instance_id);
@@ -756,7 +806,6 @@ private:
         offer_entry.set_num_opts1(1);
 
         SdMessage sd_message;
-        sd_message.set_unicast(true);  // Unicast response
         sd_message.add_entry(std::move(offer_entry));
 
         IPv4EndpointOption endpoint_option;
@@ -773,13 +822,13 @@ private:
 
         sd_message.add_option(std::move(endpoint_option));
 
-        auto serialized = sd_message.serialize();
-        if (serialized.empty()) {
+        const uint16_t unicast_sid = stamp_unicast_tx(sd_message, client.get_address());
+        if (unicast_sid == 0) {
             return;
         }
 
-        const uint16_t unicast_sid = next_unicast_session_id(client.get_address());
-        if (unicast_sid == 0) {
+        auto serialized = sd_message.serialize();
+        if (serialized.empty()) {
             return;
         }
 
@@ -802,12 +851,31 @@ private:
     mutable platform::Mutex offered_services_mutex_;
 
     std::optional<platform::Thread> offer_timer_thread_;
-    std::chrono::milliseconds next_offer_delay_;
     std::atomic<bool> running_;
 
     SdSessionIdCounter multicast_session_id_;
     platform::UnorderedMap<platform::String<>, SdSessionIdCounter, 16> unicast_session_ids_;
     mutable platform::Mutex session_id_mutex_;
+
+    SdServer::SubscriptionAcceptedCallback subscription_accepted_cb_;
+    mutable platform::Mutex callback_mutex_;
+
+    uint16_t stamp_multicast_tx(SdMessage& message) {
+        platform::ScopedLock const lock(session_id_mutex_);
+        apply_sd_tx_flags(message, multicast_session_id_);
+        return multicast_session_id_.next();
+    }
+
+    uint16_t stamp_unicast_tx(SdMessage& message, const platform::String<>& peer) {
+        platform::ScopedLock const lock(session_id_mutex_);
+        if (unicast_session_ids_.size() >= unicast_session_ids_.max_size() &&
+            unicast_session_ids_.find(peer) == unicast_session_ids_.end()) {
+            return 0;
+        }
+        auto& counter = unicast_session_ids_[peer];
+        apply_sd_tx_flags(message, counter);
+        return counter.next();
+    }
 
     uint16_t next_multicast_session_id() {
         platform::ScopedLock const lock(session_id_mutex_);
@@ -886,6 +954,10 @@ bool SdServer::is_ready() const {
 
 SdServer::Statistics SdServer::get_statistics() const {
     return impl()->get_statistics();
+}
+
+void SdServer::set_subscription_accepted_callback(SubscriptionAcceptedCallback callback) {
+    impl()->set_subscription_accepted_callback(std::move(callback));
 }
 
 // NOLINTEND(misc-include-cleaner)
