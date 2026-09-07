@@ -18,9 +18,11 @@
 #include "tp/tp_types.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <utility>
 
@@ -68,6 +70,113 @@ TpReassemblyKey make_reassembly_key(const TpSegment& segment) {
 
 }  // namespace
 
+namespace {
+
+constexpr size_t kSomeipHeaderSize = 16;
+constexpr size_t kTpOverhead = kSomeipHeaderSize + 4;
+
+uint16_t tp_payload_bytes(const TpSegment& segment) {
+    if (segment.payload.size() <= kTpOverhead) {
+        return 0;
+    }
+    return static_cast<uint16_t>(segment.payload.size() - kTpOverhead);
+}
+
+void store_someip_header(TpReassemblyBuffer& buffer, const TpSegment& segment, bool last_segment) {
+    if (segment.payload.size() < kSomeipHeaderSize) {
+        return;
+    }
+    if (!buffer.has_someip_header || last_segment) {
+        std::memcpy(buffer.someip_header.data(), segment.payload.data(), kSomeipHeaderSize);
+        buffer.has_someip_header = true;
+    }
+}
+
+}  // namespace
+
+/**
+ * @brief Parse TP header from a raw datagram
+ * @implements REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015
+ * @implements REQ_TP_016, REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021
+ * @implements REQ_TP_015_E01
+ * @implements REQ_TP_082_E01, REQ_TP_082_E02, REQ_TP_082_E03, REQ_TP_082_E04
+ * @implements REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
+ * @implements REQ_TP_082
+ */
+bool parse_tp_header(const uint8_t* data, size_t size, uint32_t& offset, bool& more_segments) {
+    if (data == nullptr || size < kTpOverhead) {
+        return false;
+    }
+
+    uint32_t const tp_header =
+        (static_cast<uint32_t>(data[16]) << 24U) |
+        (static_cast<uint32_t>(data[17]) << 16U) |
+        (static_cast<uint32_t>(data[18]) << 8U) |
+        static_cast<uint32_t>(data[19]);
+
+    uint32_t const offset_units = tp_header >> 4U;
+    offset = offset_units * 16U;
+
+    if (offset % 16U != 0U) {
+        std::cout << "Warning: Received TP segment with misaligned offset: " << offset << '\n';
+    }
+
+    more_segments = (tp_header & 0x01U) != 0;
+    return true;
+}
+
+bool parse_wire_segment(const uint8_t* data, size_t size, TpSegment& out_segment) {
+    if (data == nullptr || size < kTpOverhead || size > UINT16_MAX) {
+        return false;
+    }
+    if ((data[14] & 0x20U) == 0U) {
+        return false;
+    }
+
+    uint32_t offset = 0;
+    bool more = false;
+    if (!parse_tp_header(data, size, offset, more)) {
+        return false;
+    }
+
+    out_segment = TpSegment();
+    out_segment.payload.resize(size);
+    if (size > 0) {
+        std::memcpy(out_segment.payload.data(), data, size);
+    }
+    out_segment.header.segment_length = static_cast<uint16_t>(size);
+    out_segment.header.segment_offset = offset;
+    out_segment.header.message_length = 0;  // wire TP header has no total size
+
+    const auto service = static_cast<uint16_t>(
+        (static_cast<unsigned>(data[0]) << 8U) | static_cast<unsigned>(data[1]));
+    const auto method = static_cast<uint16_t>(
+        (static_cast<unsigned>(data[2]) << 8U) | static_cast<unsigned>(data[3]));
+    const auto client = static_cast<uint16_t>(
+        (static_cast<unsigned>(data[8]) << 8U) | static_cast<unsigned>(data[9]));
+    const auto session = static_cast<uint16_t>(
+        (static_cast<unsigned>(data[10]) << 8U) | static_cast<unsigned>(data[11]));
+    out_segment.header.service_id = service;
+    out_segment.header.method_id = method;
+    out_segment.header.client_id = client;
+    out_segment.header.session_id = session;
+    out_segment.header.protocol_version = data[12];
+    out_segment.header.interface_version = data[13];
+
+    if (offset == 0 && more) {
+        out_segment.header.message_type = TpMessageType::FIRST_SEGMENT;
+    } else if (!more && offset > 0) {
+        out_segment.header.message_type = TpMessageType::LAST_SEGMENT;
+    } else if (more && offset > 0) {
+        out_segment.header.message_type = TpMessageType::CONSECUTIVE_SEGMENT;
+    } else {
+        // offset == 0 && !more: single TP segment
+        out_segment.header.message_type = TpMessageType::FIRST_SEGMENT;
+    }
+
+    return true;
+}
+
 /**
  * @brief SOME/IP-TP Reassembler implementation
  * @satisfies feat_req_someiptp_410
@@ -84,48 +193,8 @@ TpReassembler::~TpReassembler() {
 }
 
 /**
- * @brief Parse TP header from segment payload
- * @implements REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015
- * @implements REQ_TP_016, REQ_TP_018, REQ_TP_019, REQ_TP_020, REQ_TP_021
- * @implements REQ_TP_015_E01
- * @implements REQ_TP_082_E01, REQ_TP_082_E02, REQ_TP_082_E03, REQ_TP_082_E04
- * @implements REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
- * @implements REQ_TP_082
- */
-bool TpReassembler::parse_tp_header(const platform::ByteBuffer& payload,
-                                   uint32_t& offset, bool& more_segments) const {
-    if (payload.size() < 20) {  // SOME/IP header (16) + TP header (4) minimum
-        return false;
-    }
-
-    // TP header starts at offset 16 (after SOME/IP header)
-    uint32_t const tp_header =
-        (static_cast<uint32_t>(payload[16]) << 24U) |
-        (static_cast<uint32_t>(payload[17]) << 16U) |
-        (static_cast<uint32_t>(payload[18]) << 8U) |
-        static_cast<uint32_t>(payload[19]);
-
-    // Upper 28 bits = byte_offset / 16; shift right by 4 to extract, then * 16 to get bytes.
-    uint32_t const offset_units = tp_header >> 4U;
-    offset = offset_units * 16;
-
-    // Check offset alignment (REQ_TP_015_E01)
-    if (offset % 16 != 0) {
-        // Log warning but continue processing
-        std::cout << "Warning: Received TP segment with misaligned offset: " << offset << '\n';
-    }
-
-    // Extract more segments flag (bit 0)
-    more_segments = (tp_header & 0x01U) != 0;
-
-    // Reserved bits (bits 1-3) are ignored (REQ_TP_018)
-
-    return true;
-}
-
-/**
  * @brief Process a received TP segment
- * @implements REQ_TP_030, REQ_TP_031, REQ_TP_032
+ * @implements REQ_TP_030, REQ_TP_031, REQ_TP_032, REQ_TP_033
  * @implements REQ_TP_030_E01, REQ_TP_076, REQ_TP_077, REQ_TP_078
  * @implements REQ_TP_079, REQ_TP_080, REQ_TP_081, REQ_TP_082
  */
@@ -143,21 +212,26 @@ bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuff
         return false;
     }
 
-    // Reject follow-up segments whose message_length disagrees with the
-    // buffer created by the FIRST segment.  A rogue segment with a larger
-    // message_length would pass validate_segment (which uses the segment's
-    // own message_length) but could exceed the buffer allocation.
-    if (segment.header.message_length != buffer->total_length) {
+    // When the sender populated message_length (internal segmenter path),
+    // reject follow-up segments that disagree. Wire ingest leaves
+    // message_length at 0 because the TP header has no total size.
+    if (segment.header.message_length > 0 && buffer->known_total &&
+        segment.header.message_length != buffer->total_length) {
         return false;
     }
 
-    if (!add_segment_to_buffer(*buffer, segment)) {
+    const auto config = get_config_copy();
+    if (!add_segment_to_buffer(*buffer, segment, config.max_message_size)) {
         return false;
     }
 
     if (buffer->is_complete()) {
         buffer->complete = true;
         complete_message = buffer->get_complete_message();
+        if (buffer->has_someip_header) {
+            last_completed_someip_header_ = buffer->someip_header;
+            has_last_completed_someip_header_ = true;
+        }
         reassembly_buffers_.erase(key);
         return true;
     }
@@ -194,22 +268,32 @@ bool TpReassembler::validate_segment(const TpSegment& segment) const {
         return false;
     }
 
-    // Use the wire TP offset for bounds checking so validation agrees with
-    // placement in add_segment_to_buffer (which also uses the wire offset).
-    // Overflow-safe: split into two comparisons to avoid uint32_t wrap.
-    if (segment.header.message_type != TpMessageType::SINGLE_MESSAGE) {
-        uint32_t wire_offset = 0;
-        bool wire_more = false;
-        if (!parse_tp_header(segment.payload, wire_offset, wire_more)) {
-            return false;
+    if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
+        if (segment.header.message_length > 0) {
+            return actual_payload_bytes <= segment.header.message_length;
         }
+        return true;
+    }
+
+    uint32_t wire_offset = 0;
+    bool wire_more = false;
+    if (!parse_tp_header(segment.payload.data(), segment.payload.size(), wire_offset, wire_more)) {
+        return false;
+    }
+    if (wire_offset > config.max_message_size) {
+        return false;
+    }
+    if (actual_payload_bytes > config.max_message_size - wire_offset) {
+        return false;
+    }
+    // Known total (internal segmenter path) still bounds-checks against message_length.
+    if (segment.header.message_length > 0) {
         if (wire_offset > segment.header.message_length) {
             return false;
         }
         return actual_payload_bytes <= segment.header.message_length - wire_offset;
     }
-
-    return actual_payload_bytes <= segment.header.message_length;
+    return true;
 }
 
 /**
@@ -225,10 +309,11 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
         return &it->second;
     }
 
-    // No exact key match (includes Session ID).
-    // Only FIRST/SINGLE may create a new buffer.
+    // FIRST (offset 0) and LAST (More=0) may open a buffer so last-arrives-first
+    // works. CONSECUTIVE (offset>0 and More=1) must attach to an existing buffer.
     if (segment.header.message_type != TpMessageType::FIRST_SEGMENT &&
-        segment.header.message_type != TpMessageType::SINGLE_MESSAGE) {
+        segment.header.message_type != TpMessageType::SINGLE_MESSAGE &&
+        segment.header.message_type != TpMessageType::LAST_SEGMENT) {
         return nullptr;
     }
 
@@ -251,10 +336,22 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
     if (reassembly_buffers_.size() >= config.max_concurrent_transfers) {
         return nullptr;
     }
+
+    uint32_t initial_length = segment.header.message_length;
+    if (initial_length == 0 && segment.header.message_type != TpMessageType::SINGLE_MESSAGE) {
+        uint32_t wire_offset = 0;
+        bool wire_more = false;
+        if (parse_tp_header(segment.payload.data(), segment.payload.size(), wire_offset, wire_more)) {
+            initial_length = wire_offset + tp_payload_bytes(segment);
+        }
+    }
+
     auto result = reassembly_buffers_.insert(
         std::make_pair(key,
-            TpReassemblyBuffer(key.message_id, segment.header.message_length,
-                               segment.header.session_id)));
+            TpReassemblyBuffer(key.message_id, initial_length, segment.header.session_id)));
+    if (segment.header.message_length == 0) {
+        result.first->second.known_total = false;
+    }
     return &result.first->second;
 }
 
@@ -263,7 +360,8 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
  * @implements REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043
  * @implements REQ_TP_039_E01, REQ_TP_080, REQ_TP_081
  */
-bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment) {
+bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment,
+                                          uint32_t max_message_size) {
     if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
         constexpr size_t header_size = 16;
         if (segment.payload.size() <= header_size) {
@@ -271,48 +369,84 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
         }
         const size_t bytes = segment.payload.size() - header_size;
 
-        if (buffer.is_segment_received(0, bytes)) {
+        if (buffer.is_segment_received(0, static_cast<uint32_t>(bytes))) {
             return true;
         }
-        if (bytes > buffer.total_length) {
+        if (buffer.known_total && bytes > buffer.total_length) {
+            return false;
+        }
+        if (!buffer.ensure_size(static_cast<uint32_t>(bytes), max_message_size)) {
             return false;
         }
 
         std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(header_size),
                  segment.payload.end(),
                  buffer.received_data.begin());
-        buffer.mark_segment_received(0, bytes);
+        buffer.mark_segment_received(0, static_cast<uint32_t>(bytes));
         buffer.last_sequence_number = segment.header.sequence_number;
+        buffer.last_segment_seen = true;
+        buffer.finalized_length = static_cast<uint32_t>(bytes);
+        store_someip_header(buffer, segment, true);
         return true;
     }
 
-    // TP segments: parse wire TP offset from payload bytes [16..19].
-    constexpr size_t tp_header_size = 16 + 4;
-    if (segment.payload.size() <= tp_header_size) {
+    if (segment.payload.size() <= kTpOverhead) {
         return false;
     }
 
     uint32_t wire_offset = 0;
     bool wire_more = false;
-    if (!parse_tp_header(segment.payload, wire_offset, wire_more)) {
+    if (!parse_tp_header(segment.payload.data(), segment.payload.size(), wire_offset, wire_more)) {
         return false;
     }
 
-    const size_t bytes = segment.payload.size() - tp_header_size;
+    const auto bytes = static_cast<uint32_t>(segment.payload.size() - kTpOverhead);
 
     if (buffer.is_segment_received(wire_offset, bytes)) {
         return true;
     }
-    if (wire_offset > buffer.total_length ||
-        bytes > static_cast<size_t>(buffer.total_length - wire_offset)) {
+
+    if (buffer.last_segment_seen &&
+        (wire_offset > buffer.finalized_length ||
+         bytes > buffer.finalized_length - wire_offset)) {
         return false;
     }
 
-    std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(tp_header_size),
+    if (buffer.known_total) {
+        if (wire_offset > buffer.total_length ||
+            bytes > buffer.total_length - wire_offset) {
+            return false;
+        }
+    } else {
+        if (wire_offset > max_message_size || bytes > max_message_size - wire_offset) {
+            return false;
+        }
+        if (!buffer.ensure_size(wire_offset + bytes, max_message_size)) {
+            return false;
+        }
+    }
+
+    if (!wire_more) {
+        const uint32_t implied = wire_offset + bytes;
+        if (buffer.last_segment_seen && buffer.finalized_length != implied) {
+            return false;
+        }
+        if (buffer.known_total && implied != buffer.total_length) {
+            return false;
+        }
+        buffer.last_segment_seen = true;
+        buffer.finalized_length = implied;
+        if (!buffer.known_total) {
+            buffer.total_length = implied;
+        }
+    }
+
+    std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(kTpOverhead),
              segment.payload.end(),
-             buffer.received_data.begin() + wire_offset);
+             buffer.received_data.begin() + static_cast<std::ptrdiff_t>(wire_offset));
     buffer.mark_segment_received(wire_offset, bytes);
     buffer.last_sequence_number = segment.header.sequence_number;
+    store_someip_header(buffer, segment, !wire_more);
     return true;
 }
 
@@ -417,6 +551,15 @@ void TpReassembler::update_config(const TpConfig& config) {
     config_ = config;
 }
 
+bool TpReassembler::copy_last_completed_someip_header(std::array<uint8_t, 16>& out) const {
+    platform::ScopedLock const lock(buffers_mutex_);
+    if (!has_last_completed_someip_header_) {
+        return false;
+    }
+    out = last_completed_someip_header_;
+    return true;
+}
+
 void TpReassembler::cleanup_completed_buffers() {
     // Completed buffers are removed when reassembly finishes
 }
@@ -473,12 +616,16 @@ bool TpReassemblyBuffer::is_complete() const {
         return true;
     }
 
-    if (total_length == 0 || received_segments.size() < total_length) {
+    if (!last_segment_seen || finalized_length == 0) {
         return false;
     }
 
-    for (bool const received : received_segments) {
-        if (!received) {
+    if (received_segments.size() < finalized_length) {
+        return false;
+    }
+
+    for (uint32_t i = 0; i < finalized_length; ++i) {
+        if (!received_segments[i]) {
             return false;
         }
     }
@@ -490,7 +637,34 @@ platform::ByteBuffer TpReassemblyBuffer::get_complete_message() const {
     if (!is_complete()) {
         return {};
     }
-    return received_data;
+    if (received_data.size() < finalized_length || received_data.data() == nullptr) {
+        return {};
+    }
+    platform::ByteBuffer result(finalized_length);
+    if (result.size() < finalized_length || result.data() == nullptr) {
+        return {};
+    }
+    std::memcpy(result.data(), received_data.data(), finalized_length);
+    return result;
+}
+
+bool TpReassemblyBuffer::ensure_size(uint32_t needed, uint32_t max_message_size) {
+    if (needed == 0 || needed > max_message_size) {
+        return false;
+    }
+    if (received_data.size() < needed) {
+        received_data.resize(needed);
+        if (received_data.size() < needed) {
+            return false;
+        }
+    }
+    if (received_segments.size() < needed) {
+        received_segments.resize(needed, false);
+    }
+    if (total_length < needed) {
+        total_length = needed;
+    }
+    return true;
 }
 
 }  // namespace someip::tp

@@ -135,8 +135,26 @@ enum class MessageType : uint8_t {
     ERROR_ACK = 0xC1,
     TP_REQUEST = 0x20,
     TP_REQUEST_NO_RETURN = 0x21,
-    TP_NOTIFICATION = 0x22
+    TP_NOTIFICATION = 0x22,
+    TP_REQUEST_ACK = 0x60,
+    TP_RESPONSE = 0xA0,
+    TP_ERROR = 0xA1,
+    TP_RESPONSE_ACK = 0xE0,
+    TP_ERROR_ACK = 0xE1
 };
+
+/** TP flag in Message Type (bit 5). @implements REQ_MSG_056 */
+inline constexpr uint8_t MESSAGE_TYPE_TP_FLAG = 0x20;
+
+/**
+ * @brief Return the Message Type with TP flag (bit 5) cleared
+ * @implements REQ_MSG_056
+ * @satisfies feat_req_someiptp_785
+ */
+inline MessageType without_tp_flag(MessageType type) {
+    return static_cast<MessageType>(
+        static_cast<uint8_t>(type) & static_cast<uint8_t>(~MESSAGE_TYPE_TP_FLAG));
+}
 
 /** @implements REQ_MSG_131 */
 enum class ReturnCode : uint8_t {

@@ -110,7 +110,7 @@ void on_segment_received(const TpSegment& segment) {
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `max_segment_size` | Maximum payload size per segment | 1400 bytes |
+| `max_segment_size` | Maximum **payload** bytes per TP segment (not including 16+4 header bytes) | 1392 |
 | `max_message_size` | Maximum total message size | 1MB |
 | `max_retries` | Maximum retransmission attempts | 3 |
 | `retry_timeout` | Timeout between retries | 500ms |
@@ -127,11 +127,23 @@ void on_segment_received(const TpSegment& segment) {
 
 ## Integration with Transport Layer
 
-The TP layer integrates seamlessly with the transport layer:
+UDP transport segments and reassembles automatically when
+`UdpTransportConfig.enable_tp` is true (the default):
 
-1. **Outgoing Messages**: TP manager intercepts large messages and segments them before transport
-2. **Incoming Segments**: Transport layer forwards TP segments to TP manager for reassembly
-3. **Transparent Operation**: Applications see complete messages, TP handles segmentation details
+1. **Outgoing messages**: `UdpTransport::send_message` calls `TpManager`
+   when `needs_segmentation()` is true (payload larger than
+   `TpConfig.max_segment_size`, default **1392 TP payload bytes**; the
+   UDP datagram is 16-byte SOME/IP header + 4-byte TP header + payload).
+   Each segment is sent as its own datagram. Small messages are sent
+   unchanged, without the TP flag.
+2. **Incoming datagrams**: if Message Type bit 5 is set, the receive
+   loop feeds `TpManager::ingest_datagram`. A complete reassembly is
+   delivered as one `Message` with the TP flag cleared. Incomplete
+   transfers are not delivered.
+3. Set `enable_tp` to false to keep the previous send/receive path.
+
+Applications that talk to `TpManager` directly can still segment and
+reassemble without going through UDP.
 
 ## Error Handling
 

@@ -19,6 +19,8 @@
 #include "platform/containers.h"
 #include "platform/net.h"
 #include "platform/thread.h"
+#include "tp/tp_manager.h"
+#include "tp/tp_types.h"
 #include <atomic>
 #include <optional>
 #include <utility>
@@ -40,9 +42,14 @@ struct UdpTransportConfig {
     platform::String<> multicast_interface;  // Interface for multicast (empty = INADDR_ANY)
     int multicast_ttl{1};                   // Multicast TTL (1 = local network only)
 
-    // SOME/IP spec recommends max 1400 bytes to avoid IP fragmentation
-    // Set to 0 to disable this check
+    // SOME/IP spec recommends max 1400 bytes to avoid IP fragmentation.
+    // Set to 0 to disable this check. When enable_tp is true, messages whose
+    // payload exceeds TpConfig.max_segment_size are segmented instead of
+    // sent as a single datagram.
     size_t max_message_size{1400};
+
+    bool enable_tp{true};
+    tp::TpConfig tp_config{};
 };
 
 /**
@@ -120,6 +127,8 @@ private:
 
     platform::Mutex socket_mutex_;
 
+    tp::TpManager tp_manager_;
+
     // Constants
     static constexpr size_t MAX_UDP_PAYLOAD = 65507; // Maximum UDP payload size
 
@@ -130,6 +139,7 @@ private:
     void receive_loop();
     Result send_data(const platform::ByteBuffer& data, const Endpoint& endpoint);
     Result receive_data(platform::ByteBuffer& data, Endpoint& sender, size_t& bytes_received);
+    Result send_tp_segments(const Message& message, const Endpoint& endpoint);
     sockaddr_in create_sockaddr(const Endpoint& endpoint) const;
     Endpoint sockaddr_to_endpoint(const sockaddr_in& addr) const;
     bool is_multicast_address(const platform::String<>& address) const;

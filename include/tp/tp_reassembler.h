@@ -20,9 +20,27 @@
 #include "platform/containers.h"
 #include "platform/thread.h"
 
+#include <array>
 #include <cstddef>
+#include <cstdint>
 
 namespace someip::tp {
+
+/**
+ * @brief Parse the 4-byte TP header at offset 16 of a SOME/IP-TP datagram
+ * @implements REQ_TP_011, REQ_TP_012, REQ_TP_013, REQ_TP_014, REQ_TP_015
+ * @return true if the datagram is large enough and the header was parsed
+ */
+bool parse_tp_header(const uint8_t* data, size_t size, uint32_t& offset, bool& more_segments);
+
+/**
+ * @brief Parse a raw SOME/IP-TP UDP datagram into a TpSegment
+ *
+ * Does not require Message::deserialize. Sets header.message_length to 0
+ * because the wire TP header does not carry the total message size.
+ */
+bool parse_wire_segment(const uint8_t* data, size_t size, TpSegment& out_segment);
+
 
 /**
  * @brief SOME/IP TP Message Reassembler
@@ -142,6 +160,12 @@ public:
      */
     void update_config(const TpConfig& config);
 
+    /**
+     * @brief Copy the 16-byte SOME/IP header from the most recently completed message
+     * @return true if a header is available from the last successful reassembly
+     */
+    bool copy_last_completed_someip_header(std::array<uint8_t, 16>& out) const;
+
 private:
     TpConfig config_;
     platform::UnorderedMap<TpReassemblyKey, TpReassemblyBuffer, 16, TpReassemblyKeyHash> reassembly_buffers_;
@@ -151,10 +175,13 @@ private:
     TpConfig get_config_copy() const;
     bool validate_segment(const TpSegment& segment) const;
     TpReassemblyBuffer* find_or_create_buffer(const TpSegment& segment);
-    bool add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment);
+    bool add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment,
+                               uint32_t max_message_size);
     void cleanup_completed_buffers();
     void cleanup_timed_out_buffers(const TpConfig& config);
-    bool parse_tp_header(const platform::ByteBuffer& payload, uint32_t& offset, bool& more_segments) const;
+
+    std::array<uint8_t, 16> last_completed_someip_header_{};
+    bool has_last_completed_someip_header_{false};
 };
 
 }  // namespace someip::tp

@@ -17,12 +17,15 @@
 #include "platform/containers.h"
 #include "platform/thread.h"
 #include "someip/message.h"
+#include "someip/types.h"
 #include "tp/tp_reassembler.h"
 #include "tp/tp_segmenter.h"
 #include "tp/tp_types.h"
 
+#include <array>
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 #include <utility>
 
 namespace someip::tp {
@@ -153,6 +156,79 @@ bool TpManager::handle_received_segment(const TpSegment& segment, platform::Byte
         return false;
     }
     return reassembler_->process_segment(segment, complete_message);
+}
+
+namespace {
+
+bool assemble_message_from_tp(const std::array<uint8_t, 16>& hdr,
+                              const platform::ByteBuffer& payload,
+                              Message& out_complete) {
+    const auto service = static_cast<uint16_t>(
+        (static_cast<unsigned>(hdr[0]) << 8U) | static_cast<unsigned>(hdr[1]));
+    const auto method = static_cast<uint16_t>(
+        (static_cast<unsigned>(hdr[2]) << 8U) | static_cast<unsigned>(hdr[3]));
+    const auto client = static_cast<uint16_t>(
+        (static_cast<unsigned>(hdr[8]) << 8U) | static_cast<unsigned>(hdr[9]));
+    const auto session = static_cast<uint16_t>(
+        (static_cast<unsigned>(hdr[10]) << 8U) | static_cast<unsigned>(hdr[11]));
+
+    out_complete.set_service_id(service);
+    out_complete.set_method_id(method);
+    out_complete.set_client_id(client);
+    out_complete.set_session_id(session);
+    out_complete.set_protocol_version(hdr[12]);
+    out_complete.set_interface_version(hdr[13]);
+    out_complete.set_message_type(without_tp_flag(static_cast<MessageType>(hdr[14])));
+    out_complete.set_return_code(static_cast<ReturnCode>(hdr[15]));
+    out_complete.set_payload(payload);
+    return true;
+}
+
+}  // namespace
+
+bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_complete) {
+    TpSegment segment;
+    if (!parse_wire_segment(data, size, segment)) {
+        return false;
+    }
+
+    statistics_.segments_received++;
+
+    if (!reassembler_) {
+        return false;
+    }
+
+    platform::ByteBuffer complete_payload;
+    if (!reassembler_->process_segment(segment, complete_payload)) {
+        return false;
+    }
+    if (complete_payload.empty()) {
+        return false;
+    }
+
+    statistics_.messages_reassembled++;
+
+    std::array<uint8_t, 16> hdr{};
+    if (!reassembler_->copy_last_completed_someip_header(hdr)) {
+        if (data == nullptr || size < 16) {
+            return false;
+        }
+        std::memcpy(hdr.data(), data, 16);
+    }
+
+    return assemble_message_from_tp(hdr, complete_payload, out_complete);
+}
+
+TpResult TpManager::segment_and_serialize(const Message& message, TpSegmentVector& segments) {
+    if (!segmenter_) {
+        return TpResult::RESOURCE_EXHAUSTED;
+    }
+    TpResult const result = segmenter_->segment_message(message, segments);
+    if (result == TpResult::SUCCESS) {
+        statistics_.messages_segmented++;
+        statistics_.segments_sent += static_cast<uint32_t>(segments.size());
+    }
+    return result;
 }
 
 TpResult TpManager::acknowledge_segments(uint32_t transfer_id, const platform::Vector<uint16_t>& /*segments_acknowledged*/) {

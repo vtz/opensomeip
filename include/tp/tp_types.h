@@ -17,6 +17,7 @@
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -54,7 +55,9 @@ enum class TpMessageType : uint8_t {
  * @brief TP segmentation configuration
  */
 struct TpConfig {
-    uint32_t max_segment_size{1392};        // Maximum segment payload size (bytes) - 87*16 for alignment
+    // TP payload bytes per segment (default 1392). Full UDP datagram is
+    // 16-byte SOME/IP header + 4-byte TP header + payload.
+    uint32_t max_segment_size{1392};
     uint32_t max_message_size{1000000};     // Maximum total message size (1MB default)
     uint8_t max_retries{3};                 // Maximum retransmission attempts
     std::chrono::milliseconds retry_timeout{500};      // Timeout between retries
@@ -166,10 +169,18 @@ struct TpReassemblyBuffer {
     uint8_t last_sequence_number{0};
     uint16_t session_id{0};  // Track Session ID for stale detection (feat_req_someiptp_795)
     bool complete{false};
+    bool last_segment_seen{false};
+    bool known_total{false};
+    uint32_t finalized_length{0};
+    std::array<uint8_t, 16> someip_header{};
+    bool has_someip_header{false};
 
     TpReassemblyBuffer(uint32_t msg_id, uint32_t length, uint16_t sess_id = 0)
-        : message_id(msg_id), total_length(length), session_id(sess_id) {
-        received_data.resize(length);
+        : message_id(msg_id), total_length(length), session_id(sess_id),
+          known_total(length > 0) {
+        if (length > 0) {
+            received_data.resize(length);
+        }
         start_time = std::chrono::steady_clock::now();
     }
 
@@ -177,6 +188,7 @@ struct TpReassemblyBuffer {
     void mark_segment_received(uint32_t offset, uint32_t length);
     bool is_complete() const;
     platform::ByteBuffer get_complete_message() const;
+    bool ensure_size(uint32_t needed, uint32_t max_message_size);
 };
 
 /**

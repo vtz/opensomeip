@@ -21,6 +21,7 @@
 #include "platform/thread.h"
 
 #include "../someip/message.h"
+#include <cstddef>
 #include <optional>
 
 #include "tp_segmenter.h"
@@ -98,6 +99,25 @@ public:
      * @return true if segment processed successfully
      */
     bool handle_received_segment(const TpSegment& segment, platform::ByteBuffer& complete_message);
+
+    /**
+     * @brief Ingest a raw UDP datagram that has the TP flag set
+     *
+     * Parses the wire TP header, feeds the reassembler, and if a complete
+     * message is ready fills @p out_complete with TP flag cleared and the
+     * reassembled payload.
+     *
+     * @return true if a complete message is ready
+     * @implements REQ_TP_055, REQ_TP_078, REQ_TP_091
+     * @satisfies feat_req_someiptp_785
+     */
+    bool ingest_datagram(const uint8_t* data, size_t size, Message& out_complete);
+
+    /**
+     * @brief Segment a message and return wire datagrams (segment payloads)
+     * @implements REQ_TP_050, REQ_TP_090
+     */
+    TpResult segment_and_serialize(const Message& message, TpSegmentVector& segments);
 
     /**
      * @brief Acknowledge receipt of segments

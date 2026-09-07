@@ -33,7 +33,7 @@ using namespace someip;
  * @tests REQ_MSG_040, REQ_MSG_041, REQ_MSG_042
  * @tests REQ_MSG_050, REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_054, REQ_MSG_055
  * @tests REQ_MSG_056, REQ_MSG_057, REQ_MSG_058, REQ_MSG_059
- * @tests REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP
+ * @tests REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP, REQ_MSG_060_TP_RESPONSE
  * @tests REQ_MSG_063, REQ_MSG_064
  * @tests REQ_MSG_070, REQ_MSG_071, REQ_MSG_072
  * @tests REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078, REQ_MSG_079, REQ_MSG_080
@@ -449,6 +449,46 @@ TEST_F(MessageTest, MessageTypeHelpers) {
     notification_msg.set_message_type(MessageType::NOTIFICATION);
     EXPECT_FALSE(notification_msg.is_request());
     EXPECT_FALSE(notification_msg.is_response());
+}
+
+/**
+ * @test_case TC_MSG_TP_A0_A1
+ * @tests REQ_MSG_056, REQ_MSG_060_TP_RESPONSE, REQ_MSG_063
+ * @tests feat_req_someip_761
+ * @brief TP-flagged Response (0xA0) and Error (0xA1) deserialize; 0x50/0xFF stay unknown
+ */
+TEST_F(MessageTest, TpFlaggedResponseAndErrorAccepted) {
+    auto round_trip = [](uint8_t type_byte) {
+        Message original(MessageId(0x1234, 0x0001), RequestId(0x0001, 0x0001),
+                         static_cast<MessageType>(type_byte), ReturnCode::E_OK);
+        original.set_payload({0xAA, 0xBB});
+        return original.serialize();
+    };
+
+    Message response;
+    ASSERT_TRUE(response.deserialize(round_trip(0xA0)));
+    EXPECT_TRUE(response.uses_tp());
+    EXPECT_TRUE(response.has_tp_flag());
+    EXPECT_TRUE(response.is_response());
+    EXPECT_FALSE(response.is_request());
+    EXPECT_EQ(without_tp_flag(response.get_message_type()), MessageType::RESPONSE);
+    EXPECT_EQ(static_cast<uint8_t>(response.get_message_type()) & 0x20, 0x20);
+
+    Message error;
+    ASSERT_TRUE(error.deserialize(round_trip(0xA1)));
+    EXPECT_TRUE(error.uses_tp());
+    EXPECT_TRUE(error.is_response());
+    EXPECT_EQ(without_tp_flag(error.get_message_type()), MessageType::ERROR);
+
+    Message unknown;
+    unknown.set_service_id(0x1234);
+    unknown.set_method_id(0x0001);
+    unknown.set_message_type(static_cast<MessageType>(0x50));
+    EXPECT_FALSE(unknown.has_valid_message_type());
+    unknown.set_message_type(static_cast<MessageType>(0xFF));
+    EXPECT_FALSE(unknown.has_valid_message_type());
+    unknown.set_message_type(static_cast<MessageType>(0xA0));
+    EXPECT_TRUE(unknown.has_valid_message_type());
 }
 
 /**

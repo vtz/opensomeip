@@ -37,7 +37,12 @@ std::string to_string(MessageType type) {
         {MessageType::ERROR_ACK, "ERROR_ACK"},
         {MessageType::TP_REQUEST, "TP_REQUEST"},
         {MessageType::TP_REQUEST_NO_RETURN, "TP_REQUEST_NO_RETURN"},
-        {MessageType::TP_NOTIFICATION, "TP_NOTIFICATION"}
+        {MessageType::TP_NOTIFICATION, "TP_NOTIFICATION"},
+        {MessageType::TP_REQUEST_ACK, "TP_REQUEST_ACK"},
+        {MessageType::TP_RESPONSE, "TP_RESPONSE"},
+        {MessageType::TP_ERROR, "TP_ERROR"},
+        {MessageType::TP_RESPONSE_ACK, "TP_RESPONSE_ACK"},
+        {MessageType::TP_ERROR_ACK, "TP_ERROR_ACK"}
     };
 
     const auto it = TYPE_STRINGS.find(type);
@@ -69,23 +74,25 @@ std::string to_string(ReturnCode code) {
 }
 
 bool is_request(MessageType type) {
-    return type == MessageType::REQUEST ||
-           type == MessageType::REQUEST_NO_RETURN ||
-           type == MessageType::TP_REQUEST ||
-           type == MessageType::TP_REQUEST_NO_RETURN;
+    const MessageType base = without_tp_flag(type);
+    return base == MessageType::REQUEST ||
+           base == MessageType::REQUEST_NO_RETURN;
 }
 
 bool is_response(MessageType type) {
-    return type == MessageType::RESPONSE ||
-           type == MessageType::ERROR ||
-           type == MessageType::RESPONSE_ACK ||
-           type == MessageType::ERROR_ACK;
+    const MessageType base = without_tp_flag(type);
+    return base == MessageType::RESPONSE ||
+           base == MessageType::ERROR ||
+           base == MessageType::RESPONSE_ACK ||
+           base == MessageType::ERROR_ACK;
 }
 
+/**
+ * @implements REQ_MSG_056
+ * @satisfies feat_req_someip_761
+ */
 bool uses_tp(MessageType type) {
-    return type == MessageType::TP_REQUEST ||
-           type == MessageType::TP_REQUEST_NO_RETURN ||
-           type == MessageType::TP_NOTIFICATION;
+    return (static_cast<uint8_t>(type) & MESSAGE_TYPE_TP_FLAG) != 0;
 }
 
 MessageType get_ack_type(MessageType type) {

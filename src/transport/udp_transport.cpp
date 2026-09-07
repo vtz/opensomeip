@@ -20,6 +20,8 @@
 #include "platform/net.h"
 #include "platform/thread.h"
 #include "someip/message.h"
+#include "tp/tp_manager.h"
+#include "tp/tp_types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
 
@@ -44,7 +46,8 @@ namespace someip::transport {
 UdpTransport::UdpTransport(const Endpoint& local_endpoint, const UdpTransportConfig& config)
     : local_endpoint_(local_endpoint),
       config_(config),
-      running_(false) {
+      running_(false),
+      tp_manager_(config.tp_config) {
     if (!local_endpoint_.is_valid()) {
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS)
         throw std::invalid_argument("Invalid local endpoint");
@@ -62,6 +65,7 @@ UdpTransport::~UdpTransport() {
  * @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c
  * @implements REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03
  * @implements REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d
+ * @implements REQ_TP_090
  * @satisfies feat_req_someip_800
  * @satisfies feat_req_someip_804
  */
@@ -74,20 +78,47 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
         return Result::INVALID_ENDPOINT;
     }
 
-    // Serialize message
+    if (config_.enable_tp) {
+        const bool over_udp_max = config_.max_message_size > 0 &&
+            message.serialize().size() > config_.max_message_size &&
+            message.get_payload().size() > config_.tp_config.max_segment_size;
+        if (tp_manager_.needs_segmentation(message) || over_udp_max) {
+            return send_tp_segments(message, endpoint);
+        }
+    }
+
     const platform::ByteBuffer data = message.serialize();
 
     if (data.size() > MAX_UDP_PAYLOAD) {
         return Result::BUFFER_OVERFLOW;
     }
 
-    // Check against SOME/IP recommended max size (1400 bytes to avoid IP fragmentation)
-    if (config_.max_message_size > 0 && data.size() > config_.max_message_size) {
-        // Log warning but allow sending - use TP for large messages
-        // In production, this should trigger SOME/IP-TP segmentation
+    return send_data(data, endpoint);
+}
+
+Result UdpTransport::send_tp_segments(const Message& message, const Endpoint& endpoint) {
+    tp::TpSegmentVector segments;
+    const tp::TpResult tp_result = tp_manager_.segment_and_serialize(message, segments);
+    if (tp_result == tp::TpResult::MESSAGE_TOO_LARGE) {
+        return Result::BUFFER_OVERFLOW;
+    }
+    if (tp_result == tp::TpResult::RESOURCE_EXHAUSTED) {
+        return Result::RESOURCE_EXHAUSTED;
+    }
+    if (tp_result != tp::TpResult::SUCCESS) {
+        return Result::INVALID_MESSAGE;
     }
 
-    return send_data(data, endpoint);
+    for (const auto& segment : segments) {
+        if (segment.payload.empty()) {
+            continue;
+        }
+        const Result sent = send_data(segment.payload, endpoint);
+        if (sent != Result::SUCCESS) {
+            return sent;
+        }
+    }
+    return Result::SUCCESS;
 }
 
 MessagePtr UdpTransport::receive_message() {
@@ -377,18 +408,39 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
     return Result::SUCCESS;
 }
 
+/** @implements REQ_TRANSPORT_010, REQ_TP_091
+ *  @satisfies feat_req_someiptp_785 */
 void UdpTransport::receive_loop() {
     platform::ByteBuffer buffer(config_.receive_buffer_size);
     if (buffer.data() == nullptr) { return; }
 
     while (running_) {
+        tp_manager_.process_timeouts();
+
         Endpoint sender;
         size_t bytes_received = 0;
         const Result result = receive_data(buffer, sender, bytes_received);
 
         if (result == Result::SUCCESS && bytes_received > 0) {
             MessagePtr const message = platform::allocate_message();
-            if (message && message->deserialize(buffer.data(), bytes_received)) {
+            if (!message) {
+                continue;
+            }
+
+            bool delivered = false;
+            const bool tp_datagram = config_.enable_tp &&
+                bytes_received >= 15 &&
+                (buffer.data()[14] & 0x20U) != 0U;
+
+            if (tp_datagram) {
+                if (tp_manager_.ingest_datagram(buffer.data(), bytes_received, *message)) {
+                    delivered = true;
+                }
+            } else if (message->deserialize(buffer.data(), bytes_received)) {
+                delivered = true;
+            }
+
+            if (delivered) {
                 auto* l = listener_.load(std::memory_order_acquire);
                 if (l != nullptr) {
                     l->on_message_received(message, sender);
