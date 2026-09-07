@@ -44,12 +44,15 @@ namespace someip::rpc {
  * @satisfies feat_req_someip_710
  * @satisfies feat_req_someip_711
  * @satisfies feat_req_someip_712
+ * @satisfies feat_req_someip_92
  */
 class RpcServerImpl : public transport::ITransportListener {
 public:
-    explicit RpcServerImpl(uint16_t service_id)
+    RpcServerImpl(uint16_t service_id, uint8_t interface_version,
+                  const transport::Endpoint& bind_endpoint)
         : service_id_(service_id),
-          transport_(transport::Endpoint("127.0.0.1", 30490)),
+          interface_version_(interface_version),
+          transport_(bind_endpoint),
           running_(false) {
 
         transport_.set_listener(this);
@@ -92,7 +95,7 @@ public:
         transport_.stop();
     }
 
-    bool register_method(MethodId method_id, MethodHandler handler) {
+    bool register_method(MethodId method_id, MethodHandler handler, MethodSemantics semantics) {
         platform::ScopedLock const lock(methods_mutex_);
 
         // Check if already registered
@@ -101,7 +104,7 @@ public:
             if (method_handlers_.size() >= method_handlers_.max_size()) {
                 return false;
             }
-            method_handlers_[method_id] = std::move(handler);
+            method_handlers_[method_id] = RegisteredMethod{std::move(handler), semantics};
         }
         return !already_exists;
     }
@@ -126,6 +129,10 @@ public:
         return methods;
     }
 
+    transport::Endpoint get_local_endpoint() const {
+        return transport_.get_local_endpoint();
+    }
+
     bool is_ready() const {
         return running_ && transport_.is_connected();
     }
@@ -136,30 +143,72 @@ public:
     }
 
 private:
-    /** @implements REQ_MSG_111, REQ_MSG_116, REQ_MSG_127, REQ_MSG_128, REQ_MSG_130, REQ_MSG_132A, REQ_MSG_133C, REQ_MSG_134, REQ_COMPAT_003 */
+    struct RegisteredMethod {
+        MethodHandler handler;
+        MethodSemantics semantics{MethodSemantics::RequestResponse};
+    };
+
+    static bool message_expects_response(MessageType type) {
+        return type == MessageType::REQUEST || type == MessageType::TP_REQUEST;
+    }
+
+    static bool is_no_return(MessageType type) {
+        return type == MessageType::REQUEST_NO_RETURN ||
+               type == MessageType::TP_REQUEST_NO_RETURN;
+    }
+
+    /** @implements REQ_MSG_042, REQ_MSG_052, REQ_MSG_111, REQ_MSG_116, REQ_MSG_127, REQ_MSG_128, REQ_MSG_130, REQ_MSG_132A, REQ_MSG_133C, REQ_MSG_134, REQ_COMPAT_003 */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
         // Check if this is for our service and is a request
         if (message->get_service_id() != service_id_ || !message->is_request()) {
             return;
         }
 
+        const MessageType type = message->get_message_type();
+        const bool expects_response = message_expects_response(type);
+
+        // Interface Version is the service major; mismatch is an RPC error, not a header drop.
+        if (message->get_interface_version() != interface_version_) {
+            if (expects_response) {
+                send_error_response(message, sender, ReturnCode::E_WRONG_INTERFACE_VERSION);
+            }
+            return;
+        }
+
         // Find method handler
-        MethodHandler handler;
+        RegisteredMethod registered;
         {
             platform::ScopedLock const lock(methods_mutex_);
             const auto it = method_handlers_.find(message->get_method_id());
             if (it == method_handlers_.end()) {
-                // Method not found - send error response
-                send_error_response(message, sender, ReturnCode::E_UNKNOWN_METHOD);
+                if (expects_response) {
+                    send_error_response(message, sender, ReturnCode::E_UNKNOWN_METHOD);
+                }
                 return;
             }
-            handler = it->second;
+            registered = it->second;
+        }
+
+        const bool fire_and_forget = (registered.semantics == MethodSemantics::FireAndForget);
+
+        if (expects_response && fire_and_forget) {
+            send_error_response(message, sender, ReturnCode::E_WRONG_MESSAGE_TYPE);
+            return;
+        }
+
+        if (is_no_return(type) && !fire_and_forget) {
+            // Client does not wait; do not run the request/response handler.
+            return;
         }
 
         // Process the method call
         platform::ByteBuffer output_params;
-        const RpcResult result = handler(message->get_client_id(), message->get_session_id(),
+        const RpcResult result = registered.handler(message->get_client_id(), message->get_session_id(),
                                   message->get_payload(), output_params);
+
+        if (!expects_response) {
+            return;
+        }
 
         // Send response
         if (result == RpcResult::SUCCESS) {
@@ -181,12 +230,17 @@ private:
         // TODO: Handle transport errors
     }
 
+    void stamp_interface_version(Message& msg) const {
+        msg.set_interface_version(interface_version_);
+    }
+
     /** @implements REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01 */
     void send_success_response(MessagePtr const& request, const transport::Endpoint& sender,
                               const platform::ByteBuffer& return_values) {
         const MessageId response_msg_id(request->get_service_id(), request->get_method_id());
         Message response(response_msg_id, request->get_request_id(),
                         MessageType::RESPONSE, ReturnCode::E_OK);
+        stamp_interface_version(response);
         response.set_payload(return_values);
 
         const Result result = transport_.send_message(response, sender);
@@ -195,11 +249,12 @@ private:
         }
     }
 
-    /** @implements REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01, REQ_MSG_129 */
+    /** @implements REQ_MSG_042, REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01, REQ_MSG_129 */
     void send_error_response(MessagePtr const& request, const transport::Endpoint& sender, ReturnCode error_code) {
         const MessageId response_msg_id(request->get_service_id(), request->get_method_id());
-        Message const response(response_msg_id, request->get_request_id(),
+        Message response(response_msg_id, request->get_request_id(),
                         MessageType::ERROR, error_code);
+        stamp_interface_version(response);
 
         const Result result = transport_.send_message(response, sender);
         if (result != Result::SUCCESS) {
@@ -225,9 +280,10 @@ private:
     }
 
     uint16_t service_id_;
+    uint8_t interface_version_;
     transport::UdpTransport transport_;
 
-    platform::UnorderedMap<MethodId, MethodHandler, 32> method_handlers_;
+    platform::UnorderedMap<MethodId, RegisteredMethod, 32> method_handlers_;
     mutable platform::Mutex methods_mutex_;
 
     std::atomic<bool> running_;
@@ -239,13 +295,14 @@ static_assert(sizeof(RpcServerImpl) <= SOMEIP_PIMPL_RPCSERVER_SIZE,
 #endif
 
 // RpcServer implementation
-RpcServer::RpcServer(uint16_t service_id)
+RpcServer::RpcServer(uint16_t service_id, uint8_t interface_version,
+                     const transport::Endpoint& bind_endpoint)
 #ifdef SOMEIP_STATIC_ALLOC
 {
-    new (impl_storage_) RpcServerImpl(service_id);
+    new (impl_storage_) RpcServerImpl(service_id, interface_version, bind_endpoint);
 }
 #else
-    : impl_(std::make_unique<RpcServerImpl>(service_id)) {
+    : impl_(std::make_unique<RpcServerImpl>(service_id, interface_version, bind_endpoint)) {
 }
 #endif
 
@@ -263,8 +320,8 @@ void RpcServer::shutdown() {
     impl()->shutdown();
 }
 
-bool RpcServer::register_method(MethodId method_id, MethodHandler handler) {
-    return impl()->register_method(method_id, std::move(handler));
+bool RpcServer::register_method(MethodId method_id, MethodHandler handler, MethodSemantics semantics) {
+    return impl()->register_method(method_id, std::move(handler), semantics);
 }
 
 bool RpcServer::unregister_method(MethodId method_id) {
@@ -277,6 +334,10 @@ bool RpcServer::is_method_registered(MethodId method_id) const {
 
 platform::Vector<MethodId> RpcServer::get_registered_methods() const {
     return impl()->get_registered_methods();
+}
+
+transport::Endpoint RpcServer::get_local_endpoint() const {
+    return impl()->get_local_endpoint();
 }
 
 bool RpcServer::is_ready() const {

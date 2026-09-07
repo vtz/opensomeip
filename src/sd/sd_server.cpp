@@ -528,6 +528,7 @@ private:
                                      RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
+        someip_message.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
         someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
@@ -560,6 +561,7 @@ private:
                                      RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
+        someip_message.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
         someip_message.set_payload(std::move(serialized));
 
         transport::Endpoint const multicast_endpoint(config_.multicast_address, config_.multicast_port);
@@ -822,6 +824,7 @@ private:
                                      RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
+        someip_message.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
         auto serialized = response_message.serialize();
         if (serialized.empty()) {
             return false;
@@ -889,6 +892,7 @@ private:
                                      RequestId(SOMEIP_SD_CLIENT_ID, unicast_sid),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
+        someip_message.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
         someip_message.set_payload(std::move(serialized));
 
         const Result result = transport_.send_message(someip_message, client);

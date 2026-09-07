@@ -197,7 +197,11 @@ def echo_scenario(echo_server_executable, echo_client_executable, localhost_endp
 
     # Add server process
     server_port = localhost_endpoint.port
-    scenario.add_process(echo_server_executable, str(server_port))
+    scenario.add_process(
+        echo_server_executable,
+        env={**os.environ, "HELLO_BIND_HOST": "127.0.0.1",
+             "HELLO_BIND_PORT": str(server_port)},
+    )
 
     # Add client (will be connected in test)
     scenario.add_client(localhost_endpoint)

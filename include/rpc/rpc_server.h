@@ -17,6 +17,7 @@
 #include "rpc/rpc_types.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
+#include "transport/endpoint.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -55,8 +56,13 @@ public:
     /**
      * @brief Constructor
      * @param service_id Service identifier this server handles
+     * @param interface_version Service major / Interface Version (default 0x01)
+     * @param bind_endpoint Local bind address; default 127.0.0.1:30501 (not the SD port)
      */
-    explicit RpcServer(uint16_t service_id);
+    explicit RpcServer(uint16_t service_id,
+                       uint8_t interface_version = 0x01,
+                       const transport::Endpoint& bind_endpoint =
+                           transport::Endpoint("127.0.0.1", SOMEIP_DEFAULT_RPC_PORT));
 
     /**
      * @brief Destructor
@@ -85,9 +91,11 @@ public:
      *
      * @param method_id Method identifier
      * @param handler Function to handle method calls
+     * @param semantics Request/response vs fire-and-forget
      * @return true if registered successfully, false if method already exists
      */
-    bool register_method(MethodId method_id, MethodHandler handler);
+    bool register_method(MethodId method_id, MethodHandler handler,
+                         MethodSemantics semantics = MethodSemantics::RequestResponse);
 
     /**
      * @brief Unregister a method handler
@@ -111,6 +119,11 @@ public:
      * @return Vector of all registered method IDs
      */
     platform::Vector<MethodId> get_registered_methods() const;
+
+    /**
+     * @brief Local bind endpoint (port is assigned after initialize when using 0)
+     */
+    transport::Endpoint get_local_endpoint() const;
 
     /**
      * @brief Check if server is initialized and ready

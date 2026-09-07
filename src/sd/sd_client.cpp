@@ -160,6 +160,7 @@ public:
                                      RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
+        someip_message.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
         auto serialized = sd_message.serialize();
         if (serialized.empty()) {
             platform::ScopedLock const lock(pending_finds_mutex_);
@@ -283,6 +284,7 @@ public:
                                      RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
+        someip_message.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
         someip_message.set_payload(std::move(serialized));
 
         if (transport_.send_message(someip_message, sd_unicast) != Result::SUCCESS) {
@@ -331,6 +333,7 @@ public:
                                      RequestId(SOMEIP_SD_CLIENT_ID, session_id),
                                      MessageType::NOTIFICATION,
                                      ReturnCode::E_OK);
+        someip_message.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
         someip_message.set_payload(std::move(serialized));
 
         const bool sent = transport_.send_message(someip_message, sd_unicast) == Result::SUCCESS;

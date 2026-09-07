@@ -16,6 +16,7 @@
 
 #include "rpc/rpc_types.h"
 #include "platform/buffer_pool.h"
+#include "transport/endpoint.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -41,8 +42,12 @@ public:
     /**
      * @brief Constructor
      * @param client_id Unique client identifier
+     * @param interface_version Service major / Interface Version stamped on outgoing calls (default 0x01)
+     * @param local_bind Local UDP bind endpoint; default is ephemeral ("0.0.0.0", 0)
      */
-    explicit RpcClient(uint16_t client_id);
+    explicit RpcClient(uint16_t client_id,
+                       uint8_t interface_version = 0x01,
+                       const transport::Endpoint& local_bind = transport::Endpoint("0.0.0.0", 0));
 
     /**
      * @brief Destructor
@@ -67,7 +72,19 @@ public:
     void shutdown();
 
     /**
-     * @brief Synchronous RPC method call
+     * @brief Set the default destination for method calls
+     *
+     * Must be the offered service endpoint (not the SD multicast/unicast port).
+     */
+    void set_remote_endpoint(const transport::Endpoint& ep);
+
+    /**
+     * @brief Local endpoint after bind (port is assigned when using 0)
+     */
+    transport::Endpoint get_local_endpoint() const;
+
+    /**
+     * @brief Synchronous RPC method call using the configured remote endpoint
      *
      * @param service_id Target service ID
      * @param method_id Method to call
@@ -80,7 +97,15 @@ public:
                                    const RpcTimeout& timeout = RpcTimeout());
 
     /**
-     * @brief Asynchronous RPC method call
+     * @brief Synchronous RPC method call to an explicit service endpoint
+     */
+    RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
+                                   const platform::ByteBuffer& parameters,
+                                   const transport::Endpoint& server_endpoint,
+                                   const RpcTimeout& timeout = RpcTimeout());
+
+    /**
+     * @brief Asynchronous RPC method call using the configured remote endpoint
      *
      * @param service_id Target service ID
      * @param method_id Method to call
@@ -93,6 +118,27 @@ public:
                                     const platform::ByteBuffer& parameters,
                                     RpcCallback callback,
                                     const RpcTimeout& timeout = RpcTimeout());
+
+    /**
+     * @brief Asynchronous RPC method call to an explicit service endpoint
+     */
+    RpcCallHandle call_method_async(uint16_t service_id, MethodId method_id,
+                                    const platform::ByteBuffer& parameters,
+                                    RpcCallback callback,
+                                    const transport::Endpoint& server_endpoint,
+                                    const RpcTimeout& timeout = RpcTimeout());
+
+    /**
+     * @brief Fire-and-forget REQUEST_NO_RETURN (message type 0x01)
+     *
+     * Does not allocate a pending-call slot or wait for a response.
+     * Return Code on the wire is E_OK. Interface Version is the configured service major.
+     *
+     * @return true if the datagram was sent
+     */
+    bool send_request_no_return(uint16_t service_id, MethodId method_id,
+                                const platform::ByteBuffer& params,
+                                const transport::Endpoint& dest);
 
     /**
      * @brief Cancel asynchronous RPC call

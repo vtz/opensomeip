@@ -191,9 +191,10 @@ TEST_F(MessageTest, SerializationRoundTrip) {
 /**
  * @test_case TC_MSG_005
  * @tests REQ_MSG_031, REQ_MSG_032, REQ_MSG_033
- * @tests REQ_MSG_042, REQ_MSG_063, REQ_MSG_064
+ * @tests REQ_MSG_041, REQ_MSG_042, REQ_MSG_063, REQ_MSG_064
  * @tests REQ_MSG_032_E01, REQ_MSG_032_E02
  * @tests REQ_MSG_100
+ * @tests feat_req_someip_92
  * @brief Test header validation for protocol version, interface version, and message type
  */
 TEST_F(MessageTest, Validation) {
@@ -203,19 +204,66 @@ TEST_F(MessageTest, Validation) {
     EXPECT_TRUE(msg.is_valid());
     EXPECT_TRUE(msg.has_valid_header());
 
-    // Invalid protocol version
+    // Invalid protocol version (must remain 0x01)
     msg.set_protocol_version(0xFF);
     EXPECT_FALSE(msg.is_valid());
     msg.set_protocol_version(SOMEIP_PROTOCOL_VERSION);
 
-    // Invalid interface version
+    // Interface Version is the service major: any uint8_t is valid at the header layer
     msg.set_interface_version(0xFF);
-    EXPECT_FALSE(msg.is_valid());
+    EXPECT_TRUE(msg.is_valid());
+    EXPECT_TRUE(msg.has_valid_header());
+    msg.set_interface_version(0x02);
+    EXPECT_TRUE(msg.is_valid());
+    EXPECT_TRUE(msg.has_valid_header());
     msg.set_interface_version(SOMEIP_INTERFACE_VERSION);
 
     // Invalid message type
     msg.set_message_type(static_cast<MessageType>(0xFF));
     EXPECT_FALSE(msg.has_valid_header());
+}
+
+/**
+ * @test_case TC_MSG_041_RPC_IV
+ * @tests REQ_MSG_041
+ * @tests feat_req_someip_92
+ * @brief RPC messages may carry Interface Version 0x02 (service major)
+ */
+TEST_F(MessageTest, RpcInterfaceVersionTwoIsValid) {
+    Message msg(MessageId(0x1234, 0x0001), RequestId(0x0001, 0x0001),
+                MessageType::REQUEST, ReturnCode::E_OK);
+    msg.set_interface_version(0x02);
+    EXPECT_TRUE(msg.has_valid_header());
+    EXPECT_TRUE(msg.is_valid());
+
+    auto wire = msg.serialize();
+    ASSERT_GE(wire.size(), 16u);
+    EXPECT_EQ(wire[13], 0x02);
+
+    Message decoded;
+    ASSERT_TRUE(decoded.deserialize(wire));
+    EXPECT_EQ(decoded.get_interface_version(), 0x02);
+    EXPECT_TRUE(decoded.has_valid_header());
+}
+
+/**
+ * @test_case TC_MSG_041_SD_IV
+ * @tests REQ_MSG_041
+ * @brief SD SOME/IP wrappers require Interface Version 0x01
+ */
+TEST_F(MessageTest, SdHeaderRequiresInterfaceVersionOne) {
+    Message sd(MessageId(SOMEIP_SD_SERVICE_ID, SOMEIP_SD_METHOD_ID),
+               RequestId(SOMEIP_SD_CLIENT_ID, 0x0001),
+               MessageType::NOTIFICATION, ReturnCode::E_OK);
+    EXPECT_EQ(sd.get_interface_version(), SOMEIP_SD_INTERFACE_VERSION);
+    EXPECT_TRUE(sd.has_valid_header());
+
+    sd.set_interface_version(0x02);
+    EXPECT_FALSE(sd.has_valid_header());
+    EXPECT_FALSE(sd.is_valid());
+
+    sd.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
+    EXPECT_TRUE(sd.has_valid_header());
 }
 
 /**
