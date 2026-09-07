@@ -87,18 +87,31 @@ struct EventGroup {
 
 /** @implements REQ_SD_131, REQ_SD_180, REQ_SD_281, REQ_SD_310, REQ_COMPAT_030 */
 struct SdConfig {
-    platform::String<> multicast_address{"239.255.255.251"};  // Default SOME/IP SD multicast
-    uint16_t multicast_port{30490};                           // Default SOME/IP SD port
+    platform::String<> multicast_address{"239.255.255.251"};  // Deployment default SD multicast group
+    uint16_t multicast_port{30490};                           // Specified SOME/IP SD port
     platform::String<> unicast_address{"127.0.0.1"};         // Local unicast address
     uint16_t unicast_port{0};                          // Auto-assign port
-    std::chrono::milliseconds initial_delay{100};      // Initial offer delay
+    std::chrono::milliseconds initial_delay_min{0};    // Initial Wait Phase minimum
+    std::chrono::milliseconds initial_delay_max{100};  // Initial Wait Phase maximum
+    std::chrono::milliseconds initial_delay{100};      // Source-compat alias of initial_delay_max
     std::chrono::milliseconds repetition_base{2000};   // Base repetition interval
     std::chrono::milliseconds repetition_max{3600000}; // Max repetition interval (1 hour)
     uint8_t repetition_multiplier{2};                   // Exponential backoff multiplier
     std::chrono::milliseconds cyclic_offer{30000};     // Cyclic offer interval (30s)
-    std::chrono::milliseconds ttl{3600000};           // Default TTL (1 hour)
+    std::chrono::milliseconds ttl{3600000};           // Default TTL (1 hour, stored as milliseconds)
     size_t max_services{100};                          // Maximum number of services to track
+    /// When true, pick_initial_wait_ms() returns initial_delay_override_ms exactly.
+    bool has_initial_delay_override{false};
+    uint32_t initial_delay_override_ms{0};
 };
+
+/**
+ * @brief Pick the Initial Wait delay in milliseconds.
+ *
+ * Uses [initial_delay_min, max(initial_delay_max, initial_delay)] unless an
+ * override is set for deterministic tests.
+ */
+uint32_t pick_initial_wait_ms(const SdConfig& config);
 
 /**
  * @brief Service discovery callback types
@@ -119,22 +132,38 @@ enum class SubscriptionState : uint8_t {
  * @brief SD Session ID counter per SOME/IP-SD spec.
  *
  * Session IDs start at 0x0001, increment per message, and wrap from
- * 0xFFFF back to 0x0001 (0x0000 is never emitted).
+ * 0xFFFF back to 0x0001 (0x0000 is never emitted). The reboot flag is
+ * true until the first wrap, then false.
+ *
+ * Sample reboot_flag() before next() when stamping a message so the
+ * 0xFFFF datagram still carries Reboot=1.
  */
 class SdSessionIdCounter {
 public:
+    SdSessionIdCounter() = default;
+    explicit SdSessionIdCounter(uint16_t start)
+        : next_id_(start == 0 ? uint16_t{1} : start) {}
+
     uint16_t next() {
-        const uint16_t val = next_id_++;
-        if (next_id_ == 0) {
+        const uint16_t val = next_id_;
+        if (next_id_ == 0xFFFF) {
             next_id_ = 1;
+            wrapped_ = true;
+        } else {
+            ++next_id_;
+            if (next_id_ == 0) {
+                next_id_ = 1;
+            }
         }
         return val;
     }
 
     uint16_t current() const { return next_id_; }
+    bool reboot_flag() const { return !wrapped_; }
 
 private:
     uint16_t next_id_{1};
+    bool wrapped_{false};
 };
 
 /**

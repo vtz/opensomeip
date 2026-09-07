@@ -15,6 +15,40 @@
 
 ## Unreleased
 
+### Bug Fixes
+
+- **SOME/IP-SD**: SubscribeEventgroup family is unicast-only. Clients send
+  Subscribe/StopSubscribe to the Offer datagram source (not the SD multicast
+  group); servers ignore Subscribe received on a multicast destination
+  ([#294](https://github.com/vtz/opensomeip/issues/294)).
+- **SOME/IP-SD**: Clients process SubscribeEventgroupAck/Nack and expose
+  `SdClient::get_eventgroup_subscription_state()`
+  ([#295](https://github.com/vtz/opensomeip/issues/295)).
+- **SOME/IP-SD**: SubscribeEventgroupAck IPv4MulticastOption uses the offered
+  eventgroup endpoint; unicast eventgroups omit the option
+  ([#298](https://github.com/vtz/opensomeip/issues/298)).
+- **SOME/IP-SD**: OfferService never uses TTL 0 (default TTL applied or offer
+  rejected); StopOfferService still uses TTL 0
+  ([#299](https://github.com/vtz/opensomeip/issues/299)).
+- **SOME/IP-SD**: Default SD multicast endpoint unified to
+  `239.255.255.251:30490` (port is specified; group is a deployment default)
+  ([#300](https://github.com/vtz/opensomeip/issues/300)).
+- **SOME/IP-SD**: Unknown 16-byte entry types are skipped instead of dropping
+  the whole SD message
+  ([#302](https://github.com/vtz/opensomeip/issues/302)).
+- **SOME/IP-SD**: Unicast Flag is set on all SD TX; Reboot Flag stays set until
+  session ID wraps `0xFFFF` → `0x0001`
+  ([#303](https://github.com/vtz/opensomeip/issues/303)).
+- **SOME/IP-SD**: SubscribeEventgroupAck/Nack copy the Subscribe counter and
+  reserved 12-bit field
+  ([#304](https://github.com/vtz/opensomeip/issues/304)).
+- **SOME/IP-SD**: Initial Wait Phase picks a random delay between
+  `initial_delay_min` and `initial_delay_max` (deterministic override for tests)
+  ([#306](https://github.com/vtz/opensomeip/issues/306)).
+- **Events**: New subscribers receive current field values after Subscribe Ack;
+  TTL refresh of an existing client does not repeat the initial burst
+  ([#307](https://github.com/vtz/opensomeip/issues/307)).
+
 ### Breaking Changes (Wire Format)
 
 - **String serialization now includes UTF-8 BOM and NUL terminator.**

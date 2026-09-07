@@ -120,6 +120,12 @@ public:
     uint8_t get_major_version() const { return major_version_; }
     void set_major_version(uint8_t version) { major_version_ = version; }
 
+    uint16_t get_reserved_12bit() const { return reserved_12bit_; }
+    void set_reserved_12bit(uint16_t reserved) { reserved_12bit_ = static_cast<uint16_t>(reserved & 0x0FFFU); }
+
+    uint8_t get_counter() const { return counter_; }
+    void set_counter(uint8_t counter) { counter_ = static_cast<uint8_t>(counter & 0x0FU); }
+
     platform::ByteBuffer serialize() const override;
     bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
 
@@ -128,6 +134,8 @@ private:
     uint16_t instance_id_{0};
     uint16_t eventgroup_id_{0};
     uint8_t major_version_{0};
+    uint16_t reserved_12bit_{0};
+    uint8_t counter_{0};
 };
 
 /**
@@ -207,6 +215,9 @@ public:
 
     uint16_t get_port() const { return port_; }
     void set_port(uint16_t port) { port_ = port; }
+
+    void set_ipv4_address_from_string(const platform::String<>& ip_address);
+    platform::String<> get_ipv4_address_string() const;
 
     platform::ByteBuffer serialize() const override;
     bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
@@ -305,6 +316,17 @@ private:
     platform::Vector<SdEntryStorage> entries_;
     platform::Vector<SdOptionStorage> options_;
 };
+
+/**
+ * @brief Stamp Unicast Flag=1 and Reboot Flag from the session counter.
+ *
+ * Call this before SdSessionIdCounter::next() so the 0xFFFF datagram still
+ * carries Reboot=1; the subsequent wrap clears reboot_flag() for later TX.
+ */
+inline void apply_sd_tx_flags(SdMessage& message, const SdSessionIdCounter& counter) {
+    message.set_unicast(true);
+    message.set_reboot(counter.reboot_flag());
+}
 
 // Type aliases for convenience
 using SdEntryPtr = SdEntryStorage;

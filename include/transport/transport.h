@@ -45,6 +45,18 @@ public:
     virtual void on_message_received(MessagePtr message, const Endpoint& sender) = 0;
 
     /**
+     * @brief Called when a message is received, including the datagram destination.
+     *
+     * The destination is empty when the local stack cannot report it (non-POSIX
+     * or recv ancillary data unavailable). Default forwards to the two-argument
+     * overload. Transport implementations call this three-argument version.
+     */
+    virtual void on_message_received(MessagePtr message, const Endpoint& sender,
+                                    const Endpoint& /*destination*/) {
+        on_message_received(message, sender);
+    }
+
+    /**
      * @brief Called when connection to endpoint is lost
      * @param endpoint The endpoint that lost connection
      */

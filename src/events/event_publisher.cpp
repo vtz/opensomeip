@@ -34,6 +34,7 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 
 namespace someip::events {
 
@@ -117,6 +118,7 @@ public:
 
     bool unregister_event(uint16_t event_id) {
         platform::ScopedLock const events_lock(events_mutex_);
+        field_values_.erase(event_id);
         return registered_events_.erase(event_id) > 0;
     }
 
@@ -146,6 +148,13 @@ public:
                 return false;
             }
             eventgroup_id = event_it->second.eventgroup_id;
+            if (event_it->second.is_field) {
+                if (field_values_.size() >= field_values_.max_size() &&
+                    field_values_.find(event_id) == field_values_.end()) {
+                    return false;
+                }
+                field_values_[event_id] = data;
+            }
         }
 
         EventNotification notification(service_id_, instance_id_, event_id);
@@ -173,7 +182,16 @@ public:
     }
 
     bool publish_field(uint16_t event_id, const platform::ByteBuffer& data) {
-        // Fields are published immediately like events
+        {
+            platform::ScopedLock const events_lock(events_mutex_);
+            auto event_it = registered_events_.find(event_id);
+            if (event_it != registered_events_.end() && event_it->second.is_field) {
+                if (field_values_.size() < field_values_.max_size() ||
+                    field_values_.find(event_id) != field_values_.end()) {
+                    field_values_[event_id] = data;
+                }
+            }
+        }
         return publish_event(event_id, data);
     }
 
@@ -192,21 +210,40 @@ public:
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            uint32_t ttl_seconds,
                            const platform::Vector<EventFilter>& filters) {
-        platform::ScopedLock const lock(subscriptions_mutex_);
-        if (default_client_port_ == 0) {
-            return false;
+        bool is_new = false;
+        bool ok = false;
+        transport::Endpoint dest;
+        {
+            platform::ScopedLock const lock(subscriptions_mutex_);
+            if (default_client_port_ == 0) {
+                return false;
+            }
+            dest = transport::Endpoint(default_client_address_, default_client_port_);
+            is_new = !has_subscriber_locked(eventgroup_id, client_id);
+            ok = handle_subscription_locked(eventgroup_id, client_id, dest,
+                                            ttl_seconds, filters);
         }
-        return handle_subscription_locked(eventgroup_id, client_id,
-                                          transport::Endpoint(default_client_address_, default_client_port_),
-                                          ttl_seconds, filters);
+        if (ok && is_new && ttl_seconds > 0) {
+            send_initial_fields(eventgroup_id, dest);
+        }
+        return ok;
     }
 
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const transport::Endpoint& client_endpoint,
                            const platform::Vector<EventFilter>& filters) {
-        platform::ScopedLock const subs_lock(subscriptions_mutex_);
-        return handle_subscription_locked(eventgroup_id, client_id, client_endpoint,
-                                          TTL_INFINITE, filters);
+        bool is_new = false;
+        bool ok = false;
+        {
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
+            is_new = !has_subscriber_locked(eventgroup_id, client_id);
+            ok = handle_subscription_locked(eventgroup_id, client_id, client_endpoint,
+                                            TTL_INFINITE, filters);
+        }
+        if (ok && is_new) {
+            send_initial_fields(eventgroup_id, client_endpoint);
+        }
+        return ok;
     }
 
     bool handle_subscription_locked(uint16_t eventgroup_id, uint16_t client_id,
@@ -261,6 +298,55 @@ public:
         }
 
         return true;
+    }
+
+    bool has_subscriber_locked(uint16_t eventgroup_id, uint16_t client_id) const {
+        auto sub_it = subscriptions_.find(eventgroup_id);
+        if (sub_it == subscriptions_.end()) {
+            return false;
+        }
+        const auto& clients = sub_it->second;
+        return std::find_if(clients.begin(), clients.end(),
+                            [client_id](const ClientInfo& info) {
+                                return info.client_id == client_id;
+                            }) != clients.end();
+    }
+
+    void send_initial_fields(uint16_t eventgroup_id, const transport::Endpoint& dest) {
+        if (!running_) {
+            return;
+        }
+
+        struct PendingField {
+            uint16_t event_id{};
+            platform::ByteBuffer payload;
+        };
+        platform::Vector<PendingField> pending;
+
+        {
+            platform::ScopedLock const events_lock(events_mutex_);
+            for (const auto& event_pair : registered_events_) {
+                const auto& config = event_pair.second;
+                if (!config.is_field || config.eventgroup_id != eventgroup_id) {
+                    continue;
+                }
+                auto val_it = field_values_.find(config.event_id);
+                if (val_it == field_values_.end()) {
+                    continue;
+                }
+                PendingField item;
+                item.event_id = config.event_id;
+                item.payload = val_it->second;
+                pending.push_back(std::move(item));
+            }
+        }
+
+        for (const auto& item : pending) {
+            EventNotification notification(service_id_, instance_id_, item.event_id);
+            notification.event_data = item.payload;
+            notification.session_id = next_session_id_++;
+            send_event_notification(notification, dest);
+        }
     }
 
     bool handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id) {
@@ -467,6 +553,7 @@ private:
     transport::UdpTransport transport_;
 
     platform::UnorderedMap<uint16_t, EventConfig, 16> registered_events_;
+    platform::UnorderedMap<uint16_t, platform::ByteBuffer, 16> field_values_;
     mutable platform::Mutex events_mutex_;
 
     platform::UnorderedMap<uint16_t, platform::Vector<ClientInfo, 8>, 16> subscriptions_;
