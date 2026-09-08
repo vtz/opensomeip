@@ -93,7 +93,8 @@ extern "C" opensomeip_result_t opensomeip_rpc_client_call_sync(opensomeip_rpc_cl
             *output_len = result.return_values.size();
             return OPENSOMEIP_RESULT_BUFFER_OVERFLOW;
         }
-        if (!result.return_values.empty() && output_data) {
+        if (!result.return_values.empty()) {
+            if (!output_data) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
             std::memcpy(output_data, result.return_values.data(), result.return_values.size());
         }
         *output_len = result.return_values.size();
@@ -123,11 +124,19 @@ extern "C" opensomeip_result_t opensomeip_rpc_client_call_async(opensomeip_rpc_c
         auto handle = c->client.call_method_async(
             service_id, method_id, params,
             [cb, ud](const someip::rpc::RpcResponse& resp) {
-                opensomeip_result_t res = OPENSOMEIP_RESULT_SUCCESS;
-                if (resp.result != someip::rpc::RpcResult::SUCCESS) {
-                    res = OPENSOMEIP_RESULT_INTERNAL_ERROR;
-                }
-                cb(res, resp.return_values.data(), resp.return_values.size(), ud);
+                try {
+                    opensomeip_result_t res = OPENSOMEIP_RESULT_SUCCESS;
+                    if (resp.result != someip::rpc::RpcResult::SUCCESS) {
+                        switch (resp.result) {
+                            case someip::rpc::RpcResult::TIMEOUT: res = OPENSOMEIP_RESULT_TIMEOUT; break;
+                            case someip::rpc::RpcResult::NETWORK_ERROR: res = OPENSOMEIP_RESULT_NETWORK_ERROR; break;
+                            case someip::rpc::RpcResult::METHOD_NOT_FOUND: res = OPENSOMEIP_RESULT_INVALID_METHOD_ID; break;
+                            case someip::rpc::RpcResult::SERVICE_NOT_AVAILABLE: res = OPENSOMEIP_RESULT_SERVICE_UNAVAILABLE; break;
+                            default: res = OPENSOMEIP_RESULT_INTERNAL_ERROR; break;
+                        }
+                    }
+                    cb(res, resp.return_values.data(), resp.return_values.size(), ud);
+                } catch (...) { cb(OPENSOMEIP_RESULT_INTERNAL_ERROR, nullptr, 0, ud); }
             },
             timeout
         );

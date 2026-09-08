@@ -71,16 +71,18 @@ extern "C" opensomeip_result_t opensomeip_sd_client_find_service(opensomeip_sd_c
         bool ok = c->client.find_service(
             service_id,
             [cb, ud](const someip::platform::Vector<someip::sd::ServiceInstance>& instances) {
-                for (const auto& inst : instances) {
-                    opensomeip_endpoint_t ep;
-                    std::memset(&ep, 0, sizeof(ep));
-                    auto addr = inst.ip_address;
-                    size_t copy_len = addr.size() < 63 ? addr.size() : 63;
-                    std::memcpy(ep.address, addr.c_str(), copy_len);
-                    ep.address[copy_len] = '\0';
-                    ep.port = inst.port;
-                    cb(inst.service_id, inst.instance_id, &ep, ud);
-                }
+                try {
+                    for (const auto& inst : instances) {
+                        opensomeip_endpoint_t ep;
+                        std::memset(&ep, 0, sizeof(ep));
+                        auto addr = inst.ip_address;
+                        size_t copy_len = addr.size() < 63 ? addr.size() : 63;
+                        std::memcpy(ep.address, addr.c_str(), copy_len);
+                        ep.address[copy_len] = '\0';
+                        ep.port = inst.port;
+                        cb(inst.service_id, inst.instance_id, &ep, ud);
+                    }
+                } catch (...) { /* firewall */ }
             },
             std::chrono::milliseconds(timeout_ms)
         );
@@ -99,10 +101,10 @@ extern "C" opensomeip_result_t opensomeip_sd_client_subscribe_availability(opens
         bool ok = c->client.subscribe_service(
             service_id,
             [cb, ud, service_id](const someip::sd::ServiceInstance& inst) {
-                cb(service_id, inst.instance_id, 1, ud);
+                try { cb(service_id, inst.instance_id, 1, ud); } catch (...) { /* firewall */ }
             },
             [cb, ud, service_id](const someip::sd::ServiceInstance& inst) {
-                cb(service_id, inst.instance_id, 0, ud);
+                try { cb(service_id, inst.instance_id, 0, ud); } catch (...) { /* firewall */ }
             }
         );
         return ok ? OPENSOMEIP_RESULT_SUCCESS : OPENSOMEIP_RESULT_INTERNAL_ERROR;

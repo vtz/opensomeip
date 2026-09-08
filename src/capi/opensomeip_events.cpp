@@ -142,8 +142,10 @@ extern "C" opensomeip_result_t opensomeip_event_subscriber_subscribe(opensomeip_
         bool ok = s->subscriber.subscribe_eventgroup(
             service_id, instance_id, eventgroup_id,
             [cb, ud](const someip::events::EventNotification& notif) {
-                cb(notif.service_id, notif.instance_id, notif.event_id,
-                   notif.event_data.data(), notif.event_data.size(), ud);
+                try {
+                    cb(notif.service_id, notif.instance_id, notif.event_id,
+                       notif.event_data.data(), notif.event_data.size(), ud);
+                } catch (...) { /* firewall: prevent C++ exceptions from escaping the FFI boundary */ }
             }
         );
         return ok ? OPENSOMEIP_RESULT_SUCCESS : OPENSOMEIP_RESULT_INTERNAL_ERROR;

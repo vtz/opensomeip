@@ -18,15 +18,15 @@
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "platform/memory.h"
+#include <mutex>
 
 namespace opensomeip::capi::detail {
 
 inline void ensure_static_pool() {
-    static bool done = false;
-    if (!done) {
+    static std::once_flag flag;
+    std::call_once(flag, []() {
         someip::platform::init_static_allocator();
-        done = true;
-    }
+    });
 }
 
 }  // namespace opensomeip::capi::detail
