@@ -95,7 +95,7 @@ public:
      * @return true if registered successfully, false if method already exists
      */
     bool register_method(MethodId method_id, MethodHandler handler,
-                         MethodSemantics semantics = MethodSemantics::RequestResponse);
+                         MethodSemantics semantics = MethodSemantics::REQUEST_RESPONSE);
 
     /**
      * @brief Unregister a method handler

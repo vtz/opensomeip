@@ -55,8 +55,8 @@ static constexpr uint16_t SOMEIP_DEFAULT_RPC_PORT = 30501;
  * @brief Method call semantics advertised by RpcServer::register_method
  */
 enum class MethodSemantics : uint8_t {
-    RequestResponse,
-    FireAndForget
+    REQUEST_RESPONSE,
+    FIRE_AND_FORGET
 };
 
 /**
