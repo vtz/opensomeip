@@ -49,7 +49,9 @@ if(CONFIG_SOMEIP_E2E)
 endif()
 
 # ---- TP ----
-if(CONFIG_SOMEIP_TP)
+# UdpTransport references TpManager whenever UDP is built, so link TP with UDP
+# even if CONFIG_SOMEIP_TP is unset (native_sim sample).
+if(CONFIG_SOMEIP_TP OR CONFIG_SOMEIP_TRANSPORT_UDP)
     zephyr_library_sources(
         ${SOMEIP_SRC}/tp/tp_segmenter.cpp
         ${SOMEIP_SRC}/tp/tp_reassembler.cpp

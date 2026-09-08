@@ -181,16 +181,19 @@ bool assemble_message_from_tp(const std::array<uint8_t, 16>& hdr,
     out_complete.set_message_type(without_tp_flag(static_cast<MessageType>(hdr[14])));
     out_complete.set_return_code(static_cast<ReturnCode>(hdr[15]));
     out_complete.set_payload(payload);
-    return true;
+    return out_complete.is_valid();
 }
 
 }  // namespace
 
-bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_complete) {
+bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_complete,
+                                uint32_t sender_ipv4, uint16_t sender_port) {
     TpSegment segment;
     if (!parse_wire_segment(data, size, segment)) {
         return false;
     }
+    segment.sender_ipv4 = sender_ipv4;
+    segment.sender_port = sender_port;
 
     statistics_.segments_received++;
 

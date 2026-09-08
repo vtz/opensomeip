@@ -168,5 +168,6 @@ static inline int someip_socket_errno() { return errno; }
 #define SOMEIP_EINPROGRESS EINPROGRESS
 #define SOMEIP_EBADF       EBADF
 #define SOMEIP_EINTR       EINTR
+#define SOMEIP_ETIMEDOUT   ETIMEDOUT
 
 #endif // SOMEIP_PLATFORM_LWIP_NET_IMPL_H

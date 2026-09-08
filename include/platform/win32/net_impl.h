@@ -152,5 +152,6 @@ static inline int someip_socket_errno() { return WSAGetLastError(); }
 #define SOMEIP_EINPROGRESS WSAEWOULDBLOCK  /* non-blocking connect() */
 #define SOMEIP_EBADF       WSAENOTSOCK
 #define SOMEIP_EINTR       WSAEINTR
+#define SOMEIP_ETIMEDOUT   WSAETIMEDOUT
 
 #endif // SOMEIP_PLATFORM_WIN32_NET_IMPL_H

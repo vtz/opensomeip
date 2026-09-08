@@ -55,6 +55,8 @@ TpReassemblyKey make_reassembly_key(const TpSegment& segment) {
         key.interface_version = p[13];
         key.message_type = p[14] & static_cast<uint8_t>(~0x20U);
         key.request_id = (static_cast<uint32_t>(client) << 16U) | session;
+        key.sender_ipv4 = segment.sender_ipv4;
+        key.sender_port = segment.sender_port;
     } else {
         // Fallback for payloads too short (rejected by validate_segment for TP).
         key.message_id = (static_cast<uint32_t>(segment.header.service_id) << 16U) |
@@ -64,6 +66,8 @@ TpReassemblyKey make_reassembly_key(const TpSegment& segment) {
         key.message_type = 0;
         key.request_id = (static_cast<uint32_t>(segment.header.client_id) << 16U) |
                          static_cast<uint32_t>(segment.header.session_id);
+        key.sender_ipv4 = segment.sender_ipv4;
+        key.sender_port = segment.sender_port;
     }
     return key;
 }
@@ -72,22 +76,22 @@ TpReassemblyKey make_reassembly_key(const TpSegment& segment) {
 
 namespace {
 
-constexpr size_t kSomeipHeaderSize = 16;
-constexpr size_t kTpOverhead = kSomeipHeaderSize + 4;
+constexpr size_t SOMEIP_HEADER_SIZE = 16;
+constexpr size_t TP_OVERHEAD = SOMEIP_HEADER_SIZE + 4;
 
 uint16_t tp_payload_bytes(const TpSegment& segment) {
-    if (segment.payload.size() <= kTpOverhead) {
+    if (segment.payload.size() <= TP_OVERHEAD) {
         return 0;
     }
-    return static_cast<uint16_t>(segment.payload.size() - kTpOverhead);
+    return static_cast<uint16_t>(segment.payload.size() - TP_OVERHEAD);
 }
 
 void store_someip_header(TpReassemblyBuffer& buffer, const TpSegment& segment, bool last_segment) {
-    if (segment.payload.size() < kSomeipHeaderSize) {
+    if (segment.payload.size() < SOMEIP_HEADER_SIZE) {
         return;
     }
     if (!buffer.has_someip_header || last_segment) {
-        std::memcpy(buffer.someip_header.data(), segment.payload.data(), kSomeipHeaderSize);
+        std::memcpy(buffer.someip_header.data(), segment.payload.data(), SOMEIP_HEADER_SIZE);
         buffer.has_someip_header = true;
     }
 }
@@ -104,7 +108,7 @@ void store_someip_header(TpReassemblyBuffer& buffer, const TpSegment& segment, b
  * @implements REQ_TP_082
  */
 bool parse_tp_header(const uint8_t* data, size_t size, uint32_t& offset, bool& more_segments) {
-    if (data == nullptr || size < kTpOverhead) {
+    if (data == nullptr || size < TP_OVERHEAD) {
         return false;
     }
 
@@ -126,7 +130,7 @@ bool parse_tp_header(const uint8_t* data, size_t size, uint32_t& offset, bool& m
 }
 
 bool parse_wire_segment(const uint8_t* data, size_t size, TpSegment& out_segment) {
-    if (data == nullptr || size < kTpOverhead || size > UINT16_MAX) {
+    if (data == nullptr || size < TP_OVERHEAD || size > UINT16_MAX) {
         return false;
     }
     if ((data[14] & 0x20U) == 0U) {
@@ -163,14 +167,12 @@ bool parse_wire_segment(const uint8_t* data, size_t size, TpSegment& out_segment
     out_segment.header.protocol_version = data[12];
     out_segment.header.interface_version = data[13];
 
-    if (offset == 0 && more) {
-        out_segment.header.message_type = TpMessageType::FIRST_SEGMENT;
+    if (more && offset > 0) {
+        out_segment.header.message_type = TpMessageType::CONSECUTIVE_SEGMENT;
     } else if (!more && offset > 0) {
         out_segment.header.message_type = TpMessageType::LAST_SEGMENT;
-    } else if (more && offset > 0) {
-        out_segment.header.message_type = TpMessageType::CONSECUTIVE_SEGMENT;
     } else {
-        // offset == 0 && !more: single TP segment
+        // offset == 0 (first or single TP segment)
         out_segment.header.message_type = TpMessageType::FIRST_SEGMENT;
     }
 
@@ -325,6 +327,8 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
             stale->first.protocol_version == key.protocol_version &&
             stale->first.interface_version == key.interface_version &&
             stale->first.message_type == key.message_type &&
+            stale->first.sender_ipv4 == key.sender_ipv4 &&
+            stale->first.sender_port == key.sender_port &&
             static_cast<uint16_t>(stale->first.request_id >> 16U) == client_id_bits &&
             stale->first.request_id != key.request_id) {
             reassembly_buffers_.erase(stale);
@@ -390,7 +394,7 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
         return true;
     }
 
-    if (segment.payload.size() <= kTpOverhead) {
+    if (segment.payload.size() <= TP_OVERHEAD) {
         return false;
     }
 
@@ -400,7 +404,7 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
         return false;
     }
 
-    const auto bytes = static_cast<uint32_t>(segment.payload.size() - kTpOverhead);
+    const auto bytes = static_cast<uint32_t>(segment.payload.size() - TP_OVERHEAD);
 
     if (buffer.is_segment_received(wire_offset, bytes)) {
         return true;
@@ -441,7 +445,7 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
         }
     }
 
-    std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(kTpOverhead),
+    std::copy(segment.payload.begin() + static_cast<std::ptrdiff_t>(TP_OVERHEAD),
              segment.payload.end(),
              buffer.received_data.begin() + static_cast<std::ptrdiff_t>(wire_offset));
     buffer.mark_segment_received(wire_offset, bytes);
@@ -652,6 +656,9 @@ bool TpReassemblyBuffer::ensure_size(uint32_t needed, uint32_t max_message_size)
     if (needed == 0 || needed > max_message_size) {
         return false;
     }
+    if (needed > received_segments.max_size()) {
+        return false;
+    }
     if (received_data.size() < needed) {
         received_data.resize(needed);
         if (received_data.size() < needed) {
@@ -660,6 +667,9 @@ bool TpReassemblyBuffer::ensure_size(uint32_t needed, uint32_t max_message_size)
     }
     if (received_segments.size() < needed) {
         received_segments.resize(needed, false);
+        if (received_segments.size() < needed) {
+            return false;
+        }
     }
     if (total_length < needed) {
         total_length = needed;

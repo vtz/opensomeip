@@ -19,11 +19,15 @@
 #include "platform/containers.h"
 #include "platform/net.h"
 #include "platform/thread.h"
-#include "tp/tp_manager.h"
 #include "tp/tp_types.h"
 #include <atomic>
+#include <memory>
 #include <optional>
 #include <utility>
+
+namespace someip::tp {
+class TpManager;
+}
 
 namespace someip::transport {
 
@@ -48,7 +52,11 @@ struct UdpTransportConfig {
     // sent as a single datagram.
     size_t max_message_size{1400};
 
+#ifdef SOMEIP_STATIC_ALLOC
+    bool enable_tp{false};
+#else
     bool enable_tp{true};
+#endif
     tp::TpConfig tp_config{};
 };
 
@@ -127,7 +135,7 @@ private:
 
     platform::Mutex socket_mutex_;
 
-    tp::TpManager tp_manager_;
+    std::unique_ptr<tp::TpManager> tp_manager_;
 
     // Constants
     static constexpr size_t MAX_UDP_PAYLOAD = 65507; // Maximum UDP payload size

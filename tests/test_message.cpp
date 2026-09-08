@@ -478,7 +478,7 @@ TEST_F(MessageTest, TpFlaggedResponseAndErrorAccepted) {
     ASSERT_TRUE(error.deserialize(round_trip(0xA1)));
     EXPECT_TRUE(error.uses_tp());
     EXPECT_TRUE(error.is_response());
-    EXPECT_EQ(without_tp_flag(error.get_message_type()), MessageType::ERROR);
+    EXPECT_EQ(without_tp_flag(error.get_message_type()), static_cast<MessageType>(0x81));
 
     Message unknown;
     unknown.set_service_id(0x1234);

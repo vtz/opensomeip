@@ -1729,3 +1729,82 @@ TEST_F(TpTest, WireIngestLastArrivesFirst) {
     EXPECT_EQ(complete.get_payload()[0], 0x11);
     EXPECT_EQ(complete.get_payload()[32], 0x22);
 }
+
+/**
+ * @test_case TC_TP_REASSEMBLY_KEY_INCLUDES_SENDER
+ * @tests REQ_TP_031
+ * @brief Segments from different UDP senders with the same SOME/IP IDs stay isolated.
+ */
+TEST_F(TpTest, ReassemblyKeyIncludesSender) {
+    TpManager manager(config);
+    ASSERT_TRUE(manager.initialize());
+
+    auto make_wire = [](uint32_t offset, bool more, uint8_t fill, size_t n) {
+        platform::ByteBuffer datagram(20 + n, 0);
+        datagram[0] = 0x11; datagram[1] = 0x11;
+        datagram[2] = 0x22; datagram[3] = 0x22;
+        const uint32_t someip_length = 8 + 4 + static_cast<uint32_t>(n);
+        datagram[4] = static_cast<uint8_t>((someip_length >> 24U) & 0xFFU);
+        datagram[5] = static_cast<uint8_t>((someip_length >> 16U) & 0xFFU);
+        datagram[6] = static_cast<uint8_t>((someip_length >> 8U) & 0xFFU);
+        datagram[7] = static_cast<uint8_t>(someip_length & 0xFFU);
+        datagram[8] = 0x00; datagram[9] = 0x01;
+        datagram[10] = 0x00; datagram[11] = 0x01;
+        datagram[12] = 0x01; datagram[13] = 0x01;
+        datagram[14] = 0x20;
+        datagram[15] = 0x00;
+        const uint32_t tp_hdr = ((offset / 16U) << 4U) | (more ? 0x01U : 0x00U);
+        datagram[16] = static_cast<uint8_t>((tp_hdr >> 24U) & 0xFFU);
+        datagram[17] = static_cast<uint8_t>((tp_hdr >> 16U) & 0xFFU);
+        datagram[18] = static_cast<uint8_t>((tp_hdr >> 8U) & 0xFFU);
+        datagram[19] = static_cast<uint8_t>(tp_hdr & 0xFFU);
+        std::fill(datagram.begin() + 20, datagram.end(), fill);
+        return datagram;
+    };
+
+    const platform::ByteBuffer a_first = make_wire(0, true, 0xAA, 32);
+    const platform::ByteBuffer b_first = make_wire(0, true, 0xBB, 32);
+    const platform::ByteBuffer b_last = make_wire(32, false, 0xCC, 16);
+
+    Message complete;
+    EXPECT_FALSE(manager.ingest_datagram(a_first.data(), a_first.size(), complete, 0x0A000001U, 30000));
+    EXPECT_FALSE(manager.ingest_datagram(b_first.data(), b_first.size(), complete, 0x0B000001U, 30001));
+    ASSERT_TRUE(manager.ingest_datagram(b_last.data(), b_last.size(), complete, 0x0B000001U, 30001));
+    ASSERT_EQ(complete.get_payload().size(), 48u);
+    EXPECT_EQ(complete.get_payload()[0], 0xBB);
+    EXPECT_EQ(complete.get_payload()[32], 0xCC);
+}
+
+/**
+ * @test_case TC_TP_REJECT_INVALID_RECONSTRUCTED_HEADER
+ * @tests REQ_MSG_100
+ * @brief A completed TP transfer with an invalid SOME/IP header is not delivered.
+ */
+TEST_F(TpTest, RejectInvalidReconstructedHeader) {
+    TpManager manager(config);
+    ASSERT_TRUE(manager.initialize());
+
+    platform::ByteBuffer datagram(36, 0);
+    datagram[0] = 0x00;
+    datagram[1] = 0x00;  // Service ID 0 is invalid
+    datagram[2] = 0x00;
+    datagram[3] = 0x01;
+    const uint32_t someip_length = 8 + 4 + 16;
+    datagram[4] = static_cast<uint8_t>((someip_length >> 24U) & 0xFFU);
+    datagram[5] = static_cast<uint8_t>((someip_length >> 16U) & 0xFFU);
+    datagram[6] = static_cast<uint8_t>((someip_length >> 8U) & 0xFFU);
+    datagram[7] = static_cast<uint8_t>(someip_length & 0xFFU);
+    datagram[8] = 0x00;
+    datagram[9] = 0x01;
+    datagram[10] = 0x00;
+    datagram[11] = 0x01;
+    datagram[12] = 0x01;
+    datagram[13] = 0x01;
+    datagram[14] = 0x20;
+    datagram[15] = 0x00;
+    datagram[19] = 0x00;  // offset 0, more = 0
+    std::fill(datagram.begin() + 20, datagram.end(), 0x11);
+
+    Message complete;
+    EXPECT_FALSE(manager.ingest_datagram(datagram.data(), datagram.size(), complete));
+}

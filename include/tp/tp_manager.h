@@ -105,13 +105,17 @@ public:
      *
      * Parses the wire TP header, feeds the reassembler, and if a complete
      * message is ready fills @p out_complete with TP flag cleared and the
-     * reassembled payload.
+     * reassembled payload. @p sender_ipv4 / @p sender_port are part of the
+     * reassembly key so two peers cannot collide.
+     *
+     * @return true if a complete valid message is ready
      *
      * @return true if a complete message is ready
      * @implements REQ_TP_055, REQ_TP_078, REQ_TP_091
      * @satisfies feat_req_someiptp_785
      */
-    bool ingest_datagram(const uint8_t* data, size_t size, Message& out_complete);
+    bool ingest_datagram(const uint8_t* data, size_t size, Message& out_complete,
+                         uint32_t sender_ipv4 = 0, uint16_t sender_port = 0);
 
     /**
      * @brief Segment a message and return wire datagrams (segment payloads)

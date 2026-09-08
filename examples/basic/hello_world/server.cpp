@@ -36,6 +36,14 @@
 using namespace someip;
 using namespace someip::transport;
 
+namespace {
+UdpTransportConfig hello_udp_config() {
+    UdpTransportConfig config;
+    config.enable_tp = false;
+    return config;
+}
+}
+
 // Service and method IDs for the Hello World service
 const uint16_t HELLO_SERVICE_ID = 0x1000;
 const uint16_t SAY_HELLO_METHOD_ID = 0x0001;
@@ -51,7 +59,7 @@ void signal_handler(int signal) {
 class HelloServer : public ITransportListener {
 public:
     HelloServer(const std::string& host, uint16_t port)
-        : transport_(std::make_shared<UdpTransport>(Endpoint(host, port))) {
+        : transport_(std::make_shared<UdpTransport>(Endpoint(host, port), hello_udp_config())) {
         transport_->set_listener(this);
     }
 

@@ -30,6 +30,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 
 namespace someip::transport {
@@ -46,8 +47,13 @@ namespace someip::transport {
 UdpTransport::UdpTransport(const Endpoint& local_endpoint, const UdpTransportConfig& config)
     : local_endpoint_(local_endpoint),
       config_(config),
-      running_(false),
-      tp_manager_(config.tp_config) {
+      running_(false) {
+    if (config_.enable_tp) {
+        const size_t min_rx = 20U + static_cast<size_t>(config_.tp_config.max_segment_size);
+        if (config_.receive_buffer_size < min_rx) {
+            config_.receive_buffer_size = min_rx;
+        }
+    }
     if (!local_endpoint_.is_valid()) {
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS)
         throw std::invalid_argument("Invalid local endpoint");
@@ -78,11 +84,11 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
         return Result::INVALID_ENDPOINT;
     }
 
-    if (config_.enable_tp) {
+    if (config_.enable_tp && tp_manager_) {
         const bool over_udp_max = config_.max_message_size > 0 &&
             message.serialize().size() > config_.max_message_size &&
             message.get_payload().size() > config_.tp_config.max_segment_size;
-        if (tp_manager_.needs_segmentation(message) || over_udp_max) {
+        if (tp_manager_->needs_segmentation(message) || over_udp_max) {
             return send_tp_segments(message, endpoint);
         }
     }
@@ -97,8 +103,11 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
 }
 
 Result UdpTransport::send_tp_segments(const Message& message, const Endpoint& endpoint) {
+    if (!tp_manager_) {
+        return Result::INVALID_MESSAGE;
+    }
     tp::TpSegmentVector segments;
-    const tp::TpResult tp_result = tp_manager_.segment_and_serialize(message, segments);
+    const tp::TpResult tp_result = tp_manager_->segment_and_serialize(message, segments);
     if (tp_result == tp::TpResult::MESSAGE_TOO_LARGE) {
         return Result::BUFFER_OVERFLOW;
     }
@@ -181,6 +190,10 @@ void UdpTransport::set_listener(ITransportListener* listener) {
 Result UdpTransport::start() {
     if (is_running()) {
         return Result::SUCCESS;
+    }
+
+    if (config_.enable_tp && !tp_manager_) {
+        tp_manager_ = std::make_unique<tp::TpManager>(config_.tp_config);
     }
 
     Result result = create_socket();
@@ -362,6 +375,13 @@ Result UdpTransport::create_socket() {
             socket_fd_ = SOMEIP_INVALID_SOCKET;
             return Result::NETWORK_ERROR;
         }
+    } else if (config_.enable_tp) {
+        int timeout_ms = 100;
+        const auto reassembly_ms = config_.tp_config.reassembly_timeout.count();
+        if (reassembly_ms > 0 && reassembly_ms < timeout_ms) {
+            timeout_ms = static_cast<int>(reassembly_ms);
+        }
+        (void)someip_set_socket_timeout(socket_fd_, SO_RCVTIMEO, timeout_ms);
     }
 
     return Result::SUCCESS;
@@ -415,11 +435,17 @@ void UdpTransport::receive_loop() {
     if (buffer.data() == nullptr) { return; }
 
     while (running_) {
-        tp_manager_.process_timeouts();
+        if (tp_manager_) {
+            tp_manager_->process_timeouts();
+        }
 
         Endpoint sender;
         size_t bytes_received = 0;
         const Result result = receive_data(buffer, sender, bytes_received);
+
+        if (tp_manager_) {
+            tp_manager_->process_timeouts();
+        }
 
         if (result == Result::SUCCESS && bytes_received > 0) {
             MessagePtr const message = platform::allocate_message();
@@ -428,12 +454,14 @@ void UdpTransport::receive_loop() {
             }
 
             bool delivered = false;
-            const bool tp_datagram = config_.enable_tp &&
+            const bool tp_datagram = config_.enable_tp && tp_manager_ &&
                 bytes_received >= 15 &&
                 (buffer.data()[14] & 0x20U) != 0U;
 
             if (tp_datagram) {
-                if (tp_manager_.ingest_datagram(buffer.data(), bytes_received, *message)) {
+                const uint32_t sender_ipv4 = ntohl(someip_inet_addr(sender.get_address().c_str()));
+                if (tp_manager_->ingest_datagram(buffer.data(), bytes_received, *message,
+                                                 sender_ipv4, sender.get_port())) {
                     delivered = true;
                 }
             } else if (message->deserialize(buffer.data(), bytes_received)) {
@@ -453,20 +481,18 @@ void UdpTransport::receive_loop() {
         } else if (result == Result::NOT_CONNECTED) {
             // Socket was closed, exit loop
             break;
-        } else if (result == Result::TIMEOUT && !config_.blocking) {
-            // Timeout in non-blocking mode - just continue polling
-            // Small delay to prevent tight polling loop
-            platform::this_thread::sleep_for(std::chrono::milliseconds(10));
+        } else if (result == Result::TIMEOUT) {
+            if (!config_.blocking) {
+                platform::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
         } else {
             if (auto* l = listener_.load(std::memory_order_acquire)) {
                 l->on_error(result);
             }
 
             if (!config_.blocking) {
-                // In non-blocking mode, add delay to prevent busy loops on errors
                 platform::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
-            // In blocking mode, we only get here on actual errors, no delay needed
         }
     }
 }
@@ -523,7 +549,7 @@ Result UdpTransport::receive_data(platform::ByteBuffer& data, Endpoint& sender, 
             return Result::NOT_CONNECTED;
         }
 
-        if (!config_.blocking && (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK)) {
+        if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK || err == SOMEIP_ETIMEDOUT) {
             return Result::TIMEOUT;
         }
 

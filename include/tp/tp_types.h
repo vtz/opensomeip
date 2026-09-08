@@ -93,6 +93,8 @@ struct TpSegment {
     platform::ByteBuffer payload;
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
     uint32_t retransmit_count{0};
+    uint32_t sender_ipv4{0};
+    uint16_t sender_port{0};
 
     TpSegment() = default;
 };
@@ -110,11 +112,13 @@ inline constexpr size_t MAX_TP_REASSEMBLY_SIZE = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
 /**
  * @brief Composite key for TP reassembly per Open SOME/IP-TP spec
  * @satisfies feat_req_someiptp_781, feat_req_someiptp_794
+ * @implements REQ_TP_031
  *
  * Key fields (per someip-tp.rst):
  *   Message ID + Protocol Version + Interface Version
  *   + Message Type (SOME/IP wire byte 14, TP-flag 0x20 masked off)
  *   + Request ID (Client ID << 16 | Session ID)
+ *   + UDP sender IPv4 + port (two peers must not share a buffer)
  *
  * Session ID changes for the same Client ID trigger stale-buffer discard
  * in find_or_create_buffer (feat_req_someiptp_795).
@@ -125,13 +129,17 @@ struct TpReassemblyKey {
     uint8_t interface_version{0};
     uint8_t message_type{0};         // Wire Message Type with TP-flag masked off
     uint32_t request_id{0};          // Client ID << 16 | Session ID
+    uint32_t sender_ipv4{0};         // Host-order IPv4 of the UDP source
+    uint16_t sender_port{0};
 
     bool operator==(const TpReassemblyKey& other) const {
         return message_id == other.message_id &&
                protocol_version == other.protocol_version &&
                interface_version == other.interface_version &&
                message_type == other.message_type &&
-               request_id == other.request_id;
+               request_id == other.request_id &&
+               sender_ipv4 == other.sender_ipv4 &&
+               sender_port == other.sender_port;
     }
 
     bool operator!=(const TpReassemblyKey& other) const {
@@ -153,6 +161,8 @@ struct TpReassemblyKeyHash {
         combine(h, std::hash<uint8_t>{}(k.interface_version));
         combine(h, std::hash<uint8_t>{}(k.message_type));
         combine(h, std::hash<uint32_t>{}(k.request_id));
+        combine(h, std::hash<uint32_t>{}(k.sender_ipv4));
+        combine(h, std::hash<uint16_t>{}(k.sender_port));
         return h;
     }
 };
