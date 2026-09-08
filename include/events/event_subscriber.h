@@ -15,11 +15,17 @@
 #define SOMEIP_EVENTS_SUBSCRIBER_H
 
 #include "event_types.h"
-#include <memory>
-#include <vector>
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+#include "transport/endpoint.h"
 
-namespace someip {
-namespace events {
+#ifdef SOMEIP_STATIC_ALLOC
+#include "static_config.h"
+#else
+#include <memory>
+#endif
+
+namespace someip::events {
 
 /**
  * @brief Forward declaration
@@ -63,6 +69,20 @@ public:
     void shutdown();
 
     /**
+     * @brief Set the default service endpoint used when no resolver is configured.
+     * @param address Service IP address
+     * @param port    Service port
+     */
+    void set_default_endpoint(const platform::String<>& address, uint16_t port);
+
+    /**
+     * @brief Set a resolver function that maps (service_id, instance_id) to an endpoint.
+     * @param resolver Callable returning an Endpoint for the given service+instance
+     */
+    using EndpointResolver = platform::Function<transport::Endpoint(uint16_t, uint16_t)>;
+    void set_endpoint_resolver(EndpointResolver resolver);
+
+    /**
      * @brief Subscribe to an event group
      *
      * @param service_id Service identifier
@@ -76,7 +96,7 @@ public:
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                             EventNotificationCallback notification_callback,
                             SubscriptionStatusCallback status_callback = nullptr,
-                            const std::vector<EventFilter>& filters = {});
+                            const platform::Vector<EventFilter>& filters = {});
 
     /**
      * @brief Unsubscribe from an event group
@@ -110,14 +130,14 @@ public:
      * @return true if filters updated, false on error
      */
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
-                         const std::vector<EventFilter>& filters);
+                         const platform::Vector<EventFilter>& filters);
 
     /**
      * @brief Get active subscriptions
      *
      * @return Vector of active event subscriptions
      */
-    std::vector<EventSubscription> get_active_subscriptions() const;
+    platform::Vector<EventSubscription> get_active_subscriptions() const;
 
     /**
      * @brief Get subscription status for an event group
@@ -152,10 +172,17 @@ public:
     Statistics get_statistics() const;
 
 private:
+#ifdef SOMEIP_STATIC_ALLOC
+    alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_EVENTSUB_SIZE];
+    EventSubscriberImpl* impl() noexcept { return reinterpret_cast<EventSubscriberImpl*>(impl_storage_); }
+    const EventSubscriberImpl* impl() const noexcept { return reinterpret_cast<const EventSubscriberImpl*>(impl_storage_); }
+#else
     std::unique_ptr<EventSubscriberImpl> impl_;
+    EventSubscriberImpl* impl() noexcept { return impl_.get(); }
+    const EventSubscriberImpl* impl() const noexcept { return impl_.get(); }
+#endif
 };
 
-} // namespace events
-} // namespace someip
+}  // namespace someip::events
 
 #endif // SOMEIP_EVENTS_SUBSCRIBER_H

@@ -25,8 +25,7 @@
 
 #include "thread_impl.h"
 
-namespace someip {
-namespace platform {
+namespace someip::platform {
 
 /** @implements REQ_PLATFORM_ARCH_001, REQ_PAL_LOCK_ACQUIRE, REQ_PAL_LOCK_RELEASE, REQ_PAL_LOCK_NONCOPY */
 class ScopedLock {
@@ -37,11 +36,12 @@ public:
     ~ScopedLock() { m_.unlock(); }
     ScopedLock(const ScopedLock&) = delete;
     ScopedLock& operator=(const ScopedLock&) = delete;
+    ScopedLock(ScopedLock&&) = delete;
+    ScopedLock& operator=(ScopedLock&&) = delete;
 private:
     Mutex& m_;
 };
 
-} // namespace platform
-} // namespace someip
+}  // namespace someip::platform
 
 #endif // SOMEIP_PLATFORM_THREAD_H

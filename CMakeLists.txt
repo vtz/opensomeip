@@ -58,7 +58,6 @@ endif()
 option(SAFETY_LEVEL "Safety level (ASIL_A, ASIL_B, ASIL_C, ASIL_D)" "ASIL_B")
 option(BUILD_TESTS "Build test executables" ${_someip_default_build_tests})
 option(BUILD_EXAMPLES "Build example programs" ${_someip_default_build_examples})
-option(BUILD_VSOMEIP_INTEROP "Build vsomeip interoperability examples (requires vsomeip3 and Boost)" OFF)
 option(BUILD_TOOLS "Build development tools (reserved for future use)" OFF)
 option(SOMEIP_DEV_TOOLS "Enable development tools (static analysis, formatting, traceability targets)" ON)
 option(COVERAGE "Enable code coverage reporting" OFF)
@@ -68,6 +67,7 @@ option(ENABLE_WERROR "Treat compiler warnings as errors (recommended for CI)" OF
 option(SOMEIP_USE_FREERTOS "Use FreeRTOS for threading primitives" OFF)
 option(SOMEIP_USE_THREADX  "Use ThreadX for threading primitives" OFF)
 option(SOMEIP_USE_LWIP     "Use lwIP for network sockets" OFF)
+option(SOMEIP_USE_STATIC_ALLOC "Use static allocation (no heap)" OFF)
 
 # RTOS linux/POSIX port runtime tests (Linux only)
 option(SOMEIP_FREERTOS_LINUX_TESTS "Build and run FreeRTOS runtime tests using FreeRTOS POSIX port" OFF)
@@ -197,6 +197,19 @@ if(SOMEIP_USE_LWIP)
     )
 endif()
 
+# --- ETL (Embedded Template Library) for static-allocation containers ---
+if(SOMEIP_USE_STATIC_ALLOC)
+    set(BUILD_TESTS_SAVED ${BUILD_TESTS})
+    set(BUILD_TESTS OFF)
+    FetchContent_Declare(etl
+        GIT_REPOSITORY https://github.com/ETLCPP/etl.git
+        GIT_TAG        20.47.1
+        GIT_SHALLOW    TRUE
+    )
+    FetchContent_MakeAvailable(etl)
+    set(BUILD_TESTS ${BUILD_TESTS_SAVED})
+endif()
+
 # Set policy for FetchContent timestamp handling (CMake 3.24+)
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
@@ -251,6 +264,15 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Include directories
 include_directories(include)
+
+# Allocation backend (selects containers_impl.h, buffer_pool_impl.h, memory_impl.h)
+# SOMEIP_STATIC_ALLOC is set via target_compile_definitions on opensomeip (PUBLIC),
+# so it propagates to dependents but NOT to PAL mock tests that compile sources directly.
+if(SOMEIP_USE_STATIC_ALLOC)
+    include_directories(include/platform/static)
+else()
+    include_directories(include/platform/dynamic)
+endif()
 
 # Platform backend include directories (selects which *_impl.h files are found)
 if(SOMEIP_USE_FREERTOS)
@@ -342,6 +364,13 @@ endif()
 if(SOMEIP_FREERTOS_RENODE_TESTS)
     add_subdirectory(bsp/stm32f407_renode)
 
+    # Propagate heap size override to the FreeRTOS kernel so heap_4.c picks it
+    # up via FreeRTOSConfig.h's #ifndef SOMEIP_FREERTOS_HEAP_SIZE guard.
+    if(DEFINED SOMEIP_FREERTOS_HEAP_SIZE AND TARGET freertos_kernel)
+        target_compile_definitions(freertos_kernel PUBLIC
+            SOMEIP_FREERTOS_HEAP_SIZE=${SOMEIP_FREERTOS_HEAP_SIZE})
+    endif()
+
     add_executable(test_freertos_renode tests/freertos/test_freertos_core.cpp)
     target_include_directories(test_freertos_renode PRIVATE
         ${PROJECT_SOURCE_DIR}/include
@@ -351,6 +380,8 @@ if(SOMEIP_FREERTOS_RENODE_TESTS)
         someip-core
         someip-serialization
         someip-transport
+        someip-e2e
+        someip-tp
         stm32f407_bsp
     )
     target_link_options(test_freertos_renode PRIVATE
@@ -382,6 +413,8 @@ if(SOMEIP_THREADX_RENODE_TESTS)
         someip-core
         someip-serialization
         someip-transport
+        someip-e2e
+        someip-tp
         stm32f407_bsp
     )
     target_link_options(test_threadx_renode PRIVATE
@@ -605,6 +638,11 @@ elseif(WIN32)
     message(STATUS "    Networking ............ Winsock2")
 else()
     message(STATUS "    Networking ............ BSD sockets")
+endif()
+if(SOMEIP_USE_STATIC_ALLOC)
+    message(STATUS "    Allocation ............ Static (ETL, no heap)")
+else()
+    message(STATUS "    Allocation ............ Dynamic (STL)")
 endif()
 message(STATUS "  Build tests ............. ${BUILD_TESTS}")
 message(STATUS "  Build examples .......... ${BUILD_EXAMPLES}")

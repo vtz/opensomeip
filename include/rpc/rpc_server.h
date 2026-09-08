@@ -15,11 +15,16 @@
 #define SOMEIP_RPC_SERVER_H
 
 #include "rpc/rpc_types.h"
-#include <memory>
-#include <functional>
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 
-namespace someip {
-namespace rpc {
+#ifdef SOMEIP_STATIC_ALLOC
+#include "static_config.h"
+#else
+#include <memory>
+#endif
+
+namespace someip::rpc {
 
 /**
  * @brief Forward declaration
@@ -32,11 +37,11 @@ class RpcServerImpl;
  * Function signature for handling RPC method calls on the server side.
  * Receives method parameters and returns result with output parameters.
  */
-using MethodHandler = std::function<RpcResult(
+using MethodHandler = platform::Function<RpcResult(
     uint16_t client_id,
     uint16_t session_id,
-    const std::vector<uint8_t>& input_params,
-    std::vector<uint8_t>& output_params
+    const platform::ByteBuffer& input_params,
+    platform::ByteBuffer& output_params
 )>;
 
 /**
@@ -105,7 +110,7 @@ public:
      *
      * @return Vector of all registered method IDs
      */
-    std::vector<MethodId> get_registered_methods() const;
+    platform::Vector<MethodId> get_registered_methods() const;
 
     /**
      * @brief Check if server is initialized and ready
@@ -129,10 +134,17 @@ public:
     Statistics get_statistics() const;
 
 private:
+#ifdef SOMEIP_STATIC_ALLOC
+    alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_RPCSERVER_SIZE];
+    RpcServerImpl* impl() noexcept { return reinterpret_cast<RpcServerImpl*>(impl_storage_); }
+    const RpcServerImpl* impl() const noexcept { return reinterpret_cast<const RpcServerImpl*>(impl_storage_); }
+#else
     std::unique_ptr<RpcServerImpl> impl_;
+    RpcServerImpl* impl() noexcept { return impl_.get(); }
+    const RpcServerImpl* impl() const noexcept { return impl_.get(); }
+#endif
 };
 
-} // namespace rpc
-} // namespace someip
+}  // namespace someip::rpc
 
 #endif // SOMEIP_RPC_SERVER_H

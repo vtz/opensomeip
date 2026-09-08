@@ -1,0 +1,7 @@
+# PAL (Platform Abstraction Layer) implementation files.
+#
+# These files intentionally include platform headers that re-export types
+# and functions through the PAL interface.  Transitive includes are by
+# design here, so misc-include-cleaner is disabled for this directory only.
+InheritParentConfig: true
+Checks: '-misc-include-cleaner'

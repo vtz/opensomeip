@@ -75,13 +75,17 @@ static inline int someip_shutdown_socket(someip_socket_t fd) {
 static inline int someip_set_nonblocking(someip_socket_t fd) {
     int flags = zsock_fcntl(fd, ZVFS_F_GETFL, 0);
     if (flags < 0) return -1;
-    return zsock_fcntl(fd, ZVFS_F_SETFL, flags | ZVFS_O_NONBLOCK);
+    return zsock_fcntl(fd, ZVFS_F_SETFL,
+                       static_cast<int>(static_cast<unsigned int>(flags) |
+                                        static_cast<unsigned int>(ZVFS_O_NONBLOCK)));
 }
 
 static inline int someip_set_blocking(someip_socket_t fd) {
     int flags = zsock_fcntl(fd, ZVFS_F_GETFL, 0);
     if (flags < 0) return -1;
-    return zsock_fcntl(fd, ZVFS_F_SETFL, flags & ~ZVFS_O_NONBLOCK);
+    return zsock_fcntl(fd, ZVFS_F_SETFL,
+                       static_cast<int>(static_cast<unsigned int>(flags) &
+                                        ~static_cast<unsigned int>(ZVFS_O_NONBLOCK)));
 }
 
 /* ---------- Socket creation & connection ----------------------------------- */

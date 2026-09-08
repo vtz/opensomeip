@@ -12,11 +12,16 @@
  ********************************************************************************/
 
 #include "e2e/e2e_header.h"
+
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
+
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
+// NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from platform/byteorder.h -> byteorder_impl.h
 
 /**
  * @brief Serialize E2E header to byte vector
@@ -24,8 +29,8 @@ namespace e2e {
  * @satisfies feat_req_someip_102
  * @satisfies feat_req_someip_103
  */
-std::vector<uint8_t> E2EHeader::serialize() const {
-    std::vector<uint8_t> data;
+platform::ByteBuffer E2EHeader::serialize() const {
+    platform::ByteBuffer data;
     data.reserve(get_header_size());
 
     // Serialize in big-endian format (network byte order)
@@ -54,28 +59,28 @@ std::vector<uint8_t> E2EHeader::serialize() const {
  * @satisfies feat_req_someip_102
  * @satisfies feat_req_someip_103
  */
-bool E2EHeader::deserialize(const std::vector<uint8_t>& data, size_t offset) {
+bool E2EHeader::deserialize(const platform::ByteBuffer& data, size_t offset) {
     const size_t header_size = get_header_size();
-    if (data.size() < offset + header_size) {
+    if (header_size > data.size() || offset > data.size() - header_size) {
         return false;
     }
 
-    uint32_t crc_be;
+    uint32_t crc_be = 0;
     std::memcpy(&crc_be, &data[offset], sizeof(uint32_t));
     crc = someip_ntohl(crc_be);
     offset += sizeof(uint32_t);
 
-    uint32_t counter_be;
+    uint32_t counter_be = 0;
     std::memcpy(&counter_be, &data[offset], sizeof(uint32_t));
     counter = someip_ntohl(counter_be);
     offset += sizeof(uint32_t);
 
-    uint16_t data_id_be;
+    uint16_t data_id_be = 0;
     std::memcpy(&data_id_be, &data[offset], sizeof(uint16_t));
     data_id = someip_ntohs(data_id_be);
     offset += sizeof(uint16_t);
 
-    uint16_t freshness_be;
+    uint16_t freshness_be = 0;
     std::memcpy(&freshness_be, &data[offset], sizeof(uint16_t));
     freshness_value = someip_ntohs(freshness_be);
 
@@ -88,5 +93,6 @@ bool E2EHeader::is_valid() const {
     return true;
 }
 
-} // namespace e2e
-} // namespace someip
+// NOLINTEND(misc-include-cleaner)
+
+}  // namespace someip::e2e

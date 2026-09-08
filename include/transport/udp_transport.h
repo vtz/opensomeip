@@ -16,13 +16,15 @@
 
 #include "transport/transport.h"
 #include "transport/multicast_transport.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/net.h"
 #include "platform/thread.h"
 #include <atomic>
-#include <queue>
+#include <optional>
+#include <utility>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief UDP Transport Configuration
@@ -36,7 +38,7 @@ struct UdpTransportConfig {
     bool reuse_address{true};               // Allow address reuse (SO_REUSEADDR)
     bool reuse_port{false};                 // Allow port reuse (SO_REUSEPORT) - for multicast
     bool enable_broadcast{false};           // Enable broadcast sending
-    std::string multicast_interface{};      // Interface for multicast (empty = INADDR_ANY)
+    platform::String<> multicast_interface;  // Interface for multicast (empty = INADDR_ANY)
     int multicast_ttl{1};                   // Multicast TTL (1 = local network only)
 
     // SOME/IP spec recommends max 1400 bytes to avoid IP fragmentation
@@ -72,6 +74,20 @@ public:
     // ITransport interface implementation
     [[nodiscard]] Result send_message(const Message& message, const Endpoint& endpoint) override;
     MessagePtr receive_message() override;
+
+    /**
+     * @brief Receive a message with sender endpoint (non-blocking, polling mode)
+     *
+     * Like receive_message(), this only returns messages when no listener is
+     * installed. Use this variant when the caller needs the originating
+     * endpoint for reply addressing without requiring a full listener.
+     *
+     * @param[out] sender Filled with the sender's endpoint on success
+     * @return Received message or nullptr if no message available
+     * @see ITransport::set_listener(), ITransport::receive_message()
+     */
+    MessagePtr receive_message_with_sender(Endpoint& sender);
+
     Result connect(const Endpoint& endpoint) override;
     Result disconnect() override;
     bool is_connected() const override;
@@ -82,18 +98,24 @@ public:
     bool is_running() const override;
 
     // IMulticastTransport
-    Result join_multicast_group(const std::string& multicast_address) override;
-    Result leave_multicast_group(const std::string& multicast_address) override;
+    Result join_multicast_group(const platform::String<>& multicast_address) override;
+    Result leave_multicast_group(const platform::String<>& multicast_address) override;
+
+    // Disable copy and assignment
+    UdpTransport(const UdpTransport&) = delete;
+    UdpTransport& operator=(const UdpTransport&) = delete;
+    UdpTransport(UdpTransport&&) = delete;
+    UdpTransport& operator=(UdpTransport&&) = delete;
 
 private:
     Endpoint local_endpoint_;
     UdpTransportConfig config_;
     someip_socket_t socket_fd_{SOMEIP_INVALID_SOCKET};
     std::atomic<bool> running_;
-    std::unique_ptr<platform::Thread> receive_thread_;
-    ITransportListener* listener_{nullptr};
+    std::optional<platform::Thread> receive_thread_;
+    std::atomic<ITransportListener*> listener_{nullptr};
 
-    std::queue<MessagePtr> receive_queue_;
+    platform::Queue<std::pair<MessagePtr, Endpoint>> receive_queue_;
     platform::Mutex queue_mutex_;
     platform::ConditionVariable queue_cv_;
 
@@ -107,18 +129,13 @@ private:
     Result bind_socket();
     Result configure_multicast(const Endpoint& endpoint);
     void receive_loop();
-    Result send_data(const std::vector<uint8_t>& data, const Endpoint& endpoint);
-    Result receive_data(std::vector<uint8_t>& data, Endpoint& sender, size_t& bytes_received);
+    Result send_data(const platform::ByteBuffer& data, const Endpoint& endpoint);
+    Result receive_data(platform::ByteBuffer& data, Endpoint& sender, size_t& bytes_received);
     sockaddr_in create_sockaddr(const Endpoint& endpoint) const;
     Endpoint sockaddr_to_endpoint(const sockaddr_in& addr) const;
-    bool is_multicast_address(const std::string& address) const;
-
-    // Disable copy and assignment
-    UdpTransport(const UdpTransport&) = delete;
-    UdpTransport& operator=(const UdpTransport&) = delete;
+    bool is_multicast_address(const platform::String<>& address) const;
 };
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
 #endif // SOMEIP_TRANSPORT_UDP_TRANSPORT_H

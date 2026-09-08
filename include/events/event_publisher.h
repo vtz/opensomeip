@@ -15,11 +15,16 @@
 #define SOMEIP_EVENTS_PUBLISHER_H
 
 #include "event_types.h"
-#include <memory>
-#include <vector>
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 
-namespace someip {
-namespace events {
+#ifdef SOMEIP_STATIC_ALLOC
+#include "static_config.h"
+#else
+#include <memory>
+#endif
+
+namespace someip::events {
 
 /**
  * @brief Forward declaration
@@ -95,7 +100,7 @@ public:
      * @param data Event data payload
      * @return true if published successfully, false on error
      */
-    bool publish_event(uint16_t event_id, const std::vector<uint8_t>& data);
+    bool publish_event(uint16_t event_id, const platform::ByteBuffer& data);
 
     /**
      * @brief Publish a field notification (immediate update)
@@ -104,7 +109,15 @@ public:
      * @param data Field data payload
      * @return true if published successfully, false on error
      */
-    bool publish_field(uint16_t event_id, const std::vector<uint8_t>& data);
+    bool publish_field(uint16_t event_id, const platform::ByteBuffer& data);
+
+    /**
+     * @brief Set the default client endpoint for subscriptions that don't
+     *        provide an explicit endpoint (e.g. from SD-discovered addresses).
+     * @param address Client IP address
+     * @param port    Client port
+     */
+    void set_default_client_endpoint(const platform::String<>& address, uint16_t port);
 
     /**
      * @brief Handle event subscription request
@@ -115,7 +128,25 @@ public:
      * @return true if subscription handled, false on error
      */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
-                           const std::vector<EventFilter>& filters = {});
+                           const platform::Vector<EventFilter>& filters = {});
+
+    /**
+     * @brief Handle event subscription request with explicit TTL
+     *
+     * Per SOME/IP-SD, the server must track subscription TTL and stop
+     * sending events once the TTL expires without renewal.
+     *
+     * @param eventgroup_id Event group being subscribed to
+     * @param client_id Client identifier
+     * @param ttl_seconds Subscription TTL in seconds.
+     *        0 = StopSubscribeEventgroup (immediate removal).
+     *        0xFFFFFF = infinite (never expires).
+     * @param filters Optional filters for selective notifications
+     * @return true if subscription handled, false on error
+     */
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                           uint32_t ttl_seconds,
+                           const platform::Vector<EventFilter>& filters = {});
 
     /**
      * @brief Handle event unsubscription
@@ -127,11 +158,21 @@ public:
     bool handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id);
 
     /**
+     * @brief Remove subscriptions whose TTL has expired.
+     *
+     * Called automatically from the publish timer, but may also be invoked
+     * manually for deterministic testing.
+     *
+     * @return Number of subscriptions removed
+     */
+    size_t cleanup_expired_subscriptions();
+
+    /**
      * @brief Get registered events
      *
      * @return Vector of registered event IDs
      */
-    std::vector<uint16_t> get_registered_events() const;
+    platform::Vector<uint16_t> get_registered_events() const;
 
     /**
      * @brief Get active subscriptions for an event group
@@ -139,7 +180,7 @@ public:
      * @param eventgroup_id Event group identifier
      * @return Vector of subscribed client IDs
      */
-    std::vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const;
+    platform::Vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const;
 
     /**
      * @brief Check if publisher is initialized and ready
@@ -163,10 +204,17 @@ public:
     Statistics get_statistics() const;
 
 private:
+#ifdef SOMEIP_STATIC_ALLOC
+    alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_EVENTPUB_SIZE];
+    EventPublisherImpl* impl() noexcept { return reinterpret_cast<EventPublisherImpl*>(impl_storage_); }
+    const EventPublisherImpl* impl() const noexcept { return reinterpret_cast<const EventPublisherImpl*>(impl_storage_); }
+#else
     std::unique_ptr<EventPublisherImpl> impl_;
+    EventPublisherImpl* impl() noexcept { return impl_.get(); }
+    const EventPublisherImpl* impl() const noexcept { return impl_.get(); }
+#endif
 };
 
-} // namespace events
-} // namespace someip
+}  // namespace someip::events
 
 #endif // SOMEIP_EVENTS_PUBLISHER_H

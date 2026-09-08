@@ -39,6 +39,13 @@ void Default_Handler(void) {
     while (1) {}
 }
 
+// GCC's libstdc++ references __sync_synchronize for thread-safe static
+// locals and std::string COW.  Cortex-M4 has no SMP, so a full barrier
+// is a no-op; the DMB instruction is sufficient for peripheral ordering.
+void __sync_synchronize(void) {
+    __asm volatile ("dmb" ::: "memory");
+}
+
 void NMI_Handler(void)       __attribute__((weak, alias("Default_Handler")));
 void HardFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
 void MemManage_Handler(void) __attribute__((weak, alias("Default_Handler")));

@@ -13,6 +13,8 @@ target_link_libraries(test_threadx_core PRIVATE
     someip-core
     someip-serialization
     someip-transport
+    someip-e2e
+    someip-tp
 )
 
 add_test(NAME ThreadXCoreTest COMMAND test_threadx_core)

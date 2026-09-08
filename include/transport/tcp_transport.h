@@ -15,14 +15,15 @@
 #define SOMEIP_TRANSPORT_TCP_TRANSPORT_H
 
 #include "transport/transport.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/net.h"
 #include "platform/thread.h"
-#include <cstddef>
 #include <atomic>
-#include <queue>
+#include <cstddef>
+#include <optional>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief TCP Connection State
@@ -42,7 +43,7 @@ struct TcpConnection {
     Endpoint remote_endpoint;
     TcpConnectionState state{TcpConnectionState::DISCONNECTED};
     std::chrono::steady_clock::time_point last_activity{std::chrono::steady_clock::now()};
-    std::vector<uint8_t> receive_buffer;
+    platform::ByteBuffer receive_buffer;
 
     TcpConnection() = default;
 
@@ -66,6 +67,8 @@ struct TcpTransportConfig {
     size_t max_connections{10};                             // Max concurrent connections
     bool keep_alive{true};                                  // TCP keep-alive
     std::chrono::milliseconds keep_alive_interval{30000};   // Keep-alive interval
+    bool magic_cookie_enabled{true};                        // Periodic Magic Cookie insertion
+    std::chrono::milliseconds magic_cookie_interval{10000}; // 10s per SOME/IP spec
 };
 
 /**
@@ -109,8 +112,13 @@ public:
     [[nodiscard]] Result send_message(const Message& message, const Endpoint& endpoint) override;
 
     /**
-     * @brief Receive a message (non-blocking)
+     * @brief Receive a message from the internal queue (non-blocking, polling mode)
+     *
+     * Only returns messages when no listener is installed via set_listener().
+     * Messages queued before listener installation remain drainable.
+     *
      * @return Received message or nullptr if no message available
+     * @see set_listener()
      */
     MessagePtr receive_message() override;
 
@@ -140,8 +148,9 @@ public:
     Endpoint get_local_endpoint() const override;
 
     /**
-     * @brief Set transport listener
-     * @param listener The listener to receive events
+     * @brief Set transport listener for asynchronous message delivery
+     *
+     * @copydetails ITransport::set_listener()
      */
     void set_listener(ITransportListener* listener) override;
 
@@ -182,19 +191,39 @@ public:
      */
     someip_socket_t accept_connection();
 
+    /**
+     * @brief Parse one complete SOME/IP message from a byte buffer.
+     *
+     * Consumes exactly the bytes of one message if successful; leaves
+     * incomplete trailing bytes in the buffer for subsequent calls.
+     *
+     * @param buffer Accumulation buffer (modified in-place)
+     * @param message [out] Parsed message on success
+     * @return true if a complete message was extracted
+     */
+    bool parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message);
+
+    static constexpr size_t SOMEIP_HEADER_SIZE = 16;
+    static constexpr size_t MAX_MESSAGE_SIZE = 65535;
+
+    /** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_025 */
+    static bool is_magic_cookie(const platform::ByteBuffer& data, size_t offset = 0);
+    static platform::ByteBuffer make_magic_cookie_client();
+    static platform::ByteBuffer make_magic_cookie_server();
+
 private:
     TcpTransportConfig config_;
     Endpoint local_endpoint_;
     TcpConnection connection_;
-    ITransportListener* listener_{nullptr};
+    std::atomic<ITransportListener*> listener_{nullptr};
 
     std::atomic<bool> running_{false};
-    std::unique_ptr<platform::Thread> receive_thread_;
-    std::unique_ptr<platform::Thread> connection_thread_;
+    std::optional<platform::Thread> receive_thread_;
+    std::optional<platform::Thread> connection_thread_;
 
     std::atomic<size_t> active_connections_{0};
 
-    std::queue<std::pair<MessagePtr, Endpoint>> message_queue_;
+    platform::Queue<std::pair<MessagePtr, Endpoint>> message_queue_;
     platform::Mutex queue_mutex_;
     platform::ConditionVariable queue_cv_;
 
@@ -202,7 +231,8 @@ private:
     bool server_mode_{false};
     someip_socket_t listen_socket_fd_{SOMEIP_INVALID_SOCKET};
 
-    // Helper methods
+    void deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender);
+    someip_socket_t accept_connection_with_peer(Endpoint& peer_endpoint);
     Result create_socket();
     Result bind_socket();
     Result setup_socket_options(someip_socket_t socket_fd, bool blocking = true);
@@ -210,16 +240,13 @@ private:
     void disconnect_internal();
     void receive_loop();
     void connection_monitor_loop();
-    Result send_data(someip_socket_t socket_fd, const std::vector<uint8_t>& data);
-    Result receive_data(someip_socket_t socket_fd, std::vector<uint8_t>& data);
-    bool parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message);
+    void send_periodic_magic_cookie();
+    Result send_data(someip_socket_t socket_fd, const platform::ByteBuffer& data);
+    Result receive_data(someip_socket_t socket_fd, platform::ByteBuffer& data);
 
-    // Message parsing
-    static const size_t SOMEIP_HEADER_SIZE = 16;
-    static const size_t MAX_MESSAGE_SIZE = 65535;
+    std::chrono::steady_clock::time_point last_magic_cookie_time_{std::chrono::steady_clock::now()};
 };
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
 #endif // SOMEIP_TRANSPORT_TCP_TRANSPORT_H

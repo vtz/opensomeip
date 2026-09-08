@@ -12,12 +12,20 @@
  ********************************************************************************/
 
 #include "serialization/serializer.h"
-#include <cstring>
-#include <algorithm>
+
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
 
-namespace someip {
-namespace serialization {
+#include <algorithm>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <optional>
+#include <string>
+#include <utility>
+
+namespace someip::serialization {
+// NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from platform/byteorder.h -> byteorder_impl.h
 
 /**
  * @brief SOME/IP Serializer implementation
@@ -125,20 +133,31 @@ void Serializer::serialize_double(double value) {
 }
 
 /**
- * @brief Serialize string with length prefix and padding
+ * @brief Serialize dynamic UTF-8 string per Open SOME/IP spec
+ * @satisfies feat_req_someip_662, feat_req_someip_800, feat_req_someip_687, feat_req_someip_562
  * @implements REQ_SER_040, REQ_SER_041, REQ_SER_042
  * @implements REQ_SER_040_E01, REQ_SER_040_E02, REQ_SER_042_E01
  * @implements REQ_SER_050, REQ_SER_051, REQ_SER_050_E01, REQ_SER_050_E02
+ *
+ * Wire format: [length u32][BOM EF BB BF][utf8 data][0x00]
+ * Length = BOM(3) + data + NUL(1), excludes the length field itself.
  */
-void Serializer::serialize_string(const std::string& value) {
-    // Serialize string length as uint32_t
-    serialize_uint32(static_cast<uint32_t>(value.length()));
+void Serializer::serialize_string(const platform::String<>& value) {
+    const auto data_len = static_cast<uint32_t>(value.length());
+    const uint32_t wire_length = 3 + data_len + 1;  // BOM + data + NUL
+    serialize_uint32(wire_length);
 
-    // Serialize string data (no null terminator)
-    buffer_.insert(buffer_.end(), value.begin(), value.end());
+    // UTF-8 BOM
+    buffer_.push_back(0xEF);
+    buffer_.push_back(0xBB);
+    buffer_.push_back(0xBF);
 
-    // Add padding to align to 4-byte boundary
-    align_to(4);
+    // String data
+    const auto* str_data = reinterpret_cast<const uint8_t*>(value.data());
+    buffer_.insert(buffer_.end(), str_data, str_data + value.length());
+
+    // NUL terminator
+    buffer_.push_back(0x00);
 }
 
 /**
@@ -148,8 +167,11 @@ void Serializer::serialize_string(const std::string& value) {
  * @implements REQ_SER_080_E01, REQ_SER_080_E02
  */
 void Serializer::align_to(size_t alignment) {
-    size_t current_size = buffer_.size();
-    size_t padding_needed = (alignment - (current_size % alignment)) % alignment;
+    if (alignment == 0) {
+        return;
+    }
+    const size_t current_size = buffer_.size();
+    size_t const padding_needed = (alignment - (current_size % alignment)) % alignment;
 
     for (size_t i = 0; i < padding_needed; ++i) {
         buffer_.push_back(0x00);
@@ -167,29 +189,27 @@ void Serializer::add_padding(size_t bytes) {
 }
 
 void Serializer::append_be_uint16(uint16_t value) {
-    uint16_t be_value = someip_htons(value);
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&be_value);
+    const uint16_t be_value = someip_htons(value);
+    const auto* bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint16_t));
 }
 
 void Serializer::append_be_uint32(uint32_t value) {
-    uint32_t be_value = someip_htonl(value);
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&be_value);
+    const uint32_t be_value = someip_htonl(value);
+    const auto* bytes = reinterpret_cast<const uint8_t*>(&be_value);
     buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint32_t));
 }
 
 void Serializer::append_be_uint64(uint64_t value) {
-    // Manual big-endian conversion for macOS compatibility
-    uint64_t be_value = ((value & 0xFF00000000000000ULL) >> 56) |
-                        ((value & 0x00FF000000000000ULL) >> 40) |
-                        ((value & 0x0000FF0000000000ULL) >> 24) |
-                        ((value & 0x000000FF00000000ULL) >> 8) |
-                        ((value & 0x00000000FF000000ULL) << 8) |
-                        ((value & 0x0000000000FF0000ULL) << 24) |
-                        ((value & 0x000000000000FF00ULL) << 40) |
-                        ((value & 0x00000000000000FFULL) << 56);
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&be_value);
-    buffer_.insert(buffer_.end(), bytes, bytes + sizeof(uint64_t));
+    // Portable big-endian serialization: extract bytes MSB-first
+    buffer_.push_back(static_cast<uint8_t>((value >> 56U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 48U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 40U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 32U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 24U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 16U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>((value >> 8U) & 0xFFU));
+    buffer_.push_back(static_cast<uint8_t>(value & 0xFFU));
 }
 
 void Serializer::append_be_int16(int16_t value) {
@@ -206,14 +226,14 @@ void Serializer::append_be_int64(int64_t value) {
 
 void Serializer::append_be_float(float value) {
     // Convert to big-endian bytes
-    uint32_t bits;
+    uint32_t bits = 0;
     std::memcpy(&bits, &value, sizeof(bits));
     append_be_uint32(bits);
 }
 
 void Serializer::append_be_double(double value) {
     // Convert to big-endian bytes using memcpy to avoid undefined behavior
-    uint64_t bits;
+    uint64_t bits = 0;
     std::memcpy(&bits, &value, sizeof(bits));
     append_be_uint64(bits);
 }
@@ -230,11 +250,11 @@ void Serializer::append_be_double(double value) {
  * @implements REQ_SER_071, REQ_SER_072
  */
 
-Deserializer::Deserializer(const std::vector<uint8_t>& data)
+Deserializer::Deserializer(const platform::ByteBuffer& data)
     : buffer_(data), position_(0) {
 }
 
-Deserializer::Deserializer(std::vector<uint8_t>&& data)
+Deserializer::Deserializer(platform::ByteBuffer&& data)
     : buffer_(std::move(data)), position_(0) {
 }
 
@@ -255,7 +275,7 @@ DeserializationResult<bool> Deserializer::deserialize_bool() {
     if (position_ + sizeof(uint8_t) > buffer_.size()) {
         return DeserializationResult<bool>::error(Result::MALFORMED_MESSAGE);
     }
-    bool value = buffer_[position_++] != 0x00;
+    const bool value = buffer_[position_++] != 0x00;
     return DeserializationResult<bool>::success(value);
 }
 
@@ -268,7 +288,7 @@ DeserializationResult<uint8_t> Deserializer::deserialize_uint8() {
     if (position_ + sizeof(uint8_t) > buffer_.size()) {
         return DeserializationResult<uint8_t>::error(Result::MALFORMED_MESSAGE);
     }
-    uint8_t value = buffer_[position_++];
+    const uint8_t value = buffer_[position_++];
     return DeserializationResult<uint8_t>::success(value);
 }
 
@@ -382,30 +402,49 @@ DeserializationResult<double> Deserializer::deserialize_double() {
 }
 
 /**
- * @brief Deserialize string with length prefix
+ * @brief Deserialize dynamic UTF-8 string per Open SOME/IP spec
+ * @satisfies feat_req_someip_662, feat_req_someip_800, feat_req_someip_687, feat_req_someip_666, feat_req_someip_562
  * @implements REQ_SER_043, REQ_SER_044, REQ_SER_045
  * @implements REQ_SER_043_E01, REQ_SER_047_E01
+ *
+ * Wire format: [length u32][BOM EF BB BF][utf8 data][0x00]
+ * Length = BOM(3) + data + NUL(1), excludes the length field itself.
  */
-DeserializationResult<std::string> Deserializer::deserialize_string() {
-    // Deserialize string length
+DeserializationResult<platform::String<>> Deserializer::deserialize_string() {
     auto length_result = deserialize_uint32();
     if (length_result.is_error()) {
-        return DeserializationResult<std::string>::error(length_result.get_error());
+        return DeserializationResult<platform::String<>>::error(length_result.get_error());
     }
-    uint32_t length = length_result.get_value();
+    const uint32_t length = length_result.get_value();
 
-    if (position_ + length > buffer_.size()) {
-        return DeserializationResult<std::string>::error(Result::MALFORMED_MESSAGE);
+    // Minimum: BOM(3) + NUL(1) = 4 bytes
+    if (length < 4) {
+        return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
     }
 
-    std::string result(buffer_.begin() + position_,
-                      buffer_.begin() + position_ + length);
+    if (position_ > buffer_.size() || length > buffer_.size() - position_) {
+        return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
+    }
+
+    // Validate UTF-8 BOM (feat_req_someip_666)
+    if (buffer_[position_] != 0xEF ||
+        buffer_[position_ + 1] != 0xBB ||
+        buffer_[position_ + 2] != 0xBF) {
+        return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
+    }
+
+    // Validate trailing NUL (feat_req_someip_687)
+    if (buffer_[position_ + length - 1] != 0x00) {
+        return DeserializationResult<platform::String<>>::error(Result::MALFORMED_MESSAGE);
+    }
+
+    // Extract string data: skip BOM(3), exclude trailing NUL(1)
+    const uint32_t str_len = length - 4;  // minus BOM(3) and NUL(1)
+    platform::String<> result(
+        reinterpret_cast<const char*>(buffer_.data() + position_ + 3), str_len);
     position_ += length;
 
-    // Skip padding to align to 4-byte boundary
-    align_to(4);
-
-    return DeserializationResult<std::string>::success(std::move(result));
+    return DeserializationResult<platform::String<>>::success(std::move(result));
 }
 
 /**
@@ -413,7 +452,7 @@ DeserializationResult<std::string> Deserializer::deserialize_string() {
  * @implements REQ_SER_073
  */
 bool Deserializer::set_position(size_t pos) {
-    bool valid = pos <= buffer_.size();
+    bool const valid = pos <= buffer_.size();
     if (valid) {
         position_ = pos;
     }
@@ -429,7 +468,10 @@ void Deserializer::skip(size_t bytes) {
  * @implements REQ_SER_080, REQ_SER_081, REQ_SER_082
  */
 void Deserializer::align_to(size_t alignment) {
-    size_t padding = (alignment - (position_ % alignment)) % alignment;
+    if (alignment == 0) {
+        return;
+    }
+    size_t const padding = (alignment - (position_ % alignment)) % alignment;
     skip(padding);
 }
 
@@ -438,7 +480,7 @@ std::optional<uint16_t> Deserializer::read_be_uint16() {
         return std::nullopt;
     }
 
-    uint16_t value;
+    uint16_t value = 0;
     std::memcpy(&value, &buffer_[position_], sizeof(uint16_t));
     position_ += sizeof(uint16_t);
     return someip_ntohs(value);
@@ -449,7 +491,7 @@ std::optional<uint32_t> Deserializer::read_be_uint32() {
         return std::nullopt;
     }
 
-    uint32_t value;
+    uint32_t value = 0;
     std::memcpy(&value, &buffer_[position_], sizeof(uint32_t));
     position_ += sizeof(uint32_t);
     return someip_ntohl(value);
@@ -460,19 +502,18 @@ std::optional<uint64_t> Deserializer::read_be_uint64() {
         return std::nullopt;
     }
 
-    uint64_t be_value;
-    std::memcpy(&be_value, &buffer_[position_], sizeof(uint64_t));
+    // Portable big-endian deserialization: reconstruct from MSB-first bytes
+    uint64_t value = (static_cast<uint64_t>(buffer_[position_]) << 56U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 1]) << 48U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 2]) << 40U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 3]) << 32U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 4]) << 24U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 5]) << 16U) |
+                     (static_cast<uint64_t>(buffer_[position_ + 6]) << 8U) |
+                     static_cast<uint64_t>(buffer_[position_ + 7]);
     position_ += sizeof(uint64_t);
 
-    // Manual big-endian to host conversion for macOS compatibility
-    return ((be_value & 0xFF00000000000000ULL) >> 56) |
-           ((be_value & 0x00FF000000000000ULL) >> 40) |
-           ((be_value & 0x0000FF0000000000ULL) >> 24) |
-           ((be_value & 0x000000FF00000000ULL) >> 8) |
-           ((be_value & 0x00000000FF000000ULL) << 8) |
-           ((be_value & 0x0000000000FF0000ULL) << 24) |
-           ((be_value & 0x000000000000FF00ULL) << 40) |
-           ((be_value & 0x00000000000000FFULL) << 56);
+    return value;
 }
 
 std::optional<int16_t> Deserializer::read_be_int16() {
@@ -504,7 +545,7 @@ std::optional<float> Deserializer::read_be_float() {
     if (!bits) {
         return std::nullopt;
     }
-    float result;
+    float result = 0.0F;
     std::memcpy(&result, &*bits, sizeof(result));
     return result;
 }
@@ -514,10 +555,11 @@ std::optional<double> Deserializer::read_be_double() {
     if (!bits) {
         return std::nullopt;
     }
-    double result;
+    double result = 0.0;
     std::memcpy(&result, &*bits, sizeof(result));
     return result;
 }
 
-} // namespace serialization
-} // namespace someip
+// NOLINTEND(misc-include-cleaner)
+
+}  // namespace someip::serialization

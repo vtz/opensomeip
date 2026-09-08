@@ -14,13 +14,13 @@
 #ifndef E2E_HEADER_H
 #define E2E_HEADER_H
 
+#include "platform/buffer_pool.h"
+
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <optional>
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief E2E protection header structure
@@ -70,7 +70,7 @@ struct E2EHeader {
      * @brief Serialize header to byte vector (big-endian)
      * @return Serialized header bytes
      */
-    std::vector<uint8_t> serialize() const;
+    platform::ByteBuffer serialize() const;
 
     /**
      * @brief Deserialize header from byte vector (big-endian)
@@ -78,7 +78,7 @@ struct E2EHeader {
      * @param offset Offset into the data vector
      * @return true if successful, false otherwise
      */
-    bool deserialize(const std::vector<uint8_t>& data, size_t offset = 0);
+    bool deserialize(const platform::ByteBuffer& data, size_t offset = 0);
 
     /**
      * @brief Get the size of the header in bytes
@@ -93,7 +93,6 @@ struct E2EHeader {
     bool is_valid() const;
 };
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e
 
 #endif // E2E_HEADER_H

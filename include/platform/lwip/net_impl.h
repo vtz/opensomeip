@@ -44,14 +44,18 @@ static inline int someip_shutdown_socket(someip_socket_t fd) {
 static inline int someip_set_nonblocking(someip_socket_t fd) {
     int flags = lwip_fcntl(fd, F_GETFL, 0);
     if (flags < 0) return -1;
-    return lwip_fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    return lwip_fcntl(fd, F_SETFL,
+                      static_cast<int>(static_cast<unsigned int>(flags) |
+                                       static_cast<unsigned int>(O_NONBLOCK)));
 }
 
 /** @implements REQ_PLATFORM_LWIP_001 */
 static inline int someip_set_blocking(someip_socket_t fd) {
     int flags = lwip_fcntl(fd, F_GETFL, 0);
     if (flags < 0) return -1;
-    return lwip_fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+    return lwip_fcntl(fd, F_SETFL,
+                      static_cast<int>(static_cast<unsigned int>(flags) &
+                                       ~static_cast<unsigned int>(O_NONBLOCK)));
 }
 
 /* ---------- Socket creation & connection ----------------------------------- */

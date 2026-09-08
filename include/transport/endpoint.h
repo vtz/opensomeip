@@ -14,11 +14,12 @@
 #ifndef SOMEIP_TRANSPORT_ENDPOINT_H
 #define SOMEIP_TRANSPORT_ENDPOINT_H
 
-#include <string>
-#include <cstdint>
+#include "platform/containers.h"
 
-namespace someip {
-namespace transport {
+#include <cstdint>
+#include <string>
+
+namespace someip::transport {
 
 /**
  * @brief Transport protocol types
@@ -47,7 +48,7 @@ public:
      * @param port Port number
      * @param protocol Transport protocol
      */
-    Endpoint(const std::string& address, uint16_t port,
+    Endpoint(const platform::String<>& address, uint16_t port,
              TransportProtocol protocol = TransportProtocol::UDP);
 
     /**
@@ -76,8 +77,8 @@ public:
     ~Endpoint() = default;
 
     // Accessors
-    const std::string& get_address() const { return address_; }
-    void set_address(const std::string& address) { address_ = address; }
+    const platform::String<>& get_address() const { return address_; }
+    void set_address(const platform::String<>& address) { address_ = address; }
 
     uint16_t get_port() const { return port_; }
     void set_port(uint16_t port) { port_ = port; }
@@ -103,14 +104,14 @@ public:
     };
 
 private:
-    std::string address_;
+    platform::String<> address_;
     uint16_t port_;
     TransportProtocol protocol_;
 
     // Helper methods
-    bool is_valid_ipv4(const std::string& address) const;
-    bool is_valid_ipv6(const std::string& address) const;
-    bool is_multicast_ipv4(const std::string& address) const;
+    bool is_valid_ipv4(const platform::String<>& address) const;
+    bool is_valid_ipv6(const platform::String<>& address) const;
+    bool is_multicast_ipv4(const platform::String<>& address) const;
 };
 
 // Predefined endpoints for common SOME/IP usage
@@ -118,7 +119,6 @@ extern const Endpoint SOMEIP_SD_MULTICAST_ENDPOINT;
 extern const Endpoint SOMEIP_DEFAULT_UDP_ENDPOINT;
 extern const Endpoint SOMEIP_DEFAULT_TCP_ENDPOINT;
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
 #endif // SOMEIP_TRANSPORT_ENDPOINT_H

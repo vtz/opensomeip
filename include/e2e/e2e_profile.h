@@ -18,12 +18,11 @@
 #include "e2e_header.h"
 #include "someip/message.h"
 #include "common/result.h"
+#include "platform/containers.h"
 #include <cstdint>
-#include <string>
 #include <memory>
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief Abstract interface for E2E protection profiles
@@ -34,6 +33,11 @@ namespace e2e {
 class E2EProfile {
 public:
     virtual ~E2EProfile() = default;
+
+    E2EProfile(const E2EProfile&) = delete;
+    E2EProfile& operator=(const E2EProfile&) = delete;
+    E2EProfile(E2EProfile&&) = delete;
+    E2EProfile& operator=(E2EProfile&&) = delete;
 
     /**
      * @brief Protect a message before sending
@@ -61,13 +65,16 @@ public:
      * @brief Get the profile name
      * @return Profile name string
      */
-    virtual std::string get_profile_name() const = 0;
+    virtual platform::String<> get_profile_name() const = 0;
 
     /**
      * @brief Get the profile ID
      * @return Profile ID (unique identifier)
      */
     virtual uint32_t get_profile_id() const = 0;
+
+protected:
+    E2EProfile() = default;
 };
 
 /**
@@ -75,7 +82,6 @@ public:
  */
 using E2EProfilePtr = std::unique_ptr<E2EProfile>;
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e
 
 #endif // E2E_PROFILE_H

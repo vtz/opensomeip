@@ -190,6 +190,27 @@ Testing Infrastructure
 
    **Code Location**: ``tests/``
 
+Static Allocation
+-----------------
+
+.. requirement:: Static Allocation Policy
+   :id: REQ_ARCH_008
+   :satisfies: REQ_ARCH_003
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Build with ``SOMEIP_USE_STATIC_ALLOC=ON`` and run unit tests with heap-interception enabled (``REQ_PAL_NOOP_HEAP_VERIFY``). Verify no ``malloc``, ``free``, ``new``, or ``delete`` calls occur during protocol operation. Inspect container and pool types for compile-time capacity bounds.
+
+   When ``SOMEIP_USE_STATIC_ALLOC`` is enabled, the stack shall not perform
+   dynamic memory allocation (heap) at runtime. All buffers, containers, and
+   object pools shall use compile-time-sized static storage.
+
+   **Rationale**: Freedom from interference per ISO 26262 Part 6 clause 7.4.6;
+   WCET determinism per clause 7.4.11.
+
+   **Code Location**: ``CMakeLists.txt``, ``include/platform/static/``,
+   ``src/platform/static/``
+
 Traceability
 ============
 

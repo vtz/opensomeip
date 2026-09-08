@@ -12,16 +12,31 @@
  ********************************************************************************/
 
 #include "transport/tcp_transport.h"
-#include "platform/net.h"
-#include "platform/memory.h"
-#include "common/result.h"
-#include <cstring>
-#include <iostream>
-#include <algorithm>
-#include <cstdio>
 
-namespace someip {
-namespace transport {
+#include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - someip_ntohs for portable byte order
+#include "platform/byteorder.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
+#include "platform/memory.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - socket/POSIX types and someip_* helpers from net_impl.h
+#include "platform/net.h"
+#include "platform/thread.h"
+#include "someip/message.h"
+#include "transport/endpoint.h"
+#include "transport/transport.h"
+
+#include <algorithm>
+#include <array>
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+
+namespace someip::transport {
+
+// NOLINTBEGIN(misc-include-cleaner) - sockaddr/timeval/fd_set and someip_* wrappers/macros come from
+// platform/net.h -> net_impl.h; misc-include-cleaner does not trace through this abstraction.
 
 /**
  * @brief TCP Transport constructor
@@ -55,9 +70,9 @@ Result TcpTransport::initialize(const Endpoint& local_endpoint) {
     }
 
     // Update local endpoint with the actual bound port (useful when port was 0)
-    sockaddr_in bound_addr;
+    sockaddr_in bound_addr = {};
     socklen_t addr_len = sizeof(bound_addr);
-    if (someip_getsockname(connection_.socket_fd, (sockaddr*)&bound_addr, &addr_len) == 0) {
+    if (someip_getsockname(connection_.socket_fd, reinterpret_cast<struct sockaddr*>(&bound_addr), &addr_len) == 0) {
         local_endpoint_ = Endpoint(local_endpoint_.get_address(), ntohs(bound_addr.sin_port));
     }
 
@@ -70,10 +85,10 @@ Result TcpTransport::send_message(const Message& message, const Endpoint& /*endp
     }
 
     // Serialize message
-    std::vector<uint8_t> data = message.serialize();
+    const platform::ByteBuffer data = message.serialize();
 
     // Send data
-    Result result = send_data(connection_.socket_fd, data);
+    const Result result = send_data(connection_.socket_fd, data);
     if (result == Result::SUCCESS) {
         connection_.update_activity();
     }
@@ -82,7 +97,7 @@ Result TcpTransport::send_message(const Message& message, const Endpoint& /*endp
 }
 
 MessagePtr TcpTransport::receive_message() {
-    platform::ScopedLock lock(queue_mutex_);
+    platform::ScopedLock const lock(queue_mutex_);
     if (message_queue_.empty()) {
         return nullptr;
     }
@@ -122,7 +137,7 @@ Endpoint TcpTransport::get_local_endpoint() const {
 }
 
 void TcpTransport::set_listener(ITransportListener* listener) {
-    listener_ = listener;
+    listener_.store(listener, std::memory_order_release);
 }
 
 Result TcpTransport::start() {
@@ -133,10 +148,10 @@ Result TcpTransport::start() {
     running_ = true;
 
     // Start receive thread
-    receive_thread_ = std::make_unique<platform::Thread>(&TcpTransport::receive_loop, this);
+    receive_thread_.emplace(&TcpTransport::receive_loop, this);
 
     // Start connection monitor thread
-    connection_thread_ = std::make_unique<platform::Thread>(&TcpTransport::connection_monitor_loop, this);
+    connection_thread_.emplace(&TcpTransport::connection_monitor_loop, this);
 
     return Result::SUCCESS;
 }
@@ -147,8 +162,8 @@ Result TcpTransport::stop() {
         return Result::SUCCESS;
     }
 
-    running_ = false;
-    listener_ = nullptr;
+    running_.store(false, std::memory_order_release);
+    listener_.store(nullptr, std::memory_order_release);
 
     // Close connections
     disconnect_internal();
@@ -195,6 +210,11 @@ Result TcpTransport::enable_server_mode(int backlog) {
 
 /** @implements REQ_TRANSPORT_003_E01 */
 someip_socket_t TcpTransport::accept_connection() {
+    Endpoint unused;
+    return accept_connection_with_peer(unused);
+}
+
+someip_socket_t TcpTransport::accept_connection_with_peer(Endpoint& peer_endpoint) {
     if (!server_mode_ || listen_socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return SOMEIP_INVALID_SOCKET;
     }
@@ -204,21 +224,26 @@ someip_socket_t TcpTransport::accept_connection() {
     FD_SET(listen_socket_fd_, &read_fds);
 
     struct timeval tv = {0, 100000}; // 100ms
-    int sel = someip_select(static_cast<int>(listen_socket_fd_) + 1, &read_fds, nullptr, nullptr, &tv);
+    const int sel = someip_select(static_cast<int>(listen_socket_fd_) + 1, &read_fds, nullptr, nullptr, &tv);
     if (sel <= 0) {
         return SOMEIP_INVALID_SOCKET;
     }
 
-    sockaddr_in client_addr;
+    sockaddr_in client_addr = {};
     socklen_t client_len = sizeof(client_addr);
 
-    someip_socket_t client_fd = someip_accept(listen_socket_fd_, (sockaddr*)&client_addr, &client_len);
+    someip_socket_t const client_fd =
+        someip_accept(listen_socket_fd_, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
 
     if (client_fd == SOMEIP_INVALID_SOCKET) {
         return SOMEIP_INVALID_SOCKET;
     }
 
     setup_socket_options(client_fd, true);
+
+    std::array<char, 64> addr_buf = {};
+    someip_inet_ntop(AF_INET, &client_addr.sin_addr, addr_buf.data(), addr_buf.size());
+    peer_endpoint = Endpoint(addr_buf.data(), someip_ntohs(client_addr.sin_port), TransportProtocol::TCP);
 
     return client_fd;
 }
@@ -240,13 +265,12 @@ Result TcpTransport::bind_socket() {
         return Result::NOT_INITIALIZED;
     }
 
-    sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
+    sockaddr_in addr = {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(local_endpoint_.get_port());
     addr.sin_addr.s_addr = someip_inet_addr(local_endpoint_.get_address().c_str());
 
-    if (someip_bind(connection_.socket_fd, (sockaddr*)&addr, sizeof(addr)) < 0) {
+    if (someip_bind(connection_.socket_fd, reinterpret_cast<const struct sockaddr*>(&addr), sizeof(addr)) < 0) {
         return Result::NETWORK_ERROR;
     }
 
@@ -294,8 +318,7 @@ Result TcpTransport::setup_socket_options(someip_socket_t socket_fd, bool blocki
 
 /** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04, REQ_TRANSPORT_016, REQ_TRANSPORT_016_E01, REQ_TRANSPORT_018 */
 Result TcpTransport::connect_internal(const Endpoint& endpoint) {
-    sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
+    sockaddr_in addr = {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(endpoint.get_port());
     addr.sin_addr.s_addr = someip_inet_addr(endpoint.get_address().c_str());
@@ -303,15 +326,17 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
     connection_.state = TcpConnectionState::CONNECTING;
     connection_.remote_endpoint = endpoint;
 
-    int connect_result = someip_connect(connection_.socket_fd, (sockaddr*)&addr, sizeof(addr));
+    int connect_result =
+        someip_connect(connection_.socket_fd, reinterpret_cast<const struct sockaddr*>(&addr), sizeof(addr));
 
     if (connect_result == 0) {
-        // Connected immediately
         connection_.state = TcpConnectionState::CONNECTED;
+        connection_.receive_buffer.clear();
+        last_magic_cookie_time_ = std::chrono::steady_clock::now();
         connection_.update_activity();
 
-        if (listener_) {
-            listener_->on_connection_established(endpoint);
+        if (auto* l = listener_.load(std::memory_order_acquire)) {
+            l->on_connection_established(endpoint);
         }
 
         return Result::SUCCESS;
@@ -321,7 +346,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         FD_ZERO(&write_fds);
         FD_SET(connection_.socket_fd, &write_fds);
 
-        struct timeval timeout;
+        struct timeval timeout = {};
         timeout.tv_sec  = static_cast<decltype(timeout.tv_sec)>(config_.connection_timeout.count() / 1000);
         timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>((config_.connection_timeout.count() % 1000) * 1000);
 
@@ -330,14 +355,16 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         if (connect_result > 0) {
             int error = 0;
             socklen_t len = sizeof(error);
-            int gso_ret = someip_getsockopt(connection_.socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
+            const int gso_ret = someip_getsockopt(connection_.socket_fd, SOL_SOCKET, SO_ERROR, &error, &len);
 
             if (gso_ret == 0 && error == 0) {
                 connection_.state = TcpConnectionState::CONNECTED;
+                connection_.receive_buffer.clear();
+                last_magic_cookie_time_ = std::chrono::steady_clock::now();
                 connection_.update_activity();
 
-                if (listener_) {
-                    listener_->on_connection_established(endpoint);
+                if (auto* l = listener_.load(std::memory_order_acquire)) {
+                    l->on_connection_established(endpoint);
                 }
 
                 return Result::SUCCESS;
@@ -354,7 +381,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
 }
 
 void TcpTransport::disconnect_internal() {
-    platform::ScopedLock lock(connection_mutex_);
+    platform::ScopedLock const lock(connection_mutex_);
 
     if (connection_.socket_fd != SOMEIP_INVALID_SOCKET) {
         connection_.state = TcpConnectionState::DISCONNECTING;
@@ -362,6 +389,7 @@ void TcpTransport::disconnect_internal() {
         someip_shutdown_socket(connection_.socket_fd);
         someip_close_socket(connection_.socket_fd);
         connection_.socket_fd = SOMEIP_INVALID_SOCKET;
+        connection_.receive_buffer.clear();
 
         connection_.state = TcpConnectionState::DISCONNECTED;
 
@@ -370,40 +398,48 @@ void TcpTransport::disconnect_internal() {
             active_connections_.fetch_sub(1);
         }
 
-        if (listener_) {
-            listener_->on_connection_lost(connection_.remote_endpoint);
+        if (auto* l = listener_.load(std::memory_order_acquire)) {
+            l->on_connection_lost(connection_.remote_endpoint);
         }
     }
 }
 
 /** @implements REQ_TRANSPORT_024 */
+void TcpTransport::deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender) {
+    auto* l = listener_.load(std::memory_order_acquire);
+    if (l != nullptr) {
+        l->on_message_received(message, sender);
+    } else {
+        platform::ScopedLock const q_lock(queue_mutex_);
+        message_queue_.emplace(message, sender);
+    }
+}
+
 void TcpTransport::receive_loop() {
     while (running_) {
         if (server_mode_) {
-            // In server mode, accept new connections
             if (listen_socket_fd_ != SOMEIP_INVALID_SOCKET) {
-                // Check connection limit before accepting
                 if (active_connections_.load() >= config_.max_connections) {
-                    // Too many connections, wait a bit before checking again
                     platform::this_thread::sleep_for(std::chrono::milliseconds(100));
                     continue;
                 }
 
-                someip_socket_t client_fd = accept_connection();
+                Endpoint peer_ep("0.0.0.0", 0, TransportProtocol::TCP);
+                someip_socket_t const client_fd = accept_connection_with_peer(peer_ep);
                 if (client_fd != SOMEIP_INVALID_SOCKET) {
-                    // For this simple implementation, we'll handle one client at a time
-                    // In a real implementation, you'd manage multiple client connections
-                    if (!is_connected()) {
+                    platform::ScopedLock const lock(connection_mutex_);
+                    if (!connection_.is_connected()) {
                         connection_.socket_fd = client_fd;
                         connection_.state = TcpConnectionState::CONNECTED;
-                        connection_.remote_endpoint = Endpoint("127.0.0.1", 0, TransportProtocol::TCP); // Would need to get actual client address
+                        connection_.remote_endpoint = peer_ep;
+                        connection_.receive_buffer.clear();
+                        last_magic_cookie_time_ = std::chrono::steady_clock::now();
                         active_connections_.fetch_add(1);
 
-                        if (listener_) {
-                            listener_->on_connection_established(connection_.remote_endpoint);
+                        if (auto* l = listener_.load(std::memory_order_acquire)) {
+                            l->on_connection_established(connection_.remote_endpoint);
                         }
                     } else {
-                        // Already have a connection, close this one
                         someip_close_socket(client_fd);
                     }
                 }
@@ -415,30 +451,36 @@ void TcpTransport::receive_loop() {
             continue;
         }
 
-        std::vector<uint8_t> buffer;
-        Result result = receive_data(connection_.socket_fd, buffer);
+        Result result = Result::NETWORK_ERROR;
+        {
+            platform::ScopedLock const lock(connection_mutex_);
+            if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
+                continue;
+            }
+            result = receive_data(connection_.socket_fd, connection_.receive_buffer);
+        }
 
-        if (result == Result::SUCCESS && !buffer.empty()) {
-            // Try to parse messages from buffer
-            MessagePtr message;
-            if (parse_message_from_buffer(buffer, message)) {
-                platform::ScopedLock lock(queue_mutex_);
-                message_queue_.push({message, connection_.remote_endpoint});
-                connection_.update_activity();
-
-                if (listener_) {
-                    listener_->on_message_received(message, connection_.remote_endpoint);
+        if (result == Result::SUCCESS) {
+            for (;;) {
+                MessagePtr message;
+                Endpoint sender_ep;
+                {
+                    platform::ScopedLock const conn_lock(connection_mutex_);
+                    if (connection_.receive_buffer.empty()) { break; }
+                    if (!parse_message_from_buffer(connection_.receive_buffer, message)) {
+                        break;
+                    }
+                    connection_.update_activity();
+                    sender_ep = connection_.remote_endpoint;
                 }
-            } else {
-                // Failed to parse message from buffer
+                deliver_or_enqueue(message, sender_ep);
             }
         } else if (result != Result::SUCCESS) {
-            // Connection error
-            disconnect_internal();
-
-            if (listener_) {
-                listener_->on_error(result);
+            {
+                platform::ScopedLock const lock(connection_mutex_);
+                connection_.receive_buffer.clear();
             }
+            disconnect_internal();
         }
 
         platform::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -448,33 +490,64 @@ void TcpTransport::receive_loop() {
 void TcpTransport::connection_monitor_loop() {
     while (running_) {
         if (is_connected()) {
-            auto now = std::chrono::steady_clock::now();
-            auto time_since_activity = std::chrono::duration_cast<std::chrono::milliseconds>(
-                now - connection_.last_activity);
+            bool timed_out = false;
+            {
+                platform::ScopedLock const lock(connection_mutex_);
+                const auto now = std::chrono::steady_clock::now();
+                const auto time_since_activity = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    now - connection_.last_activity);
+                timed_out = (time_since_activity > std::chrono::minutes(5));
+            }
 
-            if (time_since_activity > std::chrono::minutes(5)) {
+            if (timed_out) {
                 disconnect_internal();
+            } else {
+                send_periodic_magic_cookie();
             }
         }
 
-        // Sleep in short intervals so stop() can join promptly
-        for (int i = 0; i < 300 && running_; ++i) {
+        for (int i = 0; i < 10 && running_; ++i) {
             platform::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
 
+/** @implements REQ_TRANSPORT_021 */
+void TcpTransport::send_periodic_magic_cookie() {
+    if (!config_.magic_cookie_enabled) {
+        return;
+    }
+
+    platform::ScopedLock const lock(connection_mutex_);
+    if (connection_.socket_fd == SOMEIP_INVALID_SOCKET) {
+        return;
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        now - last_magic_cookie_time_);
+
+    if (elapsed < config_.magic_cookie_interval) {
+        return;
+    }
+
+    const auto cookie = server_mode_ ? make_magic_cookie_server() : make_magic_cookie_client();
+    if (send_data(connection_.socket_fd, cookie) == Result::SUCCESS) {
+        last_magic_cookie_time_ = now;
+    }
+}
+
 /** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04 */
-Result TcpTransport::send_data(someip_socket_t socket_fd, const std::vector<uint8_t>& data) {
+Result TcpTransport::send_data(someip_socket_t socket_fd, const platform::ByteBuffer& data) {
     size_t total_sent = 0;
     const uint8_t* buffer = data.data();
 
     while (total_sent < data.size()) {
-        ssize_t sent = someip_send(socket_fd, buffer + total_sent,
-                                   data.size() - total_sent, 0);
+        ssize_t const sent = someip_send(socket_fd, buffer + total_sent,
+                                         data.size() - total_sent, 0);
 
         if (sent < 0) {
-            int err = someip_socket_errno();
+            int const err = someip_socket_errno();
             if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK || err == SOMEIP_EINTR) {
                 continue;
             }
@@ -490,18 +563,18 @@ Result TcpTransport::send_data(someip_socket_t socket_fd, const std::vector<uint
 }
 
 /** @implements REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04 */
-Result TcpTransport::receive_data(someip_socket_t socket_fd, std::vector<uint8_t>& data) {
+Result TcpTransport::receive_data(someip_socket_t socket_fd, platform::ByteBuffer& data) {
     // Respect maximum receive buffer size from config
-    size_t max_chunk_size = std::min(static_cast<size_t>(4096), config_.max_receive_buffer - data.size());
+    const size_t max_chunk_size = std::min(static_cast<size_t>(4096), config_.max_receive_buffer - data.size());
     if (max_chunk_size == 0) {
         return Result::BUFFER_OVERFLOW;  // Already at buffer limit
     }
 
-    uint8_t buffer[4096];
-    ssize_t received = someip_recv(socket_fd, buffer, max_chunk_size, 0);
+    std::array<uint8_t, 4096> buffer{};
+    const ssize_t received = someip_recv(socket_fd, buffer.data(), max_chunk_size, 0);
 
     if (received < 0) {
-        int err = someip_socket_errno();
+        int const err = someip_socket_errno();
         if (err == SOMEIP_EAGAIN || err == SOMEIP_EWOULDBLOCK || err == SOMEIP_EINTR) {
             return Result::SUCCESS;  // No data available or interrupted
         }
@@ -510,11 +583,11 @@ Result TcpTransport::receive_data(someip_socket_t socket_fd, std::vector<uint8_t
         return Result::NETWORK_ERROR;  // Connection closed
     }
 
-    data.insert(data.end(), buffer, buffer + received);
+    data.insert(data.end(), buffer.begin(), buffer.begin() + received);
     return Result::SUCCESS;
 }
 
-bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message) {
+bool TcpTransport::parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message) {
     // For TCP, we expect complete messages in the buffer since TCP is stream-oriented
     // but our current implementation receives data in chunks
 
@@ -525,60 +598,115 @@ bool TcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, Messa
     }
 
     if (buffer.size() < SOMEIP_HEADER_SIZE) {
-        return false;  // Need at least header
+        return false;
     }
 
-    // Parse message length from header (bytes 4-7 in big-endian)
-    // Length field contains length from client_id to end of message
-    uint32_t length_from_client_id = (buffer[4] << 24) | (buffer[5] << 16) | (buffer[6] << 8) | buffer[7];
+    if (is_magic_cookie(buffer, 0)) {
+        buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(SOMEIP_HEADER_SIZE));
+        return false;
+    }
+
+    const uint32_t length_from_client_id =
+        (static_cast<uint32_t>(buffer[4]) << 24U) | (static_cast<uint32_t>(buffer[5]) << 16U) |
+        (static_cast<uint32_t>(buffer[6]) << 8U) | static_cast<uint32_t>(buffer[7]);
 
     if (length_from_client_id < 8 || length_from_client_id > MAX_MESSAGE_SIZE) {
-        // Invalid message length - try to resync by skipping this potential header
-        // Look for next potential SOME/IP header (non-zero message ID)
-        size_t search_start = SOMEIP_HEADER_SIZE;
-        bool found_valid_header = false;
+        size_t search_start = 1;
+        bool found_valid = false;
 
         while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
-            // Check if this looks like a valid SOME/IP header
-            uint32_t potential_msg_id = (buffer[search_start] << 24) |
-                                       (buffer[search_start + 1] << 16) |
-                                       (buffer[search_start + 2] << 8) |
-                                       buffer[search_start + 3];
-            if (potential_msg_id != 0) {  // Found a non-zero message ID
-                // Discard data before this potential header
-                buffer.erase(buffer.begin(), buffer.begin() + search_start);
-                found_valid_header = true;
+            if (is_magic_cookie(buffer, search_start)) {
+                buffer.erase(buffer.begin(),
+                             buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
+                found_valid = true;
+                break;
+            }
+
+            uint32_t const potential_msg_id =
+                (static_cast<uint32_t>(buffer[search_start]) << 24U) |
+                (static_cast<uint32_t>(buffer[search_start + 1]) << 16U) |
+                (static_cast<uint32_t>(buffer[search_start + 2]) << 8U) |
+                static_cast<uint32_t>(buffer[search_start + 3]);
+            if (potential_msg_id != 0) {
+                buffer.erase(buffer.begin(),
+                             buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
+                found_valid = true;
                 break;
             }
             search_start++;
         }
 
-        if (!found_valid_header) {
-            // No valid header found, clear buffer to prevent infinite loops
-            buffer.clear();
+        if (!found_valid) {
+            if (buffer.size() > SOMEIP_HEADER_SIZE) {
+                buffer.erase(buffer.begin(),
+                             buffer.begin() + static_cast<std::ptrdiff_t>(buffer.size() - SOMEIP_HEADER_SIZE + 1));
+            }
         }
         return false;
     }
 
     // Total message size = message_id(4) + length(4) + length_from_client_id
-    size_t total_message_size = 8 + length_from_client_id;
+    const size_t total_message_size = 8 + length_from_client_id;
 
     if (buffer.size() < total_message_size) {
         return false;  // Need more data
     }
 
     // Extract message data
-    std::vector<uint8_t> message_data(buffer.begin(), buffer.begin() + total_message_size);
-    buffer.erase(buffer.begin(), buffer.begin() + total_message_size);
+    const auto msg_end = buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size);
+    const platform::ByteBuffer message_data(buffer.begin(), msg_end);
+    buffer.erase(buffer.begin(), msg_end);
 
     // Parse message
     message = platform::allocate_message();
-    if (message && message->deserialize(message_data)) {
-        return true;
-    }
-
-    return false;
+    return message && message->deserialize(message_data);
 }
 
-} // namespace transport
-} // namespace someip
+/** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_025 */
+bool TcpTransport::is_magic_cookie(const platform::ByteBuffer& data, size_t offset) {
+    if (offset + SOMEIP_HEADER_SIZE > data.size()) {
+        return false;
+    }
+    // Common fields: Service 0xFFFF, Length 8, Client 0xDEAD, Session 0xBEEF,
+    // Proto 1, Iface 1, RetCode 0.
+    // Method ID and Message Type must correlate:
+    //   Client cookie: Method 0x0000, MsgType 0x01 (REQUEST)
+    //   Server cookie: Method 0x8000, MsgType 0x02 (NOTIFICATION)
+    const bool common =
+        data[offset + 0] == 0xFF && data[offset + 1] == 0xFF &&
+        data[offset + 3] == 0x00 &&
+        data[offset + 4] == 0x00 && data[offset + 5] == 0x00 &&
+        data[offset + 6] == 0x00 && data[offset + 7] == 0x08 &&
+        data[offset + 8] == 0xDE && data[offset + 9] == 0xAD &&
+        data[offset + 10] == 0xBE && data[offset + 11] == 0xEF &&
+        data[offset + 12] == 0x01 && data[offset + 13] == 0x01 &&
+        data[offset + 15] == 0x00;
+    if (!common) {
+        return false;
+    }
+    const bool is_client = data[offset + 2] == 0x00 && data[offset + 14] == 0x01;
+    const bool is_server = data[offset + 2] == 0x80 && data[offset + 14] == 0x02;
+    return is_client || is_server;
+}
+
+platform::ByteBuffer TcpTransport::make_magic_cookie_client() {
+    return {
+        0xFF, 0xFF, 0x00, 0x00,  // Service 0xFFFF, Method 0x0000
+        0x00, 0x00, 0x00, 0x08,  // Length 8
+        0xDE, 0xAD, 0xBE, 0xEF,  // Client 0xDEAD, Session 0xBEEF
+        0x01, 0x01, 0x01, 0x00   // Proto 1, Iface 1, MsgType 0x01, RetCode 0x00
+    };
+}
+
+platform::ByteBuffer TcpTransport::make_magic_cookie_server() {
+    return {
+        0xFF, 0xFF, 0x80, 0x00,  // Service 0xFFFF, Method 0x8000
+        0x00, 0x00, 0x00, 0x08,  // Length 8
+        0xDE, 0xAD, 0xBE, 0xEF,  // Client 0xDEAD, Session 0xBEEF
+        0x01, 0x01, 0x02, 0x00   // Proto 1, Iface 1, MsgType 0x02, RetCode 0x00
+    };
+}
+
+// NOLINTEND(misc-include-cleaner)
+
+}  // namespace someip::transport

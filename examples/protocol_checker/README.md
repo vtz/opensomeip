@@ -70,5 +70,3 @@ The server:
 - No TCP support (UDP only)
 - No payload validation (echo only)
 - Not a conformance test suite
-
-For full interoperability testing with vsomeip, see `examples/vsomeip_interop/`.

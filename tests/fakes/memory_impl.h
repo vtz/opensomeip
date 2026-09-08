@@ -18,10 +18,6 @@
 #include <memory>
 
 namespace someip {
-
-class Message;
-using MessagePtr = std::shared_ptr<Message>;
-
 namespace platform {
 
 inline std::atomic<int>& alloc_count() {
@@ -32,6 +28,10 @@ inline std::atomic<int>& alloc_count() {
 inline MessagePtr allocate_message() {
     ++alloc_count();
     return std::make_shared<Message>();
+}
+
+inline void release_message(Message* msg) {
+    delete msg;
 }
 
 inline void reset_alloc_count() {

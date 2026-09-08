@@ -21,8 +21,7 @@
 #include "common/result.h"
 #include <optional>
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief Main E2E protection manager
@@ -41,6 +40,11 @@ public:
      * @brief Destructor
      */
     ~E2EProtection() = default;
+
+    E2EProtection(const E2EProtection&) = delete;
+    E2EProtection& operator=(const E2EProtection&) = delete;
+    E2EProtection(E2EProtection&&) = delete;
+    E2EProtection& operator=(E2EProtection&&) = delete;
 
     /**
      * @brief Protect a message before sending
@@ -80,7 +84,6 @@ public:
     bool has_e2e_protection(const Message& message) const;
 };
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e
 
 #endif // E2E_PROTECTION_H

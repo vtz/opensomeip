@@ -38,7 +38,8 @@
 #include <task.h>
 #include <semphr.h>
 
-#include <functional>
+#include "platform/containers.h"
+
 #include <chrono>
 #include <cstdint>
 #include <tuple>
@@ -149,11 +150,7 @@ public:
         join_sem_ = xSemaphoreCreateBinary();
         configASSERT(join_sem_ != nullptr);
 
-        ctx_ = new std::function<void()>(
-            [f = std::forward<Fn>(fn),
-             a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
-                std::apply(std::move(f), std::move(a));
-            });
+        store_callable(std::forward<Fn>(fn), std::forward<Args>(args)...);
 
         BaseType_t rc = xTaskCreate(
             trampoline,
@@ -164,7 +161,6 @@ public:
             &task_handle_);
 
         if (rc != pdPASS) {
-            delete ctx_;
             ctx_ = nullptr;
             vSemaphoreDelete(join_sem_);
             join_sem_ = nullptr;
@@ -177,7 +173,6 @@ public:
     ~Thread() {
         if (joinable()) {
             if (task_handle_) vTaskDelete(task_handle_);
-            delete ctx_;
             ctx_ = nullptr;
             if (join_sem_) vSemaphoreDelete(join_sem_);
             join_sem_ = nullptr;
@@ -196,7 +191,6 @@ public:
         if (!joinable()) return;
         xSemaphoreTake(join_sem_, portMAX_DELAY);
         joined_ = true;
-        delete ctx_;
         ctx_ = nullptr;
         vSemaphoreDelete(join_sem_);
         join_sem_ = nullptr;
@@ -211,8 +205,8 @@ public:
 private:
     static void trampoline(void* param) {
         auto* self = static_cast<Thread*>(param);
-        if (self->ctx_ && *(self->ctx_)) {
-            (*(self->ctx_))();
+        if (self->ctx_) {
+            self->ctx_();
         }
         if (self->join_sem_) {
             xSemaphoreGive(self->join_sem_);
@@ -220,9 +214,32 @@ private:
         vTaskDelete(nullptr);
     }
 
+    // Member-function-pointer + object: 2 pointers (8 bytes on 32-bit ARM)
+    template <typename Ret, typename Cls>
+    void store_callable(Ret (Cls::*mfn)(), Cls* obj) {
+        ctx_ = platform::Function<void()>([mfn, obj]() { (obj->*mfn)(); });
+    }
+
+    // Zero-arg callable (lambda, functor): assign directly
+    template <typename Fn>
+    void store_callable(Fn&& fn) {
+        ctx_ = platform::Function<void()>(std::forward<Fn>(fn));
+    }
+
+    // Multi-arg case: pack args into a tuple
+    template <typename Fn, typename Arg, typename... Rest>
+    void store_callable(Fn&& fn, Arg&& arg, Rest&&... rest) {
+        ctx_ = platform::Function<void()>(
+            [f = std::forward<Fn>(fn),
+             a = std::make_tuple(std::forward<Arg>(arg),
+                                 std::forward<Rest>(rest)...)]() mutable {
+                std::apply(std::move(f), std::move(a));
+            });
+    }
+
     TaskHandle_t task_handle_{nullptr};
     SemaphoreHandle_t join_sem_{nullptr};
-    std::function<void()>* ctx_{nullptr};
+    platform::Function<void()> ctx_;
     bool started_{false};
     bool joined_{false};
 };

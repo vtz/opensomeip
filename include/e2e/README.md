@@ -59,7 +59,7 @@ Configuration for E2E protection.
 
 **Fields:**
 - `uint32_t profile_id` - Profile identifier (0 = basic profile)
-- `std::string profile_name` - Profile name ("standard" by default)
+- `std::string profile_name` - Profile name ("basic" by default)
 - `uint16_t data_id` - Data ID for identifying protected data
 - `uint32_t offset` - Offset from Return Code (default: 8 bytes)
 - `bool enable_crc` - Enable CRC calculation

@@ -1,4 +1,6 @@
 #include "common/result.h"
+
+#include <string>
 #include <unordered_map>
 
 namespace someip {
@@ -10,7 +12,7 @@ namespace someip {
  */
 /** @implements REQ_ARCH_004, REQ_MY_001 */
 std::string to_string(Result result) {
-    static const std::unordered_map<Result, std::string> result_strings = {
+    static const std::unordered_map<Result, std::string> RESULT_STRINGS = {
         {Result::SUCCESS, "SUCCESS"},
         {Result::NETWORK_ERROR, "NETWORK_ERROR"},
         {Result::NOT_CONNECTED, "NOT_CONNECTED"},
@@ -46,8 +48,8 @@ std::string to_string(Result result) {
         {Result::UNKNOWN_ERROR, "UNKNOWN_ERROR"}
     };
 
-    auto it = result_strings.find(result);
-    return (it != result_strings.end()) ? it->second : "UNKNOWN_RESULT";
+    const auto it = RESULT_STRINGS.find(result);
+    return (it != RESULT_STRINGS.end()) ? it->second : "UNKNOWN_RESULT";
 }
 
 } // namespace someip

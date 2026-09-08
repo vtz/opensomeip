@@ -61,8 +61,8 @@ public:
     Result stop() override;
     bool is_running() const override;
 
-    Result join_multicast_group(const std::string& multicast_address) override;
-    Result leave_multicast_group(const std::string& multicast_address) override;
+    Result join_multicast_group(const platform::String<>& multicast_address) override;
+    Result leave_multicast_group(const platform::String<>& multicast_address) override;
 
 private:
     void on_adapter_receive(const std::vector<uint8_t>& data, const Endpoint& sender);

@@ -12,9 +12,12 @@
  */
 
 #include <zephyr/kernel.h>
-#include <functional>
+
+#include "platform/containers.h"
+
 #include <chrono>
 #include <cstring>
+#include <tuple>
 
 #ifndef CONFIG_SOMEIP_THREAD_STACK_SIZE
 #define CONFIG_SOMEIP_THREAD_STACK_SIZE 4096
@@ -86,14 +89,14 @@ public:
     /** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_CREATE_E01 */
     template <typename Fn, typename... Args>
     explicit Thread(Fn&& fn, Args&&... args) {
-        ctx_ = new std::function<void()>(
+        ctx_ = platform::Function<void()>(
             [f = std::forward<Fn>(fn),
              a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
                 std::apply(std::move(f), std::move(a));
             });
         k_thread_create(&thread_, stack_,
                         K_THREAD_STACK_SIZEOF(stack_),
-                        trampoline, ctx_, nullptr, nullptr,
+                        trampoline, this, nullptr, nullptr,
                         K_PRIO_PREEMPT(7), 0, K_NO_WAIT);
         started_ = true;
     }
@@ -102,8 +105,7 @@ public:
     ~Thread() {
         if (joinable()) {
             k_thread_abort(&thread_);
-            delete ctx_;
-            ctx_ = nullptr;
+            ctx_ = {};
             started_ = false;
         }
     }
@@ -119,8 +121,7 @@ public:
         if (joinable()) {
             k_thread_join(&thread_, K_FOREVER);
             joined_ = true;
-            delete ctx_;
-            ctx_ = nullptr;
+            ctx_ = {};
         }
     }
 
@@ -131,13 +132,13 @@ public:
 
 private:
     static void trampoline(void* p1, void*, void*) {
-        auto* fn = static_cast<std::function<void()>*>(p1);
-        if (fn && *fn) (*fn)();
+        auto* self = static_cast<Thread*>(p1);
+        if (self && self->ctx_) self->ctx_();
     }
 
     k_thread thread_{};
     K_KERNEL_STACK_MEMBER(stack_, CONFIG_SOMEIP_THREAD_STACK_SIZE);
-    std::function<void()>* ctx_{nullptr};
+    platform::Function<void()> ctx_;
     bool started_{false};
     bool joined_{false};
 };

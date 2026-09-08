@@ -12,14 +12,18 @@
  ********************************************************************************/
 
 #include "transport/endpoint.h"
-#include <sstream>
-#include <functional>
+
+#include <cctype>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <cctype>
+#include <functional>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief Transport endpoint implementation
@@ -35,14 +39,11 @@ Endpoint::Endpoint()
     : address_("127.0.0.1"), port_(30490), protocol_(TransportProtocol::UDP) {
 }
 
-Endpoint::Endpoint(const std::string& address, uint16_t port, TransportProtocol protocol)
+Endpoint::Endpoint(const platform::String<>& address, uint16_t port, TransportProtocol protocol)
     : address_(address), port_(port), protocol_(protocol) {
 }
 
-// NOLINTNEXTLINE(modernize-use-equals-default) - explicit copy for clarity
-Endpoint::Endpoint(const Endpoint& other)
-    : address_(other.address_), port_(other.port_), protocol_(other.protocol_) {
-}
+Endpoint::Endpoint(const Endpoint& other) = default;
 
 Endpoint::Endpoint(Endpoint&& other) noexcept
     : address_(std::move(other.address_)), port_(other.port_), protocol_(other.protocol_) {
@@ -124,13 +125,13 @@ bool Endpoint::operator<(const Endpoint& other) const {
 
 size_t Endpoint::Hash::operator()(const Endpoint& endpoint) const {
     size_t hash = 0;
-    hash = std::hash<std::string>()(endpoint.address_);
+    hash = std::hash<std::string_view>()(std::string_view(endpoint.address_.data(), endpoint.address_.size()));
     hash = hash * 31 + std::hash<uint16_t>()(endpoint.port_);
     hash = hash * 31 + std::hash<int>()(static_cast<int>(endpoint.protocol_));
     return hash;
 }
 
-bool Endpoint::is_valid_ipv4(const std::string& address) const {
+bool Endpoint::is_valid_ipv4(const platform::String<>& address) const {
     if (address.empty() || address.size() > 15) {
         return false;
     }
@@ -139,21 +140,22 @@ bool Endpoint::is_valid_ipv4(const std::string& address) const {
     size_t pos = 0;
 
     while (pos < address.size() && octets < 4) {
-        if (!std::isdigit(static_cast<unsigned char>(address[pos]))) {
+        if (std::isdigit(static_cast<unsigned char>(address[pos])) == 0) {
             return false;
         }
 
-        size_t start = pos;
-        while (pos < address.size() && std::isdigit(static_cast<unsigned char>(address[pos]))) {
+        size_t const start = pos;
+        while (pos < address.size() && std::isdigit(static_cast<unsigned char>(address[pos])) != 0) {
             ++pos;
         }
 
-        size_t digit_len = pos - start;
+        size_t const digit_len = pos - start;
         if (digit_len == 0 || digit_len > 3) {
             return false;
         }
 
-        int val = std::atoi(address.substr(start, digit_len).c_str());
+        int const val = static_cast<int>(
+            std::strtol(address.substr(start, digit_len).c_str(), nullptr, 10));
         if (val < 0 || val > 255) {
             return false;
         }
@@ -176,20 +178,20 @@ bool Endpoint::is_valid_ipv4(const std::string& address) const {
     return octets == 4 && pos == address.size();
 }
 
-bool Endpoint::is_valid_ipv6(const std::string& address) const {
+bool Endpoint::is_valid_ipv6(const platform::String<>& address) const {
     if (address.empty() || address.size() > 39) {
         return false;
     }
 
-    for (char c : address) {
-        if (!std::isxdigit(static_cast<unsigned char>(c)) && c != ':') {
+    for (char const c : address) {
+        if (std::isxdigit(static_cast<unsigned char>(c)) == 0 && c != ':') {
             return false;
         }
     }
 
-    size_t double_colon = address.find("::");
-    bool has_double_colon = (double_colon != std::string::npos);
-    if (has_double_colon && address.find("::", double_colon + 2) != std::string::npos) {
+    size_t const double_colon = address.find("::");
+    bool const has_double_colon = (double_colon != platform::String<>::npos);
+    if (has_double_colon && address.find("::", double_colon + 2) != platform::String<>::npos) {
         return false;
     }
 
@@ -210,7 +212,7 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
     }
 
     // Reject ":::" by checking for three consecutive colons
-    if (address.find(":::") != std::string::npos) {
+    if (address.find(":::") != platform::String<>::npos) {
         return false;
     }
 
@@ -220,10 +222,10 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
 
     while (pos <= address.size()) {
         size_t next = address.find(':', pos);
-        if (next == std::string::npos) {
+        if (next == platform::String<>::npos) {
             next = address.size();
         }
-        size_t len = next - pos;
+        size_t const len = next - pos;
 
         if (len > 0) {
             if (len > 4) {
@@ -257,22 +259,21 @@ bool Endpoint::is_valid_ipv6(const std::string& address) const {
     return groups == 8;
 }
 
-bool Endpoint::is_multicast_ipv4(const std::string& address) const {
+bool Endpoint::is_multicast_ipv4(const platform::String<>& address) const {
     if (!is_valid_ipv4(address)) {
         return false;
     }
 
     // Extract first octet
-    size_t first_dot = address.find('.');
-    if (first_dot == std::string::npos) {
+    size_t const first_dot = address.find('.');
+    if (first_dot == platform::String<>::npos) {
         return false;
     }
 
-    int first_octet = std::stoi(address.substr(0, first_dot));
+    int const first_octet = static_cast<int>(std::strtol(address.substr(0, first_dot).c_str(), nullptr, 10));
 
     // IPv4 multicast range: 224.0.0.0 to 239.255.255.255
     return first_octet >= 224 && first_octet <= 239;
 }
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport

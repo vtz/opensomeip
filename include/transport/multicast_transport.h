@@ -15,7 +15,7 @@
 #define SOMEIP_TRANSPORT_MULTICAST_TRANSPORT_H
 
 #include "common/result.h"
-#include <string>
+#include "platform/containers.h"
 
 namespace someip {
 namespace transport {
@@ -31,8 +31,8 @@ class IMulticastTransport {
 public:
     virtual ~IMulticastTransport() = default;
 
-    [[nodiscard]] virtual Result join_multicast_group(const std::string& multicast_address) = 0;
-    [[nodiscard]] virtual Result leave_multicast_group(const std::string& multicast_address) = 0;
+    [[nodiscard]] virtual Result join_multicast_group(const platform::String<>& multicast_address) = 0;
+    [[nodiscard]] virtual Result leave_multicast_group(const platform::String<>& multicast_address) = 0;
 };
 
 } // namespace transport

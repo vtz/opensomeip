@@ -31,8 +31,9 @@
 
 #include <tx_api.h>
 
+#include "platform/containers.h"
+
 #include <atomic>
-#include <functional>
 #include <chrono>
 #include <cstdint>
 #include <tuple>
@@ -135,19 +136,10 @@ public:
     explicit Thread(Fn&& fn, Args&&... args) {
         tx_event_flags_create(&join_ev_, const_cast<CHAR*>("someip_join"));
 
-        ctx_ = new std::function<void()>(
-            [f = std::forward<Fn>(fn),
-             a = std::make_tuple(std::forward<Args>(args)...)]() mutable {
-                std::apply(std::move(f), std::move(a));
-            });
+        store_callable(std::forward<Fn>(fn), std::forward<Args>(args)...);
 
-        // tx_thread_create's entry_input is ULONG (unsigned int on the
-        // ThreadX Linux port), which is too narrow to hold a pointer on
-        // 64-bit hosts.  Pass an integer slot index into a global registry
-        // instead of casting this directly to ULONG.
         slot_ = alloc_slot(this);
         if (slot_ == kInvalidSlot) {
-            delete ctx_;
             ctx_ = nullptr;
             tx_event_flags_delete(&join_ev_);
             return;
@@ -167,7 +159,6 @@ public:
 
         if (rc != TX_SUCCESS) {
             release_slot_if_owner();
-            delete ctx_;
             ctx_ = nullptr;
             tx_event_flags_delete(&join_ev_);
             return;
@@ -179,13 +170,8 @@ public:
     ~Thread() {
         if (joinable()) {
             tx_thread_terminate(&tcb_);
-            // The trampoline may have been scheduled but not yet run when
-            // tx_thread_terminate killed it.  Clear the registry slot so it
-            // is not leaked; use CAS so we do not double-free if the
-            // trampoline already claimed and cleared the slot.
             release_slot_if_owner();
             tx_thread_delete(&tcb_);
-            delete ctx_;
             ctx_ = nullptr;
             tx_event_flags_delete(&join_ev_);
             started_ = false;
@@ -203,12 +189,9 @@ public:
         if (!joinable()) return;
         ULONG actual = 0;
         tx_event_flags_get(&join_ev_, 0x1, TX_OR_CLEAR, &actual, TX_WAIT_FOREVER);
-        // trampoline has completed and already released the slot via CAS;
-        // release_slot_if_owner() here is a no-op but keeps ownership clear.
         release_slot_if_owner();
         joined_ = true;
         tx_thread_delete(&tcb_);
-        delete ctx_;
         ctx_ = nullptr;
         tx_event_flags_delete(&join_ev_);
     }
@@ -254,27 +237,47 @@ private:
 
     static void trampoline(ULONG slot) {
         Thread* self = s_registry[slot].load(std::memory_order_acquire);
-        // CAS-release the slot: the destructor may have beaten us here if the
-        // thread was terminated before the trampoline ran.  In that case self
-        // is already gone; bail out to avoid a use-after-free.
         Thread* expected = self;
         if (!s_registry[slot].compare_exchange_strong(
                 expected, nullptr,
                 std::memory_order_acq_rel,
                 std::memory_order_relaxed)) {
-            return; // destructor already owns/destroyed the Thread object
+            return;
         }
         if (self) self->slot_ = kInvalidSlot;
-        if (self && self->ctx_ && *(self->ctx_)) {
-            (*(self->ctx_))();
+        if (self && self->ctx_) {
+            self->ctx_();
         }
         if (self) tx_event_flags_set(&self->join_ev_, 0x1, TX_OR);
+    }
+
+    // Member-function-pointer + object: 2 pointers (8 bytes on 32-bit ARM)
+    template <typename Ret, typename Cls>
+    void store_callable(Ret (Cls::*mfn)(), Cls* obj) {
+        ctx_ = platform::Function<void()>([mfn, obj]() { (obj->*mfn)(); });
+    }
+
+    // Zero-arg callable (lambda, functor): assign directly
+    template <typename Fn>
+    void store_callable(Fn&& fn) {
+        ctx_ = platform::Function<void()>(std::forward<Fn>(fn));
+    }
+
+    // Multi-arg case: pack args into a tuple
+    template <typename Fn, typename Arg, typename... Rest>
+    void store_callable(Fn&& fn, Arg&& arg, Rest&&... rest) {
+        ctx_ = platform::Function<void()>(
+            [f = std::forward<Fn>(fn),
+             a = std::make_tuple(std::forward<Arg>(arg),
+                                 std::forward<Rest>(rest)...)]() mutable {
+                std::apply(std::move(f), std::move(a));
+            });
     }
 
     TX_THREAD tcb_{};
     TX_EVENT_FLAGS_GROUP join_ev_{};
     UCHAR stack_[SOMEIP_THREADX_THREAD_STACK_SIZE]{};
-    std::function<void()>* ctx_{nullptr};
+    platform::Function<void()> ctx_;
     ULONG slot_{kInvalidSlot};
     bool started_{false};
     bool joined_{false};

@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 #include "transport/endpoint.h"
 #include <unordered_set>
+#include "static_pool_init.h"
 
 using namespace someip::transport;
 

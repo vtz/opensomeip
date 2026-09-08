@@ -13,6 +13,8 @@ target_link_libraries(test_freertos_core PRIVATE
     someip-core
     someip-serialization
     someip-transport
+    someip-e2e
+    someip-tp
 )
 
 add_test(NAME FreeRTOSCoreTest COMMAND test_freertos_core)

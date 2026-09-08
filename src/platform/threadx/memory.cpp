@@ -20,46 +20,73 @@
 
 #include <tx_api.h>
 
+#include <array>
+#include <atomic>
 #include <cstring>
 #include <new>
 
 #ifndef SOMEIP_THREADX_MESSAGE_POOL_SIZE
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define SOMEIP_THREADX_MESSAGE_POOL_SIZE 16
 #endif
 
 static constexpr size_t POOL_SIZE = SOMEIP_THREADX_MESSAGE_POOL_SIZE;
 
-alignas(someip::Message) static UCHAR
-    pool_buffer[POOL_SIZE * sizeof(someip::Message)];
-
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 TX_BLOCK_POOL message_pool;
-static TX_MUTEX pool_guard;
-bool pool_initialized = false;
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+std::atomic<bool> pool_initialized{false};
 
-static void ensure_pool_init() {
-    if (pool_initialized) return;
+namespace {
 
-    static bool guard_created = false;
-    if (!guard_created) {
-        tx_mutex_create(&pool_guard, const_cast<CHAR*>("someip_pool_guard"),
-                        TX_NO_INHERIT);
-        guard_created = true;
+alignas(someip::Message) std::array<UCHAR, POOL_SIZE * sizeof(someip::Message)>
+    pool_buffer{};  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+TX_MUTEX pool_guard;
+
+void ensure_pool_init() {
+    if (pool_initialized.load(std::memory_order_acquire)) {
+        return;
     }
 
-    tx_mutex_get(&pool_guard, TX_WAIT_FOREVER);
-    if (!pool_initialized) {
-        tx_block_pool_create(&message_pool,
-                             const_cast<CHAR*>("someip_msg"),
-                             sizeof(someip::Message),
-                             pool_buffer,
-                             sizeof(pool_buffer));
-        pool_initialized = true;
+    TX_INTERRUPT_SAVE_AREA
+    // NOLINTNEXTLINE(readability-identifier-naming)
+    TX_DISABLE
+
+    if (!pool_initialized.load(std::memory_order_relaxed)) {
+        UINT status = tx_mutex_create(&pool_guard,
+                                      const_cast<CHAR*>("someip_pool_guard"),
+                                      TX_NO_INHERIT);
+        if (status == TX_SUCCESS) {
+            status = tx_block_pool_create(&message_pool,
+                                          const_cast<CHAR*>("someip_msg"),
+                                          sizeof(someip::Message),
+                                          pool_buffer.data(),
+                                          sizeof(pool_buffer));
+            if (status != TX_SUCCESS) {
+                tx_mutex_delete(&pool_guard);
+            }
+        }
+        if (status == TX_SUCCESS) {
+            pool_initialized.store(true, std::memory_order_release);
+        }
     }
-    tx_mutex_put(&pool_guard);
+
+    TX_RESTORE
 }
 
-namespace someip {
-namespace platform {
+void release_message_impl(someip::Message* msg) {
+    if (msg == nullptr) {
+        return;
+    }
+
+    msg->~Message();
+    tx_block_release(static_cast<void*>(msg));
+}
+
+}  // namespace
+
+namespace someip::platform {
 
 /** @implements REQ_PLATFORM_THREADX_002 */
 MessagePtr allocate_message() {
@@ -71,6 +98,7 @@ MessagePtr allocate_message() {
         return nullptr;
     }
 
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
     auto* msg = new (block) Message();
     return MessagePtr(msg, [](Message* p) {
         release_message(p);
@@ -78,11 +106,7 @@ MessagePtr allocate_message() {
 }
 
 void release_message(Message* msg) {
-    if (!msg) return;
-
-    msg->~Message();
-    tx_block_release(static_cast<void*>(msg));
+    release_message_impl(msg);
 }
 
-} // namespace platform
-} // namespace someip
+}  // namespace someip::platform

@@ -14,12 +14,11 @@
 #ifndef E2E_CRC_H
 #define E2E_CRC_H
 
+#include "platform/buffer_pool.h"
+
 #include <cstddef>
 #include <cstdint>
-#include <vector>
-
-namespace someip {
-namespace e2e {
+#include <optional>
 
 /**
  * @brief CRC calculation utilities using publicly available standards
@@ -29,7 +28,7 @@ namespace e2e {
  * - ITU-T X.25 / CCITT: 16-bit CRC (telecommunications standard)
  * - CRC32: Standard 32-bit CRC
  */
-namespace E2ECRC {
+namespace someip::e2e::e2ecrc {
 
 /**
  * @brief Calculate 8-bit CRC using SAE-J1850 algorithm
@@ -40,7 +39,7 @@ namespace E2ECRC {
  * @param data Data to calculate CRC for
  * @return 8-bit CRC value
  */
-uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data);
+uint8_t calculate_crc8_sae_j1850(const platform::ByteBuffer& data);
 
 /**
  * @brief Calculate 16-bit CRC using ITU-T X.25 / CCITT algorithm
@@ -52,7 +51,7 @@ uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data);
  * @param data Data to calculate CRC for
  * @return 16-bit CRC value
  */
-uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data);
+uint16_t calculate_crc16_itu_x25(const platform::ByteBuffer& data);
 
 /**
  * @brief Calculate 32-bit CRC using standard CRC32 algorithm
@@ -62,7 +61,7 @@ uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data);
  * @param data Data to calculate CRC for
  * @return 32-bit CRC value
  */
-uint32_t calculate_crc32(const std::vector<uint8_t>& data);
+uint32_t calculate_crc32(const platform::ByteBuffer& data);
 
 /**
  * @brief Calculate CRC for a specific range of data
@@ -72,10 +71,12 @@ uint32_t calculate_crc32(const std::vector<uint8_t>& data);
  * @param crc_type 0 = SAE-J1850 (8-bit), 1 = ITU-T X.25 (16-bit), 2 = CRC32
  * @return CRC value (size depends on crc_type)
  */
-uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type);
+std::optional<uint32_t> calculate_crc(const platform::ByteBuffer& data, size_t offset, size_t length, uint8_t crc_type);
 
-} // namespace E2ECRC
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e::e2ecrc
+
+namespace someip::e2e {
+namespace E2ECRC = e2ecrc;  // backward-compatible alias
+}  // namespace someip::e2e
 
 #endif // E2E_CRC_H

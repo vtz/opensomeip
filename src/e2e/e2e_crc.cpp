@@ -12,10 +12,13 @@
  ********************************************************************************/
 
 #include "e2e/e2e_crc.h"
-#include <algorithm>
 
-namespace someip {
-namespace e2e {
+#include "platform/buffer_pool.h"
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
 
 /**
  * @brief E2E CRC calculation functions
@@ -26,100 +29,104 @@ namespace e2e {
  * - ITU-T X.25 (16-bit)
  * - ISO 3309 / IEEE 802.3 (32-bit)
  */
-namespace E2ECRC {
+namespace someip::e2e::e2ecrc {
 
 // SAE-J1850 CRC-8 polynomial: 0x1D (x^8 + x^4 + x^3 + x^2 + 1)
 static constexpr uint8_t SAE_J1850_POLY = 0x1D;
 static constexpr uint8_t SAE_J1850_INIT = 0xFF;
 
 /** @implements REQ_E2E_PLUGIN_004 */
-uint8_t calculate_crc8_sae_j1850(const std::vector<uint8_t>& data) {
-    uint8_t crc = SAE_J1850_INIT;
+uint8_t calculate_crc8_sae_j1850(const platform::ByteBuffer& data) {
+    uint32_t crc_reg = SAE_J1850_INIT;
 
-    for (uint8_t byte : data) {
-        crc ^= byte;
+    for (const uint8_t byte : data) {
+        crc_reg ^= static_cast<uint32_t>(byte);
         for (int i = 0; i < 8; ++i) {
-            if (crc & 0x80) {
-                crc = (crc << 1) ^ SAE_J1850_POLY;
+            if ((crc_reg & 0x80U) != 0) {
+                crc_reg = ((crc_reg << 1U) ^ static_cast<uint32_t>(SAE_J1850_POLY)) & 0xFFU;
             } else {
-                crc <<= 1;
+                crc_reg = (crc_reg << 1U) & 0xFFU;
             }
         }
     }
 
-    return crc;
+    return static_cast<uint8_t>(crc_reg);
 }
 
 // ITU-T X.25 / CCITT CRC-16 polynomial: 0x1021 (x^16 + x^12 + x^5 + 1)
 static constexpr uint16_t ITU_X25_POLY = 0x1021;
 static constexpr uint16_t ITU_X25_INIT = 0xFFFF;
 
-uint16_t calculate_crc16_itu_x25(const std::vector<uint8_t>& data) {
-    uint16_t crc = ITU_X25_INIT;
+uint16_t calculate_crc16_itu_x25(const platform::ByteBuffer& data) {
+    uint32_t crc_reg = ITU_X25_INIT;
 
-    for (uint8_t byte : data) {
-        crc ^= (static_cast<uint16_t>(byte) << 8);
+    for (const uint8_t byte : data) {
+        crc_reg ^= static_cast<uint32_t>(byte) << 8U;
         for (int i = 0; i < 8; ++i) {
-            if (crc & 0x8000) {
-                crc = (crc << 1) ^ ITU_X25_POLY;
+            if ((crc_reg & 0x8000U) != 0) {
+                crc_reg = ((crc_reg << 1U) ^ static_cast<uint32_t>(ITU_X25_POLY)) & 0xFFFFU;
             } else {
-                crc <<= 1;
+                crc_reg = (crc_reg << 1U) & 0xFFFFU;
             }
         }
     }
 
-    return crc;
+    return static_cast<uint16_t>(crc_reg);
 }
 
 // CRC-32 polynomial: 0x04C11DB7 (IEEE 802.3)
 static constexpr uint32_t CRC32_POLY = 0x04C11DB7;
 static constexpr uint32_t CRC32_INIT = 0xFFFFFFFF;
 
-// Precomputed CRC32 lookup table
-static uint32_t crc32_table[256];
+namespace {
 
-// Initialize CRC32 lookup table (called once)
-static bool crc32_table_initialized = false;
-
-static void init_crc32_table() {
-    if (crc32_table_initialized) {
-        return;
-    }
-
-    for (uint32_t i = 0; i < 256; ++i) {
-        uint32_t crc = i << 24;
-        for (int j = 0; j < 8; ++j) {
-            if (crc & 0x80000000) {
-                crc = (crc << 1) ^ CRC32_POLY;
-            } else {
-                crc <<= 1;
+const std::array<uint32_t, 256>& get_crc32_table() {
+    static const std::array<uint32_t, 256> CRC32_TABLE = [] {
+        std::array<uint32_t, 256> t{};
+        for (uint32_t i = 0; i < 256; ++i) {
+            uint32_t crc = i << 24U;
+            for (int j = 0; j < 8; ++j) {
+                if ((crc & 0x80000000U) != 0U) {
+                    crc = (crc << 1U) ^ CRC32_POLY;
+                } else {
+                    crc <<= 1U;
+                }
             }
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+            t[i] = crc;
         }
-        crc32_table[i] = crc;
-    }
-
-    crc32_table_initialized = true;
+        return t;
+    }();
+    return CRC32_TABLE;
 }
 
-uint32_t calculate_crc32(const std::vector<uint8_t>& data) {
-    init_crc32_table();
+}  // namespace
+
+uint32_t calculate_crc32(const platform::ByteBuffer& data) {
+    const auto& crc32_table = get_crc32_table();
 
     uint32_t crc = CRC32_INIT;
 
-    for (uint8_t byte : data) {
-        uint32_t index = ((crc >> 24) ^ byte) & 0xFF;
-        crc = (crc << 8) ^ crc32_table[index];
+    for (const uint8_t byte : data) {
+        const uint32_t index = ((crc >> 24U) ^ static_cast<uint32_t>(byte)) & 0xFFU;
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+        crc = (crc << 8U) ^ crc32_table[index];
     }
 
     return crc;
 }
 
-uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t length, uint8_t crc_type) {
-    if (offset > data.size() || length > data.size() || offset > data.size() - length) {
-        return 0;
+std::optional<uint32_t> calculate_crc(const platform::ByteBuffer& data, size_t offset, size_t length, uint8_t crc_type) {
+    if (offset > data.size() || length > data.size() || offset > data.size() - length ||
+        offset > static_cast<size_t>(PTRDIFF_MAX) || length > static_cast<size_t>(PTRDIFF_MAX)) {
+        return std::nullopt;
     }
 
-    std::vector<uint8_t> slice(data.begin() + offset, data.begin() + offset + length);
+    auto first = data.begin() + static_cast<std::ptrdiff_t>(offset);
+    const platform::ByteBuffer slice(first, first + static_cast<std::ptrdiff_t>(length));
+    if (slice.size() != length) {
+        return std::nullopt;
+    }
 
     switch (crc_type) {
         case 0:  // SAE-J1850 (8-bit)
@@ -129,10 +136,8 @@ uint32_t calculate_crc(const std::vector<uint8_t>& data, size_t offset, size_t l
         case 2:  // CRC32
             return calculate_crc32(slice);
         default:
-            return 0;
+            return std::nullopt;
     }
 }
 
-} // namespace E2ECRC
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e::e2ecrc

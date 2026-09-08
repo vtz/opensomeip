@@ -12,18 +12,51 @@
  ********************************************************************************/
 
 #include "events/event_subscriber.h"
+
+// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
+#include <new>
+
+#include "common/result.h"
 #include "events/event_types.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::String via containers dispatch header
+#include "platform/containers.h"
 #include "platform/thread.h"
-#include "transport/udp_transport.h"
+#include "someip/message.h"
+#include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
-#include "someip/message.h"
-#include <unordered_map>
-#include <atomic>
-#include <algorithm>
+#include "transport/udp_transport.h"
 
-namespace someip {
-namespace events {
+#include <array>
+#include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <unordered_map>
+#include <utility>
+
+namespace someip::events {
+
+namespace {
+void uint16_to_str(uint16_t val, platform::String<>& out) {
+    if (val == 0) {
+        out.append("0");
+        return;
+    }
+    std::array<char, 6> digits{};
+    int pos = 5;
+    while (val > 0) {
+        --pos;
+        digits.at(static_cast<size_t>(pos)) = static_cast<char>('0' + (val % 10));
+        val /= 10;
+    }
+    out.append(digits.data() + pos,
+               digits.data() + 5);
+}
+}  // namespace
+
+// NOLINTBEGIN(misc-include-cleaner) - platform::Mutex from platform/thread.h (IWYU false positives in impl).
 
 /**
  * @brief Event Subscriber implementation
@@ -34,25 +67,30 @@ namespace events {
  */
 class EventSubscriberImpl : public transport::ITransportListener {
 public:
-    EventSubscriberImpl(uint16_t client_id)
+    explicit EventSubscriberImpl(uint16_t client_id)
         : client_id_(client_id),
-          transport_(std::make_shared<transport::UdpTransport>(
-              transport::Endpoint("127.0.0.1", 0))),
+          transport_(transport::Endpoint("0.0.0.0", 0)),
           running_(false) {
 
-        transport_->set_listener(this);
+        transport_.set_listener(this);
     }
 
-    ~EventSubscriberImpl() {
+    ~EventSubscriberImpl() override
+    {
         shutdown();
     }
+
+    EventSubscriberImpl(const EventSubscriberImpl&) = delete;
+    EventSubscriberImpl& operator=(const EventSubscriberImpl&) = delete;
+    EventSubscriberImpl(EventSubscriberImpl&&) = delete;
+    EventSubscriberImpl& operator=(EventSubscriberImpl&&) = delete;
 
     bool initialize() {
         if (running_) {
             return true;
         }
 
-        if (transport_->start() != Result::SUCCESS) {
+        if (transport_.start() != Result::SUCCESS) {
             return false;
         }
 
@@ -68,17 +106,17 @@ public:
         running_ = false;
 
         // Clear all subscriptions and callbacks
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
         subscriptions_.clear();
 
-        transport_->stop();
+        transport_.stop();
     }
 
     /** @implements REQ_MSG_122 */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                             EventNotificationCallback notification_callback,
                             SubscriptionStatusCallback status_callback,
-                            const std::vector<EventFilter>& filters) {
+                            const platform::Vector<EventFilter>& filters) {
 
         if (!running_) {
             return false;
@@ -90,33 +128,37 @@ public:
 
         SubscriptionInfo sub_info;
         sub_info.subscription = subscription;
-        sub_info.notification_callback = notification_callback;
-        sub_info.status_callback = status_callback;
+        sub_info.notification_callback = std::move(notification_callback);
+        sub_info.status_callback = std::move(status_callback);
         sub_info.filters = filters;
 
         // Store subscription
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
-        std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
-        subscriptions_[key] = sub_info;
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        const platform::String<> key = make_subscription_key(service_id, instance_id, eventgroup_id);
+        if (subscriptions_.size() >= subscriptions_.max_size() &&
+            subscriptions_.find(key) == subscriptions_.end()) {
+            return false;
+        }
+        subscriptions_[key] = std::move(sub_info);
 
-        // Send subscription request via RPC (simplified - in real implementation,
-        // this would use SD to find the service endpoint and send subscription)
-        // For now, we'll assume the service is at a known endpoint
-        transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
+        const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        if (service_endpoint.get_port() == 0) {
+            subscriptions_.erase(key);
+            return false;
+        }
 
-        // Create subscription message (simplified)
-        MessageId msg_id(service_id, 0x0001);  // Method ID for subscription
-        Message subscription_msg(msg_id, RequestId(client_id_, 0x0001),
-                                MessageType::REQUEST, ReturnCode::E_OK);
+        MessageId const msg_id(service_id, 0x0001);  // Method ID for subscription
+        Message subscription_msg(msg_id, RequestId(client_id_, 0x0001), MessageType::REQUEST,
+                                 ReturnCode::E_OK);
 
         // Add subscription data to payload
-        std::vector<uint8_t> payload;
-        payload.push_back((eventgroup_id >> 8) & 0xFF);
-        payload.push_back(eventgroup_id & 0xFF);
+        platform::ByteBuffer payload;
+        payload.push_back(static_cast<uint8_t>((static_cast<uint32_t>(eventgroup_id) >> 8U) & 0xFFU));
+        payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
         subscription_msg.set_payload(payload);
 
-        Result send_result = transport_->send_message(subscription_msg, service_endpoint);
-        bool success = (send_result == Result::SUCCESS);
+        const Result send_result = transport_.send_message(subscription_msg, service_endpoint);
+        bool const success = (send_result == Result::SUCCESS);
         if (!success) {
             subscriptions_.erase(key);
         }
@@ -128,28 +170,30 @@ public:
             return false;
         }
 
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
-        std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        const platform::String<> key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
         if (it == subscriptions_.end()) {
             return false;
         }
 
-        // Send unsubscription request
-        transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
+        const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        if (service_endpoint.get_port() == 0) {
+            return false;
+        }
 
-        MessageId msg_id(service_id, 0x0002);  // Method ID for unsubscription
+        MessageId const msg_id(service_id, 0x0002);
         Message unsubscription_msg(msg_id, RequestId(client_id_, 0x0002),
-                                  MessageType::REQUEST, ReturnCode::E_OK);
+                                   MessageType::REQUEST, ReturnCode::E_OK);
 
         // Add unsubscription data to payload
-        std::vector<uint8_t> payload;
-        payload.push_back((eventgroup_id >> 8) & 0xFF);
-        payload.push_back(eventgroup_id & 0xFF);
+        platform::ByteBuffer payload;
+        payload.push_back(static_cast<uint8_t>((static_cast<uint32_t>(eventgroup_id) >> 8U) & 0xFFU));
+        payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
         unsubscription_msg.set_payload(payload);
 
-        Result result = transport_->send_message(unsubscription_msg, service_endpoint);
+        const Result result = transport_.send_message(unsubscription_msg, service_endpoint);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
         }
@@ -166,32 +210,40 @@ public:
             return false;
         }
 
-        // Store callback for field response
-        platform::ScopedLock field_lock(field_requests_mutex_);
-        std::string key = make_field_key(service_id, instance_id, event_id);
-        field_requests_[key] = callback;
+        transport::Endpoint service_endpoint;
+        {
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
+            service_endpoint = resolve_service_endpoint(service_id, instance_id);
+        }
+        if (service_endpoint.get_port() == 0) {
+            return false;
+        }
 
-        // Send field request
-        transport::Endpoint service_endpoint("127.0.0.1", 30500);  // TODO: Get from SD
+        platform::ScopedLock const field_lock(field_requests_mutex_);
+        const platform::String<> key = make_field_key(service_id, 0, event_id);
+        if (field_requests_.size() >= field_requests_.max_size() &&
+            field_requests_.find(key) == field_requests_.end()) {
+            return false;
+        }
+        field_requests_[key] = std::move(callback);
 
-        MessageId msg_id(service_id, 0x0003);  // Method ID for field request
-        Message field_msg(msg_id, RequestId(client_id_, 0x0003),
-                         MessageType::REQUEST, ReturnCode::E_OK);
+        MessageId const msg_id(service_id, 0x0003);
+        Message field_msg(msg_id, RequestId(client_id_, 0x0003), MessageType::REQUEST,
+                          ReturnCode::E_OK);
 
         // Add field ID to payload
-        std::vector<uint8_t> payload;
-        payload.push_back((event_id >> 8) & 0xFF);
-        payload.push_back(event_id & 0xFF);
+        platform::ByteBuffer payload;
+        payload.push_back(static_cast<uint8_t>((static_cast<uint32_t>(event_id) >> 8U) & 0xFFU));
+        payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(event_id) & 0xFFU));
         field_msg.set_payload(payload);
 
-        return transport_->send_message(field_msg, service_endpoint) == Result::SUCCESS;
+        return transport_.send_message(field_msg, service_endpoint) == Result::SUCCESS;
     }
 
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
-                         const std::vector<EventFilter>& filters) {
-
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
-        std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
+                         const platform::Vector<EventFilter>& filters) {
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        platform::String<> const key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
         if (it == subscriptions_.end()) {
@@ -203,9 +255,10 @@ public:
     }
 
     /** @implements REQ_MSG_123, REQ_MSG_123_E01 */
-    std::vector<EventSubscription> get_active_subscriptions() const {
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
-        std::vector<EventSubscription> result;
+    platform::Vector<EventSubscription> get_active_subscriptions() const {
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        platform::Vector<EventSubscription> result;
+        result.reserve(subscriptions_.size());
 
         for (const auto& pair : subscriptions_) {
             result.push_back(pair.second.subscription);
@@ -216,9 +269,8 @@ public:
 
     SubscriptionState get_subscription_status(uint16_t service_id, uint16_t instance_id,
                                             uint16_t eventgroup_id) const {
-
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
-        std::string key = make_subscription_key(service_id, instance_id, eventgroup_id);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        platform::String<> const key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
         auto it = subscriptions_.find(key);
         if (it == subscriptions_.end()) {
@@ -229,7 +281,7 @@ public:
     }
 
     bool is_ready() const {
-        return running_ && transport_->is_connected();
+        return running_ && transport_.is_connected();
     }
 
     EventSubscriber::Statistics get_statistics() const {
@@ -237,20 +289,55 @@ public:
         return EventSubscriber::Statistics{};
     }
 
+    using EndpointResolver = platform::Function<transport::Endpoint(uint16_t, uint16_t)>;
+
+    void set_endpoint_resolver(EndpointResolver resolver) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        endpoint_resolver_ = std::move(resolver);
+    }
+
+    void set_default_endpoint(const platform::String<>& address, uint16_t port) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        default_service_address_ = address;
+        default_service_port_ = port;
+    }
+
 private:
     struct SubscriptionInfo {
         EventSubscription subscription;
         EventNotificationCallback notification_callback;
         SubscriptionStatusCallback status_callback;
-        std::vector<EventFilter> filters;
+        platform::Vector<EventFilter> filters;
     };
 
-    std::string make_subscription_key(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) const {
-        return std::to_string(service_id) + ":" + std::to_string(instance_id) + ":" + std::to_string(eventgroup_id);
+    transport::Endpoint resolve_service_endpoint(uint16_t service_id, uint16_t instance_id) const {
+        if (endpoint_resolver_) {
+            return endpoint_resolver_(service_id, instance_id);
+        }
+        if (default_service_address_ == "0.0.0.0" && default_service_port_ == 0) {
+            return transport::Endpoint();
+        }
+        return transport::Endpoint(default_service_address_, default_service_port_);
     }
 
-    std::string make_field_key(uint16_t service_id, uint16_t instance_id, uint16_t event_id) {
-        return std::to_string(service_id) + ":" + std::to_string(instance_id) + ":" + std::to_string(event_id);
+    platform::String<> make_subscription_key(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) const {
+        platform::String<> key;
+        uint16_to_str(service_id, key);
+        key.append(":");
+        uint16_to_str(instance_id, key);
+        key.append(":");
+        uint16_to_str(eventgroup_id, key);
+        return key;
+    }
+
+    platform::String<> make_field_key(uint16_t service_id, uint16_t instance_id, uint16_t event_id) {
+        platform::String<> key;
+        uint16_to_str(service_id, key);
+        key.append(":");
+        uint16_to_str(instance_id, key);
+        key.append(":");
+        uint16_to_str(event_id, key);
+        return key;
     }
 
     void on_message_received(MessagePtr message, const transport::Endpoint& /*sender*/) override {
@@ -260,10 +347,10 @@ private:
         }
 
         // Check if this is for one of our subscriptions
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
-        uint16_t service_id = message->get_service_id();
-        uint16_t event_id = message->get_method_id();  // Event ID is in method ID field for notifications
+        uint16_t const service_id = message->get_service_id();
+        uint16_t const event_id = message->get_method_id();  // Event ID is in method ID field for notifications
 
         // Find matching subscription (we need to check all subscriptions for this service)
         for (auto& sub_pair : subscriptions_) {
@@ -289,8 +376,8 @@ private:
         }
 
         // Check if this is a field response
-        platform::ScopedLock field_lock(field_requests_mutex_);
-        std::string field_key = make_field_key(service_id, 0, event_id);  // Simplified
+        platform::ScopedLock const field_lock(field_requests_mutex_);
+        platform::String<> const field_key = make_field_key(service_id, 0, event_id);  // Simplified
 
         auto field_it = field_requests_.find(field_key);
         if (field_it != field_requests_.end()) {
@@ -307,7 +394,7 @@ private:
 
     void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {
         // Handle service disconnection
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         for (auto& sub_pair : subscriptions_) {
             auto& sub_info = sub_pair.second;
@@ -327,70 +414,97 @@ private:
     }
 
     uint16_t client_id_;
-    std::shared_ptr<transport::UdpTransport> transport_;
+    platform::String<> default_service_address_{"0.0.0.0"};
+    uint16_t default_service_port_{0};
+    EndpointResolver endpoint_resolver_;
+    transport::UdpTransport transport_;
 
-    std::unordered_map<std::string, SubscriptionInfo> subscriptions_;
-    mutable platform::Mutex subscriptions_mutex_;
+    platform::UnorderedMap<platform::String<>, SubscriptionInfo> subscriptions_;
+    mutable platform::Mutex subscriptions_mutex_;  // Lock order: acquire before field_requests_mutex_
 
-    std::unordered_map<std::string, EventNotificationCallback> field_requests_;
-    mutable platform::Mutex field_requests_mutex_;
+    platform::UnorderedMap<platform::String<>, EventNotificationCallback> field_requests_;
+    mutable platform::Mutex field_requests_mutex_;  // Lock order: acquire after subscriptions_mutex_
 
     std::atomic<bool> running_;
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(EventSubscriberImpl) <= SOMEIP_PIMPL_EVENTSUB_SIZE,
+              "EventSubscriberImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_EVENTSUB_SIZE");
+#endif
+
 // EventSubscriber implementation
 EventSubscriber::EventSubscriber(uint16_t client_id)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) EventSubscriberImpl(client_id);
+}
+#else
     : impl_(std::make_unique<EventSubscriberImpl>(client_id)) {
 }
+#endif
 
-EventSubscriber::~EventSubscriber() = default;
+EventSubscriber::~EventSubscriber() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~EventSubscriberImpl();
+#endif
+}
+
+void EventSubscriber::set_default_endpoint(const platform::String<>& address, uint16_t port) {
+    impl()->set_default_endpoint(address, port);
+}
+
+void EventSubscriber::set_endpoint_resolver(EndpointResolver resolver) {
+    impl()->set_endpoint_resolver(std::move(resolver));
+}
 
 bool EventSubscriber::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void EventSubscriber::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 bool EventSubscriber::subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                                          EventNotificationCallback notification_callback,
                                          SubscriptionStatusCallback status_callback,
-                                         const std::vector<EventFilter>& filters) {
-    return impl_->subscribe_eventgroup(service_id, instance_id, eventgroup_id,
-                                     notification_callback, status_callback, filters);
+                                         const platform::Vector<EventFilter>& filters) {
+    return impl()->subscribe_eventgroup(service_id, instance_id, eventgroup_id,
+                                     std::move(notification_callback), std::move(status_callback), filters);
 }
 
 bool EventSubscriber::unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
-    return impl_->unsubscribe_eventgroup(service_id, instance_id, eventgroup_id);
+    return impl()->unsubscribe_eventgroup(service_id, instance_id, eventgroup_id);
 }
 
 bool EventSubscriber::request_field(uint16_t service_id, uint16_t instance_id, uint16_t event_id,
                                    EventNotificationCallback callback) {
-    return impl_->request_field(service_id, instance_id, event_id, callback);
+    return impl()->request_field(service_id, instance_id, event_id, std::move(callback));
 }
 
 bool EventSubscriber::set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
-                                      const std::vector<EventFilter>& filters) {
-    return impl_->set_event_filters(service_id, instance_id, eventgroup_id, filters);
+                                      const platform::Vector<EventFilter>& filters) {
+    return impl()->set_event_filters(service_id, instance_id, eventgroup_id, filters);
 }
 
-std::vector<EventSubscription> EventSubscriber::get_active_subscriptions() const {
-    return impl_->get_active_subscriptions();
+platform::Vector<EventSubscription> EventSubscriber::get_active_subscriptions() const {
+    return impl()->get_active_subscriptions();
 }
 
 SubscriptionState EventSubscriber::get_subscription_status(uint16_t service_id, uint16_t instance_id,
                                                          uint16_t eventgroup_id) const {
-    return impl_->get_subscription_status(service_id, instance_id, eventgroup_id);
+    return impl()->get_subscription_status(service_id, instance_id, eventgroup_id);
 }
 
 bool EventSubscriber::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 EventSubscriber::Statistics EventSubscriber::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
-} // namespace events
-} // namespace someip
+// NOLINTEND(misc-include-cleaner)
+
+}  // namespace someip::events

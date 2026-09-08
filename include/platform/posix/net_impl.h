@@ -26,7 +26,7 @@
 #include <errno.h>
 
 using someip_socket_t = int;
-#define SOMEIP_INVALID_SOCKET (-1)
+constexpr someip_socket_t SOMEIP_INVALID_SOCKET = -1;
 
 /* ---------- Socket lifecycle ----------------------------------------------- */
 
@@ -42,16 +42,26 @@ static inline int someip_shutdown_socket(someip_socket_t fd) {
 
 /** @implements REQ_PAL_NET_NONBLOCK, REQ_PAL_NET_MODE_E01 */
 static inline int someip_set_nonblocking(someip_socket_t fd) {
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags < 0) return -1;
-    return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    const int flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0) {
+        return -1;
+    }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+    return fcntl(fd, F_SETFL,
+                 static_cast<int>(static_cast<unsigned int>(flags) |
+                                  static_cast<unsigned int>(O_NONBLOCK)));
 }
 
 /** @implements REQ_PAL_NET_BLOCK, REQ_PAL_NET_MODE_E01 */
 static inline int someip_set_blocking(someip_socket_t fd) {
-    int flags = fcntl(fd, F_GETFL, 0);
-    if (flags < 0) return -1;
-    return fcntl(fd, F_SETFL, flags & ~O_NONBLOCK);
+    const int flags = fcntl(fd, F_GETFL, 0);
+    if (flags < 0) {
+        return -1;
+    }
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
+    return fcntl(fd, F_SETFL,
+                 static_cast<int>(static_cast<unsigned int>(flags) &
+                                  ~static_cast<unsigned int>(O_NONBLOCK)));
 }
 
 /* ---------- Socket creation & connection ----------------------------------- */
@@ -149,9 +159,9 @@ static inline ssize_t someip_recv(someip_socket_t fd, void* buf,
 
 static inline int someip_set_socket_timeout(someip_socket_t fd, int optname,
                                             int timeout_ms) {
-    struct timeval tv;
+    struct timeval tv{};
     tv.tv_sec  = timeout_ms / 1000;
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    tv.tv_usec = static_cast<long>(timeout_ms % 1000) * 1000L;
     return ::setsockopt(fd, SOL_SOCKET, optname, &tv, sizeof(tv));
 }
 

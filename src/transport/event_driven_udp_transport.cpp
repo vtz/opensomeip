@@ -14,6 +14,7 @@
 #include "transport/event_driven_udp_transport.h"
 #include "platform/memory.h"
 #include <stdexcept>
+#include <string>
 
 namespace someip {
 namespace transport {
@@ -140,18 +141,20 @@ bool EventDrivenUdpTransport::is_running() const {
     return running_.load();
 }
 
-Result EventDrivenUdpTransport::join_multicast_group(const std::string& multicast_address) {
-    if (!is_multicast_ipv4(multicast_address)) {
+Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& multicast_address) {
+    const std::string address(multicast_address.c_str());
+    if (!is_multicast_ipv4(address)) {
         return Result::INVALID_ENDPOINT;
     }
-    return adapter_.join_multicast(multicast_address, config_.multicast_interface);
+    return adapter_.join_multicast(address, config_.multicast_interface);
 }
 
-Result EventDrivenUdpTransport::leave_multicast_group(const std::string& multicast_address) {
-    if (!is_multicast_ipv4(multicast_address)) {
+Result EventDrivenUdpTransport::leave_multicast_group(const platform::String<>& multicast_address) {
+    const std::string address(multicast_address.c_str());
+    if (!is_multicast_ipv4(address)) {
         return Result::INVALID_ENDPOINT;
     }
-    return adapter_.leave_multicast(multicast_address, config_.multicast_interface);
+    return adapter_.leave_multicast(address, config_.multicast_interface);
 }
 
 void EventDrivenUdpTransport::on_adapter_receive(const std::vector<uint8_t>& data, const Endpoint& sender) {

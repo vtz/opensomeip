@@ -1,6 +1,12 @@
 name: Zephyr Build & Test
 on:
   workflow_call:
+    inputs:
+      rtos_paths_changed:
+        description: Whether RTOS-specific paths changed (vs only shared code)
+        type: boolean
+        required: false
+        default: true
   workflow_dispatch:
 
 permissions:
@@ -12,10 +18,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: sudo apt-get update -qq && sudo apt-get install -y ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-zephyr-host-build-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-zephyr-host-build-
+
+      - name: Cache CMake FetchContent
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: fetchcontent-zephyr-host-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            fetchcontent-zephyr-host-
+
       - name: Build & Test
         run: |
-          cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF -DSAFETY_LEVEL=NONE
-          cmake --build build -j$(nproc)
+          cmake -B build -DBUILD_TESTS=ON -DBUILD_EXAMPLES=OFF -DSAFETY_LEVEL=NONE \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build build -j"$(nproc)"
           mkdir -p "$GITHUB_WORKSPACE/gtest_results"
           export GTEST_OUTPUT="xml:$GITHUB_WORKSPACE/gtest_results/"
           cd build && ctest --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
@@ -36,39 +64,109 @@ jobs:
           path: ${{ github.workspace }}/gtest_results/
           retention-days: 14
 
-  zephyr-native-sim:
-    name: Zephyr native_sim
+  zephyr-setup:
+    name: Zephyr environment (cache + artifact)
     runs-on: ubuntu-latest
     container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
     env:
       ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cache Zephyr workspace and SDK
+        id: zephyr-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            /tmp/zp
+            /opt/zephyr-sdk-0.17.0
+          key: zephyr-env-v4.3.0-sdk0.17.0-ci0.27.4-${{ hashFiles('zephyr/**/CMakeLists.txt', 'zephyr/**/prj.conf') }}
+          restore-keys: |
+            zephyr-env-v4.3.0-sdk0.17.0-ci0.27.4-
+
       - name: Install Python 3.12
-        run: |
-          apt-get update -qq
-          apt-get install -y -qq software-properties-common > /dev/null
-          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
-          apt-get update -qq
-          apt-get install -y -qq python3.12 python3.12-venv > /dev/null
-          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
-          python3.12 -m ensurepip --upgrade
-          python3.12 -m pip install --upgrade pip
-      - name: Install Zephyr SDK
+        if: steps.zephyr-cache.outputs.cache-hit != 'true'
+        uses: ./.github/actions/setup-python312
+
+      - name: Install Zephyr SDK and ARM toolchain
+        if: steps.zephyr-cache.outputs.cache-hit != 'true'
         run: |
           wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
           tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
+          tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
           /opt/zephyr-sdk-0.17.0/setup.sh -c
+
       - name: Init Zephyr
+        if: steps.zephyr-cache.outputs.cache-hit != 'true'
         run: |
           python3.12 -m pip install jsonschema west
           west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
           west update --narrow -o=--depth=1 && west zephyr-export
           python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
+      - name: Package Zephyr environment
+        run: |
+          rm -rf /tmp/zephyr-env-staging
+          mkdir -p /tmp/zephyr-env-staging
+          cp -a /tmp/zp /tmp/zephyr-env-staging/zp
+          cp -a /opt/zephyr-sdk-0.17.0 /tmp/zephyr-env-staging/zephyr-sdk-0.17.0
+          cd /tmp/zephyr-env-staging && tar czf /tmp/zephyr-env.tar.gz .
+
+      - name: Upload Zephyr environment
+        uses: actions/upload-artifact@v4
+        with:
+          name: zephyr-env
+          path: /tmp/zephyr-env.tar.gz
+          retention-days: 1
+
+  zephyr-native-sim:
+    name: Zephyr native_sim
+    needs: [zephyr-setup]
+    runs-on: ubuntu-latest
+    container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
+    env:
+      ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-zephyr-native-sim-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-zephyr-native-sim-
+
+      - name: Install Python 3.12
+        uses: ./.github/actions/setup-python312
+
+      - name: Download Zephyr environment
+        uses: actions/download-artifact@v4
+        with:
+          name: zephyr-env
+
+      - name: Extract Zephyr environment
+        run: |
+          rm -rf /tmp/zp /opt/zephyr-sdk-0.17.0
+          tarball=$(find "${GITHUB_WORKSPACE:-.}" -name zephyr-env.tar.gz -print -quit)
+          [ -n "$tarball" ] || { echo "zephyr-env.tar.gz not found"; exit 1; }
+          tar xzf "$tarball" -C /tmp
+          mv /tmp/zephyr-sdk-0.17.0 /opt/
+          /opt/zephyr-sdk-0.17.0/setup.sh -c
+          python3.12 -m pip install jsonschema west
+          python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
       - name: Build & run test_core
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
-          west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto
+          west build -b native_sim zephyr/tests/test_core -d build/ns_tc --pristine auto -- \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           if timeout 30 build/ns_tc/zephyr/zephyr.exe > /tmp/test_core.log 2>&1; then
             rc=0
           else
@@ -86,7 +184,8 @@ jobs:
       - name: Build & run test_transport
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
-          west build -b native_sim zephyr/tests/test_transport -d build/ns_tp --pristine auto
+          west build -b native_sim zephyr/tests/test_transport -d build/ns_tp --pristine auto -- \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           if timeout 30 build/ns_tp/zephyr/zephyr.exe > /tmp/test_transport.log 2>&1; then
             rc=0
           else
@@ -101,6 +200,25 @@ jobs:
       - name: Convert test_transport results to JUnit XML
         if: always()
         run: python3 scripts/zephyr_to_junit.py /tmp/test_transport.log test_transport /tmp/test_transport_junit.xml || true
+      - name: Build & run test_events
+        env: { ZEPHYR_BASE: /tmp/zp/zephyr }
+        run: |
+          west build -b native_sim zephyr/tests/test_events -d build/ns_ev --pristine auto -- \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          if timeout 30 build/ns_ev/zephyr/zephyr.exe > /tmp/test_events.log 2>&1; then
+            rc=0
+          else
+            rc=$?
+          fi
+          cat /tmp/test_events.log
+          if [ "$rc" -eq 124 ]; then
+            grep -Eq "=== Results: [0-9]+ passed, 0 failed ===" /tmp/test_events.log || exit 1
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
+      - name: Convert test_events results to JUnit XML
+        if: always()
+        run: python3 scripts/zephyr_to_junit.py /tmp/test_events.log test_events /tmp/test_events_junit.xml || true
       - name: Upload Zephyr native_sim test results
         uses: actions/upload-artifact@v4
         if: always()
@@ -111,7 +229,8 @@ jobs:
       - name: Build & run someip_echo
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
-          west build -b native_sim zephyr/samples/someip_echo -d build/ns_echo --pristine auto
+          west build -b native_sim zephyr/samples/someip_echo -d build/ns_echo --pristine auto -- \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           # someip_echo is a sample that may run continuously.
           # Accept timeout exit code 124, but fail on any other non-zero code.
           if timeout 30 build/ns_echo/zephyr/zephyr.exe; then
@@ -124,17 +243,20 @@ jobs:
           fi
       - name: Build someip_sd_client
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
-        run: west build -b native_sim zephyr/samples/someip_sd_client -d build/ns_sd --pristine auto
+        run: >
+          west build -b native_sim zephyr/samples/someip_sd_client -d build/ns_sd --pristine auto --
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - name: Build & run sanitizer tests (ASan + UBSan)
         run: |
-          for spec in test_core:tc test_transport:tp; do
+          for spec in test_core:tc test_transport:tp test_events:ev; do
             t="${spec%%:*}"
             short="${spec##*:}"
             out_dir="build/ns_${short}_asan"
             log="/tmp/${t}_asan.log"
             west build -b native_sim "zephyr/tests/${t}" \
               -d "${out_dir}" --pristine auto \
-              -- -DOVERLAY_CONFIG="$PWD/zephyr/boards/native_sim_asan.conf"
+              -- -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+              -DOVERLAY_CONFIG="$PWD/zephyr/boards/native_sim_asan.conf"
             if timeout 60 "${out_dir}/zephyr/zephyr.exe" > "${log}" 2>&1; then
               rc=0
             else
@@ -154,41 +276,56 @@ jobs:
 
   zephyr-s32k344-build:
     name: Zephyr S32K344 cross-compile
+    needs: [zephyr-setup]
     runs-on: ubuntu-latest
     container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
     env:
       ZEPHYR_SDK_INSTALL_DIR: /opt/zephyr-sdk-0.17.0
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-zephyr-s32k344-build-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-zephyr-s32k344-build-
+
       - name: Install Python 3.12
+        uses: ./.github/actions/setup-python312
+
+      - name: Download Zephyr environment
+        uses: actions/download-artifact@v4
+        with:
+          name: zephyr-env
+
+      - name: Extract Zephyr environment
         run: |
-          apt-get update -qq
-          apt-get install -y -qq software-properties-common > /dev/null
-          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
-          apt-get update -qq
-          apt-get install -y -qq python3.12 python3.12-venv > /dev/null
-          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
-          python3.12 -m ensurepip --upgrade
-          python3.12 -m pip install --upgrade pip
-      - name: Install Zephyr SDK
-        run: |
-          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
-          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
-          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
-          tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
+          rm -rf /tmp/zp /opt/zephyr-sdk-0.17.0
+          tarball=$(find "${GITHUB_WORKSPACE:-.}" -name zephyr-env.tar.gz -print -quit)
+          [ -n "$tarball" ] || { echo "zephyr-env.tar.gz not found"; exit 1; }
+          tar xzf "$tarball" -C /tmp
+          mv /tmp/zephyr-sdk-0.17.0 /opt/
           /opt/zephyr-sdk-0.17.0/setup.sh -c
-      - name: Init Zephyr
-        run: |
           python3.12 -m pip install jsonschema west
-          west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
-          west update --narrow -o=--depth=1 && west zephyr-export
           python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
       - name: Build hello_s32k (mr_canhubk3)
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
-        run: west build -b mr_canhubk3 zephyr/samples/hello_s32k -d build/s32k344
+        run: >
+          west build -b mr_canhubk3 zephyr/samples/hello_s32k -d build/s32k344 --
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
   zephyr-renode-s32k388:
     name: Zephyr S32K388 Renode Tests
+    if: inputs.rtos_paths_changed || github.event_name == 'workflow_dispatch'
+    needs: [zephyr-setup]
     runs-on: ubuntu-latest
     container: { image: "ghcr.io/zephyrproject-rtos/ci:v0.27.4" }
     env:
@@ -196,35 +333,56 @@ jobs:
       RENODE_VERSION: "1.15.3"
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install ccache
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq ccache
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ccache
+          key: ccache-${{ runner.os }}-zephyr-renode-s32k388-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-zephyr-renode-s32k388-
+
       - name: Install Python 3.12
+        uses: ./.github/actions/setup-python312
+
+      - name: Download Zephyr environment
+        uses: actions/download-artifact@v4
+        with:
+          name: zephyr-env
+
+      - name: Extract Zephyr environment
         run: |
-          apt-get update -qq
-          apt-get install -y -qq software-properties-common > /dev/null
-          add-apt-repository -y ppa:deadsnakes/ppa > /dev/null 2>&1
-          apt-get update -qq
-          apt-get install -y -qq python3.12 python3.12-venv > /dev/null
-          update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.12 2
-          python3.12 -m ensurepip --upgrade
-          python3.12 -m pip install --upgrade pip
-      - name: Install Zephyr SDK (ARM toolchain)
-        run: |
-          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz
-          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v0.17.0/toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz
-          tar xf zephyr-sdk-0.17.0_linux-x86_64_minimal.tar.xz -C /opt/
-          tar xf toolchain_linux-x86_64_arm-zephyr-eabi.tar.xz -C /opt/zephyr-sdk-0.17.0/
+          rm -rf /tmp/zp /opt/zephyr-sdk-0.17.0
+          tarball=$(find "${GITHUB_WORKSPACE:-.}" -name zephyr-env.tar.gz -print -quit)
+          [ -n "$tarball" ] || { echo "zephyr-env.tar.gz not found"; exit 1; }
+          tar xzf "$tarball" -C /tmp
+          mv /tmp/zephyr-sdk-0.17.0 /opt/
           /opt/zephyr-sdk-0.17.0/setup.sh -c
+          python3.12 -m pip install jsonschema west
+          python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
+      - name: Cache Renode
+        id: renode-cache
+        uses: actions/cache@v4
+        with:
+          path: /opt/renode
+          key: renode-${{ env.RENODE_VERSION }}-linux
+
       - name: Install Renode
+        if: steps.renode-cache.outputs.cache-hit != 'true'
         run: |
           wget -q "https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable.tar.gz"
           mkdir -p /opt/renode
           tar xzf "renode-${RENODE_VERSION}.linux-portable.tar.gz" -C /opt/renode --strip-components=1
-          ln -s /opt/renode/renode /usr/local/bin/renode
-      - name: Init Zephyr
-        run: |
-          python3.12 -m pip install jsonschema west
-          west init --mr v4.3.0 /tmp/zp && cd /tmp/zp
-          west update --narrow -o=--depth=1 && west zephyr-export
-          python3.12 -m pip install -r /tmp/zp/zephyr/scripts/requirements.txt
+
+      - name: Add Renode to PATH
+        run: ln -sf /opt/renode/renode /usr/local/bin/renode
+
       - name: Build & run test_core on Renode
         env: { ZEPHYR_BASE: /tmp/zp/zephyr }
         run: |
@@ -277,57 +435,3 @@ jobs:
             test-results-zephyr-renode/*.xml
           check_name: "Zephyr Test Results"
           comment_mode: "off"
-
-      - name: Merge all test XML for detailed report
-        if: always()
-        run: |
-          shopt -s nullglob
-          mkdir -p all-results
-          for f in gtest-downloads/*/*.xml; do
-            cp "$f" all-results/
-          done
-          for f in test-results-zephyr-native-sim/*.xml test-results-zephyr-renode/*.xml; do
-            cp "$f" all-results/
-          done
-
-      - name: Convert JUnit XML to CTRF
-        if: always()
-        run: npx junit-to-ctrf@0.0.14 "all-results/*.xml" -o ctrf/zephyr-report.json -t zephyr
-
-      - name: Detailed Test Report
-        uses: ctrf-io/github-test-reporter@31e2a2735dd4641c65c2f49eb07e93ce8ec37fff # v1
-        if: always()
-        with:
-          report-path: 'ctrf/zephyr-report.json'
-          title: 'Zephyr Test Report'
-          summary-report: true
-          failed-report: true
-          suite-list-report: true
-          test-report: true
-          use-suite-name: true
-
-      - name: Create Zephyr Test Check Run
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
-          REPORT="ctrf/zephyr-report.json"
-          if [ ! -f "$REPORT" ]; then echo "No CTRF report found"; exit 0; fi
-          TOTAL=$(jq '.results.summary.tests' "$REPORT")
-          PASSED=$(jq '.results.summary.passed' "$REPORT")
-          FAILED=$(jq '.results.summary.failed' "$REPORT")
-          SKIPPED=$(jq '.results.summary.skipped' "$REPORT")
-          CONCLUSION="success"; [ "$FAILED" -gt 0 ] && CONCLUSION="failure"
-          BODY="## Zephyr Test Report"$'\n\n'"| Tests | Passed | Failed | Skipped |"$'\n'"|-|-|-|-|"$'\n'"| $TOTAL | $PASSED | $FAILED | $SKIPPED |"
-          if [ "$FAILED" -gt 0 ]; then
-            FAILS=$(jq -r '[.results.tests[] | select(.status=="failed")] | .[0:50] | .[] | "| \(.suite // "-") | \(.name) |"' "$REPORT")
-            BODY="$BODY"$'\n\n'"### Failed Tests"$'\n'"| Suite | Test |"$'\n'"|-|-|"$'\n'"$FAILS"
-          fi
-          gh api repos/${{ github.repository }}/check-runs \
-            -f "head_sha=${SHA}" \
-            -f "name=Zephyr Detailed Test Report" \
-            -f "status=completed" \
-            -f "conclusion=${CONCLUSION}" \
-            -f "output[title]=Zephyr: ${PASSED}/${TOTAL} passed" \
-            -f "output[summary]=${BODY}"

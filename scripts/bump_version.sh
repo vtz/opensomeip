@@ -131,18 +131,72 @@ main() {
     # Validate new version format
     validate_version "$new_version"
 
-    # Write new version to file
+    # Write new version to VERSION file (single source of truth)
     echo "$new_version" > "$version_file"
+    echo -e "${GREEN}Updated:${NC} VERSION"
 
+    # Update packaging/opensomeip.spec
+    local spec_file="${PROJECT_ROOT}/packaging/opensomeip.spec"
+    if [ -f "$spec_file" ]; then
+        sed -i.bak "s/^Version:.*$/Version:        ${new_version}/" "$spec_file"
+        sed -i.bak "s/^Release:.*$/Release:        1%{?dist}/" "$spec_file"
+        rm -f "${spec_file}.bak"
+        echo -e "${GREEN}Updated:${NC} packaging/opensomeip.spec"
+    fi
+
+    # Update README.md
+    local readme_file="${PROJECT_ROOT}/README.md"
+    if [ -f "$readme_file" ]; then
+        sed -i.bak "s/\*\*Current Version\*\*: [0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/\*\*Current Version\*\*: ${new_version}/" "$readme_file"
+        rm -f "${readme_file}.bak"
+        echo -e "${GREEN}Updated:${NC} README.md"
+    fi
+
+    # Scaffold CHANGELOG.md entry (only if section doesn't already exist)
+    local changelog_file="${PROJECT_ROOT}/CHANGELOG.md"
+    if [ -f "$changelog_file" ]; then
+        if ! grep -q "## \[${new_version}\]" "$changelog_file"; then
+            local today
+            today=$(date +%Y-%m-%d)
+            # Insert new section after the "adheres to" preamble line
+            sed -i.bak "/^## \[/i\\
+## [${new_version}] - ${today}\\
+\\
+### Added\\
+\\
+### Fixed\\
+\\
+### Changed\\
+" "$changelog_file"
+            rm -f "${changelog_file}.bak"
+
+            # Add comparison link if not present
+            if ! grep -q "^\[${new_version}\]:" "$changelog_file"; then
+                sed -i.bak "s|^\[${current_version}\]:|\[${new_version}\]: https://github.com/vtz/opensomeip/compare/v${current_version}...v${new_version}\n\[${current_version}\]:|" "$changelog_file"
+                rm -f "${changelog_file}.bak"
+            fi
+            echo -e "${GREEN}Updated:${NC} CHANGELOG.md (scaffolded new section)"
+        else
+            echo -e "${YELLOW}Skipped:${NC} CHANGELOG.md (section for ${new_version} already exists)"
+        fi
+    fi
+
+    echo ""
     echo -e "${GREEN}Version updated successfully!${NC}"
     echo -e "${BLUE}New version:${NC} $new_version"
+    echo ""
+    echo -e "${BLUE}Files modified:${NC}"
+    echo "  VERSION"
+    echo "  packaging/opensomeip.spec"
+    echo "  README.md"
+    echo "  CHANGELOG.md"
 
     # Check if git is available and suggest commit
     if command -v git >/dev/null 2>&1 && [ -d "${PROJECT_ROOT}/.git" ]; then
         echo ""
         echo -e "${YELLOW}Consider committing this version change:${NC}"
-        echo "  git add VERSION"
-        echo "  git commit -m \"Bump version to $new_version\""
+        echo "  git add VERSION packaging/opensomeip.spec README.md CHANGELOG.md"
+        echo "  git commit -m \"release: bump version to $new_version\""
         echo "  git tag v$new_version"
     fi
 }

@@ -13,6 +13,13 @@
 
 #include "core/session_manager.h"
 
+#include "platform/thread.h"
+
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+
 namespace someip {
 
 /**
@@ -30,62 +37,75 @@ SessionManager::SessionManager() = default;
  * @implements REQ_MSG_118
  */
 uint16_t SessionManager::create_session(uint16_t client_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
-    uint16_t session_id = get_next_session_id();
+    if (sessions_.size() >= sessions_.max_size()) {
+        return 0;
+    }
 
-    auto session = std::make_shared<Session>(session_id, client_id);
-    sessions_[session_id] = session;
+    uint16_t const session_id = get_next_session_id();
+    sessions_.insert({session_id, Session(session_id, client_id)});
 
     return session_id;
 }
 
-std::shared_ptr<Session> SessionManager::get_session(uint16_t session_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+std::optional<Session> SessionManager::get_session(uint16_t session_id) {
+    platform::ScopedLock const lock(sessions_mutex_);
 
     auto it = sessions_.find(session_id);
     if (it != sessions_.end()) {
         return it->second;
     }
 
-    return nullptr;
+    return std::nullopt;
+}
+
+bool SessionManager::set_session_state(uint16_t session_id, SessionState state) {
+    platform::ScopedLock const lock(sessions_mutex_);
+
+    auto it = sessions_.find(session_id);
+    if (it == sessions_.end()) {
+        return false;
+    }
+    it->second.state = state;
+    return true;
 }
 
 void SessionManager::remove_session(uint16_t session_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     sessions_.erase(session_id);
 }
 
 bool SessionManager::validate_session(uint16_t session_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     auto it = sessions_.find(session_id);
     if (it == sessions_.end()) {
         return false;
     }
 
-    return it->second->state == SessionState::ACTIVE;
+    return it->second.state == SessionState::ACTIVE;
 }
 
 void SessionManager::update_session_activity(uint16_t session_id) {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     auto it = sessions_.find(session_id);
     if (it != sessions_.end()) {
-        it->second->update_activity();
+        it->second.update_activity();
     }
 }
 
-size_t SessionManager::cleanup_expired_sessions(std::chrono::seconds timeout) {
-    platform::ScopedLock lock(sessions_mutex_);
+size_t SessionManager::cleanup_expired_sessions(std::chrono::steady_clock::duration timeout) {
+    platform::ScopedLock const lock(sessions_mutex_);
 
     size_t cleaned_count = 0;
     auto it = sessions_.begin();
 
     while (it != sessions_.end()) {
-        if (it->second->is_expired(timeout)) {
-            it->second->state = SessionState::EXPIRED;
+        if (it->second.is_expired(timeout)) {
+            it->second.state = SessionState::EXPIRED;
             it = sessions_.erase(it);
             cleaned_count++;
         } else {
@@ -118,11 +138,11 @@ uint16_t SessionManager::get_next_session_id() {
 }
 
 size_t SessionManager::get_active_session_count() const {
-    platform::ScopedLock lock(sessions_mutex_);
+    platform::ScopedLock const lock(sessions_mutex_);
 
     size_t count = 0;
     for (const auto& pair : sessions_) {
-        if (pair.second->state == SessionState::ACTIVE) {
+        if (pair.second.state == SessionState::ACTIVE) {
             count++;
         }
     }

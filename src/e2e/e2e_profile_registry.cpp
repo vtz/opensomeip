@@ -12,10 +12,16 @@
  ********************************************************************************/
 
 #include "e2e/e2e_profile_registry.h"
-#include <algorithm>
 
-namespace someip {
-namespace e2e {
+#include "e2e/e2e_profile.h"
+#include "platform/containers.h"
+#include "platform/thread.h"
+
+#include <cstdint>
+#include <memory>
+#include <utility>
+
+namespace someip::e2e {
 
 /**
  * @brief Get singleton instance of the E2E profile registry
@@ -36,10 +42,10 @@ bool E2EProfileRegistry::register_profile(E2EProfilePtr profile) {
         return false;
     }
 
-    platform::ScopedLock lock(mutex_);
+    platform::ScopedLock const lock(mutex_);
 
-    uint32_t profile_id = profile->get_profile_id();
-    std::string profile_name = profile->get_profile_name();
+    uint32_t const profile_id = profile->get_profile_id();
+    platform::String<> const profile_name = profile->get_profile_name();
 
     // Check if profile ID already exists
     if (profiles_by_id_.find(profile_id) != profiles_by_id_.end()) {
@@ -52,7 +58,7 @@ bool E2EProfileRegistry::register_profile(E2EProfilePtr profile) {
     }
 
     // Register profile
-    E2EProfile* raw_ptr = profile.get();
+    E2EProfile* const raw_ptr = profile.get();
     profiles_by_id_[profile_id] = std::move(profile);
     profiles_by_name_[profile_name] = raw_ptr;
 
@@ -64,7 +70,7 @@ bool E2EProfileRegistry::register_profile(E2EProfilePtr profile) {
  * @implements REQ_E2E_PLUGIN_002
  */
 E2EProfile* E2EProfileRegistry::get_profile(uint32_t profile_id) {
-    platform::ScopedLock lock(mutex_);
+    platform::ScopedLock const lock(mutex_);
 
     auto it = profiles_by_id_.find(profile_id);
     if (it != profiles_by_id_.end()) {
@@ -74,8 +80,8 @@ E2EProfile* E2EProfileRegistry::get_profile(uint32_t profile_id) {
     return nullptr;
 }
 
-E2EProfile* E2EProfileRegistry::get_profile(const std::string& profile_name) {
-    platform::ScopedLock lock(mutex_);
+E2EProfile* E2EProfileRegistry::get_profile(const platform::String<>& profile_name) {
+    platform::ScopedLock const lock(mutex_);
 
     auto it = profiles_by_name_.find(profile_name);
     if (it != profiles_by_name_.end()) {
@@ -86,7 +92,7 @@ E2EProfile* E2EProfileRegistry::get_profile(const std::string& profile_name) {
 }
 
 bool E2EProfileRegistry::unregister_profile(uint32_t profile_id) {
-    platform::ScopedLock lock(mutex_);
+    platform::ScopedLock const lock(mutex_);
 
     auto it = profiles_by_id_.find(profile_id);
     if (it == profiles_by_id_.end()) {
@@ -94,7 +100,7 @@ bool E2EProfileRegistry::unregister_profile(uint32_t profile_id) {
     }
 
     // Remove from name map
-    std::string profile_name = it->second->get_profile_name();
+    platform::String<> const profile_name = it->second->get_profile_name();
     profiles_by_name_.erase(profile_name);
 
     // Remove from ID map
@@ -104,14 +110,13 @@ bool E2EProfileRegistry::unregister_profile(uint32_t profile_id) {
 }
 
 bool E2EProfileRegistry::is_registered(uint32_t profile_id) const {
-    platform::ScopedLock lock(mutex_);
+    platform::ScopedLock const lock(mutex_);
     return profiles_by_id_.find(profile_id) != profiles_by_id_.end();
 }
 
 E2EProfile* E2EProfileRegistry::get_default_profile() {
-    // Default profile has ID 0 and name "standard"
+    // Default profile has ID 0 and name "basic"
     return get_profile(0);
 }
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e

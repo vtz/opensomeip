@@ -8,6 +8,8 @@ upstream_tag_template: v{version}
 copy_upstream_release_description: true
 
 actions:
+  get-current-version:
+    - bash -c "cat VERSION"
   # Packit creates the tarball from git; fix-spec-file updates Version/Release.
   # The archive name must match %autosetup -n %{name}-%{version}.
   create-archive:
@@ -15,16 +17,20 @@ actions:
     - bash -c "echo opensomeip-$(cat VERSION).tar.gz"
 
 jobs:
-  # Build RPM on every pull request (validates spec before merge).
+  # PR RPM validation is handled by GitHub Actions (.github/workflows/rpm-build.yml)
+  # with path-based filtering via ci.yml — Packit does not support path filters.
+
+  # Build on every push to main (validates RPM continuously, provides latest builds).
   - job: copr_build
-    trigger: pull_request
+    trigger: commit
+    branch: main
     targets:
       - fedora-all
 
   # Publish to Copr on GitHub Release (triggered by v* tag).
   - job: copr_build
     trigger: release
-    owner: vtz
+    owner: vtzein
     project: opensomeip
     targets:
       - fedora-all

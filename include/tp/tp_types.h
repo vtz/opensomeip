@@ -14,15 +14,16 @@
 #ifndef SOMEIP_TP_TYPES_H
 #define SOMEIP_TP_TYPES_H
 
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
-#include <memory>
-#include <chrono>
 #include <functional>
+#include <memory>
 
-namespace someip {
-namespace tp {
+namespace someip::tp {
 
 /**
  * @brief TP (Transport Protocol) result codes
@@ -67,10 +68,16 @@ struct TpConfig {
  */
 struct TpSegmentHeader {
     uint32_t message_length{0};     // Total message length
-    uint16_t segment_offset{0};     // Offset of this segment in the message
+    uint32_t segment_offset{0};     // Offset of this segment in the message
     uint16_t segment_length{0};     // Length of this segment's payload
     uint8_t sequence_number{0};     // Sequence number for ordering
     TpMessageType message_type{TpMessageType::SINGLE_MESSAGE};  // Type of TP message
+    uint16_t service_id{0};         // For reassembly key
+    uint16_t method_id{0};          // For reassembly key
+    uint16_t client_id{0};          // For reassembly key
+    uint16_t session_id{0};         // For reassembly key + stale detection
+    uint8_t protocol_version{0};    // For reassembly key
+    uint8_t interface_version{0};   // For reassembly key
 
     TpSegmentHeader() = default;
 };
@@ -80,35 +87,96 @@ struct TpSegmentHeader {
  */
 struct TpSegment {
     TpSegmentHeader header;
-    std::vector<uint8_t> payload;
+    platform::ByteBuffer payload;
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
     uint32_t retransmit_count{0};
 
     TpSegment() = default;
 };
 
+// Capacity for the per-byte reception bitvector inside TpReassemblyBuffer.
+// Under static alloc, etl::vector<bool> stores one byte per element (not
+// bit-packed), so this directly controls the inline memory footprint of
+// each reassembly entry.  Defaults are set in static_config.h; dynamic
+// builds fall back to a generous value that std::vector ignores anyway.
+#ifndef SOMEIP_MAX_TP_REASSEMBLY_SIZE          // NOLINT(cppcoreguidelines-macro-usage)
+#define SOMEIP_MAX_TP_REASSEMBLY_SIZE 16384    // NOLINT(cppcoreguidelines-macro-usage)
+#endif
+inline constexpr size_t MAX_TP_REASSEMBLY_SIZE = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
+
+/**
+ * @brief Composite key for TP reassembly per Open SOME/IP-TP spec
+ * @satisfies feat_req_someiptp_781, feat_req_someiptp_794
+ *
+ * Key fields (per someip-tp.rst):
+ *   Message ID + Protocol Version + Interface Version
+ *   + Message Type (SOME/IP wire byte 14, TP-flag 0x20 masked off)
+ *   + Request ID (Client ID << 16 | Session ID)
+ *
+ * Session ID changes for the same Client ID trigger stale-buffer discard
+ * in find_or_create_buffer (feat_req_someiptp_795).
+ */
+struct TpReassemblyKey {
+    uint32_t message_id{0};          // Service ID << 16 | Method ID
+    uint8_t protocol_version{0};
+    uint8_t interface_version{0};
+    uint8_t message_type{0};         // Wire Message Type with TP-flag masked off
+    uint32_t request_id{0};          // Client ID << 16 | Session ID
+
+    bool operator==(const TpReassemblyKey& other) const {
+        return message_id == other.message_id &&
+               protocol_version == other.protocol_version &&
+               interface_version == other.interface_version &&
+               message_type == other.message_type &&
+               request_id == other.request_id;
+    }
+
+    bool operator!=(const TpReassemblyKey& other) const {
+        return !(*this == other);
+    }
+};
+
+/**
+ * @brief Hash function for TpReassemblyKey for use in unordered_map
+ */
+struct TpReassemblyKeyHash {
+    static void combine(size_t& h, size_t v) {
+        h ^= v + static_cast<size_t>(0x9e3779b9U) + (h << 6U) + (h >> 2U);
+    }
+
+    size_t operator()(const TpReassemblyKey& k) const {
+        size_t h = std::hash<uint32_t>{}(k.message_id);
+        combine(h, std::hash<uint8_t>{}(k.protocol_version));
+        combine(h, std::hash<uint8_t>{}(k.interface_version));
+        combine(h, std::hash<uint8_t>{}(k.message_type));
+        combine(h, std::hash<uint32_t>{}(k.request_id));
+        return h;
+    }
+};
+
 /**
  * @brief TP message being reassembled
  */
 struct TpReassemblyBuffer {
-    uint32_t message_id{0};                    // SOME/IP message ID
-    uint32_t total_length{0};                  // Total expected message length
-    std::vector<uint8_t> received_data;     // Buffer for received data
-    std::vector<bool> received_segments;    // Track which segments received
+    uint32_t message_id{0};
+    uint32_t total_length{0};
+    platform::ByteBuffer received_data;
+    platform::Vector<bool, MAX_TP_REASSEMBLY_SIZE> received_segments;
     std::chrono::steady_clock::time_point start_time{std::chrono::steady_clock::now()};
     uint8_t last_sequence_number{0};
+    uint16_t session_id{0};  // Track Session ID for stale detection (feat_req_someiptp_795)
     bool complete{false};
 
-    TpReassemblyBuffer(uint32_t msg_id, uint32_t length)
-        : message_id(msg_id), total_length(length) {
+    TpReassemblyBuffer(uint32_t msg_id, uint32_t length, uint16_t sess_id = 0)
+        : message_id(msg_id), total_length(length), session_id(sess_id) {
         received_data.resize(length);
         start_time = std::chrono::steady_clock::now();
     }
 
-    bool is_segment_received(uint16_t offset, uint16_t length) const;
-    void mark_segment_received(uint16_t offset, uint16_t length);
+    bool is_segment_received(uint32_t offset, uint32_t length) const;
+    void mark_segment_received(uint32_t offset, uint32_t length);
     bool is_complete() const;
-    std::vector<uint8_t> get_complete_message() const;
+    platform::ByteBuffer get_complete_message() const;
 };
 
 /**
@@ -129,11 +197,21 @@ enum class TpTransferState : uint8_t {
 /**
  * @brief TP transfer information
  */
+/// Capacity for TP segment vectors.  Under static alloc this is
+/// capped by SOMEIP_MAX_TP_SEGMENTS from static_config.h.
+#ifdef SOMEIP_MAX_TP_SEGMENTS
+inline constexpr size_t MAX_TP_SEGMENTS = SOMEIP_MAX_TP_SEGMENTS;
+#else
+inline constexpr size_t MAX_TP_SEGMENTS = 64;
+#endif
+
+using TpSegmentVector = platform::Vector<TpSegment, MAX_TP_SEGMENTS>;
+
 struct TpTransfer {
     uint32_t transfer_id{0};
     uint32_t message_id{0};
     TpTransferState state{TpTransferState::IDLE};
-    std::vector<TpSegment> segments;
+    TpSegmentVector segments;
     size_t next_segment_to_send{0};
     std::chrono::steady_clock::time_point start_time{std::chrono::steady_clock::now()};
     std::chrono::steady_clock::time_point last_activity{std::chrono::steady_clock::now()};
@@ -142,18 +220,18 @@ struct TpTransfer {
     TpTransfer() = default;
 
     TpTransfer(uint32_t id, uint32_t msg_id)
-        : transfer_id(id), message_id(msg_id) {
-        start_time = std::chrono::steady_clock::now();
-        last_activity = start_time;
-    }
+        : transfer_id(id),
+          message_id(msg_id),
+          start_time(std::chrono::steady_clock::now()),
+          last_activity(start_time) {}
 };
 
 /**
  * @brief TP callback types
  */
-using TpCompletionCallback = std::function<void(uint32_t transfer_id, TpResult result)>;
-using TpProgressCallback = std::function<void(uint32_t transfer_id, uint32_t bytes_transferred, uint32_t total_bytes)>;
-using TpMessageCallback = std::function<void(uint32_t message_id, const std::vector<uint8_t>& data)>;
+using TpCompletionCallback = platform::Function<void(uint32_t transfer_id, TpResult result)>;
+using TpProgressCallback = platform::Function<void(uint32_t transfer_id, uint32_t bytes_transferred, uint32_t total_bytes)>;
+using TpMessageCallback = platform::Function<void(uint32_t message_id, const platform::ByteBuffer& data)>;
 
 /**
  * @brief TP statistics
@@ -168,7 +246,6 @@ struct TpStatistics {
     uint32_t errors{0};
 };
 
-} // namespace tp
-} // namespace someip
+}  // namespace someip::tp
 
 #endif // SOMEIP_TP_TYPES_H

@@ -12,14 +12,28 @@
  ********************************************************************************/
 
 #include "transport/udp_transport.h"
-#include "platform/net.h"
-#include "platform/memory.h"
-#include "common/result.h"
-#include <cstring>
-#include <iostream>
 
-namespace someip {
-namespace transport {
+#include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
+#include "platform/memory.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - socket/POSIX types and someip_* helpers from net_impl.h
+#include "platform/net.h"
+#include "platform/thread.h"
+#include "someip/message.h"
+#include "transport/endpoint.h"
+#include "transport/transport.h"
+
+#include <array>
+#include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <cstring>
+#include <stdexcept>
+
+namespace someip::transport {
+
+// NOLINTBEGIN(misc-include-cleaner) - sockaddr_in/ip_mreq/INADDR_ANY and someip_* wrappers/macros
+// come from platform/net.h -> net_impl.h; misc-include-cleaner cannot trace through this abstraction.
 
 /**
  * @brief UDP Transport constructor
@@ -61,7 +75,7 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
     }
 
     // Serialize message
-    std::vector<uint8_t> data = message.serialize();
+    const platform::ByteBuffer data = message.serialize();
 
     if (data.size() > MAX_UDP_PAYLOAD) {
         return Result::BUFFER_OVERFLOW;
@@ -77,12 +91,25 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
 }
 
 MessagePtr UdpTransport::receive_message() {
-    platform::ScopedLock lock(queue_mutex_);
+    platform::ScopedLock const lock(queue_mutex_);
     if (receive_queue_.empty()) {
         return nullptr;
     }
 
-    MessagePtr message = receive_queue_.front();
+    MessagePtr message = receive_queue_.front().first;
+    receive_queue_.pop();
+    return message;
+}
+
+MessagePtr UdpTransport::receive_message_with_sender(Endpoint& sender) {
+    platform::ScopedLock const lock(queue_mutex_);
+    if (receive_queue_.empty()) {
+        return nullptr;
+    }
+
+    const auto& entry = receive_queue_.front();
+    MessagePtr message = entry.first;
+    sender = entry.second;
     receive_queue_.pop();
     return message;
 }
@@ -116,7 +143,7 @@ Endpoint UdpTransport::get_local_endpoint() const {
 }
 
 void UdpTransport::set_listener(ITransportListener* listener) {
-    listener_ = listener;
+    listener_.store(listener, std::memory_order_release);
 }
 
 /** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_021, REQ_TRANSPORT_022, REQ_TRANSPORT_023 */
@@ -138,7 +165,7 @@ Result UdpTransport::start() {
     }
 
     running_ = true;
-    receive_thread_ = std::make_unique<platform::Thread>(&UdpTransport::receive_loop, this);
+    receive_thread_.emplace(&UdpTransport::receive_loop, this);
 
     return Result::SUCCESS;
 }
@@ -150,8 +177,8 @@ Result UdpTransport::stop() {
         return Result::SUCCESS;
     }
 
-    running_ = false;
-    listener_ = nullptr;
+    running_.store(false, std::memory_order_release);
+    listener_.store(nullptr, std::memory_order_release);
 
     // Close socket to wake up receive thread
     if (socket_fd_ != SOMEIP_INVALID_SOCKET) {
@@ -173,8 +200,8 @@ bool UdpTransport::is_running() const {
 }
 
 /** @implements REQ_TRANSPORT_011, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02 */
-Result UdpTransport::join_multicast_group(const std::string& multicast_address) {
-    platform::ScopedLock lock(socket_mutex_);
+Result UdpTransport::join_multicast_group(const platform::String<>& multicast_address) {
+    platform::ScopedLock const lock(socket_mutex_);
 
     if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return Result::NOT_CONNECTED;
@@ -184,7 +211,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
         return Result::INVALID_ENDPOINT;
     }
 
-    struct ip_mreq mreq;
+    struct ip_mreq mreq = {};
     mreq.imr_multiaddr.s_addr = someip_inet_addr(multicast_address.c_str());
     if (!config_.multicast_interface.empty()) {
         mreq.imr_interface.s_addr = someip_inet_addr(config_.multicast_interface.c_str());
@@ -211,7 +238,7 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
 
     // Pin outgoing multicast to the configured interface
     if (!config_.multicast_interface.empty()) {
-        struct in_addr interface_addr;
+        struct in_addr interface_addr = {};
         interface_addr.s_addr = someip_inet_addr(config_.multicast_interface.c_str());
         if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_IF, &interface_addr, sizeof(interface_addr)) < 0) {
             // Not critical, continue
@@ -222,8 +249,8 @@ Result UdpTransport::join_multicast_group(const std::string& multicast_address) 
 }
 
 /** @implements REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02 */
-Result UdpTransport::leave_multicast_group(const std::string& multicast_address) {
-    platform::ScopedLock lock(socket_mutex_);
+Result UdpTransport::leave_multicast_group(const platform::String<>& multicast_address) {
+    platform::ScopedLock const lock(socket_mutex_);
 
     if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return Result::NOT_CONNECTED;
@@ -233,7 +260,7 @@ Result UdpTransport::leave_multicast_group(const std::string& multicast_address)
         return Result::INVALID_ENDPOINT;
     }
 
-    struct ip_mreq mreq;
+    struct ip_mreq mreq = {};
     mreq.imr_multiaddr.s_addr = someip_inet_addr(multicast_address.c_str());
     if (!config_.multicast_interface.empty()) {
         mreq.imr_interface.s_addr = someip_inet_addr(config_.multicast_interface.c_str());
@@ -249,7 +276,7 @@ Result UdpTransport::leave_multicast_group(const std::string& multicast_address)
 }
 
 Result UdpTransport::create_socket() {
-    platform::ScopedLock lock(socket_mutex_);
+    platform::ScopedLock const lock(socket_mutex_);
 
     socket_fd_ = someip_socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
@@ -311,7 +338,7 @@ Result UdpTransport::create_socket() {
 
 /** @implements REQ_TRANSPORT_014, REQ_TRANSPORT_014_E01 */
 Result UdpTransport::bind_socket() {
-    platform::ScopedLock lock(socket_mutex_);
+    platform::ScopedLock const lock(socket_mutex_);
 
     sockaddr_in addr = create_sockaddr(local_endpoint_);
     if (someip_bind(socket_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
@@ -333,7 +360,7 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
         return Result::INVALID_ENDPOINT;
     }
 
-    struct ip_mreq mreq;
+    struct ip_mreq mreq = {};
     mreq.imr_multiaddr.s_addr = someip_inet_addr(endpoint.get_address().c_str());
 
     // Use configured interface or INADDR_ANY
@@ -351,27 +378,24 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
 }
 
 void UdpTransport::receive_loop() {
-    std::vector<uint8_t> buffer(config_.receive_buffer_size);
+    platform::ByteBuffer buffer(config_.receive_buffer_size);
+    if (buffer.data() == nullptr) { return; }
 
     while (running_) {
         Endpoint sender;
         size_t bytes_received = 0;
-        Result result = receive_data(buffer, sender, bytes_received);
+        const Result result = receive_data(buffer, sender, bytes_received);
 
         if (result == Result::SUCCESS && bytes_received > 0) {
-            MessagePtr message = platform::allocate_message();
-            const uint8_t* begin = buffer.data();
-            if (message->deserialize({begin, begin + bytes_received})) {
-                // Add to queue
-                {
-                    platform::ScopedLock lock(queue_mutex_);
-                    receive_queue_.push(message);
-                }
-                queue_cv_.notify_one();
-
-                // Notify listener with sender information
-                if (listener_) {
-                    listener_->on_message_received(message, sender);
+            MessagePtr const message = platform::allocate_message();
+            if (message && message->deserialize(buffer.data(), bytes_received)) {
+                auto* l = listener_.load(std::memory_order_acquire);
+                if (l != nullptr) {
+                    l->on_message_received(message, sender);
+                } else {
+                    platform::ScopedLock const lock(queue_mutex_);
+                    receive_queue_.emplace(message, sender);
+                    queue_cv_.notify_one();
                 }
             }
         } else if (result == Result::NOT_CONNECTED) {
@@ -382,9 +406,8 @@ void UdpTransport::receive_loop() {
             // Small delay to prevent tight polling loop
             platform::this_thread::sleep_for(std::chrono::milliseconds(10));
         } else {
-            // Network or other error, notify listener
-            if (listener_) {
-                listener_->on_error(result);
+            if (auto* l = listener_.load(std::memory_order_acquire)) {
+                l->on_error(result);
             }
 
             if (!config_.blocking) {
@@ -397,20 +420,22 @@ void UdpTransport::receive_loop() {
 }
 
 /** @implements REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03 */
-Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint& endpoint) {
-    platform::ScopedLock lock(socket_mutex_);
+Result UdpTransport::send_data(const platform::ByteBuffer& data, const Endpoint& endpoint) {
+    platform::ScopedLock const lock(socket_mutex_);
 
     if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
         return Result::NOT_CONNECTED;
     }
 
-    sockaddr_in dest_addr = create_sockaddr(endpoint);
-    ssize_t sent;
-    do {
+    const sockaddr_in dest_addr = create_sockaddr(endpoint);
+    ssize_t sent = someip_sendto(socket_fd_, data.data(), data.size(), 0,
+                                 reinterpret_cast<const sockaddr*>(&dest_addr),
+                                 sizeof(dest_addr));
+    while (sent < 0 && someip_socket_errno() == SOMEIP_EINTR) {
         sent = someip_sendto(socket_fd_, data.data(), data.size(), 0,
-                             reinterpret_cast<sockaddr*>(&dest_addr),
+                             reinterpret_cast<const sockaddr*>(&dest_addr),
                              sizeof(dest_addr));
-    } while (sent < 0 && someip_socket_errno() == SOMEIP_EINTR);
+    }
 
     if (sent < 0) {
         return Result::NETWORK_ERROR;
@@ -424,21 +449,23 @@ Result UdpTransport::send_data(const std::vector<uint8_t>& data, const Endpoint&
 }
 
 /** @implements REQ_TRANSPORT_010 */
-Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender, size_t& bytes_received) {
-    sockaddr_in src_addr;
+Result UdpTransport::receive_data(platform::ByteBuffer& data, Endpoint& sender, size_t& bytes_received) {
+    sockaddr_in src_addr = {};
     socklen_t addr_len = sizeof(src_addr);
 
     bytes_received = 0;
 
-    ssize_t received;
-    do {
+    ssize_t received = someip_recvfrom(socket_fd_, data.data(), data.size(), 0,
+                                       reinterpret_cast<sockaddr*>(&src_addr),
+                                       &addr_len);
+    while (received < 0 && someip_socket_errno() == SOMEIP_EINTR) {
         received = someip_recvfrom(socket_fd_, data.data(), data.size(), 0,
                                    reinterpret_cast<sockaddr*>(&src_addr),
                                    &addr_len);
-    } while (received < 0 && someip_socket_errno() == SOMEIP_EINTR);
+    }
 
     if (received < 0) {
-        int err = someip_socket_errno();
+        int const err = someip_socket_errno();
 
         if (err == SOMEIP_EBADF) {
             return Result::NOT_CONNECTED;
@@ -458,8 +485,7 @@ Result UdpTransport::receive_data(std::vector<uint8_t>& data, Endpoint& sender, 
 }
 
 sockaddr_in UdpTransport::create_sockaddr(const Endpoint& endpoint) const {
-    sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
+    sockaddr_in addr = {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(endpoint.get_port());
     addr.sin_addr.s_addr = someip_inet_addr(endpoint.get_address().c_str());
@@ -467,22 +493,23 @@ sockaddr_in UdpTransport::create_sockaddr(const Endpoint& endpoint) const {
 }
 
 Endpoint UdpTransport::sockaddr_to_endpoint(const sockaddr_in& addr) const {
-    char ip_str[INET_ADDRSTRLEN];
-    someip_inet_ntop(AF_INET, &addr.sin_addr, ip_str, sizeof(ip_str));
+    std::array<char, INET_ADDRSTRLEN> ip_str{};
+    someip_inet_ntop(AF_INET, &addr.sin_addr, ip_str.data(), ip_str.size());
 
-    return Endpoint(ip_str, ntohs(addr.sin_port), TransportProtocol::UDP);
+    return Endpoint(ip_str.data(), ntohs(addr.sin_port), TransportProtocol::UDP);
 }
 
-bool UdpTransport::is_multicast_address(const std::string& address) const {
-    in_addr_t addr = someip_inet_addr(address.c_str());
+bool UdpTransport::is_multicast_address(const platform::String<>& address) const {
+    in_addr_t const addr = someip_inet_addr(address.c_str());
     if (addr == INADDR_NONE) {
         return false;
     }
 
     // Check if address is in multicast range (224.0.0.0 - 239.255.255.255)
-    uint32_t host_addr = ntohl(addr);
+    uint32_t const host_addr = ntohl(addr);
     return (host_addr >= 0xE0000000) && (host_addr <= 0xEFFFFFFF);
 }
 
-} // namespace transport
-} // namespace someip
+// NOLINTEND(misc-include-cleaner)
+
+}  // namespace someip::transport

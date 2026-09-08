@@ -15,8 +15,11 @@
 #include <transport/tcp_transport.h>
 #include <transport/transport.h>
 #include <someip/message.h>
+#include <platform/buffer_pool.h>
+#include <platform/containers.h>
 #include <thread>
 #include <chrono>
+#include "static_pool_init.h"
 
 using namespace someip;
 using namespace someip::transport;
@@ -82,6 +85,14 @@ public:
         std::unique_lock<std::mutex> lock(mutex_);
         return cv_.wait_for(lock, timeout, [this]() {
             return !received_messages_.empty();
+        });
+    }
+
+    bool wait_for_messages(size_t expected_count,
+                           std::chrono::milliseconds timeout = std::chrono::milliseconds(2000)) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this, expected_count]() {
+            return received_messages_.size() >= expected_count;
         });
     }
 
@@ -193,11 +204,11 @@ TEST_F(TcpTransportTest, MessageSerialization) {
     // Test that TCP transport properly handles message serialization
     Message original_message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                            MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> test_payload = {0x01, 0x02, 0x03, 0x04};
+    platform::ByteBuffer test_payload = {0x01, 0x02, 0x03, 0x04};
     original_message.set_payload(test_payload);
 
     // Serialize message
-    std::vector<uint8_t> serialized = original_message.serialize();
+    platform::ByteBuffer serialized = original_message.serialize();
     ASSERT_EQ(serialized.size(), 20u);  // 16 byte header + 4 byte payload
 
     // Verify serialization contains correct data
@@ -230,10 +241,10 @@ TEST_F(TcpTransportTest, MessageSerialization) {
     // Test that we can create a new message and verify round-trip works
     Message reconstructed_message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                                 MessageType::REQUEST, ReturnCode::E_OK);
-    std::vector<uint8_t> payload = {serialized[16], serialized[17], serialized[18], serialized[19]};
+    platform::ByteBuffer payload = {serialized[16], serialized[17], serialized[18], serialized[19]};
     reconstructed_message.set_payload(payload);
 
-    std::vector<uint8_t> re_serialized = reconstructed_message.serialize();
+    platform::ByteBuffer re_serialized = reconstructed_message.serialize();
 
     // Should be identical
     ASSERT_EQ(serialized, re_serialized);
@@ -541,7 +552,587 @@ TEST_F(TcpTransportTest, ZeroLengthMessage) {
     msg.set_service_id(0x1234);
     msg.set_method_id(0x0001);
 
-    std::vector<uint8_t> serialized = msg.serialize();
+    platform::ByteBuffer serialized = msg.serialize();
     EXPECT_FALSE(serialized.empty()) << "Even empty payload has header";
     EXPECT_GE(serialized.size(), 16u) << "Minimum SOME/IP header is 16 bytes";
+}
+
+// ============================================================================
+// TCP Persistent Buffer / Fragmented Frame Tests (Issue #255)
+// ============================================================================
+
+/**
+ * @test_case TC_TCP_PARSE_001
+ * @tests REQ_TRANSPORT_024
+ * @brief parse_message_from_buffer handles a complete single message
+ */
+TEST_F(TcpTransportTest, ParseSingleCompleteMessage) {
+    TcpTransport transport(config);
+
+    Message original(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    original.set_payload({0x01, 0x02, 0x03, 0x04});
+
+    platform::ByteBuffer buffer = original.serialize();
+    MessagePtr parsed;
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed));
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0x1234);
+    EXPECT_EQ(parsed->get_method_id(), 0x5678);
+    EXPECT_EQ(parsed->get_payload(), (platform::ByteBuffer{0x01, 0x02, 0x03, 0x04}));
+    EXPECT_TRUE(buffer.empty()) << "Buffer should be consumed";
+}
+
+/**
+ * @test_case TC_TCP_PARSE_002
+ * @tests REQ_TRANSPORT_024
+ * @brief Incomplete message (only partial header) stays in buffer
+ */
+TEST_F(TcpTransportTest, ParseIncompleteHeaderStaysInBuffer) {
+    TcpTransport transport(config);
+
+    Message original(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    original.set_payload({0x01, 0x02, 0x03});
+
+    platform::ByteBuffer full = original.serialize();
+    platform::ByteBuffer buffer(full.begin(), full.begin() + 10);
+
+    MessagePtr parsed;
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed));
+    EXPECT_EQ(buffer.size(), 10u) << "Incomplete bytes must be preserved";
+}
+
+/**
+ * @test_case TC_TCP_PARSE_003
+ * @tests REQ_TRANSPORT_024
+ * @brief Multiple complete messages in one buffer are parseable sequentially
+ */
+TEST_F(TcpTransportTest, ParseMultipleMessagesInBuffer) {
+    TcpTransport transport(config);
+
+    Message msg1(MessageId(0x1111, 0x2222), RequestId(0x0001, 0x0001),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    msg1.set_payload({0xAA});
+
+    Message msg2(MessageId(0x3333, 0x4444), RequestId(0x0002, 0x0001),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    msg2.set_payload({0xBB, 0xCC});
+
+    platform::ByteBuffer buffer;
+    auto s1 = msg1.serialize();
+    auto s2 = msg2.serialize();
+    buffer.insert(buffer.end(), s1.begin(), s1.end());
+    buffer.insert(buffer.end(), s2.begin(), s2.end());
+
+    MessagePtr parsed1;
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed1));
+    ASSERT_NE(parsed1, nullptr);
+    EXPECT_EQ(parsed1->get_service_id(), 0x1111);
+
+    MessagePtr parsed2;
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed2));
+    ASSERT_NE(parsed2, nullptr);
+    EXPECT_EQ(parsed2->get_service_id(), 0x3333);
+    EXPECT_EQ(parsed2->get_payload(), (platform::ByteBuffer{0xBB, 0xCC}));
+
+    EXPECT_TRUE(buffer.empty());
+}
+
+/**
+ * @test_case TC_TCP_PARSE_004
+ * @tests REQ_TRANSPORT_024
+ * @brief Complete message + incomplete tail: first parses, tail preserved
+ */
+TEST_F(TcpTransportTest, ParseCompleteMessagePlusIncompleteTail) {
+    TcpTransport transport(config);
+
+    Message msg1(MessageId(0x1111, 0x2222), RequestId(0x0001, 0x0001),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    msg1.set_payload({0xAA});
+
+    Message msg2(MessageId(0x3333, 0x4444), RequestId(0x0002, 0x0001),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    msg2.set_payload({0xBB, 0xCC});
+
+    auto s1 = msg1.serialize();
+    auto s2 = msg2.serialize();
+
+    platform::ByteBuffer buffer;
+    buffer.insert(buffer.end(), s1.begin(), s1.end());
+    buffer.insert(buffer.end(), s2.begin(), s2.begin() + 8);
+
+    MessagePtr parsed;
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed));
+    EXPECT_EQ(parsed->get_service_id(), 0x1111);
+
+    EXPECT_EQ(buffer.size(), 8u) << "Incomplete tail of second message must remain";
+
+    MessagePtr parsed2;
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed2));
+    EXPECT_EQ(buffer.size(), 8u) << "Tail still preserved after failed parse";
+}
+
+/**
+ * @test_case TC_TCP_PARSE_005
+ * @tests REQ_TRANSPORT_024
+ * @brief Simulated chunked arrival: feed a frame in 2+ chunks
+ */
+TEST_F(TcpTransportTest, ChunkedArrivalReassembly) {
+    TcpTransport transport(config);
+
+    Message original(MessageId(0xAAAA, 0xBBBB), RequestId(0xCCCC, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    original.set_payload({0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
+
+    platform::ByteBuffer full = original.serialize();
+    ASSERT_EQ(full.size(), 24u);
+
+    platform::ByteBuffer persistent_buffer;
+    MessagePtr parsed;
+
+    persistent_buffer.insert(persistent_buffer.end(), full.begin(), full.begin() + 5);
+    EXPECT_FALSE(transport.parse_message_from_buffer(persistent_buffer, parsed));
+    EXPECT_EQ(persistent_buffer.size(), 5u);
+
+    persistent_buffer.insert(persistent_buffer.end(), full.begin() + 5, full.begin() + 16);
+    EXPECT_FALSE(transport.parse_message_from_buffer(persistent_buffer, parsed));
+    EXPECT_EQ(persistent_buffer.size(), 16u);
+
+    persistent_buffer.insert(persistent_buffer.end(), full.begin() + 16, full.end());
+    ASSERT_TRUE(transport.parse_message_from_buffer(persistent_buffer, parsed));
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0xAAAA);
+    EXPECT_EQ(parsed->get_payload().size(), 8u);
+    EXPECT_TRUE(persistent_buffer.empty());
+}
+
+// ============================================================================
+// Magic Cookie Tests (Issue #257)
+// ============================================================================
+
+/**
+ * @test_case TC_TCP_MAGIC_001
+ * @tests REQ_TRANSPORT_020, REQ_TRANSPORT_025
+ * @brief Client Magic Cookie has correct wire format
+ */
+TEST_F(TcpTransportTest, MagicCookieClientFormat) {
+    auto cookie = TcpTransport::make_magic_cookie_client();
+    ASSERT_EQ(cookie.size(), 16u);
+    // Service ID = 0xFFFF
+    EXPECT_EQ(cookie[0], 0xFF);
+    EXPECT_EQ(cookie[1], 0xFF);
+    // Method ID = 0x0000 (client→server)
+    EXPECT_EQ(cookie[2], 0x00);
+    EXPECT_EQ(cookie[3], 0x00);
+    // Length = 0x00000008
+    EXPECT_EQ(cookie[4], 0x00);
+    EXPECT_EQ(cookie[7], 0x08);
+    // Client ID = 0xDEAD
+    EXPECT_EQ(cookie[8], 0xDE);
+    EXPECT_EQ(cookie[9], 0xAD);
+    // Session ID = 0xBEEF (feat_req_someip_609)
+    EXPECT_EQ(cookie[10], 0xBE);
+    EXPECT_EQ(cookie[11], 0xEF);
+    // Protocol Version = 0x01, Interface Version = 0x01
+    EXPECT_EQ(cookie[12], 0x01);
+    EXPECT_EQ(cookie[13], 0x01);
+    // Message Type = 0x01 (REQUEST_NO_RETURN, client->server)
+    EXPECT_EQ(cookie[14], 0x01);
+    // Return Code = 0x00
+    EXPECT_EQ(cookie[15], 0x00);
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_002
+ * @tests REQ_TRANSPORT_020, REQ_TRANSPORT_025
+ * @brief Server Magic Cookie has Method ID 0x8000
+ */
+TEST_F(TcpTransportTest, MagicCookieServerFormat) {
+    auto cookie = TcpTransport::make_magic_cookie_server();
+    ASSERT_EQ(cookie.size(), 16u);
+    // Method ID = 0x8000 (server->client)
+    EXPECT_EQ(cookie[2], 0x80);
+    EXPECT_EQ(cookie[3], 0x00);
+    // Session ID = 0xBEEF
+    EXPECT_EQ(cookie[10], 0xBE);
+    EXPECT_EQ(cookie[11], 0xEF);
+    // Message Type = 0x02 (NOTIFICATION, server->client)
+    EXPECT_EQ(cookie[14], 0x02);
+    // Return Code = 0x00
+    EXPECT_EQ(cookie[15], 0x00);
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_003
+ * @tests REQ_TRANSPORT_020
+ * @brief is_magic_cookie detects client and server cookies
+ */
+TEST_F(TcpTransportTest, IsMagicCookieDetection) {
+    auto client_cookie = TcpTransport::make_magic_cookie_client();
+    auto server_cookie = TcpTransport::make_magic_cookie_server();
+    EXPECT_TRUE(TcpTransport::is_magic_cookie(client_cookie));
+    EXPECT_TRUE(TcpTransport::is_magic_cookie(server_cookie));
+
+    platform::ByteBuffer not_cookie(16, 0x00);
+    EXPECT_FALSE(TcpTransport::is_magic_cookie(not_cookie));
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_CORRELATION
+ * @tests feat_req_someip_609
+ * @brief Method ID and Message Type must correlate: client 0x0000/0x01,
+ *        server 0x8000/0x02. Crossed combinations are NOT valid cookies.
+ */
+TEST_F(TcpTransportTest, MagicCookieMethodTypeCorrelation) {
+    // Client cookie with wrong message type (0x02 instead of 0x01)
+    auto bad_client = TcpTransport::make_magic_cookie_client();
+    bad_client[14] = 0x02;
+    EXPECT_FALSE(TcpTransport::is_magic_cookie(bad_client))
+        << "Client method 0x0000 + type 0x02 must NOT be a valid cookie";
+
+    // Server cookie with wrong message type (0x01 instead of 0x02)
+    auto bad_server = TcpTransport::make_magic_cookie_server();
+    bad_server[14] = 0x01;
+    EXPECT_FALSE(TcpTransport::is_magic_cookie(bad_server))
+        << "Server method 0x8000 + type 0x01 must NOT be a valid cookie";
+
+    // Correct cookies still match
+    EXPECT_TRUE(TcpTransport::is_magic_cookie(TcpTransport::make_magic_cookie_client()));
+    EXPECT_TRUE(TcpTransport::is_magic_cookie(TcpTransport::make_magic_cookie_server()));
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_004
+ * @tests REQ_TRANSPORT_020
+ * @brief Magic Cookie in stream is silently consumed by parser
+ */
+TEST_F(TcpTransportTest, MagicCookieConsumedByParser) {
+    TcpTransport transport(config);
+    auto cookie = TcpTransport::make_magic_cookie_client();
+
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                MessageType::REQUEST, ReturnCode::E_OK);
+    msg.set_payload({0x01, 0x02});
+    platform::ByteBuffer msg_bytes = msg.serialize();
+
+    platform::ByteBuffer buffer;
+    buffer.insert(buffer.end(), cookie.begin(), cookie.end());
+    buffer.insert(buffer.end(), msg_bytes.begin(), msg_bytes.end());
+
+    MessagePtr parsed;
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed))
+        << "First call should consume the magic cookie";
+    EXPECT_EQ(buffer.size(), msg_bytes.size());
+
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed));
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0x1234);
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_005
+ * @tests REQ_TRANSPORT_021
+ * @brief magic_cookie_enabled config controls periodic insertion
+ */
+TEST_F(TcpTransportTest, MagicCookieConfigControls) {
+    TcpTransportConfig mc_config;
+    mc_config.magic_cookie_enabled = true;
+    mc_config.magic_cookie_interval = std::chrono::milliseconds(10000);
+    EXPECT_TRUE(mc_config.magic_cookie_enabled);
+    EXPECT_EQ(mc_config.magic_cookie_interval.count(), 10000);
+
+    mc_config.magic_cookie_enabled = false;
+    EXPECT_FALSE(mc_config.magic_cookie_enabled);
+}
+
+/**
+ * @test_case TC_TCP_MAGIC_006
+ * @tests REQ_TRANSPORT_021
+ * @brief Multiple magic cookies in a stream are all consumed
+ */
+TEST_F(TcpTransportTest, MultipleMagicCookiesConsumed) {
+    TcpTransport transport(config);
+    auto cookie_c = TcpTransport::make_magic_cookie_client();
+    auto cookie_s = TcpTransport::make_magic_cookie_server();
+
+    Message msg(MessageId(0xAAAA, 0xBBBB), RequestId(0xCCCC, 0x0001),
+                MessageType::REQUEST, ReturnCode::E_OK);
+    msg.set_payload({0xDD});
+    platform::ByteBuffer msg_bytes = msg.serialize();
+
+    platform::ByteBuffer buffer;
+    buffer.insert(buffer.end(), cookie_c.begin(), cookie_c.end());
+    buffer.insert(buffer.end(), cookie_s.begin(), cookie_s.end());
+    buffer.insert(buffer.end(), msg_bytes.begin(), msg_bytes.end());
+
+    MessagePtr parsed;
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed));
+    EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed));
+    ASSERT_TRUE(transport.parse_message_from_buffer(buffer, parsed));
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0xAAAA);
+    EXPECT_TRUE(buffer.empty());
+}
+
+// ============================================================================
+// Listener / Polling Mutual Exclusion Tests (Issue #269)
+// ============================================================================
+
+/**
+ * @test_case TC_TCP_LISTENER_QUEUE_RETENTION
+ * @brief Listener-only mode must not retain messages in message_queue_ (issue #269)
+ *
+ * When set_listener() is used, messages dispatched via on_message_received must
+ * not also be enqueued. This mirrors the UDP-side test
+ * ListenerOnlyDoesNotRetainQueueMessages.
+ */
+TEST_F(TcpTransportTest, ListenerOnlyDoesNotRetainQueueMessages) {
+    TcpTransport server(config);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+    Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+
+    ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
+    ASSERT_TRUE(server_listener.wait_for_connection_established());
+
+    constexpr int NUM_MESSAGES = 3;
+    for (int i = 0; i < NUM_MESSAGES; ++i) {
+        Message msg;
+        msg.set_service_id(0x1234);
+        msg.set_method_id(0x5678);
+        msg.set_client_id(0x9ABC);
+        msg.set_session_id(static_cast<uint16_t>(i + 1));
+        msg.set_protocol_version(1);
+        msg.set_interface_version(1);
+        msg.set_message_type(MessageType::REQUEST);
+        msg.set_return_code(ReturnCode::E_OK);
+
+        platform::ByteBuffer payload = {static_cast<uint8_t>(i)};
+        msg.set_payload(payload);
+
+        EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+    }
+
+    ASSERT_TRUE(server_listener.wait_for_messages(NUM_MESSAGES))
+        << "Listener should have received all messages";
+
+    MessagePtr queued = server.receive_message();
+    EXPECT_EQ(queued, nullptr)
+        << "message_queue_ must be empty in listener-only mode (issue #269)";
+
+    client.disconnect();
+    client.stop();
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_MODE_SWITCH
+ * @brief Messages route correctly across no-listener → listener → cleared-listener transitions
+ */
+TEST_F(TcpTransportTest, ModeSwitchPollingToListenerAndBack) {
+    TcpTransport server(config);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    // Use a temporary listener to detect connection establishment
+    TestTcpListener setup_listener;
+    server.set_listener(&setup_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+    Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+    ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
+
+    ASSERT_TRUE(setup_listener.wait_for_connection_established())
+        << "Server must accept the connection";
+
+    // Remove the setup listener — start in polling mode for phase 1
+    server.set_listener(nullptr);
+
+    // --- Phase 1: polling mode (no listener) ---
+    {
+        Message msg;
+        msg.set_service_id(0x1111);
+        msg.set_method_id(0x0001);
+        msg.set_client_id(0x0001);
+        msg.set_session_id(0x0001);
+        msg.set_protocol_version(1);
+        msg.set_interface_version(1);
+        msg.set_message_type(MessageType::REQUEST);
+        msg.set_return_code(ReturnCode::E_OK);
+
+        EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+    }
+
+    MessagePtr polled;
+    const auto deadline1 = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (std::chrono::steady_clock::now() < deadline1) {
+        polled = server.receive_message();
+        if (polled) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    ASSERT_NE(polled, nullptr) << "Phase 1: polling must receive the message";
+    EXPECT_EQ(polled->get_service_id(), 0x1111);
+
+    // --- Phase 2: install listener → messages go to listener only ---
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+
+    {
+        Message msg;
+        msg.set_service_id(0x2222);
+        msg.set_method_id(0x0001);
+        msg.set_client_id(0x0001);
+        msg.set_session_id(0x0002);
+        msg.set_protocol_version(1);
+        msg.set_interface_version(1);
+        msg.set_message_type(MessageType::REQUEST);
+        msg.set_return_code(ReturnCode::E_OK);
+
+        EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+    }
+
+    ASSERT_TRUE(server_listener.wait_for_messages(1))
+        << "Phase 2: listener must receive the message";
+    {
+        auto msgs = server_listener.get_received_messages();
+        EXPECT_EQ(msgs[0].first->get_service_id(), 0x2222);
+    }
+
+    MessagePtr stale = server.receive_message();
+    EXPECT_EQ(stale, nullptr) << "Phase 2: queue must be empty for new listener traffic";
+
+    // --- Phase 3: clear listener → messages enqueue again ---
+    server.set_listener(nullptr);
+
+    {
+        Message msg;
+        msg.set_service_id(0x3333);
+        msg.set_method_id(0x0001);
+        msg.set_client_id(0x0001);
+        msg.set_session_id(0x0003);
+        msg.set_protocol_version(1);
+        msg.set_interface_version(1);
+        msg.set_message_type(MessageType::REQUEST);
+        msg.set_return_code(ReturnCode::E_OK);
+
+        EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+    }
+
+    MessagePtr polled3;
+    const auto deadline3 = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (std::chrono::steady_clock::now() < deadline3) {
+        polled3 = server.receive_message();
+        if (polled3) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    ASSERT_NE(polled3, nullptr) << "Phase 3: polling must resume after listener cleared";
+    EXPECT_EQ(polled3->get_service_id(), 0x3333);
+
+    client.disconnect();
+    client.stop();
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_LISTENER_DISCONNECT_NO_DEADLOCK
+ * @brief Listener calling disconnect() must not deadlock (connection_mutex_ lock scope fix)
+ *
+ * Before the fix, on_message_received was called with connection_mutex_ held.
+ * A listener that called disconnect() would re-enter disconnect_internal() which
+ * also locks connection_mutex_, causing a deadlock. The lock-scope fix releases
+ * connection_mutex_ before invoking the listener.
+ *
+ * Note: calling stop() from the listener callback is inherently unsafe because
+ * stop() joins the receive thread (self-join). Only disconnect() is tested here.
+ */
+TEST_F(TcpTransportTest, ListenerCallingDisconnectDoesNotDeadlock) {
+    TcpTransport server(config);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    std::atomic<bool> callback_fired{false};
+    std::atomic<bool> disconnect_completed{false};
+
+    class DisconnectOnReceiveListener : public ITransportListener {
+    public:
+        DisconnectOnReceiveListener(TcpTransport& t,
+                                    std::atomic<bool>& fired,
+                                    std::atomic<bool>& done)
+            : transport_(t), callback_fired_(fired), disconnect_completed_(done) {}
+
+        void on_message_received(MessagePtr /*message*/, const Endpoint& /*sender*/) override {
+            callback_fired_.store(true, std::memory_order_release);
+            transport_.disconnect();
+            disconnect_completed_.store(true, std::memory_order_release);
+        }
+        void on_connection_lost(const Endpoint& /*endpoint*/) override {}
+        void on_connection_established(const Endpoint& /*endpoint*/) override {}
+        void on_error(Result /*error*/) override {}
+
+    private:
+        TcpTransport& transport_;
+        std::atomic<bool>& callback_fired_;
+        std::atomic<bool>& disconnect_completed_;
+    };
+
+    // Use a temporary listener for connection establishment
+    TestTcpListener setup_listener;
+    server.set_listener(&setup_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+
+    Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+    ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
+
+    ASSERT_TRUE(setup_listener.wait_for_connection_established())
+        << "Server must accept the connection";
+
+    // Now install the real listener that will call disconnect()
+    DisconnectOnReceiveListener disconnector(server, callback_fired, disconnect_completed);
+    server.set_listener(&disconnector);
+
+    Message msg;
+    msg.set_service_id(0xDEAD);
+    msg.set_method_id(0x0001);
+    msg.set_client_id(0x0001);
+    msg.set_session_id(0x0001);
+    msg.set_protocol_version(1);
+    msg.set_interface_version(1);
+    msg.set_message_type(MessageType::REQUEST);
+    msg.set_return_code(ReturnCode::E_OK);
+
+    EXPECT_EQ(client.send_message(msg, server_ep), Result::SUCCESS);
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (std::chrono::steady_clock::now() < deadline) {
+        if (disconnect_completed.load(std::memory_order_acquire)) { break; }
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    }
+
+    EXPECT_TRUE(callback_fired.load()) << "Listener callback should have fired";
+    EXPECT_TRUE(disconnect_completed.load())
+        << "disconnect() from listener must complete without deadlock";
+
+    client.disconnect();
+    client.stop();
+    server.stop();
 }

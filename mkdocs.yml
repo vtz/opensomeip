@@ -92,10 +92,27 @@ nav:
   - Architecture:
     - Overview: project-overview.md
     - E2E Protection: architecture/e2e_protection.md
+  - Protocol Gateways:
+    - Overview: gateways/index.md
+    - Architecture: gateways/architecture.md
+    - Tier 1:
+      - SOME/IP ↔ iceoryx2: gateways/iceoryx2.md
+      - SOME/IP ↔ MQTT: gateways/mqtt.md
+      - SOME/IP ↔ gRPC: gateways/grpc.md
+    - Tier 2:
+      - SOME/IP ↔ ROS 2: gateways/ros2.md
+      - SOME/IP ↔ Zenoh: gateways/zenoh.md
+      - SOME/IP ↔ D-Bus: gateways/dbus.md
+    - Tier 3:
+      - SOME/IP ↔ DDS: gateways/dds.md
+    - Supported Platforms: gateways/supported-platforms.md
+    - Adding a Gateway: gateways/contributing.md
   - Platforms:
+    - Supported Platforms & Architectures: supported-platforms.md
     - Zephyr RTOS: ZEPHYR_PORT.md
     - FreeRTOS: FREERTOS_PORT.md
     - Eclipse ThreadX: THREADX_PORT.md
+    - Cross-Compilation: cross-compilation.md
     - Risk Register: PLATFORM_RISK_REGISTER.md
   - API Reference:
     - Overview: api/index.md

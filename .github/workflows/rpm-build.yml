@@ -1,0 +1,38 @@
+name: RPM Build
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rpmbuild:
+    name: RPM Build (Fedora ${{ matrix.fedora }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        fedora: ['42', 'rawhide']
+    container:
+      image: fedora:${{ matrix.fedora }}
+      credentials:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    steps:
+      - name: Install build tools
+        run: dnf install -y git rpm-build cmake gcc-c++ ninja-build
+
+      - uses: actions/checkout@v4
+
+      - name: Create source archive
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          VERSION=$(cat VERSION)
+          mkdir -p ~/rpmbuild/SOURCES
+          git archive --format=tar.gz --prefix=opensomeip-${VERSION}/ HEAD \
+            -o ~/rpmbuild/SOURCES/opensomeip-${VERSION}.tar.gz
+
+      - name: Build RPM
+        run: rpmbuild -ba packaging/opensomeip.spec

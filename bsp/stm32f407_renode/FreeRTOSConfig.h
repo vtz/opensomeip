@@ -21,7 +21,10 @@
 #define configUSE_DAEMON_TASK_STARTUP_HOOK       0
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
 #define configMINIMAL_STACK_SIZE                 ((unsigned short)512)
-#define configTOTAL_HEAP_SIZE                    ((size_t)(128 * 1024))
+#ifndef SOMEIP_FREERTOS_HEAP_SIZE
+#define SOMEIP_FREERTOS_HEAP_SIZE (128 * 1024)
+#endif
+#define configTOTAL_HEAP_SIZE                    ((size_t)SOMEIP_FREERTOS_HEAP_SIZE)
 #define configMAX_TASK_NAME_LEN                  16
 #define configUSE_TRACE_FACILITY                 0
 #define configUSE_16_BIT_TICKS                   0
@@ -44,6 +47,9 @@
 #define configTIMER_TASK_STACK_DEPTH             (configMINIMAL_STACK_SIZE * 2)
 
 #define configUSE_TIMERS                         1
+
+#define configCHECK_FOR_STACK_OVERFLOW            2
+#define configUSE_MALLOC_FAILED_HOOK             1
 
 /* Cortex-M4 specific (no FPU -- Renode's stm32f4 platform uses cortex-m4) */
 #define configCPU_CLOCK_HZ                       ((uint32_t)168000000)

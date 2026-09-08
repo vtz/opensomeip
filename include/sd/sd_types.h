@@ -14,15 +14,14 @@
 #ifndef SOMEIP_SD_TYPES_H
 #define SOMEIP_SD_TYPES_H
 
-#include <cstdint>
-#include <vector>
-#include <string>
-#include <chrono>
-#include <memory>
-#include <functional>
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 
-namespace someip {
-namespace sd {
+#include <chrono>
+#include <cstdint>
+#include <memory>
+
+namespace someip::sd {
 
 /** @implements REQ_SD_242 */
 enum class EntryType : uint8_t {
@@ -63,14 +62,14 @@ struct ServiceInstance {
     uint16_t service_id{0};
     uint16_t instance_id{0};
     uint8_t major_version{0};
-    uint8_t minor_version{0};
-    std::string ip_address;
+    uint32_t minor_version{0};
+    platform::String<> ip_address;
     uint16_t port{0};
     uint8_t protocol{0x11};  // Default to UDP (0x11)
     uint32_t ttl_seconds{0};  // Time to live
 
-    ServiceInstance(uint16_t svc_id = 0, uint16_t inst_id = 0,
-                   uint8_t maj_ver = 0, uint8_t min_ver = 0)
+    explicit ServiceInstance(uint16_t svc_id = 0, uint16_t inst_id = 0,
+                   uint8_t maj_ver = 0, uint32_t min_ver = 0)
         : service_id(svc_id), instance_id(inst_id),
           major_version(maj_ver), minor_version(min_ver) {}
 };
@@ -80,17 +79,17 @@ struct EventGroup {
     uint16_t eventgroup_id{0};
     uint8_t major_version{0};
     uint8_t minor_version{0};
-    std::vector<uint16_t> event_ids;
+    platform::Vector<uint16_t> event_ids;
 
-    EventGroup(uint16_t eg_id = 0, uint8_t maj_ver = 0, uint8_t min_ver = 0)
+    explicit EventGroup(uint16_t eg_id = 0, uint8_t maj_ver = 0, uint8_t min_ver = 0)
         : eventgroup_id(eg_id), major_version(maj_ver), minor_version(min_ver) {}
 };
 
 /** @implements REQ_SD_131, REQ_SD_180, REQ_SD_281, REQ_SD_310, REQ_COMPAT_030 */
 struct SdConfig {
-    std::string multicast_address{"239.255.255.251"};  // Default SOME/IP SD multicast
-    uint16_t multicast_port{30490};                    // Default SOME/IP SD port
-    std::string unicast_address{"127.0.0.1"};         // Local unicast address
+    platform::String<> multicast_address{"239.255.255.251"};  // Default SOME/IP SD multicast
+    uint16_t multicast_port{30490};                           // Default SOME/IP SD port
+    platform::String<> unicast_address{"127.0.0.1"};         // Local unicast address
     uint16_t unicast_port{0};                          // Auto-assign port
     std::chrono::milliseconds initial_delay{100};      // Initial offer delay
     std::chrono::milliseconds repetition_base{2000};   // Base repetition interval
@@ -104,9 +103,9 @@ struct SdConfig {
 /**
  * @brief Service discovery callback types
  */
-using ServiceAvailableCallback = std::function<void(const ServiceInstance&)>;
-using ServiceUnavailableCallback = std::function<void(const ServiceInstance&)>;
-using FindServiceCallback = std::function<void(const std::vector<ServiceInstance>&)>;
+using ServiceAvailableCallback = platform::Function<void(const ServiceInstance&)>;
+using ServiceUnavailableCallback = platform::Function<void(const ServiceInstance&)>;
+using FindServiceCallback = platform::Function<void(const platform::Vector<ServiceInstance>&)>;
 
 /** @implements REQ_SD_271 */
 enum class SubscriptionState : uint8_t {
@@ -117,22 +116,51 @@ enum class SubscriptionState : uint8_t {
 };
 
 /**
+ * @brief SD Session ID counter per SOME/IP-SD spec.
+ *
+ * Session IDs start at 0x0001, increment per message, and wrap from
+ * 0xFFFF back to 0x0001 (0x0000 is never emitted).
+ */
+class SdSessionIdCounter {
+public:
+    uint16_t next() {
+        const uint16_t val = next_id_++;
+        if (next_id_ == 0) {
+            next_id_ = 1;
+        }
+        return val;
+    }
+
+    uint16_t current() const { return next_id_; }
+
+private:
+    uint16_t next_id_{1};
+};
+
+/**
  * @brief Event group subscription info
  */
 struct EventGroupSubscription {
     uint16_t service_id{0};
     uint16_t instance_id{0};
     uint16_t eventgroup_id{0};
+    uint8_t major_version{0};
     SubscriptionState state{SubscriptionState::REQUESTED};
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
 
-    EventGroupSubscription(uint16_t svc_id = 0, uint16_t inst_id = 0, uint16_t eg_id = 0)
+    explicit EventGroupSubscription(uint16_t svc_id = 0, uint16_t inst_id = 0, uint16_t eg_id = 0)
         : service_id(svc_id), instance_id(inst_id), eventgroup_id(eg_id) {
         timestamp = std::chrono::steady_clock::now();
     }
 };
 
-} // namespace sd
-} // namespace someip
+/**
+ * @brief Offered event group definition for subscription validation.
+ */
+struct OfferedEventGroup {
+    uint16_t eventgroup_id{0};
+};
+
+}  // namespace someip::sd
 
 #endif // SOMEIP_SD_TYPES_H

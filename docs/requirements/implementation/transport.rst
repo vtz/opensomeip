@@ -438,7 +438,7 @@ Magic Cookie Support
 .. requirement:: TCP Magic Cookie Messages
    :id: REQ_TRANSPORT_020
    :satisfies: feat_req_someip_586, feat_req_someip_591, feat_req_someip_592, feat_req_someip_609, feat_req_someip_619
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Construct Magic Cookie message (SID=0xFFFF, MID=0x0000, Len=8, CID=0xDEAD, SessID=0xBEEF), inject into TCP stream, verify stream resync.
@@ -455,7 +455,7 @@ Magic Cookie Support
 .. requirement:: Magic Cookie Fallback Heuristic
    :id: REQ_TRANSPORT_021
    :satisfies: feat_req_someip_593, feat_req_someip_594
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Simulate active TCP connection without Magic Cookie access, verify Magic Cookie is inserted after 10 seconds of activity.
@@ -524,7 +524,7 @@ Magic Cookie Details
 .. requirement:: Magic Cookie Message Format
    :id: REQ_TRANSPORT_025
    :satisfies: feat_req_someip_589, feat_req_someip_607
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
    :verification: Unit test: Construct Magic Cookie and verify: Service ID=0xFFFF, Method ID=0x0000 (client) or 0x8000 (server), Length=8, Client ID=0xDEAD, Session ID=0xBEEF.

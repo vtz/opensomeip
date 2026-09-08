@@ -12,19 +12,32 @@
  ********************************************************************************/
 
 #include "events/event_publisher.h"
+
+// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
+#include <new>
+
+#include "common/result.h"
 #include "events/event_types.h"
-#include "transport/udp_transport.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
+#include "platform/containers.h"
+#include "platform/thread.h"
+#include "someip/message.h"
+#include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
-#include "someip/message.h"
-#include <unordered_map>
-#include <unordered_set>
+#include "transport/udp_transport.h"
+
+#include <algorithm>
 #include <atomic>
 #include <chrono>
-#include <algorithm>
+#include <cstdint>
+#include <memory>
+#include <optional>
+#include <unordered_map>
 
-namespace someip {
-namespace events {
+namespace someip::events {
+
+// NOLINTBEGIN(misc-include-cleaner) - platform::Mutex / platform::this_thread from platform/thread.h (IWYU false positives in impl).
 
 /**
  * @brief Event Publisher implementation
@@ -37,23 +50,28 @@ class EventPublisherImpl : public transport::ITransportListener {
 public:
     EventPublisherImpl(uint16_t service_id, uint16_t instance_id)
         : service_id_(service_id), instance_id_(instance_id),
-          transport_(std::make_shared<transport::UdpTransport>(
-              transport::Endpoint("127.0.0.1", 0))),
+          transport_(transport::Endpoint("0.0.0.0", 0)),
           next_session_id_(1), running_(false) {
 
-        transport_->set_listener(this);
+        transport_.set_listener(this);
     }
 
-    ~EventPublisherImpl() {
+    ~EventPublisherImpl() override
+    {
         shutdown();
     }
+
+    EventPublisherImpl(const EventPublisherImpl&) = delete;
+    EventPublisherImpl& operator=(const EventPublisherImpl&) = delete;
+    EventPublisherImpl(EventPublisherImpl&&) = delete;
+    EventPublisherImpl& operator=(EventPublisherImpl&&) = delete;
 
     bool initialize() {
         if (running_) {
             return true;
         }
 
-        if (transport_->start() != Result::SUCCESS) {
+        if (transport_.start() != Result::SUCCESS) {
             return false;
         }
 
@@ -72,35 +90,38 @@ public:
         stop_publish_timer();
 
         {
-            platform::ScopedLock events_lock(events_mutex_);
+            platform::ScopedLock const events_lock(events_mutex_);
             registered_events_.clear();
         }
         {
-            platform::ScopedLock subs_lock(subscriptions_mutex_);
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
             subscriptions_.clear();
         }
 
-        transport_->stop();
+        transport_.stop();
     }
 
     bool register_event(const EventConfig& config) {
-        platform::ScopedLock events_lock(events_mutex_);
+        platform::ScopedLock const events_lock(events_mutex_);
 
         // Check if already registered
-        bool already_exists = registered_events_.count(config.event_id) > 0;
+        bool const already_exists = registered_events_.count(config.event_id) > 0;
         if (!already_exists) {
+            if (registered_events_.size() >= registered_events_.max_size()) {
+                return false;
+            }
             registered_events_[config.event_id] = config;
         }
         return !already_exists;
     }
 
     bool unregister_event(uint16_t event_id) {
-        platform::ScopedLock events_lock(events_mutex_);
+        platform::ScopedLock const events_lock(events_mutex_);
         return registered_events_.erase(event_id) > 0;
     }
 
     bool update_event_config(uint16_t event_id, const EventConfig& config) {
-        platform::ScopedLock events_lock(events_mutex_);
+        platform::ScopedLock const events_lock(events_mutex_);
 
         auto it = registered_events_.find(event_id);
         if (it == registered_events_.end()) {
@@ -112,14 +133,14 @@ public:
     }
 
     /** @implements REQ_MSG_110, REQ_MSG_110_E01, REQ_MSG_119, REQ_MSG_121A, REQ_MSG_121B, REQ_MSG_121C, REQ_MSG_121_E01, REQ_MSG_121_E02, REQ_MSG_141 */
-    bool publish_event(uint16_t event_id, const std::vector<uint8_t>& data) {
+    bool publish_event(uint16_t event_id, const platform::ByteBuffer& data) {
         if (!running_) {
             return false;
         }
 
-        uint16_t eventgroup_id;
+        uint16_t eventgroup_id = 0;
         {
-            platform::ScopedLock events_lock(events_mutex_);
+            platform::ScopedLock const events_lock(events_mutex_);
             auto event_it = registered_events_.find(event_id);
             if (event_it == registered_events_.end()) {
                 return false;
@@ -131,13 +152,15 @@ public:
         notification.event_data = data;
         notification.session_id = next_session_id_++;
 
-        std::vector<transport::Endpoint> targets;
+        platform::Vector<transport::Endpoint> targets;
         {
-            platform::ScopedLock subs_lock(subscriptions_mutex_);
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
             auto sub_it = subscriptions_.find(eventgroup_id);
             if (sub_it != subscriptions_.end()) {
                 for (const auto& client_info : sub_it->second) {
-                    targets.push_back(client_info.endpoint);
+                    if (!client_info.is_expired()) {
+                        targets.push_back(client_info.endpoint);
+                    }
                 }
             }
         }
@@ -149,23 +172,79 @@ public:
         return true;
     }
 
-    bool publish_field(uint16_t event_id, const std::vector<uint8_t>& data) {
+    bool publish_field(uint16_t event_id, const platform::ByteBuffer& data) {
         // Fields are published immediately like events
         return publish_event(event_id, data);
     }
 
+    void set_default_client_endpoint(const platform::String<>& address, uint16_t port) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        default_client_address_ = address;
+        default_client_port_ = port;
+    }
+
     /** @implements REQ_MSG_124, REQ_MSG_124_E01, REQ_MSG_125, REQ_MSG_125_E01, REQ_MSG_126 */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
-                           const std::vector<EventFilter>& filters) {
+                           const platform::Vector<EventFilter>& filters) {
+        return handle_subscription(eventgroup_id, client_id, TTL_INFINITE, filters);
+    }
 
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                           uint32_t ttl_seconds,
+                           const platform::Vector<EventFilter>& filters) {
+        platform::ScopedLock const lock(subscriptions_mutex_);
+        if (default_client_port_ == 0) {
+            return false;
+        }
+        return handle_subscription_locked(eventgroup_id, client_id,
+                                          transport::Endpoint(default_client_address_, default_client_port_),
+                                          ttl_seconds, filters);
+    }
 
-        // Create client info (simplified - using localhost for demo)
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                           const transport::Endpoint& client_endpoint,
+                           const platform::Vector<EventFilter>& filters) {
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        return handle_subscription_locked(eventgroup_id, client_id, client_endpoint,
+                                          TTL_INFINITE, filters);
+    }
+
+    bool handle_subscription_locked(uint16_t eventgroup_id, uint16_t client_id,
+                                    const transport::Endpoint& client_endpoint,
+                                    uint32_t ttl_seconds,
+                                    const platform::Vector<EventFilter>& filters) {
+
+        if (ttl_seconds == 0) {
+            auto sub_it = subscriptions_.find(eventgroup_id);
+            if (sub_it == subscriptions_.end()) {
+                return false;
+            }
+            auto& clients = sub_it->second;
+            auto new_end = std::remove_if(clients.begin(), clients.end(),
+                [client_id](const ClientInfo& info) {
+                    return info.client_id == client_id;
+                });
+            bool const found = (new_end != clients.end());
+            clients.erase(new_end, clients.end());
+            return found;
+        }
+
         ClientInfo client_info;
         client_info.client_id = client_id;
-        client_info.endpoint = transport::Endpoint("127.0.0.1", 30500);  // TODO: Get from SD
-        client_info.filters = filters;
+        client_info.endpoint = client_endpoint;
+        if (filters.size() > client_info.filters.max_size()) {
+            return false;
+        }
+        for (const auto& f : filters) {
+            client_info.filters.push_back(f);
+        }
+        client_info.ttl_seconds = ttl_seconds;
+        client_info.subscribed_at = std::chrono::steady_clock::now();
 
+        if (subscriptions_.size() >= subscriptions_.max_size() &&
+            subscriptions_.find(eventgroup_id) == subscriptions_.end()) {
+            return false;
+        }
         auto& clients = subscriptions_[eventgroup_id];
         auto it = std::find_if(clients.begin(), clients.end(),
             [client_id](const ClientInfo& info) {
@@ -173,16 +252,19 @@ public:
             });
 
         if (it == clients.end()) {
+            if (clients.size() >= clients.max_size()) {
+                return false;
+            }
             clients.push_back(client_info);
         } else {
-            *it = client_info;  // Update existing
+            *it = client_info;
         }
 
         return true;
     }
 
     bool handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id) {
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         auto sub_it = subscriptions_.find(eventgroup_id);
         if (sub_it == subscriptions_.end()) {
@@ -199,9 +281,10 @@ public:
         return true;
     }
 
-    std::vector<uint16_t> get_registered_events() const {
-        platform::ScopedLock events_lock(events_mutex_);
-        std::vector<uint16_t> events;
+    platform::Vector<uint16_t> get_registered_events() const {
+        platform::ScopedLock const events_lock(events_mutex_);
+        platform::Vector<uint16_t> events;
+        events.reserve(registered_events_.size());
 
         for (const auto& pair : registered_events_) {
             events.push_back(pair.first);
@@ -210,24 +293,41 @@ public:
         return events;
     }
 
-    std::vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const {
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+    platform::Vector<uint16_t> get_subscriptions(uint16_t eventgroup_id) const {
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         auto it = subscriptions_.find(eventgroup_id);
         if (it == subscriptions_.end()) {
             return {};
         }
 
-        std::vector<uint16_t> client_ids;
+        platform::Vector<uint16_t> client_ids;
         for (const auto& client : it->second) {
-            client_ids.push_back(client.client_id);
+            if (!client.is_expired()) {
+                client_ids.push_back(client.client_id);
+            }
         }
 
         return client_ids;
     }
 
+    size_t cleanup_expired_subscriptions() {
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        size_t removed = 0;
+
+        for (auto& sub_pair : subscriptions_) {
+            auto& clients = sub_pair.second;
+            auto new_end = std::remove_if(clients.begin(), clients.end(),
+                [](const ClientInfo& info) { return info.is_expired(); });
+            removed += static_cast<size_t>(std::distance(new_end, clients.end()));
+            clients.erase(new_end, clients.end());
+        }
+
+        return removed;
+    }
+
     bool is_ready() const {
-        return running_ && transport_->is_connected();
+        return running_ && transport_.is_connected();
     }
 
     EventPublisher::Statistics get_statistics() const {
@@ -236,10 +336,23 @@ public:
     }
 
 private:
+    static constexpr uint32_t TTL_INFINITE = 0xFFFFFF;
+
     struct ClientInfo {
-        uint16_t client_id;
+        uint16_t client_id{};
         transport::Endpoint endpoint;
-        std::vector<EventFilter> filters;
+        platform::Vector<EventFilter, 4> filters;
+        uint32_t ttl_seconds{TTL_INFINITE};
+        std::chrono::steady_clock::time_point subscribed_at{std::chrono::steady_clock::now()};
+
+        bool is_expired() const {
+            if (ttl_seconds >= TTL_INFINITE) {
+                return false;
+            }
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::steady_clock::now() - subscribed_at);
+            return elapsed.count() >= static_cast<long>(ttl_seconds);
+        }
     };
 
     void start_publish_timer() {
@@ -247,7 +360,8 @@ private:
             return;
         }
 
-        publish_timer_thread_ = std::make_unique<platform::Thread>([this]() {
+        publish_timer_thread_.emplace([this]() {
+            uint32_t tick_count = 0;
             while (running_) {
                 platform::this_thread::sleep_for(std::chrono::milliseconds(100));  // 100ms check
 
@@ -256,6 +370,11 @@ private:
                 }
 
                 publish_cyclic_events();
+
+                if (++tick_count >= 10) {
+                    tick_count = 0;
+                    cleanup_expired_subscriptions();
+                }
             }
         });
     }
@@ -267,9 +386,9 @@ private:
     }
 
     void publish_cyclic_events() {
-        std::vector<uint16_t> events_to_publish;
+        platform::Vector<uint16_t> events_to_publish;
         {
-            platform::ScopedLock events_lock(events_mutex_);
+            platform::ScopedLock const events_lock(events_mutex_);
             auto now = std::chrono::steady_clock::now();
 
             for (auto& event_pair : registered_events_) {
@@ -278,7 +397,11 @@ private:
                 if (config.notification_type == NotificationType::PERIODIC &&
                     config.cycle_time.count() > 0) {
 
-                    auto time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    if (last_publish_times_.size() >= last_publish_times_.max_size() &&
+                        last_publish_times_.find(config.event_id) == last_publish_times_.end()) {
+                        continue;
+                    }
+                    auto const time_since_last = std::chrono::duration_cast<std::chrono::milliseconds>(
                         now - last_publish_times_[config.event_id]);
 
                     if (time_since_last >= config.cycle_time) {
@@ -289,7 +412,7 @@ private:
             }
         }
 
-        for (uint16_t eid : events_to_publish) {
+        for (const uint16_t eid : events_to_publish) {
             publish_event(eid, {});
         }
     }
@@ -298,12 +421,13 @@ private:
                                const transport::Endpoint& client_endpoint) {
 
         // Create SOME/IP message for event notification
-        MessageId msg_id(service_id_, notification.event_id);
-        Message someip_message(msg_id, RequestId(notification.client_id, notification.session_id),
-                              MessageType::NOTIFICATION, ReturnCode::E_OK);
+        MessageId const msg_id(service_id_, notification.event_id);
+        Message someip_message(msg_id,
+                               RequestId(notification.client_id, notification.session_id),
+                               MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(notification.event_data);
 
-        Result result = transport_->send_message(someip_message, client_endpoint);
+        Result const result = transport_.send_message(someip_message, client_endpoint);
         if (result != Result::SUCCESS) {
             // Log error or handle failure
         }
@@ -316,7 +440,7 @@ private:
 
     void on_connection_lost(const transport::Endpoint& endpoint) override {
         // Handle client disconnection
-        platform::ScopedLock subs_lock(subscriptions_mutex_);
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
 
         for (auto& sub_pair : subscriptions_) {
             auto& clients = sub_pair.second;
@@ -338,79 +462,111 @@ private:
 
     uint16_t service_id_;
     uint16_t instance_id_;
-    std::shared_ptr<transport::UdpTransport> transport_;
+    platform::String<> default_client_address_{"0.0.0.0"};
+    uint16_t default_client_port_{0};
+    transport::UdpTransport transport_;
 
-    std::unordered_map<uint16_t, EventConfig> registered_events_;
+    platform::UnorderedMap<uint16_t, EventConfig, 16> registered_events_;
     mutable platform::Mutex events_mutex_;
 
-    std::unordered_map<uint16_t, std::vector<ClientInfo>> subscriptions_;
+    platform::UnorderedMap<uint16_t, platform::Vector<ClientInfo, 8>, 16> subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;
 
-    std::unordered_map<uint16_t, std::chrono::steady_clock::time_point> last_publish_times_;
-    std::unique_ptr<platform::Thread> publish_timer_thread_;
+    platform::UnorderedMap<uint16_t, std::chrono::steady_clock::time_point, 16> last_publish_times_;
+    std::optional<platform::Thread> publish_timer_thread_;
     std::atomic<uint16_t> next_session_id_;
     std::atomic<bool> running_;
 };
 
+#ifdef SOMEIP_STATIC_ALLOC
+static_assert(sizeof(EventPublisherImpl) <= SOMEIP_PIMPL_EVENTPUB_SIZE,
+              "EventPublisherImpl exceeds pimpl storage size; increase SOMEIP_PIMPL_EVENTPUB_SIZE");
+#endif
+
 // EventPublisher implementation
 EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) EventPublisherImpl(service_id, instance_id);
+}
+#else
     : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id)) {
 }
+#endif
 
-EventPublisher::~EventPublisher() = default;
+EventPublisher::~EventPublisher() {
+#ifdef SOMEIP_STATIC_ALLOC
+    impl()->~EventPublisherImpl();
+#endif
+}
 
 bool EventPublisher::initialize() {
-    return impl_->initialize();
+    return impl()->initialize();
 }
 
 void EventPublisher::shutdown() {
-    impl_->shutdown();
+    impl()->shutdown();
 }
 
 bool EventPublisher::register_event(const EventConfig& config) {
-    return impl_->register_event(config);
+    return impl()->register_event(config);
 }
 
 bool EventPublisher::unregister_event(uint16_t event_id) {
-    return impl_->unregister_event(event_id);
+    return impl()->unregister_event(event_id);
 }
 
 bool EventPublisher::update_event_config(uint16_t event_id, const EventConfig& config) {
-    return impl_->update_event_config(event_id, config);
+    return impl()->update_event_config(event_id, config);
 }
 
-bool EventPublisher::publish_event(uint16_t event_id, const std::vector<uint8_t>& data) {
-    return impl_->publish_event(event_id, data);
+bool EventPublisher::publish_event(uint16_t event_id, const platform::ByteBuffer& data) {
+    return impl()->publish_event(event_id, data);
 }
 
-bool EventPublisher::publish_field(uint16_t event_id, const std::vector<uint8_t>& data) {
-    return impl_->publish_field(event_id, data);
+bool EventPublisher::publish_field(uint16_t event_id, const platform::ByteBuffer& data) {
+    return impl()->publish_field(event_id, data);
+}
+
+void EventPublisher::set_default_client_endpoint(const platform::String<>& address, uint16_t port) {
+    impl()->set_default_client_endpoint(address, port);
 }
 
 bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
-                                       const std::vector<EventFilter>& filters) {
-    return impl_->handle_subscription(eventgroup_id, client_id, filters);
+                                       const platform::Vector<EventFilter>& filters) {
+    return impl()->handle_subscription(eventgroup_id, client_id, filters);
+}
+
+bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                                       uint32_t ttl_seconds,
+                                       const platform::Vector<EventFilter>& filters) {
+    return impl()->handle_subscription(eventgroup_id, client_id, ttl_seconds, filters);
 }
 
 bool EventPublisher::handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id) {
-    return impl_->handle_unsubscription(eventgroup_id, client_id);
+    return impl()->handle_unsubscription(eventgroup_id, client_id);
 }
 
-std::vector<uint16_t> EventPublisher::get_registered_events() const {
-    return impl_->get_registered_events();
+size_t EventPublisher::cleanup_expired_subscriptions() {
+    return impl()->cleanup_expired_subscriptions();
 }
 
-std::vector<uint16_t> EventPublisher::get_subscriptions(uint16_t eventgroup_id) const {
-    return impl_->get_subscriptions(eventgroup_id);
+platform::Vector<uint16_t> EventPublisher::get_registered_events() const {
+    return impl()->get_registered_events();
+}
+
+platform::Vector<uint16_t> EventPublisher::get_subscriptions(uint16_t eventgroup_id) const {
+    return impl()->get_subscriptions(eventgroup_id);
 }
 
 bool EventPublisher::is_ready() const {
-    return impl_->is_ready();
+    return impl()->is_ready();
 }
 
 EventPublisher::Statistics EventPublisher::get_statistics() const {
-    return impl_->get_statistics();
+    return impl()->get_statistics();
 }
 
-} // namespace events
-} // namespace someip
+// NOLINTEND(misc-include-cleaner)
+
+}  // namespace someip::events

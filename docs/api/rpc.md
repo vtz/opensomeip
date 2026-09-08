@@ -9,6 +9,8 @@ The RPC layer provides high-level interfaces for making method calls between SOM
 
 ## Architecture
 
+![RPC Sequence](../diagrams/svg/rpc_sequence_diagram.svg)
+
 ### Components
 
 #### RpcClient

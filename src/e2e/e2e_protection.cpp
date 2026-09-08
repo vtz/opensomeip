@@ -12,13 +12,17 @@
  ********************************************************************************/
 
 #include "e2e/e2e_protection.h"
+
+#include "e2e/e2e_config.h"
+#include "e2e/e2e_profile.h"
 #include "e2e/e2e_profile_registry.h"
 #include "e2e/e2e_header.h"
 #include "someip/message.h"
 #include "common/result.h"
 
-namespace someip {
-namespace e2e {
+#include <optional>
+
+namespace someip::e2e {
 
 /**
  * @brief Add E2E protection to a SOME/IP message
@@ -33,16 +37,16 @@ Result E2EProtection::protect(Message& message, const E2EConfig& config) {
     E2EProfile* profile = registry.get_profile(config.profile_id);
 
     // If profile not found by ID, try by name
-    if (!profile) {
+    if (profile == nullptr) {
         profile = registry.get_profile(config.profile_name);
     }
 
     // If still not found, use default profile
-    if (!profile) {
+    if (profile == nullptr) {
         profile = registry.get_default_profile();
     }
 
-    if (!profile) {
+    if (profile == nullptr) {
         return Result::NOT_INITIALIZED;  // Basic profile not initialized
     }
 
@@ -63,24 +67,20 @@ Result E2EProtection::validate(const Message& message, const E2EConfig& config) 
     E2EProfile* profile = registry.get_profile(config.profile_id);
 
     // If profile not found by ID, try by name
-    if (!profile) {
+    if (profile == nullptr) {
         profile = registry.get_profile(config.profile_name);
     }
 
     // If still not found, use default profile
-    if (!profile) {
+    if (profile == nullptr) {
         profile = registry.get_default_profile();
     }
 
-    if (!profile) {
+    if (profile == nullptr) {
         return Result::NOT_INITIALIZED;  // Basic profile not initialized
     }
 
-    // Call profile's validate method
-    // Note: validate is const, but we need non-const message for some operations
-    // Create a mutable copy for validation
-    Message msg_copy = message;
-    return profile->validate(msg_copy, config);
+    return profile->validate(message, config);
 }
 
 std::optional<E2EHeader> E2EProtection::extract_header(const Message& message) {
@@ -91,5 +91,4 @@ bool E2EProtection::has_e2e_protection(const Message& message) const {
     return message.has_e2e_header();
 }
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e

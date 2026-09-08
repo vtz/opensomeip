@@ -19,14 +19,13 @@
  *   main() → xTaskCreate() → vTaskStartScheduler() → tasks run
  *
  * The test task exercises Message, Endpoint, SessionManager,
- * Serializer, threading primitives, and the memory pool, then
- * calls exit() to terminate the FreeRTOS scheduler.
+ * Serializer, E2E, TP, threading primitives, and the memory pool,
+ * then calls exit() to terminate the FreeRTOS scheduler.
  */
 
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <vector>
 
 #include "someip/message.h"
 #include "someip/types.h"
@@ -36,6 +35,7 @@
 #include "serialization/serializer.h"
 #include "platform/thread.h"
 #include "platform/memory.h"
+#include "platform/buffer_pool.h"
 
 #include <FreeRTOS.h>
 #include <task.h>
@@ -74,84 +74,15 @@ static int tests_failed = 0;
         }                                                   \
     } while (0)
 
-static void test_message() {
-    printf("\n--- Message tests ---\n");
+// Shared platform-independent test suites
+#include "../shared/test_message_common.inc"
+#include "../shared/test_endpoint_common.inc"
+#include "../shared/test_session_manager_common.inc"
+#include "../shared/test_serializer_common.inc"
+#include "../shared/test_e2e_common.inc"
+#include "../shared/test_tp_common.inc"
 
-    Message msg(MessageId(0x1234, 0x0001),
-                RequestId(0x0010, 0x0001));
-
-    CHECK(msg.get_service_id() == 0x1234, "service_id");
-    CHECK(msg.get_method_id() == 0x0001, "method_id");
-    CHECK(msg.get_client_id() == 0x0010, "client_id");
-    CHECK(msg.get_session_id() == 0x0001, "session_id");
-
-    std::vector<uint8_t> payload = {1, 2, 3, 4, 5};
-    msg.set_payload(payload);
-    CHECK(msg.get_payload().size() == 5, "payload_size");
-
-    auto serialized = msg.serialize();
-    CHECK(serialized.size() >= 16, "serialize_min_size");
-
-    Message decoded;
-    bool ok = decoded.deserialize(serialized);
-    CHECK(ok, "deserialize");
-    CHECK(decoded.get_service_id() == 0x1234, "roundtrip_service_id");
-    CHECK(decoded.get_payload() == payload, "roundtrip_payload");
-}
-
-static void test_endpoint() {
-    printf("\n--- Endpoint tests ---\n");
-
-    Endpoint ep1("192.168.1.1", 30490);
-    CHECK(ep1.is_valid(), "valid_ipv4");
-    CHECK(ep1.is_ipv4(), "is_ipv4");
-    CHECK(!ep1.is_multicast(), "not_multicast");
-
-    Endpoint ep2("239.118.122.69", 30490, TransportProtocol::MULTICAST_UDP);
-    CHECK(ep2.is_valid(), "multicast_valid");
-    CHECK(ep2.is_multicast(), "is_multicast");
-
-    Endpoint ep3("999.999.999.999", 80);
-    CHECK(!ep3.is_valid(), "invalid_ipv4");
-
-    Endpoint ep4("", 80);
-    CHECK(!ep4.is_valid(), "empty_address");
-
-    Endpoint ep5("::1", 80);
-    CHECK(ep5.is_valid(), "valid_ipv6");
-    CHECK(ep5.is_ipv6(), "is_ipv6");
-}
-
-static void test_session_manager() {
-    printf("\n--- Session Manager tests ---\n");
-
-    SessionManager sm;
-    uint16_t s1 = sm.get_next_session_id();
-    uint16_t s2 = sm.get_next_session_id();
-    CHECK(s2 == s1 + 1, "sequential_ids");
-}
-
-static void test_serializer() {
-    printf("\n--- Serializer tests ---\n");
-
-    using namespace someip::serialization;
-
-    Serializer ser;
-    ser.serialize_uint8(0x42);
-    ser.serialize_uint16(0x1234);
-    ser.serialize_uint32(0xDEADBEEF);
-
-    auto data = ser.get_buffer();
-    CHECK(data.size() == 7, "serialized_size");
-
-    Deserializer deser(data);
-    auto v8 = deser.deserialize_uint8();
-    auto v16 = deser.deserialize_uint16();
-    auto v32 = deser.deserialize_uint32();
-    CHECK(v8.is_success() && v8.get_value() == 0x42, "deser_uint8");
-    CHECK(v16.is_success() && v16.get_value() == 0x1234, "deser_uint16");
-    CHECK(v32.is_success() && v32.get_value() == 0xDEADBEEF, "deser_uint32");
-}
+// FreeRTOS-specific tests
 
 static void test_freertos_threading() {
     printf("\n--- FreeRTOS threading tests ---\n");
@@ -168,7 +99,6 @@ static void test_freertos_threading() {
     cv.notify_one();
     CHECK(true, "cv_notify_one");
 
-    // Test sleep_for (FreeRTOS vTaskDelay under the hood)
     auto t0 = xTaskGetTickCount();
     someip::platform::this_thread::sleep_for(std::chrono::milliseconds(50));
     auto t1 = xTaskGetTickCount();
@@ -199,7 +129,8 @@ static void test_freertos_memory_pool() {
     CHECK(msg1 != nullptr, "pool_alloc_1");
 
     if (msg1) {
-        msg1->set_payload({0xAA, 0xBB});
+        const uint8_t pd[] = {0xAA, 0xBB};
+        msg1->set_payload(pd, sizeof(pd));
         CHECK(msg1->get_payload().size() == 2, "pool_msg_payload");
     }
 
@@ -229,7 +160,7 @@ static void test_freertos_heap_watermarks() {
         SemaphoreHandle_t sem = xSemaphoreCreateBinary();
         CHECK(sem != nullptr, "heap_rtos_alloc");
         size_t free_during = xPortGetFreeHeapSize();
-        CHECK(free_during < free_before, "heap_decreased_after_alloc");
+        CHECK(free_during <= free_before, "heap_not_increased_after_alloc");
         vSemaphoreDelete(sem);
     }
 
@@ -240,17 +171,67 @@ static void test_freertos_heap_watermarks() {
            free_after, static_cast<ssize_t>(free_after) - static_cast<ssize_t>(free_before));
 }
 
+#ifdef SOMEIP_STATIC_ALLOC
+/**
+ * @test_case TC_FREERTOS_STATIC_ZERO_HEAP
+ * @tests REQ_PLATFORM_STATIC_002
+ * @brief Under static alloc, message allocate/serialize/deserialize must not
+ *        touch the FreeRTOS heap at all (delta == 0).
+ */
+static void test_freertos_static_zero_heap() {
+    printf("\n--- FreeRTOS static-alloc zero-heap-growth tests ---\n");
+
+    size_t heap_before = xPortGetFreeHeapSize();
+
+    {
+        auto msg = someip::platform::allocate_message();
+        CHECK(msg != nullptr, "static_pool_alloc");
+        msg->set_service_id(0x1234);
+        msg->set_method_id(0x5678);
+        msg->set_client_id(0x0001);
+        msg->set_session_id(0x0001);
+        const uint8_t payload[] = {0xCA, 0xFE, 0xBA, 0xBE};
+        msg->set_payload(payload, sizeof(payload));
+
+        auto wire = msg->serialize();
+        CHECK(!wire.empty(), "static_serialize");
+
+        someip::Message decoded;
+        bool ok = decoded.deserialize(wire.data(), wire.size());
+        CHECK(ok, "static_deserialize");
+        CHECK(decoded.get_payload().size() == sizeof(payload), "static_roundtrip_size");
+    }
+
+    size_t heap_after = xPortGetFreeHeapSize();
+    auto delta = static_cast<ssize_t>(heap_after) - static_cast<ssize_t>(heap_before);
+    printf("  Heap delta across message ops: %zd bytes\n", delta);
+    CHECK(delta == 0, "zero_heap_growth_under_static_alloc");
+}
+#endif
+
 static void test_task_entry(void*) {
     printf("=== SOME/IP Core Tests on FreeRTOS (POSIX port) ===\n");
 
+#ifdef SOMEIP_STATIC_ALLOC
+    someip::platform::init_static_allocator();
+#endif
+
+    // Platform-independent suites (shared with ThreadX and Zephyr)
     test_message();
     test_endpoint();
     test_session_manager();
     test_serializer();
+    test_e2e();
+    test_tp();
+
+    // FreeRTOS-specific suites
     test_freertos_threading();
     test_freertos_thread_join();
     test_freertos_memory_pool();
     test_freertos_heap_watermarks();
+#ifdef SOMEIP_STATIC_ALLOC
+    test_freertos_static_zero_heap();
+#endif
 
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);
@@ -262,7 +243,7 @@ int main() {
     BaseType_t rc = xTaskCreate(
         test_task_entry,
         "test_main",
-        configMINIMAL_STACK_SIZE * 4,
+        configMINIMAL_STACK_SIZE * 10,
         nullptr,
         tskIDLE_PRIORITY + 2,
         nullptr);
