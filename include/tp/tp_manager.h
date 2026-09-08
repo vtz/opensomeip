@@ -194,7 +194,7 @@ private:
     std::optional<TpSegmenter> segmenter_;
     std::optional<TpReassembler> reassembler_;
 
-    platform::UnorderedMap<uint32_t, TpTransfer, SOMEIP_MAX_CONCURRENT_TP> active_transfers_;
+    platform::UnorderedMap<uint32_t, TpTransfer> active_transfers_;
     mutable platform::Mutex transfers_mutex_;
 
     TpCompletionCallback completion_callback_;
