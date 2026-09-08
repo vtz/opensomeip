@@ -16,6 +16,8 @@
  * @brief Integration test: RPC client/server round-trip via C API.
  */
 
+#include <cstring>
+
 #include <gtest/gtest.h>
 #include "capi/opensomeip.h"
 
