@@ -14,7 +14,6 @@
 #include "transport/event_driven_udp_transport.h"
 #include "platform/memory.h"
 #include <stdexcept>
-#include <string>
 
 namespace someip {
 namespace transport {
@@ -45,7 +44,7 @@ Result EventDrivenUdpTransport::send_message(const Message& message, const Endpo
         return Result::INVALID_ENDPOINT;
     }
 
-    std::vector<uint8_t> data = message.serialize();
+    platform::ByteBuffer data = message.serialize();
     if (data.size() > MAX_UDP_PAYLOAD) {
         return Result::BUFFER_OVERFLOW;
     }
@@ -103,7 +102,7 @@ Result EventDrivenUdpTransport::start() {
         return Result::SUCCESS;
     }
 
-    adapter_.set_receive_callback([this](const std::vector<uint8_t>& data, const Endpoint& sender) {
+    adapter_.set_receive_callback([this](const platform::ByteBuffer& data, const Endpoint& sender) {
         on_adapter_receive(data, sender);
     });
 
@@ -142,22 +141,20 @@ bool EventDrivenUdpTransport::is_running() const {
 }
 
 Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& multicast_address) {
-    const std::string address(multicast_address.c_str());
-    if (!is_multicast_ipv4(address)) {
+    if (!is_multicast_ipv4(multicast_address)) {
         return Result::INVALID_ENDPOINT;
     }
-    return adapter_.join_multicast(address, config_.multicast_interface);
+    return adapter_.join_multicast(multicast_address, config_.multicast_interface);
 }
 
 Result EventDrivenUdpTransport::leave_multicast_group(const platform::String<>& multicast_address) {
-    const std::string address(multicast_address.c_str());
-    if (!is_multicast_ipv4(address)) {
+    if (!is_multicast_ipv4(multicast_address)) {
         return Result::INVALID_ENDPOINT;
     }
-    return adapter_.leave_multicast(address, config_.multicast_interface);
+    return adapter_.leave_multicast(multicast_address, config_.multicast_interface);
 }
 
-void EventDrivenUdpTransport::on_adapter_receive(const std::vector<uint8_t>& data, const Endpoint& sender) {
+void EventDrivenUdpTransport::on_adapter_receive(const platform::ByteBuffer& data, const Endpoint& sender) {
     if (!running_.load()) {
         return;
     }
@@ -189,7 +186,7 @@ void EventDrivenUdpTransport::on_adapter_receive(const std::vector<uint8_t>& dat
     }
 }
 
-bool EventDrivenUdpTransport::is_multicast_ipv4(const std::string& address) {
+bool EventDrivenUdpTransport::is_multicast_ipv4(const platform::String<>& address) {
     const Endpoint ep(address, 0, TransportProtocol::MULTICAST_UDP);
     return ep.is_multicast();
 }

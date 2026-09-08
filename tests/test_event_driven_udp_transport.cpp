@@ -104,20 +104,20 @@ public:
         cb_ = nullptr;
     }
 
-    Result send(const std::vector<uint8_t>& data, const Endpoint& destination) override {
+    Result send(const platform::ByteBuffer& data, const Endpoint& destination) override {
         last_send_data_ = data;
         last_send_dest_ = destination;
         return Result::SUCCESS;
     }
 
-    Result join_multicast(const std::string& multicast_address,
-                          const std::string& /*interface_address*/) override {
+    Result join_multicast(const platform::String<>& multicast_address,
+                          const platform::String<>& /*interface_address*/) override {
         joins_.push_back(multicast_address);
         return Result::SUCCESS;
     }
 
-    Result leave_multicast(const std::string& multicast_address,
-                           const std::string& /*interface_address*/) override {
+    Result leave_multicast(const platform::String<>& multicast_address,
+                           const platform::String<>& /*interface_address*/) override {
         leaves_.push_back(multicast_address);
         return Result::SUCCESS;
     }
@@ -126,7 +126,7 @@ public:
 
     Endpoint get_local_endpoint() const override { return local_; }
 
-    void inject_receive(const std::vector<uint8_t>& data, const Endpoint& sender) {
+    void inject_receive(const platform::ByteBuffer& data, const Endpoint& sender) {
         if (cb_) {
             cb_(data, sender);
         }
@@ -134,10 +134,10 @@ public:
 
     bool is_open() const { return open_; }
 
-    std::vector<uint8_t> last_send_data_;
+    platform::ByteBuffer last_send_data_;
     Endpoint last_send_dest_{"0.0.0.0", 0};
-    std::vector<std::string> joins_;
-    std::vector<std::string> leaves_;
+    std::vector<platform::String<>> joins_;
+    std::vector<platform::String<>> leaves_;
 
 private:
     bool open_{false};
@@ -206,7 +206,7 @@ TEST(EventDrivenUdpTransport, SendForwardsToAdapter) {
     ASSERT_EQ(transport.send_message(msg, dest), Result::SUCCESS);
 
     EXPECT_EQ(adapter.last_send_dest_, dest);
-    std::vector<uint8_t> expected = msg.serialize();
+    platform::ByteBuffer expected = msg.serialize();
     EXPECT_EQ(adapter.last_send_data_, expected);
 
     transport.stop();
@@ -221,7 +221,7 @@ TEST(EventDrivenUdpTransport, ReceiveCallbackNotifiesListener) {
     ASSERT_EQ(transport.start(), Result::SUCCESS);
 
     Message sent = make_sample_message();
-    std::vector<uint8_t> raw = sent.serialize();
+    platform::ByteBuffer raw = sent.serialize();
     Endpoint sender{"10.0.0.5", 5000, TransportProtocol::UDP};
     adapter.inject_receive(raw, sender);
 
@@ -245,7 +245,7 @@ TEST(EventDrivenUdpTransport, MalformedDatagramInvokesOnError) {
 
     ASSERT_EQ(transport.start(), Result::SUCCESS);
 
-    adapter.inject_receive({0x00, 0x01}, Endpoint{"127.0.0.1", 1234});
+    adapter.inject_receive(platform::ByteBuffer{0x00, 0x01}, Endpoint{"127.0.0.1", 1234});
 
     ASSERT_TRUE(listener.wait_for_error());
     EXPECT_EQ(listener.last_error_.load(), Result::INVALID_MESSAGE);

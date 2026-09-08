@@ -14,12 +14,12 @@
 #ifndef SOMEIP_TRANSPORT_EVENT_DRIVEN_TCP_TRANSPORT_H
 #define SOMEIP_TRANSPORT_EVENT_DRIVEN_TCP_TRANSPORT_H
 
-#include "transport/transport.h"
-#include "transport/tcp_socket_adapter.h"
+#include "platform/buffer_pool.h"
 #include "platform/thread.h"
+#include "transport/tcp_socket_adapter.h"
+#include "transport/transport.h"
 #include <atomic>
 #include <queue>
-#include <vector>
 
 namespace someip {
 namespace transport {
@@ -73,10 +73,10 @@ public:
     bool is_running() const override;
 
 private:
-    void on_adapter_receive(const std::vector<uint8_t>& data);
+    void on_adapter_receive(const platform::ByteBuffer& data);
     void on_adapter_connected(const Endpoint& remote);
     void on_adapter_disconnected();
-    bool parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message);
+    bool parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message);
 
     ITcpSocketAdapter& adapter_;
     EventDrivenTcpTransportConfig config_;
@@ -88,7 +88,7 @@ private:
     std::atomic<bool> initialized_{false};
     std::atomic<bool> server_mode_{false};
 
-    std::vector<uint8_t> receive_buffer_;
+    platform::ByteBuffer receive_buffer_;
     std::queue<std::pair<MessagePtr, Endpoint>> message_queue_;
     platform::Mutex queue_mutex_;
 

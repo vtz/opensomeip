@@ -14,13 +14,15 @@
 #ifndef SOMEIP_TRANSPORT_EVENT_DRIVEN_UDP_TRANSPORT_H
 #define SOMEIP_TRANSPORT_EVENT_DRIVEN_UDP_TRANSPORT_H
 
-#include "transport/transport.h"
-#include "transport/multicast_transport.h"
-#include "transport/udp_socket_adapter.h"
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/thread.h"
+#include "transport/multicast_transport.h"
+#include "transport/transport.h"
+#include "transport/udp_socket_adapter.h"
+
 #include <atomic>
 #include <queue>
-#include <string>
 
 namespace someip {
 namespace transport {
@@ -29,7 +31,7 @@ namespace transport {
  * @brief Configuration for event-driven UDP transport.
  */
 struct EventDrivenUdpTransportConfig {
-    std::string multicast_interface{};
+    platform::String<> multicast_interface{};
     size_t max_message_size{1400};
 };
 
@@ -65,8 +67,8 @@ public:
     Result leave_multicast_group(const platform::String<>& multicast_address) override;
 
 private:
-    void on_adapter_receive(const std::vector<uint8_t>& data, const Endpoint& sender);
-    static bool is_multicast_ipv4(const std::string& address);
+    void on_adapter_receive(const platform::ByteBuffer& data, const Endpoint& sender);
+    static bool is_multicast_ipv4(const platform::String<>& address);
 
     IUdpSocketAdapter& adapter_;
     Endpoint local_endpoint_;

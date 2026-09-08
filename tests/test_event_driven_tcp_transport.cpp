@@ -147,7 +147,7 @@ public:
         return Result::SUCCESS;
     }
 
-    Result send(const std::vector<uint8_t>& data) override {
+    Result send(const platform::ByteBuffer& data) override {
         if (!connected_) {
             return Result::NOT_CONNECTED;
         }
@@ -170,7 +170,7 @@ public:
     Endpoint get_local_endpoint() const override { return local_; }
     bool is_connected() const override { return connected_; }
 
-    void inject_receive(const std::vector<uint8_t>& data) {
+    void inject_receive(const platform::ByteBuffer& data) {
         if (receive_cb_) {
             receive_cb_(data);
         }
@@ -200,7 +200,7 @@ public:
     }
 
     bool is_open() const { return open_; }
-    std::vector<uint8_t> last_send_data_;
+    platform::ByteBuffer last_send_data_;
 
 private:
     bool open_{false};
@@ -330,7 +330,7 @@ TEST(EventDrivenTcpTransport, SendForwardsToAdapter) {
     Endpoint dest{"10.0.0.1", 5000};
     ASSERT_EQ(transport.send_message(msg, dest), Result::SUCCESS);
 
-    std::vector<uint8_t> expected = msg.serialize();
+    platform::ByteBuffer expected = msg.serialize();
     EXPECT_EQ(adapter.last_send_data_, expected);
 
     transport.stop();
@@ -361,7 +361,7 @@ TEST(EventDrivenTcpTransport, ReceiveCallbackReassemblesMessage) {
     adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
 
     Message sent = make_tcp_sample_message();
-    std::vector<uint8_t> raw = sent.serialize();
+    platform::ByteBuffer raw = sent.serialize();
     adapter.inject_receive(raw);
 
     ASSERT_TRUE(listener.wait_for_message());
@@ -387,11 +387,11 @@ TEST(EventDrivenTcpTransport, ReceiveFragmentedMessage) {
     adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
 
     Message sent = make_tcp_sample_message();
-    std::vector<uint8_t> raw = sent.serialize();
+    platform::ByteBuffer raw = sent.serialize();
 
     size_t half = raw.size() / 2;
-    std::vector<uint8_t> first_half(raw.begin(), raw.begin() + static_cast<std::ptrdiff_t>(half));
-    std::vector<uint8_t> second_half(raw.begin() + static_cast<std::ptrdiff_t>(half), raw.end());
+    platform::ByteBuffer first_half(raw.data(), raw.data() + half);
+    platform::ByteBuffer second_half(raw.data() + half, raw.data() + raw.size());
 
     adapter.inject_receive(first_half);
     EXPECT_FALSE(listener.wait_for_message(std::chrono::milliseconds(50)));
