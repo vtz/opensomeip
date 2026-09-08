@@ -25,6 +25,8 @@
 #include "transport/transport.h"
 #include "transport/udp_socket_adapter.h"
 
+// NOLINTBEGIN(misc-include-cleaner)
+
 namespace someip::transport {
 
 EventDrivenUdpTransport::EventDrivenUdpTransport(IUdpSocketAdapter& adapter,
@@ -216,3 +218,5 @@ bool EventDrivenUdpTransport::is_multicast_ipv4(const platform::String<>& addres
 }
 
 }  // namespace someip::transport
+
+// NOLINTEND(misc-include-cleaner)
