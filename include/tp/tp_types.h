@@ -227,8 +227,8 @@ inline constexpr size_t MAX_TP_SEGMENTS = SOMEIP_MAX_TP_SEGMENTS;
 inline constexpr size_t MAX_TP_SEGMENTS = 64;
 #endif
 
-#ifndef SOMEIP_MAX_TP_REASSEMBLY_BUFFERS
-#define SOMEIP_MAX_TP_REASSEMBLY_BUFFERS 16
+#ifndef SOMEIP_MAX_TP_REASSEMBLY_BUFFERS  // NOLINT(cppcoreguidelines-macro-usage)
+#define SOMEIP_MAX_TP_REASSEMBLY_BUFFERS 16  // NOLINT(cppcoreguidelines-macro-usage)
 #endif
 
 using TpSegmentVector = platform::Vector<TpSegment, MAX_TP_SEGMENTS>;
