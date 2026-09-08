@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 #include "capi/opensomeip.h"
+#include "static_pool_init.h"
 #include <cstring>
 #include <thread>
 #include <chrono>

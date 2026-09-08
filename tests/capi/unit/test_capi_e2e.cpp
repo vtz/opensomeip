@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 #include "capi/opensomeip.h"
+#include "static_pool_init.h"
 
 /**
  * @test_case TC_CAPI_E2E_CREATE_001
