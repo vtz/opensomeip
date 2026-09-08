@@ -15,6 +15,7 @@
 #define SOMEIP_TRANSPORT_UDP_TRANSPORT_H
 
 #include "transport/transport.h"
+#include "transport/multicast_transport.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 #include "platform/net.h"
@@ -55,7 +56,7 @@ struct UdpTransportConfig {
  * - Blocking mode (default): More efficient, eliminates busy loops
  * - Non-blocking mode: Allows integration with event loops/polling
  */
-class UdpTransport : public ITransport {
+class UdpTransport : public ITransport, public IMulticastTransport {
 public:
     /**
      * @brief Constructor
@@ -96,9 +97,9 @@ public:
     Result stop() override;
     bool is_running() const override;
 
-    // Multicast support
-    Result join_multicast_group(const platform::String<>& multicast_address);
-    Result leave_multicast_group(const platform::String<>& multicast_address);
+    // IMulticastTransport
+    Result join_multicast_group(const platform::String<>& multicast_address) override;
+    Result leave_multicast_group(const platform::String<>& multicast_address) override;
 
     // Disable copy and assignment
     UdpTransport(const UdpTransport&) = delete;
