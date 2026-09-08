@@ -14,15 +14,16 @@
 #ifndef SOMEIP_TRANSPORT_EVENT_DRIVEN_TCP_TRANSPORT_H
 #define SOMEIP_TRANSPORT_EVENT_DRIVEN_TCP_TRANSPORT_H
 
+#include <atomic>
+#include <utility>
+
 #include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "platform/thread.h"
 #include "transport/tcp_socket_adapter.h"
 #include "transport/transport.h"
-#include <atomic>
-#include <queue>
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief Configuration for event-driven TCP transport (stream reassembly limits).
@@ -40,14 +41,17 @@ struct EventDrivenTcpTransportConfig {
  * / try_accept_connection() for server-side usage, before calling start().
  */
 class EventDrivenTcpTransport : public ITransport {
-public:
-    explicit EventDrivenTcpTransport(ITcpSocketAdapter& adapter,
-                                     const EventDrivenTcpTransportConfig& config = EventDrivenTcpTransportConfig());
+   public:
+    explicit EventDrivenTcpTransport(
+        ITcpSocketAdapter& adapter,
+        const EventDrivenTcpTransportConfig& config = EventDrivenTcpTransportConfig());
 
     ~EventDrivenTcpTransport() override;
 
     EventDrivenTcpTransport(const EventDrivenTcpTransport&) = delete;
     EventDrivenTcpTransport& operator=(const EventDrivenTcpTransport&) = delete;
+    EventDrivenTcpTransport(EventDrivenTcpTransport&&) = delete;
+    EventDrivenTcpTransport& operator=(EventDrivenTcpTransport&&) = delete;
 
     /** @brief Concrete-type-only: bind the adapter to a local endpoint. */
     [[nodiscard]] Result initialize(const Endpoint& local_endpoint);
@@ -72,7 +76,7 @@ public:
     Result stop() override;
     bool is_running() const override;
 
-private:
+   private:
     void on_adapter_receive(const platform::ByteBuffer& data);
     void on_adapter_connected(const Endpoint& remote);
     void on_adapter_disconnected();
@@ -89,14 +93,13 @@ private:
     std::atomic<bool> server_mode_{false};
 
     platform::ByteBuffer receive_buffer_;
-    std::queue<std::pair<MessagePtr, Endpoint>> message_queue_;
+    platform::Queue<std::pair<MessagePtr, Endpoint>> message_queue_;
     platform::Mutex queue_mutex_;
 
     static const size_t SOMEIP_HEADER_SIZE;
     static const size_t MAX_MESSAGE_SIZE;
 };
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
-#endif // SOMEIP_TRANSPORT_EVENT_DRIVEN_TCP_TRANSPORT_H
+#endif  // SOMEIP_TRANSPORT_EVENT_DRIVEN_TCP_TRANSPORT_H
