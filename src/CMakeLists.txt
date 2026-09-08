@@ -195,6 +195,10 @@ if(BUILD_CAPI)
             CXX_VISIBILITY_PRESET hidden
             VISIBILITY_INLINES_HIDDEN ON
         )
+        target_compile_definitions(opensomeip_capi
+            PUBLIC  OPENSOMEIP_CAPI_SHARED
+            PRIVATE OPENSOMEIP_CAPI_BUILDING
+        )
     endif()
     # The CAPI wrapper uses try/catch as an exception firewall (every entry
     # point catches C++ exceptions and converts them to error codes).  ARM
