@@ -277,12 +277,45 @@ TEST_F(RpcTest, WrongInterfaceVersionReturnsError) {
 
     MessagePtr reply = wait_for_udp_message(probe);
     ASSERT_NE(reply, nullptr);
-    EXPECT_EQ(reply->get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(reply->get_message_type(), static_cast<MessageType>(0x81));
     EXPECT_EQ(reply->get_return_code(), ReturnCode::E_WRONG_INTERFACE_VERSION);
-    EXPECT_EQ(reply->get_interface_version(), 0x02);
+    EXPECT_EQ(reply->get_interface_version(), 0x01);
 
     probe.stop();
     server.shutdown();
+}
+
+/**
+ * @tests REQ_MSG_041
+ * @brief RpcClient does not treat a response with the wrong Interface Version as success
+ */
+TEST_F(RpcTest, ClientRejectsMismatchedResponseInterfaceVersion) {
+    transport::UdpTransport spy(transport::Endpoint("127.0.0.1", 0));
+    ASSERT_EQ(spy.start(), Result::SUCCESS);
+
+    RpcClient client(client_id_, 0x02);
+    ASSERT_TRUE(client.initialize());
+    client.set_remote_endpoint(spy.get_local_endpoint());
+
+    std::thread responder([&]() {
+        MessagePtr req = wait_for_udp_message(spy, 100);
+        if (!req) {
+            return;
+        }
+        Message reply(MessageId(req->get_service_id(), req->get_method_id()),
+                      req->get_request_id(), MessageType::RESPONSE, ReturnCode::E_OK);
+        reply.set_interface_version(0x01);
+        (void)spy.send_message(reply, transport::Endpoint("127.0.0.1", client.get_local_endpoint().get_port()));
+    });
+
+    RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::milliseconds(2000);
+    auto result = client.call_method_sync(test_service_id_, test_method_id_, {}, timeout);
+    responder.join();
+    EXPECT_EQ(result.result, RpcResult::INTERNAL_ERROR);
+
+    client.shutdown();
+    spy.stop();
 }
 
 /**
@@ -329,7 +362,7 @@ TEST_F(RpcTest, FireAndForgetServerDoesNotRespond) {
         [&calls](uint16_t, uint16_t, const platform::ByteBuffer&, platform::ByteBuffer&) {
             calls.fetch_add(1);
             return RpcResult::SUCCESS;
-        }, MethodSemantics::FireAndForget));
+        }, MethodSemantics::FIRE_AND_FORGET));
     ASSERT_TRUE(server.initialize());
 
     transport::UdpTransport probe(transport::Endpoint("127.0.0.1", 0));
@@ -355,7 +388,7 @@ TEST_F(RpcTest, FireAndForgetServerDoesNotRespond) {
 
     MessagePtr err = wait_for_udp_message(probe);
     ASSERT_NE(err, nullptr);
-    EXPECT_EQ(err->get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(err->get_message_type(), static_cast<MessageType>(0x81));
     EXPECT_EQ(err->get_return_code(), ReturnCode::E_WRONG_MESSAGE_TYPE);
 
     probe.stop();

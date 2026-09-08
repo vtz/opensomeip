@@ -322,7 +322,11 @@ private:
                     it->second.service_id == message->get_service_id() &&
                     it->second.method_id == message->get_method_id()) {
 
-                    const RpcResult result = (message->is_success()) ? RpcResult::SUCCESS : RpcResult::INTERNAL_ERROR;
+                    RpcResult result = RpcResult::INTERNAL_ERROR;
+                    if (message->get_interface_version() == interface_version_ &&
+                        message->is_success()) {
+                        result = RpcResult::SUCCESS;
+                    }
                     recv_resp = RpcResponse(message->get_service_id(), message->get_method_id(),
                                             message->get_client_id(), message->get_session_id(), result);
                     recv_resp.return_values = message->get_payload();

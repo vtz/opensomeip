@@ -72,7 +72,7 @@ server.register_method(0x0002, [](uint16_t, uint16_t,
                                  const std::vector<uint8_t>&,
                                  std::vector<uint8_t>&) -> RpcResult {
     return RpcResult::SUCCESS;
-}, MethodSemantics::FireAndForget);
+}, MethodSemantics::FIRE_AND_FORGET);
 
 // Server runs until shutdown
 server.shutdown();

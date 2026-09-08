@@ -145,7 +145,7 @@ public:
 private:
     struct RegisteredMethod {
         MethodHandler handler;
-        MethodSemantics semantics{MethodSemantics::RequestResponse};
+        MethodSemantics semantics{MethodSemantics::REQUEST_RESPONSE};
     };
 
     static bool message_expects_response(MessageType type) {
@@ -189,7 +189,7 @@ private:
             registered = it->second;
         }
 
-        const bool fire_and_forget = (registered.semantics == MethodSemantics::FireAndForget);
+        const bool fire_and_forget = (registered.semantics == MethodSemantics::FIRE_AND_FORGET);
 
         if (expects_response && fire_and_forget) {
             send_error_response(message, sender, ReturnCode::E_WRONG_MESSAGE_TYPE);
@@ -254,7 +254,7 @@ private:
         const MessageId response_msg_id(request->get_service_id(), request->get_method_id());
         Message response(response_msg_id, request->get_request_id(),
                         MessageType::ERROR, error_code);
-        stamp_interface_version(response);
+        response.set_interface_version(request->get_interface_version());
 
         const Result result = transport_.send_message(response, sender);
         if (result != Result::SUCCESS) {
