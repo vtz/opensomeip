@@ -107,7 +107,10 @@ extern "C" opensomeip_result_t opensomeip_tp_reassemble(opensomeip_tp_manager_t*
     if (segment_len > 0 && !segment_data) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     try {
         someip::tp::TpSegment seg;
-        seg.payload.assign(segment_data, segment_data + segment_len);
+        seg.payload.resize(segment_len);
+        if (segment_len > 0) {
+            std::memcpy(seg.payload.data(), segment_data, segment_len);
+        }
 
         someip::platform::ByteBuffer complete_msg;
         bool done = tp->manager.handle_received_segment(seg, complete_msg);

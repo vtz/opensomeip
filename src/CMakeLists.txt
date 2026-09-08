@@ -196,6 +196,13 @@ if(BUILD_CAPI)
             VISIBILITY_INLINES_HIDDEN ON
         )
     endif()
+    # The CAPI wrapper uses try/catch as an exception firewall (every entry
+    # point catches C++ exceptions and converts them to error codes).  ARM
+    # cross-compile toolchains set -fno-exceptions globally; re-enable for
+    # this translation unit so the firewall compiles.
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        target_compile_options(opensomeip_capi PRIVATE -fexceptions)
+    endif()
 endif()
 
 # Backward-compatible aliases so existing target_link_libraries() calls
