@@ -632,35 +632,54 @@ if(BUILD_CAPI)
     endif()
 endif()
 
-install(TARGETS ${_OPENSOMEIP_INSTALL_TARGETS}
-    EXPORT opensomeipTargets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+# Determine whether we can generate an EXPORT set.  FetchContent'd third-party
+# targets (etl, freertos_kernel, threadx) are not in any export set, so linking
+# opensomeip PUBLIC to them makes install(EXPORT) fail.  Skip the export/config
+# machinery when such deps are present; plain install(TARGETS) still works.
+set(_OPENSOMEIP_CAN_EXPORT TRUE)
+foreach(_dep etl freertos_kernel threadx)
+    if(TARGET ${_dep})
+        set(_OPENSOMEIP_CAN_EXPORT FALSE)
+        break()
+    endif()
+endforeach()
 
-install(EXPORT opensomeipTargets
-    FILE opensomeipTargets.cmake
-    NAMESPACE opensomeip::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/opensomeip
-)
+if(_OPENSOMEIP_CAN_EXPORT)
+    install(TARGETS ${_OPENSOMEIP_INSTALL_TARGETS}
+        EXPORT opensomeipTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
 
-write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion
-)
+    install(EXPORT opensomeipTargets
+        FILE opensomeipTargets.cmake
+        NAMESPACE opensomeip::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/opensomeip
+    )
 
-configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/opensomeipConfig.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfig.cmake"
-    @ONLY
-)
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+    )
 
-install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/opensomeip
-)
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/opensomeipConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfig.cmake"
+        @ONLY
+    )
+
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/opensomeip
+    )
+else()
+    install(TARGETS ${_OPENSOMEIP_INSTALL_TARGETS}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+endif()
 
 ################################################################################
 # Configure Summary
