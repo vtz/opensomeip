@@ -15,6 +15,7 @@
 #include "platform/memory.h"
 #include <algorithm>
 #include <cstddef>
+#include <vector>
 
 namespace someip {
 namespace transport {
@@ -77,7 +78,7 @@ Result EventDrivenTcpTransport::send_message(const Message& message, const Endpo
         return Result::NOT_CONNECTED;
     }
 
-    std::vector<uint8_t> data = message.serialize();
+    platform::ByteBuffer data = message.serialize();
     return adapter_.send(data);
 }
 
@@ -143,7 +144,7 @@ Result EventDrivenTcpTransport::start() {
         return Result::SUCCESS;
     }
 
-    adapter_.set_receive_callback([this](const std::vector<uint8_t>& data) { on_adapter_receive(data); });
+    adapter_.set_receive_callback([this](const platform::ByteBuffer& data) { on_adapter_receive(data); });
     adapter_.set_connected_callback([this](const Endpoint& remote) { on_adapter_connected(remote); });
     adapter_.set_disconnected_callback([this]() { on_adapter_disconnected(); });
 
@@ -177,7 +178,7 @@ bool EventDrivenTcpTransport::is_running() const {
     return running_.load();
 }
 
-void EventDrivenTcpTransport::on_adapter_receive(const std::vector<uint8_t>& data) {
+void EventDrivenTcpTransport::on_adapter_receive(const platform::ByteBuffer& data) {
     if (!running_.load() || !initialized_.load()) {
         return;
     }
@@ -185,7 +186,9 @@ void EventDrivenTcpTransport::on_adapter_receive(const std::vector<uint8_t>& dat
     std::vector<MessagePtr> delivered;
     {
         platform::ScopedLock lock(queue_mutex_);
-        receive_buffer_.insert(receive_buffer_.end(), data.begin(), data.end());
+        if (!data.empty()) {
+            receive_buffer_.insert(receive_buffer_.end(), data.data(), data.data() + data.size());
+        }
         MessagePtr message;
         while (parse_message_from_buffer(receive_buffer_, message)) {
             message_queue_.push({message, connection_remote_});
@@ -227,7 +230,7 @@ void EventDrivenTcpTransport::on_adapter_disconnected() {
     }
 }
 
-bool EventDrivenTcpTransport::parse_message_from_buffer(std::vector<uint8_t>& buffer, MessagePtr& message) {
+bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message) {
     for (;;) {
         if (buffer.size() > config_.max_receive_buffer) {
             buffer.clear();
@@ -273,7 +276,7 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(std::vector<uint8_t>& bu
             return false;
         }
 
-        std::vector<uint8_t> message_data(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size));
+        platform::ByteBuffer message_data(buffer.data(), buffer.data() + total_message_size);
         buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size));
 
         message = platform::allocate_message();
