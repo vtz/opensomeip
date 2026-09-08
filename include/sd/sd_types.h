@@ -108,10 +108,25 @@ struct SdConfig {
 /**
  * @brief Pick the Initial Wait delay in milliseconds.
  *
- * Uses [initial_delay_min, max(initial_delay_max, initial_delay)] unless an
- * override is set for deterministic tests.
+ * Uses [initial_delay_min, initial_delay_max]. If the legacy `initial_delay`
+ * field differs from `initial_delay_max`, it replaces the max so callers that
+ * only set `initial_delay` (including values below 100ms) are honored.
+ * `has_initial_delay_override` returns `initial_delay_override_ms` exactly.
  */
 uint32_t pick_initial_wait_ms(const SdConfig& config);
+
+/**
+ * @brief Delay before the next Offer during the repetition phase.
+ * Interval is `repetition_base * multiplier^index`, capped at `repetition_max`.
+ * @implements REQ_SD_111
+ */
+std::chrono::milliseconds sd_repetition_interval(const SdConfig& config, uint8_t repetition_index);
+
+/**
+ * @brief True when the next repetition interval has reached the cyclic phase.
+ * @implements REQ_SD_111, REQ_SD_112
+ */
+bool sd_repetition_phase_done(const SdConfig& config, uint8_t next_index);
 
 /**
  * @brief Service discovery callback types

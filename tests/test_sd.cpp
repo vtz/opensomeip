@@ -2187,6 +2187,31 @@ TEST_F(SdTest, InitialWaitOverrideAndRange) {
         EXPECT_GE(v, 10u);
         EXPECT_LE(v, 20u);
     }
+
+    SdConfig legacy_zero;
+    legacy_zero.initial_delay = std::chrono::milliseconds(0);
+    EXPECT_EQ(pick_initial_wait_ms(legacy_zero), 0u);
+}
+
+/**
+ * @test_case TC_SD_REPETITION_INTERVAL_001
+ * @tests REQ_SD_111, REQ_SD_112
+ * @brief Repetition delays follow base * 2^n until the cyclic interval.
+ */
+TEST_F(SdTest, RepetitionIntervalExponentialThenCyclic) {
+    SdConfig cfg;
+    cfg.repetition_base = std::chrono::milliseconds(10);
+    cfg.repetition_multiplier = 2;
+    cfg.repetition_max = std::chrono::milliseconds(10000);
+    cfg.cyclic_offer = std::chrono::milliseconds(80);
+
+    EXPECT_EQ(sd_repetition_interval(cfg, 0), std::chrono::milliseconds(10));
+    EXPECT_EQ(sd_repetition_interval(cfg, 1), std::chrono::milliseconds(20));
+    EXPECT_EQ(sd_repetition_interval(cfg, 2), std::chrono::milliseconds(40));
+    EXPECT_EQ(sd_repetition_interval(cfg, 3), std::chrono::milliseconds(80));
+    EXPECT_FALSE(sd_repetition_phase_done(cfg, 0));
+    EXPECT_FALSE(sd_repetition_phase_done(cfg, 2));
+    EXPECT_TRUE(sd_repetition_phase_done(cfg, 3));
 }
 
 /**
