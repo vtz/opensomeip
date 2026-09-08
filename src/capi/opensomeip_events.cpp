@@ -18,11 +18,11 @@
  */
 
 #include "capi/opensomeip.h"
+#include "capi_internal.h"
 #include "events/event_publisher.h"
 #include "events/event_subscriber.h"
 #include "events/event_types.h"
 #include <cstring>
-#include <new>
 
 struct opensomeip_event_publisher_s {
     someip::events::EventPublisher publisher;
@@ -40,6 +40,7 @@ extern "C" opensomeip_result_t opensomeip_event_publisher_create(opensomeip_even
                                                                   uint16_t service_id,
                                                                   uint16_t instance_id) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_event_publisher_s(service_id, instance_id);
         return OPENSOMEIP_RESULT_SUCCESS;
@@ -102,6 +103,7 @@ extern "C" opensomeip_result_t opensomeip_event_publisher_notify(opensomeip_even
 extern "C" opensomeip_result_t opensomeip_event_subscriber_create(opensomeip_event_subscriber_t** out,
                                                                    uint16_t client_id) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_event_subscriber_s(client_id);
         return OPENSOMEIP_RESULT_SUCCESS;

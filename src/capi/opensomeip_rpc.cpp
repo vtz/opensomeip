@@ -18,10 +18,10 @@
  */
 
 #include "capi/opensomeip.h"
+#include "capi_internal.h"
 #include "rpc/rpc_client.h"
 #include "rpc/rpc_server.h"
 #include <cstring>
-#include <new>
 
 struct opensomeip_rpc_client_s {
     someip::rpc::RpcClient client;
@@ -36,6 +36,7 @@ struct opensomeip_rpc_server_s {
 extern "C" opensomeip_result_t opensomeip_rpc_client_create(opensomeip_rpc_client_t** out,
                                                              uint16_t client_id) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_rpc_client_s(client_id);
         return OPENSOMEIP_RESULT_SUCCESS;
@@ -145,6 +146,7 @@ extern "C" opensomeip_result_t opensomeip_rpc_client_cancel(opensomeip_rpc_clien
 extern "C" opensomeip_result_t opensomeip_rpc_server_create(opensomeip_rpc_server_t** out,
                                                              uint16_t service_id) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_rpc_server_s(service_id);
         return OPENSOMEIP_RESULT_SUCCESS;

@@ -21,7 +21,6 @@
 #include "capi_internal.h"
 #include "e2e/e2e_protection.h"
 #include "e2e/e2e_config.h"
-#include <new>
 
 struct opensomeip_e2e_s {
     someip::e2e::E2EProtection protection;
@@ -29,6 +28,7 @@ struct opensomeip_e2e_s {
 
 extern "C" opensomeip_result_t opensomeip_e2e_create(opensomeip_e2e_t** out) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_e2e_s();
         return OPENSOMEIP_RESULT_SUCCESS;
