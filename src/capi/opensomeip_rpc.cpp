@@ -187,7 +187,10 @@ extern "C" opensomeip_result_t opensomeip_rpc_server_register_method(opensomeip_
                 auto rc = h(client_id, session_id, input.data(), input.size(),
                             out_buf, &out_len, ud);
                 if (rc == OPENSOMEIP_RESULT_SUCCESS) {
-                    output.assign(out_buf, out_buf + out_len);
+                    output.resize(out_len);
+                    if (out_len > 0) {
+                        std::memcpy(output.data(), out_buf, out_len);
+                    }
                     return someip::rpc::RpcResult::SUCCESS;
                 }
                 return someip::rpc::RpcResult::INTERNAL_ERROR;

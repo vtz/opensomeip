@@ -215,6 +215,13 @@ target_link_libraries(test_e2e someip-core gtest_main)
             CapiMessageTest CapiSerializerTest CapiTransportTest
             CapiRpcTest CapiSdTest CapiEventsTest CapiTpTest CapiE2ETest)
         set_tests_properties(${_CAPI_TESTS} PROPERTIES TIMEOUT 30 LABELS "capi;unit")
+
+        # Winsock init for CAPI integration tests that use sockets
+        if(WIN32)
+            foreach(_t test_capi_udp_hello test_capi_rpc_roundtrip)
+                target_sources(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winsock_init.cpp)
+            endforeach()
+        endif()
     endif()
 
     # Register available tests

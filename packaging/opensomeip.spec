@@ -47,8 +47,11 @@ OpenSOME/IP.
 %files
 %license LICENSE
 %{_libdir}/libopensomeip.so.*
+%{_libdir}/libopensomeip_capi.so.*
 
 %files devel
 %doc README.md CHANGELOG.md
 %{_includedir}/someip/
 %{_libdir}/libopensomeip.so
+%{_libdir}/libopensomeip_capi.so
+%{_libdir}/cmake/opensomeip/
