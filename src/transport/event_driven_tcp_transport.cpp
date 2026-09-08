@@ -12,28 +12,42 @@
  ********************************************************************************/
 
 #include "transport/event_driven_tcp_transport.h"
-#include "platform/memory.h"
-#include <algorithm>
-#include <cstddef>
-#include <vector>
 
-namespace someip {
-namespace transport {
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+
+#include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+#include "platform/memory.h"
+#include "platform/thread.h"
+#include "someip/message.h"
+#include "transport/endpoint.h"
+#include "transport/tcp_socket_adapter.h"
+#include "transport/transport.h"
+
+namespace someip::transport {
 
 const size_t EventDrivenTcpTransport::SOMEIP_HEADER_SIZE = 16;
 const size_t EventDrivenTcpTransport::MAX_MESSAGE_SIZE = 65535;
 
 EventDrivenTcpTransport::EventDrivenTcpTransport(ITcpSocketAdapter& adapter,
-                                                   const EventDrivenTcpTransportConfig& config)
-    : adapter_(adapter),
-      config_(config) {}
+                                                 const EventDrivenTcpTransportConfig& config)
+    : adapter_(adapter), config_(config)
+{
+}
 
-EventDrivenTcpTransport::~EventDrivenTcpTransport() {
+EventDrivenTcpTransport::~EventDrivenTcpTransport()
+{
     // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.VirtualCall)
     stop();
 }
 
-Result EventDrivenTcpTransport::initialize(const Endpoint& local_endpoint) {
+Result EventDrivenTcpTransport::initialize(const Endpoint& local_endpoint)
+{
     if (initialized_.load()) {
         return Result::INVALID_STATE;
     }
@@ -41,7 +55,7 @@ Result EventDrivenTcpTransport::initialize(const Endpoint& local_endpoint) {
     local_endpoint_ =
         Endpoint(local_endpoint.get_address(), local_endpoint.get_port(), TransportProtocol::TCP);
 
-    Result result = adapter_.open(local_endpoint_);
+    const Result result = adapter_.open(local_endpoint_);
     if (result != Result::SUCCESS) {
         return result;
     }
@@ -51,11 +65,12 @@ Result EventDrivenTcpTransport::initialize(const Endpoint& local_endpoint) {
     return Result::SUCCESS;
 }
 
-Result EventDrivenTcpTransport::enable_server_mode(int backlog) {
+Result EventDrivenTcpTransport::enable_server_mode(int backlog)
+{
     if (!initialized_.load()) {
         return Result::NOT_INITIALIZED;
     }
-    Result result = adapter_.listen(backlog);
+    const Result result = adapter_.listen(backlog);
     if (result != Result::SUCCESS) {
         return result;
     }
@@ -63,7 +78,8 @@ Result EventDrivenTcpTransport::enable_server_mode(int backlog) {
     return Result::SUCCESS;
 }
 
-Result EventDrivenTcpTransport::try_accept_connection(Endpoint& remote_out) {
+Result EventDrivenTcpTransport::try_accept_connection(Endpoint& remote_out)
+{
     if (!server_mode_) {
         return Result::INVALID_STATE;
     }
@@ -73,17 +89,19 @@ Result EventDrivenTcpTransport::try_accept_connection(Endpoint& remote_out) {
     return adapter_.accept(remote_out);
 }
 
-Result EventDrivenTcpTransport::send_message(const Message& message, const Endpoint& /*endpoint*/) {
+Result EventDrivenTcpTransport::send_message(const Message& message, const Endpoint& /*endpoint*/)
+{
     if (!is_connected()) {
         return Result::NOT_CONNECTED;
     }
 
-    platform::ByteBuffer data = message.serialize();
+    const auto data = message.serialize();
     return adapter_.send(data);
 }
 
-MessagePtr EventDrivenTcpTransport::receive_message() {
-    platform::ScopedLock lock(queue_mutex_);
+MessagePtr EventDrivenTcpTransport::receive_message()
+{
+    const platform::ScopedLock lock(queue_mutex_);
     if (message_queue_.empty()) {
         return nullptr;
     }
@@ -92,7 +110,8 @@ MessagePtr EventDrivenTcpTransport::receive_message() {
     return message;
 }
 
-Result EventDrivenTcpTransport::connect(const Endpoint& endpoint) {
+Result EventDrivenTcpTransport::connect(const Endpoint& endpoint)
+{
     if (server_mode_) {
         return Result::INVALID_STATE;
     }
@@ -108,35 +127,40 @@ Result EventDrivenTcpTransport::connect(const Endpoint& endpoint) {
     return adapter_.connect(endpoint);
 }
 
-Result EventDrivenTcpTransport::disconnect() {
+Result EventDrivenTcpTransport::disconnect()
+{
     if (!adapter_.is_connected() && !initialized_.load()) {
         return Result::SUCCESS;
     }
     adapter_.close();
     {
-        platform::ScopedLock lock(queue_mutex_);
+        const platform::ScopedLock lock(queue_mutex_);
         receive_buffer_.clear();
     }
     initialized_ = false;
     return Result::SUCCESS;
 }
 
-bool EventDrivenTcpTransport::is_connected() const {
+bool EventDrivenTcpTransport::is_connected() const
+{
     return adapter_.is_connected();
 }
 
-Endpoint EventDrivenTcpTransport::get_local_endpoint() const {
+Endpoint EventDrivenTcpTransport::get_local_endpoint() const
+{
     if (initialized_.load()) {
         return adapter_.get_local_endpoint();
     }
     return local_endpoint_;
 }
 
-void EventDrivenTcpTransport::set_listener(ITransportListener* listener) {
+void EventDrivenTcpTransport::set_listener(ITransportListener* listener)
+{
     listener_.store(listener, std::memory_order_release);
 }
 
-Result EventDrivenTcpTransport::start() {
+Result EventDrivenTcpTransport::start()
+{
     if (!initialized_.load()) {
         return Result::NOT_INITIALIZED;
     }
@@ -144,15 +168,18 @@ Result EventDrivenTcpTransport::start() {
         return Result::SUCCESS;
     }
 
-    adapter_.set_receive_callback([this](const platform::ByteBuffer& data) { on_adapter_receive(data); });
-    adapter_.set_connected_callback([this](const Endpoint& remote) { on_adapter_connected(remote); });
+    adapter_.set_receive_callback(
+        [this](const platform::ByteBuffer& data) { on_adapter_receive(data); });
+    adapter_.set_connected_callback(
+        [this](const Endpoint& remote) { on_adapter_connected(remote); });
     adapter_.set_disconnected_callback([this]() { on_adapter_disconnected(); });
 
     running_ = true;
     return Result::SUCCESS;
 }
 
-Result EventDrivenTcpTransport::stop() {
+Result EventDrivenTcpTransport::stop()
+{
     running_ = false;
 
     adapter_.set_receive_callback(nullptr);
@@ -164,7 +191,7 @@ Result EventDrivenTcpTransport::stop() {
     server_mode_ = false;
 
     {
-        platform::ScopedLock lock(queue_mutex_);
+        const platform::ScopedLock lock(queue_mutex_);
         receive_buffer_.clear();
         while (!message_queue_.empty()) {
             message_queue_.pop();
@@ -174,63 +201,71 @@ Result EventDrivenTcpTransport::stop() {
     return Result::SUCCESS;
 }
 
-bool EventDrivenTcpTransport::is_running() const {
+bool EventDrivenTcpTransport::is_running() const
+{
     return running_.load();
 }
 
-void EventDrivenTcpTransport::on_adapter_receive(const platform::ByteBuffer& data) {
+void EventDrivenTcpTransport::on_adapter_receive(const platform::ByteBuffer& data)
+{
     if (!running_.load() || !initialized_.load()) {
         return;
     }
 
-    std::vector<MessagePtr> delivered;
+    platform::Vector<MessagePtr> delivered;
     {
-        platform::ScopedLock lock(queue_mutex_);
+        const platform::ScopedLock lock(queue_mutex_);
         if (!data.empty()) {
             receive_buffer_.insert(receive_buffer_.end(), data.data(), data.data() + data.size());
         }
         MessagePtr message;
         while (parse_message_from_buffer(receive_buffer_, message)) {
-            message_queue_.push({message, connection_remote_});
+            // etl::queue has push() but not emplace()
+            // NOLINTNEXTLINE(modernize-use-emplace,hicpp-use-emplace)
+            message_queue_.push(std::pair<MessagePtr, Endpoint>{message, connection_remote_});
             delivered.push_back(message);
         }
     }
 
-    auto* cb = listener_.load(std::memory_order_acquire);
+    ITransportListener* const cb = listener_.load(std::memory_order_acquire);
     for (const MessagePtr& m : delivered) {
-        if (cb) {
+        if (cb != nullptr) {
             cb->on_message_received(m, connection_remote_);
         }
     }
 }
 
-void EventDrivenTcpTransport::on_adapter_connected(const Endpoint& remote) {
+void EventDrivenTcpTransport::on_adapter_connected(const Endpoint& remote)
+{
     if (!running_.load()) {
         return;
     }
     connection_remote_ = remote;
-    auto* cb = listener_.load(std::memory_order_acquire);
-    if (cb) {
+    ITransportListener* const cb = listener_.load(std::memory_order_acquire);
+    if (cb != nullptr) {
         cb->on_connection_established(remote);
     }
 }
 
-void EventDrivenTcpTransport::on_adapter_disconnected() {
+void EventDrivenTcpTransport::on_adapter_disconnected()
+{
     if (!running_.load()) {
         return;
     }
-    Endpoint lost = connection_remote_;
+    const Endpoint lost = connection_remote_;
     {
-        platform::ScopedLock lock(queue_mutex_);
+        const platform::ScopedLock lock(queue_mutex_);
         receive_buffer_.clear();
     }
-    auto* cb = listener_.load(std::memory_order_acquire);
-    if (cb) {
+    ITransportListener* const cb = listener_.load(std::memory_order_acquire);
+    if (cb != nullptr) {
         cb->on_connection_lost(lost);
     }
 }
 
-bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message) {
+bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& buffer,
+                                                        MessagePtr& message)
+{
     for (;;) {
         if (buffer.size() > config_.max_receive_buffer) {
             buffer.clear();
@@ -241,22 +276,23 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& bu
             return false;
         }
 
-        uint32_t message_length =
-            (static_cast<uint32_t>(buffer[4]) << 24) | (static_cast<uint32_t>(buffer[5]) << 16) |
-            (static_cast<uint32_t>(buffer[6]) << 8) | static_cast<uint32_t>(buffer[7]);
+        const uint32_t message_length =
+            (static_cast<uint32_t>(buffer[4]) << 24U) | (static_cast<uint32_t>(buffer[5]) << 16U) |
+            (static_cast<uint32_t>(buffer[6]) << 8U) | static_cast<uint32_t>(buffer[7]);
 
         if (message_length < 8 || message_length > MAX_MESSAGE_SIZE) {
             size_t search_start = 1;
             bool found_valid_header = false;
 
             while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
-                uint32_t candidate_length =
-                    (static_cast<uint32_t>(buffer[search_start + 4]) << 24) |
-                    (static_cast<uint32_t>(buffer[search_start + 5]) << 16) |
-                    (static_cast<uint32_t>(buffer[search_start + 6]) << 8) |
+                const uint32_t candidate_length =
+                    (static_cast<uint32_t>(buffer[search_start + 4]) << 24U) |
+                    (static_cast<uint32_t>(buffer[search_start + 5]) << 16U) |
+                    (static_cast<uint32_t>(buffer[search_start + 6]) << 8U) |
                     static_cast<uint32_t>(buffer[search_start + 7]);
                 if (candidate_length >= 8 && candidate_length <= MAX_MESSAGE_SIZE) {
-                    buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
+                    buffer.erase(buffer.begin(),
+                                 buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
                     found_valid_header = true;
                     break;
                 }
@@ -270,21 +306,21 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& bu
             continue;
         }
 
-        size_t total_message_size = 8 + message_length;
+        const size_t total_message_size = 8 + message_length;
 
         if (buffer.size() < total_message_size) {
             return false;
         }
 
-        platform::ByteBuffer message_data(buffer.data(), buffer.data() + total_message_size);
-        buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size));
+        const platform::ByteBuffer message_data(buffer.data(), buffer.data() + total_message_size);
+        buffer.erase(buffer.begin(),
+                     buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size));
 
         message = platform::allocate_message();
-        if (message && message->deserialize(message_data)) {
+        if ((message != nullptr) && message->deserialize(message_data)) {
             return true;
         }
     }
 }
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport

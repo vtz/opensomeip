@@ -19,10 +19,7 @@
 #include "platform/containers.h"
 #include "transport/endpoint.h"
 
-#include <functional>
-
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief Callback invoked by the adapter when a datagram is received.
@@ -31,7 +28,7 @@ namespace transport {
  * The payload is the raw UDP payload (one datagram).
  */
 using UdpReceiveCallback =
-    std::function<void(const platform::ByteBuffer& data, const Endpoint& sender)>;
+    platform::Function<void(const platform::ByteBuffer& data, const Endpoint& sender)>;
 
 /**
  * @brief UDP socket abstraction for event-driven SOME/IP transport.
@@ -40,8 +37,13 @@ using UdpReceiveCallback =
  * Must not depend on platform socket headers.
  */
 class IUdpSocketAdapter {
-public:
+   public:
     virtual ~IUdpSocketAdapter() = default;
+
+    IUdpSocketAdapter(const IUdpSocketAdapter&) = delete;
+    IUdpSocketAdapter& operator=(const IUdpSocketAdapter&) = delete;
+    IUdpSocketAdapter(IUdpSocketAdapter&&) = delete;
+    IUdpSocketAdapter& operator=(IUdpSocketAdapter&&) = delete;
 
     /**
      * @brief Open and bind the local endpoint (port 0 selects an ephemeral port).
@@ -56,21 +58,24 @@ public:
     /**
      * @brief Send one datagram to the destination.
      */
-    [[nodiscard]] virtual Result send(const platform::ByteBuffer& data, const Endpoint& destination) = 0;
+    [[nodiscard]] virtual Result send(const platform::ByteBuffer& data,
+                                      const Endpoint& destination) = 0;
 
     /**
      * @brief Join an IPv4 multicast group.
      * @param multicast_address Group address (e.g. 224.0.0.1)
      * @param interface_address Outgoing interface address; empty uses stack default
      */
-    [[nodiscard]] virtual Result join_multicast(const platform::String<>& multicast_address,
-                                                const platform::String<>& interface_address = {}) = 0;
+    [[nodiscard]] virtual Result join_multicast(
+        const platform::String<>& multicast_address,
+        const platform::String<>& interface_address = {}) = 0;
 
     /**
      * @brief Leave a multicast group previously joined.
      */
-    [[nodiscard]] virtual Result leave_multicast(const platform::String<>& multicast_address,
-                                                 const platform::String<>& interface_address = {}) = 0;
+    [[nodiscard]] virtual Result leave_multicast(
+        const platform::String<>& multicast_address,
+        const platform::String<>& interface_address = {}) = 0;
 
     /**
      * @brief Register the receive callback (nullptr clears).
@@ -88,9 +93,11 @@ public:
      * @brief Effective local endpoint after open (required after bind with port 0).
      */
     [[nodiscard]] virtual Endpoint get_local_endpoint() const = 0;
+
+   protected:
+    IUdpSocketAdapter() = default;
 };
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
-#endif // SOMEIP_TRANSPORT_UDP_SOCKET_ADAPTER_H
+#endif  // SOMEIP_TRANSPORT_UDP_SOCKET_ADAPTER_H

@@ -16,27 +16,25 @@
 
 #include "common/result.h"
 #include "platform/buffer_pool.h"
+#include "platform/containers.h"
 #include "transport/endpoint.h"
 
-#include <functional>
-
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief Invoked when payload bytes arrive on the established connection.
  */
-using TcpReceiveCallback = std::function<void(const platform::ByteBuffer& data)>;
+using TcpReceiveCallback = platform::Function<void(const platform::ByteBuffer& data)>;
 
 /**
  * @brief Invoked when the connection is ready (outgoing connect or accepted peer).
  */
-using TcpConnectedCallback = std::function<void(const Endpoint& remote)>;
+using TcpConnectedCallback = platform::Function<void(const Endpoint& remote)>;
 
 /**
  * @brief Invoked when the connection is closed or reset.
  */
-using TcpDisconnectedCallback = std::function<void()>;
+using TcpDisconnectedCallback = platform::Function<void()>;
 
 /**
  * @brief TCP socket abstraction for event-driven SOME/IP transport.
@@ -45,8 +43,13 @@ using TcpDisconnectedCallback = std::function<void()>;
  * semantics of connect/accept; it must invoke callbacks from its event context.
  */
 class ITcpSocketAdapter {
-public:
+   public:
     virtual ~ITcpSocketAdapter() = default;
+
+    ITcpSocketAdapter(const ITcpSocketAdapter&) = delete;
+    ITcpSocketAdapter& operator=(const ITcpSocketAdapter&) = delete;
+    ITcpSocketAdapter(ITcpSocketAdapter&&) = delete;
+    ITcpSocketAdapter& operator=(ITcpSocketAdapter&&) = delete;
 
     /**
      * @brief Create socket bound to the local endpoint (listening or pre-connect).
@@ -56,7 +59,8 @@ public:
     virtual void close() = 0;
 
     /**
-     * @brief Start listening after open (server mode). No-op or NOT_IMPLEMENTED for client-only adapters.
+     * @brief Start listening after open (server mode). No-op or NOT_IMPLEMENTED for client-only
+     * adapters.
      */
     [[nodiscard]] virtual Result listen(int backlog) = 0;
 
@@ -88,9 +92,11 @@ public:
 
     [[nodiscard]] virtual Endpoint get_local_endpoint() const = 0;
     [[nodiscard]] virtual bool is_connected() const = 0;
+
+   protected:
+    ITcpSocketAdapter() = default;
 };
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
-#endif // SOMEIP_TRANSPORT_TCP_SOCKET_ADAPTER_H
+#endif  // SOMEIP_TRANSPORT_TCP_SOCKET_ADAPTER_H
