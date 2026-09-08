@@ -82,7 +82,7 @@ extern "C" opensomeip_result_t opensomeip_sd_client_find_service(opensomeip_sd_c
                         ep.port = inst.port;
                         cb(inst.service_id, inst.instance_id, &ep, ud);
                     }
-                } catch (...) { /* firewall */ }
+                } catch (...) {} // NOLINT(bugprone-empty-catch) — FFI exception firewall
             },
             std::chrono::milliseconds(timeout_ms)
         );
@@ -101,10 +101,12 @@ extern "C" opensomeip_result_t opensomeip_sd_client_subscribe_availability(opens
         bool ok = c->client.subscribe_service(
             service_id,
             [cb, ud, service_id](const someip::sd::ServiceInstance& inst) {
-                try { cb(service_id, inst.instance_id, 1, ud); } catch (...) { /* firewall */ }
+                try { cb(service_id, inst.instance_id, 1, ud); }
+                catch (...) {} // NOLINT(bugprone-empty-catch) — FFI exception firewall
             },
             [cb, ud, service_id](const someip::sd::ServiceInstance& inst) {
-                try { cb(service_id, inst.instance_id, 0, ud); } catch (...) { /* firewall */ }
+                try { cb(service_id, inst.instance_id, 0, ud); }
+                catch (...) {} // NOLINT(bugprone-empty-catch) — FFI exception firewall
             }
         );
         return ok ? OPENSOMEIP_RESULT_SUCCESS : OPENSOMEIP_RESULT_INTERNAL_ERROR;
