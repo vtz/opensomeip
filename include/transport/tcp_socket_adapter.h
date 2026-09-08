@@ -14,10 +14,11 @@
 #ifndef SOMEIP_TRANSPORT_TCP_SOCKET_ADAPTER_H
 #define SOMEIP_TRANSPORT_TCP_SOCKET_ADAPTER_H
 
-#include "transport/endpoint.h"
 #include "common/result.h"
+#include "platform/buffer_pool.h"
+#include "transport/endpoint.h"
+
 #include <functional>
-#include <vector>
 
 namespace someip {
 namespace transport {
@@ -25,7 +26,7 @@ namespace transport {
 /**
  * @brief Invoked when payload bytes arrive on the established connection.
  */
-using TcpReceiveCallback = std::function<void(const std::vector<uint8_t>& data)>;
+using TcpReceiveCallback = std::function<void(const platform::ByteBuffer& data)>;
 
 /**
  * @brief Invoked when the connection is ready (outgoing connect or accepted peer).
@@ -73,7 +74,7 @@ public:
     /**
      * @brief Send bytes on the active connection.
      */
-    [[nodiscard]] virtual Result send(const std::vector<uint8_t>& data) = 0;
+    [[nodiscard]] virtual Result send(const platform::ByteBuffer& data) = 0;
 
     /**
      * Quiescence guarantee: after any set_*_callback(nullptr) returns, the
