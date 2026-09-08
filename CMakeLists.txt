@@ -663,10 +663,10 @@ if(_OPENSOMEIP_CAN_EXPORT)
         COMPATIBILITY SameMajorVersion
     )
 
-    configure_file(
+    configure_package_config_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/opensomeipConfig.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfig.cmake"
-        @ONLY
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/opensomeip
     )
 
     install(FILES

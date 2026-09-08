@@ -49,7 +49,7 @@ extern "C" opensomeip_result_t opensomeip_e2e_protect(opensomeip_e2e_t* e,
     try {
         someip::e2e::E2EConfig config;
         config.data_id = data_id;
-        config.max_counter_value = counter;
+        (void)counter;
         auto r = e->protection.protect(msg->msg, config);
         return static_cast<opensomeip_result_t>(r);
     } catch (...) { return OPENSOMEIP_RESULT_INTERNAL_ERROR; }

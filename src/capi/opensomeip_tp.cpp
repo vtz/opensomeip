@@ -82,6 +82,9 @@ extern "C" opensomeip_result_t opensomeip_tp_segment(opensomeip_tp_manager_t* tp
         size_t written = 0;
         someip::tp::TpSegment segment;
         while (tp->manager.get_next_segment(transfer_id, segment) == someip::tp::TpResult::SUCCESS) {
+            if (segment.payload.empty()) {
+                break;
+            }
             size_t seg_size = segment.payload.size();
             if (out_buf && written + sizeof(uint32_t) + seg_size <= *out_len) {
                 uint32_t seg_len = static_cast<uint32_t>(seg_size);
@@ -111,6 +114,9 @@ extern "C" opensomeip_result_t opensomeip_tp_reassemble(opensomeip_tp_manager_t*
         if (segment_len > 0) {
             std::memcpy(seg.payload.data(), segment_data, segment_len);
         }
+        seg.header.segment_length = static_cast<uint16_t>(segment_len);
+        seg.header.message_length = static_cast<uint32_t>(segment_len);
+        seg.header.message_type = someip::tp::TpMessageType::SINGLE_MESSAGE;
 
         someip::platform::ByteBuffer complete_msg;
         bool done = tp->manager.handle_received_segment(seg, complete_msg);
