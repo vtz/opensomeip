@@ -21,7 +21,6 @@
 #include "capi_internal.h"
 #include "sd/sd_client.h"
 #include "sd/sd_server.h"
-#include <cstdio>
 #include <cstring>
 
 struct opensomeip_sd_client_s {
@@ -161,10 +160,16 @@ extern "C" opensomeip_result_t opensomeip_sd_server_offer_service(opensomeip_sd_
         inst.port = endpoint->port;
         inst.ip_address = someip::platform::String<>(endpoint->address);
 
-        char ep_str[80];
-        std::snprintf(ep_str, sizeof(ep_str), "%s:%u", endpoint->address,
-                      static_cast<unsigned>(endpoint->port));
-        bool ok = s->server.offer_service(inst, someip::platform::String<>(ep_str));
+        someip::platform::String<> ep_str(endpoint->address);
+        ep_str += ':';
+        char port_buf[6];
+        char* p = port_buf + sizeof(port_buf) - 1;
+        *p = '\0';
+        uint16_t port_val = endpoint->port;
+        if (port_val == 0) { *--p = '0'; }
+        else { while (port_val > 0) { *--p = static_cast<char>('0' + (port_val % 10)); port_val /= 10; } }
+        ep_str += p;
+        bool ok = s->server.offer_service(inst, ep_str);
         return ok ? OPENSOMEIP_RESULT_SUCCESS : OPENSOMEIP_RESULT_INTERNAL_ERROR;
     } catch (...) { return OPENSOMEIP_RESULT_INTERNAL_ERROR; }
 }
