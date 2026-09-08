@@ -499,7 +499,23 @@ private:
         }
 
         for (const uint16_t eid : events_to_publish) {
-            publish_event(eid, {});
+            platform::ByteBuffer payload;
+            bool skip_empty_field = false;
+            {
+                platform::ScopedLock const events_lock(events_mutex_);
+                auto event_it = registered_events_.find(eid);
+                if (event_it != registered_events_.end() && event_it->second.is_field) {
+                    auto val_it = field_values_.find(eid);
+                    if (val_it == field_values_.end()) {
+                        skip_empty_field = true;
+                    } else {
+                        payload = val_it->second;
+                    }
+                }
+            }
+            if (!skip_empty_field) {
+                publish_event(eid, payload);
+            }
         }
     }
 

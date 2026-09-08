@@ -51,7 +51,7 @@ public:
      * or recv ancillary data unavailable). Default forwards to the two-argument
      * overload. Transport implementations call this three-argument version.
      */
-    virtual void on_message_received(MessagePtr message, const Endpoint& sender,
+    virtual void on_message_received(const MessagePtr& message, const Endpoint& sender,
                                     const Endpoint& /*destination*/) {
         on_message_received(message, sender);
     }

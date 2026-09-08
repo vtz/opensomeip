@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/uio.h>
+#include <array>
 
 using someip_socket_t = int;
 constexpr someip_socket_t SOMEIP_INVALID_SOCKET = -1;
@@ -189,9 +190,9 @@ static inline ssize_t someip_recvfrom_with_dest(someip_socket_t fd, void* buf,
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
 
-    alignas(struct cmsghdr) char cmsg_buf[256];
-    msg.msg_control = cmsg_buf;
-    msg.msg_controllen = sizeof(cmsg_buf);
+    alignas(struct cmsghdr) std::array<char, 256> cmsg_buf{};
+    msg.msg_control = cmsg_buf.data();
+    msg.msg_controllen = cmsg_buf.size();
 
     const ssize_t received = ::recvmsg(fd, &msg, flags);
     if (received < 0) {

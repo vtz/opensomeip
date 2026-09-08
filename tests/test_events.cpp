@@ -447,6 +447,67 @@ TEST_F(EventsTest, EventPublisherSendsInitialFieldOnNewSubscription) {
 }
 
 /**
+ * @test_case TC_EVT_FIELD_003
+ * @tests REQ_MSG_125
+ * @brief Periodic republish of a field keeps the cached value.
+ */
+TEST_F(EventsTest, PeriodicFieldPublishKeepsCachedValue) {
+    transport::UdpTransportConfig rx_cfg;
+    rx_cfg.blocking = false;
+    transport::UdpTransport rx(transport::Endpoint("0.0.0.0", 0), rx_cfg);
+    ASSERT_EQ(rx.start(), Result::SUCCESS);
+    const uint16_t port = rx.get_local_endpoint().get_port();
+
+    EventPublisher publisher(0x1234, 0x0001);
+    publisher.set_default_client_endpoint("127.0.0.1", port);
+    ASSERT_TRUE(publisher.initialize());
+
+    EventConfig cfg;
+    cfg.event_id = 0x8001;
+    cfg.eventgroup_id = 0x0001;
+    cfg.is_field = true;
+    cfg.notification_type = NotificationType::PERIODIC;
+    cfg.cycle_time = std::chrono::milliseconds(100);
+    ASSERT_TRUE(publisher.register_event(cfg));
+
+    platform::ByteBuffer payload;
+    payload.push_back(0xAB);
+    payload.push_back(0xCD);
+    ASSERT_TRUE(publisher.publish_field(0x8001, payload));
+    ASSERT_TRUE(publisher.handle_subscription(0x0001, 0x0100, 3600u));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(350));
+
+    transport::UdpTransport rx2(transport::Endpoint("0.0.0.0", 0), rx_cfg);
+    ASSERT_EQ(rx2.start(), Result::SUCCESS);
+    publisher.set_default_client_endpoint("127.0.0.1", rx2.get_local_endpoint().get_port());
+    ASSERT_TRUE(publisher.handle_subscription(0x0001, 0x0200, 3600u));
+
+    bool got = false;
+    platform::ByteBuffer received;
+    auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(1500);
+    while (std::chrono::steady_clock::now() < deadline && !got) {
+        auto msg = rx2.receive_message();
+        if (!msg) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        if (msg->get_method_id() == 0x8001) {
+            received = msg->get_payload();
+            got = true;
+        }
+    }
+
+    publisher.shutdown();
+    rx.stop();
+    rx2.stop();
+    ASSERT_TRUE(got);
+    ASSERT_EQ(received.size(), 2u);
+    EXPECT_EQ(received[0], 0xAB);
+    EXPECT_EQ(received[1], 0xCD);
+}
+
+/**
  * @test_case TC_EVT_FIELD_002
  * @tests REQ_MSG_125
  * @brief TTL refresh of an existing client_id does not resend the initial field burst.

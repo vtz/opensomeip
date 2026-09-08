@@ -310,6 +310,8 @@ private:
         std::chrono::steady_clock::time_point last_offer_time;
         std::chrono::steady_clock::time_point initial_offer_due;
         bool initial_offer_sent{false};
+        uint8_t repetition_index{0};
+        bool in_main_phase{false};
         platform::Vector<OfferedEventGroup> eventgroups;
     };
 
@@ -402,7 +404,7 @@ private:
         }
     }
 
-    /** @implements REQ_SD_250, REQ_SD_251, REQ_SD_260 */
+    /** @implements REQ_SD_111, REQ_SD_112, REQ_SD_250, REQ_SD_251, REQ_SD_260 */
     void send_due_offers() {
         platform::ScopedLock const lock(offered_services_mutex_);
 
@@ -413,12 +415,30 @@ private:
                     send_service_offer(service);
                     service.last_offer_time = now;
                     service.initial_offer_sent = true;
+                    if (sd_repetition_phase_done(config_, 0)) {
+                        service.in_main_phase = true;
+                    }
                 }
                 continue;
             }
 
             const auto time_since_last_offer = std::chrono::duration_cast<std::chrono::milliseconds>(
                 now - service.last_offer_time);
+
+            if (!service.in_main_phase) {
+                const auto delay = sd_repetition_interval(config_, service.repetition_index);
+                if (time_since_last_offer >= delay) {
+                    send_service_offer(service);
+                    service.last_offer_time = now;
+                    if (service.repetition_index < 255U) {
+                        ++service.repetition_index;
+                    }
+                    if (sd_repetition_phase_done(config_, service.repetition_index)) {
+                        service.in_main_phase = true;
+                    }
+                }
+                continue;
+            }
 
             if (time_since_last_offer >= config_.cyclic_offer) {
                 send_service_offer(service);
@@ -526,7 +546,7 @@ private:
         on_message_received(message, sender, transport::Endpoint("", 0));
     }
 
-    void on_message_received(MessagePtr message, const transport::Endpoint& sender,
+    void on_message_received(const MessagePtr& message, const transport::Endpoint& sender,
                             const transport::Endpoint& destination) override {
         // Check if this is an SD message (service ID 0xFFFF)
         if (message->get_service_id() != 0xFFFF) {
@@ -540,6 +560,9 @@ private:
         }
 
         const bool dest_unknown = destination.get_address().empty();
+        // Unknown dest (Win32/lwIP/Zephyr without PKTINFO) is treated as unicast so
+        // Subscribe still works on those backends. Multicast Subscribe is ignored
+        // only when the destination is known to be the SD multicast group.
         const bool via_multicast = !dest_unknown &&
             (destination.is_multicast() || destination.get_address() == config_.multicast_address);
 
