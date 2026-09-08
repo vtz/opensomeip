@@ -15,6 +15,7 @@
 #define SOMEIP_TRANSPORT_UDP_TRANSPORT_H
 
 #include "transport/transport.h"
+#include "transport/multicast_transport.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 #include "platform/net.h"
@@ -112,8 +113,8 @@ public:
     bool is_running() const override;
 
     // Multicast support
-    Result join_multicast_group(const platform::String<>& multicast_address);
-    Result leave_multicast_group(const platform::String<>& multicast_address);
+    Result join_multicast_group(const platform::String<>& multicast_address) override;
+    Result leave_multicast_group(const platform::String<>& multicast_address) override;
 
     // Disable copy and assignment
     UdpTransport(const UdpTransport&) = delete;
