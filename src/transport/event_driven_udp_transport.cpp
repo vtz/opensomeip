@@ -12,18 +12,26 @@
  ********************************************************************************/
 
 #include "transport/event_driven_udp_transport.h"
-#include "platform/memory.h"
+
+#include <atomic>
 #include <stdexcept>
 
-namespace someip {
-namespace transport {
+#include "common/result.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
+#include "platform/memory.h"
+#include "platform/thread.h"
+#include "someip/message.h"
+#include "transport/endpoint.h"
+#include "transport/transport.h"
+#include "transport/udp_socket_adapter.h"
+
+namespace someip::transport {
 
 EventDrivenUdpTransport::EventDrivenUdpTransport(IUdpSocketAdapter& adapter,
                                                  const Endpoint& local_endpoint,
                                                  const EventDrivenUdpTransportConfig& config)
-    : adapter_(adapter),
-      local_endpoint_(local_endpoint),
-      config_(config) {
+    : adapter_(adapter), local_endpoint_(local_endpoint), config_(config)
+{
     if (!local_endpoint_.is_valid()) {
 #if defined(__cpp_exceptions) || defined(__EXCEPTIONS)
         throw std::invalid_argument("Invalid local endpoint");
@@ -31,12 +39,14 @@ EventDrivenUdpTransport::EventDrivenUdpTransport(IUdpSocketAdapter& adapter,
     }
 }
 
-EventDrivenUdpTransport::~EventDrivenUdpTransport() {
+EventDrivenUdpTransport::~EventDrivenUdpTransport()
+{
     // NOLINTNEXTLINE(clang-analyzer-optin.cplusplus.VirtualCall)
     stop();
 }
 
-Result EventDrivenUdpTransport::send_message(const Message& message, const Endpoint& endpoint) {
+Result EventDrivenUdpTransport::send_message(const Message& message, const Endpoint& endpoint)
+{
     if (!is_running()) {
         return Result::NOT_CONNECTED;
     }
@@ -44,7 +54,7 @@ Result EventDrivenUdpTransport::send_message(const Message& message, const Endpo
         return Result::INVALID_ENDPOINT;
     }
 
-    platform::ByteBuffer data = message.serialize();
+    const auto data = message.serialize();
     if (data.size() > MAX_UDP_PAYLOAD) {
         return Result::BUFFER_OVERFLOW;
     }
@@ -55,8 +65,9 @@ Result EventDrivenUdpTransport::send_message(const Message& message, const Endpo
     return adapter_.send(data, endpoint);
 }
 
-MessagePtr EventDrivenUdpTransport::receive_message() {
-    platform::ScopedLock lock(queue_mutex_);
+MessagePtr EventDrivenUdpTransport::receive_message()
+{
+    const platform::ScopedLock lock(queue_mutex_);
     if (receive_queue_.empty()) {
         return nullptr;
     }
@@ -65,7 +76,8 @@ MessagePtr EventDrivenUdpTransport::receive_message() {
     return message;
 }
 
-Result EventDrivenUdpTransport::connect(const Endpoint& endpoint) {
+Result EventDrivenUdpTransport::connect(const Endpoint& endpoint)
+{
     if (!endpoint.is_valid()) {
         return Result::INVALID_ENDPOINT;
     }
@@ -78,26 +90,31 @@ Result EventDrivenUdpTransport::connect(const Endpoint& endpoint) {
     return Result::SUCCESS;
 }
 
-Result EventDrivenUdpTransport::disconnect() {
+Result EventDrivenUdpTransport::disconnect()
+{
     return Result::SUCCESS;
 }
 
-bool EventDrivenUdpTransport::is_connected() const {
+bool EventDrivenUdpTransport::is_connected() const
+{
     return is_running() && opened_.load();
 }
 
-Endpoint EventDrivenUdpTransport::get_local_endpoint() const {
+Endpoint EventDrivenUdpTransport::get_local_endpoint() const
+{
     if (opened_.load()) {
         return adapter_.get_local_endpoint();
     }
     return local_endpoint_;
 }
 
-void EventDrivenUdpTransport::set_listener(ITransportListener* listener) {
+void EventDrivenUdpTransport::set_listener(ITransportListener* listener)
+{
     listener_.store(listener, std::memory_order_release);
 }
 
-Result EventDrivenUdpTransport::start() {
+Result EventDrivenUdpTransport::start()
+{
     if (is_running()) {
         return Result::SUCCESS;
     }
@@ -106,7 +123,7 @@ Result EventDrivenUdpTransport::start() {
         on_adapter_receive(data, sender);
     });
 
-    Result result = adapter_.open(local_endpoint_);
+    const Result result = adapter_.open(local_endpoint_);
     if (result != Result::SUCCESS) {
         adapter_.set_receive_callback(nullptr);
         return result;
@@ -118,7 +135,8 @@ Result EventDrivenUdpTransport::start() {
     return Result::SUCCESS;
 }
 
-Result EventDrivenUdpTransport::stop() {
+Result EventDrivenUdpTransport::stop()
+{
     if (!running_.load()) {
         return Result::SUCCESS;
     }
@@ -128,7 +146,7 @@ Result EventDrivenUdpTransport::stop() {
     adapter_.close();
     opened_ = false;
 
-    platform::ScopedLock lock(queue_mutex_);
+    const platform::ScopedLock lock(queue_mutex_);
     while (!receive_queue_.empty()) {
         receive_queue_.pop();
     }
@@ -136,60 +154,65 @@ Result EventDrivenUdpTransport::stop() {
     return Result::SUCCESS;
 }
 
-bool EventDrivenUdpTransport::is_running() const {
+bool EventDrivenUdpTransport::is_running() const
+{
     return running_.load();
 }
 
-Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& multicast_address) {
+Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& multicast_address)
+{
     if (!is_multicast_ipv4(multicast_address)) {
         return Result::INVALID_ENDPOINT;
     }
     return adapter_.join_multicast(multicast_address, config_.multicast_interface);
 }
 
-Result EventDrivenUdpTransport::leave_multicast_group(const platform::String<>& multicast_address) {
+Result EventDrivenUdpTransport::leave_multicast_group(const platform::String<>& multicast_address)
+{
     if (!is_multicast_ipv4(multicast_address)) {
         return Result::INVALID_ENDPOINT;
     }
     return adapter_.leave_multicast(multicast_address, config_.multicast_interface);
 }
 
-void EventDrivenUdpTransport::on_adapter_receive(const platform::ByteBuffer& data, const Endpoint& sender) {
+void EventDrivenUdpTransport::on_adapter_receive(const platform::ByteBuffer& data,
+                                                 const Endpoint& sender)
+{
     if (!running_.load()) {
         return;
     }
 
-    MessagePtr message = platform::allocate_message();
-    if (!message) {
-        auto* cb = listener_.load(std::memory_order_acquire);
-        if (cb) {
+    const MessagePtr message = platform::allocate_message();
+    if (message == nullptr) {
+        ITransportListener* const cb = listener_.load(std::memory_order_acquire);
+        if (cb != nullptr) {
             cb->on_error(Result::OUT_OF_MEMORY);
         }
         return;
     }
     if (!message->deserialize(data)) {
-        auto* cb = listener_.load(std::memory_order_acquire);
-        if (cb) {
+        ITransportListener* const cb = listener_.load(std::memory_order_acquire);
+        if (cb != nullptr) {
             cb->on_error(Result::INVALID_MESSAGE);
         }
         return;
     }
 
     {
-        platform::ScopedLock lock(queue_mutex_);
+        const platform::ScopedLock lock(queue_mutex_);
         receive_queue_.push(message);
     }
 
-    auto* cb = listener_.load(std::memory_order_acquire);
-    if (cb) {
+    ITransportListener* const cb = listener_.load(std::memory_order_acquire);
+    if (cb != nullptr) {
         cb->on_message_received(message, sender);
     }
 }
 
-bool EventDrivenUdpTransport::is_multicast_ipv4(const platform::String<>& address) {
+bool EventDrivenUdpTransport::is_multicast_ipv4(const platform::String<>& address)
+{
     const Endpoint ep(address, 0, TransportProtocol::MULTICAST_UDP);
     return ep.is_multicast();
 }
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport

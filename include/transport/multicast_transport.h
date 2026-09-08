@@ -17,8 +17,7 @@
 #include "common/result.h"
 #include "platform/containers.h"
 
-namespace someip {
-namespace transport {
+namespace someip::transport {
 
 /**
  * @brief Interface for transports that support IPv4 multicast group management.
@@ -28,14 +27,23 @@ namespace transport {
  * without knowing the concrete transport type.
  */
 class IMulticastTransport {
-public:
+   public:
     virtual ~IMulticastTransport() = default;
 
-    [[nodiscard]] virtual Result join_multicast_group(const platform::String<>& multicast_address) = 0;
-    [[nodiscard]] virtual Result leave_multicast_group(const platform::String<>& multicast_address) = 0;
+    IMulticastTransport(const IMulticastTransport&) = delete;
+    IMulticastTransport& operator=(const IMulticastTransport&) = delete;
+    IMulticastTransport(IMulticastTransport&&) = delete;
+    IMulticastTransport& operator=(IMulticastTransport&&) = delete;
+
+    [[nodiscard]] virtual Result join_multicast_group(
+        const platform::String<>& multicast_address) = 0;
+    [[nodiscard]] virtual Result leave_multicast_group(
+        const platform::String<>& multicast_address) = 0;
+
+   protected:
+    IMulticastTransport() = default;
 };
 
-} // namespace transport
-} // namespace someip
+}  // namespace someip::transport
 
-#endif // SOMEIP_TRANSPORT_MULTICAST_TRANSPORT_H
+#endif  // SOMEIP_TRANSPORT_MULTICAST_TRANSPORT_H
