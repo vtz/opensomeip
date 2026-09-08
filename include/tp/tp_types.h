@@ -227,6 +227,10 @@ inline constexpr size_t MAX_TP_SEGMENTS = SOMEIP_MAX_TP_SEGMENTS;
 inline constexpr size_t MAX_TP_SEGMENTS = 64;
 #endif
 
+#ifndef SOMEIP_MAX_CONCURRENT_TP
+#define SOMEIP_MAX_CONCURRENT_TP 10
+#endif
+
 using TpSegmentVector = platform::Vector<TpSegment, MAX_TP_SEGMENTS>;
 
 struct TpTransfer {

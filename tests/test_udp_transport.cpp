@@ -1183,15 +1183,15 @@ TEST_F(UdpTransportTest, SmallMessageNotTpFlagged) {
     ASSERT_EQ(sender.start(), Result::SUCCESS);
     ASSERT_EQ(receiver.start(), Result::SUCCESS);
 
-    Message small;
-    small.set_service_id(0x2222);
-    small.set_method_id(0x0001);
-    small.set_client_id(0x0001);
-    small.set_session_id(0x0001);
-    small.set_message_type(MessageType::REQUEST);
-    small.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03});
+    Message small_msg;
+    small_msg.set_service_id(0x2222);
+    small_msg.set_method_id(0x0001);
+    small_msg.set_client_id(0x0001);
+    small_msg.set_session_id(0x0001);
+    small_msg.set_message_type(MessageType::REQUEST);
+    small_msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03});
 
-    EXPECT_EQ(sender.send_message(small, receiver.get_local_endpoint()), Result::SUCCESS);
+    EXPECT_EQ(sender.send_message(small_msg, receiver.get_local_endpoint()), Result::SUCCESS);
     ASSERT_TRUE(receiver_listener.wait_for_message());
     ASSERT_EQ(receiver_listener.received_messages_.size(), 1u);
     EXPECT_FALSE(receiver_listener.received_messages_[0].first->uses_tp());
