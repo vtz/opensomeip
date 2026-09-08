@@ -82,6 +82,10 @@
 - `UdpTransport::receive_message_with_sender(Endpoint& sender)` — polling
   mode variant that also returns the sender's endpoint for reply
   addressing without requiring a listener.
+- `RpcClient::send_request_no_return()` — fire-and-forget `REQUEST_NO_RETURN`
+  (message type 0x01) with no pending-call wait (#308).
+- `RpcServer::register_method(..., MethodSemantics)` — request/response vs
+  fire-and-forget method semantics (#308).
 
 ### Bug Fixes
 
@@ -105,6 +109,12 @@
 - TCP: `on_message_received()` is now invoked outside `connection_mutex_`,
   eliminating a potential deadlock when the callback calls
   `disconnect()`.
+- RPC: Interface Version is the service major. The message header no longer
+  rejects values other than 0x01; `RpcServer` returns
+  `E_WRONG_INTERFACE_VERSION` (0x08) on mismatch (#297).
+- RPC: `RpcClient` sends to a configured offered-service endpoint instead of
+  defaulting to `127.0.0.1:30490` (the SD port). `RpcServer` binds
+  `127.0.0.1:30501` by default (#301).
 
 ### Interop Notes
 

@@ -23,6 +23,9 @@ The RPC layer provides high-level interfaces for making method calls between SOM
 - **Purpose**: Client-side interface for making RPC method calls
 - **Features**:
   - Synchronous and asynchronous method calls
+  - Fire-and-forget `REQUEST_NO_RETURN`
+  - Explicit remote endpoint (not the SD port)
+  - Service major / Interface Version on outgoing messages
   - Automatic timeout handling
   - Request/response correlation
   - Call cancellation support
@@ -31,7 +34,9 @@ The RPC layer provides high-level interfaces for making method calls between SOM
 #### RpcServer
 - **Purpose**: Server-side interface for handling RPC method calls
 - **Features**:
-  - Method handler registration
+  - Method handler registration (request/response or fire-and-forget)
+  - Default bind `127.0.0.1:30501`
+  - `E_WRONG_INTERFACE_VERSION` on major mismatch
   - Automatic response generation
   - Error handling and return codes
   - Statistics tracking
@@ -158,14 +163,14 @@ timeout.response_timeout = std::chrono::milliseconds(5000);
 
 ```cpp
 RpcClient client(client_id);
-// Client automatically binds to available UDP port
+client.set_remote_endpoint(someip::transport::Endpoint("127.0.0.1", SOMEIP_DEFAULT_RPC_PORT));
 ```
 
 ### Server Configuration
 
 ```cpp
 RpcServer server(service_id);
-// Server binds to default SOME/IP port (30490)
+// Server binds to 127.0.0.1:30501 by default (application RPC, not SD)
 ```
 
 ## Error Handling

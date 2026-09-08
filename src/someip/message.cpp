@@ -104,8 +104,10 @@ Message::Message(Message&& other) noexcept
       payload_(std::move(other.payload_)),  // Move the payload
       e2e_header_(other.e2e_header_),
       timestamp_(other.timestamp_) {
-    // Invalidate the moved-from object (safety-critical design: moved-from messages are invalid)
-    other.interface_version_ = 0xFF;
+    // Invalidate the moved-from object (safety-critical design: moved-from messages are invalid).
+    // Protocol Version must be 0x01 at the header layer; 0xFF makes is_valid() false.
+    // Interface Version is the service major (any uint8_t), so it cannot be used to invalidate.
+    other.protocol_version_ = 0xFF;
     other.length_ = 8;  // Reset length for empty payload
     other.e2e_header_.reset();
 }
@@ -140,7 +142,7 @@ Message& Message::operator=(Message&& other) noexcept {
         timestamp_ = other.timestamp_;
 
         // Invalidate the moved-from object
-        other.interface_version_ = 0xFF;
+        other.protocol_version_ = 0xFF;
         other.length_ = 8;  // Reset length for empty payload
         other.e2e_header_.reset();
     }
@@ -434,11 +436,11 @@ bool Message::has_tp_flag() const {
  * @implements REQ_MSG_032_E01, REQ_MSG_032_E02
  * @implements REQ_MSG_063, REQ_MSG_064, REQ_MSG_063_E01, REQ_MSG_063_E02
  * @implements REQ_MSG_072, REQ_MSG_072_E01
- * @implements REQ_MSG_090_E01, REQ_MSG_093
+ * @implements REQ_MSG_041, REQ_MSG_090_E01, REQ_MSG_093
  * @implements REQ_COMPAT_001, REQ_COMPAT_001_E01, REQ_COMPAT_002, REQ_COMPAT_003_E01, REQ_COMPAT_004
  * @implements REQ_COMPAT_005, REQ_COMPAT_010, REQ_COMPAT_010_E01, REQ_COMPAT_011
  * @implements REQ_COMPAT_020, REQ_COMPAT_020_E01, REQ_COMPAT_021, REQ_COMPAT_022, REQ_COMPAT_023, REQ_COMPAT_024
- * @satisfies feat_req_someip_100, feat_req_someip_103, feat_req_someip_278
+ * @satisfies feat_req_someip_92, feat_req_someip_100, feat_req_someip_103, feat_req_someip_278
  */
 bool Message::has_valid_header() const {
     // Check Message ID components (REQ_MSG_002-008)
@@ -461,13 +463,17 @@ bool Message::has_valid_header() const {
         return false;
     }
 
-    // Check protocol version
+    // Protocol Version must be 0x01 (REQ_MSG_031). Interface Version is the
+    // service major (feat_req_someip_92 / REQ_MSG_041): any uint8_t is valid
+    // at the header layer. RPC/application code validates per service.
     if (protocol_version_ != SOMEIP_PROTOCOL_VERSION) {
         return false;
     }
 
-    // Check interface version
-    if (interface_version_ != SOMEIP_INTERFACE_VERSION) {
+    // SD SOME/IP wrappers (service 0xFFFF, method 0x8100) keep Interface Version 0x01.
+    if (get_service_id() == SOMEIP_SD_SERVICE_ID &&
+        get_method_id() == SOMEIP_SD_METHOD_ID &&
+        interface_version_ != SOMEIP_SD_INTERFACE_VERSION) {
         return false;
     }
 

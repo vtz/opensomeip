@@ -38,7 +38,7 @@ You should see:
 === SOME/IP Hello World Server ===
 Press Ctrl+C to exit
 
-Hello World Server started on 127.0.0.1:30490
+Hello World Server started on 127.0.0.1:30501
 Waiting for 'Hello' messages...
 ```
 
@@ -52,8 +52,8 @@ You should see:
 ```
 === SOME/IP Hello World Client ===
 Hello World Client started on 127.0.0.1:xxxxx
-Sending message: 'Hello from Client!' to 127.0.0.1:30490
-Received message from 127.0.0.1:30490
+Sending message: 'Hello from Client!' to 127.0.0.1:30501
+Received message from 127.0.0.1:30501
 Message: Service:0x1000, Method:0x0001, Type:RESPONSE, Length:52
 Server responded: 'Hello World! Server received: Hello from Client!'
 Client finished.
@@ -71,8 +71,8 @@ You should see:
 ```
 === SOME/IP Hello World Client ===
 Hello World Client started on 127.0.0.1:xxxxx
-Sending message: 'Hello from Client!' to 127.0.0.1:30490
-Received message from 127.0.0.1:30490
+Sending message: 'Hello from Client!' to 127.0.0.1:30501
+Received message from 127.0.0.1:30501
 Message: Service:0x1000, Method:0x0001, Type:RESPONSE, Length:52
 Server responded: 'Hello World! Server received: Hello from Client!'
 Client finished.

@@ -47,6 +47,19 @@ using RpcCallHandle = uint32_t;
 using MethodId = uint16_t;
 
 /**
+ * @brief Default unicast port for application RPC (not the SD port 30490)
+ */
+static constexpr uint16_t SOMEIP_DEFAULT_RPC_PORT = 30501;
+
+/**
+ * @brief Method call semantics advertised by RpcServer::register_method
+ */
+enum class MethodSemantics : uint8_t {
+    REQUEST_RESPONSE,
+    FIRE_AND_FORGET
+};
+
+/**
  * @brief Timeout configuration for RPC calls
  */
 struct RpcTimeout {

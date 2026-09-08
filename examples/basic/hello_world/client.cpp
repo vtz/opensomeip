@@ -165,11 +165,11 @@ int main() {
         return (val && *val) ? std::string(val) : std::string(def_val);
     };
     std::string server_host = get_env("HELLO_SERVER_HOST", "127.0.0.1");
-    uint16_t server_port = 30490;
+    uint16_t server_port = 30501;
     try {
-        server_port = static_cast<uint16_t>(std::stoi(get_env("HELLO_SERVER_PORT", "30490")));
+        server_port = static_cast<uint16_t>(std::stoi(get_env("HELLO_SERVER_PORT", "30501")));
     } catch (...) {
-        server_port = 30490;
+        server_port = 30501;
     }
 
     client.send_hello("Hello from Client!", server_host, server_port);
