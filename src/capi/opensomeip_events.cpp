@@ -145,7 +145,7 @@ extern "C" opensomeip_result_t opensomeip_event_subscriber_subscribe(opensomeip_
                 try {
                     cb(notif.service_id, notif.instance_id, notif.event_id,
                        notif.event_data.data(), notif.event_data.size(), ud);
-                } catch (...) { /* firewall: prevent C++ exceptions from escaping the FFI boundary */ }
+                } catch (...) {} // NOLINT(bugprone-empty-catch) — FFI exception firewall
             }
         );
         return ok ? OPENSOMEIP_RESULT_SUCCESS : OPENSOMEIP_RESULT_INTERNAL_ERROR;
