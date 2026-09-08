@@ -243,7 +243,7 @@ int main() {
     BaseType_t rc = xTaskCreate(
         test_task_entry,
         "test_main",
-        configMINIMAL_STACK_SIZE * 10,
+        configMINIMAL_STACK_SIZE * 14,
         nullptr,
         tskIDLE_PRIORITY + 2,
         nullptr);
