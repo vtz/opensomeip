@@ -117,6 +117,10 @@ inline constexpr size_t MAX_TP_REASSEMBLY_SIZE = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
 static_assert(MAX_TP_REASSEMBLY_SIZE >= 16,
               "SOMEIP_MAX_TP_REASSEMBLY_SIZE must be at least 16 bytes");
 
+#ifndef SOMEIP_MAX_TP_REASSEMBLY_BUFFERS  // NOLINT(cppcoreguidelines-macro-usage)
+#define SOMEIP_MAX_TP_REASSEMBLY_BUFFERS 16  // NOLINT(cppcoreguidelines-macro-usage)
+#endif
+
 /**
  * @brief Composite key for TP reassembly per Open SOME/IP-TP spec
  * @satisfies feat_req_someiptp_781, feat_req_someiptp_794
