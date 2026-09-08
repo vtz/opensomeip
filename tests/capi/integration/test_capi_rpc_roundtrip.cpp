@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 #include "capi/opensomeip.h"
+#include "static_pool_init.h"
 
 /**
  * @test_case TC_CAPI_INT_RPC_001

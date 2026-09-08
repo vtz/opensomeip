@@ -1,0 +1,31 @@
+# clang-tidy overrides for C API (extern "C") wrappers.
+#
+# These files intentionally use C-compatible patterns that conflict with
+# C++ core guidelines:
+#   - Raw new/delete for opaque-handle lifecycle (no shared_ptr across FFI)
+#   - Pointer-to-bool idioms (if (!ptr)) standard in C API code
+#   - Single-statement error-return guards without braces
+#   - C preprocessor macros for version constants and enum values
+#   - snake_case struct tags required by the C naming convention
+#
+# The checks disabled here are inappropriate for an extern-"C" boundary
+# layer; the rest of the MISRA-aligned set still applies.
+---
+InheritParentConfig: true
+Checks: >
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-macro-usage,
+  -hicpp-braces-around-statements,
+  -hicpp-no-array-decay,
+  -misc-include-cleaner,
+  -misc-const-correctness,
+  -misc-use-anonymous-namespace,
+  -readability-braces-around-statements,
+  -readability-identifier-naming,
+  -readability-implicit-bool-conversion,
+  -readability-qualified-auto,
+  -hicpp-signed-bitwise,
+  -hicpp-use-auto,
+  -modernize-use-auto,
+  -performance-unnecessary-copy-initialization,
+  -cppcoreguidelines-pro-bounds-constant-array-index
