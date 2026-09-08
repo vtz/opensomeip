@@ -114,10 +114,10 @@ extern "C" opensomeip_result_t opensomeip_udp_transport_receive(opensomeip_udp_t
         }
         auto* cmsg = new opensomeip_message_s();
         cmsg->msg = *msg_ptr;
-        *out_msg = cmsg;
         if (out_sender) {
             to_c_endpoint(sender, out_sender);
         }
+        *out_msg = cmsg;
         return OPENSOMEIP_RESULT_SUCCESS;
     } catch (...) { *out_msg = nullptr; return OPENSOMEIP_RESULT_INTERNAL_ERROR; }
 }
