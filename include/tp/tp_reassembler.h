@@ -144,7 +144,9 @@ public:
 
 private:
     TpConfig config_;
-    platform::UnorderedMap<TpReassemblyKey, TpReassemblyBuffer, 16, TpReassemblyKeyHash> reassembly_buffers_;
+    platform::UnorderedMap<TpReassemblyKey, TpReassemblyBuffer, SOMEIP_MAX_TP_REASSEMBLY_BUFFERS,
+                           TpReassemblyKeyHash>
+        reassembly_buffers_;
     mutable platform::Mutex config_mutex_;
     mutable platform::Mutex buffers_mutex_;
 
