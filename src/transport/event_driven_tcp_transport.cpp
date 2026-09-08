@@ -29,6 +29,8 @@
 #include "transport/tcp_socket_adapter.h"
 #include "transport/transport.h"
 
+// NOLINTBEGIN(misc-include-cleaner)
+
 namespace someip::transport {
 
 const size_t EventDrivenTcpTransport::SOMEIP_HEADER_SIZE = 16;
@@ -324,3 +326,5 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& bu
 }
 
 }  // namespace someip::transport
+
+// NOLINTEND(misc-include-cleaner)
