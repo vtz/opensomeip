@@ -19,9 +19,7 @@
 
 #include "capi/opensomeip.h"
 #include "capi_internal.h"
-#include "common/result.h"
 #include <cstring>
-#include <new>
 
 /** @implements REQ_CAPI_005 */
 extern "C" uint32_t opensomeip_capi_version(void) {
@@ -32,6 +30,7 @@ extern "C" uint32_t opensomeip_capi_version(void) {
 
 extern "C" opensomeip_result_t opensomeip_message_create(opensomeip_message_t** out_msg) {
     if (!out_msg) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out_msg = new opensomeip_message_s();
         return OPENSOMEIP_RESULT_SUCCESS;

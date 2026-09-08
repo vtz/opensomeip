@@ -16,6 +16,26 @@
 
 #include "someip/message.h"
 
+#ifdef SOMEIP_STATIC_ALLOC
+#include "platform/memory.h"
+
+namespace opensomeip::capi::detail {
+
+inline void ensure_static_pool() {
+    static bool done = false;
+    if (!done) {
+        someip::platform::init_static_allocator();
+        done = true;
+    }
+}
+
+}  // namespace opensomeip::capi::detail
+
+#define CAPI_ENSURE_INIT() opensomeip::capi::detail::ensure_static_pool()
+#else
+#define CAPI_ENSURE_INIT() ((void)0)
+#endif
+
 struct opensomeip_message_s {
     someip::Message msg;
 };

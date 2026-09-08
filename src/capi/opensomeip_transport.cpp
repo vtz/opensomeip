@@ -23,7 +23,6 @@
 #include "transport/tcp_transport.h"
 #include "transport/endpoint.h"
 #include <cstring>
-#include <new>
 
 static someip::transport::Endpoint to_cpp_endpoint(const opensomeip_endpoint_t* ep) {
     someip::transport::TransportProtocol proto = someip::transport::TransportProtocol::UDP;
@@ -61,6 +60,7 @@ struct opensomeip_tcp_transport_s {
 extern "C" opensomeip_result_t opensomeip_udp_transport_create(opensomeip_udp_transport_t** out,
                                                                 const opensomeip_endpoint_t* local_ep) {
     if (!out || !local_ep) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         auto ep = to_cpp_endpoint(local_ep);
         *out = new opensomeip_udp_transport_s(ep);
@@ -124,6 +124,7 @@ extern "C" opensomeip_result_t opensomeip_udp_transport_receive(opensomeip_udp_t
 
 extern "C" opensomeip_result_t opensomeip_tcp_transport_create(opensomeip_tcp_transport_t** out) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_tcp_transport_s();
         return OPENSOMEIP_RESULT_SUCCESS;

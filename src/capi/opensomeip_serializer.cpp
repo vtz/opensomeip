@@ -18,9 +18,9 @@
  */
 
 #include "capi/opensomeip.h"
+#include "capi_internal.h"
 #include "serialization/serializer.h"
 #include <cstring>
-#include <new>
 
 struct opensomeip_serializer_s {
     someip::serialization::Serializer ser;
@@ -34,6 +34,7 @@ struct opensomeip_deserializer_s {
 
 extern "C" opensomeip_result_t opensomeip_serializer_create(opensomeip_serializer_t** out) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_serializer_s();
         return OPENSOMEIP_RESULT_SUCCESS;
@@ -117,6 +118,7 @@ extern "C" opensomeip_result_t opensomeip_deserializer_create(opensomeip_deseria
                                                                const uint8_t* data, size_t len) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     if (len > 0 && !data) { *out = nullptr; return OPENSOMEIP_RESULT_INVALID_ARGUMENT; }
+    CAPI_ENSURE_INIT();
     try {
         someip::platform::ByteBuffer buf(data, data + len);
         *out = new opensomeip_deserializer_s(std::move(buf));

@@ -18,10 +18,10 @@
  */
 
 #include "capi/opensomeip.h"
+#include "capi_internal.h"
 #include "sd/sd_client.h"
 #include "sd/sd_server.h"
 #include <cstring>
-#include <new>
 
 struct opensomeip_sd_client_s {
     someip::sd::SdClient client;
@@ -33,6 +33,7 @@ struct opensomeip_sd_server_s {
 
 extern "C" opensomeip_result_t opensomeip_sd_client_create(opensomeip_sd_client_t** out) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_sd_client_s();
         return OPENSOMEIP_RESULT_SUCCESS;
@@ -121,6 +122,7 @@ extern "C" opensomeip_result_t opensomeip_sd_client_subscribe_eventgroup(opensom
 
 extern "C" opensomeip_result_t opensomeip_sd_server_create(opensomeip_sd_server_t** out) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_sd_server_s();
         return OPENSOMEIP_RESULT_SUCCESS;

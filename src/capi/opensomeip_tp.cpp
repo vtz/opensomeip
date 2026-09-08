@@ -21,7 +21,6 @@
 #include "capi_internal.h"
 #include "tp/tp_manager.h"
 #include <cstring>
-#include <new>
 
 struct opensomeip_tp_manager_s {
     someip::tp::TpManager manager;
@@ -29,6 +28,7 @@ struct opensomeip_tp_manager_s {
 
 extern "C" opensomeip_result_t opensomeip_tp_manager_create(opensomeip_tp_manager_t** out) {
     if (!out) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    CAPI_ENSURE_INIT();
     try {
         *out = new opensomeip_tp_manager_s();
         return OPENSOMEIP_RESULT_SUCCESS;
