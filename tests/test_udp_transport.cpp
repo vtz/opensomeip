@@ -41,6 +41,8 @@ using namespace someip::transport;
  * @tests REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03
  * @tests REQ_TRANSPORT_006_E01, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02
  * @tests REQ_TRANSPORT_014_E01
+ * @tests REQ_TP_090, REQ_TP_091
+ * @tests feat_req_someiptp_785
  */
 class UdpTransportTest : public ::testing::Test {
 protected:
@@ -551,6 +553,8 @@ TEST_F(UdpTransportTest, MessageSizeLimit) {
     // Wait for the message
     EXPECT_TRUE(receiver_listener.wait_for_message());
     EXPECT_EQ(receiver_listener.received_messages_.size(), 1);
+    EXPECT_FALSE(receiver_listener.received_messages_[0].first->uses_tp())
+        << "Small messages must be sent without the TP flag";
 
     sender.stop();
     receiver.stop();
@@ -562,6 +566,7 @@ TEST_F(UdpTransportTest, MaxUdpPayloadSize) {
     GTEST_SKIP() << "Static allocation: large payload round-trip exhausts pool";
 #endif
     config.max_message_size = 0;  // Disable size check to test raw UDP limit
+    config.enable_tp = false;     // This test is a single datagram, not TP segmentation
 
     UdpTransport sender(local_endpoint, config);
     UdpTransport receiver(local_endpoint, config);
@@ -763,6 +768,7 @@ TEST_F(UdpTransportTest, MessageExceedsMtu) {
 #endif
     // Disable the configurable size check to test the raw UDP max-payload rejection
     config.max_message_size = 0;
+    config.enable_tp = false;
     UdpTransport transport(local_endpoint, config);
     EXPECT_EQ(transport.start(), Result::SUCCESS);
 
@@ -1098,6 +1104,100 @@ TEST_F(UdpTransportTest, QueuedMessagesPreservedWhenListenerInstalled) {
 
     MessagePtr leaked = receiver.receive_message();
     EXPECT_EQ(leaked, nullptr) << "Listener traffic must not also be enqueued";
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_TP_REASSEMBLY
+ * @tests REQ_TP_090, REQ_TP_091, REQ_TP_078
+ * @tests feat_req_someiptp_785
+ * @brief Large UDP payload is segmented and delivered as one message with TP flag cleared
+ */
+TEST_F(UdpTransportTest, TpSegmentsAndReassemblesLargePayload) {
+    config.enable_tp = true;
+    config.tp_config.max_segment_size = 32;  // force multiple TP segments
+    config.tp_config.max_message_size = 10000;
+    config.max_message_size = 0;
+
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener receiver_listener;
+    receiver.set_listener(&receiver_listener);
+
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    Endpoint receiver_endpoint = receiver.get_local_endpoint();
+
+    Message large_message;
+    large_message.set_service_id(0x1234);
+    large_message.set_method_id(0x5678);
+    large_message.set_client_id(0x9ABC);
+    large_message.set_session_id(0x0001);
+    large_message.set_protocol_version(1);
+    large_message.set_interface_version(1);
+    large_message.set_message_type(MessageType::REQUEST);
+    large_message.set_return_code(ReturnCode::E_OK);
+
+    platform::ByteBuffer payload(80);
+    for (size_t i = 0; i < payload.size(); ++i) {
+        payload[i] = static_cast<uint8_t>(i & 0xFFU);
+    }
+    large_message.set_payload(payload);
+
+    EXPECT_EQ(sender.send_message(large_message, receiver_endpoint), Result::SUCCESS);
+    ASSERT_TRUE(receiver_listener.wait_for_message(std::chrono::milliseconds(2000)));
+    ASSERT_EQ(receiver_listener.received_messages_.size(), 1u);
+
+    const MessagePtr& received = receiver_listener.received_messages_[0].first;
+    ASSERT_NE(received, nullptr);
+    EXPECT_FALSE(received->uses_tp()) << "Reassembled message must have TP flag cleared";
+    EXPECT_EQ(received->get_message_type(), MessageType::REQUEST);
+    EXPECT_EQ(received->get_payload().size(), payload.size());
+    EXPECT_EQ(received->get_payload(), payload);
+    EXPECT_EQ(received->get_service_id(), 0x1234);
+    EXPECT_EQ(received->get_session_id(), 0x0001);
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_TP_SMALL_NO_FLAG
+ * @tests REQ_TP_090
+ * @brief Small UDP messages are not TP-flagged when enable_tp is true
+ */
+TEST_F(UdpTransportTest, SmallMessageNotTpFlagged) {
+    config.enable_tp = true;
+    config.tp_config.max_segment_size = 32;
+
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener receiver_listener;
+    receiver.set_listener(&receiver_listener);
+
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    Message small_msg;
+    small_msg.set_service_id(0x2222);
+    small_msg.set_method_id(0x0001);
+    small_msg.set_client_id(0x0001);
+    small_msg.set_session_id(0x0001);
+    small_msg.set_message_type(MessageType::REQUEST);
+    small_msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03});
+
+    EXPECT_EQ(sender.send_message(small_msg, receiver.get_local_endpoint()), Result::SUCCESS);
+    ASSERT_TRUE(receiver_listener.wait_for_message());
+    ASSERT_EQ(receiver_listener.received_messages_.size(), 1u);
+    EXPECT_FALSE(receiver_listener.received_messages_[0].first->uses_tp());
+    EXPECT_EQ(receiver_listener.received_messages_[0].first->get_message_type(),
+              MessageType::REQUEST);
+    EXPECT_EQ(receiver_listener.received_messages_[0].first->get_payload().size(), 3u);
 
     sender.stop();
     receiver.stop();

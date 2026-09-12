@@ -1277,6 +1277,43 @@ TP Informational References
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 
+.. requirement:: UDP Send Uses TP Segmentation
+   :id: REQ_TP_090
+   :satisfies: feat_req_someiptp_760, feat_req_someiptp_765
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Integration test: Two ``UdpTransport`` instances on loopback; send a payload larger than ``TpConfig.max_segment_size``; receiver gets one reassembled message. Small messages have no TP flag. Tests: ``tests/test_udp_transport.cpp`` (TpSegmentsAndReassemblesLargePayload, SmallMessageNotTpFlagged).
+
+   When ``UdpTransportConfig.enable_tp`` is true, UDP send shall segment
+   messages whose payload exceeds ``TpConfig.max_segment_size`` (TP
+   payload bytes, default 1392; full datagram is 16+4+payload) and
+   transmit each segment as its own datagram. The unsegmented message
+   shall not be sent. Small messages shall be sent without the TP flag.
+
+   **Rationale**: Automatic TP on UDP avoids IP fragmentation and exposes a single Message API.
+
+   **Code Location**: ``src/transport/udp_transport.cpp`` (``send_message``, ``send_tp_segments``)
+
+.. requirement:: UDP Receive Reassembles TP Datagrams
+   :id: REQ_TP_091
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_785
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``TpManager::ingest_datagram`` completes when total length is unknown until the last segment. Integration: UDP loopback reassembly with TP flag cleared. Tests: ``tests/test_tp.cpp`` (WireIngestUnknownTotalUntilLast), ``tests/test_udp_transport.cpp``.
+
+   When ``enable_tp`` is true, UDP receive shall treat datagrams with
+   Message Type bit 5 set as TP segments, reassemble them without
+   requiring a total-size field (grow the buffer; last segment with
+   More=0 finalizes the length), and deliver one Message with the TP
+   flag cleared. Incomplete transfers shall not be delivered.
+   ``TpManager::process_timeouts()`` shall run on the receive loop.
+
+   **Rationale**: The wire TP header has no total message length; reassembly must wait for More=0.
+
+   **Code Location**: ``src/transport/udp_transport.cpp`` (``receive_loop``), ``src/tp/tp_manager.cpp`` (``ingest_datagram``), ``src/tp/tp_reassembler.cpp``
+
 Traceability
 ============
 
@@ -1290,8 +1327,12 @@ Implementation Files
 * ``src/tp/tp_manager.cpp`` - TP manager implementation
 * ``src/tp/tp_segmenter.cpp`` - Segmenter implementation
 * ``src/tp/tp_reassembler.cpp`` - Reassembler implementation
+* ``src/transport/udp_transport.cpp`` - UDP send/receive TP integration
+* ``include/transport/udp_transport.h`` - ``enable_tp`` and ``TpConfig``
 
 Test Files
 ----------
 
 * ``tests/test_tp.cpp`` - TP unit tests
+* ``tests/test_udp_transport.cpp`` - UDP loopback TP integration
+* ``tests/integration/test_tp_udp_integration.py`` - wire-format TP tests

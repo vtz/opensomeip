@@ -85,6 +85,11 @@
 
 ### Bug Fixes
 
+- **SOME/IP-TP**: Message Type bit 5 (`0x20`) is the TP flag for all
+  types, including Response (`0xA0`) and Error (`0xA1`). Unknown types
+  are decided after masking bit 5 (`#296`).
+- **UDP**: `UdpTransport` segments and reassembles large messages via
+  `TpManager` when `enable_tp` is true (`#305`).
 - **Serialization**: string wire format now matches Open SOME/IP spec
   with UTF-8 BOM, NUL terminator, and correct length semantics (#274).
 - **SOME/IP-TP**: every segment now carries a full SOME/IP header;

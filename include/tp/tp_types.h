@@ -17,6 +17,7 @@
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -54,7 +55,9 @@ enum class TpMessageType : uint8_t {
  * @brief TP segmentation configuration
  */
 struct TpConfig {
-    uint32_t max_segment_size{1392};        // Maximum segment payload size (bytes) - 87*16 for alignment
+    // TP payload bytes per segment (default 1392). Full UDP datagram is
+    // 16-byte SOME/IP header + 4-byte TP header + payload.
+    uint32_t max_segment_size{1392};
     uint32_t max_message_size{1000000};     // Maximum total message size (1MB default)
     uint8_t max_retries{3};                 // Maximum retransmission attempts
     std::chrono::milliseconds retry_timeout{500};      // Timeout between retries
@@ -90,6 +93,8 @@ struct TpSegment {
     platform::ByteBuffer payload;
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
     uint32_t retransmit_count{0};
+    uint32_t sender_ipv4{0};
+    uint16_t sender_port{0};
 
     TpSegment() = default;
 };
@@ -107,11 +112,13 @@ inline constexpr size_t MAX_TP_REASSEMBLY_SIZE = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
 /**
  * @brief Composite key for TP reassembly per Open SOME/IP-TP spec
  * @satisfies feat_req_someiptp_781, feat_req_someiptp_794
+ * @implements REQ_TP_031
  *
  * Key fields (per someip-tp.rst):
  *   Message ID + Protocol Version + Interface Version
  *   + Message Type (SOME/IP wire byte 14, TP-flag 0x20 masked off)
  *   + Request ID (Client ID << 16 | Session ID)
+ *   + UDP sender IPv4 + port (two peers must not share a buffer)
  *
  * Session ID changes for the same Client ID trigger stale-buffer discard
  * in find_or_create_buffer (feat_req_someiptp_795).
@@ -122,13 +129,17 @@ struct TpReassemblyKey {
     uint8_t interface_version{0};
     uint8_t message_type{0};         // Wire Message Type with TP-flag masked off
     uint32_t request_id{0};          // Client ID << 16 | Session ID
+    uint32_t sender_ipv4{0};         // Host-order IPv4 of the UDP source
+    uint16_t sender_port{0};
 
     bool operator==(const TpReassemblyKey& other) const {
         return message_id == other.message_id &&
                protocol_version == other.protocol_version &&
                interface_version == other.interface_version &&
                message_type == other.message_type &&
-               request_id == other.request_id;
+               request_id == other.request_id &&
+               sender_ipv4 == other.sender_ipv4 &&
+               sender_port == other.sender_port;
     }
 
     bool operator!=(const TpReassemblyKey& other) const {
@@ -150,6 +161,8 @@ struct TpReassemblyKeyHash {
         combine(h, std::hash<uint8_t>{}(k.interface_version));
         combine(h, std::hash<uint8_t>{}(k.message_type));
         combine(h, std::hash<uint32_t>{}(k.request_id));
+        combine(h, std::hash<uint32_t>{}(k.sender_ipv4));
+        combine(h, std::hash<uint16_t>{}(k.sender_port));
         return h;
     }
 };
@@ -166,10 +179,18 @@ struct TpReassemblyBuffer {
     uint8_t last_sequence_number{0};
     uint16_t session_id{0};  // Track Session ID for stale detection (feat_req_someiptp_795)
     bool complete{false};
+    bool last_segment_seen{false};
+    bool known_total{false};
+    uint32_t finalized_length{0};
+    std::array<uint8_t, 16> someip_header{};
+    bool has_someip_header{false};
 
     TpReassemblyBuffer(uint32_t msg_id, uint32_t length, uint16_t sess_id = 0)
-        : message_id(msg_id), total_length(length), session_id(sess_id) {
-        received_data.resize(length);
+        : message_id(msg_id), total_length(length), session_id(sess_id),
+          known_total(length > 0) {
+        if (length > 0) {
+            received_data.resize(length);
+        }
         start_time = std::chrono::steady_clock::now();
     }
 
@@ -177,6 +198,7 @@ struct TpReassemblyBuffer {
     void mark_segment_received(uint32_t offset, uint32_t length);
     bool is_complete() const;
     platform::ByteBuffer get_complete_message() const;
+    bool ensure_size(uint32_t needed, uint32_t max_message_size);
 };
 
 /**
@@ -203,6 +225,10 @@ enum class TpTransferState : uint8_t {
 inline constexpr size_t MAX_TP_SEGMENTS = SOMEIP_MAX_TP_SEGMENTS;
 #else
 inline constexpr size_t MAX_TP_SEGMENTS = 64;
+#endif
+
+#ifndef SOMEIP_MAX_TP_REASSEMBLY_BUFFERS  // NOLINT(cppcoreguidelines-macro-usage)
+#define SOMEIP_MAX_TP_REASSEMBLY_BUFFERS 16  // NOLINT(cppcoreguidelines-macro-usage)
 #endif
 
 using TpSegmentVector = platform::Vector<TpSegment, MAX_TP_SEGMENTS>;

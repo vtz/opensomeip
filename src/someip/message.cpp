@@ -399,21 +399,23 @@ bool Message::has_valid_request_id() const {
  * @brief Validate message type according to SOME/IP specification
  * @implements REQ_MSG_042, REQ_MSG_042_E01
  * @implements REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_053_E01, REQ_MSG_054, REQ_MSG_054_E01, REQ_MSG_055
- * @implements REQ_MSG_057, REQ_MSG_058, REQ_MSG_059
+ * @implements REQ_MSG_056, REQ_MSG_057, REQ_MSG_058, REQ_MSG_059
+ * @implements REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP, REQ_MSG_060_TP_RESPONSE
+ * @implements REQ_MSG_063
+ * @satisfies feat_req_someip_761
  */
 bool Message::has_valid_message_type() const {
-    switch (message_type_) {
-        case MessageType::REQUEST:           // REQ_MSG_051
-        case MessageType::REQUEST_NO_RETURN: // REQ_MSG_052
-        case MessageType::NOTIFICATION:      // REQ_MSG_053
-        case MessageType::RESPONSE:          // REQ_MSG_054
-        case MessageType::ERROR:             // REQ_MSG_055
-        case MessageType::REQUEST_ACK:       // REQ_MSG_057
-        case MessageType::RESPONSE_ACK:      // REQ_MSG_058
-        case MessageType::ERROR_ACK:         // REQ_MSG_059
-        case MessageType::TP_REQUEST:        // TP variants also valid
-        case MessageType::TP_REQUEST_NO_RETURN:
-        case MessageType::TP_NOTIFICATION:
+    // Unknown means unknown after masking TP flag bit 5 (REQ_MSG_063).
+    // 0xA0 (RESPONSE|TP) and 0xA1 (ERROR|TP) are valid, not unknown.
+    switch (without_tp_flag(message_type_)) {
+        case MessageType::REQUEST:           // REQ_MSG_051, TP 0x20
+        case MessageType::REQUEST_NO_RETURN: // REQ_MSG_052, TP 0x21
+        case MessageType::NOTIFICATION:      // REQ_MSG_053, TP 0x22
+        case MessageType::REQUEST_ACK:       // REQ_MSG_057, TP 0x60
+        case MessageType::RESPONSE:          // REQ_MSG_054, TP 0xA0
+        case MessageType::ERROR:             // REQ_MSG_055, TP 0xA1
+        case MessageType::RESPONSE_ACK:      // REQ_MSG_058, TP 0xE0
+        case MessageType::ERROR_ACK:         // REQ_MSG_059, TP 0xE1
             return true;
         default:
             return false;
