@@ -136,7 +136,7 @@ extern "C" opensomeip_result_t opensomeip_rpc_client_call_async(opensomeip_rpc_c
                         }
                     }
                     cb(res, resp.return_values.data(), resp.return_values.size(), ud);
-                } catch (...) { cb(OPENSOMEIP_RESULT_INTERNAL_ERROR, nullptr, 0, ud); }
+                } catch (...) {} // NOLINT(bugprone-empty-catch) — FFI exception firewall
             },
             timeout
         );

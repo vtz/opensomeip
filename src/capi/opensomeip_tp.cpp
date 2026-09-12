@@ -122,7 +122,7 @@ extern "C" opensomeip_result_t opensomeip_tp_reassemble(opensomeip_tp_manager_t*
         bool done = tp->manager.handle_received_segment(seg, complete_msg);
 
         if (done && !complete_msg.empty()) {
-            if (*out_len < complete_msg.size()) {
+            if (!out_buf || *out_len < complete_msg.size()) {
                 *complete = 0;
                 *out_len = complete_msg.size();
                 return OPENSOMEIP_RESULT_BUFFER_OVERFLOW;
