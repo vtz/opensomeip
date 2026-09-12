@@ -86,8 +86,7 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
 
     if (config_.enable_tp && tp_manager_) {
         const bool over_udp_max = config_.max_message_size > 0 &&
-            message.serialize().size() > config_.max_message_size &&
-            message.get_payload().size() > config_.tp_config.max_segment_size;
+            message.serialize().size() > config_.max_message_size;
         if (tp_manager_->needs_segmentation(message) || over_udp_max) {
             return send_tp_segments(message, endpoint);
         }

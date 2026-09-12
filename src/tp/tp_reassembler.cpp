@@ -133,6 +133,20 @@ bool parse_wire_segment(const uint8_t* data, size_t size, TpSegment& out_segment
     if (data == nullptr || size < TP_OVERHEAD || size > UINT16_MAX) {
         return false;
     }
+
+    // Validate the declared SOME/IP Length field (bytes 4-7) against the
+    // actual datagram size.  The Length field counts every byte after the
+    // initial 8-byte Service-ID/Method-ID/Length header, so a well-formed
+    // datagram satisfies: size == 8 + declared_length.
+    const auto declared_length = static_cast<uint32_t>(
+        (static_cast<uint32_t>(data[4]) << 24U) |
+        (static_cast<uint32_t>(data[5]) << 16U) |
+        (static_cast<uint32_t>(data[6]) << 8U)  |
+        static_cast<uint32_t>(data[7]));
+    if (size != 8U + declared_length) {
+        return false;
+    }
+
     if ((data[14] & 0x20U) == 0U) {
         return false;
     }
