@@ -93,6 +93,7 @@ public:
         {
             platform::ScopedLock const events_lock(events_mutex_);
             registered_events_.clear();
+            field_values_.clear();
         }
         {
             platform::ScopedLock const subs_lock(subscriptions_mutex_);
@@ -308,7 +309,7 @@ public:
         const auto& clients = sub_it->second;
         return std::find_if(clients.begin(), clients.end(),
                             [client_id](const ClientInfo& info) {
-                                return info.client_id == client_id;
+                                return info.client_id == client_id && !info.is_expired();
                             }) != clients.end();
     }
 
