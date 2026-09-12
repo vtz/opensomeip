@@ -60,6 +60,7 @@ option(BUILD_TESTS "Build test executables" ${_someip_default_build_tests})
 option(BUILD_EXAMPLES "Build example programs" ${_someip_default_build_examples})
 option(BUILD_TOOLS "Build development tools (reserved for future use)" OFF)
 option(SOMEIP_DEV_TOOLS "Enable development tools (static analysis, formatting, traceability targets)" ON)
+option(BUILD_CAPI "Build C API wrapper (extern C FFI boundary)" ${PROJECT_IS_TOP_LEVEL})
 option(COVERAGE "Enable code coverage reporting" OFF)
 option(ENABLE_WERROR "Treat compiler warnings as errors (recommended for CI)" OFF)
 
@@ -76,6 +77,11 @@ option(SOMEIP_THREADX_LINUX_TESTS "Build and run ThreadX runtime tests using Ecl
 # RTOS Renode ARM target tests (cross-compiled, run on Renode simulator)
 option(SOMEIP_FREERTOS_RENODE_TESTS "Build FreeRTOS tests for Cortex-M4F STM32F407 (Renode)" OFF)
 option(SOMEIP_THREADX_RENODE_TESTS "Build ThreadX tests for Cortex-M4 STM32F407 (Renode)" OFF)
+
+# Enable C language for C API wrappers
+if(BUILD_CAPI)
+    enable_language(C)
+endif()
 
 # Derive backend from runtime test mode before include-path/backend selection.
 if(SOMEIP_FREERTOS_LINUX_TESTS AND SOMEIP_THREADX_LINUX_TESTS)
@@ -609,11 +615,71 @@ endif()
 ################################################################################
 
 include(GNUInstallDirs)
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/someip FILES_MATCHING PATTERN "*.h")
-install(TARGETS opensomeip
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+include(CMakePackageConfigHelpers)
+
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/someip
+    FILES_MATCHING PATTERN "*.h"
+    PATTERN "capi" EXCLUDE
 )
+
+set(_OPENSOMEIP_INSTALL_TARGETS opensomeip)
+if(BUILD_CAPI)
+    install(DIRECTORY include/capi/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/someip/capi
+        FILES_MATCHING PATTERN "*.h"
+    )
+    if(TARGET opensomeip_capi)
+        list(APPEND _OPENSOMEIP_INSTALL_TARGETS opensomeip_capi)
+    endif()
+endif()
+
+# Determine whether we can generate an EXPORT set.  FetchContent'd third-party
+# targets (etl, freertos_kernel, threadx) are not in any export set, so linking
+# opensomeip PUBLIC to them makes install(EXPORT) fail.  Skip the export/config
+# machinery when such deps are present; plain install(TARGETS) still works.
+set(_OPENSOMEIP_CAN_EXPORT TRUE)
+foreach(_dep etl freertos_kernel threadx)
+    if(TARGET ${_dep})
+        set(_OPENSOMEIP_CAN_EXPORT FALSE)
+        break()
+    endif()
+endforeach()
+
+if(_OPENSOMEIP_CAN_EXPORT)
+    install(TARGETS ${_OPENSOMEIP_INSTALL_TARGETS}
+        EXPORT opensomeipTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+
+    install(EXPORT opensomeipTargets
+        FILE opensomeipTargets.cmake
+        NAMESPACE opensomeip::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/opensomeip
+    )
+
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
+    )
+
+    configure_package_config_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/opensomeipConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/opensomeip
+    )
+
+    install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/opensomeipConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/opensomeip
+    )
+else()
+    install(TARGETS ${_OPENSOMEIP_INSTALL_TARGETS}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
+endif()
 
 ################################################################################
 # Configure Summary
@@ -646,6 +712,7 @@ else()
 endif()
 message(STATUS "  Build tests ............. ${BUILD_TESTS}")
 message(STATUS "  Build examples .......... ${BUILD_EXAMPLES}")
+message(STATUS "  C API (FFI) ............. ${BUILD_CAPI}")
 message(STATUS "  Dev tools ............... ${SOMEIP_DEV_TOOLS}")
 if(SOMEIP_FREERTOS_RENODE_TESTS OR SOMEIP_THREADX_RENODE_TESTS)
     message(STATUS "  Renode tests ............ ON")

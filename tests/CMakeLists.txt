@@ -167,6 +167,70 @@ target_link_libraries(test_e2e someip-core gtest_main)
         endif()
     endif()
 
+    # ---- C API Tests ----
+    if(BUILD_CAPI)
+        add_executable(test_capi_message capi/unit/test_capi_message.cpp)
+        target_link_libraries(test_capi_message opensomeip_capi gtest_main)
+        add_test(NAME CapiMessageTest COMMAND test_capi_message)
+
+        add_executable(test_capi_serializer capi/unit/test_capi_serializer.cpp)
+        target_link_libraries(test_capi_serializer opensomeip_capi gtest_main)
+        add_test(NAME CapiSerializerTest COMMAND test_capi_serializer)
+
+        add_executable(test_capi_transport capi/unit/test_capi_transport.cpp)
+        target_link_libraries(test_capi_transport opensomeip_capi gtest_main)
+        add_test(NAME CapiTransportTest COMMAND test_capi_transport)
+
+        add_executable(test_capi_rpc capi/unit/test_capi_rpc.cpp)
+        target_link_libraries(test_capi_rpc opensomeip_capi gtest_main)
+        add_test(NAME CapiRpcTest COMMAND test_capi_rpc)
+
+        add_executable(test_capi_sd capi/unit/test_capi_sd.cpp)
+        target_link_libraries(test_capi_sd opensomeip_capi gtest_main)
+        add_test(NAME CapiSdTest COMMAND test_capi_sd)
+
+        add_executable(test_capi_events capi/unit/test_capi_events.cpp)
+        target_link_libraries(test_capi_events opensomeip_capi gtest_main)
+        add_test(NAME CapiEventsTest COMMAND test_capi_events)
+
+        add_executable(test_capi_tp capi/unit/test_capi_tp.cpp)
+        target_link_libraries(test_capi_tp opensomeip_capi gtest_main)
+        add_test(NAME CapiTpTest COMMAND test_capi_tp)
+
+        add_executable(test_capi_e2e capi/unit/test_capi_e2e.cpp)
+        target_link_libraries(test_capi_e2e opensomeip_capi gtest_main)
+        add_test(NAME CapiE2ETest COMMAND test_capi_e2e)
+
+        add_executable(test_capi_udp_hello capi/integration/test_capi_udp_hello.cpp)
+        target_link_libraries(test_capi_udp_hello opensomeip_capi gtest_main)
+        add_test(NAME CapiUdpHelloTest COMMAND test_capi_udp_hello)
+        set_tests_properties(CapiUdpHelloTest PROPERTIES TIMEOUT 30 LABELS "capi;integration")
+
+        add_executable(test_capi_rpc_roundtrip capi/integration/test_capi_rpc_roundtrip.cpp)
+        target_link_libraries(test_capi_rpc_roundtrip opensomeip_capi gtest_main)
+        add_test(NAME CapiRpcRoundtripTest COMMAND test_capi_rpc_roundtrip)
+        set_tests_properties(CapiRpcRoundtripTest PROPERTIES TIMEOUT 30 LABELS "capi;integration")
+
+        set(_CAPI_TESTS
+            CapiMessageTest CapiSerializerTest CapiTransportTest
+            CapiRpcTest CapiSdTest CapiEventsTest CapiTpTest CapiE2ETest)
+        set_tests_properties(${_CAPI_TESTS} PROPERTIES TIMEOUT 30 LABELS "capi;unit")
+
+        # Static-alloc pool init and Winsock init for CAPI tests
+        set(_CAPI_TEST_TARGETS
+            test_capi_message test_capi_serializer test_capi_transport
+            test_capi_rpc test_capi_sd test_capi_events test_capi_tp
+            test_capi_e2e test_capi_udp_hello test_capi_rpc_roundtrip)
+        foreach(_t ${_CAPI_TEST_TARGETS})
+            target_include_directories(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+        endforeach()
+        if(WIN32)
+            foreach(_t test_capi_udp_hello test_capi_rpc_roundtrip)
+                target_sources(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winsock_init.cpp)
+            endforeach()
+        endif()
+    endif()
+
     # Register available tests
     add_test(NAME PlatformThreadingTest COMMAND test_platform_threading)
     add_test(NAME SerializationTest COMMAND test_serialization)

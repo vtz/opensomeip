@@ -16,6 +16,7 @@ OpenSOME/IP is organized into self-contained modules, each with its own public h
 | [Events](events.md) | `include/events/` | Publish/subscribe event system |
 | [E2E Protection](e2e.md) | `include/e2e/` | CRC, profiles, and message integrity |
 | [Serialization](serialization.md) | `include/serialization/` | Data type serialization |
+| [C API](capi.md) | `include/capi/` | Stable C ABI for FFI consumers |
 
 ## Core Types
 

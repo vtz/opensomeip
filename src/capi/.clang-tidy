@@ -1,0 +1,32 @@
+# Per-directory clang-tidy override for the C API (FFI) boundary layer.
+#
+# The C API intentionally uses C-style idioms that conflict with several
+# C++-oriented checks enabled in the project root .clang-tidy:
+#
+#   - snake_case struct names (C ABI convention)
+#   - preprocessor macros for version constants (C compatibility)
+#   - implicit pointer-to-bool conversions in guard clauses
+#   - raw new/delete for opaque handle management
+#   - single-statement guard returns without braces
+#
+# Disabling these checks here keeps the rest of the codebase strict while
+# allowing idiomatic C FFI wrapper code.
+---
+InheritParentConfig: true
+Checks: >
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -hicpp-braces-around-statements,
+  -hicpp-no-array-decay,
+  -hicpp-signed-bitwise,
+  -hicpp-use-auto,
+  -misc-const-correctness,
+  -misc-include-cleaner,
+  -misc-use-anonymous-namespace,
+  -modernize-use-auto,
+  -performance-unnecessary-copy-initialization,
+  -readability-braces-around-statements,
+  -readability-identifier-naming,
+  -readability-implicit-bool-conversion,
+  -readability-qualified-auto
