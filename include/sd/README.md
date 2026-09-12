@@ -190,8 +190,9 @@ The multicast **port** 30490 is specified. The multicast **group** `239.255.255.
 ### Timing Behavior
 
 1. **Initial Wait**: First Offer/Find is delayed by a random duration in `[initial_delay_min, initial_delay_max]` (override available for tests)
-2. **Repetition / Cyclic Phase**: Offers continue on `cyclic_offer` after the first transmission
-3. **TTL Expiration**: Services expire after the configured `ttl` duration (`std::chrono::milliseconds`)
+2. **Repetition Phase**: After the first Offer, exponential back-off repeats at `repetition_base × 2^n` until the interval reaches `cyclic_offer`
+3. **Cyclic Phase**: Regular offers sent every `cyclic_offer` (default 30 s)
+4. **TTL Expiration**: Services expire after the configured `ttl` duration (`std::chrono::milliseconds`)
 
 ## Safety Considerations (non-certified)
 
