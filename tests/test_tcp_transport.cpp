@@ -18,6 +18,7 @@
 #include <platform/buffer_pool.h>
 #include <platform/containers.h>
 #include <thread>
+#include <atomic>
 #include <chrono>
 #include <memory>
 #include <set>
@@ -1394,6 +1395,107 @@ TEST_F(TcpTransportTest, ConnectionLimitRefusesSurplusClientsOnly) {
         client.transport->disconnect();
         client.transport->stop();
     }
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_STALLED_PEER_ISOLATION
+ * @tests REQ_TRANSPORT_003b
+ * @brief A peer that never drains its socket does not stall the other peers
+ *
+ * Socket I/O is serialised per connection rather than across the whole table,
+ * so a send blocked on one unresponsive peer must not hold up queries or
+ * traffic for anybody else. Guards against regressing to a single transport
+ * wide lock held across blocking socket calls.
+ */
+TEST_F(TcpTransportTest, StalledPeerDoesNotBlockOtherPeers) {
+    TcpTransportConfig slow = config;
+    slow.send_timeout = std::chrono::milliseconds(5000);
+    slow.magic_cookie_enabled = false;
+
+    TcpTransport server(slow);
+    ASSERT_EQ(server.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+
+    const Endpoint server_ep = server.get_local_endpoint();
+
+    // Declared ahead of the transport so it is still alive when that transport
+    // is torn down at the end of the test.
+    TestTcpListener stalled_listener;
+
+    // Connects but never starts, so nothing drains its socket and the server's
+    // sends to it block once the kernel buffers fill.
+    TcpTransport stalled(slow);
+    ASSERT_EQ(stalled.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(stalled.connect(server_ep), Result::SUCCESS);
+    const Endpoint stalled_ep = stalled.get_local_endpoint();
+
+    ConnectedClient healthy;
+    healthy.transport = std::make_unique<TcpTransport>(slow);
+    healthy.listener = std::make_unique<TestTcpListener>();
+    ASSERT_EQ(healthy.transport->initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    healthy.transport->set_listener(healthy.listener.get());
+    ASSERT_EQ(healthy.transport->start(), Result::SUCCESS);
+    ASSERT_EQ(healthy.transport->connect(server_ep), Result::SUCCESS);
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (server.connection_count() < 2U && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    ASSERT_EQ(server.connection_count(), 2U);
+
+    // Keep sending to the stalled peer until the socket backs up and blocks.
+    std::atomic<bool> keep_sending{true};
+    std::atomic<bool> flooder_blocked{false};
+    std::thread flooder([&]() {
+        // Sized to stay inside the static build's medium buffer tier. The large
+        // tier has only a handful of slots, and flooding it would exhaust the
+        // pool rather than exercise the socket back-pressure this test is about.
+        std::vector<uint8_t> payload(1024, 0xCD);
+        Message big = make_tagged_message(0xAB);
+        big.set_payload(payload.data(), payload.size());
+        while (keep_sending) {
+            flooder_blocked = true;
+            if (server.send_message(big, stalled_ep) != Result::SUCCESS) {
+                break;
+            }
+        }
+    });
+
+    // Give the flooder time to fill the socket and block inside send().
+    std::this_thread::sleep_for(std::chrono::milliseconds(750));
+    EXPECT_TRUE(flooder_blocked.load());
+
+    const auto probe_start = std::chrono::steady_clock::now();
+    const size_t count = server.connection_count();
+    const bool healthy_up = server.is_peer_connected(healthy.transport->get_local_endpoint());
+    const auto probe_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - probe_start);
+
+    EXPECT_EQ(count, 2U);
+    EXPECT_TRUE(healthy_up);
+    EXPECT_LT(probe_ms.count(), 1000)
+        << "connection table queries waited " << probe_ms.count()
+        << "ms behind a send blocked on an unresponsive peer";
+
+    // Let the stalled peer start draining so the in-flight send can complete.
+    // Closing it here instead would complete that send with EPIPE, and the send
+    // path passes no MSG_NOSIGNAL, so the whole test process would take a
+    // SIGPIPE. Nothing about this test needs the peer to vanish mid-send.
+    keep_sending = false;
+    stalled.set_listener(&stalled_listener);
+    EXPECT_EQ(stalled.start(), Result::SUCCESS);
+    flooder.join();
+
+    stalled.disconnect();
+    stalled.stop();
+
+    healthy.transport->disconnect();
+    healthy.transport->stop();
     server.stop();
 }
 

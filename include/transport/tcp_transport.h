@@ -19,8 +19,10 @@
 #include "platform/containers.h"
 #include "platform/net.h"
 #include "platform/thread.h"
+#include <array>
 #include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 
 /**
@@ -288,10 +290,31 @@ public:
     static platform::ByteBuffer make_magic_cookie_server();
 
 private:
-    /// Established peer connections. A client holds at most one entry.
-    using ConnectionTable = platform::Vector<TcpConnection, MAX_TCP_CONNECTIONS>;
-    /// Peer endpoints batched for notification outside connection_mutex_.
+    /// Peer endpoints batched for notification outside table_mutex_.
     using EndpointList = platform::Vector<Endpoint, MAX_TCP_CONNECTIONS>;
+
+    enum class SlotState : uint8_t {
+        FREE,      ///< Unused and available for a new peer.
+        ACTIVE,    ///< Serving a peer.
+        CLOSING    ///< Being torn down; no new I/O may start on it.
+    };
+
+    /**
+     * @brief One peer connection and the lock serialising its socket I/O.
+     *
+     * Slots live in a fixed array and are never moved or erased, only recycled
+     * through FREE. That matters for two reasons: a slot pointer stays valid
+     * once table_mutex_ is released, and the slot can own a platform::Mutex,
+     * which a vector could not hold because erase() moves its elements and a
+     * mutex is not movable.
+     */
+    struct ConnectionSlot {
+        TcpConnection conn;
+        /// Held across this peer's blocking socket calls. Never acquired while
+        /// table_mutex_ is held; see the lock-order note on table_mutex_.
+        platform::Mutex io_mutex;
+        SlotState state{SlotState::FREE};
+    };
 
     TcpTransportConfig config_;
     Endpoint local_endpoint_;
@@ -305,15 +328,24 @@ private:
     platform::Mutex queue_mutex_;
     platform::ConditionVariable queue_cv_;
 
-    /// Guards connections_, server_mode_ and both socket descriptors. Listener
-    /// callbacks are always invoked with this released, so a listener may
-    /// re-enter the transport.
-    mutable platform::Mutex connection_mutex_;
-    ConnectionTable connections_;
+    /**
+     * @brief Guards the slot table, server_mode_ and both socket descriptors.
+     *
+     * No blocking socket call is ever made while this is held, so one slow or
+     * unresponsive peer cannot stall accepts or traffic for the others. Peer
+     * I/O is serialised by ConnectionSlot::io_mutex instead.
+     *
+     * Lock order is io_mutex then table_mutex_, never the reverse: a thread
+     * releases table_mutex_ before waiting on a slot's io_mutex, then re-takes
+     * table_mutex_ to re-validate the slot. Listener callbacks are invoked with
+     * both released, so a listener may re-enter the transport.
+     */
+    mutable platform::Mutex table_mutex_;
+    std::array<ConnectionSlot, MAX_TCP_CONNECTIONS> slots_;
     bool server_mode_{false};
 
     /// Socket created by initialize(). Ownership moves to listen_socket_fd_ on
-    /// enable_server_mode(), or into connections_ on a successful connect().
+    /// enable_server_mode(), or into a slot on a successful connect().
     someip_socket_t bound_socket_fd_{SOMEIP_INVALID_SOCKET};
     someip_socket_t listen_socket_fd_{SOMEIP_INVALID_SOCKET};
 
@@ -328,12 +360,42 @@ private:
     void connection_monitor_loop();
     void send_periodic_magic_cookie();
     Result send_data(someip_socket_t socket_fd, const platform::ByteBuffer& data);
-    Result receive_data(someip_socket_t socket_fd, platform::ByteBuffer& data);
 
-    // Connection table helpers. The _locked suffix requires connection_mutex_.
-    TcpConnection* find_peer_locked(const Endpoint& peer);
-    TcpConnection* find_socket_locked(someip_socket_t socket_fd);
-    void close_peer_locked(size_t index);
+    /**
+     * @brief Read once from a socket into a caller-owned buffer.
+     *
+     * Takes no lock, so the caller may hold a slot's io_mutex across it without
+     * blocking the slot table. Reads at most @p max_chunk bytes, which the
+     * caller derives from how much room is left in the connection's buffer.
+     * @p received is set to the byte count on success.
+     */
+    Result receive_data(someip_socket_t socket_fd, std::array<uint8_t, 4096>& buffer,
+                        size_t max_chunk, size_t& received);
+
+    // Slot table helpers. The _locked suffix requires table_mutex_.
+    ConnectionSlot* find_active_peer_locked(const Endpoint& peer);
+    ConnectionSlot* find_active_socket_locked(someip_socket_t socket_fd);
+    ConnectionSlot* allocate_slot_locked();
+    size_t active_count_locked() const;
+
+    /**
+     * @brief Take exclusive I/O rights on a peer's slot.
+     *
+     * Waits on the slot's io_mutex with table_mutex_ released, then re-validates
+     * that the slot still belongs to @p peer, since it may have been closed and
+     * recycled meanwhile. On success the slot's io_mutex is held by the caller
+     * and must be released with release_io(); @p fd_out receives the descriptor,
+     * which cannot be closed while those rights are held.
+     *
+     * @return The slot, or nullptr if the peer is no longer connected.
+     */
+    ConnectionSlot* acquire_io(const Endpoint& peer, someip_socket_t& fd_out);
+    /// As above, identifying the slot by descriptor rather than by peer.
+    ConnectionSlot* acquire_io(someip_socket_t socket_fd);
+    static void release_io(ConnectionSlot& slot);
+
+    /// Close one slot's socket and return it to FREE. Must NOT hold table_mutex_.
+    void close_slot(ConnectionSlot& slot);
     void close_socket_and_notify(someip_socket_t socket_fd);
     void notify_peers_lost(const EndpointList& peers);
 
