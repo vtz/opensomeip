@@ -30,7 +30,7 @@ namespace someip::transport {
  */
 
 // Predefined endpoints
-const Endpoint SOMEIP_SD_MULTICAST_ENDPOINT("239.118.122.69", 30490, TransportProtocol::MULTICAST_UDP);
+const Endpoint SOMEIP_SD_MULTICAST_ENDPOINT("239.255.255.251", 30490, TransportProtocol::MULTICAST_UDP);
 const Endpoint SOMEIP_DEFAULT_UDP_ENDPOINT("127.0.0.1", 30490, TransportProtocol::UDP);
 const Endpoint SOMEIP_DEFAULT_TCP_ENDPOINT("127.0.0.1", 30490, TransportProtocol::TCP);
 

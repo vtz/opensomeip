@@ -1547,15 +1547,15 @@ SD Entry Processing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Parse SD message with 3 entries (Find, Offer, Subscribe), verify each is dispatched to correct handler.
+   :verification: Integration test: Client sends SubscribeEventgroup, receives SubscribeEventgroupAck (Type 7, TTL>0), and activates the subscription (state SUBSCRIBED). Covered by ClientProcessesSubscribeAck.
 
    The software shall process SubscribeEventgroupAck entries (Type 7
    with TTL>0) by activating event reception for the subscribed
    eventgroup.
 
-   **Rationale**: Entry type dispatch enables parallel processing of mixed SD messages.
+   **Rationale**: The client must not treat an eventgroup as subscribed until the server acknowledges the request.
 
-   **Code Location**: ``src/sd/sd_server.cpp`` (process_sd_entries, entry type dispatch)
+   **Code Location**: ``src/sd/sd_client.cpp`` (process_sd_entries, handle_subscribe_ack_nack)
 
 .. requirement:: SubscribeEventgroupNack Processing
    :id: REQ_SD_120
@@ -1563,14 +1563,14 @@ SD Entry Processing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Serialize IPv4EndpointOption with IP=10.0.0.1 port=30001, deserialize, verify round-trip accuracy.
+   :verification: Integration test: Client sends SubscribeEventgroup for an eventgroup the server does not offer, receives SubscribeEventgroupNack (Type 7, TTL=0), and marks the subscription REJECTED. Covered by ClientProcessesSubscribeNack.
 
    The software shall process SubscribeEventgroupNack entries (Type 7
    with TTL=0) by marking the subscription as rejected.
 
-   **Rationale**: Options provide flexible endpoint and configuration metadata.
+   **Rationale**: Nack tells the client the subscription was not accepted so it can stop waiting for events.
 
-   **Code Location**: ``src/sd/sd_message.cpp`` (SdOption, IPv4EndpointOption, IPv4MulticastOption)
+   **Code Location**: ``src/sd/sd_client.cpp`` (process_sd_entries, handle_subscribe_ack_nack)
 
 
 SD Option Handling
@@ -2379,15 +2379,15 @@ SD SubscribeEventgroup Message Details
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Server receives FindService from unknown client, verify it responds without authentication checks (open access).
+   :verification: Unit/integration test: After OfferService is received, client constructs SubscribeEventgroup with Service ID, Instance ID, Eventgroup ID, TTL, and a client IPv4EndpointOption, and sends it to the offering ECU SD unicast address. Covered by SubscribeSentToUnicastNotMulticast.
 
    The software shall construct SubscribeEventgroup messages with Service
    ID, Instance ID, Eventgroup ID, TTL, and client Endpoint Options.
    Subscriptions shall be triggered by OfferService reception.
 
-   **Rationale**: Open access simplifies deployment without per-client authorization at SD level.
+   **Rationale**: SubscribeEventgroup tells the offering ECU which eventgroup the client wants and where to send events.
 
-   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
+   **Code Location**: ``src/sd/sd_client.cpp`` (subscribe_eventgroup)
 
 .. requirement:: SD Subscription Lifecycle
    :id: REQ_SD_271
@@ -2655,19 +2655,34 @@ SD Shutdown and Recovery
 
 .. requirement:: SD Graceful Shutdown
    :id: REQ_SD_310
-   :satisfies: feat_req_someipsd_818, feat_req_someipsd_819, feat_req_someipsd_822, feat_req_someipsd_823, feat_req_someipsd_824
+   :satisfies: feat_req_someipsd_819, feat_req_someipsd_822, feat_req_someipsd_823, feat_req_someipsd_824
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Configure reserved eventgroup handling, attempt subscription to reserved ID, verify rejection.
+   :verification: Unit test: Server shutdown sends StopOfferService for offered services; client shutdown sends StopSubscribe for active subscriptions.
 
    The software shall implement graceful shutdown by sending
    StopOfferService for all offered services and StopSubscribe
    for all active subscriptions.
 
-   **Rationale**: Mandatory features define the minimum required SD implementation.
+   **Rationale**: Peers must learn immediately that offered services and subscriptions are going away.
 
-   **Code Location**: ``include/sd/sd_types.h``, ``src/sd/sd_message.cpp``
+   **Code Location**: ``src/sd/sd_server.cpp`` (shutdown, send_stop_offer_messages), ``src/sd/sd_client.cpp`` (shutdown)
+
+.. requirement:: Subscribe Family Unicast Transport
+   :id: REQ_SD_818
+   :satisfies: feat_req_someipsd_818
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Integration test: After an Offer is received, SubscribeEventgroup is sent to the Offer datagram source (unicast IP and SD port), not the SD multicast group. Multicast Subscribe is ignored by the server when destination detection is available. Covered by SubscribeSentToUnicastNotMulticast and MulticastSubscribeDoesNotProduceAck.
+
+   SubscribeEventgroup, StopSubscribeEventgroup, SubscribeEventgroupAck,
+   and SubscribeEventgroupNack shall be transported by unicast only.
+
+   **Rationale**: Subscribe family messages are peer-to-peer and must not be flooded on the SD multicast group.
+
+   **Code Location**: ``src/sd/sd_client.cpp`` (subscribe_eventgroup, unsubscribe_eventgroup), ``src/sd/sd_server.cpp`` (process_sd_entries multicast filter)
 
 .. requirement:: SD Reboot Recovery
    :id: REQ_SD_311

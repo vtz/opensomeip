@@ -118,6 +118,15 @@ public:
     bool unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id);
 
     /**
+     * @brief Query eventgroup subscription state
+     *
+     * @return PENDING_ACK after Subscribe is sent, SUBSCRIBED after Ack (TTL>0),
+     *         REJECTED after Nack (TTL=0), REQUESTED if never subscribed
+     */
+    SubscriptionState get_eventgroup_subscription_state(uint16_t service_id, uint16_t instance_id,
+                                                       uint16_t eventgroup_id) const;
+
+    /**
      * @brief Get currently available services
      *
      * @param service_id Service to query (0 = all services)

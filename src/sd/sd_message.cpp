@@ -25,6 +25,7 @@
 #include <iostream>
 #include <utility>
 #include <variant>
+#include <algorithm>
 
 namespace someip::sd {
 
@@ -168,7 +169,13 @@ platform::ByteBuffer EventGroupEntry::serialize() const {
     // Byte 8: Major Version
     data[8] = major_version_;
 
-    // Bytes 12-13: Reserved + Counter (left as zero from base)
+    // Bytes 12-13: reserved (12 bit) + counter (4 bit), big-endian
+    const auto packed = static_cast<uint16_t>(
+        (static_cast<uint32_t>(reserved_12bit_ & 0x0FFFU) << 4U) |
+        (static_cast<uint32_t>(counter_) & 0x0FU));
+    data[12] = static_cast<uint8_t>((static_cast<uint32_t>(packed) >> 8U) & 0xFFU);
+    data[13] = static_cast<uint8_t>(static_cast<uint32_t>(packed) & 0xFFU);
+
     // Bytes 14-15: EventGroup ID
     data[14] = static_cast<uint8_t>((static_cast<uint32_t>(eventgroup_id_) >> 8U) & 0xFFU);
     data[15] = static_cast<uint8_t>(eventgroup_id_ & 0xFFU);
@@ -193,6 +200,11 @@ bool EventGroupEntry::deserialize(const platform::ByteBuffer& data, size_t& offs
     major_version_ = data[offset + 4];
     ttl_ = (static_cast<uint32_t>(data[offset + 5]) << 16U) | (static_cast<uint32_t>(data[offset + 6]) << 8U) |
            static_cast<uint32_t>(data[offset + 7]);
+    const auto packed = static_cast<uint16_t>(
+        (static_cast<uint32_t>(data[offset + 8]) << 8U) |
+        static_cast<uint32_t>(data[offset + 9]));
+    reserved_12bit_ = static_cast<uint16_t>((static_cast<uint32_t>(packed) >> 4U) & 0x0FFFU);
+    counter_ = static_cast<uint8_t>(static_cast<uint32_t>(packed) & 0x0FU);
     eventgroup_id_ = static_cast<uint16_t>((static_cast<uint32_t>(data[offset + 10]) << 8U) |
                                            static_cast<uint32_t>(data[offset + 11]));
 
@@ -408,6 +420,23 @@ bool IPv4MulticastOption::deserialize(const platform::ByteBuffer& data, size_t& 
     return true;
 }
 
+void IPv4MulticastOption::set_ipv4_address_from_string(const platform::String<>& ip_address) {
+    struct in_addr addr{};
+    if (someip_inet_pton(AF_INET, ip_address.c_str(), &addr) == 1) {
+        ipv4_address_ = addr.s_addr;
+    } else {
+        ipv4_address_ = 0;
+    }
+}
+
+platform::String<> IPv4MulticastOption::get_ipv4_address_string() const {
+    std::array<char, INET_ADDRSTRLEN> buffer{};
+    struct in_addr addr{};
+    addr.s_addr = ipv4_address_;
+    someip_inet_ntop(AF_INET, &addr, buffer.data(), buffer.size());
+    return platform::String<>(buffer.data());
+}
+
 // ConfigurationOption implementation
 /** @implements REQ_SD_236, REQ_SD_243 */
 platform::ByteBuffer ConfigurationOption::serialize() const {
@@ -469,6 +498,52 @@ bool SdMessage::add_option(SdOptionStorage option) {
     }
     options_.emplace_back(std::move(option));
     return true;
+}
+
+uint32_t pick_initial_wait_ms(const SdConfig& config) {
+    if (config.has_initial_delay_override) {
+        return config.initial_delay_override_ms;
+    }
+    auto min_ms = static_cast<uint32_t>(std::max<long long>(0, config.initial_delay_min.count()));
+    auto max_ms = static_cast<uint32_t>(std::max<long long>(0, config.initial_delay_max.count()));
+    const auto compat_ms = static_cast<uint32_t>(std::max<long long>(0, config.initial_delay.count()));
+    if (config.initial_delay != config.initial_delay_max) {
+        max_ms = compat_ms;
+    }
+    if (min_ms > max_ms) {
+        std::swap(min_ms, max_ms);
+    }
+    if (min_ms == max_ms) {
+        return min_ms;
+    }
+    static thread_local uint32_t lcg_state = 0xA5A5A5A5U;
+    lcg_state = lcg_state * 1664525U + 1013904223U;
+    const uint32_t span = max_ms - min_ms + 1U;
+    return min_ms + (lcg_state % span);
+}
+
+std::chrono::milliseconds sd_repetition_interval(const SdConfig& config, uint8_t repetition_index) {
+    auto delay = config.repetition_base;
+    const int multiplier = (config.repetition_multiplier == 0)
+        ? 2
+        : static_cast<int>(config.repetition_multiplier);
+    for (uint8_t i = 0; i < repetition_index; ++i) {
+        if (delay >= config.repetition_max) {
+            return config.repetition_max;
+        }
+        if (multiplier > 1 && delay > config.repetition_max / multiplier) {
+            return config.repetition_max;
+        }
+        delay *= multiplier;
+    }
+    if (delay > config.repetition_max) {
+        delay = config.repetition_max;
+    }
+    return delay;
+}
+
+bool sd_repetition_phase_done(const SdConfig& config, uint8_t next_index) {
+    return sd_repetition_interval(config, next_index) >= config.cyclic_offer;
 }
 
 /** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320 */
@@ -588,7 +663,10 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
             }
             entries_.emplace_back(std::move(entry));
         } else {
-            return false;
+            // Unknown entry types are skipped (16-byte entries) without failing
+            // the whole message. Known types that fail deserialize still fail.
+            offset += 16;
+            continue;
         }
     }
 

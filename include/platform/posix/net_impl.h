@@ -24,6 +24,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/uio.h>
+#include <array>
 
 using someip_socket_t = int;
 constexpr someip_socket_t SOMEIP_INVALID_SOCKET = -1;
@@ -143,6 +145,88 @@ static inline ssize_t someip_recvfrom(someip_socket_t fd, void* buf,
                                       struct sockaddr* src,
                                       socklen_t* addrlen) {
     return ::recvfrom(fd, buf, len, flags, src, addrlen);
+}
+
+/**
+ * @brief Enable ancillary destination-address reporting on a UDP socket.
+ *
+ * Uses IP_PKTINFO (Linux) or IP_RECVDSTADDR (Darwin). Returns 0 on success.
+ */
+static inline int someip_enable_recv_dest(someip_socket_t fd) {
+#if defined(__APPLE__)
+    int on = 1;
+    return ::setsockopt(fd, IPPROTO_IP, IP_RECVDSTADDR, &on, sizeof(on));
+#elif defined(IP_PKTINFO)
+    int on = 1;
+    return ::setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &on, sizeof(on));
+#else
+    (void)fd;
+    return -1;
+#endif
+}
+
+/**
+ * @brief recvfrom that also reports the IPv4 destination of the datagram.
+ *
+ * dest_ip is filled with a dotted IPv4 string when ancillary data is present;
+ * otherwise dest_ip[0] is set to '\\0' (unknown destination).
+ */
+static inline ssize_t someip_recvfrom_with_dest(someip_socket_t fd, void* buf,
+                                                size_t len, int flags,
+                                                struct sockaddr* src,
+                                                socklen_t* addrlen,
+                                                char* dest_ip, size_t dest_ip_len) {
+    if (dest_ip != nullptr && dest_ip_len > 0) {
+        dest_ip[0] = '\0';
+    }
+
+    struct iovec iov{};
+    iov.iov_base = buf;
+    iov.iov_len = len;
+
+    struct msghdr msg{};
+    msg.msg_name = src;
+    msg.msg_namelen = (addrlen != nullptr) ? *addrlen : 0;
+    msg.msg_iov = &iov;
+    msg.msg_iovlen = 1;
+
+    alignas(struct cmsghdr) std::array<char, 256> cmsg_buf{};
+    msg.msg_control = cmsg_buf.data();
+    msg.msg_controllen = cmsg_buf.size();
+
+    const ssize_t received = ::recvmsg(fd, &msg, flags);
+    if (received < 0) {
+        return received;
+    }
+    if (addrlen != nullptr) {
+        *addrlen = msg.msg_namelen;
+    }
+
+    if (dest_ip == nullptr || dest_ip_len == 0) {
+        return received;
+    }
+
+    for (struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msg); cmsg != nullptr;
+         cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+        if (cmsg->cmsg_level != IPPROTO_IP) {
+            continue;
+        }
+#if defined(__APPLE__)
+        if (cmsg->cmsg_type == IP_RECVDSTADDR) {
+            const auto* addr = reinterpret_cast<const struct in_addr*>(CMSG_DATA(cmsg));
+            ::inet_ntop(AF_INET, addr, dest_ip, static_cast<socklen_t>(dest_ip_len));
+            break;
+        }
+#elif defined(IP_PKTINFO)
+        if (cmsg->cmsg_type == IP_PKTINFO) {
+            const auto* pkt = reinterpret_cast<const struct in_pktinfo*>(CMSG_DATA(cmsg));
+            ::inet_ntop(AF_INET, &pkt->ipi_addr, dest_ip, static_cast<socklen_t>(dest_ip_len));
+            break;
+        }
+#endif
+    }
+
+    return received;
 }
 
 static inline ssize_t someip_send(someip_socket_t fd, const void* buf,

@@ -15,6 +15,7 @@
 #define SOMEIP_SD_SERVER_H
 
 #include "sd_types.h"
+#include "transport/endpoint.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -139,6 +140,15 @@ public:
         uint32_t subscriptions_acknowledged{0};
     };
     Statistics get_statistics() const;
+
+    using SubscriptionAcceptedCallback =
+        platform::Function<void(uint16_t service, uint16_t instance, uint16_t eventgroup,
+                                const transport::Endpoint& subscriber)>;
+
+    /**
+     * @brief Invoked after a SubscribeEventgroupAck is sent for a new/accepted subscription.
+     */
+    void set_subscription_accepted_callback(SubscriptionAcceptedCallback callback);
 
 private:
 #ifdef SOMEIP_STATIC_ALLOC

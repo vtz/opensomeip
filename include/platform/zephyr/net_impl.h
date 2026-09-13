@@ -171,6 +171,21 @@ static inline ssize_t someip_recvfrom(someip_socket_t fd, void* buf,
     return zsock_recvfrom(fd, buf, len, flags, src, addrlen);
 }
 
+static inline int someip_enable_recv_dest(someip_socket_t /*fd*/) {
+    return -1;
+}
+
+static inline ssize_t someip_recvfrom_with_dest(someip_socket_t fd, void* buf,
+                                                size_t len, int flags,
+                                                struct sockaddr* src,
+                                                socklen_t* addrlen,
+                                                char* dest_ip, size_t dest_ip_len) {
+    if (dest_ip != nullptr && dest_ip_len > 0) {
+        dest_ip[0] = '\0';
+    }
+    return someip_recvfrom(fd, buf, len, flags, src, addrlen);
+}
+
 static inline ssize_t someip_send(someip_socket_t fd, const void* buf,
                                   size_t len, int flags) {
     return zsock_send(fd, buf, len, flags);

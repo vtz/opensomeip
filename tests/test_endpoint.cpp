@@ -493,7 +493,7 @@ TEST_F(EndpointTest, Hash_UsableInUnorderedSet) {
 // ============================================================================
 
 TEST_F(EndpointTest, PredefinedEndpoints) {
-    EXPECT_EQ(SOMEIP_SD_MULTICAST_ENDPOINT.get_address(), "239.118.122.69");
+    EXPECT_EQ(SOMEIP_SD_MULTICAST_ENDPOINT.get_address(), "239.255.255.251");
     EXPECT_EQ(SOMEIP_SD_MULTICAST_ENDPOINT.get_port(), 30490);
     EXPECT_EQ(SOMEIP_SD_MULTICAST_ENDPOINT.get_protocol(), TransportProtocol::MULTICAST_UDP);
     EXPECT_TRUE(SOMEIP_SD_MULTICAST_ENDPOINT.is_multicast());

@@ -333,6 +333,9 @@ Result UdpTransport::create_socket() {
         }
     }
 
+    // Destination address for multicast vs unicast filtering (POSIX only).
+    static_cast<void>(someip_enable_recv_dest(socket_fd_));
+
     return Result::SUCCESS;
 }
 
@@ -383,15 +386,16 @@ void UdpTransport::receive_loop() {
 
     while (running_) {
         Endpoint sender;
+        Endpoint destination;
         size_t bytes_received = 0;
-        const Result result = receive_data(buffer, sender, bytes_received);
+        const Result result = receive_data(buffer, sender, destination, bytes_received);
 
         if (result == Result::SUCCESS && bytes_received > 0) {
             MessagePtr const message = platform::allocate_message();
             if (message && message->deserialize(buffer.data(), bytes_received)) {
                 auto* l = listener_.load(std::memory_order_acquire);
                 if (l != nullptr) {
-                    l->on_message_received(message, sender);
+                    l->on_message_received(message, sender, destination);
                 } else {
                     platform::ScopedLock const lock(queue_mutex_);
                     receive_queue_.emplace(message, sender);
@@ -449,19 +453,24 @@ Result UdpTransport::send_data(const platform::ByteBuffer& data, const Endpoint&
 }
 
 /** @implements REQ_TRANSPORT_010 */
-Result UdpTransport::receive_data(platform::ByteBuffer& data, Endpoint& sender, size_t& bytes_received) {
+Result UdpTransport::receive_data(platform::ByteBuffer& data, Endpoint& sender,
+                                  Endpoint& destination, size_t& bytes_received) {
     sockaddr_in src_addr = {};
     socklen_t addr_len = sizeof(src_addr);
 
     bytes_received = 0;
+    destination = Endpoint("", 0);
 
-    ssize_t received = someip_recvfrom(socket_fd_, data.data(), data.size(), 0,
-                                       reinterpret_cast<sockaddr*>(&src_addr),
-                                       &addr_len);
+    std::array<char, INET_ADDRSTRLEN> dest_ip{};
+    ssize_t received = someip_recvfrom_with_dest(
+        socket_fd_, data.data(), data.size(), 0,
+        reinterpret_cast<sockaddr*>(&src_addr), &addr_len,
+        dest_ip.data(), dest_ip.size());
     while (received < 0 && someip_socket_errno() == SOMEIP_EINTR) {
-        received = someip_recvfrom(socket_fd_, data.data(), data.size(), 0,
-                                   reinterpret_cast<sockaddr*>(&src_addr),
-                                   &addr_len);
+        received = someip_recvfrom_with_dest(
+            socket_fd_, data.data(), data.size(), 0,
+            reinterpret_cast<sockaddr*>(&src_addr), &addr_len,
+            dest_ip.data(), dest_ip.size());
     }
 
     if (received < 0) {
@@ -480,6 +489,13 @@ Result UdpTransport::receive_data(platform::ByteBuffer& data, Endpoint& sender, 
 
     sender = sockaddr_to_endpoint(src_addr);
     bytes_received = static_cast<size_t>(received);
+
+    if (dest_ip[0] != '\0') {
+        const bool multicast = is_multicast_address(dest_ip.data());
+        destination = Endpoint(dest_ip.data(), local_endpoint_.get_port(),
+                               multicast ? TransportProtocol::MULTICAST_UDP
+                                         : TransportProtocol::UDP);
+    }
 
     return Result::SUCCESS;
 }

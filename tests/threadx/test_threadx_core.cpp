@@ -153,7 +153,7 @@ static void test_threadx_pool_diagnostics() {
 }
 
 static TX_THREAD test_thread;
-static UCHAR test_stack[20480];
+static UCHAR test_stack[28672];
 
 #ifdef SOMEIP_STATIC_ALLOC
 /**

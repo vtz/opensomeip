@@ -167,21 +167,25 @@ Client              Multicast Group          Server
 
 ```cpp
 SdConfig config;
-config.multicast_address = "239.255.255.251";    // Standard SD multicast
-config.multicast_port = 30490;                   // Standard SD port
+config.multicast_address = "239.255.255.251";    // Deployment default; must match peers
+config.multicast_port = 30490;                   // Specified SOME/IP-SD port
 config.unicast_address = "127.0.0.1";           // Local unicast
 config.unicast_port = 0;                        // Auto-assign
-config.initial_delay = std::chrono::milliseconds(100);
+config.initial_delay_min = std::chrono::milliseconds(0);
+config.initial_delay_max = std::chrono::milliseconds(100);
+config.initial_delay = std::chrono::milliseconds(100);  // source-compat alias of max
 config.repetition_base = std::chrono::milliseconds(2000);
 config.cyclic_offer = std::chrono::milliseconds(30000);
 config.ttl = std::chrono::milliseconds(3600000); // 1 hour
 ```
 
+The multicast **port** 30490 is specified. The multicast **group** `239.255.255.251` is a deployment default and must be the same on every peer; it is not a protocol-mandated address.
+
 ### Timing Behavior
 
-1. **Initial Offer**: Sent after the configured `initial_delay` (default 100 ms); set to zero for immediate sending
-2. **Repetition Phase**: Offers sent with exponential backoff
-3. **Cyclic Phase**: Regular offers sent every 30 seconds
+1. **Initial Wait**: First Offer/Find is delayed by a random duration in `[initial_delay_min, initial_delay_max]` (override available for tests)
+2. **Repetition Phase**: After the first Offer, exponential back-off repeats at `repetition_base × 2^n` until the interval reaches `cyclic_offer`
+3. **Cyclic Phase**: Regular offers sent every `cyclic_offer` (default 30 s)
 4. **TTL Expiration**: Services expire after TTL seconds
 
 ## Safety Considerations (non-certified)
