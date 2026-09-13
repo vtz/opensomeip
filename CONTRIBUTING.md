@@ -138,6 +138,19 @@ pre-commit install --hook-type commit-msg
 pre-commit run --all-files
 ```
 
+**In the dev containers**, `pre-commit` is already on `PATH`: both images install
+`requirements-dev.txt`, which pins it, so there is nothing to `pip install`.
+
+```bash
+docker-compose -f docker-compose.dev.yml run --rm fedora-dev \
+  pre-commit run --all-files
+```
+
+Note that `pre-commit install` wires the hooks into `.git/hooks`, and those fire
+wherever you run `git commit`. If you build in a container but commit on the
+host, install pre-commit on the host as well, or the commit-msg hook will not
+run and CI will reject the commit message.
+
 **What the hooks check:**
 - Trailing whitespace and end-of-file issues
 - Valid YAML and JSON files
