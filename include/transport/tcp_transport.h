@@ -34,7 +34,7 @@
  * usually means raising SOMEIP_BYTE_POOL_* counts as well.
  */
 #ifndef SOMEIP_MAX_TCP_CONNECTIONS            // NOLINT(cppcoreguidelines-macro-usage)
-#define SOMEIP_MAX_TCP_CONNECTIONS 8          // NOLINT(cppcoreguidelines-macro-usage)
+#define SOMEIP_MAX_TCP_CONNECTIONS 10         // NOLINT(cppcoreguidelines-macro-usage)
 #endif
 
 namespace someip::transport {
@@ -81,7 +81,7 @@ struct TcpTransportConfig {
     std::chrono::milliseconds receive_timeout{100};        // Receive timeout
     std::chrono::milliseconds send_timeout{1000};          // Send timeout
     size_t max_receive_buffer{65536};                       // Max receive buffer size
-    size_t max_connections{8};                              // Concurrent connections (clamped)
+    size_t max_connections{10};                             // Concurrent connections (clamped)
     bool keep_alive{true};                                  // TCP keep-alive
     std::chrono::milliseconds keep_alive_interval{30000};   // Keep-alive interval
     bool magic_cookie_enabled{true};                        // Periodic Magic Cookie insertion

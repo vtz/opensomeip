@@ -90,12 +90,12 @@
   closes one connection and reports `on_connection_lost()` for it, while
   `disconnect()` continues to close every connection the transport holds.
 
-- `SOMEIP_MAX_TCP_CONNECTIONS` (default 8) sizes the TCP connection table
-  at compile time. `TcpTransportConfig::max_connections` is clamped to it
-  and reported by `max_connections()`; its default moved from 10 to 8 to
-  match. Raising it on a static-allocation build usually means raising
-  the `SOMEIP_BYTE_POOL_*` counts too, since each served connection may
-  hold a pooled receive buffer.
+- `SOMEIP_MAX_TCP_CONNECTIONS` (default 10, matching the long-standing
+  `TcpTransportConfig::max_connections` default) sizes the TCP connection
+  table at compile time. The configured limit is clamped to it and
+  reported by `max_connections()`. Raising it on a static-allocation
+  build usually means raising the `SOMEIP_BYTE_POOL_*` counts too, since
+  each served connection may hold a pooled receive buffer.
 
 ### Bug Fixes
 
