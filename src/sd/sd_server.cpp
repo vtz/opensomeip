@@ -387,13 +387,13 @@ private:
 
         offer_timer_thread_.emplace([this]() {
             while (running_) {
-                platform::this_thread::sleep_for(std::chrono::milliseconds(10));
+                const auto sleep_time = send_due_offers();
 
                 if (!running_) {
                     break;
                 }
 
-                send_due_offers();
+                platform::this_thread::sleep_for(sleep_time);
             }
         });
     }
@@ -404,9 +404,14 @@ private:
         }
     }
 
-    /** @implements REQ_SD_111, REQ_SD_112, REQ_SD_250, REQ_SD_251, REQ_SD_260 */
-    void send_due_offers() {
+    /** @implements REQ_SD_111, REQ_SD_112, REQ_SD_250, REQ_SD_251, REQ_SD_260
+     *  @returns Duration to sleep before the next offer is due.
+     */
+    std::chrono::milliseconds send_due_offers() {
         platform::ScopedLock const lock(offered_services_mutex_);
+
+        static constexpr auto kIdleSleep = std::chrono::milliseconds(500);
+        auto next_wakeup = kIdleSleep;
 
         const auto now = std::chrono::steady_clock::now();
         for (auto& service : offered_services_) {
@@ -417,7 +422,15 @@ private:
                     service.initial_offer_sent = true;
                     if (sd_repetition_phase_done(config_, 0)) {
                         service.in_main_phase = true;
+                        next_wakeup = std::min(next_wakeup, config_.cyclic_offer);
+                    } else {
+                        next_wakeup = std::min(next_wakeup,
+                            sd_repetition_interval(config_, service.repetition_index));
                     }
+                } else {
+                    const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        service.initial_offer_due - now);
+                    next_wakeup = std::min(next_wakeup, remaining);
                 }
                 continue;
             }
@@ -435,7 +448,14 @@ private:
                     }
                     if (sd_repetition_phase_done(config_, service.repetition_index)) {
                         service.in_main_phase = true;
+                        next_wakeup = std::min(next_wakeup, config_.cyclic_offer);
+                    } else {
+                        next_wakeup = std::min(next_wakeup,
+                            sd_repetition_interval(config_, service.repetition_index));
                     }
+                } else {
+                    const auto remaining = delay - time_since_last_offer;
+                    next_wakeup = std::min(next_wakeup, remaining);
                 }
                 continue;
             }
@@ -443,8 +463,18 @@ private:
             if (time_since_last_offer >= config_.cyclic_offer) {
                 send_service_offer(service);
                 service.last_offer_time = now;
+                next_wakeup = std::min(next_wakeup, config_.cyclic_offer);
+            } else {
+                const auto remaining = config_.cyclic_offer - time_since_last_offer;
+                next_wakeup = std::min(next_wakeup, remaining);
             }
         }
+
+        if (next_wakeup < std::chrono::milliseconds(1)) {
+            next_wakeup = std::chrono::milliseconds(1);
+        }
+
+        return next_wakeup;
     }
 
     void send_stop_offer_messages() {
