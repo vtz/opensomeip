@@ -2658,16 +2658,32 @@ TEST_F(SdIntegrationTest, MulticastSubscribeDoesNotProduceAck) {
 
     auto subscribe_msg = build_subscribe_eventgroup_message(
         0x1234, 0x0001, 0x0001, 1800, "127.0.0.1", client_port);
+
+    // Step 1: send Subscribe via multicast and check platform capability
     transport::Endpoint mcast(server_config.multicast_address, server_port,
                               transport::TransportProtocol::MULTICAST_UDP);
     ASSERT_EQ(client_transport.send_message(subscribe_msg, mcast), Result::SUCCESS);
 
     EventGroupEntry ack_entry;
-    bool received = receive_sd_ack(client_transport, ack_entry, std::chrono::milliseconds(400));
+    bool mcast_acked = receive_sd_ack(client_transport, ack_entry, std::chrono::milliseconds(400));
+
+    if (mcast_acked) {
+        client_transport.stop();
+        server.shutdown();
+        GTEST_SKIP() << "Destination address not available; multicast Subscribe was treated as unicast";
+    }
+
+    // Step 2: positive control — unicast Subscribe MUST be accepted
+    transport::Endpoint unicast_ep("127.0.0.1", server_port);
+    ASSERT_EQ(client_transport.send_message(subscribe_msg, unicast_ep), Result::SUCCESS);
+
+    EventGroupEntry unicast_ack;
+    bool unicast_acked = receive_sd_ack(client_transport, unicast_ack, std::chrono::milliseconds(400));
+
     client_transport.stop();
     server.shutdown();
 
-    if (received) {
-        GTEST_SKIP() << "Destination address not available; multicast Subscribe was treated as unicast";
-    }
+    ASSERT_TRUE(unicast_acked) << "Unicast Subscribe must be accepted (positive control)";
+    EXPECT_EQ(unicast_ack.get_service_id(), 0x1234u);
+    EXPECT_EQ(unicast_ack.get_eventgroup_id(), 0x0001u);
 }
