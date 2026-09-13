@@ -31,11 +31,13 @@
  * receive buffer drawn from the byte pool, so raising this on a static build
  * usually means raising SOMEIP_BYTE_POOL_* counts as well.
  */
-#ifndef SOMEIP_MAX_TCP_CONNECTIONS
-#define SOMEIP_MAX_TCP_CONNECTIONS 8
+#ifndef SOMEIP_MAX_TCP_CONNECTIONS            // NOLINT(cppcoreguidelines-macro-usage)
+#define SOMEIP_MAX_TCP_CONNECTIONS 8          // NOLINT(cppcoreguidelines-macro-usage)
 #endif
 
 namespace someip::transport {
+
+inline constexpr size_t MAX_TCP_CONNECTIONS = SOMEIP_MAX_TCP_CONNECTIONS;
 
 /**
  * @brief TCP Connection State
@@ -77,7 +79,7 @@ struct TcpTransportConfig {
     std::chrono::milliseconds receive_timeout{100};        // Receive timeout
     std::chrono::milliseconds send_timeout{1000};          // Send timeout
     size_t max_receive_buffer{65536};                       // Max receive buffer size
-    size_t max_connections{8};                              // Max concurrent connections (clamped to SOMEIP_MAX_TCP_CONNECTIONS)
+    size_t max_connections{8};                              // Concurrent connections (clamped)
     bool keep_alive{true};                                  // TCP keep-alive
     std::chrono::milliseconds keep_alive_interval{30000};   // Keep-alive interval
     bool magic_cookie_enabled{true};                        // Periodic Magic Cookie insertion
@@ -117,10 +119,19 @@ public:
     [[nodiscard]] Result initialize(const Endpoint& local_endpoint);
 
     /**
-     * @brief Send a message
+     * @brief Send a message to one connected peer
+     *
+     * The message is sent on the connection whose remote endpoint matches
+     * @p endpoint by address and port. A server therefore addresses each of its
+     * peers individually; a client names the endpoint it connected to.
+     *
      * @param message The message to send
      * @param endpoint The destination endpoint
-     * @return Result of the operation
+     * @return SUCCESS on transmission, INVALID_ENDPOINT if @p endpoint is
+     *         malformed, NOT_CONNECTED if no connection matches it
+     *
+     * @thread_safety Thread-safe
+     * @safety Safety alignment in progress (not certified)
      */
     [[nodiscard]] Result send_message(const Message& message, const Endpoint& endpoint) override;
 
@@ -198,7 +209,11 @@ public:
 
     /**
      * @brief Number of peers currently connected
+     *
      * @return Connection count (0..max_connections())
+     *
+     * @thread_safety Thread-safe
+     * @safety Safety alignment in progress (not certified)
      */
     size_t connection_count() const;
 
@@ -208,21 +223,34 @@ public:
      * TcpTransportConfig::max_connections clamped to SOMEIP_MAX_TCP_CONNECTIONS.
      *
      * @return Maximum number of peers served concurrently
+     *
+     * @thread_safety Thread-safe
+     * @safety Safety alignment in progress (not certified)
      */
     size_t max_connections() const;
 
     /**
      * @brief Check whether a specific peer is connected
+     *
      * @param peer Remote endpoint, matched on address and port
      * @return true if a connection to that peer is established
+     *
+     * @thread_safety Thread-safe
+     * @safety Safety alignment in progress (not certified)
      */
     bool is_peer_connected(const Endpoint& peer) const;
 
     /**
      * @brief Close the connection to one peer, leaving others untouched
+     *
+     * Reports ITransportListener::on_connection_lost() for the closed peer.
+     *
      * @param peer Remote endpoint, matched on address and port
      * @return SUCCESS if the peer was connected and is now closed,
      *         NOT_CONNECTED otherwise
+     *
+     * @thread_safety Thread-safe. Safe to call from a listener callback.
+     * @safety Safety alignment in progress (not certified)
      */
     Result disconnect_peer(const Endpoint& peer);
 
@@ -261,9 +289,9 @@ public:
 
 private:
     /// Established peer connections. A client holds at most one entry.
-    using ConnectionTable = platform::Vector<TcpConnection, SOMEIP_MAX_TCP_CONNECTIONS>;
+    using ConnectionTable = platform::Vector<TcpConnection, MAX_TCP_CONNECTIONS>;
     /// Peer endpoints batched for notification outside connection_mutex_.
-    using EndpointList = platform::Vector<Endpoint, SOMEIP_MAX_TCP_CONNECTIONS>;
+    using EndpointList = platform::Vector<Endpoint, MAX_TCP_CONNECTIONS>;
 
     TcpTransportConfig config_;
     Endpoint local_endpoint_;
@@ -277,8 +305,9 @@ private:
     platform::Mutex queue_mutex_;
     platform::ConditionVariable queue_cv_;
 
-    /// Guards connections_ and bound_socket_fd_. Listener callbacks are always
-    /// invoked with this released, so a listener may re-enter the transport.
+    /// Guards connections_, server_mode_ and both socket descriptors. Listener
+    /// callbacks are always invoked with this released, so a listener may
+    /// re-enter the transport.
     mutable platform::Mutex connection_mutex_;
     ConnectionTable connections_;
     bool server_mode_{false};

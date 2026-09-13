@@ -97,7 +97,8 @@ Result TcpTransport::initialize(const Endpoint& local_endpoint) {
     // Update local endpoint with the actual bound port (useful when port was 0)
     sockaddr_in bound_addr = {};
     socklen_t addr_len = sizeof(bound_addr);
-    if (someip_getsockname(bound_socket_fd_, reinterpret_cast<struct sockaddr*>(&bound_addr), &addr_len) == 0) {
+    if (someip_getsockname(bound_socket_fd_,
+                           reinterpret_cast<struct sockaddr*>(&bound_addr), &addr_len) == 0) {
         local_endpoint_ = Endpoint(local_endpoint_.get_address(), ntohs(bound_addr.sin_port));
     }
 
@@ -179,7 +180,7 @@ size_t TcpTransport::connection_count() const {
 /** @implements REQ_TRANSPORT_003_E01 */
 size_t TcpTransport::max_connections() const {
     const size_t configured = (config_.max_connections == 0U) ? 1U : config_.max_connections;
-    return std::min(configured, static_cast<size_t>(SOMEIP_MAX_TCP_CONNECTIONS));
+    return std::min(configured, MAX_TCP_CONNECTIONS);
 }
 
 bool TcpTransport::is_peer_connected(const Endpoint& peer) const {
@@ -379,16 +380,28 @@ someip_socket_t TcpTransport::accept_connection() {
 }
 
 someip_socket_t TcpTransport::accept_connection_with_peer(Endpoint& peer_endpoint) {
-    if (!server_mode_ || listen_socket_fd_ == SOMEIP_INVALID_SOCKET) {
+    // Snapshot the descriptor: stop() may invalidate the member concurrently,
+    // and FD_SET/FD_ISSET on -1 trips the glibc FD_* fortify checks.
+    someip_socket_t listen_fd = SOMEIP_INVALID_SOCKET;
+    {
+        platform::ScopedLock const lock(connection_mutex_);
+        if (!server_mode_) {
+            return SOMEIP_INVALID_SOCKET;
+        }
+        listen_fd = listen_socket_fd_;
+    }
+
+    if (listen_fd == SOMEIP_INVALID_SOCKET) {
         return SOMEIP_INVALID_SOCKET;
     }
 
     fd_set read_fds;
     FD_ZERO(&read_fds);
-    FD_SET(listen_socket_fd_, &read_fds);
+    FD_SET(listen_fd, &read_fds);
 
     struct timeval tv = {0, 100000}; // 100ms
-    const int sel = someip_select(static_cast<int>(listen_socket_fd_) + 1, &read_fds, nullptr, nullptr, &tv);
+    const int sel =
+        someip_select(static_cast<int>(listen_fd) + 1, &read_fds, nullptr, nullptr, &tv);
     if (sel <= 0) {
         return SOMEIP_INVALID_SOCKET;
     }
@@ -397,7 +410,7 @@ someip_socket_t TcpTransport::accept_connection_with_peer(Endpoint& peer_endpoin
     socklen_t client_len = sizeof(client_addr);
 
     someip_socket_t const client_fd =
-        someip_accept(listen_socket_fd_, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
+        someip_accept(listen_fd, reinterpret_cast<struct sockaddr*>(&client_addr), &client_len);
 
     if (client_fd == SOMEIP_INVALID_SOCKET) {
         return SOMEIP_INVALID_SOCKET;
@@ -434,7 +447,8 @@ Result TcpTransport::bind_socket() {
     addr.sin_port = htons(local_endpoint_.get_port());
     addr.sin_addr.s_addr = someip_inet_addr(local_endpoint_.get_address().c_str());
 
-    if (someip_bind(bound_socket_fd_, reinterpret_cast<const struct sockaddr*>(&addr), sizeof(addr)) < 0) {
+    if (someip_bind(bound_socket_fd_,
+                    reinterpret_cast<const struct sockaddr*>(&addr), sizeof(addr)) < 0) {
         return Result::NETWORK_ERROR;
     }
 
@@ -511,10 +525,12 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
         timeout.tv_usec = static_cast<decltype(timeout.tv_usec)>((config_.connection_timeout.count() % 1000) * 1000);
 
         connect_result = -1;
-        if (someip_select(static_cast<int>(socket_fd) + 1, nullptr, &write_fds, nullptr, &timeout) > 0) {
+        if (someip_select(static_cast<int>(socket_fd) + 1, nullptr, &write_fds,
+                          nullptr, &timeout) > 0) {
             int error = 0;
             socklen_t len = sizeof(error);
-            if (someip_getsockopt(socket_fd, SOL_SOCKET, SO_ERROR, &error, &len) == 0 && error == 0) {
+            if (someip_getsockopt(socket_fd, SOL_SOCKET, SO_ERROR, &error, &len) == 0 &&
+                error == 0) {
                 connect_result = 0;
             }
         }
@@ -706,7 +722,7 @@ void TcpTransport::receive_loop() {
         }
 
         // Collect readable peers first; service_peer() re-locks per peer.
-        platform::Vector<someip_socket_t, SOMEIP_MAX_TCP_CONNECTIONS> readable;
+        platform::Vector<someip_socket_t, MAX_TCP_CONNECTIONS> readable;
         {
             platform::ScopedLock const lock(connection_mutex_);
             for (const auto& conn : connections_) {
