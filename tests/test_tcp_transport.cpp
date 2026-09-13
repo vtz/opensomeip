@@ -19,6 +19,9 @@
 #include <platform/containers.h>
 #include <thread>
 #include <chrono>
+#include <memory>
+#include <set>
+#include <vector>
 #include "static_pool_init.h"
 
 using namespace someip;
@@ -1131,6 +1134,359 @@ TEST_F(TcpTransportTest, ListenerCallingDisconnectDoesNotDeadlock) {
     EXPECT_TRUE(callback_fired.load()) << "Listener callback should have fired";
     EXPECT_TRUE(disconnect_completed.load())
         << "disconnect() from listener must complete without deadlock";
+
+    client.disconnect();
+    client.stop();
+    server.stop();
+}
+
+// ============================================================================
+// Multi-connection server (issue #319)
+// ============================================================================
+
+namespace {
+
+/// Build a REQUEST carrying a single-byte payload used to identify the sender.
+Message make_tagged_message(uint8_t tag) {
+    Message msg;
+    msg.set_service_id(0x1234);
+    msg.set_method_id(0x5678);
+    msg.set_client_id(static_cast<uint16_t>(0x1000U + tag));
+    msg.set_session_id(static_cast<uint16_t>(tag + 1U));
+    msg.set_protocol_version(1);
+    msg.set_interface_version(1);
+    msg.set_message_type(MessageType::REQUEST);
+    msg.set_return_code(ReturnCode::E_OK);
+
+    platform::ByteBuffer payload = {tag};
+    msg.set_payload(payload);
+    return msg;
+}
+
+/// A started client transport already connected to server_ep.
+struct ConnectedClient {
+    std::unique_ptr<TcpTransport> transport;
+    std::unique_ptr<TestTcpListener> listener;
+    Endpoint local;
+};
+
+}  // namespace
+
+/**
+ * @test_case TC_TCP_MULTI_CLIENT
+ * @tests REQ_TRANSPORT_003b
+ * @brief A TCP server serves several clients at the same time (issue #319)
+ *
+ * Before the fix the server stored a single TcpConnection and closed every
+ * surplus accepted socket, so only the first client was ever served.
+ */
+TEST_F(TcpTransportTest, ServerAcceptsMultipleConcurrentClients) {
+    constexpr size_t NUM_CLIENTS = 4;
+
+    TcpTransport server(config);
+    ASSERT_EQ(server.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+
+    const Endpoint server_ep = server.get_local_endpoint();
+
+    std::vector<ConnectedClient> clients;
+    for (size_t i = 0; i < NUM_CLIENTS; ++i) {
+        ConnectedClient client;
+        client.transport = std::make_unique<TcpTransport>(config);
+        client.listener = std::make_unique<TestTcpListener>();
+        ASSERT_EQ(client.transport->initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+        client.transport->set_listener(client.listener.get());
+        ASSERT_EQ(client.transport->start(), Result::SUCCESS);
+        ASSERT_EQ(client.transport->connect(server_ep), Result::SUCCESS)
+            << "client " << i << " must connect";
+        client.local = client.transport->get_local_endpoint();
+        clients.push_back(std::move(client));
+    }
+
+    // Every client must still be connected; none may have been dropped.
+    for (size_t i = 0; i < NUM_CLIENTS; ++i) {
+        EXPECT_TRUE(clients[i].transport->is_connected())
+            << "client " << i << " must remain connected";
+    }
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (server.connection_count() < NUM_CLIENTS &&
+           std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    EXPECT_EQ(server.connection_count(), NUM_CLIENTS)
+        << "server must hold one connection per client";
+
+    // Each client sends a distinct tag; the server must receive all of them.
+    for (size_t i = 0; i < NUM_CLIENTS; ++i) {
+        EXPECT_EQ(clients[i].transport->send_message(make_tagged_message(static_cast<uint8_t>(i)),
+                                                     server_ep),
+                  Result::SUCCESS);
+    }
+
+    ASSERT_TRUE(server_listener.wait_for_messages(NUM_CLIENTS, std::chrono::milliseconds(5000)))
+        << "server must receive a message from every client";
+
+    std::set<uint8_t> received_tags;
+    std::set<uint16_t> sender_ports;
+    for (const auto& [message, sender] : server_listener.get_received_messages()) {
+        ASSERT_NE(message, nullptr);
+        ASSERT_EQ(message->get_payload().size(), 1U);
+        received_tags.insert(message->get_payload()[0]);
+        sender_ports.insert(sender.get_port());
+    }
+
+    EXPECT_EQ(received_tags.size(), NUM_CLIENTS) << "every client's payload must arrive";
+    EXPECT_EQ(sender_ports.size(), NUM_CLIENTS)
+        << "each message must be attributed to a distinct peer";
+
+    for (auto& client : clients) {
+        client.transport->disconnect();
+        client.transport->stop();
+    }
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_MULTI_CLIENT_ROUTING
+ * @tests REQ_TRANSPORT_003b, REQ_TRANSPORT_002a
+ * @brief send_message() delivers to the peer named by its endpoint argument
+ *
+ * Before the fix the endpoint parameter was ignored and every send went to the
+ * single stored socket.
+ */
+TEST_F(TcpTransportTest, ServerRoutesEachResponseToItsOwnPeer) {
+    constexpr size_t NUM_CLIENTS = 3;
+
+    TcpTransport server(config);
+    ASSERT_EQ(server.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+
+    const Endpoint server_ep = server.get_local_endpoint();
+
+    std::vector<ConnectedClient> clients;
+    for (size_t i = 0; i < NUM_CLIENTS; ++i) {
+        ConnectedClient client;
+        client.transport = std::make_unique<TcpTransport>(config);
+        client.listener = std::make_unique<TestTcpListener>();
+        ASSERT_EQ(client.transport->initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+        client.transport->set_listener(client.listener.get());
+        ASSERT_EQ(client.transport->start(), Result::SUCCESS);
+        ASSERT_EQ(client.transport->connect(server_ep), Result::SUCCESS);
+        clients.push_back(std::move(client));
+    }
+
+    // Each client announces itself so the server learns its peer endpoint.
+    for (size_t i = 0; i < NUM_CLIENTS; ++i) {
+        EXPECT_EQ(clients[i].transport->send_message(make_tagged_message(static_cast<uint8_t>(i)),
+                                                     server_ep),
+                  Result::SUCCESS);
+    }
+    ASSERT_TRUE(server_listener.wait_for_messages(NUM_CLIENTS, std::chrono::milliseconds(5000)));
+
+    // Echo each tag back to the peer it came from.
+    for (const auto& [message, sender] : server_listener.get_received_messages()) {
+        ASSERT_EQ(message->get_payload().size(), 1U);
+        EXPECT_TRUE(server.is_peer_connected(sender));
+        EXPECT_EQ(server.send_message(make_tagged_message(message->get_payload()[0]), sender),
+                  Result::SUCCESS);
+    }
+
+    // Each client must receive exactly its own tag back.
+    for (size_t i = 0; i < NUM_CLIENTS; ++i) {
+        ASSERT_TRUE(clients[i].listener->wait_for_message(std::chrono::milliseconds(5000)))
+            << "client " << i << " must receive its echo";
+
+        const auto echoes = clients[i].listener->get_received_messages();
+        ASSERT_EQ(echoes.size(), 1U) << "client " << i << " must receive only its own echo";
+        ASSERT_EQ(echoes[0].first->get_payload().size(), 1U);
+        EXPECT_EQ(echoes[0].first->get_payload()[0], static_cast<uint8_t>(i))
+            << "client " << i << " received another peer's message";
+    }
+
+    for (auto& client : clients) {
+        client.transport->disconnect();
+        client.transport->stop();
+    }
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_E01_LIMIT
+ * @tests REQ_TRANSPORT_003_E01
+ * @brief Connections beyond max_connections are refused, established ones survive
+ */
+TEST_F(TcpTransportTest, ConnectionLimitRefusesSurplusClientsOnly) {
+    TcpTransportConfig limited = config;
+    limited.max_connections = 2;
+
+    TcpTransport server(limited);
+    ASSERT_EQ(server.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+
+    EXPECT_EQ(server.max_connections(), 2U);
+
+    const Endpoint server_ep = server.get_local_endpoint();
+
+    std::vector<ConnectedClient> clients;
+    for (size_t i = 0; i < limited.max_connections; ++i) {
+        ConnectedClient client;
+        client.transport = std::make_unique<TcpTransport>(limited);
+        client.listener = std::make_unique<TestTcpListener>();
+        ASSERT_EQ(client.transport->initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+        client.transport->set_listener(client.listener.get());
+        ASSERT_EQ(client.transport->start(), Result::SUCCESS);
+        ASSERT_EQ(client.transport->connect(server_ep), Result::SUCCESS);
+        clients.push_back(std::move(client));
+    }
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (server.connection_count() < limited.max_connections &&
+           std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    ASSERT_EQ(server.connection_count(), limited.max_connections);
+
+    // One client beyond the limit. TCP may complete the handshake from the
+    // backlog, but the server must never exceed its configured limit.
+    TcpTransport surplus(limited);
+    ASSERT_EQ(surplus.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(surplus.start(), Result::SUCCESS);
+    (void)surplus.connect(server_ep);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_EQ(server.connection_count(), limited.max_connections)
+        << "server must not exceed max_connections";
+
+    // The clients admitted first must be unaffected by the refusal.
+    for (size_t i = 0; i < clients.size(); ++i) {
+        EXPECT_EQ(clients[i].transport->send_message(make_tagged_message(static_cast<uint8_t>(i)),
+                                                     server_ep),
+                  Result::SUCCESS)
+            << "admitted client " << i << " must still be served";
+    }
+    EXPECT_TRUE(server_listener.wait_for_messages(clients.size(), std::chrono::milliseconds(5000)));
+
+    surplus.disconnect();
+    surplus.stop();
+    for (auto& client : clients) {
+        client.transport->disconnect();
+        client.transport->stop();
+    }
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_PEER_ISOLATION
+ * @tests REQ_TRANSPORT_003b, REQ_TRANSPORT_003_E01
+ * @brief One peer disconnecting leaves the other peers serviceable
+ */
+TEST_F(TcpTransportTest, OnePeerDisconnectingLeavesOthersConnected) {
+    constexpr size_t NUM_CLIENTS = 3;
+
+    TcpTransport server(config);
+    ASSERT_EQ(server.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+
+    const Endpoint server_ep = server.get_local_endpoint();
+
+    std::vector<ConnectedClient> clients;
+    for (size_t i = 0; i < NUM_CLIENTS; ++i) {
+        ConnectedClient client;
+        client.transport = std::make_unique<TcpTransport>(config);
+        client.listener = std::make_unique<TestTcpListener>();
+        ASSERT_EQ(client.transport->initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+        client.transport->set_listener(client.listener.get());
+        ASSERT_EQ(client.transport->start(), Result::SUCCESS);
+        ASSERT_EQ(client.transport->connect(server_ep), Result::SUCCESS);
+        clients.push_back(std::move(client));
+    }
+
+    const auto connected_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (server.connection_count() < NUM_CLIENTS &&
+           std::chrono::steady_clock::now() < connected_deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    ASSERT_EQ(server.connection_count(), NUM_CLIENTS);
+
+    // Drop the middle client.
+    clients[1].transport->disconnect();
+    clients[1].transport->stop();
+
+    const auto dropped_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (server.connection_count() > NUM_CLIENTS - 1 &&
+           std::chrono::steady_clock::now() < dropped_deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    EXPECT_EQ(server.connection_count(), NUM_CLIENTS - 1)
+        << "only the departing peer may be removed";
+
+    server_listener.clear_messages();
+
+    // The survivors must still be served.
+    EXPECT_EQ(clients[0].transport->send_message(make_tagged_message(0), server_ep),
+              Result::SUCCESS);
+    EXPECT_EQ(clients[2].transport->send_message(make_tagged_message(2), server_ep),
+              Result::SUCCESS);
+
+    EXPECT_TRUE(server_listener.wait_for_messages(2, std::chrono::milliseconds(5000)))
+        << "surviving peers must still be serviced";
+
+    clients[0].transport->disconnect();
+    clients[0].transport->stop();
+    clients[2].transport->disconnect();
+    clients[2].transport->stop();
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_ROUTE_UNKNOWN_PEER
+ * @tests REQ_TRANSPORT_002_E04
+ * @brief Sending to an endpoint with no connection fails instead of misrouting
+ */
+TEST_F(TcpTransportTest, SendToUnknownPeerDoesNotMisroute) {
+    TcpTransport server(config);
+    ASSERT_EQ(server.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+
+    const Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+    ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    while (server.connection_count() < 1U && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    ASSERT_EQ(server.connection_count(), 1U);
+
+    // A well-formed endpoint that is not one of the server's peers.
+    const Endpoint stranger("127.0.0.1", 1);
+    EXPECT_FALSE(server.is_peer_connected(stranger));
+    EXPECT_EQ(server.send_message(make_tagged_message(0), stranger), Result::NOT_CONNECTED)
+        << "an unknown peer must not fall back to another connection";
+
+    EXPECT_EQ(server.send_message(make_tagged_message(0), Endpoint("not-an-ip", 100)),
+              Result::INVALID_ENDPOINT);
 
     client.disconnect();
     client.stop();

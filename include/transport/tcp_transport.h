@@ -23,6 +23,18 @@
 #include <cstddef>
 #include <optional>
 
+/**
+ * @brief Compile-time upper bound on concurrently served TCP connections.
+ *
+ * Static builds size the connection table at compile time, so this bound also
+ * caps TcpTransportConfig::max_connections. Each served connection may hold a
+ * receive buffer drawn from the byte pool, so raising this on a static build
+ * usually means raising SOMEIP_BYTE_POOL_* counts as well.
+ */
+#ifndef SOMEIP_MAX_TCP_CONNECTIONS
+#define SOMEIP_MAX_TCP_CONNECTIONS 8
+#endif
+
 namespace someip::transport {
 
 /**
@@ -43,6 +55,7 @@ struct TcpConnection {
     Endpoint remote_endpoint;
     TcpConnectionState state{TcpConnectionState::DISCONNECTED};
     std::chrono::steady_clock::time_point last_activity{std::chrono::steady_clock::now()};
+    std::chrono::steady_clock::time_point last_magic_cookie{std::chrono::steady_clock::now()};
     platform::ByteBuffer receive_buffer;
 
     TcpConnection() = default;
@@ -64,7 +77,7 @@ struct TcpTransportConfig {
     std::chrono::milliseconds receive_timeout{100};        // Receive timeout
     std::chrono::milliseconds send_timeout{1000};          // Send timeout
     size_t max_receive_buffer{65536};                       // Max receive buffer size
-    size_t max_connections{10};                             // Max concurrent connections
+    size_t max_connections{8};                              // Max concurrent connections (clamped to SOMEIP_MAX_TCP_CONNECTIONS)
     bool keep_alive{true};                                  // TCP keep-alive
     std::chrono::milliseconds keep_alive_interval{30000};   // Keep-alive interval
     bool magic_cookie_enabled{true};                        // Periodic Magic Cookie insertion
@@ -174,9 +187,44 @@ public:
 
     /**
      * @brief Get current connection state
+     *
+     * A server may serve several peers at once. This reports CONNECTED while at
+     * least one peer is connected; use connection_count() or
+     * is_peer_connected() to inspect individual peers.
+     *
      * @return Connection state
      */
     TcpConnectionState get_connection_state() const;
+
+    /**
+     * @brief Number of peers currently connected
+     * @return Connection count (0..max_connections())
+     */
+    size_t connection_count() const;
+
+    /**
+     * @brief Effective concurrent connection limit
+     *
+     * TcpTransportConfig::max_connections clamped to SOMEIP_MAX_TCP_CONNECTIONS.
+     *
+     * @return Maximum number of peers served concurrently
+     */
+    size_t max_connections() const;
+
+    /**
+     * @brief Check whether a specific peer is connected
+     * @param peer Remote endpoint, matched on address and port
+     * @return true if a connection to that peer is established
+     */
+    bool is_peer_connected(const Endpoint& peer) const;
+
+    /**
+     * @brief Close the connection to one peer, leaving others untouched
+     * @param peer Remote endpoint, matched on address and port
+     * @return SUCCESS if the peer was connected and is now closed,
+     *         NOT_CONNECTED otherwise
+     */
+    Result disconnect_peer(const Endpoint& peer);
 
     /**
      * @brief Enable server mode (listen for incoming connections)
@@ -212,23 +260,32 @@ public:
     static platform::ByteBuffer make_magic_cookie_server();
 
 private:
+    /// Established peer connections. A client holds at most one entry.
+    using ConnectionTable = platform::Vector<TcpConnection, SOMEIP_MAX_TCP_CONNECTIONS>;
+    /// Peer endpoints batched for notification outside connection_mutex_.
+    using EndpointList = platform::Vector<Endpoint, SOMEIP_MAX_TCP_CONNECTIONS>;
+
     TcpTransportConfig config_;
     Endpoint local_endpoint_;
-    TcpConnection connection_;
     std::atomic<ITransportListener*> listener_{nullptr};
 
     std::atomic<bool> running_{false};
     std::optional<platform::Thread> receive_thread_;
     std::optional<platform::Thread> connection_thread_;
 
-    std::atomic<size_t> active_connections_{0};
-
     platform::Queue<std::pair<MessagePtr, Endpoint>> message_queue_;
     platform::Mutex queue_mutex_;
     platform::ConditionVariable queue_cv_;
 
-    platform::Mutex connection_mutex_;
+    /// Guards connections_ and bound_socket_fd_. Listener callbacks are always
+    /// invoked with this released, so a listener may re-enter the transport.
+    mutable platform::Mutex connection_mutex_;
+    ConnectionTable connections_;
     bool server_mode_{false};
+
+    /// Socket created by initialize(). Ownership moves to listen_socket_fd_ on
+    /// enable_server_mode(), or into connections_ on a successful connect().
+    someip_socket_t bound_socket_fd_{SOMEIP_INVALID_SOCKET};
     someip_socket_t listen_socket_fd_{SOMEIP_INVALID_SOCKET};
 
     void deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender);
@@ -244,7 +301,17 @@ private:
     Result send_data(someip_socket_t socket_fd, const platform::ByteBuffer& data);
     Result receive_data(someip_socket_t socket_fd, platform::ByteBuffer& data);
 
-    std::chrono::steady_clock::time_point last_magic_cookie_time_{std::chrono::steady_clock::now()};
+    // Connection table helpers. The _locked suffix requires connection_mutex_.
+    TcpConnection* find_peer_locked(const Endpoint& peer);
+    TcpConnection* find_socket_locked(someip_socket_t socket_fd);
+    void close_peer_locked(size_t index);
+    void close_socket_and_notify(someip_socket_t socket_fd);
+    void notify_peers_lost(const EndpointList& peers);
+
+    /// Accept one pending peer (server mode), if below the connection limit.
+    void accept_pending_peer();
+    /// Read from one peer socket and dispatch every complete message on it.
+    void service_peer(someip_socket_t socket_fd);
 };
 
 }  // namespace someip::transport
