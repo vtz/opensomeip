@@ -130,7 +130,12 @@ public:
      * @param message The message to send
      * @param endpoint The destination endpoint
      * @return SUCCESS on transmission, INVALID_ENDPOINT if @p endpoint is
-     *         malformed, NOT_CONNECTED if no connection matches it
+     *         malformed, NOT_CONNECTED if no connection matches it, TIMEOUT if
+     *         the peer accepted nothing within TcpTransportConfig::send_timeout
+     *         (the message did not go out and may be retried), CONNECTION_LOST
+     *         if that deadline passed with the message only partly written, in
+     *         which case the peer has been closed because its stream can no
+     *         longer be framed, NETWORK_ERROR on a socket failure
      *
      * @thread_safety Thread-safe
      * @safety Safety alignment in progress (not certified)
@@ -156,8 +161,13 @@ public:
     Result connect(const Endpoint& endpoint) override;
 
     /**
-     * @brief Disconnect from current connection
-     * @return Result of the operation
+     * @brief Close every connection this transport holds
+     *
+     * In server mode that is all accepted peers, not a single connection; use
+     * disconnect_peer() to close one peer and leave the rest serving.
+     * ITransportListener::on_connection_lost() is reported for each peer closed.
+     *
+     * @return SUCCESS, including when nothing was connected
      */
     Result disconnect() override;
 
@@ -201,11 +211,14 @@ public:
     /**
      * @brief Get current connection state
      *
-     * A server may serve several peers at once. This reports CONNECTED while at
-     * least one peer is connected; use connection_count() or
-     * is_peer_connected() to inspect individual peers.
+     * A server may serve several peers at once, so this collapses the whole
+     * table to one value: CONNECTED if any peer is connected, otherwise
+     * DISCONNECTING if any peer is being torn down, otherwise DISCONNECTED.
+     * CONNECTING is never reported here, because an outbound connection occupies
+     * no slot until it completes and connect() blocks for its duration. Use
+     * connection_count() or is_peer_connected() to inspect individual peers.
      *
-     * @return Connection state
+     * @return Aggregate connection state
      */
     TcpConnectionState get_connection_state() const;
 
@@ -314,6 +327,13 @@ private:
         /// table_mutex_ is held; see the lock-order note on table_mutex_.
         platform::Mutex io_mutex;
         SlotState state{SlotState::FREE};
+        /// Bumped every time the slot returns to FREE, so it names one session
+        /// rather than one slot. A thread that captured the slot while it was
+        /// serving peer A and then had to release table_mutex_ compares this on
+        /// its way back in; a mismatch means the slot was recycled meanwhile,
+        /// which neither the peer endpoint nor the descriptor number can reveal
+        /// on their own since both may be reissued.
+        uint32_t generation{0};
     };
 
     TcpTransportConfig config_;
@@ -382,21 +402,39 @@ private:
      * @brief Take exclusive I/O rights on a peer's slot.
      *
      * Waits on the slot's io_mutex with table_mutex_ released, then re-validates
-     * that the slot still belongs to @p peer, since it may have been closed and
-     * recycled meanwhile. On success the slot's io_mutex is held by the caller
-     * and must be released with release_io(); @p fd_out receives the descriptor,
-     * which cannot be closed while those rights are held.
+     * that the slot still holds the same session, since it may have been closed
+     * and recycled meanwhile. On success the slot's io_mutex is held by the
+     * caller and must be released with release_io(); @p fd_out receives the
+     * descriptor, which cannot be closed while those rights are held.
      *
-     * @return The slot, or nullptr if the peer is no longer connected.
+     * @return The slot, or nullptr if that session is over.
      */
     ConnectionSlot* acquire_io(const Endpoint& peer, someip_socket_t& fd_out);
     /// As above, identifying the slot by descriptor rather than by peer.
     ConnectionSlot* acquire_io(someip_socket_t socket_fd);
     static void release_io(ConnectionSlot& slot);
 
-    /// Close one slot's socket and return it to FREE. Must NOT hold table_mutex_.
-    void close_slot(ConnectionSlot& slot);
+    /**
+     * @brief Reserve an ACTIVE slot for teardown. Requires table_mutex_.
+     *
+     * Moving ACTIVE -> CLOSING inside the same critical section that found the
+     * slot is what makes teardown safe to finish with the table released:
+     * allocate_slot_locked() only takes FREE slots and the find_active_*_locked()
+     * helpers skip CLOSING ones, so no other thread can hand the slot to a new
+     * peer or claim it for a second close. The claiming thread is therefore the
+     * only one that will close this descriptor and the only one that reports the
+     * loss. Pair every claim with finish_close().
+     */
+    static void claim_close_locked(ConnectionSlot& slot);
+
+    /// Complete a teardown reserved by claim_close_locked(), returning the slot
+    /// to FREE under a new generation. Must NOT hold table_mutex_.
+    void finish_close(ConnectionSlot& slot);
+
+    /// Claim, close and report one peer. @return false if it was not connected.
+    bool close_peer_and_notify(const Endpoint& peer);
     void close_socket_and_notify(someip_socket_t socket_fd);
+    void notify_peer_lost(const Endpoint& peer);
     void notify_peers_lost(const EndpointList& peers);
 
     /// Accept one pending peer (server mode), if below the connection limit.
