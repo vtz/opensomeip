@@ -146,7 +146,12 @@ Result TcpTransport::connect(const Endpoint& endpoint) {
         return Result::SUCCESS;  // Already connected
     }
 
-    if (server_mode_) {
+    bool server_mode = false;
+    {
+        platform::ScopedLock const lock(connection_mutex_);
+        server_mode = server_mode_;
+    }
+    if (server_mode) {
         return Result::INVALID_STATE;  // Server mode doesn't connect
     }
 
@@ -373,7 +378,6 @@ Result TcpTransport::enable_server_mode(int backlog) {
     return Result::SUCCESS;
 }
 
-/** @implements REQ_TRANSPORT_003_E01 */
 someip_socket_t TcpTransport::accept_connection() {
     Endpoint unused;
     return accept_connection_with_peer(unused);
@@ -623,7 +627,8 @@ void TcpTransport::accept_pending_peer() {
 
     if (!accepted) {
         // At the connection limit: refuse this peer without disturbing the
-        // established ones.
+        // established ones. Shutting down before closing makes the refusal
+        // observable to the client instead of leaving it half-open.
         someip_shutdown_socket(client_fd);
         someip_close_socket(client_fd);
         return;
@@ -691,8 +696,11 @@ void TcpTransport::receive_loop() {
         {
             platform::ScopedLock const lock(connection_mutex_);
 
-            if (listen_socket_fd_ != SOMEIP_INVALID_SOCKET &&
-                connections_.size() < max_connections()) {
+            // Watched even at capacity. accept_pending_peer() then accepts and
+            // immediately closes the surplus peer, so the client observes a
+            // prompt refusal rather than completing a handshake into the kernel
+            // backlog and waiting on a server that will never serve it.
+            if (listen_socket_fd_ != SOMEIP_INVALID_SOCKET) {
                 listen_fd = listen_socket_fd_;
                 FD_SET(listen_fd, &read_fds);
                 max_fd = std::max(max_fd, static_cast<int>(listen_fd));
@@ -778,9 +786,9 @@ void TcpTransport::send_periodic_magic_cookie() {
     }
 
     const auto now = std::chrono::steady_clock::now();
-    const auto cookie = server_mode_ ? make_magic_cookie_server() : make_magic_cookie_client();
 
     platform::ScopedLock const lock(connection_mutex_);
+    const auto cookie = server_mode_ ? make_magic_cookie_server() : make_magic_cookie_client();
     for (auto& conn : connections_) {
         if (conn.socket_fd == SOMEIP_INVALID_SOCKET) {
             continue;

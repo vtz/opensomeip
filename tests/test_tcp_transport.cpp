@@ -1323,10 +1323,13 @@ TEST_F(TcpTransportTest, ServerRoutesEachResponseToItsOwnPeer) {
  * @test_case TC_TCP_E01_LIMIT
  * @tests REQ_TRANSPORT_003_E01
  * @brief Connections beyond max_connections are refused, established ones survive
+ *
+ * Mirrors the verification REQ_TRANSPORT_003_E01 states: five admitted peers,
+ * a sixth that must be rejected, and a rejection the sixth peer can observe.
  */
 TEST_F(TcpTransportTest, ConnectionLimitRefusesSurplusClientsOnly) {
     TcpTransportConfig limited = config;
-    limited.max_connections = 2;
+    limited.max_connections = 5;
 
     TcpTransport server(limited);
     ASSERT_EQ(server.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
@@ -1336,7 +1339,7 @@ TEST_F(TcpTransportTest, ConnectionLimitRefusesSurplusClientsOnly) {
     server.set_listener(&server_listener);
     ASSERT_EQ(server.start(), Result::SUCCESS);
 
-    EXPECT_EQ(server.max_connections(), 2U);
+    EXPECT_EQ(server.max_connections(), 5U);
 
     const Endpoint server_ep = server.get_local_endpoint();
 
@@ -1359,14 +1362,20 @@ TEST_F(TcpTransportTest, ConnectionLimitRefusesSurplusClientsOnly) {
     }
     ASSERT_EQ(server.connection_count(), limited.max_connections);
 
-    // One client beyond the limit. TCP may complete the handshake from the
-    // backlog, but the server must never exceed its configured limit.
-    TcpTransport surplus(limited);
-    ASSERT_EQ(surplus.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
-    ASSERT_EQ(surplus.start(), Result::SUCCESS);
-    (void)surplus.connect(server_ep);
+    // One client beyond the limit. The server accepts it only to close it again,
+    // so the refusal reaches the client instead of leaving it parked in the
+    // kernel backlog believing it is being served.
+    ConnectedClient surplus;
+    surplus.transport = std::make_unique<TcpTransport>(limited);
+    surplus.listener = std::make_unique<TestTcpListener>();
+    ASSERT_EQ(surplus.transport->initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    surplus.transport->set_listener(surplus.listener.get());
+    ASSERT_EQ(surplus.transport->start(), Result::SUCCESS);
+    (void)surplus.transport->connect(server_ep);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    EXPECT_TRUE(surplus.listener->wait_for_connection_lost(std::chrono::seconds(5)))
+        << "surplus client must be told it was refused";
+
     EXPECT_EQ(server.connection_count(), limited.max_connections)
         << "server must not exceed max_connections";
 
@@ -1379,8 +1388,8 @@ TEST_F(TcpTransportTest, ConnectionLimitRefusesSurplusClientsOnly) {
     }
     EXPECT_TRUE(server_listener.wait_for_messages(clients.size(), std::chrono::milliseconds(5000)));
 
-    surplus.disconnect();
-    surplus.stop();
+    surplus.transport->disconnect();
+    surplus.transport->stop();
     for (auto& client : clients) {
         client.transport->disconnect();
         client.transport->stop();

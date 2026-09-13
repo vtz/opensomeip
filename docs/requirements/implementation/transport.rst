@@ -143,7 +143,7 @@ Connection Management
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Call disconnect(), verify TCP FIN sent and socket closed cleanly. Simulate connection error, verify state transitions to disconnected and pending requests timeout.
+   :verification: Unit test: Call disconnect(), verify TCP FIN sent and socket closed cleanly. Simulate connection error, verify state transitions to disconnected and pending requests timeout. Connect several clients to one server concurrently, verify each stays connected, that a response is routed only to the peer it is addressed to, and that disconnecting one peer leaves the others connected.
 
    The TCP transport shall support graceful connection shutdown, handle
    connection errors and timeouts, and support multiple simultaneous
