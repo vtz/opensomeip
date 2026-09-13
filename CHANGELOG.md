@@ -83,6 +83,20 @@
   mode variant that also returns the sender's endpoint for reply
   addressing without requiring a listener.
 
+- `TcpTransport::connection_count()`, `max_connections()`,
+  `is_peer_connected(const Endpoint&)` and
+  `disconnect_peer(const Endpoint&)` — inspect and manage individual
+  peers now that a server serves several at once. `disconnect_peer()`
+  closes one connection and reports `on_connection_lost()` for it, while
+  `disconnect()` continues to close every connection the transport holds.
+
+- `SOMEIP_MAX_TCP_CONNECTIONS` (default 10, matching the long-standing
+  `TcpTransportConfig::max_connections` default) sizes the TCP connection
+  table at compile time. The configured limit is clamped to it and
+  reported by `max_connections()`. Raising it on a static-allocation
+  build usually means raising the `SOMEIP_BYTE_POOL_*` counts too, since
+  each served connection may hold a pooled receive buffer.
+
 ### Bug Fixes
 
 - **Serialization**: string wire format now matches Open SOME/IP spec
@@ -105,6 +119,27 @@
 - TCP: `on_message_received()` is now invoked outside `connection_mutex_`,
   eliminating a potential deadlock when the callback calls
   `disconnect()`.
+- **TCP**: a server now serves several clients concurrently. It previously
+  kept a single connection and closed every surplus accepted socket, so
+  only the first client was ever served (#319). Socket I/O is serialised
+  per connection instead of across the whole transport, so one peer that
+  is slow to drain no longer stalls traffic to the others, and
+  `send_message()` routes by its endpoint argument rather than to the one
+  stored socket.
+- **TCP**: connections beyond the limit are now accepted and closed
+  immediately, so the client observes a refusal, instead of completing a
+  handshake into the backlog and waiting on a server that will never
+  serve it (`REQ_TRANSPORT_003_E01`).
+- **TCP**: `send_data()` no longer retries `EAGAIN` forever. It now gives
+  up after `TcpTransportConfig::send_timeout`, returning `TIMEOUT` when
+  nothing was written and `CONNECTION_LOST` when a partial write left the
+  peer's stream unframeable, in which case that peer is closed. The
+  unbounded retry could hold a connection's I/O lock indefinitely against
+  a peer that stopped reading, which in turn made `disconnect_peer()`,
+  `stop()` and the destructor block forever.
+- **TCP**: `get_connection_state()` reports `DISCONNECTING` while a peer
+  is being torn down; previously only `CONNECTED` and `DISCONNECTED` were
+  ever returned.
 
 ### Interop Notes
 
