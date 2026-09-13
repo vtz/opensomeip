@@ -23,7 +23,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <utility>
 
 namespace someip::tp {
@@ -120,10 +119,7 @@ bool parse_tp_header(const uint8_t* data, size_t size, uint32_t& offset, bool& m
 
     uint32_t const offset_units = tp_header >> 4U;
     offset = offset_units * 16U;
-
-    if (offset % 16U != 0U) {
-        std::cout << "Warning: Received TP segment with misaligned offset: " << offset << '\n';
-    }
+    // offset is always 16-byte aligned by construction (feat_req_someiptp_768).
 
     more_segments = (tp_header & 0x01U) != 0;
     return true;
@@ -197,9 +193,16 @@ bool parse_wire_segment(const uint8_t* data, size_t size, TpSegment& out_segment
  * @brief SOME/IP-TP Reassembler implementation
  * @satisfies feat_req_someiptp_410
  * @satisfies feat_req_someiptp_412
+ * @satisfies feat_req_someiptp_782
  */
 TpReassembler::TpReassembler(const TpConfig& config)
     : config_(config) {
+#ifdef SOMEIP_STATIC_ALLOC
+    // feat_req_someiptp_782: reassemble only up to the configured buffer size.
+    if (config_.max_message_size > MAX_TP_REASSEMBLY_SIZE) {
+        config_.max_message_size = static_cast<uint32_t>(MAX_TP_REASSEMBLY_SIZE);
+    }
+#endif
 }
 
 // NOLINTNEXTLINE(modernize-use-equals-default) - intentional cleanup with lock
@@ -259,6 +262,7 @@ bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuff
  * @brief Validate a TP segment
  * @implements REQ_TP_033, REQ_TP_034, REQ_TP_035
  * @implements REQ_TP_030_E02, REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
+ * @implements feat_req_someiptp_772, feat_req_someiptp_792
  */
 bool TpReassembler::validate_segment(const TpSegment& segment) const {
     const auto config = get_config_copy();
@@ -296,6 +300,15 @@ bool TpReassembler::validate_segment(const TpSegment& segment) const {
     if (!parse_tp_header(segment.payload.data(), segment.payload.size(), wire_offset, wire_more)) {
         return false;
     }
+
+    // feat_req_someiptp_772 (SHALL): all but the last segment shall have a
+    // length that is a multiple of 16 bytes.
+    // feat_req_someiptp_792 (SHALL): cancel reassembly if a non-final segment
+    // length is not a multiple of 16.
+    if (wire_more && (actual_payload_bytes % 16U) != 0U) {
+        return false;
+    }
+
     if (wire_offset > config.max_message_size) {
         return false;
     }
@@ -567,6 +580,12 @@ size_t TpReassembler::get_active_reassemblies() const {
 void TpReassembler::update_config(const TpConfig& config) {
     platform::ScopedLock const lock(config_mutex_);
     config_ = config;
+#ifdef SOMEIP_STATIC_ALLOC
+    // feat_req_someiptp_782: reassemble only up to the configured buffer size.
+    if (config_.max_message_size > MAX_TP_REASSEMBLY_SIZE) {
+        config_.max_message_size = static_cast<uint32_t>(MAX_TP_REASSEMBLY_SIZE);
+    }
+#endif
 }
 
 bool TpReassembler::copy_last_completed_someip_header(std::array<uint8_t, 16>& out) const {

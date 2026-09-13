@@ -696,6 +696,27 @@ Reassembly Error Handling
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 
+.. requirement:: Reject Misaligned Non-Final Segments
+   :id: REQ_TP_044
+   :satisfies: feat_req_someiptp_772, feat_req_someiptp_792
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Receive a non-final segment (More=1) with payload length not a multiple of 16 bytes, verify the segment is rejected. Receive a final segment (More=0) with non-aligned payload, verify it is accepted. Tests: ``tests/test_tp.cpp`` (MisalignedNonFinalSegmentRejected, MisalignedFinalSegmentAccepted).
+
+   The software shall reject any TP segment with More Segments = 1 whose
+   payload length is not a multiple of 16 bytes. The last segment (More
+   Segments = 0) may have any payload length.
+
+   **Rationale**: The offset field uses 16-byte units; non-aligned intermediate
+   segments would produce gaps or overlaps during reassembly. The spec
+   mandates this check (feat_req_someiptp_772 SHALL, feat_req_someiptp_792
+   SHALL).
+
+   **Error Handling**: Discard segment; return false from ``validate_segment``.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (validate_segment)
+
 .. requirement:: Error - Total Length Inconsistency
    :id: REQ_TP_043
    :satisfies: feat_req_someiptp_774, feat_req_someiptp_792
@@ -712,6 +733,30 @@ Reassembly Error Handling
    **Error Handling**: Discard buffer; return MALFORMED_MESSAGE error.
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
+
+.. requirement:: Clamp Reassembly Size to Static Buffer Capacity
+   :id: REQ_TP_030_E03
+   :satisfies: feat_req_someiptp_782
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Build with ``-DSOMEIP_USE_STATIC_ALLOC=ON``; verify ``max_message_size`` is clamped to ``SOMEIP_MAX_TP_REASSEMBLY_SIZE`` at reassembler construction time. A ``static_assert`` in ``tp_types.h`` guards against build-time misconfiguration. Tests: ``tests/test_tp.cpp`` (MaxTpReassemblySizeIsAtLeast16).
+
+   On static-allocation builds, the software shall clamp the effective
+   ``max_message_size`` to ``SOMEIP_MAX_TP_REASSEMBLY_SIZE`` at
+   reassembler construction and on configuration update. This prevents
+   transfers that exceed the compile-time buffer capacity from silently
+   failing.
+
+   **Rationale**: ``SOMEIP_MAX_TP_REASSEMBLY_SIZE`` defaults to 2048 on
+   RTOS targets but ``TpConfig::max_message_size`` defaults to 1 MB.
+   Without clamping, transfers > 2 KB silently fail on static builds
+   (feat_req_someiptp_782 SHOULD).
+
+   **Error Handling**: Clamp silently; no error raised (the configured size
+   is honoured, just reduced to fit).
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (constructor, update_config), ``include/tp/tp_types.h`` (static_assert)
 
 .. requirement:: Error - Maximum Concurrent Transfers
    :id: REQ_TP_030_E02

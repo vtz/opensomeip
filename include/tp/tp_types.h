@@ -109,6 +109,14 @@ struct TpSegment {
 #endif
 inline constexpr size_t MAX_TP_REASSEMBLY_SIZE = SOMEIP_MAX_TP_REASSEMBLY_SIZE;
 
+// feat_req_someiptp_782: on static-alloc builds the reassembly buffer capacity
+// must be large enough to hold at least the minimum useful TP transfer (one
+// 16-byte aligned payload chunk).  The runtime constructor clamps
+// TpConfig::max_message_size to MAX_TP_REASSEMBLY_SIZE; this static_assert
+// guards against a nonsensical build-time configuration.
+static_assert(MAX_TP_REASSEMBLY_SIZE >= 16,
+              "SOMEIP_MAX_TP_REASSEMBLY_SIZE must be at least 16 bytes");
+
 /**
  * @brief Composite key for TP reassembly per Open SOME/IP-TP spec
  * @satisfies feat_req_someiptp_781, feat_req_someiptp_794

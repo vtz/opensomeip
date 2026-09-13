@@ -145,6 +145,27 @@ UDP transport segments and reassembles automatically when
 Applications that talk to `TpManager` directly can still segment and
 reassemble without going through UDP.
 
+## Receiver Validation
+
+### Non-final segment alignment (feat_req_someiptp_772, feat_req_someiptp_792)
+
+All non-final TP segments (More Segments = 1) **must** have a payload
+length that is a multiple of 16 bytes. The reassembler rejects any
+non-final segment whose payload is not 16-byte aligned and drops it
+silently. The final segment (More Segments = 0) may have any payload
+length.
+
+### Static-allocation buffer size clamping (feat_req_someiptp_782)
+
+On static-allocation builds (`-DSOMEIP_USE_STATIC_ALLOC=ON`), the
+maximum reassembly buffer capacity is set at compile time via
+`SOMEIP_MAX_TP_REASSEMBLY_SIZE` (default 2048 bytes on RTOS targets).
+The reassembler **clamps** `TpConfig::max_message_size` to this value
+at construction and on `update_config()`, so transfers that would
+exceed the buffer are rejected early rather than silently failing.
+A `static_assert` in `tp_types.h` guards against nonsensical
+compile-time configurations.
+
 ## Error Handling
 
 The TP layer provides comprehensive error handling:
