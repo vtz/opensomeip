@@ -696,6 +696,27 @@ Reassembly Error Handling
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 
+.. requirement:: Reject Misaligned Non-Final Segments
+   :id: REQ_TP_044
+   :satisfies: feat_req_someiptp_772, feat_req_someiptp_792
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Receive a non-final segment (More=1) with payload length not a multiple of 16 bytes, verify the segment is rejected. Receive a final segment (More=0) with non-aligned payload, verify it is accepted. Tests: ``tests/test_tp.cpp`` (MisalignedNonFinalSegmentRejected, MisalignedFinalSegmentAccepted).
+
+   The software shall reject any TP segment with More Segments = 1 whose
+   payload length is not a multiple of 16 bytes. The last segment (More
+   Segments = 0) may have any payload length.
+
+   **Rationale**: The offset field uses 16-byte units; non-aligned intermediate
+   segments would produce gaps or overlaps during reassembly. The spec
+   mandates this check (feat_req_someiptp_772 SHALL, feat_req_someiptp_792
+   SHALL).
+
+   **Error Handling**: Discard segment; return false from ``validate_segment``.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (validate_segment)
+
 .. requirement:: Error - Total Length Inconsistency
    :id: REQ_TP_043
    :satisfies: feat_req_someiptp_774, feat_req_someiptp_792
@@ -712,6 +733,30 @@ Reassembly Error Handling
    **Error Handling**: Discard buffer; return MALFORMED_MESSAGE error.
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
+
+.. requirement:: Clamp Reassembly Size to Static Buffer Capacity
+   :id: REQ_TP_030_E03
+   :satisfies: feat_req_someiptp_782
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Build with ``-DSOMEIP_USE_STATIC_ALLOC=ON``; verify ``max_message_size`` is clamped to ``SOMEIP_MAX_TP_REASSEMBLY_SIZE`` at reassembler construction time. A ``static_assert`` in ``tp_types.h`` guards against build-time misconfiguration. Tests: ``tests/test_tp.cpp`` (MaxTpReassemblySizeIsAtLeast16).
+
+   On static-allocation builds, the software shall clamp the effective
+   ``max_message_size`` to ``SOMEIP_MAX_TP_REASSEMBLY_SIZE`` at
+   reassembler construction and on configuration update. This prevents
+   transfers that exceed the compile-time buffer capacity from silently
+   failing.
+
+   **Rationale**: ``SOMEIP_MAX_TP_REASSEMBLY_SIZE`` defaults to 2048 on
+   RTOS targets but ``TpConfig::max_message_size`` defaults to 1 MB.
+   Without clamping, transfers > 2 KB silently fail on static builds
+   (feat_req_someiptp_782 SHOULD).
+
+   **Error Handling**: Clamp silently; no error raised (the configured size
+   is honoured, just reduced to fit).
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (constructor, update_config), ``include/tp/tp_types.h`` (static_assert)
 
 .. requirement:: Error - Maximum Concurrent Transfers
    :id: REQ_TP_030_E02
@@ -1277,6 +1322,43 @@ TP Informational References
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 
+.. requirement:: UDP Send Uses TP Segmentation
+   :id: REQ_TP_090
+   :satisfies: feat_req_someiptp_760, feat_req_someiptp_765
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Integration test: Two ``UdpTransport`` instances on loopback; send a payload larger than ``TpConfig.max_segment_size``; receiver gets one reassembled message. Small messages have no TP flag. Tests: ``tests/test_udp_transport.cpp`` (TpSegmentsAndReassemblesLargePayload, SmallMessageNotTpFlagged).
+
+   When ``UdpTransportConfig.enable_tp`` is true, UDP send shall segment
+   messages whose payload exceeds ``TpConfig.max_segment_size`` (TP
+   payload bytes, default 1392; full datagram is 16+4+payload) and
+   transmit each segment as its own datagram. The unsegmented message
+   shall not be sent. Small messages shall be sent without the TP flag.
+
+   **Rationale**: Automatic TP on UDP avoids IP fragmentation and exposes a single Message API.
+
+   **Code Location**: ``src/transport/udp_transport.cpp`` (``send_message``, ``send_tp_segments``)
+
+.. requirement:: UDP Receive Reassembles TP Datagrams
+   :id: REQ_TP_091
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_785
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: ``TpManager::ingest_datagram`` completes when total length is unknown until the last segment. Integration: UDP loopback reassembly with TP flag cleared. Tests: ``tests/test_tp.cpp`` (WireIngestUnknownTotalUntilLast), ``tests/test_udp_transport.cpp``.
+
+   When ``enable_tp`` is true, UDP receive shall treat datagrams with
+   Message Type bit 5 set as TP segments, reassemble them without
+   requiring a total-size field (grow the buffer; last segment with
+   More=0 finalizes the length), and deliver one Message with the TP
+   flag cleared. Incomplete transfers shall not be delivered.
+   ``TpManager::process_timeouts()`` shall run on the receive loop.
+
+   **Rationale**: The wire TP header has no total message length; reassembly must wait for More=0.
+
+   **Code Location**: ``src/transport/udp_transport.cpp`` (``receive_loop``), ``src/tp/tp_manager.cpp`` (``ingest_datagram``), ``src/tp/tp_reassembler.cpp``
+
 Traceability
 ============
 
@@ -1290,8 +1372,12 @@ Implementation Files
 * ``src/tp/tp_manager.cpp`` - TP manager implementation
 * ``src/tp/tp_segmenter.cpp`` - Segmenter implementation
 * ``src/tp/tp_reassembler.cpp`` - Reassembler implementation
+* ``src/transport/udp_transport.cpp`` - UDP send/receive TP integration
+* ``include/transport/udp_transport.h`` - ``enable_tp`` and ``TpConfig``
 
 Test Files
 ----------
 
 * ``tests/test_tp.cpp`` - TP unit tests
+* ``tests/test_udp_transport.cpp`` - UDP loopback TP integration
+* ``tests/integration/test_tp_udp_integration.py`` - wire-format TP tests

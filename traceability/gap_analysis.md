@@ -1,13 +1,13 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-09-01 03:55:33
+Generated: 2026-09-14 03:19:32
 
 ## Summary
 
-- **Total Requirements**: 669
-- **Fully Traced (impl + tests)**: 594 (88.8%)
-- **Missing Implementation**: 73
-- **Missing Tests**: 7
+- **Total Requirements**: 674
+- **Fully Traced (impl + tests)**: 594 (88.1%)
+- **Missing Implementation**: 78
+- **Missing Tests**: 9
 - **Missing Spec Links (all)**: 153
 - **Missing Spec Links (required only)**: 1
 
@@ -16,21 +16,21 @@ Generated: 2026-09-01 03:55:33
 | Category | Total | Implemented | Tested | Spec Linked |
 |----------|-------|-------------|--------|-------------|
 | Architectural (derived) | 8 | 7 (88%) | 7 (88%) | 3 (38%) |
-| Error Handling (derived) | 154 | 130 (84%) | 151 (98%) | 9 (6%) |
-| Message Header | 91 | 86 (95%) | 91 (100%) | 91 (100%) |
+| Error Handling (derived) | 155 | 130 (84%) | 151 (97%) | 10 (6%) |
+| Message Header | 92 | 87 (95%) | 92 (100%) | 92 (100%) |
 | Other | 77 | 63 (82%) | 74 (96%) | 76 (99%) |
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
 | Serialization | 75 | 52 (69%) | 75 (100%) | 75 (100%) |
 | Service Discovery | 170 | 166 (98%) | 170 (100%) | 170 (100%) |
 | Transport Layer | 29 | 27 (93%) | 29 (100%) | 29 (100%) |
-| Transport Protocol | 60 | 60 (100%) | 60 (100%) | 60 (100%) |
+| Transport Protocol | 63 | 59 (94%) | 62 (98%) | 63 (100%) |
 
 
 **Note**: Error handling, architectural, and plugin requirements are implementation-derived and
 may not require direct spec links.
 
-- **Spec-Derived Requirements**: 502
-- **Implementation-Derived Requirements**: 167
+- **Spec-Derived Requirements**: 506
+- **Implementation-Derived Requirements**: 168
 
 ### Priority Breakdown
 
@@ -38,20 +38,21 @@ may not require direct spec links.
 |----------|-------|-------------|--------|----------|
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 55 | 55 | 98% |
-| Medium | 403 | 355 | 400 | 88% |
-| Low | 178 | 154 | 175 | 87% |
+| Medium | 405 | 356 | 401 | 88% |
+| Low | 181 | 153 | 177 | 85% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 355 |
-| Integration Tests | 9 |
+| Unit Tests | 368 |
+| Integration Tests | 13 |
 | System Tests | 6 |
 
 ## Gaps Requiring Attention
 
 ### Requirements Without Implementation
+- REQ_ARCH_008
 - REQ_SER_022_E01
 - REQ_SER_046_E01
 - REQ_SER_047_E02
@@ -92,6 +93,11 @@ may not require direct spec links.
 - REQ_SER_034_E01
 - REQ_SER_056_E01
 - REQ_SER_073_E01
+- REQ_TP_044
+- REQ_TP_030_E03
+- REQ_TP_052
+- REQ_TP_053
+- REQ_TP_054
 - REQ_MSG_132B
 - REQ_MSG_133A
 - REQ_MSG_133B
@@ -117,7 +123,6 @@ may not require direct spec links.
 - REQ_PLATFORM_WIN32_002
 - REQ_PLATFORM_WIN32_003
 - REQ_PLATFORM_WIN32_004
-- REQ_ARCH_008
 - REQ_SD_125
 - REQ_SD_126
 - REQ_SD_170
@@ -127,13 +132,15 @@ may not require direct spec links.
 - REQ_SD_113_E01
 
 ### Requirements Without Test Coverage
+- REQ_ARCH_008
+- REQ_TP_044
+- REQ_TP_030_E03
 - REQ_PAL_MEM_THREADSAFE_E01
 - REQ_PAL_CONTAINER_CAPACITY_E01
 - REQ_PAL_BUFPOOL_THREADSAFE_E01
 - REQ_PAL_STATIC_CONFIG
 - REQ_PLATFORM_STATIC_001
 - REQ_PLATFORM_STATIC_005
-- REQ_ARCH_008
 
 ### Implementation Requirements Without Spec Links (Required)
 These requirements should have spec links but don't:
@@ -143,6 +150,11 @@ These requirements should have spec links but don't:
 ### Implementation-Derived Requirements Without Spec Links (Expected)
 These are derived requirements (error handling, architectural, plugin) that don't need spec links:
 
+- REQ_ARCH_002
+- REQ_ARCH_003
+- REQ_ARCH_004
+- REQ_ARCH_006
+- REQ_ARCH_007
 - REQ_SER_001_E01
 - REQ_SER_002_E01
 - REQ_SER_003_E01
@@ -183,6 +195,23 @@ These are derived requirements (error handling, architectural, plugin) that don'
 - REQ_SER_040_E02
 - REQ_SER_073_E01
 - REQ_SER_080_E02
+- REQ_TP_001_E01
+- REQ_TP_001_E02
+- REQ_TP_001_E03
+- REQ_TP_013_E01
+- REQ_TP_015_E01
+- REQ_TP_039_E01
+- REQ_TP_030_E01
+- REQ_TP_030_E02
+- REQ_TP_050_E01
+- REQ_TP_050_E02
+- REQ_TP_072_E01
+- REQ_TP_076_E01
+- REQ_TP_082_E01
+- REQ_TP_082_E02
+- REQ_TP_082_E03
+- REQ_TP_082_E04
+- REQ_TP_076_E02
 - REQ_MSG_004_E02
 - REQ_MSG_012_E01
 - REQ_MSG_012_E02
@@ -231,6 +260,8 @@ These are derived requirements (error handling, architectural, plugin) that don'
 - REQ_TRANSPORT_003_E01
 - REQ_TRANSPORT_002_E04
 - REQ_TRANSPORT_011_E02
+- REQ_E2E_PLUGIN_002
+- REQ_E2E_PLUGIN_003
 - REQ_PAL_MUTEX_UNLOCK_E01
 - REQ_PAL_CV_EXCEPT_E01
 - REQ_PAL_THREAD_CREATE_E01
@@ -238,30 +269,6 @@ These are derived requirements (error handling, architectural, plugin) that don'
 - REQ_PAL_MEM_EXHAUST_E01
 - REQ_PAL_MEM_THREADSAFE_E01
 - REQ_PAL_NET_MODE_E01
-- REQ_TP_001_E01
-- REQ_TP_001_E02
-- REQ_TP_001_E03
-- REQ_TP_013_E01
-- REQ_TP_015_E01
-- REQ_TP_039_E01
-- REQ_TP_030_E01
-- REQ_TP_030_E02
-- REQ_TP_050_E01
-- REQ_TP_050_E02
-- REQ_TP_072_E01
-- REQ_TP_076_E01
-- REQ_TP_082_E01
-- REQ_TP_082_E02
-- REQ_TP_082_E03
-- REQ_TP_082_E04
-- REQ_TP_076_E02
-- REQ_ARCH_002
-- REQ_ARCH_003
-- REQ_ARCH_004
-- REQ_ARCH_006
-- REQ_ARCH_007
-- REQ_E2E_PLUGIN_002
-- REQ_E2E_PLUGIN_003
 - REQ_SD_001_E01
 - REQ_SD_010_E01
 - REQ_SD_021_E01
@@ -301,7 +308,7 @@ These are derived requirements (error handling, architectural, plugin) that don'
 ### SWE.1 (Software Requirements Analysis)
 - **Status**: ⚠️ PARTIAL - Some spec-derived requirements missing links
 - **Details**: Spec-derived requirements must satisfy at least one specification requirement
-- **Derived Requirements**: 167 implementation-derived requirements do not require spec links
+- **Derived Requirements**: 168 implementation-derived requirements do not require spec links
 
 ### SWE.3 (Software Architectural Design)
 - **Status**: ❌ FAIL - Missing implementations
@@ -314,7 +321,7 @@ These are derived requirements (error handling, architectural, plugin) that don'
 ### Overall Compliance Level
 - **Current Level**: CL1
 - **Target for Production**: CL2 (100% traceability)
-- **Gap to Target**: 75 requirements
+- **Gap to Target**: 80 requirements
 
 ## Recommendations
 

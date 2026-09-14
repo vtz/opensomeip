@@ -2966,6 +2966,11 @@
 </ul>
 <h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>SOME/IP-TP</strong>: Message Type bit 5 (<code>0x20</code>) is the TP flag for all
+  types, including Response (<code>0xA0</code>) and Error (<code>0xA1</code>). Unknown types
+  are decided after masking bit 5 (<code>#296</code>).</li>
+<li><strong>UDP</strong>: <code>UdpTransport</code> segments and reassembles large messages via
+  <code>TpManager</code> when <code>enable_tp</code> is true (<code>#305</code>).</li>
 <li><strong>Serialization</strong>: string wire format now matches Open SOME/IP spec
   with UTF-8 BOM, NUL terminator, and correct length semantics (#274).</li>
 <li><strong>SOME/IP-TP</strong>: every segment now carries a full SOME/IP header;

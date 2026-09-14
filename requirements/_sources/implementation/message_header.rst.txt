@@ -746,14 +746,17 @@ Message Type Parsing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Deserialize message with type=0x20, verify TP flag (bit 5) is set. Verify message is routed to TP reassembler.
+   :verification: Unit test: Deserialize messages with type 0x20, 0xA0, and 0xA1, verify TP flag (bit 5) is set via ``uses_tp()``. Verify 0xA0/0xA1 are accepted (not unknown). Tests: ``tests/test_message.cpp`` (TpFlaggedResponseAndErrorAccepted), ``tests/test_tp.cpp`` (TpFlagBitIncludesResponseAndError).
 
    The software shall detect the TP flag (bit 5, value 0x20) in the
    Message Type field to identify SOME/IP-TP segmented messages.
+   Detection shall be a bitwise test ``(type & 0x20) != 0``, so that
+   TP-flagged Response (0xA0) and Error (0xA1) are recognized as well
+   as 0x20/0x21/0x22.
 
    **Rationale**: TP flag indicates the message is a segment of a larger message.
 
-   **Code Location**: ``src/someip/message.cpp``
+   **Code Location**: ``src/someip/types.cpp`` (``uses_tp``), ``src/someip/message.cpp``
 
 .. requirement:: Accept REQUEST_ACK Message Type
    :id: REQ_MSG_057
@@ -806,12 +809,12 @@ Message Type Parsing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Message Type 0x20 (TP_REQUEST) is accepted.
+   :verification: Unit test: Verify Message Type 0x20 (REQUEST with TP flag) is accepted.
 
-   The software shall accept Message Type 0x20 (TP_REQUEST) for
-   segmented request messages.
+   The software shall accept Message Type 0x20, which is REQUEST (0x00)
+   with the TP flag (bit 5) set, for segmented request messages.
 
-   **Rationale**: TP variant of REQUEST message type.
+   **Rationale**: TP-flagged REQUEST, not a distinct message class.
 
    **Code Location**: ``src/someip/message.cpp``
 
@@ -821,12 +824,12 @@ Message Type Parsing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Message Type 0x21 (TP_REQUEST_NO_RETURN) is accepted.
+   :verification: Unit test: Verify Message Type 0x21 (REQUEST_NO_RETURN with TP flag) is accepted.
 
-   The software shall accept Message Type 0x21 (TP_REQUEST_NO_RETURN) for
-   segmented fire-and-forget messages.
+   The software shall accept Message Type 0x21, which is REQUEST_NO_RETURN
+   (0x01) with the TP flag set, for segmented fire-and-forget messages.
 
-   **Rationale**: TP variant of REQUEST_NO_RETURN message type.
+   **Rationale**: TP-flagged REQUEST_NO_RETURN.
 
    **Code Location**: ``src/someip/message.cpp``
 
@@ -836,14 +839,30 @@ Message Type Parsing
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Message Type 0x22 (TP_NOTIFICATION) is accepted.
+   :verification: Unit test: Verify Message Type 0x22 (NOTIFICATION with TP flag) is accepted.
 
-   The software shall accept Message Type 0x22 (TP_NOTIFICATION) for
-   segmented notification messages.
+   The software shall accept Message Type 0x22, which is NOTIFICATION
+   (0x02) with the TP flag set, for segmented notification messages.
 
-   **Rationale**: TP variant of NOTIFICATION message type.
+   **Rationale**: TP-flagged NOTIFICATION.
 
    **Code Location**: ``src/someip/message.cpp``
+
+.. requirement:: Accept TP-flagged RESPONSE Message Type
+   :id: REQ_MSG_060_TP_RESPONSE
+   :satisfies: feat_req_someip_761, feat_req_someiptp_765
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Deserialize type 0xA0 (RESPONSE|TP) and 0xA1 (ERROR|TP); verify acceptance and ``uses_tp()``. Tests: ``tests/test_message.cpp``, ``tests/test_tp.cpp``.
+
+   The software shall accept Message Type 0xA0 (RESPONSE with TP flag)
+   and 0xA1 (ERROR with TP flag) for segmented response and error
+   messages. After reassembly the TP flag shall be cleared (0x80 / 0x81).
+
+   **Rationale**: TP is a flag on the base message type, including Response and Error.
+
+   **Code Location**: ``src/someip/message.cpp``, ``src/someip/types.cpp``
 
 .. requirement:: Error - Reject Unknown Message Type
    :id: REQ_MSG_063
@@ -851,10 +870,13 @@ Message Type Parsing
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Deserialize message with type=0x50, verify E_WRONG_MESSAGE_TYPE (0x0A) is returned. Test all undefined type values.
+   :verification: Unit test: Deserialize message with type=0x50, verify rejection. Test type=0xFF. Verify type=0xA0 is NOT treated as unknown (bit 5 masked first). Tests: ``tests/test_message.cpp`` (TpFlaggedResponseAndErrorAccepted, Validation).
 
-   The software shall reject messages with Message Type values not
-   defined in the SOME/IP specification.
+   The software shall reject messages whose Message Type, after masking
+   TP flag bit 5 (``type & ~0x20``), is not one of the defined base types
+   (REQUEST, REQUEST_NO_RETURN, NOTIFICATION, REQUEST_ACK, RESPONSE,
+   ERROR, RESPONSE_ACK, ERROR_ACK). 0xA0 (RESPONSE|TP) and 0xA1 (ERROR|TP)
+   are valid, not unknown.
 
    **Rationale**: Unknown message types cannot be processed correctly.
 
@@ -2072,10 +2094,12 @@ Implementation Files
 * ``include/someip/message.h`` - Message class definition
 * ``include/someip/types.h`` - Type definitions
 * ``src/someip/message.cpp`` - Message implementation
-* ``src/someip/types.cpp`` - Type implementations
+* ``src/someip/types.cpp`` - Type implementations (``uses_tp`` bit test)
 * ``src/core/session_manager.cpp`` - Session ID management
 
 Test Files
 ----------
 
 * ``tests/test_message.cpp`` - Message unit tests
+* ``tests/test_tp.cpp`` - TP-flagged 0xA0/0xA1 and reassembly tests
+* ``tests/integration/test_tp_udp_integration.py`` - wire TP type tests

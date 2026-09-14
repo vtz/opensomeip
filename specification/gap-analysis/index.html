@@ -2987,13 +2987,13 @@
 
 
 <h1 id="aspice-traceability-gap-analysis-report">ASPICE Traceability Gap Analysis Report<a class="headerlink" href="#aspice-traceability-gap-analysis-report" title="Permanent link">&para;</a></h1>
-<p>Generated: 2026-09-01 03:55:33</p>
+<p>Generated: 2026-09-14 03:19:32</p>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Total Requirements</strong>: 669</li>
-<li><strong>Fully Traced (impl + tests)</strong>: 594 (88.8%)</li>
-<li><strong>Missing Implementation</strong>: 73</li>
-<li><strong>Missing Tests</strong>: 7</li>
+<li><strong>Total Requirements</strong>: 674</li>
+<li><strong>Fully Traced (impl + tests)</strong>: 594 (88.1%)</li>
+<li><strong>Missing Implementation</strong>: 78</li>
+<li><strong>Missing Tests</strong>: 9</li>
 <li><strong>Missing Spec Links (all)</strong>: 153</li>
 <li><strong>Missing Spec Links (required only)</strong>: 1</li>
 </ul>
@@ -3018,17 +3018,17 @@
 </tr>
 <tr>
 <td>Error Handling (derived)</td>
-<td>154</td>
+<td>155</td>
 <td>130 (84%)</td>
-<td>151 (98%)</td>
-<td>9 (6%)</td>
+<td>151 (97%)</td>
+<td>10 (6%)</td>
 </tr>
 <tr>
 <td>Message Header</td>
-<td>91</td>
-<td>86 (95%)</td>
-<td>91 (100%)</td>
-<td>91 (100%)</td>
+<td>92</td>
+<td>87 (95%)</td>
+<td>92 (100%)</td>
+<td>92 (100%)</td>
 </tr>
 <tr>
 <td>Other</td>
@@ -3067,18 +3067,18 @@
 </tr>
 <tr>
 <td>Transport Protocol</td>
-<td>60</td>
-<td>60 (100%)</td>
-<td>60 (100%)</td>
-<td>60 (100%)</td>
+<td>63</td>
+<td>59 (94%)</td>
+<td>62 (98%)</td>
+<td>63 (100%)</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Note</strong>: Error handling, architectural, and plugin requirements are implementation-derived and
 may not require direct spec links.</p>
 <ul>
-<li><strong>Spec-Derived Requirements</strong>: 502</li>
-<li><strong>Implementation-Derived Requirements</strong>: 167</li>
+<li><strong>Spec-Derived Requirements</strong>: 506</li>
+<li><strong>Implementation-Derived Requirements</strong>: 168</li>
 </ul>
 <h3 id="priority-breakdown">Priority Breakdown<a class="headerlink" href="#priority-breakdown" title="Permanent link">&para;</a></h3>
 <table>
@@ -3108,17 +3108,17 @@ may not require direct spec links.</p>
 </tr>
 <tr>
 <td>Medium</td>
-<td>403</td>
-<td>355</td>
-<td>400</td>
+<td>405</td>
+<td>356</td>
+<td>401</td>
 <td>88%</td>
 </tr>
 <tr>
 <td>Low</td>
-<td>178</td>
-<td>154</td>
-<td>175</td>
-<td>87%</td>
+<td>181</td>
+<td>153</td>
+<td>177</td>
+<td>85%</td>
 </tr>
 </tbody>
 </table>
@@ -3133,11 +3133,11 @@ may not require direct spec links.</p>
 <tbody>
 <tr>
 <td>Unit Tests</td>
-<td>355</td>
+<td>368</td>
 </tr>
 <tr>
 <td>Integration Tests</td>
-<td>9</td>
+<td>13</td>
 </tr>
 <tr>
 <td>System Tests</td>
@@ -3148,6 +3148,7 @@ may not require direct spec links.</p>
 <h2 id="gaps-requiring-attention">Gaps Requiring Attention<a class="headerlink" href="#gaps-requiring-attention" title="Permanent link">&para;</a></h2>
 <h3 id="requirements-without-implementation">Requirements Without Implementation<a class="headerlink" href="#requirements-without-implementation" title="Permanent link">&para;</a></h3>
 <ul>
+<li>REQ_ARCH_008</li>
 <li>REQ_SER_022_E01</li>
 <li>REQ_SER_046_E01</li>
 <li>REQ_SER_047_E02</li>
@@ -3188,6 +3189,11 @@ may not require direct spec links.</p>
 <li>REQ_SER_034_E01</li>
 <li>REQ_SER_056_E01</li>
 <li>REQ_SER_073_E01</li>
+<li>REQ_TP_044</li>
+<li>REQ_TP_030_E03</li>
+<li>REQ_TP_052</li>
+<li>REQ_TP_053</li>
+<li>REQ_TP_054</li>
 <li>REQ_MSG_132B</li>
 <li>REQ_MSG_133A</li>
 <li>REQ_MSG_133B</li>
@@ -3213,7 +3219,6 @@ may not require direct spec links.</p>
 <li>REQ_PLATFORM_WIN32_002</li>
 <li>REQ_PLATFORM_WIN32_003</li>
 <li>REQ_PLATFORM_WIN32_004</li>
-<li>REQ_ARCH_008</li>
 <li>REQ_SD_125</li>
 <li>REQ_SD_126</li>
 <li>REQ_SD_170</li>
@@ -3224,13 +3229,15 @@ may not require direct spec links.</p>
 </ul>
 <h3 id="requirements-without-test-coverage">Requirements Without Test Coverage<a class="headerlink" href="#requirements-without-test-coverage" title="Permanent link">&para;</a></h3>
 <ul>
+<li>REQ_ARCH_008</li>
+<li>REQ_TP_044</li>
+<li>REQ_TP_030_E03</li>
 <li>REQ_PAL_MEM_THREADSAFE_E01</li>
 <li>REQ_PAL_CONTAINER_CAPACITY_E01</li>
 <li>REQ_PAL_BUFPOOL_THREADSAFE_E01</li>
 <li>REQ_PAL_STATIC_CONFIG</li>
 <li>REQ_PLATFORM_STATIC_001</li>
 <li>REQ_PLATFORM_STATIC_005</li>
-<li>REQ_ARCH_008</li>
 </ul>
 <h3 id="implementation-requirements-without-spec-links-required">Implementation Requirements Without Spec Links (Required)<a class="headerlink" href="#implementation-requirements-without-spec-links-required" title="Permanent link">&para;</a></h3>
 <p>These requirements should have spec links but don't:</p>
@@ -3240,6 +3247,11 @@ may not require direct spec links.</p>
 <h3 id="implementation-derived-requirements-without-spec-links-expected">Implementation-Derived Requirements Without Spec Links (Expected)<a class="headerlink" href="#implementation-derived-requirements-without-spec-links-expected" title="Permanent link">&para;</a></h3>
 <p>These are derived requirements (error handling, architectural, plugin) that don't need spec links:</p>
 <ul>
+<li>REQ_ARCH_002</li>
+<li>REQ_ARCH_003</li>
+<li>REQ_ARCH_004</li>
+<li>REQ_ARCH_006</li>
+<li>REQ_ARCH_007</li>
 <li>REQ_SER_001_E01</li>
 <li>REQ_SER_002_E01</li>
 <li>REQ_SER_003_E01</li>
@@ -3280,6 +3292,23 @@ may not require direct spec links.</p>
 <li>REQ_SER_040_E02</li>
 <li>REQ_SER_073_E01</li>
 <li>REQ_SER_080_E02</li>
+<li>REQ_TP_001_E01</li>
+<li>REQ_TP_001_E02</li>
+<li>REQ_TP_001_E03</li>
+<li>REQ_TP_013_E01</li>
+<li>REQ_TP_015_E01</li>
+<li>REQ_TP_039_E01</li>
+<li>REQ_TP_030_E01</li>
+<li>REQ_TP_030_E02</li>
+<li>REQ_TP_050_E01</li>
+<li>REQ_TP_050_E02</li>
+<li>REQ_TP_072_E01</li>
+<li>REQ_TP_076_E01</li>
+<li>REQ_TP_082_E01</li>
+<li>REQ_TP_082_E02</li>
+<li>REQ_TP_082_E03</li>
+<li>REQ_TP_082_E04</li>
+<li>REQ_TP_076_E02</li>
 <li>REQ_MSG_004_E02</li>
 <li>REQ_MSG_012_E01</li>
 <li>REQ_MSG_012_E02</li>
@@ -3328,6 +3357,8 @@ may not require direct spec links.</p>
 <li>REQ_TRANSPORT_003_E01</li>
 <li>REQ_TRANSPORT_002_E04</li>
 <li>REQ_TRANSPORT_011_E02</li>
+<li>REQ_E2E_PLUGIN_002</li>
+<li>REQ_E2E_PLUGIN_003</li>
 <li>REQ_PAL_MUTEX_UNLOCK_E01</li>
 <li>REQ_PAL_CV_EXCEPT_E01</li>
 <li>REQ_PAL_THREAD_CREATE_E01</li>
@@ -3335,30 +3366,6 @@ may not require direct spec links.</p>
 <li>REQ_PAL_MEM_EXHAUST_E01</li>
 <li>REQ_PAL_MEM_THREADSAFE_E01</li>
 <li>REQ_PAL_NET_MODE_E01</li>
-<li>REQ_TP_001_E01</li>
-<li>REQ_TP_001_E02</li>
-<li>REQ_TP_001_E03</li>
-<li>REQ_TP_013_E01</li>
-<li>REQ_TP_015_E01</li>
-<li>REQ_TP_039_E01</li>
-<li>REQ_TP_030_E01</li>
-<li>REQ_TP_030_E02</li>
-<li>REQ_TP_050_E01</li>
-<li>REQ_TP_050_E02</li>
-<li>REQ_TP_072_E01</li>
-<li>REQ_TP_076_E01</li>
-<li>REQ_TP_082_E01</li>
-<li>REQ_TP_082_E02</li>
-<li>REQ_TP_082_E03</li>
-<li>REQ_TP_082_E04</li>
-<li>REQ_TP_076_E02</li>
-<li>REQ_ARCH_002</li>
-<li>REQ_ARCH_003</li>
-<li>REQ_ARCH_004</li>
-<li>REQ_ARCH_006</li>
-<li>REQ_ARCH_007</li>
-<li>REQ_E2E_PLUGIN_002</li>
-<li>REQ_E2E_PLUGIN_003</li>
 <li>REQ_SD_001_E01</li>
 <li>REQ_SD_010_E01</li>
 <li>REQ_SD_021_E01</li>
@@ -3398,7 +3405,7 @@ may not require direct spec links.</p>
 <ul>
 <li><strong>Status</strong>: ⚠️ PARTIAL - Some spec-derived requirements missing links</li>
 <li><strong>Details</strong>: Spec-derived requirements must satisfy at least one specification requirement</li>
-<li><strong>Derived Requirements</strong>: 167 implementation-derived requirements do not require spec links</li>
+<li><strong>Derived Requirements</strong>: 168 implementation-derived requirements do not require spec links</li>
 </ul>
 <h3 id="swe3-software-architectural-design">SWE.3 (Software Architectural Design)<a class="headerlink" href="#swe3-software-architectural-design" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3414,7 +3421,7 @@ may not require direct spec links.</p>
 <ul>
 <li><strong>Current Level</strong>: CL1</li>
 <li><strong>Target for Production</strong>: CL2 (100% traceability)</li>
-<li><strong>Gap to Target</strong>: 75 requirements</li>
+<li><strong>Gap to Target</strong>: 80 requirements</li>
 </ul>
 <h2 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h2>
 <ol>
