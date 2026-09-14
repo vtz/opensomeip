@@ -410,8 +410,8 @@ private:
     std::chrono::milliseconds send_due_offers() {
         platform::ScopedLock const lock(offered_services_mutex_);
 
-        static constexpr auto kIdleSleep = std::chrono::milliseconds(500);
-        auto next_wakeup = kIdleSleep;
+        static constexpr auto IDLE_SLEEP = std::chrono::milliseconds(500);
+        auto next_wakeup = IDLE_SLEEP;
 
         const auto now = std::chrono::steady_clock::now();
         for (auto& service : offered_services_) {
