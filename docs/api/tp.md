@@ -147,6 +147,30 @@ reassemble without going through UDP.
 
 ## Receiver Validation
 
+### Overlapping segment handling — first-wins (feat_req_someiptp_799)
+
+When a received TP segment overlaps with bytes that were already written
+to the reassembly buffer, the reassembler applies **first-wins**
+semantics: only bytes that have not yet been received are written; bytes
+already present are preserved.  This prevents mixed-payload messages when
+a retransmitted or duplicated segment carries different data for the
+overlapping region.
+
+- Exact duplicates (`is_segment_received` returns true for the full
+  range) are accepted and silently ignored — no data is rewritten.
+- Partial overlaps write only the new byte positions and skip the
+  already-received ones.
+
+### Atomic header + payload completion
+
+`process_segment()` now returns the 16-byte SOME/IP header alongside the
+completed payload via an optional output parameter (`out_someip_header`).
+`TpManager::ingest_datagram()` uses this parameter instead of the
+separate `copy_last_completed_someip_header()` call, ensuring the header
+and payload are retrieved atomically under the reassembly lock.  This
+eliminates a race where concurrent `ingest_datagram()` calls could pair
+the wrong header with a payload.
+
 ### Non-final segment alignment (feat_req_someiptp_772, feat_req_someiptp_792)
 
 All non-final TP segments (More Segments = 1) **must** have a payload

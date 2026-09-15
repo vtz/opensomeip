@@ -201,8 +201,12 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
         return false;
     }
 
+    // Retrieve payload and SOME/IP header atomically from the reassembler
+    // so that concurrent ingest_datagram() calls cannot pair the wrong
+    // header with a payload (issue #327).
+    std::array<uint8_t, 16> hdr{};
     platform::ByteBuffer complete_payload;
-    if (!reassembler_->process_segment(segment, complete_payload)) {
+    if (!reassembler_->process_segment(segment, complete_payload, &hdr)) {
         return false;
     }
     if (complete_payload.empty()) {
@@ -210,14 +214,6 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
     }
 
     statistics_.messages_reassembled++;
-
-    std::array<uint8_t, 16> hdr{};
-    if (!reassembler_->copy_last_completed_someip_header(hdr)) {
-        if (data == nullptr || size < 16) {
-            return false;
-        }
-        std::memcpy(hdr.data(), data, 16);
-    }
 
     return assemble_message_from_tp(hdr, complete_payload, out_complete);
 }

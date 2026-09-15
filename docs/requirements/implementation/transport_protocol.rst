@@ -1194,6 +1194,47 @@ Receiver Behavior Extensions
 
    **Code Location**: ``src/tp/tp_reassembler.cpp`` (add_segment_to_buffer overlap detection)
 
+.. requirement:: First-Wins Semantics for Overlapping Segments
+   :id: REQ_TP_081_FW
+   :satisfies: feat_req_someiptp_799
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Send segment A at offset 0 (32 bytes 0xAA, more=1), then overlapping segment B at offset 16 (32 bytes 0xBB, more=0). Verify bytes [16..31] retain 0xAA (first-wins). Tests: ``tests/test_tp.cpp`` (OverlapSameDataSucceeds, OverlapDifferentDataFirstWins, ExactDuplicateAccepted).
+
+   The software shall implement first-wins semantics for overlapping TP
+   segments: when a newly received segment overlaps with bytes that were
+   already received, only the not-yet-received bytes are written to the
+   reassembly buffer.  Already-received bytes are preserved.
+
+   **Rationale**: Per ``feat_req_someiptp_799`` (SHOULD): "The receiver
+   should correctly reassemble overlapping and duplicated segments by
+   overwriting using the content of the first segment received."
+   First-wins prevents mixed-payload messages when a retransmitted
+   segment carries slightly different data.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (add_segment_to_buffer, per-byte first-wins copy)
+
+.. requirement:: Atomic Header and Payload Completion
+   :id: REQ_TP_081_ATOM
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Complete a reassembly and verify that the returned SOME/IP header matches the payload (not a stale header from a previous completion). Tests: ``tests/test_tp.cpp`` (HeaderMatchesPayloadAfterCompletion, ProcessSegmentReturnsHeader).
+
+   The software shall return the completed SOME/IP header alongside the
+   reassembled payload from ``process_segment()`` so that concurrent
+   ``ingest_datagram()`` calls cannot pair the wrong header with a
+   payload.
+
+   **Rationale**: ``last_completed_someip_header_`` is a shared member
+   variable that can be overwritten between ``process_segment()`` and
+   ``copy_last_completed_someip_header()`` during concurrent calls.
+   Bundling the header with the payload under the reassembly lock
+   eliminates the race condition.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (process_segment), ``src/tp/tp_manager.cpp`` (ingest_datagram)
+
 
 TP Informational References
 ===========================

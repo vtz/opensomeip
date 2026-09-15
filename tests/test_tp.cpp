@@ -2005,3 +2005,236 @@ TEST_F(TpTest, MaxTpReassemblySizeIsAtLeast16) {
     EXPECT_GE(MAX_TP_REASSEMBLY_SIZE, 16u)
         << "MAX_TP_REASSEMBLY_SIZE must be at least 16 (one aligned chunk)";
 }
+
+// ============================================================================
+// Fix: Overlapping TP segment handling — first-wins (feat_req_someiptp_799)
+// ============================================================================
+
+namespace {
+
+/// Build a wire TP datagram with caller-supplied payload bytes.
+platform::ByteBuffer make_tp_datagram(uint16_t service, uint16_t method,
+                                       uint16_t client, uint16_t session,
+                                       uint32_t offset, bool more,
+                                       const platform::ByteBuffer& chunk) {
+    platform::ByteBuffer dg(20 + chunk.size(), 0);
+    dg[0] = static_cast<uint8_t>(service >> 8U);
+    dg[1] = static_cast<uint8_t>(service & 0xFFU);
+    dg[2] = static_cast<uint8_t>(method >> 8U);
+    dg[3] = static_cast<uint8_t>(method & 0xFFU);
+    const uint32_t sl = 8 + 4 + static_cast<uint32_t>(chunk.size());
+    dg[4] = static_cast<uint8_t>((sl >> 24U) & 0xFFU);
+    dg[5] = static_cast<uint8_t>((sl >> 16U) & 0xFFU);
+    dg[6] = static_cast<uint8_t>((sl >> 8U) & 0xFFU);
+    dg[7] = static_cast<uint8_t>(sl & 0xFFU);
+    dg[8] = static_cast<uint8_t>(client >> 8U);
+    dg[9] = static_cast<uint8_t>(client & 0xFFU);
+    dg[10] = static_cast<uint8_t>(session >> 8U);
+    dg[11] = static_cast<uint8_t>(session & 0xFFU);
+    dg[12] = 0x01;  // Protocol Version
+    dg[13] = 0x01;  // Interface Version
+    dg[14] = 0x20;  // REQUEST | TP-Flag
+    dg[15] = 0x00;  // Return Code
+    const uint32_t tp_hdr = ((offset / 16U) << 4U) | (more ? 0x01U : 0x00U);
+    dg[16] = static_cast<uint8_t>((tp_hdr >> 24U) & 0xFFU);
+    dg[17] = static_cast<uint8_t>((tp_hdr >> 16U) & 0xFFU);
+    dg[18] = static_cast<uint8_t>((tp_hdr >> 8U) & 0xFFU);
+    dg[19] = static_cast<uint8_t>(tp_hdr & 0xFFU);
+    std::copy(chunk.begin(), chunk.end(), dg.begin() + 20);
+    return dg;
+}
+
+}  // namespace
+
+/**
+ * @test_case TC_TP_OVERLAP_SAME_DATA
+ * @tests feat_req_someiptp_799
+ * @brief Overlapping segment with identical data succeeds (first-wins, no corruption)
+ *
+ * Segment A: offset 0, 32 bytes of 0xAA (more=1)
+ * Segment B: offset 16, 32 bytes of 0xAA (more=0, total=48)
+ * Overlap [16..31] contains the same data → message completes with all 0xAA
+ * for bytes [0..47] except [32..47] which are also 0xAA.
+ */
+TEST_F(TpTest, OverlapSameDataSucceeds) {
+    TpManager manager(config);
+    ASSERT_TRUE(manager.initialize());
+
+    platform::ByteBuffer chunk_a(32, 0xAA);
+    platform::ByteBuffer chunk_b(32, 0xAA);
+    const auto dg_a = make_tp_datagram(0x1111, 0x2222, 0xAAAA, 0x0001, 0, true, chunk_a);
+    const auto dg_b = make_tp_datagram(0x1111, 0x2222, 0xAAAA, 0x0001, 16, false, chunk_b);
+
+    Message complete;
+    EXPECT_FALSE(manager.ingest_datagram(dg_a.data(), dg_a.size(), complete));
+    ASSERT_TRUE(manager.ingest_datagram(dg_b.data(), dg_b.size(), complete))
+        << "Overlapping segment with same data must complete";
+    ASSERT_EQ(complete.get_payload().size(), 48u);
+    for (size_t i = 0; i < 48; ++i) {
+        EXPECT_EQ(complete.get_payload()[i], 0xAA)
+            << "Byte " << i << " must be 0xAA";
+    }
+}
+
+/**
+ * @test_case TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS
+ * @tests feat_req_someiptp_799
+ * @brief Overlapping segment with different data → first-wins preserves original bytes
+ *
+ * Segment A: offset 0, 32 bytes of 0xAA (more=1)  → covers [0..31]
+ * Segment B: offset 16, 32 bytes of 0xBB (more=0)  → covers [16..47]
+ * Overlap region [16..31]: first-wins keeps 0xAA from segment A.
+ * Non-overlap [32..47]: filled with 0xBB from segment B.
+ */
+TEST_F(TpTest, OverlapDifferentDataFirstWins) {
+    TpManager manager(config);
+    ASSERT_TRUE(manager.initialize());
+
+    platform::ByteBuffer chunk_a(32, 0xAA);
+    platform::ByteBuffer chunk_b(32, 0xBB);
+    const auto dg_a = make_tp_datagram(0x1111, 0x2222, 0xAAAA, 0x0001, 0, true, chunk_a);
+    const auto dg_b = make_tp_datagram(0x1111, 0x2222, 0xAAAA, 0x0001, 16, false, chunk_b);
+
+    Message complete;
+    EXPECT_FALSE(manager.ingest_datagram(dg_a.data(), dg_a.size(), complete));
+    ASSERT_TRUE(manager.ingest_datagram(dg_b.data(), dg_b.size(), complete))
+        << "Overlapping segment with different data must still complete";
+    ASSERT_EQ(complete.get_payload().size(), 48u);
+
+    // [0..15]: 0xAA from segment A (no overlap)
+    for (size_t i = 0; i < 16; ++i) {
+        EXPECT_EQ(complete.get_payload()[i], 0xAA)
+            << "Byte " << i << " must be 0xAA (segment A, no overlap)";
+    }
+    // [16..31]: 0xAA from segment A — first-wins preserves original data
+    for (size_t i = 16; i < 32; ++i) {
+        EXPECT_EQ(complete.get_payload()[i], 0xAA)
+            << "Byte " << i << " must be 0xAA (first-wins, not overwritten by 0xBB)";
+    }
+    // [32..47]: 0xBB from segment B (new bytes)
+    for (size_t i = 32; i < 48; ++i) {
+        EXPECT_EQ(complete.get_payload()[i], 0xBB)
+            << "Byte " << i << " must be 0xBB (segment B, no overlap)";
+    }
+}
+
+/**
+ * @test_case TC_TP_EXACT_DUPLICATE_ACCEPTED
+ * @tests feat_req_someiptp_799
+ * @brief Exact duplicate segment is accepted without changing data
+ *
+ * Send segment A twice (offset 0, 32 bytes 0xAA, more=1).
+ * Then send last segment B (offset 32, 16 bytes 0xBB, more=0).
+ * Duplicate A must be accepted (return true) and the final message is correct.
+ */
+TEST_F(TpTest, ExactDuplicateAccepted) {
+    TpManager manager(config);
+    ASSERT_TRUE(manager.initialize());
+
+    platform::ByteBuffer chunk_a(32, 0xAA);
+    platform::ByteBuffer chunk_b(16, 0xBB);
+    const auto dg_a = make_tp_datagram(0x1111, 0x2222, 0xAAAA, 0x0001, 0, true, chunk_a);
+    const auto dg_b = make_tp_datagram(0x1111, 0x2222, 0xAAAA, 0x0001, 32, false, chunk_b);
+
+    Message complete;
+    // First copy of segment A
+    EXPECT_FALSE(manager.ingest_datagram(dg_a.data(), dg_a.size(), complete));
+    // Duplicate of segment A — accepted (is_segment_received returns true)
+    EXPECT_FALSE(manager.ingest_datagram(dg_a.data(), dg_a.size(), complete))
+        << "Exact duplicate must be accepted but not complete the message yet";
+    // Last segment completes the message
+    ASSERT_TRUE(manager.ingest_datagram(dg_b.data(), dg_b.size(), complete));
+    ASSERT_EQ(complete.get_payload().size(), 48u);
+
+    for (size_t i = 0; i < 32; ++i) {
+        EXPECT_EQ(complete.get_payload()[i], 0xAA)
+            << "Byte " << i << " must be 0xAA from segment A";
+    }
+    for (size_t i = 32; i < 48; ++i) {
+        EXPECT_EQ(complete.get_payload()[i], 0xBB)
+            << "Byte " << i << " must be 0xBB from segment B";
+    }
+}
+
+// ============================================================================
+// Fix: Atomic header + payload completion (issue #327)
+// ============================================================================
+
+/**
+ * @test_case TC_TP_HEADER_MATCHES_PAYLOAD
+ * @tests REQ_TP_077, REQ_TP_078
+ * @brief Completed header matches the payload after ingest_datagram
+ *
+ * Verifies that the SOME/IP fields in the reassembled Message (service ID,
+ * method ID, client ID, session ID, message type) match the wire headers
+ * used during reassembly, not some stale header from an earlier completion.
+ */
+TEST_F(TpTest, HeaderMatchesPayloadAfterCompletion) {
+    TpManager manager(config);
+    ASSERT_TRUE(manager.initialize());
+
+    platform::ByteBuffer chunk1(32, 0xC1);
+    platform::ByteBuffer chunk2(16, 0xC2);
+    const auto dg1 = make_tp_datagram(0x5555, 0x6666, 0x7777, 0x8888, 0, true, chunk1);
+    const auto dg2 = make_tp_datagram(0x5555, 0x6666, 0x7777, 0x8888, 32, false, chunk2);
+
+    Message complete;
+    EXPECT_FALSE(manager.ingest_datagram(dg1.data(), dg1.size(), complete));
+    ASSERT_TRUE(manager.ingest_datagram(dg2.data(), dg2.size(), complete));
+
+    // Verify header fields match the segments
+    EXPECT_EQ(complete.get_service_id(), 0x5555);
+    EXPECT_EQ(complete.get_method_id(), 0x6666);
+    EXPECT_EQ(complete.get_client_id(), 0x7777);
+    EXPECT_EQ(complete.get_session_id(), 0x8888);
+    EXPECT_EQ(complete.get_protocol_version(), 0x01);
+    EXPECT_EQ(complete.get_interface_version(), 0x01);
+    EXPECT_EQ(complete.get_message_type(), MessageType::REQUEST)
+        << "TP flag must be cleared after reassembly";
+    EXPECT_FALSE(complete.uses_tp());
+
+    // Verify payload
+    ASSERT_EQ(complete.get_payload().size(), 48u);
+    EXPECT_EQ(complete.get_payload()[0], 0xC1);
+    EXPECT_EQ(complete.get_payload()[32], 0xC2);
+}
+
+/**
+ * @test_case TC_TP_PROCESS_SEGMENT_RETURNS_HEADER
+ * @tests feat_req_someiptp_799
+ * @brief process_segment with out_someip_header returns the header atomically
+ *
+ * Calls the TpReassembler API directly with the new out_someip_header
+ * parameter and verifies it is populated on completion.
+ */
+TEST_F(TpTest, ProcessSegmentReturnsHeader) {
+    TpReassembler reassembler(config);
+
+    platform::ByteBuffer chunk1(32, 0xD1);
+    platform::ByteBuffer chunk2(16, 0xD2);
+    const auto dg1 = make_tp_datagram(0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 0, true, chunk1);
+    const auto dg2 = make_tp_datagram(0xAAAA, 0xBBBB, 0xCCCC, 0xDDDD, 32, false, chunk2);
+
+    TpSegment seg1, seg2;
+    ASSERT_TRUE(parse_wire_segment(dg1.data(), dg1.size(), seg1));
+    ASSERT_TRUE(parse_wire_segment(dg2.data(), dg2.size(), seg2));
+
+    platform::ByteBuffer complete;
+    std::array<uint8_t, 16> hdr{};
+
+    // First segment — no completion, header unchanged
+    ASSERT_TRUE(reassembler.process_segment(seg1, complete, &hdr));
+    EXPECT_TRUE(complete.empty());
+
+    // Last segment — completes, header populated
+    ASSERT_TRUE(reassembler.process_segment(seg2, complete, &hdr));
+    ASSERT_FALSE(complete.empty());
+
+    // Verify header contains the wire SOME/IP fields
+    const auto svc = static_cast<uint16_t>((static_cast<unsigned>(hdr[0]) << 8U) |
+                                            static_cast<unsigned>(hdr[1]));
+    const auto mtd = static_cast<uint16_t>((static_cast<unsigned>(hdr[2]) << 8U) |
+                                            static_cast<unsigned>(hdr[3]));
+    EXPECT_EQ(svc, 0xAAAA);
+    EXPECT_EQ(mtd, 0xBBBB);
+}

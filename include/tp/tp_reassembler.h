@@ -70,11 +70,22 @@ public:
     /**
      * @brief Process a received TP segment
      *
+     * When a complete message is ready, the reassembled payload is written to
+     * @p complete_message **and** the 16-byte SOME/IP header is written to
+     * @p out_someip_header (if non-null).  Returning both values under the
+     * internal lock makes the operation atomic with respect to concurrent
+     * calls — callers no longer need to query the header separately.
+     *
      * @param segment The received segment
      * @param complete_message Complete reassembled message (output, if available)
+     * @param out_someip_header If non-null and the message completes, receives
+     *                          the 16-byte SOME/IP header from the reassembly
+     *                          buffer (atomic with the payload)
      * @return true if segment processed successfully, false on error
+     * @implements feat_req_someiptp_799
      */
-    bool process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message);
+    bool process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message,
+                         std::array<uint8_t, 16>* out_someip_header = nullptr);
 
     /**
      * @brief Check if any buffer with this message_id is being reassembled
