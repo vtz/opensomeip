@@ -2314,6 +2314,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#breaking-changes-wire-format" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2347,7 +2358,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bug-fixes" class="md-nav__link">
+  <a href="#bug-fixes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Bug Fixes
@@ -2408,7 +2419,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bug-fixes_1" class="md-nav__link">
+  <a href="#bug-fixes_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Bug Fixes
@@ -2746,6 +2757,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#bug-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bug Fixes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#breaking-changes-wire-format" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2779,7 +2801,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bug-fixes" class="md-nav__link">
+  <a href="#bug-fixes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Bug Fixes
@@ -2840,7 +2862,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bug-fixes_1" class="md-nav__link">
+  <a href="#bug-fixes_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Bug Fixes
@@ -2888,6 +2910,40 @@
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>SOME/IP-SD</strong>: SubscribeEventgroup family is unicast-only. Clients send
+  Subscribe/StopSubscribe to the Offer datagram source (not the SD multicast
+  group); servers ignore Subscribe received on a multicast destination
+  (<a href="https://github.com/vtz/opensomeip/issues/294">#294</a>).</li>
+<li><strong>SOME/IP-SD</strong>: Clients process SubscribeEventgroupAck/Nack and expose
+  <code>SdClient::get_eventgroup_subscription_state()</code>
+  (<a href="https://github.com/vtz/opensomeip/issues/295">#295</a>).</li>
+<li><strong>SOME/IP-SD</strong>: SubscribeEventgroupAck IPv4MulticastOption uses the offered
+  eventgroup endpoint; unicast eventgroups omit the option
+  (<a href="https://github.com/vtz/opensomeip/issues/298">#298</a>).</li>
+<li><strong>SOME/IP-SD</strong>: OfferService never uses TTL 0 (default TTL applied or offer
+  rejected); StopOfferService still uses TTL 0
+  (<a href="https://github.com/vtz/opensomeip/issues/299">#299</a>).</li>
+<li><strong>SOME/IP-SD</strong>: Default SD multicast endpoint unified to
+  <code>239.255.255.251:30490</code> (port is specified; group is a deployment default)
+  (<a href="https://github.com/vtz/opensomeip/issues/300">#300</a>).</li>
+<li><strong>SOME/IP-SD</strong>: Unknown 16-byte entry types are skipped instead of dropping
+  the whole SD message
+  (<a href="https://github.com/vtz/opensomeip/issues/302">#302</a>).</li>
+<li><strong>SOME/IP-SD</strong>: Unicast Flag is set on all SD TX; Reboot Flag stays set until
+  session ID wraps <code>0xFFFF</code> → <code>0x0001</code>
+  (<a href="https://github.com/vtz/opensomeip/issues/303">#303</a>).</li>
+<li><strong>SOME/IP-SD</strong>: SubscribeEventgroupAck/Nack copy the Subscribe counter and
+  reserved 12-bit field
+  (<a href="https://github.com/vtz/opensomeip/issues/304">#304</a>).</li>
+<li><strong>SOME/IP-SD</strong>: Initial Wait Phase picks a random delay between
+  <code>initial_delay_min</code> and <code>initial_delay_max</code> (deterministic override for tests)
+  (<a href="https://github.com/vtz/opensomeip/issues/306">#306</a>).</li>
+<li><strong>Events</strong>: New subscribers receive current field values after Subscribe Ack;
+  TTL refresh of an existing client does not repeat the initial burst
+  (<a href="https://github.com/vtz/opensomeip/issues/307">#307</a>).</li>
+</ul>
 <h3 id="breaking-changes-wire-format">Breaking Changes (Wire Format)<a class="headerlink" href="#breaking-changes-wire-format" title="Permanent link">&para;</a></h3>
 <ul>
 <li>
@@ -2964,7 +3020,7 @@
   mode variant that also returns the sender's endpoint for reply
   addressing without requiring a listener.</li>
 </ul>
-<h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
+<h3 id="bug-fixes_1">Bug Fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>SOME/IP-TP</strong>: Message Type bit 5 (<code>0x20</code>) is the TP flag for all
   types, including Response (<code>0xA0</code>) and Error (<code>0xA1</code>). Unknown types
@@ -3081,7 +3137,7 @@ underlying representation:</p>
 <li><strong>SD capacity-aware contracts</strong> — <code>add_entry()</code> / <code>add_option()</code> return
   <code>bool</code>; <code>deserialize()</code> rejects messages that exceed container capacity.</li>
 </ul>
-<h3 id="bug-fixes_1">Bug Fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h3>
+<h3 id="bug-fixes_2">Bug Fixes<a class="headerlink" href="#bug-fixes_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li>SD client: reserve local tracking map slot <strong>before</strong> sending network
   traffic in <code>find_service()</code> and <code>subscribe_eventgroup()</code>.  Previously,
