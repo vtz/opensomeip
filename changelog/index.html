@@ -3019,6 +3019,10 @@
 <li><code>UdpTransport::receive_message_with_sender(Endpoint&amp; sender)</code> — polling
   mode variant that also returns the sender's endpoint for reply
   addressing without requiring a listener.</li>
+<li><code>RpcClient::send_request_no_return()</code> — fire-and-forget <code>REQUEST_NO_RETURN</code>
+  (message type 0x01) with no pending-call wait (#308).</li>
+<li><code>RpcServer::register_method(..., MethodSemantics)</code> — request/response vs
+  fire-and-forget method semantics (#308).</li>
 </ul>
 <h3 id="bug-fixes_1">Bug Fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3047,6 +3051,12 @@
 <li>TCP: <code>on_message_received()</code> is now invoked outside <code>connection_mutex_</code>,
   eliminating a potential deadlock when the callback calls
   <code>disconnect()</code>.</li>
+<li>RPC: Interface Version is the service major. The message header no longer
+  rejects values other than 0x01; <code>RpcServer</code> returns
+  <code>E_WRONG_INTERFACE_VERSION</code> (0x08) on mismatch (#297).</li>
+<li>RPC: <code>RpcClient</code> sends to a configured offered-service endpoint instead of
+  defaulting to <code>127.0.0.1:30490</code> (the SD port). <code>RpcServer</code> binds
+  <code>127.0.0.1:30501</code> by default (#301).</li>
 </ul>
 <h3 id="interop-notes">Interop Notes<a class="headerlink" href="#interop-notes" title="Permanent link">&para;</a></h3>
 <p>The following intentional extensions remain vs. the Open SOME/IP spec:</p>

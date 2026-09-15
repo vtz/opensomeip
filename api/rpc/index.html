@@ -3241,6 +3241,9 @@
 <li><strong>Purpose</strong>: Client-side interface for making RPC method calls</li>
 <li><strong>Features</strong>:</li>
 <li>Synchronous and asynchronous method calls</li>
+<li>Fire-and-forget <code>REQUEST_NO_RETURN</code></li>
+<li>Explicit remote endpoint (not the SD port)</li>
+<li>Service major / Interface Version on outgoing messages</li>
 <li>Automatic timeout handling</li>
 <li>Request/response correlation</li>
 <li>Call cancellation support</li>
@@ -3250,7 +3253,9 @@
 <ul>
 <li><strong>Purpose</strong>: Server-side interface for handling RPC method calls</li>
 <li><strong>Features</strong>:</li>
-<li>Method handler registration</li>
+<li>Method handler registration (request/response or fire-and-forget)</li>
+<li>Default bind <code>127.0.0.1:30501</code></li>
+<li><code>E_WRONG_INTERFACE_VERSION</code> on major mismatch</li>
 <li>Automatic response generation</li>
 <li>Error handling and return codes</li>
 <li>Statistics tracking</li>
@@ -3289,29 +3294,33 @@
 </span></code></pre></div>
 <h3 id="client-side">Client Side<a class="headerlink" href="#client-side" title="Permanent link">&para;</a></h3>
 <div class="language-cpp highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;rpc/rpc_client.h&gt;</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">someip</span><span class="o">::</span><span class="nn">rpc</span><span class="p">;</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1">// Create client with ID 0xABCD</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">RpcClient</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="mh">0xABCD</span><span class="p">);</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1">// Initialize client</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">client</span><span class="p">.</span><span class="n">initialize</span><span class="p">();</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1">// Synchronous call</span>
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">RpcSyncResult</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">call_method_sync</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="n">parameters</span><span class="p">);</span>
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
-</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1">// Asynchronous call</span>
-</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="n">RpcCallHandle</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">call_method_async</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="n">parameters</span><span class="p">,</span>
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="p">[](</span><span class="k">const</span><span class="w"> </span><span class="n">RpcResponse</span><span class="o">&amp;</span><span class="w"> </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">        </span><span class="c1">// Handle response</span>
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="p">});</span>
-</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
-</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="c1">// Cancel async call if needed</span>
-</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="n">client</span><span class="p">.</span><span class="n">cancel_call</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
-</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
-</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="c1">// Client shutdown</span>
-</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="n">client</span><span class="p">.</span><span class="n">shutdown</span><span class="p">();</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;rpc/rpc_types.h&gt;</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">someip</span><span class="o">::</span><span class="nn">rpc</span><span class="p">;</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1">// Create client with ID 0xABCD</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">RpcClient</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="mh">0xABCD</span><span class="p">);</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1">// Configure the remote endpoint (offered-service RPC port, not the SD port)</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">client</span><span class="p">.</span><span class="n">set_remote_endpoint</span><span class="p">(</span><span class="n">someip</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"127.0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="n">SOMEIP_DEFAULT_RPC_PORT</span><span class="p">));</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1">// Initialize client</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">client</span><span class="p">.</span><span class="n">initialize</span><span class="p">();</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1">// Synchronous call</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="n">RpcSyncResult</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">call_method_sync</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="n">parameters</span><span class="p">);</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="c1">// Asynchronous call</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="n">RpcCallHandle</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">call_method_async</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="n">parameters</span><span class="p">,</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="p">[](</span><span class="k">const</span><span class="w"> </span><span class="n">RpcResponse</span><span class="o">&amp;</span><span class="w"> </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">        </span><span class="c1">// Handle response</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="p">});</span>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="c1">// Cancel async call if needed</span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="n">client</span><span class="p">.</span><span class="n">cancel_call</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="c1">// Client shutdown</span>
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="n">client</span><span class="p">.</span><span class="n">shutdown</span><span class="p">();</span>
 </span></code></pre></div>
 <h2 id="safety-considerations-non-certified">Safety Considerations (non-certified)<a class="headerlink" href="#safety-considerations-non-certified" title="Permanent link">&para;</a></h2>
 <ol>
@@ -3361,11 +3370,11 @@
 </span></code></pre></div>
 <h3 id="client-configuration">Client Configuration<a class="headerlink" href="#client-configuration" title="Permanent link">&para;</a></h3>
 <div class="language-cpp highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">RpcClient</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="n">client_id</span><span class="p">);</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1">// Client automatically binds to available UDP port</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">client</span><span class="p">.</span><span class="n">set_remote_endpoint</span><span class="p">(</span><span class="n">someip</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"127.0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="n">SOMEIP_DEFAULT_RPC_PORT</span><span class="p">));</span>
 </span></code></pre></div>
 <h3 id="server-configuration">Server Configuration<a class="headerlink" href="#server-configuration" title="Permanent link">&para;</a></h3>
 <div class="language-cpp highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">RpcServer</span><span class="w"> </span><span class="nf">server</span><span class="p">(</span><span class="n">service_id</span><span class="p">);</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">// Server binds to default SOME/IP port (30490)</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">// Server binds to 127.0.0.1:30501 by default (application RPC, not SD)</span>
 </span></code></pre></div>
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <h3 id="client-errors">Client Errors<a class="headerlink" href="#client-errors" title="Permanent link">&para;</a></h3>
@@ -3373,6 +3382,7 @@
 <li><strong>TIMEOUT</strong>: Response not received within timeout period</li>
 <li><strong>NETWORK_ERROR</strong>: Transport layer communication failure</li>
 <li><strong>SERVICE_NOT_AVAILABLE</strong>: Server not reachable</li>
+<li><strong>WRONG_INTERFACE_VERSION</strong>: Response Interface Version doesn't match configured major</li>
 <li><strong>INTERNAL_ERROR</strong>: Internal client error</li>
 </ul>
 <h3 id="server-errors">Server Errors<a class="headerlink" href="#server-errors" title="Permanent link">&para;</a></h3>
