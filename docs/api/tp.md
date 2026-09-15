@@ -190,6 +190,33 @@ exceed the buffer are rejected early rather than silently failing.
 A `static_assert` in `tp_types.h` guards against nonsensical
 compile-time configurations.
 
+## Statistics and Monitoring
+
+`TpManager` provides separate statistics for the sender and receiver paths,
+allowing concurrent diagnostic reads without locks or data races.
+
+### Sender statistics — `get_sender_statistics()`
+
+Returns a point-in-time snapshot of counters written by the segmentation
+path: `messages_segmented`, `segments_sent`, `errors`.  Call from any
+thread; the read is atomic (relaxed ordering — zero overhead on ARM / x86).
+
+### Receiver statistics — `get_receiver_statistics()`
+
+Returns a point-in-time snapshot of counters written by the reassembly
+path: `messages_reassembled`, `segments_received`, `timeouts`,
+`retransmissions`, `errors`.
+
+### Thread-safety model
+
+Counters are stored in `AtomicTpStatistics` instances using
+`std::atomic<uint32_t>` with `memory_order_relaxed`.  Each path writes
+exclusively to its own instance, so cross-thread writes never occur.  The
+atomics guard only against a concurrent read (diagnostic query) while the
+owning path is incrementing.  On ARM and x86 targets, relaxed atomics
+compile to plain load/store instructions with the same overhead as
+non-atomic `uint32_t`.
+
 ## Error Handling
 
 The TP layer provides comprehensive error handling:

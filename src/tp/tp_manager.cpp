@@ -23,6 +23,7 @@
 #include "tp/tp_types.h"
 
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
@@ -95,7 +96,7 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
         return TpResult::RESOURCE_EXHAUSTED;
     }
     active_transfers_[transfer_id] = std::move(transfer);
-    sender_statistics_.messages_segmented++;
+    sender_statistics_.messages_segmented.fetch_add(1, std::memory_order_relaxed);
 
     return TpResult::SUCCESS;
 }
@@ -124,7 +125,7 @@ TpResult TpManager::get_next_segment(uint32_t transfer_id, TpSegment& segment) {
     transfer.next_segment_to_send++;
     transfer.last_activity = std::chrono::steady_clock::now();
 
-    sender_statistics_.segments_sent++;
+    sender_statistics_.segments_sent.fetch_add(1, std::memory_order_relaxed);
 
     return TpResult::SUCCESS;
 }
@@ -136,7 +137,7 @@ TpResult TpManager::get_next_segment(uint32_t transfer_id, TpSegment& segment) {
  */
 bool TpManager::handle_received_segment(const TpSegment& segment, platform::ByteBuffer& complete_message) {
     // Update statistics
-    receiver_statistics_.segments_received++;
+    receiver_statistics_.segments_received.fetch_add(1, std::memory_order_relaxed);
 
     if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
         if (segment.header.segment_length != segment.payload.size()) {
@@ -195,7 +196,7 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
     segment.sender_ipv4 = sender_ipv4;
     segment.sender_port = sender_port;
 
-    receiver_statistics_.segments_received++;
+    receiver_statistics_.segments_received.fetch_add(1, std::memory_order_relaxed);
 
     if (!reassembler_) {
         return false;
@@ -213,7 +214,7 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
         return false;
     }
 
-    receiver_statistics_.messages_reassembled++;
+    receiver_statistics_.messages_reassembled.fetch_add(1, std::memory_order_relaxed);
 
     return assemble_message_from_tp(hdr, complete_payload, out_complete);
 }
@@ -224,8 +225,9 @@ TpResult TpManager::segment_and_serialize(const Message& message, TpSegmentVecto
     }
     TpResult const result = segmenter_->segment_message(message, segments);
     if (result == TpResult::SUCCESS) {
-        sender_statistics_.messages_segmented++;
-        sender_statistics_.segments_sent += static_cast<uint32_t>(segments.size());
+        sender_statistics_.messages_segmented.fetch_add(1, std::memory_order_relaxed);
+        sender_statistics_.segments_sent.fetch_add(
+            static_cast<uint32_t>(segments.size()), std::memory_order_relaxed);
     }
     return result;
 }
@@ -303,7 +305,7 @@ void TpManager::process_timeouts() {
 
             if (elapsed > config_.reassembly_timeout) {
                 transfer.state = TpTransferState::TIMEOUT;
-                receiver_statistics_.timeouts++;
+                receiver_statistics_.timeouts.fetch_add(1, std::memory_order_relaxed);
                 timed_out.emplace_back(transfer.transfer_id, TpResult::TIMEOUT);
                 it = active_transfers_.erase(it);
             } else {
@@ -329,7 +331,7 @@ void TpManager::process_timeouts() {
  * @implements REQ_TP_060, REQ_TP_061
  */
 TpStatistics TpManager::get_sender_statistics() const {
-    return sender_statistics_;
+    return sender_statistics_.snapshot();
 }
 
 /**
@@ -337,7 +339,7 @@ TpStatistics TpManager::get_sender_statistics() const {
  * @implements REQ_TP_062, REQ_TP_063
  */
 TpStatistics TpManager::get_receiver_statistics() const {
-    return receiver_statistics_;
+    return receiver_statistics_.snapshot();
 }
 
 /**

@@ -949,6 +949,13 @@ Timer Error Handling
 Statistics and Monitoring
 =========================
 
+Statistics counters use ``std::atomic<uint32_t>`` with relaxed memory
+ordering (``AtomicTpStatistics``) and are split into separate sender and
+receiver instances so that diagnostic reads via
+``get_sender_statistics()`` / ``get_receiver_statistics()`` are lock-free
+and race-free.  On ARM and x86, relaxed atomics compile to plain
+load/store instructions with zero overhead.
+
 .. requirement:: Track Segmentation Statistics
    :id: REQ_TP_060
    :satisfies: feat_req_someiptp_774, feat_req_someiptp_801
