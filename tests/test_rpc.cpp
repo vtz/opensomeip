@@ -67,7 +67,8 @@ TEST_F(RpcTest, RpcResultValues) {
     EXPECT_EQ(static_cast<int>(RpcResult::INVALID_PARAMETERS), 3);
     EXPECT_EQ(static_cast<int>(RpcResult::METHOD_NOT_FOUND), 4);
     EXPECT_EQ(static_cast<int>(RpcResult::SERVICE_NOT_AVAILABLE), 5);
-    EXPECT_EQ(static_cast<int>(RpcResult::INTERNAL_ERROR), 6);
+    EXPECT_EQ(static_cast<int>(RpcResult::WRONG_INTERFACE_VERSION), 6);
+    EXPECT_EQ(static_cast<int>(RpcResult::INTERNAL_ERROR), 7);
 }
 
 TEST_F(RpcTest, RpcRequestConstruction) {
@@ -312,7 +313,7 @@ TEST_F(RpcTest, ClientRejectsMismatchedResponseInterfaceVersion) {
     timeout.response_timeout = std::chrono::milliseconds(2000);
     auto result = client.call_method_sync(test_service_id_, test_method_id_, {}, timeout);
     responder.join();
-    EXPECT_EQ(result.result, RpcResult::INTERNAL_ERROR);
+    EXPECT_EQ(result.result, RpcResult::WRONG_INTERFACE_VERSION);
 
     client.shutdown();
     spy.stop();

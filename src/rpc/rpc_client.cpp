@@ -323,8 +323,9 @@ private:
                     it->second.method_id == message->get_method_id()) {
 
                     RpcResult result = RpcResult::INTERNAL_ERROR;
-                    if (message->get_interface_version() == interface_version_ &&
-                        message->is_success()) {
+                    if (message->get_interface_version() != interface_version_) {
+                        result = RpcResult::WRONG_INTERFACE_VERSION;
+                    } else if (message->is_success()) {
                         result = RpcResult::SUCCESS;
                     }
                     recv_resp = RpcResponse(message->get_service_id(), message->get_method_id(),

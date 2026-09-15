@@ -180,6 +180,7 @@ RpcServer server(service_id);
 - **TIMEOUT**: Response not received within timeout period
 - **NETWORK_ERROR**: Transport layer communication failure
 - **SERVICE_NOT_AVAILABLE**: Server not reachable
+- **WRONG_INTERFACE_VERSION**: Response Interface Version doesn't match configured major
 - **INTERNAL_ERROR**: Internal client error
 
 ### Server Errors

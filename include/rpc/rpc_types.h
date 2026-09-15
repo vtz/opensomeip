@@ -33,6 +33,7 @@ enum class RpcResult : uint8_t {
     INVALID_PARAMETERS,
     METHOD_NOT_FOUND,
     SERVICE_NOT_AVAILABLE,
+    WRONG_INTERFACE_VERSION,  // Response IV doesn't match configured major
     INTERNAL_ERROR
 };
 
