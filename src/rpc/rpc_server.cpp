@@ -167,15 +167,8 @@ private:
         const MessageType type = message->get_message_type();
         const bool expects_response = message_expects_response(type);
 
-        // Interface Version is the service major; mismatch is an RPC error, not a header drop.
-        if (message->get_interface_version() != interface_version_) {
-            if (expects_response) {
-                send_error_response(message, sender, ReturnCode::E_WRONG_INTERFACE_VERSION);
-            }
-            return;
-        }
-
-        // Find method handler
+        // Find method handler (needed before message-type/interface-version checks
+        // because semantics are a per-method property).
         RegisteredMethod registered;
         {
             platform::ScopedLock const lock(methods_mutex_);
@@ -191,6 +184,9 @@ private:
 
         const bool fire_and_forget = (registered.semantics == MethodSemantics::FIRE_AND_FORGET);
 
+        // Per feat_req_someip_721 / feat_req_someip_718 the check order is:
+        //   Message Type -> Interface Version -> Method (already resolved above).
+        // E_WRONG_MESSAGE_TYPE (0x0a) takes precedence over E_WRONG_INTERFACE_VERSION (0x08).
         if (expects_response && fire_and_forget) {
             send_error_response(message, sender, ReturnCode::E_WRONG_MESSAGE_TYPE);
             return;
@@ -198,6 +194,14 @@ private:
 
         if (is_no_return(type) && !fire_and_forget) {
             // Client does not wait; do not run the request/response handler.
+            return;
+        }
+
+        // Interface Version is the service major; mismatch is an RPC error, not a header drop.
+        if (message->get_interface_version() != interface_version_) {
+            if (expects_response) {
+                send_error_response(message, sender, ReturnCode::E_WRONG_INTERFACE_VERSION);
+            }
             return;
         }
 

@@ -23,7 +23,6 @@ MSG_TYPE_REQUEST_NO_RETURN = 0x01
 MSG_TYPE_RESPONSE = 0x80
 MSG_TYPE_ERROR = 0x81
 RETURN_CODE_OK = 0x00
-RETURN_CODE_WRONG_INTERFACE_VERSION = 0x08
 PROTOCOL_VERSION = 0x01
 
 
@@ -123,6 +122,7 @@ async def test_live_interface_version_two_if_server_present(echo_scenario):
         if response is None:
             pytest.skip("server did not answer IV=0x02 REQUEST")
         parsed = _parse(response)
-        assert parsed["message_type"] in (MSG_TYPE_RESPONSE, MSG_TYPE_ERROR)
-        if parsed["message_type"] == MSG_TYPE_ERROR:
-            assert parsed["return_code"] == RETURN_CODE_WRONG_INTERFACE_VERSION
+        # The hello-world server does not inspect Interface Version, so
+        # the header layer must no longer drop non-0x01 values and we
+        # expect a normal RESPONSE.
+        assert parsed["message_type"] == MSG_TYPE_RESPONSE
