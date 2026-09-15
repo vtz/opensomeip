@@ -84,6 +84,9 @@ Result EventDrivenUdpTransport::connect(const Endpoint& endpoint)
         return Result::INVALID_ENDPOINT;
     }
     if (endpoint.get_protocol() == TransportProtocol::MULTICAST_UDP) {
+        if (!opened_.load()) {
+            return Result::NOT_CONNECTED;
+        }
         if (!is_multicast_ipv4(endpoint.get_address())) {
             return Result::INVALID_ENDPOINT;
         }
@@ -163,6 +166,9 @@ bool EventDrivenUdpTransport::is_running() const
 
 Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& multicast_address)
 {
+    if (!opened_.load()) {
+        return Result::NOT_CONNECTED;
+    }
     if (!is_multicast_ipv4(multicast_address)) {
         return Result::INVALID_ENDPOINT;
     }
@@ -171,6 +177,9 @@ Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& m
 
 Result EventDrivenUdpTransport::leave_multicast_group(const platform::String<>& multicast_address)
 {
+    if (!opened_.load()) {
+        return Result::NOT_CONNECTED;
+    }
     if (!is_multicast_ipv4(multicast_address)) {
         return Result::INVALID_ENDPOINT;
     }
@@ -200,14 +209,12 @@ void EventDrivenUdpTransport::on_adapter_receive(const platform::ByteBuffer& dat
         return;
     }
 
-    {
-        const platform::ScopedLock lock(queue_mutex_);
-        receive_queue_.push(message);
-    }
-
     ITransportListener* const cb = listener_.load(std::memory_order_acquire);
     if (cb != nullptr) {
         cb->on_message_received(message, sender);
+    } else {
+        const platform::ScopedLock lock(queue_mutex_);
+        receive_queue_.push(message);
     }
 }
 

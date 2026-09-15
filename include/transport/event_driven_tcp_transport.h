@@ -81,6 +81,7 @@ class EventDrivenTcpTransport : public ITransport {
     void on_adapter_connected(const Endpoint& remote);
     void on_adapter_disconnected();
     bool parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message);
+    static bool is_magic_cookie(const platform::ByteBuffer& data, size_t offset);
 
     ITcpSocketAdapter& adapter_;
     EventDrivenTcpTransportConfig config_;
