@@ -187,6 +187,11 @@ bool assemble_message_from_tp(const std::array<uint8_t, 16>& hdr,
 
 }  // namespace
 
+/**
+ * @brief Ingest a raw TP datagram and produce a reassembled Message
+ * @implements REQ_TP_055, REQ_TP_078, REQ_TP_091
+ * @satisfies feat_req_someiptp_785
+ */
 bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_complete,
                                 uint32_t sender_ipv4, uint16_t sender_port) {
     TpSegment segment;
@@ -219,6 +224,10 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
     return assemble_message_from_tp(hdr, complete_payload, out_complete);
 }
 
+/**
+ * @brief Segment a message and return wire datagrams
+ * @implements REQ_TP_050, REQ_TP_090
+ */
 TpResult TpManager::segment_and_serialize(const Message& message, TpSegmentVector& segments) {
     if (!segmenter_) {
         return TpResult::RESOURCE_EXHAUSTED;
@@ -287,6 +296,9 @@ void TpManager::set_message_callback(TpMessageCallback callback) {
     message_callback_ = std::move(callback);
 }
 
+/**
+ * @brief Process timeouts and cleanup stale transfers
+ */
 void TpManager::process_timeouts() {
     platform::Vector<std::pair<uint32_t, TpResult>> timed_out;
     TpCompletionCallback cb;

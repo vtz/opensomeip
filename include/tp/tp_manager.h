@@ -51,7 +51,13 @@ struct AtomicTpStatistics {
     std::atomic<uint32_t> timeouts{0};
     std::atomic<uint32_t> errors{0};
 
-    /// Return a point-in-time snapshot as a plain copyable POD struct.
+    /**
+     * @brief Return a point-in-time snapshot as a plain copyable POD struct.
+     *
+     * Each field is read with @c memory_order_relaxed; the snapshot is not
+     * guaranteed to be a consistent cut across all fields, but each
+     * individual counter is race-free.
+     */
     TpStatistics snapshot() const {
         return {
             messages_segmented.load(std::memory_order_relaxed),

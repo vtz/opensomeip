@@ -2012,7 +2012,17 @@ TEST_F(TpTest, MaxTpReassemblySizeIsAtLeast16) {
 
 namespace {
 
-/// Build a wire TP datagram with caller-supplied payload bytes.
+/**
+ * @brief Build a wire TP datagram with caller-supplied payload bytes.
+ * @param service  SOME/IP Service ID
+ * @param method   SOME/IP Method ID
+ * @param client   SOME/IP Client ID
+ * @param session  SOME/IP Session ID
+ * @param offset   TP byte offset (must be 16-byte aligned)
+ * @param more     True if more segments follow
+ * @param chunk    Payload bytes for this segment
+ * @return Complete wire datagram (20-byte header + chunk)
+ */
 platform::ByteBuffer make_tp_datagram(uint16_t service, uint16_t method,
                                        uint16_t client, uint16_t session,
                                        uint32_t offset, bool more,

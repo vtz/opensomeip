@@ -568,18 +568,22 @@ Segment Storage
 
 .. requirement:: Detect Overlapping Segments
    :id: REQ_TP_037
-   :satisfies: feat_req_someiptp_780
+   :satisfies: feat_req_someiptp_780, feat_req_someiptp_797
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Receive segment at offset 0 (100 bytes), then offset 50 (100 bytes), verify overlap is detected and logged.
+   :verification: Unit test: Receive segment at offset 0 (100 bytes), then offset 50 (100 bytes), verify overlap is detected and first-wins semantics applied (original bytes preserved, only new positions written).
 
    The software shall detect segments that partially overlap with
-   previously received segments.
+   previously received segments and apply first-wins semantics:
+   already-received bytes are preserved, only not-yet-received byte
+   positions are written from the new segment.
 
-   **Rationale**: Overlapping segments indicate protocol error.
+   **Rationale**: Overlapping segments may occur due to retransmission.
+   First-wins prevents mixed-payload corruption per
+   ``feat_req_someiptp_797``.
 
-   **Error Handling**: Log warning; discard new segment.
+   **Error Handling**: Log warning; apply first-wins copy (see ``REQ_TP_081_FW``).
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 
