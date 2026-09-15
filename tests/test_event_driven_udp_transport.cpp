@@ -233,8 +233,7 @@ TEST(EventDrivenUdpTransport, ReceiveCallbackNotifiesListener) {
     EXPECT_EQ(listener.message_service_id(0), sent.get_service_id());
 
     MessagePtr queued = transport.receive_message();
-    ASSERT_NE(queued, nullptr);
-    EXPECT_EQ(queued->get_method_id(), sent.get_method_id());
+    EXPECT_EQ(queued, nullptr);
 
     transport.stop();
 }
@@ -296,4 +295,14 @@ TEST(EventDrivenUdpTransport, StopClearsReceiveCallback) {
     adapter.inject_receive(sent.serialize(), Endpoint{"127.0.0.1", 1});
 
     EXPECT_FALSE(listener.wait_for_message(std::chrono::milliseconds(50)));
+}
+
+TEST(EventDrivenUdpTransport, MulticastBeforeStart) {
+    MockUdpAdapter adapter;
+    EventDrivenUdpTransport transport(adapter, Endpoint{"127.0.0.1", 0});
+
+    EXPECT_EQ(transport.join_multicast_group("224.0.0.1"), Result::NOT_CONNECTED);
+    EXPECT_EQ(transport.leave_multicast_group("224.0.0.1"), Result::NOT_CONNECTED);
+    EXPECT_TRUE(adapter.joins_.empty());
+    EXPECT_TRUE(adapter.leaves_.empty());
 }
