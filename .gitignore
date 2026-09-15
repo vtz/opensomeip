@@ -101,3 +101,4 @@ docs/diagrams/svg/
 .git/
 *.patch
 *.diff
+some-ip-clang-tidy-fixes/

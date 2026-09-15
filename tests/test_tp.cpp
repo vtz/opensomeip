@@ -2201,7 +2201,7 @@ TEST_F(TpTest, HeaderMatchesPayloadAfterCompletion) {
 
 /**
  * @test_case TC_TP_PROCESS_SEGMENT_RETURNS_HEADER
- * @tests feat_req_someiptp_797
+ * @tests REQ_TP_081_ATOM
  * @brief process_segment with out_someip_header returns the header atomically
  *
  * Calls the TpReassembler API directly with the new out_someip_header
