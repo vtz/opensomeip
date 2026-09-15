@@ -371,8 +371,7 @@ TEST(EventDrivenTcpTransport, ReceiveCallbackReassemblesMessage) {
     EXPECT_EQ(listener.message_service_id(0), sent.get_service_id());
 
     MessagePtr queued = transport.receive_message();
-    ASSERT_NE(queued, nullptr);
-    EXPECT_EQ(queued->get_method_id(), sent.get_method_id());
+    EXPECT_EQ(queued, nullptr);
 
     transport.stop();
 }
@@ -481,4 +480,38 @@ TEST(EventDrivenTcpTransport, StopClearsCallbacks) {
     adapter.inject_receive({0x00, 0x01, 0x02});
 
     EXPECT_FALSE(listener.wait_for_message(std::chrono::milliseconds(50)));
+}
+
+TEST(EventDrivenTcpTransport, MagicCookieIsSkipped) {
+    MockTcpAdapter adapter;
+    EventDrivenTcpTransport transport(adapter);
+    TestEventTcpListener listener;
+    transport.set_listener(&listener);
+
+    ASSERT_EQ(transport.initialize(Endpoint{"127.0.0.1", 0}), Result::SUCCESS);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+
+    adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
+
+    platform::ByteBuffer client_cookie = {
+        0xFF, 0xFF, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x08,
+        0xDE, 0xAD, 0xBE, 0xEF,
+        0x01, 0x01, 0x01, 0x00
+    };
+
+    Message sent = make_tcp_sample_message();
+    platform::ByteBuffer raw = sent.serialize();
+
+    platform::ByteBuffer combined;
+    combined.insert(combined.end(), client_cookie.begin(), client_cookie.end());
+    combined.insert(combined.end(), raw.begin(), raw.end());
+
+    adapter.inject_receive(combined);
+
+    ASSERT_TRUE(listener.wait_for_message());
+    ASSERT_EQ(listener.message_count(), 1u);
+    EXPECT_EQ(listener.message_service_id(0), sent.get_service_id());
+
+    transport.stop();
 }

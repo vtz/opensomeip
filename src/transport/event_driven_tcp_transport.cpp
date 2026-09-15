@@ -22,6 +22,7 @@
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::allocate_message from memory_impl.h
 #include "platform/memory.h"
 #include "platform/thread.h"
 #include "someip/message.h"
@@ -222,9 +223,6 @@ void EventDrivenTcpTransport::on_adapter_receive(const platform::ByteBuffer& dat
         }
         MessagePtr message;
         while (parse_message_from_buffer(receive_buffer_, message)) {
-            // etl::queue has push() but not emplace()
-            // NOLINTNEXTLINE(modernize-use-emplace,hicpp-use-emplace)
-            message_queue_.push(std::pair<MessagePtr, Endpoint>{message, connection_remote_});
             delivered.push_back(message);
         }
     }
@@ -233,6 +231,10 @@ void EventDrivenTcpTransport::on_adapter_receive(const platform::ByteBuffer& dat
     for (const MessagePtr& m : delivered) {
         if (cb != nullptr) {
             cb->on_message_received(m, connection_remote_);
+        } else {
+            const platform::ScopedLock lock(queue_mutex_);
+            // NOLINTNEXTLINE(modernize-use-emplace,hicpp-use-emplace)
+            message_queue_.push(std::pair<MessagePtr, Endpoint>{m, connection_remote_});
         }
     }
 }
@@ -278,6 +280,12 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& bu
             return false;
         }
 
+        if (is_magic_cookie(buffer, 0)) {
+            buffer.erase(buffer.begin(),
+                         buffer.begin() + static_cast<std::ptrdiff_t>(SOMEIP_HEADER_SIZE));
+            continue;
+        }
+
         const uint32_t message_length =
             (static_cast<uint32_t>(buffer[4]) << 24U) | (static_cast<uint32_t>(buffer[5]) << 16U) |
             (static_cast<uint32_t>(buffer[6]) << 8U) | static_cast<uint32_t>(buffer[7]);
@@ -287,6 +295,12 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& bu
             bool found_valid_header = false;
 
             while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
+                if (is_magic_cookie(buffer, search_start)) {
+                    buffer.erase(buffer.begin(),
+                                 buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
+                    found_valid_header = true;
+                    break;
+                }
                 const uint32_t candidate_length =
                     (static_cast<uint32_t>(buffer[search_start + 4]) << 24U) |
                     (static_cast<uint32_t>(buffer[search_start + 5]) << 16U) |
@@ -323,6 +337,29 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& bu
             return true;
         }
     }
+}
+
+/** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_025 */
+bool EventDrivenTcpTransport::is_magic_cookie(const platform::ByteBuffer& data, size_t offset)
+{
+    if (offset + SOMEIP_HEADER_SIZE > data.size()) {
+        return false;
+    }
+    const bool common =
+        data[offset + 0] == 0xFF && data[offset + 1] == 0xFF &&
+        data[offset + 3] == 0x00 &&
+        data[offset + 4] == 0x00 && data[offset + 5] == 0x00 &&
+        data[offset + 6] == 0x00 && data[offset + 7] == 0x08 &&
+        data[offset + 8] == 0xDE && data[offset + 9] == 0xAD &&
+        data[offset + 10] == 0xBE && data[offset + 11] == 0xEF &&
+        data[offset + 12] == 0x01 && data[offset + 13] == 0x01 &&
+        data[offset + 15] == 0x00;
+    if (!common) {
+        return false;
+    }
+    const bool is_client = data[offset + 2] == 0x00 && data[offset + 14] == 0x01;
+    const bool is_server = data[offset + 2] == 0x80 && data[offset + 14] == 0x02;
+    return is_client || is_server;
 }
 
 }  // namespace someip::transport
