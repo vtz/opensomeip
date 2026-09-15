@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>C API Requirements &#8212; OpenSOMEIP Requirements</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-data-viewer/jsonview.bundle.css?v=f6ef2277" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/libs/html/datatables.min.css?v=4b4fd840" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_toggle.css?v=5c6620df" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/needstable.css?v=5e1b6797" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_links.css?v=2150a916" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_style.css?v=92936fa5" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_core.css?v=f5b60a78" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/modern.css?v=803738c0" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=d5a60f39" />
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/sphinx-data-viewer/jsonview.bundle.js?v=18cd53c5"></script>
+    <script src="../_static/sphinx-data-viewer/jsonview_loader.js?v=f7ff7e7d"></script>
+    <script src="../_static/sphinx-needs/libs/html/datatables.min.js?v=8a4aee21"></script>
+    <script src="../_static/sphinx-needs/libs/html/datatables_loader.js?v=a2cae175"></script>
+    <script src="../_static/sphinx-needs/libs/html/sphinx_needs_collapse.js?v=dca66431"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Compatibility and Migration Requirements" href="compatibility.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="c-api-requirements">
+<h1>C API Requirements<a class="headerlink" href="#c-api-requirements" title="Link to this heading">¶</a></h1>
+<p>This section defines requirements for the OpenSOMEIP C ABI, the stable
+foreign-function-interface (FFI) boundary used by language bindings (Rust,
+Python-future, etc.) and C-only consumers.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">¶</a></h2>
+<p>The C API provides:</p>
+<ol class="arabic simple">
+<li><p>Stable <code class="docutils literal notranslate"><span class="pre">extern</span> <span class="pre">&quot;C&quot;</span></code> ABI with no C++ types in the public surface</p></li>
+<li><p>Opaque-handle ownership model with explicit create/destroy</p></li>
+<li><p>Integer error codes matching <code class="docutils literal notranslate"><span class="pre">someip::Result</span></code></p></li>
+<li><p>Exception firewall at every wrapper entry point</p></li>
+<li><p>Callback support via function pointer + <code class="docutils literal notranslate"><span class="pre">void*</span> <span class="pre">user_data</span></code></p></li>
+<li><p>Version macros and runtime version query</p></li>
+</ol>
+</section>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h2>
+<section id="abi-stability">
+<h3>ABI Stability<a class="headerlink" href="#abi-stability" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-98e7b8bb">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_001">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Stable C ABI</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_001" title="REQ_CAPI_001">REQ_CAPI_001</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><span class="needs_dead_link forbidden">feat_req_someip_2</span>, <span class="needs_dead_link forbidden">feat_req_someip_3</span></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The C API shall expose only <code class="docutils literal notranslate"><span class="pre">extern</span> <span class="pre">&quot;C&quot;</span></code> functions with POD parameter
+and return types (integers, pointers to opaque structs, caller-provided
+buffers). No C++ types (<code class="docutils literal notranslate"><span class="pre">std::string</span></code>, <code class="docutils literal notranslate"><span class="pre">std::vector</span></code>, templates,
+classes) shall appear in the public header.</p>
+<p><strong>Rationale</strong>: A stable C ABI is compiler- and language-agnostic, enabling
+FFI from Rust, Python, and other languages without C++ ABI coupling.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="error-model">
+<h3>Error Model<a class="headerlink" href="#error-model" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-39765441">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_002">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Integer Error Codes</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_002" title="REQ_CAPI_002">REQ_CAPI_002</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_004" title="REQ_CAPI_002">REQ_ARCH_004</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>Every C API function shall return <code class="docutils literal notranslate"><span class="pre">opensomeip_result_t</span></code> (an integer enum)
+whose values match the <code class="docutils literal notranslate"><span class="pre">someip::Result</span></code> enum. No C++ exception shall
+propagate across the FFI boundary.</p>
+<p><strong>Rationale</strong>: Integer return codes are the universal FFI error convention.
+Exceptions crossing FFI are undefined behaviour in mixed-language stacks.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="ownership-model">
+<h3>Ownership Model<a class="headerlink" href="#ownership-model" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-ae092356">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_003">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Explicit Create/Destroy Ownership</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_003" title="REQ_CAPI_003">REQ_CAPI_003</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_003" title="REQ_CAPI_003">REQ_ARCH_003</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>Resources exposed through the C API shall follow an explicit
+<code class="docutils literal notranslate"><span class="pre">opensomeip_&lt;type&gt;_create</span></code> / <code class="docutils literal notranslate"><span class="pre">opensomeip_&lt;type&gt;_destroy</span></code> lifecycle.
+The caller owns the handle and is responsible for calling destroy exactly
+once. Caller-provided buffers shall be documented as borrowed (not freed
+by the library).</p>
+<p><strong>Rationale</strong>: Explicit ownership avoids hidden shared-state and
+double-free hazards across FFI.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="callback-contract">
+<h3>Callback Contract<a class="headerlink" href="#callback-contract" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-5112c891">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_004">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Callback Safety</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_004" title="REQ_CAPI_004">REQ_CAPI_004</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span></span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>Asynchronous notifications shall use a C function pointer plus a
+<code class="docutils literal notranslate"><span class="pre">void*</span> <span class="pre">user_data</span></code> context. Callbacks shall not unwind (no C++ exceptions
+or Rust panics). The library shall not call a callback after the
+corresponding handle has been destroyed.</p>
+<p><strong>Rationale</strong>: Function pointer + userdata is the standard C callback
+idiom; it is FFI-safe and avoids closure captures.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="versioning">
+<h3>Versioning<a class="headerlink" href="#versioning" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-f2ccf432">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_005">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">C API Versioning</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_005" title="REQ_CAPI_005">REQ_CAPI_005</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">medium</span></span></div>
+</span></span></div>
+<div class="line"><span></span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The C header shall define <code class="docutils literal notranslate"><span class="pre">OPENSOMEIP_CAPI_VERSION_MAJOR</span></code>,
+<code class="docutils literal notranslate"><span class="pre">OPENSOMEIP_CAPI_VERSION_MINOR</span></code>, <code class="docutils literal notranslate"><span class="pre">OPENSOMEIP_CAPI_VERSION_PATCH</span></code>
+macros and a runtime <code class="docutils literal notranslate"><span class="pre">opensomeip_capi_version()</span></code> function. The version
+shall follow Semantic Versioning.</p>
+<p><strong>Rationale</strong>: Consumers need compile-time and run-time version checks to
+detect ABI mismatches.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="thread-safety-documentation">
+<h3>Thread Safety Documentation<a class="headerlink" href="#thread-safety-documentation" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-8e20ee5b">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_006">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Thread Safety Documentation</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_006" title="REQ_CAPI_006">REQ_CAPI_006</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">medium</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_002" title="REQ_CAPI_006">REQ_ARCH_002</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>Every C API function shall document its thread-safety guarantee in the
+header comment (e.g., “thread-safe”, “not thread-safe — caller must
+synchronize”, “may be called from any thread”).</p>
+<p><strong>Rationale</strong>: Mixed-language consumers cannot infer C++ synchronization
+from the header alone.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="exception-panic-firewall">
+<h3>Exception / Panic Firewall<a class="headerlink" href="#exception-panic-firewall" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-365aab85">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_007">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Exception Firewall</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_007" title="REQ_CAPI_007">REQ_CAPI_007</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_004" title="REQ_CAPI_007">REQ_ARCH_004</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>Every C wrapper function shall contain a <code class="docutils literal notranslate"><span class="pre">try</span> <span class="pre">{</span> <span class="pre">…</span> <span class="pre">}</span> <span class="pre">catch</span> <span class="pre">(…)</span></code> block
+(or equivalent) that converts any C++ exception to
+<code class="docutils literal notranslate"><span class="pre">OPENSOMEIP_RESULT_INTERNAL_ERROR</span></code>. No exception or stack unwind shall
+cross the <code class="docutils literal notranslate"><span class="pre">extern</span> <span class="pre">&quot;C&quot;</span></code> boundary.</p>
+<p><strong>Rationale</strong>: Unwinding across FFI is undefined behaviour (C++ → C, or
+C++ → Rust); the firewall guarantees defined behaviour.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/capi/</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="per-module-c-api-surface">
+<h3>Per-Module C API Surface<a class="headerlink" href="#per-module-c-api-surface" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-e17f85ed">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_008">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Message and Serialization C API</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_008" title="REQ_CAPI_008">REQ_CAPI_008</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_001" title="REQ_CAPI_008">REQ_ARCH_001</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The C API shall expose message creation, header field access, payload
+get/set, and serializer/deserializer operations as <code class="docutils literal notranslate"><span class="pre">extern</span> <span class="pre">&quot;C&quot;</span></code>
+functions operating on opaque handles.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_message.cpp</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_serializer.cpp</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="need_container docutils container" id="SNCB-f0909eeb">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_009">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Transport C API</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_009" title="REQ_CAPI_009">REQ_CAPI_009</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_001" title="REQ_CAPI_009">REQ_ARCH_001</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The C API shall expose UDP and TCP transport handles with create, destroy,
+start, stop, send, and receive operations. The UDP constructor’s potential
+exception shall be caught and returned as an error code (REQ_CAPI_007).</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_transport.cpp</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="need_container docutils container" id="SNCB-9c7fa39c">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_010">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">RPC C API</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_010" title="REQ_CAPI_010">REQ_CAPI_010</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_001" title="REQ_CAPI_010">REQ_ARCH_001</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The C API shall expose RPC client and server handles. Synchronous calls
+shall block and return a result code. Asynchronous calls shall accept a
+C callback + userdata and invoke it on completion.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_rpc.cpp</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="need_container docutils container" id="SNCB-d81f6db9">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_011">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Service Discovery C API</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_011" title="REQ_CAPI_011">REQ_CAPI_011</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_001" title="REQ_CAPI_011">REQ_ARCH_001</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The C API shall expose SD client and server handles with offer, find,
+subscribe, and unsubscribe operations mapped to C callbacks.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_sd.cpp</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="need_container docutils container" id="SNCB-1dd67a4d">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_012">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">Events C API</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_012" title="REQ_CAPI_012">REQ_CAPI_012</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_001" title="REQ_CAPI_012">REQ_ARCH_001</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The C API shall expose event publisher and subscriber handles with
+register, unregister, publish, and subscribe operations.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_events.cpp</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="need_container docutils container" id="SNCB-acc572aa">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_013">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">TP and E2E C API</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_CAPI_013" title="REQ_CAPI_013">REQ_CAPI_013</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">pending</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">medium</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><a class="reference internal" href="architecture.html#REQ_ARCH_001" title="REQ_CAPI_013">REQ_ARCH_001</a></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>The C API shall expose TP segmentation/reassembly and E2E
+protect/check as functions operating on caller-provided byte buffers.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_tp.cpp</span></code>, <code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_e2e.cpp</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<section id="traceability">
+<h2>Traceability<a class="headerlink" href="#traceability" title="Link to this heading">¶</a></h2>
+<section id="implementation-files">
+<h3>Implementation Files<a class="headerlink" href="#implementation-files" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">include/capi/opensomeip.h</span></code> — Public C API header</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_message.cpp</span></code> — Message wrapper</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_serializer.cpp</span></code> — Serializer wrapper</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_transport.cpp</span></code> — Transport wrapper</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_rpc.cpp</span></code> — RPC wrapper</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_sd.cpp</span></code> — SD wrapper</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_events.cpp</span></code> — Events wrapper</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_tp.cpp</span></code> — TP wrapper</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/capi/opensomeip_e2e.cpp</span></code> — E2E wrapper</p></li>
+</ul>
+</section>
+<section id="test-files">
+<h3>Test Files<a class="headerlink" href="#test-files" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/unit/test_capi_message.cpp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/unit/test_capi_serializer.cpp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/unit/test_capi_transport.cpp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/unit/test_capi_rpc.cpp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/unit/test_capi_sd.cpp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/unit/test_capi_events.cpp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/unit/test_capi_tp.cpp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/unit/test_capi_e2e.cpp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/integration/test_capi_udp_hello.cpp</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/capi/integration/test_capi_rpc_roundtrip.cpp</span></code></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">OpenSOMEIP Requirements</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Requirements</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../spec_references.html">Specification Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="e2e_plugin.html">E2E Plugin Mechanism</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transport.html">Transport Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="message_header.html">Message Header Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serialization.html">Serialization Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service_discovery.html">Service Discovery Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="transport_protocol.html">Transport Protocol Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="platform.html">Platform Abstraction Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="compatibility.html">Compatibility and Migration Requirements</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">C API Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#traceability">Traceability</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="compatibility.html" title="previous chapter">Compatibility and Migration Requirements</a></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Vinicius Tadeu Zein.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="../_sources/implementation/c_api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

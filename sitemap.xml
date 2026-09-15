@@ -89,6 +89,10 @@
          <lastmod>2026-09-15</lastmod>
     </url>
     <url>
+         <loc>https://vtz.github.io/opensomeip/api/capi/</loc>
+         <lastmod>2026-09-15</lastmod>
+    </url>
+    <url>
          <loc>https://vtz.github.io/opensomeip/api/e2e/</loc>
          <lastmod>2026-09-15</lastmod>
     </url>
@@ -170,6 +174,10 @@
     </url>
     <url>
          <loc>https://vtz.github.io/opensomeip/requirements/TRACEABILITY_GUIDE/</loc>
+         <lastmod>2026-09-15</lastmod>
+    </url>
+    <url>
+         <loc>https://vtz.github.io/opensomeip/safety/FFI_C_API/</loc>
          <lastmod>2026-09-15</lastmod>
     </url>
     <url>

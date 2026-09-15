@@ -6,37 +6,33 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="OpenSOME/IP API reference. Covers service discovery, RPC, transport protocol, events, E2E protection, and serialization modules.">
+        <meta name="description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
       
       
         <meta name="author" content="Vinicius Tadeu Zein">
       
       
-        <link rel="canonical" href="https://vtz.github.io/opensomeip/api/">
+        <link rel="canonical" href="https://vtz.github.io/opensomeip/safety/FFI_C_API/">
       
       
-        <link rel="prev" href="../PLATFORM_RISK_REGISTER/">
-      
-      
-        <link rel="next" href="sd/">
       
       
         
       
       
-      <link rel="icon" href="../images/favicon.png">
+      <link rel="icon" href="../../images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Overview - OpenSOME/IP</title>
+        <title>FFI C API - OpenSOME/IP</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,9 +51,9 @@
       
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -77,16 +73,16 @@
   <meta name="author" content="Vinicius Tadeu Zein">
 
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://vtz.github.io/opensomeip/api/">
-  <meta property="og:title" content="Overview">
-  <meta property="og:description" content="OpenSOME/IP API reference. Covers service discovery, RPC, transport protocol, events, E2E protection, and serialization modules.">
+  <meta property="og:url" content="https://vtz.github.io/opensomeip/safety/FFI_C_API/">
+  <meta property="og:title" content="FFI C API">
+  <meta property="og:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
   <meta property="og:site_name" content="OpenSOME/IP">
   <meta property="og:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://vtz.github.io/opensomeip/api/">
-  <meta name="twitter:title" content="Overview">
-  <meta name="twitter:description" content="OpenSOME/IP API reference. Covers service discovery, RPC, transport protocol, events, E2E protection, and serialization modules.">
+  <meta name="twitter:url" content="https://vtz.github.io/opensomeip/safety/FFI_C_API/">
+  <meta name="twitter:title" content="FFI C API">
+  <meta name="twitter:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
   <meta name="twitter:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   
@@ -113,7 +109,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#api-reference" class="md-skip">
+        <a href="#fmea-c-api-ffi-boundary" class="md-skip">
           Skip to content
         </a>
       
@@ -129,7 +125,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="OpenSOME/IP" class="md-header__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
+    <a href="../.." title="OpenSOME/IP" class="md-header__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 14h14l-1.5-4.5h-11zm12.5 5a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5m-11 0A1.5 1.5 0 0 0 8 17.5 1.5 1.5 0 0 0 6.5 16 1.5 1.5 0 0 0 5 17.5 1.5 1.5 0 0 0 6.5 19M18.92 9 21 15v8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8l2.08-6c.2-.58.77-1 1.42-1h11c.65 0 1.22.42 1.42 1M12 0c2.12 0 4.15.86 5.65 2.35l-1.42 1.42A6.02 6.02 0 0 0 12 2c-1.58 0-3.11.65-4.23 1.77L6.36 2.35A8 8 0 0 1 12 0m0 4c1.06 0 2.07.44 2.82 1.18L13.4 6.6c-.37-.37-.87-.6-1.4-.6-.5 0-1.03.23-1.4.6L9.18 5.18C9.93 4.44 10.94 4 12 4"/></svg>
@@ -149,7 +145,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              FFI C API
             
           </span>
         </div>
@@ -256,7 +252,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -277,7 +273,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../getting-started/" class="md-tabs__link">
+        <a href="../../getting-started/" class="md-tabs__link">
           
   
   
@@ -297,7 +293,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../project-overview/" class="md-tabs__link">
+        <a href="../../project-overview/" class="md-tabs__link">
           
   
   
@@ -317,7 +313,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../gateways/" class="md-tabs__link">
+        <a href="../../gateways/" class="md-tabs__link">
           
   
   
@@ -337,7 +333,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../supported-platforms/" class="md-tabs__link">
+        <a href="../../supported-platforms/" class="md-tabs__link">
           
   
   
@@ -353,13 +349,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
           
   
   
@@ -379,7 +373,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../examples/" class="md-tabs__link">
+        <a href="../../examples/" class="md-tabs__link">
           
   
   
@@ -399,7 +393,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-tabs__link">
+        <a href="../../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-tabs__link">
           
   
   
@@ -419,7 +413,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../contributing/" class="md-tabs__link">
+        <a href="../../contributing/" class="md-tabs__link">
           
   
   
@@ -439,7 +433,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../specification/" class="md-tabs__link">
+        <a href="../../specification/" class="md-tabs__link">
           
   
   
@@ -479,7 +473,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="OpenSOME/IP" class="md-nav__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
+    <a href="../.." title="OpenSOME/IP" class="md-nav__button md-logo" aria-label="OpenSOME/IP" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 14h14l-1.5-4.5h-11zm12.5 5a1.5 1.5 0 0 0 1.5-1.5 1.5 1.5 0 0 0-1.5-1.5 1.5 1.5 0 0 0-1.5 1.5 1.5 1.5 0 0 0 1.5 1.5m-11 0A1.5 1.5 0 0 0 8 17.5 1.5 1.5 0 0 0 6.5 16 1.5 1.5 0 0 0 5 17.5 1.5 1.5 0 0 0 6.5 19M18.92 9 21 15v8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8l2.08-6c.2-.58.77-1 1.42-1h11c.65 0 1.22.42 1.42 1M12 0c2.12 0 4.15.86 5.65 2.35l-1.42 1.42A6.02 6.02 0 0 0 12 2c-1.58 0-3.11.65-4.23 1.77L6.36 2.35A8 8 0 0 1 12 0m0 4c1.06 0 2.07.44 2.82 1.18L13.4 6.6c-.37-.37-.87-.6-1.4-.6-.5 0-1.03.23-1.4.6L9.18 5.18C9.93 4.44 10.94 4 12 4"/></svg>
@@ -509,7 +503,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -590,7 +584,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../../getting-started/" class="md-nav__link">
         
   
   
@@ -618,7 +612,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../BUILD/" class="md-nav__link">
+      <a href="../../BUILD/" class="md-nav__link">
         
   
   
@@ -646,7 +640,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../INTEGRATION_GUIDE/" class="md-nav__link">
+      <a href="../../INTEGRATION_GUIDE/" class="md-nav__link">
         
   
   
@@ -674,7 +668,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../SETUP_GIT_SUBMODULE/" class="md-nav__link">
+      <a href="../../SETUP_GIT_SUBMODULE/" class="md-nav__link">
         
   
   
@@ -763,7 +757,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../project-overview/" class="md-nav__link">
+      <a href="../../project-overview/" class="md-nav__link">
         
   
   
@@ -791,7 +785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/e2e_protection/" class="md-nav__link">
+      <a href="../../architecture/e2e_protection/" class="md-nav__link">
         
   
   
@@ -880,7 +874,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/" class="md-nav__link">
+      <a href="../../gateways/" class="md-nav__link">
         
   
   
@@ -908,7 +902,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/architecture/" class="md-nav__link">
+      <a href="../../gateways/architecture/" class="md-nav__link">
         
   
   
@@ -990,7 +984,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/iceoryx2/" class="md-nav__link">
+      <a href="../../gateways/iceoryx2/" class="md-nav__link">
         
   
   
@@ -1018,7 +1012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/mqtt/" class="md-nav__link">
+      <a href="../../gateways/mqtt/" class="md-nav__link">
         
   
   
@@ -1046,7 +1040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/grpc/" class="md-nav__link">
+      <a href="../../gateways/grpc/" class="md-nav__link">
         
   
   
@@ -1136,7 +1130,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/ros2/" class="md-nav__link">
+      <a href="../../gateways/ros2/" class="md-nav__link">
         
   
   
@@ -1164,7 +1158,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/zenoh/" class="md-nav__link">
+      <a href="../../gateways/zenoh/" class="md-nav__link">
         
   
   
@@ -1192,7 +1186,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/dbus/" class="md-nav__link">
+      <a href="../../gateways/dbus/" class="md-nav__link">
         
   
   
@@ -1282,7 +1276,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/dds/" class="md-nav__link">
+      <a href="../../gateways/dds/" class="md-nav__link">
         
   
   
@@ -1318,7 +1312,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/supported-platforms/" class="md-nav__link">
+      <a href="../../gateways/supported-platforms/" class="md-nav__link">
         
   
   
@@ -1346,7 +1340,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gateways/contributing/" class="md-nav__link">
+      <a href="../../gateways/contributing/" class="md-nav__link">
         
   
   
@@ -1435,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../supported-platforms/" class="md-nav__link">
+      <a href="../../supported-platforms/" class="md-nav__link">
         
   
   
@@ -1463,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ZEPHYR_PORT/" class="md-nav__link">
+      <a href="../../ZEPHYR_PORT/" class="md-nav__link">
         
   
   
@@ -1491,7 +1485,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../FREERTOS_PORT/" class="md-nav__link">
+      <a href="../../FREERTOS_PORT/" class="md-nav__link">
         
   
   
@@ -1519,7 +1513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../THREADX_PORT/" class="md-nav__link">
+      <a href="../../THREADX_PORT/" class="md-nav__link">
         
   
   
@@ -1547,7 +1541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cross-compilation/" class="md-nav__link">
+      <a href="../../cross-compilation/" class="md-nav__link">
         
   
   
@@ -1575,7 +1569,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../PLATFORM_RISK_REGISTER/" class="md-nav__link">
+      <a href="../../PLATFORM_RISK_REGISTER/" class="md-nav__link">
         
   
   
@@ -1607,31 +1601,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -1649,7 +1640,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1664,37 +1655,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Overview
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
         
   
   
@@ -1710,114 +1674,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#modules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Modules
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#core-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Types
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#udp-transport" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UDP Transport
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#common-utilities" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Common Utilities
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#core-class-diagram" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Class Diagram
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#transport-class-diagram" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transport Class Diagram
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1830,7 +1686,7 @@
   
   
     <li class="md-nav__item">
-      <a href="sd/" class="md-nav__link">
+      <a href="../../api/sd/" class="md-nav__link">
         
   
   
@@ -1858,7 +1714,7 @@
   
   
     <li class="md-nav__item">
-      <a href="rpc/" class="md-nav__link">
+      <a href="../../api/rpc/" class="md-nav__link">
         
   
   
@@ -1886,7 +1742,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tp/" class="md-nav__link">
+      <a href="../../api/tp/" class="md-nav__link">
         
   
   
@@ -1914,7 +1770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="events/" class="md-nav__link">
+      <a href="../../api/events/" class="md-nav__link">
         
   
   
@@ -1942,7 +1798,7 @@
   
   
     <li class="md-nav__item">
-      <a href="e2e/" class="md-nav__link">
+      <a href="../../api/e2e/" class="md-nav__link">
         
   
   
@@ -1970,7 +1826,7 @@
   
   
     <li class="md-nav__item">
-      <a href="serialization/" class="md-nav__link">
+      <a href="../../api/serialization/" class="md-nav__link">
         
   
   
@@ -2059,7 +1915,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../examples/" class="md-nav__link">
+      <a href="../../examples/" class="md-nav__link">
         
   
   
@@ -2148,7 +2004,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-nav__link">
+      <a href="../../SOMEIP_ACCEPTANCE_TEST_PLAN/" class="md-nav__link">
         
   
   
@@ -2176,7 +2032,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../TEST_PLAN_STATUS/" class="md-nav__link">
+      <a href="../../TEST_PLAN_STATUS/" class="md-nav__link">
         
   
   
@@ -2204,7 +2060,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../TEST_REPORTING/" class="md-nav__link">
+      <a href="../../TEST_REPORTING/" class="md-nav__link">
         
   
   
@@ -2260,7 +2116,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../CODING_GUIDELINES/" class="md-nav__link">
+      <a href="../../CODING_GUIDELINES/" class="md-nav__link">
         
   
   
@@ -2349,7 +2205,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributing/" class="md-nav__link">
+      <a href="../../contributing/" class="md-nav__link">
         
   
   
@@ -2377,7 +2233,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../changelog/" class="md-nav__link">
+      <a href="../../changelog/" class="md-nav__link">
         
   
   
@@ -2466,7 +2322,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../specification/" class="md-nav__link">
+      <a href="../../specification/" class="md-nav__link">
         
   
   
@@ -2494,7 +2350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../specification/gap-analysis/" class="md-nav__link">
+      <a href="../../specification/gap-analysis/" class="md-nav__link">
         
   
   
@@ -2522,7 +2378,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../specification/implementation-report/" class="md-nav__link">
+      <a href="../../specification/implementation-report/" class="md-nav__link">
         
   
   
@@ -2550,7 +2406,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../specification/implementation-verification/" class="md-nav__link">
+      <a href="../../specification/implementation-verification/" class="md-nav__link">
         
   
   
@@ -2578,7 +2434,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../specification/spec-mapping-report/" class="md-nav__link">
+      <a href="../../specification/spec-mapping-report/" class="md-nav__link">
         
   
   
@@ -2606,7 +2462,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../specification/requirements/" class="md-nav__link">
+      <a href="../../specification/requirements/" class="md-nav__link">
         
   
   
@@ -2634,7 +2490,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../specification/traceability-matrix/" class="md-nav__link">
+      <a href="../../specification/traceability-matrix/" class="md-nav__link">
         
   
   
@@ -2689,10 +2545,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#modules" class="md-nav__link">
+  <a href="#1-purpose" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Modules
+        1. Purpose
       
     </span>
   </a>
@@ -2700,10 +2556,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-types" class="md-nav__link">
+  <a href="#2-iso-26262-applicability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core Types
+        2. ISO 26262 Applicability
       
     </span>
   </a>
@@ -2711,10 +2567,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#udp-transport" class="md-nav__link">
+  <a href="#3-exception-firewall-strategy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        UDP Transport
+        3. Exception Firewall Strategy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Exception Firewall Strategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-problem-c-exceptions-across-extern-c" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Problem: C++ Exceptions across extern "C"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-mitigation-trycatch-on-every-entry-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Mitigation: try/catch on Every Entry Point
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-rationale" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Rationale
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-fmea-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. FMEA Table
       
     </span>
   </a>
@@ -2722,10 +2628,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#common-utilities" class="md-nav__link">
+  <a href="#5-assumptions-of-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Common Utilities
+        5. Assumptions of Use
       
     </span>
   </a>
@@ -2733,46 +2639,52 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#quick-example" class="md-nav__link">
+  <a href="#6-residual-risk-assessment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Example
+        6. Residual Risk Assessment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Residual Risk Assessment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-mitigated-to-acceptable-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Mitigated to Acceptable Levels
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#integration" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#62-remaining-integrator-responsibilities" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration
+        6.2 Remaining Integrator Responsibilities
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#core-class-diagram" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#63-overall-assessment" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core Class Diagram
+        6.3 Overall Assessment
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#transport-class-diagram" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Transport Class Diagram
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -2796,119 +2708,333 @@
   
 
 
-<h1 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h1>
-<p>OpenSOME/IP is organized into self-contained modules, each with its own public header directory under <code>include/</code>.</p>
-<h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
+<!--
+  Copyright (c) 2025 Vinicius Tadeu Zein
+
+  SPDX-License-Identifier: Apache-2.0
+-->
+
+<h1 id="fmea-c-api-ffi-boundary">FMEA — C API FFI Boundary<a class="headerlink" href="#fmea-c-api-ffi-boundary" title="Permanent link">&para;</a></h1>
 <table>
 <thead>
 <tr>
-<th>Module</th>
-<th>Headers</th>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Document ID</strong></td>
+<td>FMEA-FFI-CAPI-001</td>
+</tr>
+<tr>
+<td><strong>Version</strong></td>
+<td>1.0</td>
+</tr>
+<tr>
+<td><strong>Status</strong></td>
+<td>Draft</td>
+</tr>
+<tr>
+<td><strong>Scope</strong></td>
+<td>OpenSOME/IP C ABI (<code>include/capi/opensomeip.h</code>, <code>src/capi/</code>)</td>
+</tr>
+<tr>
+<td><strong>Related requirements</strong></td>
+<td>REQ_CAPI_001–REQ_CAPI_013</td>
+</tr>
+</tbody>
+</table>
+<h2 id="1-purpose">1. Purpose<a class="headerlink" href="#1-purpose" title="Permanent link">&para;</a></h2>
+<p>This document performs a <strong>Failure Mode and Effects Analysis (FMEA)</strong> for the
+OpenSOME/IP <strong>C API FFI boundary</strong> — the <code>extern "C"</code> wrapper layer that
+language bindings (Rust, Python, etc.) and pure-C consumers call.</p>
+<p>The C ABI is the ISO 26262 mixed-language qualification boundary between the
+C++17 protocol stack and foreign-language consumers. All protocol operations
+are accessed exclusively through opaque handles and POD parameter types.
+No C++ types, templates, or exceptions appear in the public API surface.</p>
+<p>This FMEA supplements the project-wide software FMEA and is traceable to
+C API requirements in <code>docs/requirements/implementation/c_api.rst</code> and
+architecture requirements in <code>docs/requirements/implementation/architecture.rst</code>.</p>
+<h2 id="2-iso-26262-applicability">2. ISO 26262 Applicability<a class="headerlink" href="#2-iso-26262-applicability" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>ISO 26262 Part</th>
+<th>Relevance to this FMEA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Part 6 — Software</strong></td>
+<td>The FFI wrapper layer is a software-architectural boundary (clause 7.4.3). Error propagation across the boundary must be defined (clause 9.4.3). Exception/unwind behaviour must be deterministic (no UB).</td>
+</tr>
+<tr>
+<td><strong>Part 9 — ASIL analyses</strong></td>
+<td>This FMEA follows the systematic failure-analysis methodology described in Part 9, clause 8, adapted for cross-language FFI failure modes.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-exception-firewall-strategy">3. Exception Firewall Strategy<a class="headerlink" href="#3-exception-firewall-strategy" title="Permanent link">&para;</a></h2>
+<h3 id="31-problem-c-exceptions-across-extern-c">3.1 Problem: C++ Exceptions across <code>extern "C"</code><a class="headerlink" href="#31-problem-c-exceptions-across-extern-c" title="Permanent link">&para;</a></h3>
+<p>Allowing a C++ exception to propagate through an <code>extern "C"</code> function is
+<strong>undefined behaviour</strong> in the C++ standard (and always fatal when the caller
+is Rust compiled with <code>panic=abort</code>). The C API must guarantee that no
+exception escapes any wrapper function.</p>
+<h3 id="32-mitigation-trycatch-on-every-entry-point">3.2 Mitigation: try/catch on Every Entry Point<a class="headerlink" href="#32-mitigation-trycatch-on-every-entry-point" title="Permanent link">&para;</a></h3>
+<p>Every C wrapper function follows this pattern:</p>
+<div class="language-cpp highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">extern</span><span class="w"> </span><span class="s">"C"</span><span class="w"> </span><span class="n">opensomeip_result_t</span><span class="w"> </span><span class="n">opensomeip_xxx</span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">handle</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="n">OPENSOMEIP_RESULT_INVALID_ARGUMENT</span><span class="p">;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">        </span><span class="c1">// C++ operations</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">OPENSOMEIP_RESULT_SUCCESS</span><span class="p">;</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">OPENSOMEIP_RESULT_INTERNAL_ERROR</span><span class="p">;</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="p">}</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>The <code>catch (...)</code> clause ensures that <strong>no exception type</strong> — including
+<code>std::bad_alloc</code>, <code>std::runtime_error</code>, or any user-defined exception —
+can escape the wrapper. The catch converts the exception to
+<code>OPENSOMEIP_RESULT_INTERNAL_ERROR</code>.</p>
+<h3 id="33-rationale">3.3 Rationale<a class="headerlink" href="#33-rationale" title="Permanent link">&para;</a></h3>
+<p>This strategy aligns with REQ_CAPI_007 (Exception Firewall) and
+REQ_ARCH_004 (Consistent Error Handling). The integer return code is the
+only error-reporting mechanism visible to FFI consumers.</p>
+<h2 id="4-fmea-table">4. FMEA Table<a class="headerlink" href="#4-fmea-table" title="Permanent link">&para;</a></h2>
+<p>Severity scale (same as FMEA-STATIC-ALLOC-001):</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Label</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><a href="sd/">Service Discovery</a></td>
-<td><code>include/sd/</code></td>
-<td>SOME/IP-SD client, server, messages, and options</td>
+<td><strong>S4</strong></td>
+<td>Critical</td>
+<td>Loss of safety function or data corruption</td>
 </tr>
 <tr>
-<td><a href="rpc/">RPC</a></td>
-<td><code>include/rpc/</code></td>
-<td>Request/response client and server</td>
+<td><strong>S3</strong></td>
+<td>Major</td>
+<td>Service disruption or message loss with detectable impact</td>
 </tr>
 <tr>
-<td><a href="tp/">Transport Protocol</a></td>
-<td><code>include/tp/</code></td>
-<td>Large message segmentation and reassembly</td>
+<td><strong>S2</strong></td>
+<td>Moderate</td>
+<td>Degraded performance with recovery path</td>
 </tr>
 <tr>
-<td><a href="events/">Events</a></td>
-<td><code>include/events/</code></td>
-<td>Publish/subscribe event system</td>
-</tr>
-<tr>
-<td><a href="e2e/">E2E Protection</a></td>
-<td><code>include/e2e/</code></td>
-<td>CRC, profiles, and message integrity</td>
-</tr>
-<tr>
-<td><a href="serialization/">Serialization</a></td>
-<td><code>include/serialization/</code></td>
-<td>Data type serialization</td>
-</tr>
-<tr>
-<td><a href="capi/">C API</a></td>
-<td><code>include/capi/</code></td>
-<td>Stable C ABI for FFI consumers</td>
+<td><strong>S1</strong></td>
+<td>Minor</td>
+<td>Benign failure when handled correctly</td>
 </tr>
 </tbody>
 </table>
-<h2 id="core-types">Core Types<a class="headerlink" href="#core-types" title="Permanent link">&para;</a></h2>
-<p>The core protocol types live in <code>include/someip/</code>:</p>
-<ul>
-<li><strong><code>message.h</code></strong> -- <code>Message</code> class with header fields, payload, and serialization</li>
-<li><strong><code>types.h</code></strong> -- <code>MessageId</code>, <code>RequestId</code>, <code>MessageType</code>, <code>ReturnCode</code>, and other protocol constants</li>
-</ul>
-<h2 id="udp-transport">UDP Transport<a class="headerlink" href="#udp-transport" title="Permanent link">&para;</a></h2>
-<p>The transport layer in <code>include/transport/</code>:</p>
-<ul>
-<li><strong><code>udp_transport.h</code></strong> -- <code>UdpTransport</code> for sending and receiving SOME/IP messages over UDP</li>
-<li><strong><code>endpoint.h</code></strong> -- <code>Endpoint</code> representing a network address and port pair</li>
-</ul>
-<h2 id="common-utilities">Common Utilities<a class="headerlink" href="#common-utilities" title="Permanent link">&para;</a></h2>
-<p>Shared utilities in <code>include/common/</code>:</p>
-<ul>
-<li><strong><code>result.h</code></strong> -- <code>Result&lt;T&gt;</code> type for error handling without exceptions</li>
-</ul>
-<h2 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h2>
-<div class="language-cpp highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">"someip/message.h"</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">"serialization/serializer.h"</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">"transport/udp_transport.h"</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">someip</span><span class="p">;</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1">// Create a request message</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">MessageId</span><span class="w"> </span><span class="nf">msg_id</span><span class="p">(</span><span class="mh">0x1000</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">);</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">Message</span><span class="w"> </span><span class="nf">request</span><span class="p">(</span><span class="n">msg_id</span><span class="p">,</span><span class="w"> </span><span class="n">RequestId</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x5678</span><span class="p">));</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1">// Add payload</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">Serializer</span><span class="w"> </span><span class="n">ser</span><span class="p">;</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">ser</span><span class="p">.</span><span class="n">serialize_string</span><span class="p">(</span><span class="s">"Hello SOME/IP"</span><span class="p">);</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">request</span><span class="p">.</span><span class="n">set_payload</span><span class="p">(</span><span class="n">ser</span><span class="p">.</span><span class="n">get_buffer</span><span class="p">());</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1">// Send over UDP</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">transport</span><span class="o">::</span><span class="n">UdpTransport</span><span class="w"> </span><span class="n">udp</span><span class="p">(</span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"0.0.0.0"</span><span class="p">,</span><span class="w"> </span><span class="mi">30490</span><span class="p">));</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">udp</span><span class="p">.</span><span class="n">initialize</span><span class="p">();</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="n">udp</span><span class="p">.</span><span class="n">send_message</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"192.168.1.100"</span><span class="p">,</span><span class="w"> </span><span class="mi">30490</span><span class="p">));</span>
-</span></code></pre></div>
-<h2 id="integration">Integration<a class="headerlink" href="#integration" title="Permanent link">&para;</a></h2>
-<p>Link the libraries you need in CMake:</p>
-<div class="language-cmake highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">add_subdirectory</span><span class="p">(</span><span class="s">path/to/opensomeip</span><span class="p">)</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">your_target</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="s">someip-core</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="s">someip-serialization</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="s">someip-transport</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="s">someip-sd</span><span class="w">          </span><span class="c"># if using Service Discovery</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span><span class="s">someip-rpc</span><span class="w">         </span><span class="c"># if using RPC</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="s">someip-events</span><span class="w">      </span><span class="c"># if using Events</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="p">)</span>
-</span></code></pre></div>
-<h2 id="core-class-diagram">Core Class Diagram<a class="headerlink" href="#core-class-diagram" title="Permanent link">&para;</a></h2>
-<p><img alt="Core Classes" src="../diagrams/svg/core_class_diagram.svg" /></p>
-<h2 id="transport-class-diagram">Transport Class Diagram<a class="headerlink" href="#transport-class-diagram" title="Permanent link">&para;</a></h2>
-<p><img alt="Transport Classes" src="../diagrams/svg/transport_class_diagram.svg" /></p>
+<table>
+<thead>
+<tr>
+<th>Failure Mode</th>
+<th>Affected Component</th>
+<th>Effect</th>
+<th>Detection</th>
+<th>Mitigation</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>C++ exception unwind across FFI</strong> — exception thrown inside wrapper escapes <code>extern "C"</code> boundary</td>
+<td>All <code>src/capi/*.cpp</code> wrappers</td>
+<td>Undefined behaviour: Rust callers abort (<code>panic=abort</code>), C callers crash or corrupt stack. Complete loss of communication.</td>
+<td>Code review: every wrapper has <code>try { … } catch (…)</code>; CI: unit test <code>TC_CAPI_MSG_NULL_001</code> verifies error codes, not exceptions. <code>grep -r "catch" src/capi/</code> confirms coverage.</td>
+<td>Exception firewall (§3): <code>try/catch(...)</code> on every entry point. <code>OPENSOMEIP_RESULT_INTERNAL_ERROR</code> returned. No unwind crosses boundary.</td>
+<td><strong>S4</strong> (if unmitigated); <strong>S1</strong> (with firewall)</td>
+</tr>
+<tr>
+<td><strong>Use-after-destroy</strong> — caller uses a handle after calling <code>_destroy()</code></td>
+<td>All opaque handles (<code>opensomeip_message_t*</code>, etc.)</td>
+<td>Dangling pointer dereference: crash (best case) or memory corruption / data leak (worst case).</td>
+<td>ASan/UBSan in CI test suite; code review of caller lifetime discipline.</td>
+<td>The library cannot prevent use-after-destroy in the caller. Documented as <strong>Assumption of Use</strong>: caller must not use a handle after <code>_destroy()</code>. <code>_destroy(nullptr)</code> returns <code>OPENSOMEIP_RESULT_INVALID_ARGUMENT</code> (no crash). Double-destroy of a valid pointer is UB — documented.</td>
+<td><strong>S4</strong> (caller defect); <strong>S1</strong> (with ASan in development)</td>
+</tr>
+<tr>
+<td><strong>Buffer overflow in caller-provided buffer (outbound)</strong> — caller passes undersized <code>buf</code> / <code>buf_len</code> to get-payload, get-data, or serialize</td>
+<td><code>opensomeip_message_get_payload</code>, <code>opensomeip_serializer_get_data</code>, <code>opensomeip_message_serialize</code></td>
+<td>Out-of-bounds write: memory corruption, possible code execution.</td>
+<td>Unit tests <code>TC_CAPI_MSG_PAYLOAD_OVERFLOW_001</code>, <code>TC_CAPI_SER_OVERFLOW_001</code> verify <code>OPENSOMEIP_RESULT_BUFFER_OVERFLOW</code> is returned without writing past the buffer. ASan in CI.</td>
+<td>All copy-out functions check <code>*out_len &lt; actual_size</code> <strong>before</strong> any <code>memcpy</code> and return <code>OPENSOMEIP_RESULT_BUFFER_OVERFLOW</code> with <code>*out_len</code> set to required size. No data is written when the buffer is too small.</td>
+<td><strong>S4</strong> (if unmitigated); <strong>S1</strong> (with bounds check)</td>
+</tr>
+<tr>
+<td><strong>Buffer overflow in handler bridge (inbound)</strong> — RPC method handler returns SUCCESS with <code>*output_len</code> exceeding the bridge buffer capacity (<code>OPENSOMEIP_RPC_METHOD_MAX_RESPONSE</code>)</td>
+<td><code>opensomeip_rpc_server_register_method</code> handler bridge</td>
+<td>Stack buffer overflow in the bridge lambda: memory corruption, possible code execution.</td>
+<td>Unit test <code>TC_CAPI_RPC_HANDLER_OVERFLOW_001</code> verifies that a handler returning an oversized <code>*output_len</code> produces <code>INTERNAL_ERROR</code> without writing past the buffer. ASan in CI.</td>
+<td>The bridge clamps <code>out_len</code> against <code>sizeof(out_buf)</code> after the handler returns; if <code>out_len &gt; sizeof(out_buf)</code> the bridge returns <code>RpcResult::INTERNAL_ERROR</code> without performing <code>memcpy</code>. The handler also runs inside an FFI exception firewall (<code>try/catch(...)</code>). <code>OPENSOMEIP_RPC_METHOD_MAX_RESPONSE</code> is documented in the public header.</td>
+<td><strong>S4</strong> (if unmitigated); <strong>S1</strong> (with clamp + firewall)</td>
+</tr>
+<tr>
+<td><strong>NULL handle passed to API</strong> — caller passes <code>nullptr</code> where a valid handle is required</td>
+<td>All API functions</td>
+<td>Without check: null pointer dereference → crash.</td>
+<td>Every wrapper checks <code>if (!handle) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;</code> as the first operation. Unit tests <code>TC_CAPI_MSG_NULL_001</code>, <code>TC_CAPI_SER_NULL_001</code>, etc.</td>
+<td>NULL check on every entry point. Error code returned, no crash.</td>
+<td><strong>S2</strong> (if unmitigated); <strong>S1</strong> (with NULL check)</td>
+</tr>
+<tr>
+<td><strong>Callback re-entry during destroy</strong> — callback invocation triggers a destroy of the same handle</td>
+<td>RPC async callback, SD callbacks, event callbacks</td>
+<td>Deadlock or double-free if the callback calls <code>_destroy()</code> on the handle that is delivering the callback.</td>
+<td>Code review; documented contract.</td>
+<td><strong>Assumption of Use</strong>: callbacks shall not call <code>_destroy()</code> on the handle delivering the callback. The library does not call callbacks after <code>_destroy()</code> returns. Documented in <code>opensomeip.h</code> (REQ_CAPI_004).</td>
+<td><strong>S3</strong> (caller defect); <strong>S1</strong> (with documented AoU)</td>
+</tr>
+<tr>
+<td><strong>Callback panic/unwind in Rust consumer</strong> — Rust callback panics, unwinding through C frames</td>
+<td>Callback trampolines from Rust → C → C++ → C → Rust</td>
+<td>Undefined behaviour: foreign unwind through C frames. Process may abort or corrupt state.</td>
+<td>Rust consumers must use <code>catch_unwind</code> in callback trampolines or compile with <code>panic=abort</code>.</td>
+<td><strong>Assumption of Use for Rust consumers</strong>: callbacks must not panic. Rust <code>opensomeip</code> crate will use <code>catch_unwind</code> at the trampoline or <code>panic=abort</code> profile (REQ_CAPI_004, documented in <code>docs/FERROCENE_SUBSET.md</code>).</td>
+<td><strong>S4</strong> (if unmitigated in Rust); <strong>S1</strong> (with <code>panic=abort</code> or <code>catch_unwind</code>)</td>
+</tr>
+<tr>
+<td><strong>Mixed-language thread safety</strong> — concurrent calls from multiple language threads without synchronization</td>
+<td>Transport send/receive, RPC async, SD callbacks</td>
+<td>Data race: corrupted message state, lost callbacks, incorrect routing.</td>
+<td>Thread-safety documentation per function (REQ_CAPI_006); C++ internals use mutexes (REQ_ARCH_002).</td>
+<td>Each opaque handle is independent; concurrent operations on <strong>different</strong> handles are safe. Concurrent operations on the <strong>same</strong> handle require caller synchronization unless documented as thread-safe. Transport and RPC internals use internal mutexes.</td>
+<td><strong>S3</strong> (if caller ignores docs); <strong>S2</strong> (with internal mutexes)</td>
+</tr>
+<tr>
+<td><strong>ABI version mismatch</strong> — consumer compiled against header v0.1 links runtime v0.2 with changed struct layout</td>
+<td>All API functions</td>
+<td>Incorrect field offsets, memory corruption, silent wrong results.</td>
+<td><code>opensomeip_capi_version()</code> runtime query vs <code>OPENSOMEIP_CAPI_VERSION_*</code> macros. Consumer should assert at startup.</td>
+<td>Semantic Versioning: MAJOR bump for ABI-breaking changes. Opaque handles prevent struct-layout coupling. Only POD endpoint struct is exposed — changes to it require a MAJOR bump.</td>
+<td><strong>S3</strong> (if mismatch occurs); <strong>S1</strong> (with version check + opaque handles)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="5-assumptions-of-use">5. Assumptions of Use<a class="headerlink" href="#5-assumptions-of-use" title="Permanent link">&para;</a></h2>
+<p>Integrators deploying the C API must observe:</p>
+<ol>
+<li>
+<p><strong>Handle lifetime</strong>: Do not use a handle after <code>_destroy()</code>. Do not call
+   <code>_destroy()</code> twice on the same handle.</p>
+</li>
+<li>
+<p><strong>Buffer sizing</strong>: Always check the return code from copy-out functions.
+   When <code>OPENSOMEIP_RESULT_BUFFER_OVERFLOW</code> is returned, <code>*out_len</code> contains
+   the required size — reallocate and retry.</p>
+</li>
+<li>
+<p><strong>Callback safety</strong>: Callbacks must not call <code>_destroy()</code> on the handle
+   delivering the callback. Callbacks must not throw C++ exceptions or Rust
+   panics.</p>
+</li>
+<li>
+<p><strong>Thread safety</strong>: Concurrent use of the <strong>same</strong> handle from multiple
+   threads requires external synchronization unless the function is documented
+   as thread-safe.</p>
+</li>
+<li>
+<p><strong>Version check</strong>: At startup, verify that
+   <code>opensomeip_capi_version() &gt;&gt; 16 == OPENSOMEIP_CAPI_VERSION_MAJOR</code>.</p>
+</li>
+</ol>
+<h2 id="6-residual-risk-assessment">6. Residual Risk Assessment<a class="headerlink" href="#6-residual-risk-assessment" title="Permanent link">&para;</a></h2>
+<h3 id="61-mitigated-to-acceptable-levels">6.1 Mitigated to Acceptable Levels<a class="headerlink" href="#61-mitigated-to-acceptable-levels" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Residual Risk</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Exception escape</td>
+<td><strong>Negligible</strong></td>
+<td>Every wrapper has <code>try/catch(...)</code>. CI grep confirms no uncovered entry points.</td>
+</tr>
+<tr>
+<td>Buffer overflow (outbound)</td>
+<td><strong>Negligible</strong></td>
+<td>Bounds check before every <code>memcpy</code>. ASan CI.</td>
+</tr>
+<tr>
+<td>Buffer overflow (inbound handler)</td>
+<td><strong>Negligible</strong></td>
+<td>Handler bridge clamps returned length against <code>OPENSOMEIP_RPC_METHOD_MAX_RESPONSE</code>; exception firewall on handler invocation. ASan CI.</td>
+</tr>
+<tr>
+<td>NULL handle</td>
+<td><strong>Negligible</strong></td>
+<td>NULL check on every entry point.</td>
+</tr>
+<tr>
+<td>ABI mismatch</td>
+<td><strong>Low</strong></td>
+<td>Opaque handles isolate layout; version macros enable compile-time check.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="62-remaining-integrator-responsibilities">6.2 Remaining Integrator Responsibilities<a class="headerlink" href="#62-remaining-integrator-responsibilities" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Residual Risk</th>
+<th>Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Use-after-destroy</td>
+<td><strong>Moderate</strong></td>
+<td>Library cannot prevent caller defect. ASan catches it in testing.</td>
+</tr>
+<tr>
+<td>Callback re-entry</td>
+<td><strong>Low–Moderate</strong></td>
+<td>Documented AoU; library does not call callbacks post-destroy.</td>
+</tr>
+<tr>
+<td>Rust panic in callback</td>
+<td><strong>Low</strong></td>
+<td>Mitigated by <code>panic=abort</code> or <code>catch_unwind</code> in Rust crate.</td>
+</tr>
+<tr>
+<td>Thread safety</td>
+<td><strong>Low–Moderate</strong></td>
+<td>Internal mutexes for shared state; caller must not race on same handle.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="63-overall-assessment">6.3 Overall Assessment<a class="headerlink" href="#63-overall-assessment" title="Permanent link">&para;</a></h3>
+<p>With the exception firewall (§3) and bounds-check patterns, the C API FFI
+boundary provides <strong>defined behaviour for all library-side failure modes</strong>.</p>
+<p>The dominant residual risks are <strong>caller defects</strong> (use-after-destroy,
+callback re-entry, thread races on same handle) which are documented as
+Assumptions of Use and detectable with ASan/TSan during development.</p>
+<p><strong>Recommended ASIL allocation</strong>: The wrapper layer itself adds no new
+safety-critical failure modes beyond what the underlying C++ stack already
+manages. FFI failure modes with library-side mitigation map to <strong>QM–ASIL B</strong>
+depending on the safety goal of the consuming function.</p>
+<hr />
+<p><em>End of document FMEA-FFI-CAPI-001</em></p>
 
 
 
 
 
 
-
-  
-  
 
 
 
@@ -2933,44 +3059,6 @@
       
         <footer class="md-footer">
   
-    
-      
-      <nav class="md-footer__inner md-grid" aria-label="Footer" >
-        
-          
-          <a href="../PLATFORM_RISK_REGISTER/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Risk Register">
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
-            </div>
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              <div class="md-ellipsis">
-                Risk Register
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="sd/" class="md-footer__link md-footer__link--next" aria-label="Next: Service Discovery">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Service Discovery
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
     
   
   <div class="md-footer-meta md-typeset">
@@ -3013,10 +3101,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.expand", "navigation.top", "navigation.footer", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-15T05:13:17.783687",
+  "generated": "2026-09-15T14:48:08.383894",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -5999,6 +5999,312 @@
         "TC_UDP_E05"
       ]
     },
+    "REQ_CAPI_001": {
+      "id": "REQ_CAPI_001",
+      "title": "Stable C ABI",
+      "type": "requirement",
+      "satisfies": [
+        "feat_req_someip_2",
+        "feat_req_someip_3"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_capi_14"
+      ],
+      "tested_by": []
+    },
+    "REQ_CAPI_002": {
+      "id": "REQ_CAPI_002",
+      "title": "Integer Error Codes",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_004"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_e2e_capi_14",
+        "CODE_opensomeip_events_capi_14",
+        "CODE_opensomeip_message_capi_14",
+        "CODE_opensomeip_rpc_capi_14",
+        "CODE_opensomeip_sd_capi_14",
+        "CODE_opensomeip_serializer_capi_14",
+        "CODE_opensomeip_tp_capi_14",
+        "CODE_opensomeip_transport_capi_14",
+        "CODE_opensomeip_capi_68"
+      ],
+      "tested_by": [
+        "TC_CAPI_E2E_NULL_001",
+        "TC_CAPI_EVT_PUB_NULL_001",
+        "TC_CAPI_EVT_SUB_NULL_001",
+        "TC_CAPI_MSG_NULL_001",
+        "TC_CAPI_MSG_PAYLOAD_OVERFLOW_001",
+        "TC_CAPI_MSG_NULL_OUT_001",
+        "TC_CAPI_RPC_CLIENT_NULL_001",
+        "TC_CAPI_RPC_SERVER_NULL_001",
+        "TC_CAPI_SD_CLIENT_NULL_001",
+        "TC_CAPI_SD_SERVER_NULL_001",
+        "TC_CAPI_SER_NULL_001",
+        "TC_CAPI_SER_OVERFLOW_001",
+        "TC_CAPI_DESER_NULL_001",
+        "TC_CAPI_TP_NULL_001",
+        "TC_CAPI_UDP_NULL_001",
+        "TC_CAPI_TCP_NULL_001",
+        "TC_CAPI_UDP_SEND_NULL_001"
+      ]
+    },
+    "REQ_CAPI_003": {
+      "id": "REQ_CAPI_003",
+      "title": "Explicit Create/Destroy Ownership",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_003"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_e2e_capi_14",
+        "CODE_opensomeip_events_capi_14",
+        "CODE_opensomeip_message_capi_14",
+        "CODE_opensomeip_rpc_capi_14",
+        "CODE_opensomeip_sd_capi_14",
+        "CODE_opensomeip_serializer_capi_14",
+        "CODE_opensomeip_tp_capi_14",
+        "CODE_opensomeip_transport_capi_14",
+        "CODE_opensomeip_capi_162",
+        "CODE_opensomeip_capi_257",
+        "CODE_opensomeip_capi_261",
+        "CODE_opensomeip_capi_311",
+        "CODE_opensomeip_capi_333",
+        "CODE_opensomeip_capi_352",
+        "CODE_opensomeip_capi_369",
+        "CODE_opensomeip_capi_387",
+        "CODE_opensomeip_capi_423",
+        "CODE_opensomeip_capi_443",
+        "CODE_opensomeip_capi_470",
+        "CODE_opensomeip_capi_490",
+        "CODE_opensomeip_capi_512",
+        "CODE_opensomeip_capi_536",
+        "CODE_opensomeip_capi_565"
+      ],
+      "tested_by": [
+        "TC_CAPI_E2E_CREATE_001",
+        "TC_CAPI_EVT_PUB_001",
+        "TC_CAPI_EVT_SUB_001",
+        "TC_CAPI_MSG_CREATE_001",
+        "TC_CAPI_RPC_CLIENT_001",
+        "TC_CAPI_RPC_SERVER_001",
+        "TC_CAPI_SD_CLIENT_001",
+        "TC_CAPI_SD_SERVER_001",
+        "TC_CAPI_SER_CREATE_001",
+        "TC_CAPI_TP_CREATE_001",
+        "TC_CAPI_UDP_CREATE_001",
+        "TC_CAPI_TCP_CREATE_001"
+      ]
+    },
+    "REQ_CAPI_004": {
+      "id": "REQ_CAPI_004",
+      "title": "Callback Safety",
+      "type": "requirement",
+      "satisfies": [],
+      "implemented_by": [
+        "CODE_opensomeip_events_capi_14",
+        "CODE_opensomeip_rpc_capi_14",
+        "CODE_opensomeip_sd_capi_14",
+        "CODE_opensomeip_capi_405",
+        "CODE_opensomeip_capi_430",
+        "CODE_opensomeip_capi_449",
+        "CODE_opensomeip_capi_519"
+      ],
+      "tested_by": [
+        "TC_CAPI_INT_RPC_001",
+        "TC_CAPI_INT_RPC_002",
+        "TC_CAPI_EVT_SUB_CB_001",
+        "TC_CAPI_RPC_ASYNC_NULL_001",
+        "TC_CAPI_RPC_REGISTER_NULL_001",
+        "TC_CAPI_SD_FIND_NULL_001"
+      ]
+    },
+    "REQ_CAPI_005": {
+      "id": "REQ_CAPI_005",
+      "title": "C API Versioning",
+      "type": "requirement",
+      "satisfies": [],
+      "implemented_by": [
+        "CODE_opensomeip_message_capi_24",
+        "CODE_opensomeip_capi_14",
+        "CODE_opensomeip_capi_59",
+        "CODE_opensomeip_capi_249"
+      ],
+      "tested_by": [
+        "TC_CAPI_VERSION_001"
+      ]
+    },
+    "REQ_CAPI_006": {
+      "id": "REQ_CAPI_006",
+      "title": "Thread Safety Documentation",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_002"
+      ],
+      "implemented_by": [],
+      "tested_by": []
+    },
+    "REQ_CAPI_007": {
+      "id": "REQ_CAPI_007",
+      "title": "Exception Firewall",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_004"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_e2e_capi_14",
+        "CODE_opensomeip_events_capi_14",
+        "CODE_opensomeip_message_capi_14",
+        "CODE_opensomeip_rpc_capi_14",
+        "CODE_opensomeip_sd_capi_14",
+        "CODE_opensomeip_serializer_capi_14",
+        "CODE_opensomeip_tp_capi_14",
+        "CODE_opensomeip_transport_capi_14"
+      ],
+      "tested_by": [
+        "TC_CAPI_MSG_NULL_001",
+        "TC_CAPI_UDP_SEND_NULL_001"
+      ]
+    },
+    "REQ_CAPI_008": {
+      "id": "REQ_CAPI_008",
+      "title": "Message and Serialization C API",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_001"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_message_capi_14",
+        "CODE_opensomeip_serializer_capi_14",
+        "CODE_opensomeip_capi_257",
+        "CODE_opensomeip_capi_261",
+        "CODE_opensomeip_capi_264",
+        "CODE_opensomeip_capi_282",
+        "CODE_opensomeip_capi_287",
+        "CODE_opensomeip_capi_292",
+        "CODE_opensomeip_capi_297",
+        "CODE_opensomeip_capi_302",
+        "CODE_opensomeip_capi_311",
+        "CODE_opensomeip_capi_333"
+      ],
+      "tested_by": [
+        "TC_CAPI_INT_UDP_001",
+        "TC_CAPI_MSG_CREATE_001",
+        "TC_CAPI_MSG_HEADER_001",
+        "TC_CAPI_MSG_PAYLOAD_001",
+        "TC_CAPI_MSG_PAYLOAD_OVERFLOW_001",
+        "TC_CAPI_MSG_SERIALIZE_001",
+        "TC_CAPI_SER_CREATE_001",
+        "TC_CAPI_SER_ROUNDTRIP_001",
+        "TC_CAPI_SER_ROUNDTRIP_002",
+        "TC_CAPI_SER_BYTES_001",
+        "TC_CAPI_SER_RESET_001"
+      ]
+    },
+    "REQ_CAPI_009": {
+      "id": "REQ_CAPI_009",
+      "title": "Transport C API",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_001"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_transport_capi_14",
+        "CODE_opensomeip_capi_352",
+        "CODE_opensomeip_capi_369"
+      ],
+      "tested_by": [
+        "TC_CAPI_INT_UDP_001",
+        "TC_CAPI_UDP_CREATE_001",
+        "TC_CAPI_TCP_CREATE_001"
+      ]
+    },
+    "REQ_CAPI_010": {
+      "id": "REQ_CAPI_010",
+      "title": "RPC C API",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_001"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_rpc_capi_14",
+        "CODE_opensomeip_capi_387",
+        "CODE_opensomeip_capi_394",
+        "CODE_opensomeip_capi_405",
+        "CODE_opensomeip_capi_423",
+        "CODE_opensomeip_capi_430"
+      ],
+      "tested_by": [
+        "TC_CAPI_INT_RPC_001",
+        "TC_CAPI_INT_RPC_002",
+        "TC_CAPI_RPC_CLIENT_001",
+        "TC_CAPI_RPC_SERVER_001"
+      ]
+    },
+    "REQ_CAPI_011": {
+      "id": "REQ_CAPI_011",
+      "title": "Service Discovery C API",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_001"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_sd_capi_14",
+        "CODE_opensomeip_capi_443",
+        "CODE_opensomeip_capi_449",
+        "CODE_opensomeip_capi_470",
+        "CODE_opensomeip_capi_476"
+      ],
+      "tested_by": [
+        "TC_CAPI_SD_CLIENT_001",
+        "TC_CAPI_SD_SERVER_001"
+      ]
+    },
+    "REQ_CAPI_012": {
+      "id": "REQ_CAPI_012",
+      "title": "Events C API",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_001"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_events_capi_14",
+        "CODE_opensomeip_capi_490",
+        "CODE_opensomeip_capi_498",
+        "CODE_opensomeip_capi_512",
+        "CODE_opensomeip_capi_519"
+      ],
+      "tested_by": [
+        "TC_CAPI_EVT_PUB_001",
+        "TC_CAPI_EVT_SUB_001"
+      ]
+    },
+    "REQ_CAPI_013": {
+      "id": "REQ_CAPI_013",
+      "title": "TP and E2E C API",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_001"
+      ],
+      "implemented_by": [
+        "CODE_opensomeip_e2e_capi_14",
+        "CODE_opensomeip_tp_capi_14",
+        "CODE_opensomeip_capi_536",
+        "CODE_opensomeip_capi_542",
+        "CODE_opensomeip_capi_548",
+        "CODE_opensomeip_capi_554",
+        "CODE_opensomeip_capi_565",
+        "CODE_opensomeip_capi_569",
+        "CODE_opensomeip_capi_576"
+      ],
+      "tested_by": [
+        "TC_CAPI_E2E_CREATE_001",
+        "TC_CAPI_E2E_PROTECT_001",
+        "TC_CAPI_TP_CREATE_001",
+        "TC_CAPI_TP_SEGCHECK_001"
+      ]
+    },
     "REQ_E2E_PLUGIN_001": {
       "id": "REQ_E2E_PLUGIN_001",
       "title": "E2E Profile Plugin Interface",
@@ -10832,6 +11138,105 @@
     }
   },
   "code_references": {
+    "CODE_opensomeip_e2e_capi_14": {
+      "id": "CODE_opensomeip_e2e_capi_14",
+      "location": "src/capi/opensomeip_e2e.cpp:14",
+      "implements": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_003",
+        "REQ_CAPI_007",
+        "REQ_CAPI_013"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_events_capi_14": {
+      "id": "CODE_opensomeip_events_capi_14",
+      "location": "src/capi/opensomeip_events.cpp:14",
+      "implements": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_003",
+        "REQ_CAPI_004",
+        "REQ_CAPI_007",
+        "REQ_CAPI_012"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_message_capi_14": {
+      "id": "CODE_opensomeip_message_capi_14",
+      "location": "src/capi/opensomeip_message.cpp:14",
+      "implements": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_003",
+        "REQ_CAPI_007",
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_message_capi_24": {
+      "id": "CODE_opensomeip_message_capi_24",
+      "location": "src/capi/opensomeip_message.cpp:24",
+      "implements": [
+        "REQ_CAPI_005"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_rpc_capi_14": {
+      "id": "CODE_opensomeip_rpc_capi_14",
+      "location": "src/capi/opensomeip_rpc.cpp:14",
+      "implements": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_003",
+        "REQ_CAPI_004",
+        "REQ_CAPI_007",
+        "REQ_CAPI_010"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_sd_capi_14": {
+      "id": "CODE_opensomeip_sd_capi_14",
+      "location": "src/capi/opensomeip_sd.cpp:14",
+      "implements": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_003",
+        "REQ_CAPI_004",
+        "REQ_CAPI_007",
+        "REQ_CAPI_011"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_serializer_capi_14": {
+      "id": "CODE_opensomeip_serializer_capi_14",
+      "location": "src/capi/opensomeip_serializer.cpp:14",
+      "implements": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_003",
+        "REQ_CAPI_007",
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_tp_capi_14": {
+      "id": "CODE_opensomeip_tp_capi_14",
+      "location": "src/capi/opensomeip_tp.cpp:14",
+      "implements": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_003",
+        "REQ_CAPI_007",
+        "REQ_CAPI_013"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_transport_capi_14": {
+      "id": "CODE_opensomeip_transport_capi_14",
+      "location": "src/capi/opensomeip_transport.cpp:14",
+      "implements": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_003",
+        "REQ_CAPI_007",
+        "REQ_CAPI_009"
+      ],
+      "satisfies": []
+    },
     "CODE_result_common_13": {
       "id": "CODE_result_common_13",
       "location": "src/common/result.cpp:13",
@@ -12981,6 +13386,321 @@
       ],
       "satisfies": []
     },
+    "CODE_opensomeip_capi_14": {
+      "id": "CODE_opensomeip_capi_14",
+      "location": "include/capi/opensomeip.h:14",
+      "implements": [
+        "REQ_CAPI_001",
+        "REQ_CAPI_005"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_59": {
+      "id": "CODE_opensomeip_capi_59",
+      "location": "include/capi/opensomeip.h:59",
+      "implements": [
+        "REQ_CAPI_005"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_68": {
+      "id": "CODE_opensomeip_capi_68",
+      "location": "include/capi/opensomeip.h:68",
+      "implements": [
+        "REQ_CAPI_002"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_162": {
+      "id": "CODE_opensomeip_capi_162",
+      "location": "include/capi/opensomeip.h:162",
+      "implements": [
+        "REQ_CAPI_003"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_249": {
+      "id": "CODE_opensomeip_capi_249",
+      "location": "include/capi/opensomeip.h:249",
+      "implements": [
+        "REQ_CAPI_005"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_257": {
+      "id": "CODE_opensomeip_capi_257",
+      "location": "include/capi/opensomeip.h:257",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_261": {
+      "id": "CODE_opensomeip_capi_261",
+      "location": "include/capi/opensomeip.h:261",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_264": {
+      "id": "CODE_opensomeip_capi_264",
+      "location": "include/capi/opensomeip.h:264",
+      "implements": [
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_282": {
+      "id": "CODE_opensomeip_capi_282",
+      "location": "include/capi/opensomeip.h:282",
+      "implements": [
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_287": {
+      "id": "CODE_opensomeip_capi_287",
+      "location": "include/capi/opensomeip.h:287",
+      "implements": [
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_292": {
+      "id": "CODE_opensomeip_capi_292",
+      "location": "include/capi/opensomeip.h:292",
+      "implements": [
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_297": {
+      "id": "CODE_opensomeip_capi_297",
+      "location": "include/capi/opensomeip.h:297",
+      "implements": [
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_302": {
+      "id": "CODE_opensomeip_capi_302",
+      "location": "include/capi/opensomeip.h:302",
+      "implements": [
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_311": {
+      "id": "CODE_opensomeip_capi_311",
+      "location": "include/capi/opensomeip.h:311",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_333": {
+      "id": "CODE_opensomeip_capi_333",
+      "location": "include/capi/opensomeip.h:333",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_008"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_352": {
+      "id": "CODE_opensomeip_capi_352",
+      "location": "include/capi/opensomeip.h:352",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_009"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_369": {
+      "id": "CODE_opensomeip_capi_369",
+      "location": "include/capi/opensomeip.h:369",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_009"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_387": {
+      "id": "CODE_opensomeip_capi_387",
+      "location": "include/capi/opensomeip.h:387",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_010"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_394": {
+      "id": "CODE_opensomeip_capi_394",
+      "location": "include/capi/opensomeip.h:394",
+      "implements": [
+        "REQ_CAPI_010"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_405": {
+      "id": "CODE_opensomeip_capi_405",
+      "location": "include/capi/opensomeip.h:405",
+      "implements": [
+        "REQ_CAPI_004",
+        "REQ_CAPI_010"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_423": {
+      "id": "CODE_opensomeip_capi_423",
+      "location": "include/capi/opensomeip.h:423",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_010"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_430": {
+      "id": "CODE_opensomeip_capi_430",
+      "location": "include/capi/opensomeip.h:430",
+      "implements": [
+        "REQ_CAPI_004",
+        "REQ_CAPI_010"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_443": {
+      "id": "CODE_opensomeip_capi_443",
+      "location": "include/capi/opensomeip.h:443",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_011"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_449": {
+      "id": "CODE_opensomeip_capi_449",
+      "location": "include/capi/opensomeip.h:449",
+      "implements": [
+        "REQ_CAPI_004",
+        "REQ_CAPI_011"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_470": {
+      "id": "CODE_opensomeip_capi_470",
+      "location": "include/capi/opensomeip.h:470",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_011"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_476": {
+      "id": "CODE_opensomeip_capi_476",
+      "location": "include/capi/opensomeip.h:476",
+      "implements": [
+        "REQ_CAPI_011"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_490": {
+      "id": "CODE_opensomeip_capi_490",
+      "location": "include/capi/opensomeip.h:490",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_012"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_498": {
+      "id": "CODE_opensomeip_capi_498",
+      "location": "include/capi/opensomeip.h:498",
+      "implements": [
+        "REQ_CAPI_012"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_512": {
+      "id": "CODE_opensomeip_capi_512",
+      "location": "include/capi/opensomeip.h:512",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_012"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_519": {
+      "id": "CODE_opensomeip_capi_519",
+      "location": "include/capi/opensomeip.h:519",
+      "implements": [
+        "REQ_CAPI_004",
+        "REQ_CAPI_012"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_536": {
+      "id": "CODE_opensomeip_capi_536",
+      "location": "include/capi/opensomeip.h:536",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_013"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_542": {
+      "id": "CODE_opensomeip_capi_542",
+      "location": "include/capi/opensomeip.h:542",
+      "implements": [
+        "REQ_CAPI_013"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_548": {
+      "id": "CODE_opensomeip_capi_548",
+      "location": "include/capi/opensomeip.h:548",
+      "implements": [
+        "REQ_CAPI_013"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_554": {
+      "id": "CODE_opensomeip_capi_554",
+      "location": "include/capi/opensomeip.h:554",
+      "implements": [
+        "REQ_CAPI_013"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_565": {
+      "id": "CODE_opensomeip_capi_565",
+      "location": "include/capi/opensomeip.h:565",
+      "implements": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_013"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_569": {
+      "id": "CODE_opensomeip_capi_569",
+      "location": "include/capi/opensomeip.h:569",
+      "implements": [
+        "REQ_CAPI_013"
+      ],
+      "satisfies": []
+    },
+    "CODE_opensomeip_capi_576": {
+      "id": "CODE_opensomeip_capi_576",
+      "location": "include/capi/opensomeip.h:576",
+      "implements": [
+        "REQ_CAPI_013"
+      ],
+      "satisfies": []
+    },
     "CODE_result_common_22": {
       "id": "CODE_result_common_22",
       "location": "include/common/result.h:22",
@@ -14033,6 +14753,392 @@
     }
   },
   "test_cases": {
+    "TC_CAPI_INT_RPC_001": {
+      "id": "TC_CAPI_INT_RPC_001",
+      "name": "CapiIntegration.RpcClientServerCreateDestroy (tests/capi/integration/test_capi_rpc_roundtrip.cpp:25)",
+      "location": "tests/capi/integration/test_capi_rpc_roundtrip.cpp:25",
+      "tests": [
+        "REQ_CAPI_004",
+        "REQ_CAPI_010"
+      ]
+    },
+    "TC_CAPI_INT_RPC_002": {
+      "id": "TC_CAPI_INT_RPC_002",
+      "name": "CapiIntegration.RpcServerRegisterHandler (tests/capi/integration/test_capi_rpc_roundtrip.cpp:55)",
+      "location": "tests/capi/integration/test_capi_rpc_roundtrip.cpp:55",
+      "tests": [
+        "REQ_CAPI_004",
+        "REQ_CAPI_010"
+      ]
+    },
+    "TC_CAPI_INT_UDP_001": {
+      "id": "TC_CAPI_INT_UDP_001",
+      "name": "CapiIntegration.UdpLoopbackSendReceive (tests/capi/integration/test_capi_udp_hello.cpp:26)",
+      "location": "tests/capi/integration/test_capi_udp_hello.cpp:26",
+      "tests": [
+        "REQ_CAPI_008",
+        "REQ_CAPI_009"
+      ]
+    },
+    "TC_CAPI_E2E_CREATE_001": {
+      "id": "TC_CAPI_E2E_CREATE_001",
+      "name": "CapiE2E.CreateAndDestroy (tests/capi/unit/test_capi_e2e.cpp:23)",
+      "location": "tests/capi/unit/test_capi_e2e.cpp:23",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_013"
+      ]
+    },
+    "TC_CAPI_E2E_NULL_001": {
+      "id": "TC_CAPI_E2E_NULL_001",
+      "name": "CapiE2E.NullHandleReturnsError (tests/capi/unit/test_capi_e2e.cpp:34)",
+      "location": "tests/capi/unit/test_capi_e2e.cpp:34",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_E2E_PROTECT_001": {
+      "id": "TC_CAPI_E2E_PROTECT_001",
+      "name": "CapiE2E.ProtectMessage (tests/capi/unit/test_capi_e2e.cpp:45)",
+      "location": "tests/capi/unit/test_capi_e2e.cpp:45",
+      "tests": [
+        "REQ_CAPI_013"
+      ]
+    },
+    "TC_CAPI_EVT_PUB_001": {
+      "id": "TC_CAPI_EVT_PUB_001",
+      "name": "CapiEventPublisher.CreateAndDestroy (tests/capi/unit/test_capi_events.cpp:23)",
+      "location": "tests/capi/unit/test_capi_events.cpp:23",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_012"
+      ]
+    },
+    "TC_CAPI_EVT_PUB_NULL_001": {
+      "id": "TC_CAPI_EVT_PUB_NULL_001",
+      "name": "CapiEventPublisher.NullHandleReturnsError (tests/capi/unit/test_capi_events.cpp:35)",
+      "location": "tests/capi/unit/test_capi_events.cpp:35",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_EVT_SUB_001": {
+      "id": "TC_CAPI_EVT_SUB_001",
+      "name": "CapiEventSubscriber.CreateAndDestroy (tests/capi/unit/test_capi_events.cpp:44)",
+      "location": "tests/capi/unit/test_capi_events.cpp:44",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_012"
+      ]
+    },
+    "TC_CAPI_EVT_SUB_NULL_001": {
+      "id": "TC_CAPI_EVT_SUB_NULL_001",
+      "name": "CapiEventSubscriber.NullHandleReturnsError (tests/capi/unit/test_capi_events.cpp:56)",
+      "location": "tests/capi/unit/test_capi_events.cpp:56",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_EVT_SUB_CB_001": {
+      "id": "TC_CAPI_EVT_SUB_CB_001",
+      "name": "CapiEventSubscriber.SubscribeRejectsNullCallback (tests/capi/unit/test_capi_events.cpp:65)",
+      "location": "tests/capi/unit/test_capi_events.cpp:65",
+      "tests": [
+        "REQ_CAPI_004"
+      ]
+    },
+    "TC_CAPI_VERSION_001": {
+      "id": "TC_CAPI_VERSION_001",
+      "name": "CapiVersion.RuntimeVersionMatchesMacros (tests/capi/unit/test_capi_message.cpp:26)",
+      "location": "tests/capi/unit/test_capi_message.cpp:26",
+      "tests": [
+        "REQ_CAPI_005"
+      ]
+    },
+    "TC_CAPI_MSG_CREATE_001": {
+      "id": "TC_CAPI_MSG_CREATE_001",
+      "name": "CapiMessage.CreateAndDestroy (tests/capi/unit/test_capi_message.cpp:38)",
+      "location": "tests/capi/unit/test_capi_message.cpp:38",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_MSG_NULL_001": {
+      "id": "TC_CAPI_MSG_NULL_001",
+      "name": "CapiMessage.NullHandleReturnsError (tests/capi/unit/test_capi_message.cpp:49)",
+      "location": "tests/capi/unit/test_capi_message.cpp:49",
+      "tests": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_007"
+      ]
+    },
+    "TC_CAPI_MSG_HEADER_001": {
+      "id": "TC_CAPI_MSG_HEADER_001",
+      "name": "CapiMessage.HeaderFieldRoundTrip (tests/capi/unit/test_capi_message.cpp:58)",
+      "location": "tests/capi/unit/test_capi_message.cpp:58",
+      "tests": [
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_MSG_PAYLOAD_001": {
+      "id": "TC_CAPI_MSG_PAYLOAD_001",
+      "name": "CapiMessage.PayloadSetGetRoundTrip (tests/capi/unit/test_capi_message.cpp:111)",
+      "location": "tests/capi/unit/test_capi_message.cpp:111",
+      "tests": [
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_MSG_PAYLOAD_OVERFLOW_001": {
+      "id": "TC_CAPI_MSG_PAYLOAD_OVERFLOW_001",
+      "name": "CapiMessage.PayloadGetUndersizedBuffer (tests/capi/unit/test_capi_message.cpp:135)",
+      "location": "tests/capi/unit/test_capi_message.cpp:135",
+      "tests": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_MSG_SERIALIZE_001": {
+      "id": "TC_CAPI_MSG_SERIALIZE_001",
+      "name": "CapiMessage.SerializeDeserializeRoundTrip (tests/capi/unit/test_capi_message.cpp:155)",
+      "location": "tests/capi/unit/test_capi_message.cpp:155",
+      "tests": [
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_MSG_NULL_OUT_001": {
+      "id": "TC_CAPI_MSG_NULL_OUT_001",
+      "name": "CapiMessage.GettersRejectNullOut (tests/capi/unit/test_capi_message.cpp:200)",
+      "location": "tests/capi/unit/test_capi_message.cpp:200",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_RPC_CLIENT_001": {
+      "id": "TC_CAPI_RPC_CLIENT_001",
+      "name": "CapiRpcClient.CreateAndDestroy (tests/capi/unit/test_capi_rpc.cpp:23)",
+      "location": "tests/capi/unit/test_capi_rpc.cpp:23",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_010"
+      ]
+    },
+    "TC_CAPI_RPC_CLIENT_NULL_001": {
+      "id": "TC_CAPI_RPC_CLIENT_NULL_001",
+      "name": "CapiRpcClient.NullHandleReturnsError (tests/capi/unit/test_capi_rpc.cpp:34)",
+      "location": "tests/capi/unit/test_capi_rpc.cpp:34",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_RPC_SERVER_001": {
+      "id": "TC_CAPI_RPC_SERVER_001",
+      "name": "CapiRpcServer.CreateAndDestroy (tests/capi/unit/test_capi_rpc.cpp:45)",
+      "location": "tests/capi/unit/test_capi_rpc.cpp:45",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_010"
+      ]
+    },
+    "TC_CAPI_RPC_SERVER_NULL_001": {
+      "id": "TC_CAPI_RPC_SERVER_NULL_001",
+      "name": "CapiRpcServer.NullHandleReturnsError (tests/capi/unit/test_capi_rpc.cpp:56)",
+      "location": "tests/capi/unit/test_capi_rpc.cpp:56",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_RPC_ASYNC_NULL_001": {
+      "id": "TC_CAPI_RPC_ASYNC_NULL_001",
+      "name": "CapiRpcClient.AsyncCallRejectsNullCallback (tests/capi/unit/test_capi_rpc.cpp:65)",
+      "location": "tests/capi/unit/test_capi_rpc.cpp:65",
+      "tests": [
+        "REQ_CAPI_004"
+      ]
+    },
+    "TC_CAPI_RPC_REGISTER_NULL_001": {
+      "id": "TC_CAPI_RPC_REGISTER_NULL_001",
+      "name": "CapiRpcServer.RegisterRejectsNullHandler (tests/capi/unit/test_capi_rpc.cpp:81)",
+      "location": "tests/capi/unit/test_capi_rpc.cpp:81",
+      "tests": [
+        "REQ_CAPI_004"
+      ]
+    },
+    "TC_CAPI_SD_CLIENT_001": {
+      "id": "TC_CAPI_SD_CLIENT_001",
+      "name": "CapiSdClient.CreateAndDestroy (tests/capi/unit/test_capi_sd.cpp:23)",
+      "location": "tests/capi/unit/test_capi_sd.cpp:23",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_011"
+      ]
+    },
+    "TC_CAPI_SD_CLIENT_NULL_001": {
+      "id": "TC_CAPI_SD_CLIENT_NULL_001",
+      "name": "CapiSdClient.NullHandleReturnsError (tests/capi/unit/test_capi_sd.cpp:34)",
+      "location": "tests/capi/unit/test_capi_sd.cpp:34",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_SD_SERVER_001": {
+      "id": "TC_CAPI_SD_SERVER_001",
+      "name": "CapiSdServer.CreateAndDestroy (tests/capi/unit/test_capi_sd.cpp:43)",
+      "location": "tests/capi/unit/test_capi_sd.cpp:43",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_011"
+      ]
+    },
+    "TC_CAPI_SD_SERVER_NULL_001": {
+      "id": "TC_CAPI_SD_SERVER_NULL_001",
+      "name": "CapiSdServer.NullHandleReturnsError (tests/capi/unit/test_capi_sd.cpp:54)",
+      "location": "tests/capi/unit/test_capi_sd.cpp:54",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_SD_FIND_NULL_001": {
+      "id": "TC_CAPI_SD_FIND_NULL_001",
+      "name": "CapiSdClient.FindServiceRejectsNullCallback (tests/capi/unit/test_capi_sd.cpp:63)",
+      "location": "tests/capi/unit/test_capi_sd.cpp:63",
+      "tests": [
+        "REQ_CAPI_004"
+      ]
+    },
+    "TC_CAPI_SER_CREATE_001": {
+      "id": "TC_CAPI_SER_CREATE_001",
+      "name": "CapiSerializer.CreateAndDestroy (tests/capi/unit/test_capi_serializer.cpp:24)",
+      "location": "tests/capi/unit/test_capi_serializer.cpp:24",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_SER_NULL_001": {
+      "id": "TC_CAPI_SER_NULL_001",
+      "name": "CapiSerializer.NullHandleReturnsError (tests/capi/unit/test_capi_serializer.cpp:35)",
+      "location": "tests/capi/unit/test_capi_serializer.cpp:35",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_SER_ROUNDTRIP_001": {
+      "id": "TC_CAPI_SER_ROUNDTRIP_001",
+      "name": "CapiSerializer.Uint8RoundTrip (tests/capi/unit/test_capi_serializer.cpp:45)",
+      "location": "tests/capi/unit/test_capi_serializer.cpp:45",
+      "tests": [
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_SER_ROUNDTRIP_002": {
+      "id": "TC_CAPI_SER_ROUNDTRIP_002",
+      "name": "CapiSerializer.MultiTypeRoundTrip (tests/capi/unit/test_capi_serializer.cpp:75)",
+      "location": "tests/capi/unit/test_capi_serializer.cpp:75",
+      "tests": [
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_SER_BYTES_001": {
+      "id": "TC_CAPI_SER_BYTES_001",
+      "name": "CapiSerializer.BytesWriteRead (tests/capi/unit/test_capi_serializer.cpp:115)",
+      "location": "tests/capi/unit/test_capi_serializer.cpp:115",
+      "tests": [
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_SER_RESET_001": {
+      "id": "TC_CAPI_SER_RESET_001",
+      "name": "CapiSerializer.ResetClearsBuffer (tests/capi/unit/test_capi_serializer.cpp:143)",
+      "location": "tests/capi/unit/test_capi_serializer.cpp:143",
+      "tests": [
+        "REQ_CAPI_008"
+      ]
+    },
+    "TC_CAPI_SER_OVERFLOW_001": {
+      "id": "TC_CAPI_SER_OVERFLOW_001",
+      "name": "CapiSerializer.GetDataUndersizedBuffer (tests/capi/unit/test_capi_serializer.cpp:163)",
+      "location": "tests/capi/unit/test_capi_serializer.cpp:163",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_DESER_NULL_001": {
+      "id": "TC_CAPI_DESER_NULL_001",
+      "name": "CapiDeserializer.NullRejectsGracefully (tests/capi/unit/test_capi_serializer.cpp:182)",
+      "location": "tests/capi/unit/test_capi_serializer.cpp:182",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_TP_CREATE_001": {
+      "id": "TC_CAPI_TP_CREATE_001",
+      "name": "CapiTp.CreateAndDestroy (tests/capi/unit/test_capi_tp.cpp:23)",
+      "location": "tests/capi/unit/test_capi_tp.cpp:23",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_013"
+      ]
+    },
+    "TC_CAPI_TP_NULL_001": {
+      "id": "TC_CAPI_TP_NULL_001",
+      "name": "CapiTp.NullHandleReturnsError (tests/capi/unit/test_capi_tp.cpp:34)",
+      "location": "tests/capi/unit/test_capi_tp.cpp:34",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_TP_SEGCHECK_001": {
+      "id": "TC_CAPI_TP_SEGCHECK_001",
+      "name": "CapiTp.NeedsSegmentationSmallPayload (tests/capi/unit/test_capi_tp.cpp:44)",
+      "location": "tests/capi/unit/test_capi_tp.cpp:44",
+      "tests": [
+        "REQ_CAPI_013"
+      ]
+    },
+    "TC_CAPI_UDP_CREATE_001": {
+      "id": "TC_CAPI_UDP_CREATE_001",
+      "name": "CapiUdpTransport.CreateAndDestroy (tests/capi/unit/test_capi_transport.cpp:24)",
+      "location": "tests/capi/unit/test_capi_transport.cpp:24",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_009"
+      ]
+    },
+    "TC_CAPI_UDP_NULL_001": {
+      "id": "TC_CAPI_UDP_NULL_001",
+      "name": "CapiUdpTransport.NullHandleReturnsError (tests/capi/unit/test_capi_transport.cpp:41)",
+      "location": "tests/capi/unit/test_capi_transport.cpp:41",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_TCP_CREATE_001": {
+      "id": "TC_CAPI_TCP_CREATE_001",
+      "name": "CapiTcpTransport.CreateAndDestroy (tests/capi/unit/test_capi_transport.cpp:52)",
+      "location": "tests/capi/unit/test_capi_transport.cpp:52",
+      "tests": [
+        "REQ_CAPI_003",
+        "REQ_CAPI_009"
+      ]
+    },
+    "TC_CAPI_TCP_NULL_001": {
+      "id": "TC_CAPI_TCP_NULL_001",
+      "name": "CapiTcpTransport.NullHandleReturnsError (tests/capi/unit/test_capi_transport.cpp:63)",
+      "location": "tests/capi/unit/test_capi_transport.cpp:63",
+      "tests": [
+        "REQ_CAPI_002"
+      ]
+    },
+    "TC_CAPI_UDP_SEND_NULL_001": {
+      "id": "TC_CAPI_UDP_SEND_NULL_001",
+      "name": "CapiUdpTransport.SendRejectsNullArgs (tests/capi/unit/test_capi_transport.cpp:72)",
+      "location": "tests/capi/unit/test_capi_transport.cpp:72",
+      "tests": [
+        "REQ_CAPI_002",
+        "REQ_CAPI_007"
+      ]
+    },
     "TC_test_freertos_core_vApplicationMallocFailedHook": {
       "id": "TC_test_freertos_core_vApplicationMallocFailedHook",
       "name": "vApplicationMallocFailedHook (tests/freertos/test_freertos_core.cpp:7)",
