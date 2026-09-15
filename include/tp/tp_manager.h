@@ -176,11 +176,20 @@ public:
     void process_timeouts();
 
     /**
-     * @brief Get TP statistics
+     * @brief Get sender-path statistics (segmentation)
      *
-     * @return Current statistics
+     * Only fields written by the sender path are meaningful:
+     * messages_segmented, segments_sent, errors.
      */
-    TpStatistics get_statistics() const;
+    TpStatistics get_sender_statistics() const;
+
+    /**
+     * @brief Get receiver-path statistics (reassembly)
+     *
+     * Only fields written by the receiver path are meaningful:
+     * messages_reassembled, segments_received, timeouts, retransmissions, errors.
+     */
+    TpStatistics get_receiver_statistics() const;
 
     /**
      * @brief Update TP configuration
@@ -202,10 +211,10 @@ private:
     TpMessageCallback message_callback_;
 
     uint32_t next_transfer_id_{1};
-    TpStatistics statistics_;
+    TpStatistics sender_statistics_;
+    TpStatistics receiver_statistics_;
 
     void cleanup_completed_transfers();
-    void update_statistics(const TpSegment& segment, bool sent);
 };
 
 }  // namespace someip::tp

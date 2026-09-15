@@ -95,7 +95,7 @@ TpResult TpManager::segment_message(const Message& message, uint32_t& transfer_i
         return TpResult::RESOURCE_EXHAUSTED;
     }
     active_transfers_[transfer_id] = std::move(transfer);
-    statistics_.messages_segmented++;
+    sender_statistics_.messages_segmented++;
 
     return TpResult::SUCCESS;
 }
@@ -124,7 +124,7 @@ TpResult TpManager::get_next_segment(uint32_t transfer_id, TpSegment& segment) {
     transfer.next_segment_to_send++;
     transfer.last_activity = std::chrono::steady_clock::now();
 
-    statistics_.segments_sent++;
+    sender_statistics_.segments_sent++;
 
     return TpResult::SUCCESS;
 }
@@ -136,7 +136,7 @@ TpResult TpManager::get_next_segment(uint32_t transfer_id, TpSegment& segment) {
  */
 bool TpManager::handle_received_segment(const TpSegment& segment, platform::ByteBuffer& complete_message) {
     // Update statistics
-    statistics_.segments_received++;
+    receiver_statistics_.segments_received++;
 
     if (segment.header.message_type == TpMessageType::SINGLE_MESSAGE) {
         if (segment.header.segment_length != segment.payload.size()) {
@@ -195,7 +195,7 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
     segment.sender_ipv4 = sender_ipv4;
     segment.sender_port = sender_port;
 
-    statistics_.segments_received++;
+    receiver_statistics_.segments_received++;
 
     if (!reassembler_) {
         return false;
@@ -213,7 +213,7 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
         return false;
     }
 
-    statistics_.messages_reassembled++;
+    receiver_statistics_.messages_reassembled++;
 
     return assemble_message_from_tp(hdr, complete_payload, out_complete);
 }
@@ -224,8 +224,8 @@ TpResult TpManager::segment_and_serialize(const Message& message, TpSegmentVecto
     }
     TpResult const result = segmenter_->segment_message(message, segments);
     if (result == TpResult::SUCCESS) {
-        statistics_.messages_segmented++;
-        statistics_.segments_sent += static_cast<uint32_t>(segments.size());
+        sender_statistics_.messages_segmented++;
+        sender_statistics_.segments_sent += static_cast<uint32_t>(segments.size());
     }
     return result;
 }
@@ -303,7 +303,7 @@ void TpManager::process_timeouts() {
 
             if (elapsed > config_.reassembly_timeout) {
                 transfer.state = TpTransferState::TIMEOUT;
-                statistics_.timeouts++;
+                receiver_statistics_.timeouts++;
                 timed_out.emplace_back(transfer.transfer_id, TpResult::TIMEOUT);
                 it = active_transfers_.erase(it);
             } else {
@@ -325,11 +325,19 @@ void TpManager::process_timeouts() {
 }
 
 /**
- * @brief Get TP statistics
- * @implements REQ_TP_060, REQ_TP_061, REQ_TP_062, REQ_TP_063
+ * @brief Get sender-path TP statistics
+ * @implements REQ_TP_060, REQ_TP_061
  */
-TpStatistics TpManager::get_statistics() const {
-    return statistics_;
+TpStatistics TpManager::get_sender_statistics() const {
+    return sender_statistics_;
+}
+
+/**
+ * @brief Get receiver-path TP statistics
+ * @implements REQ_TP_062, REQ_TP_063
+ */
+TpStatistics TpManager::get_receiver_statistics() const {
+    return receiver_statistics_;
 }
 
 /**

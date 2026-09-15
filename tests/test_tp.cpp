@@ -299,7 +299,7 @@ TEST_F(TpTest, StatisticsTracking) {
     }
 
     // Check statistics
-    auto stats = tp_manager.get_statistics();
+    auto stats = tp_manager.get_sender_statistics();
     EXPECT_EQ(stats.messages_segmented, 1u);
     EXPECT_EQ(stats.segments_sent, static_cast<uint32_t>(segment_count));
 

@@ -242,7 +242,7 @@ static void test_tp() {
             count++;
         }
 
-        auto stats = manager.get_statistics();
+        auto stats = manager.get_sender_statistics();
         CHECK(stats.messages_segmented == 1u, "tp_stats_messages_segmented");
         CHECK(stats.segments_sent == static_cast<uint32_t>(count),
               "tp_stats_segments_sent");
