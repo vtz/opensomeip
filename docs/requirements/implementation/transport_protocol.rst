@@ -957,8 +957,9 @@ Statistics counters use ``std::atomic<uint32_t>`` with relaxed memory
 ordering (``AtomicTpStatistics``) and are split into separate sender and
 receiver instances so that diagnostic reads via
 ``get_sender_statistics()`` / ``get_receiver_statistics()`` are lock-free
-and race-free.  On ARM and x86, relaxed atomics compile to plain
-load/store instructions with zero overhead.
+and race-free.  Reads (snapshots) use relaxed loads; writes use
+``fetch_add`` with relaxed ordering — the generated instructions and cost
+depend on the compiler and target.
 
 .. requirement:: Track Segmentation Statistics
    :id: REQ_TP_060

@@ -38,9 +38,11 @@ namespace someip::tp {
  * @c get_receiver_statistics() without locking, while the owning path
  * (send or receive) is actively incrementing.
  *
- * On ARM and x86 targets, relaxed atomics compile to plain load/store
- * instructions — the generated code is identical to non-atomic uint32_t
- * access, so there is zero runtime overhead.
+ * Reads (snapshots) use relaxed loads, which on ARM and x86 compile to
+ * plain load instructions.  Writes use @c fetch_add with relaxed
+ * ordering, which is an atomic read-modify-write; the generated
+ * instructions and cost depend on the compiler and target (e.g.
+ * @c lock @c xadd on x86, @c ldxr/@c stxr loop on ARM).
  */
 struct AtomicTpStatistics {
     std::atomic<uint32_t> messages_segmented{0};

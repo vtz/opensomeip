@@ -317,7 +317,7 @@ void TpManager::process_timeouts() {
 
             if (elapsed > config_.reassembly_timeout) {
                 transfer.state = TpTransferState::TIMEOUT;
-                receiver_statistics_.timeouts.fetch_add(1, std::memory_order_relaxed);
+                sender_statistics_.timeouts.fetch_add(1, std::memory_order_relaxed);
                 timed_out.emplace_back(transfer.transfer_id, TpResult::TIMEOUT);
                 it = active_transfers_.erase(it);
             } else {

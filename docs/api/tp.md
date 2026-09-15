@@ -199,7 +199,7 @@ allowing concurrent diagnostic reads without locks or data races.
 
 Returns a point-in-time snapshot of counters written by the segmentation
 path: `messages_segmented`, `segments_sent`, `errors`.  Call from any
-thread; the read is atomic (relaxed ordering — zero overhead on ARM / x86).
+thread; the read is atomic (relaxed ordering).
 
 ### Receiver statistics — `get_receiver_statistics()`
 
@@ -213,9 +213,9 @@ Counters are stored in `AtomicTpStatistics` instances using
 `std::atomic<uint32_t>` with `memory_order_relaxed`.  Each path writes
 exclusively to its own instance, so cross-thread writes never occur.  The
 atomics guard only against a concurrent read (diagnostic query) while the
-owning path is incrementing.  On ARM and x86 targets, relaxed atomics
-compile to plain load/store instructions with the same overhead as
-non-atomic `uint32_t`.
+owning path is incrementing.  Reads (snapshots) use relaxed loads;
+writes use `fetch_add` with relaxed ordering — the generated instructions
+and cost depend on the compiler and target.
 
 ## Error Handling
 
