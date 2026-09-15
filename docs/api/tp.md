@@ -147,7 +147,7 @@ reassemble without going through UDP.
 
 ## Receiver Validation
 
-### Overlapping segment handling — first-wins (feat_req_someiptp_799)
+### Overlapping segment handling — first-wins (feat_req_someiptp_797)
 
 When a received TP segment overlaps with bytes that were already written
 to the reassembly buffer, the reassembler applies **first-wins**

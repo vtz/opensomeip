@@ -585,7 +585,7 @@ Segment Storage
 
 .. requirement:: Handle Out-of-Order Segments
    :id: REQ_TP_038
-   :satisfies: feat_req_someiptp_774, feat_req_someiptp_789, feat_req_someiptp_790
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_789, feat_req_someiptp_790, feat_req_someiptp_820
    :status: implemented
    :priority: high
    :category: happy_path
@@ -1181,14 +1181,16 @@ Receiver Behavior Extensions
 
 .. requirement:: Overlapping Segment Handling
    :id: REQ_TP_081
-   :satisfies: feat_req_someiptp_810, feat_req_someiptp_797, feat_req_someiptp_820
+   :satisfies: feat_req_someiptp_810, feat_req_someiptp_797
    :status: implemented
    :priority: medium
    :category: error_path
-   :verification: Unit test: Send segment at offset 0 (100 bytes), then send overlapping segment at offset 50 (100 bytes) with different data, verify reassembly is cancelled.
+   :verification: Unit test: Send segment at offset 0 (100 bytes), then send overlapping segment at offset 50 (100 bytes) with different data, verify first-wins semantics apply (original bytes preserved). Tests: ``tests/test_tp.cpp`` (OverlapDifferentDataFirstWins).
 
-   The receiver may cancel reassembly when overlapping or duplicated
-   segments change previously received bytes, if configurable.
+   The receiver shall apply first-wins semantics to overlapping TP
+   segments.  Cancel-on-conflict (``feat_req_someiptp_810``) is
+   permitted but not currently implemented; first-wins satisfies the
+   normative requirement since 810 uses MAY.
 
    **Rationale**: Detecting overlapping changes prevents silent data corruption.
 
@@ -1196,7 +1198,7 @@ Receiver Behavior Extensions
 
 .. requirement:: First-Wins Semantics for Overlapping Segments
    :id: REQ_TP_081_FW
-   :satisfies: feat_req_someiptp_799
+   :satisfies: feat_req_someiptp_797
    :status: implemented
    :priority: medium
    :category: happy_path
@@ -1207,7 +1209,7 @@ Receiver Behavior Extensions
    already received, only the not-yet-received bytes are written to the
    reassembly buffer.  Already-received bytes are preserved.
 
-   **Rationale**: Per ``feat_req_someiptp_799`` (SHOULD): "The receiver
+   **Rationale**: Per ``feat_req_someiptp_797`` (SHOULD): "The receiver
    should correctly reassemble overlapping and duplicated segments by
    overwriting using the content of the first segment received."
    First-wins prevents mixed-payload messages when a retransmitted

@@ -2007,7 +2007,7 @@ TEST_F(TpTest, MaxTpReassemblySizeIsAtLeast16) {
 }
 
 // ============================================================================
-// Fix: Overlapping TP segment handling — first-wins (feat_req_someiptp_799)
+// Fix: Overlapping TP segment handling — first-wins (feat_req_someiptp_797)
 // ============================================================================
 
 namespace {
@@ -2048,7 +2048,7 @@ platform::ByteBuffer make_tp_datagram(uint16_t service, uint16_t method,
 
 /**
  * @test_case TC_TP_OVERLAP_SAME_DATA
- * @tests feat_req_someiptp_799
+ * @tests feat_req_someiptp_797
  * @brief Overlapping segment with identical data succeeds (first-wins, no corruption)
  *
  * Segment A: offset 0, 32 bytes of 0xAA (more=1)
@@ -2078,7 +2078,7 @@ TEST_F(TpTest, OverlapSameDataSucceeds) {
 
 /**
  * @test_case TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS
- * @tests feat_req_someiptp_799
+ * @tests feat_req_someiptp_797
  * @brief Overlapping segment with different data → first-wins preserves original bytes
  *
  * Segment A: offset 0, 32 bytes of 0xAA (more=1)  → covers [0..31]
@@ -2120,7 +2120,7 @@ TEST_F(TpTest, OverlapDifferentDataFirstWins) {
 
 /**
  * @test_case TC_TP_EXACT_DUPLICATE_ACCEPTED
- * @tests feat_req_someiptp_799
+ * @tests feat_req_someiptp_797
  * @brief Exact duplicate segment is accepted without changing data
  *
  * Send segment A twice (offset 0, 32 bytes 0xAA, more=1).
@@ -2201,7 +2201,7 @@ TEST_F(TpTest, HeaderMatchesPayloadAfterCompletion) {
 
 /**
  * @test_case TC_TP_PROCESS_SEGMENT_RETURNS_HEADER
- * @tests feat_req_someiptp_799
+ * @tests feat_req_someiptp_797
  * @brief process_segment with out_someip_header returns the header atomically
  *
  * Calls the TpReassembler API directly with the new out_someip_header

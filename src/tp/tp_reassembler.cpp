@@ -17,7 +17,6 @@
 #include "platform/thread.h"
 #include "tp/tp_types.h"
 
-#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstddef>
@@ -216,7 +215,7 @@ TpReassembler::~TpReassembler() {
  * @implements REQ_TP_030, REQ_TP_031, REQ_TP_032, REQ_TP_033
  * @implements REQ_TP_030_E01, REQ_TP_076, REQ_TP_077, REQ_TP_078
  * @implements REQ_TP_079, REQ_TP_080, REQ_TP_081, REQ_TP_082
- * @implements feat_req_someiptp_799
+ * @implements feat_req_someiptp_797
  */
 bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message,
                                      std::array<uint8_t, 16>* out_someip_header) {
@@ -255,6 +254,12 @@ bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuff
             if (out_someip_header != nullptr) {
                 *out_someip_header = buffer->someip_header;
             }
+        } else {
+            // Invariant: every accepted segment stores a SOME/IP header before
+            // the buffer can complete.  If this is violated, the completed
+            // message would carry an uninitialised header — discard it.
+            reassembly_buffers_.erase(key);
+            return false;
         }
         reassembly_buffers_.erase(key);
         return true;
@@ -395,7 +400,7 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
  * @brief Add segment to reassembly buffer
  * @implements REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043
  * @implements REQ_TP_039_E01, REQ_TP_080, REQ_TP_081
- * @implements feat_req_someiptp_799
+ * @implements feat_req_someiptp_797
  */
 bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment,
                                           uint32_t max_message_size) {
@@ -416,7 +421,7 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
             return false;
         }
 
-        // feat_req_someiptp_799: first-wins — only write bytes not already received
+        // feat_req_someiptp_797: first-wins — only write bytes not already received
         {
             const auto* src = segment.payload.data() + header_size;
             for (size_t i = 0; i < bytes; ++i) {
@@ -485,7 +490,7 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
         }
     }
 
-    // feat_req_someiptp_799: first-wins — only write bytes not already received
+    // feat_req_someiptp_797: first-wins — only write bytes not already received
     {
         const auto* src = segment.payload.data() + TP_OVERHEAD;
         for (uint32_t i = 0; i < bytes; ++i) {
