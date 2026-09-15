@@ -607,10 +607,12 @@ Interface Version Parsing
    :category: happy_path
    :verification: Unit test: Verify Interface Version 0x02 (service major) is passed through the header; RPC/application validates per service.
 
-   The Interface Version field is the service major version. The stack
-   shall pass the Interface Version through the SOME/IP header without
-   rejecting values other than 0x01. Application and RPC layers validate
-   the value per service (see REQ_MSG_042).
+   The Interface Version field is the service major version. For non-SD
+   messages the stack shall pass the Interface Version through the SOME/IP
+   header without rejecting values other than 0x01; application and RPC
+   layers validate the value per service (see REQ_MSG_042). SD messages
+   (service 0xFFFF / method 0x8100) are validated at the header layer and
+   must carry ``SOMEIP_SD_INTERFACE_VERSION`` (0x01).
 
    **Rationale**: Interface version compatibility is application-specific.
 

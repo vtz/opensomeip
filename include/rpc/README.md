@@ -80,11 +80,15 @@ server.shutdown();
 
 ```cpp
 #include <rpc/rpc_client.h>
+#include <rpc/rpc_types.h>
 
 using namespace someip::rpc;
 
 // Create client with ID 0xABCD
 RpcClient client(0xABCD);
+
+// Configure the remote endpoint (offered-service RPC port, not the SD port)
+client.set_remote_endpoint(someip::transport::Endpoint("127.0.0.1", SOMEIP_DEFAULT_RPC_PORT));
 
 // Initialize client
 client.initialize();
