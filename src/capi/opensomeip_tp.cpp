@@ -20,6 +20,7 @@
 #include "capi/opensomeip.h"
 #include "capi_internal.h"
 #include "tp/tp_manager.h"
+#include <cstdint>
 #include <cstring>
 
 struct opensomeip_tp_manager_s {
@@ -58,6 +59,7 @@ extern "C" opensomeip_result_t opensomeip_tp_needs_segmentation(const opensomeip
                                                                  const uint8_t* payload, size_t len,
                                                                  int* out_needs) {
     if (!tp || !out_needs) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    if (len > 0 && !payload) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     try {
         someip::Message msg;
         if (payload && len > 0) {
@@ -73,29 +75,30 @@ extern "C" opensomeip_result_t opensomeip_tp_segment(opensomeip_tp_manager_t* tp
                                                       uint8_t* out_buf, size_t* out_len) {
     if (!tp || !msg || !out_len) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     try {
-        uint32_t transfer_id = 0;
-        auto result = tp->manager.segment_message(msg->msg, transfer_id);
+        someip::tp::TpSegmentVector segments;
+        auto result = tp->manager.segment_and_serialize(msg->msg, segments);
         if (result != someip::tp::TpResult::SUCCESS) {
             return OPENSOMEIP_RESULT_INTERNAL_ERROR;
         }
 
+        size_t total = 0;
+        for (const auto& seg : segments) {
+            total += sizeof(uint32_t) + seg.payload.size();
+        }
+
+        if (!out_buf || *out_len < total) {
+            *out_len = total;
+            return OPENSOMEIP_RESULT_BUFFER_OVERFLOW;
+        }
+
         size_t written = 0;
-        someip::tp::TpSegment segment;
-        while (tp->manager.get_next_segment(transfer_id, segment) == someip::tp::TpResult::SUCCESS) {
-            if (segment.payload.empty()) {
-                break;
-            }
-            size_t seg_size = segment.payload.size();
-            if (out_buf && written + sizeof(uint32_t) + seg_size <= *out_len) {
-                uint32_t seg_len = static_cast<uint32_t>(seg_size);
-                std::memcpy(out_buf + written, &seg_len, sizeof(uint32_t));
-                written += sizeof(uint32_t);
-                std::memcpy(out_buf + written, segment.payload.data(), seg_size);
-                written += seg_size;
-            } else {
-                *out_len = written;
-                return OPENSOMEIP_RESULT_BUFFER_OVERFLOW;
-            }
+        for (const auto& seg : segments) {
+            const size_t seg_size = seg.payload.size();
+            uint32_t seg_len = static_cast<uint32_t>(seg_size);
+            std::memcpy(out_buf + written, &seg_len, sizeof(uint32_t));
+            written += sizeof(uint32_t);
+            std::memcpy(out_buf + written, seg.payload.data(), seg_size);
+            written += seg_size;
         }
         *out_len = written;
         return OPENSOMEIP_RESULT_SUCCESS;
@@ -108,6 +111,7 @@ extern "C" opensomeip_result_t opensomeip_tp_reassemble(opensomeip_tp_manager_t*
                                                          int* complete) {
     if (!tp || !complete || !out_len) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     if (segment_len > 0 && !segment_data) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
+    if (segment_len > UINT16_MAX) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     try {
         someip::tp::TpSegment seg;
         seg.payload.resize(segment_len);

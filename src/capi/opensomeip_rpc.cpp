@@ -73,7 +73,10 @@ extern "C" opensomeip_result_t opensomeip_rpc_client_call_sync(opensomeip_rpc_cl
     if (!c || !output_len) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     if (input_len > 0 && !input_data) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     try {
-        someip::platform::ByteBuffer params(input_data, input_data + input_len);
+        someip::platform::ByteBuffer params;
+        if (input_len > 0) {
+            params = someip::platform::ByteBuffer(input_data, input_data + input_len);
+        }
         someip::rpc::RpcTimeout timeout;
         timeout.request_timeout = std::chrono::milliseconds(timeout_ms);
         timeout.response_timeout = std::chrono::milliseconds(timeout_ms);
@@ -114,7 +117,10 @@ extern "C" opensomeip_result_t opensomeip_rpc_client_call_async(opensomeip_rpc_c
     if (!c || !callback || !out_handle) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     if (input_len > 0 && !input_data) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     try {
-        someip::platform::ByteBuffer params(input_data, input_data + input_len);
+        someip::platform::ByteBuffer params;
+        if (input_len > 0) {
+            params = someip::platform::ByteBuffer(input_data, input_data + input_len);
+        }
         someip::rpc::RpcTimeout timeout;
         timeout.request_timeout = std::chrono::milliseconds(timeout_ms);
         timeout.response_timeout = std::chrono::milliseconds(timeout_ms);
