@@ -193,7 +193,19 @@ typedef void (*opensomeip_rpc_callback_t)(
     void*               user_data
 );
 
-/** RPC method handler (server side). */
+/** Maximum response payload size (bytes) for a single RPC method handler.
+ *  The bridge allocates a stack buffer of this size; handlers must not set
+ *  *output_len to a value exceeding it.  Exceeding this limit returns
+ *  OPENSOMEIP_RESULT_BUFFER_OVERFLOW to the RPC caller. */
+#define OPENSOMEIP_RPC_METHOD_MAX_RESPONSE 4096
+
+/** RPC method handler (server side).
+ *  @p output_data points to an internal buffer of at most
+ *  OPENSOMEIP_RPC_METHOD_MAX_RESPONSE bytes.  On entry *output_len equals
+ *  the buffer capacity; on return the handler must set *output_len to the
+ *  actual number of bytes written.  Returning SUCCESS with *output_len
+ *  exceeding the entry capacity causes the bridge to report
+ *  OPENSOMEIP_RESULT_BUFFER_OVERFLOW. */
 typedef opensomeip_result_t (*opensomeip_method_handler_t)(
     uint16_t       client_id,
     uint16_t       session_id,

@@ -193,11 +193,19 @@ extern "C" opensomeip_result_t opensomeip_rpc_server_register_method(opensomeip_
             [h, ud](uint16_t client_id, uint16_t session_id,
                      const someip::platform::ByteBuffer& input,
                      someip::platform::ByteBuffer& output) -> someip::rpc::RpcResult {
-                uint8_t out_buf[4096];
+                uint8_t out_buf[OPENSOMEIP_RPC_METHOD_MAX_RESPONSE];
                 size_t out_len = sizeof(out_buf);
-                auto rc = h(client_id, session_id, input.data(), input.size(),
-                            out_buf, &out_len, ud);
+                opensomeip_result_t rc = OPENSOMEIP_RESULT_INTERNAL_ERROR;
+                try {
+                    rc = h(client_id, session_id, input.data(), input.size(),
+                           out_buf, &out_len, ud);
+                } catch (...) { // NOLINT(bugprone-empty-catch) — FFI exception firewall
+                    return someip::rpc::RpcResult::INTERNAL_ERROR;
+                }
                 if (rc == OPENSOMEIP_RESULT_SUCCESS) {
+                    if (out_len > sizeof(out_buf)) {
+                        return someip::rpc::RpcResult::INTERNAL_ERROR;
+                    }
                     output.resize(out_len);
                     if (out_len > 0) {
                         std::memcpy(output.data(), out_buf, out_len);
