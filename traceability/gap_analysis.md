@@ -1,15 +1,15 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-09-15 14:48:08
+Generated: 2026-09-15 19:44:12
 
 ## Summary
 
-- **Total Requirements**: 688
-- **Fully Traced (impl + tests)**: 606 (88.1%)
-- **Missing Implementation**: 79
-- **Missing Tests**: 11
-- **Missing Spec Links (all)**: 155
-- **Missing Spec Links (required only)**: 3
+- **Total Requirements**: 690
+- **Fully Traced (impl + tests)**: 609 (88.3%)
+- **Missing Implementation**: 78
+- **Missing Tests**: 12
+- **Missing Spec Links (all)**: 156
+- **Missing Spec Links (required only)**: 4
 
 ### Requirement Categories
 
@@ -23,13 +23,13 @@ Generated: 2026-09-15 14:48:08
 | Serialization | 75 | 52 (69%) | 75 (100%) | 75 (100%) |
 | Service Discovery | 171 | 167 (98%) | 171 (100%) | 171 (100%) |
 | Transport Layer | 29 | 27 (93%) | 29 (100%) | 29 (100%) |
-| Transport Protocol | 63 | 59 (94%) | 62 (98%) | 63 (100%) |
+| Transport Protocol | 65 | 62 (95%) | 63 (97%) | 64 (98%) |
 
 
 **Note**: Error handling, architectural, and plugin requirements are implementation-derived and
 may not require direct spec links.
 
-- **Spec-Derived Requirements**: 520
+- **Spec-Derived Requirements**: 522
 - **Implementation-Derived Requirements**: 168
 
 ### Priority Breakdown
@@ -39,13 +39,13 @@ may not require direct spec links.
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 55 | 55 | 98% |
 | Medium | 419 | 369 | 413 | 88% |
-| Low | 181 | 153 | 177 | 85% |
+| Low | 183 | 156 | 178 | 85% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 439 |
+| Unit Tests | 444 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -95,9 +95,8 @@ may not require direct spec links.
 - REQ_SER_073_E01
 - REQ_TP_044
 - REQ_TP_030_E03
-- REQ_TP_052
-- REQ_TP_053
-- REQ_TP_054
+- REQ_TP_081_FW
+- REQ_TP_081_ATOM
 - REQ_MSG_132B
 - REQ_MSG_133A
 - REQ_MSG_133B
@@ -136,6 +135,7 @@ may not require direct spec links.
 - REQ_ARCH_008
 - REQ_TP_044
 - REQ_TP_030_E03
+- REQ_TP_081_FW
 - REQ_CAPI_001
 - REQ_CAPI_006
 - REQ_PAL_MEM_THREADSAFE_E01
@@ -148,6 +148,7 @@ may not require direct spec links.
 ### Implementation Requirements Without Spec Links (Required)
 These requirements should have spec links but don't:
 
+- REQ_TP_081_ATOM
 - REQ_CAPI_004
 - REQ_CAPI_005
 - REQ_PLATFORM_ARCH_001
@@ -326,7 +327,7 @@ These are derived requirements (error handling, architectural, plugin) that don'
 ### Overall Compliance Level
 - **Current Level**: CL1
 - **Target for Production**: CL2 (100% traceability)
-- **Gap to Target**: 82 requirements
+- **Gap to Target**: 81 requirements
 
 ## Recommendations
 

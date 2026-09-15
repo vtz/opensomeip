@@ -568,24 +568,28 @@ Segment Storage
 
 .. requirement:: Detect Overlapping Segments
    :id: REQ_TP_037
-   :satisfies: feat_req_someiptp_780
+   :satisfies: feat_req_someiptp_780, feat_req_someiptp_797
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit test: Receive segment at offset 0 (100 bytes), then offset 50 (100 bytes), verify overlap is detected and logged.
+   :verification: Unit test: Receive segment at offset 0 (100 bytes), then offset 50 (100 bytes), verify overlap is detected and first-wins semantics applied (original bytes preserved, only new positions written).
 
    The software shall detect segments that partially overlap with
-   previously received segments.
+   previously received segments and apply first-wins semantics:
+   already-received bytes are preserved, only not-yet-received byte
+   positions are written from the new segment.
 
-   **Rationale**: Overlapping segments indicate protocol error.
+   **Rationale**: Overlapping segments may occur due to retransmission.
+   First-wins prevents mixed-payload corruption per
+   ``feat_req_someiptp_797``.
 
-   **Error Handling**: Log warning; discard new segment.
+   **Error Handling**: Log warning; apply first-wins copy (see ``REQ_TP_081_FW``).
 
    **Code Location**: ``src/tp/tp_reassembler.cpp``
 
 .. requirement:: Handle Out-of-Order Segments
    :id: REQ_TP_038
-   :satisfies: feat_req_someiptp_774, feat_req_someiptp_789, feat_req_someiptp_790
+   :satisfies: feat_req_someiptp_774, feat_req_someiptp_789, feat_req_someiptp_790, feat_req_someiptp_820
    :status: implemented
    :priority: high
    :category: happy_path
@@ -949,6 +953,14 @@ Timer Error Handling
 Statistics and Monitoring
 =========================
 
+Statistics counters use ``std::atomic<uint32_t>`` with relaxed memory
+ordering (``AtomicTpStatistics``) and are split into separate sender and
+receiver instances so that diagnostic reads via
+``get_sender_statistics()`` / ``get_receiver_statistics()`` are lock-free
+and race-free.  Reads (snapshots) use relaxed loads; writes use
+``fetch_add`` with relaxed ordering — the generated instructions and cost
+depend on the compiler and target.
+
 .. requirement:: Track Segmentation Statistics
    :id: REQ_TP_060
    :satisfies: feat_req_someiptp_774, feat_req_someiptp_801
@@ -1181,18 +1193,61 @@ Receiver Behavior Extensions
 
 .. requirement:: Overlapping Segment Handling
    :id: REQ_TP_081
-   :satisfies: feat_req_someiptp_810, feat_req_someiptp_797, feat_req_someiptp_820
+   :satisfies: feat_req_someiptp_810, feat_req_someiptp_797
    :status: implemented
    :priority: medium
    :category: error_path
-   :verification: Unit test: Send segment at offset 0 (100 bytes), then send overlapping segment at offset 50 (100 bytes) with different data, verify reassembly is cancelled.
+   :verification: Unit test: Send segment at offset 0 (100 bytes), then send overlapping segment at offset 50 (100 bytes) with different data, verify first-wins semantics apply (original bytes preserved). Tests: ``tests/test_tp.cpp`` (OverlapDifferentDataFirstWins).
 
-   The receiver may cancel reassembly when overlapping or duplicated
-   segments change previously received bytes, if configurable.
+   The receiver shall apply first-wins semantics to overlapping TP
+   segments.  Cancel-on-conflict (``feat_req_someiptp_810``) is
+   permitted but not currently implemented; first-wins satisfies the
+   normative requirement since 810 uses MAY.
 
    **Rationale**: Detecting overlapping changes prevents silent data corruption.
 
    **Code Location**: ``src/tp/tp_reassembler.cpp`` (add_segment_to_buffer overlap detection)
+
+.. requirement:: First-Wins Semantics for Overlapping Segments
+   :id: REQ_TP_081_FW
+   :satisfies: feat_req_someiptp_797
+   :status: implemented
+   :priority: medium
+   :category: happy_path
+   :verification: Unit test: Send segment A at offset 0 (32 bytes 0xAA, more=1), then overlapping segment B at offset 16 (32 bytes 0xBB, more=0). Verify bytes [16..31] retain 0xAA (first-wins). Tests: ``tests/test_tp.cpp`` (OverlapSameDataSucceeds, OverlapDifferentDataFirstWins, ExactDuplicateAccepted).
+
+   The software shall implement first-wins semantics for overlapping TP
+   segments: when a newly received segment overlaps with bytes that were
+   already received, only the not-yet-received bytes are written to the
+   reassembly buffer.  Already-received bytes are preserved.
+
+   **Rationale**: Per ``feat_req_someiptp_797`` (SHOULD): "The receiver
+   should correctly reassemble overlapping and duplicated segments by
+   overwriting using the content of the first segment received."
+   First-wins prevents mixed-payload messages when a retransmitted
+   segment carries slightly different data.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (add_segment_to_buffer, per-byte first-wins copy)
+
+.. requirement:: Atomic Header and Payload Completion
+   :id: REQ_TP_081_ATOM
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Complete a reassembly and verify that the returned SOME/IP header matches the payload (not a stale header from a previous completion). Tests: ``tests/test_tp.cpp`` (HeaderMatchesPayloadAfterCompletion, ProcessSegmentReturnsHeader).
+
+   The software shall return the completed SOME/IP header alongside the
+   reassembled payload from ``process_segment()`` so that concurrent
+   ``ingest_datagram()`` calls cannot pair the wrong header with a
+   payload.
+
+   **Rationale**: ``last_completed_someip_header_`` is a shared member
+   variable that can be overwritten between ``process_segment()`` and
+   ``copy_last_completed_someip_header()`` during concurrent calls.
+   Bundling the header with the payload under the reassembly lock
+   eliminates the race condition.
+
+   **Code Location**: ``src/tp/tp_reassembler.cpp`` (process_segment), ``src/tp/tp_manager.cpp`` (ingest_datagram)
 
 
 TP Informational References

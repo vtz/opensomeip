@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-15T14:48:08.383894",
+  "generated": "2026-09-15T19:44:12.249506",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -2008,7 +2008,7 @@
         "feat_req_someiptp_766"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202",
         "CODE_tp_reassembler_tp_29"
@@ -2026,7 +2026,7 @@
         "feat_req_someiptp_768"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202",
         "CODE_tp_reassembler_tp_29"
@@ -2044,7 +2044,7 @@
         "feat_req_someiptp_768"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202",
         "CODE_tp_reassembler_tp_29"
@@ -2061,7 +2061,7 @@
         "feat_req_someiptp_767"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202",
         "CODE_tp_reassembler_tp_29"
@@ -2078,7 +2078,7 @@
         "feat_req_someiptp_768"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202",
         "CODE_tp_reassembler_tp_29"
@@ -2095,7 +2095,7 @@
         "feat_req_someiptp_769"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202"
       ],
@@ -2126,7 +2126,7 @@
         "feat_req_someiptp_769"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88"
       ],
       "tested_by": [
@@ -2141,7 +2141,7 @@
         "feat_req_someiptp_770"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202"
       ],
@@ -2157,7 +2157,7 @@
         "feat_req_someiptp_770"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202"
       ],
@@ -2173,7 +2173,7 @@
         "feat_req_someiptp_770"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202"
       ],
@@ -2216,7 +2216,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
+        "CODE_tp_reassembler_tp_99",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_202"
       ],
@@ -2235,7 +2235,7 @@
         "feat_req_someiptp_782"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_214"
+        "CODE_tp_reassembler_tp_213"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2250,7 +2250,7 @@
         "feat_req_someiptp_794"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_214",
+        "CODE_tp_reassembler_tp_213",
         "CODE_tp_types_tp_124"
       ],
       "tested_by": [
@@ -2266,7 +2266,7 @@
         "feat_req_someiptp_787"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_214"
+        "CODE_tp_reassembler_tp_213"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2283,8 +2283,8 @@
         "feat_req_someiptp_783"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_214",
-        "CODE_tp_reassembler_tp_261"
+        "CODE_tp_reassembler_tp_213",
+        "CODE_tp_reassembler_tp_271"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2303,7 +2303,7 @@
         "feat_req_someiptp_789"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_261"
+        "CODE_tp_reassembler_tp_271"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2318,7 +2318,7 @@
         "feat_req_someiptp_789"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_261"
+        "CODE_tp_reassembler_tp_271"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2332,7 +2332,7 @@
         "feat_req_someiptp_780"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_328"
+        "CODE_tp_reassembler_tp_338"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2343,10 +2343,11 @@
       "title": "Detect Overlapping Segments",
       "type": "requirement",
       "satisfies": [
-        "feat_req_someiptp_780"
+        "feat_req_someiptp_780",
+        "feat_req_someiptp_797"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_328"
+        "CODE_tp_reassembler_tp_338"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2359,10 +2360,11 @@
       "satisfies": [
         "feat_req_someiptp_774",
         "feat_req_someiptp_789",
-        "feat_req_someiptp_790"
+        "feat_req_someiptp_790",
+        "feat_req_someiptp_820"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_328"
+        "CODE_tp_reassembler_tp_338"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2377,7 +2379,7 @@
         "feat_req_someiptp_783"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_389"
+        "CODE_tp_reassembler_tp_399"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2392,7 +2394,7 @@
         "feat_req_someiptp_774"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_389"
+        "CODE_tp_reassembler_tp_399"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2407,7 +2409,7 @@
         "feat_req_someiptp_783"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_389"
+        "CODE_tp_reassembler_tp_399"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2421,7 +2423,7 @@
         "feat_req_someiptp_774"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_389"
+        "CODE_tp_reassembler_tp_399"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2433,7 +2435,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_389"
+        "CODE_tp_reassembler_tp_399"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2447,7 +2449,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_214"
+        "CODE_tp_reassembler_tp_213"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2475,7 +2477,7 @@
         "feat_req_someiptp_792"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_389"
+        "CODE_tp_reassembler_tp_399"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2497,7 +2499,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_261"
+        "CODE_tp_reassembler_tp_271"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2515,8 +2517,9 @@
         "feat_req_someiptp_796"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_60",
-        "CODE_tp_manager_tp_120"
+        "CODE_tp_manager_tp_61",
+        "CODE_tp_manager_tp_227",
+        "CODE_tp_manager_tp_164"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2531,7 +2534,7 @@
         "feat_req_someiptp_774"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_60"
+        "CODE_tp_manager_tp_61"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2544,7 +2547,9 @@
       "satisfies": [
         "feat_req_someiptp_774"
       ],
-      "implemented_by": [],
+      "implemented_by": [
+        "CODE_tp_manager_tp_104"
+      ],
       "tested_by": [
         "TC_test_tp_TpTest"
       ]
@@ -2557,7 +2562,9 @@
         "feat_req_someiptp_774",
         "feat_req_someiptp_796"
       ],
-      "implemented_by": [],
+      "implemented_by": [
+        "CODE_tp_manager_tp_104"
+      ],
       "tested_by": [
         "TC_test_tp_TpTest"
       ]
@@ -2570,7 +2577,9 @@
         "feat_req_someiptp_774",
         "feat_req_someiptp_796"
       ],
-      "implemented_by": [],
+      "implemented_by": [
+        "CODE_tp_manager_tp_104"
+      ],
       "tested_by": [
         "TC_test_tp_TpTest"
       ]
@@ -2583,8 +2592,9 @@
         "feat_req_someiptp_774"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_103",
-        "CODE_tp_manager_tp_132"
+        "CODE_tp_manager_tp_133",
+        "CODE_tp_manager_tp_190",
+        "CODE_tp_manager_tp_147"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2604,7 +2614,7 @@
         "feat_req_someiptp_792"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_132"
+        "CODE_tp_manager_tp_133"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2618,7 +2628,7 @@
         "feat_req_someiptp_774"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_132"
+        "CODE_tp_manager_tp_133"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2630,7 +2640,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_manager_tp_60"
+        "CODE_tp_manager_tp_61"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2644,7 +2654,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_manager_tp_132"
+        "CODE_tp_manager_tp_133"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2660,7 +2670,7 @@
         "feat_req_someiptp_801"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_331"
+        "CODE_tp_manager_tp_341"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2675,7 +2685,7 @@
         "feat_req_someiptp_801"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_331"
+        "CODE_tp_manager_tp_341"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2690,7 +2700,7 @@
         "feat_req_someiptp_792"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_331"
+        "CODE_tp_manager_tp_349"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2704,7 +2714,7 @@
         "feat_req_someiptp_774"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_331"
+        "CODE_tp_manager_tp_349"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2719,7 +2729,7 @@
         "feat_req_someiptp_775"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_339",
+        "CODE_tp_manager_tp_357",
         "CODE_tp_segmenter_tp_38",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_194"
@@ -2736,7 +2746,7 @@
         "feat_req_someiptp_777"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_339",
+        "CODE_tp_manager_tp_357",
         "CODE_tp_segmenter_tp_38",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_194"
@@ -2754,7 +2764,7 @@
         "feat_req_someiptp_779"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_339",
+        "CODE_tp_manager_tp_357",
         "CODE_tp_segmenter_tp_38",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_194"
@@ -2771,7 +2781,7 @@
         "feat_req_someiptp_780"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_339",
+        "CODE_tp_manager_tp_357",
         "CODE_tp_segmenter_tp_38",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_194"
@@ -2788,7 +2798,7 @@
         "feat_req_someiptp_786"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_339",
+        "CODE_tp_manager_tp_357",
         "CODE_tp_segmenter_tp_38",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_194"
@@ -2805,7 +2815,7 @@
         "feat_req_someiptp_801"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_339",
+        "CODE_tp_manager_tp_357",
         "CODE_tp_segmenter_tp_38",
         "CODE_tp_segmenter_tp_88",
         "CODE_tp_segmenter_tp_194"
@@ -2824,8 +2834,8 @@
         "feat_req_someiptp_776"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_339",
-        "CODE_tp_reassembler_tp_214",
+        "CODE_tp_manager_tp_357",
+        "CODE_tp_reassembler_tp_213",
         "CODE_tp_segmenter_tp_88"
       ],
       "tested_by": [
@@ -2840,12 +2850,13 @@
         "feat_req_someiptp_784"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_339",
-        "CODE_tp_reassembler_tp_214",
+        "CODE_tp_manager_tp_357",
+        "CODE_tp_reassembler_tp_213",
         "CODE_tp_segmenter_tp_88"
       ],
       "tested_by": [
-        "TC_test_tp_TpTest"
+        "TC_test_tp_TpTest",
+        "TC_TP_HEADER_MATCHES_PAYLOAD"
       ]
     },
     "REQ_TP_078": {
@@ -2856,14 +2867,16 @@
         "feat_req_someiptp_785"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_103",
-        "CODE_tp_manager_tp_339",
-        "CODE_tp_reassembler_tp_214",
-        "CODE_tp_segmenter_tp_88"
+        "CODE_tp_manager_tp_190",
+        "CODE_tp_manager_tp_357",
+        "CODE_tp_reassembler_tp_213",
+        "CODE_tp_segmenter_tp_88",
+        "CODE_tp_manager_tp_147"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
         "TC_test_tp_TpTest",
+        "TC_TP_HEADER_MATCHES_PAYLOAD",
         "TC_UDP_TP_REASSEMBLY"
       ]
     },
@@ -2875,9 +2888,9 @@
         "feat_req_someiptp_796"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_214",
-        "CODE_tp_reassembler_tp_543",
-        "CODE_tp_reassembler_tp_563"
+        "CODE_tp_reassembler_tp_213",
+        "CODE_tp_reassembler_tp_569",
+        "CODE_tp_reassembler_tp_589"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2892,8 +2905,8 @@
         "feat_req_someiptp_803"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_214",
-        "CODE_tp_reassembler_tp_389"
+        "CODE_tp_reassembler_tp_213",
+        "CODE_tp_reassembler_tp_399"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2905,15 +2918,34 @@
       "type": "requirement",
       "satisfies": [
         "feat_req_someiptp_810",
-        "feat_req_someiptp_797",
-        "feat_req_someiptp_820"
+        "feat_req_someiptp_797"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_214",
-        "CODE_tp_reassembler_tp_389"
+        "CODE_tp_reassembler_tp_213",
+        "CODE_tp_reassembler_tp_399"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
+      ]
+    },
+    "REQ_TP_081_FW": {
+      "id": "REQ_TP_081_FW",
+      "title": "First-Wins Semantics for Overlapping Segments",
+      "type": "requirement",
+      "satisfies": [
+        "feat_req_someiptp_797"
+      ],
+      "implemented_by": [],
+      "tested_by": []
+    },
+    "REQ_TP_081_ATOM": {
+      "id": "REQ_TP_081_ATOM",
+      "title": "Atomic Header and Payload Completion",
+      "type": "requirement",
+      "satisfies": [],
+      "implemented_by": [],
+      "tested_by": [
+        "TC_TP_PROCESS_SEGMENT_RETURNS_HEADER"
       ]
     },
     "REQ_TP_082": {
@@ -2925,8 +2957,8 @@
         "feat_req_someiptp_832"
       ],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
-        "CODE_tp_reassembler_tp_214"
+        "CODE_tp_reassembler_tp_99",
+        "CODE_tp_reassembler_tp_213"
       ],
       "tested_by": [
         "TC_test_tp_TpTest"
@@ -2938,8 +2970,8 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
-        "CODE_tp_reassembler_tp_261"
+        "CODE_tp_reassembler_tp_99",
+        "CODE_tp_reassembler_tp_271"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2952,8 +2984,8 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
-        "CODE_tp_reassembler_tp_261"
+        "CODE_tp_reassembler_tp_99",
+        "CODE_tp_reassembler_tp_271"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2966,7 +2998,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100"
+        "CODE_tp_reassembler_tp_99"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2979,7 +3011,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100"
+        "CODE_tp_reassembler_tp_99"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -2992,7 +3024,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100"
+        "CODE_tp_reassembler_tp_99"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -3005,7 +3037,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100"
+        "CODE_tp_reassembler_tp_99"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -3018,8 +3050,8 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tp_reassembler_tp_100",
-        "CODE_tp_reassembler_tp_261"
+        "CODE_tp_reassembler_tp_99",
+        "CODE_tp_reassembler_tp_271"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -3035,8 +3067,9 @@
         "feat_req_someiptp_765"
       ],
       "implemented_by": [
+        "CODE_tp_manager_tp_227",
         "CODE_udp_transport_transport_69",
-        "CODE_tp_manager_tp_120"
+        "CODE_tp_manager_tp_164"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -3055,8 +3088,9 @@
         "feat_req_someiptp_785"
       ],
       "implemented_by": [
-        "CODE_tp_manager_tp_103",
-        "CODE_udp_transport_transport_433"
+        "CODE_tp_manager_tp_190",
+        "CODE_udp_transport_transport_433",
+        "CODE_tp_manager_tp_147"
       ],
       "tested_by": [
         "TC_test_tp_TpTest",
@@ -12845,18 +12879,18 @@
         "feat_req_someip_761"
       ]
     },
-    "CODE_tp_manager_tp_33": {
-      "id": "CODE_tp_manager_tp_33",
-      "location": "src/tp/tp_manager.cpp:33",
+    "CODE_tp_manager_tp_34": {
+      "id": "CODE_tp_manager_tp_34",
+      "location": "src/tp/tp_manager.cpp:34",
       "implements": [],
       "satisfies": [
         "feat_req_someiptp_400",
         "feat_req_someiptp_401"
       ]
     },
-    "CODE_tp_manager_tp_60": {
-      "id": "CODE_tp_manager_tp_60",
-      "location": "src/tp/tp_manager.cpp:60",
+    "CODE_tp_manager_tp_61": {
+      "id": "CODE_tp_manager_tp_61",
+      "location": "src/tp/tp_manager.cpp:61",
       "implements": [
         "REQ_TP_050",
         "REQ_TP_051",
@@ -12864,9 +12898,30 @@
       ],
       "satisfies": []
     },
-    "CODE_tp_manager_tp_103": {
-      "id": "CODE_tp_manager_tp_103",
-      "location": "include/tp/tp_manager.h:103",
+    "CODE_tp_manager_tp_104": {
+      "id": "CODE_tp_manager_tp_104",
+      "location": "src/tp/tp_manager.cpp:104",
+      "implements": [
+        "REQ_TP_052",
+        "REQ_TP_053",
+        "REQ_TP_054"
+      ],
+      "satisfies": []
+    },
+    "CODE_tp_manager_tp_133": {
+      "id": "CODE_tp_manager_tp_133",
+      "location": "src/tp/tp_manager.cpp:133",
+      "implements": [
+        "REQ_TP_055",
+        "REQ_TP_056",
+        "REQ_TP_057",
+        "REQ_TP_050_E02"
+      ],
+      "satisfies": []
+    },
+    "CODE_tp_manager_tp_190": {
+      "id": "CODE_tp_manager_tp_190",
+      "location": "src/tp/tp_manager.cpp:190",
       "implements": [
         "REQ_TP_055",
         "REQ_TP_078",
@@ -12876,31 +12931,36 @@
         "feat_req_someiptp_785"
       ]
     },
-    "CODE_tp_manager_tp_132": {
-      "id": "CODE_tp_manager_tp_132",
-      "location": "src/tp/tp_manager.cpp:132",
+    "CODE_tp_manager_tp_227": {
+      "id": "CODE_tp_manager_tp_227",
+      "location": "src/tp/tp_manager.cpp:227",
       "implements": [
-        "REQ_TP_055",
-        "REQ_TP_056",
-        "REQ_TP_057",
-        "REQ_TP_050_E02"
+        "REQ_TP_050",
+        "REQ_TP_090"
       ],
       "satisfies": []
     },
-    "CODE_tp_manager_tp_331": {
-      "id": "CODE_tp_manager_tp_331",
-      "location": "src/tp/tp_manager.cpp:331",
+    "CODE_tp_manager_tp_341": {
+      "id": "CODE_tp_manager_tp_341",
+      "location": "src/tp/tp_manager.cpp:341",
       "implements": [
         "REQ_TP_060",
-        "REQ_TP_061",
+        "REQ_TP_061"
+      ],
+      "satisfies": []
+    },
+    "CODE_tp_manager_tp_349": {
+      "id": "CODE_tp_manager_tp_349",
+      "location": "src/tp/tp_manager.cpp:349",
+      "implements": [
         "REQ_TP_062",
         "REQ_TP_063"
       ],
       "satisfies": []
     },
-    "CODE_tp_manager_tp_339": {
-      "id": "CODE_tp_manager_tp_339",
-      "location": "src/tp/tp_manager.cpp:339",
+    "CODE_tp_manager_tp_357": {
+      "id": "CODE_tp_manager_tp_357",
+      "location": "src/tp/tp_manager.cpp:357",
       "implements": [
         "REQ_TP_070",
         "REQ_TP_071",
@@ -12914,17 +12974,17 @@
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_32": {
-      "id": "CODE_tp_reassembler_tp_32",
-      "location": "src/tp/tp_reassembler.cpp:32",
+    "CODE_tp_reassembler_tp_31": {
+      "id": "CODE_tp_reassembler_tp_31",
+      "location": "src/tp/tp_reassembler.cpp:31",
       "implements": [],
       "satisfies": [
         "feat_req_someiptp_781"
       ]
     },
-    "CODE_tp_reassembler_tp_100": {
-      "id": "CODE_tp_reassembler_tp_100",
-      "location": "src/tp/tp_reassembler.cpp:100",
+    "CODE_tp_reassembler_tp_99": {
+      "id": "CODE_tp_reassembler_tp_99",
+      "location": "src/tp/tp_reassembler.cpp:99",
       "implements": [
         "REQ_TP_011",
         "REQ_TP_012",
@@ -12948,9 +13008,9 @@
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_192": {
-      "id": "CODE_tp_reassembler_tp_192",
-      "location": "src/tp/tp_reassembler.cpp:192",
+    "CODE_tp_reassembler_tp_191": {
+      "id": "CODE_tp_reassembler_tp_191",
+      "location": "src/tp/tp_reassembler.cpp:191",
       "implements": [],
       "satisfies": [
         "feat_req_someiptp_410",
@@ -12958,9 +13018,9 @@
         "feat_req_someiptp_782"
       ]
     },
-    "CODE_tp_reassembler_tp_214": {
-      "id": "CODE_tp_reassembler_tp_214",
-      "location": "src/tp/tp_reassembler.cpp:214",
+    "CODE_tp_reassembler_tp_213": {
+      "id": "CODE_tp_reassembler_tp_213",
+      "location": "src/tp/tp_reassembler.cpp:213",
       "implements": [
         "REQ_TP_030",
         "REQ_TP_031",
@@ -12973,13 +13033,14 @@
         "REQ_TP_079",
         "REQ_TP_080",
         "REQ_TP_081",
-        "REQ_TP_082"
+        "REQ_TP_082",
+        "REQ_SOMEIPTP_797"
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_261": {
-      "id": "CODE_tp_reassembler_tp_261",
-      "location": "src/tp/tp_reassembler.cpp:261",
+    "CODE_tp_reassembler_tp_271": {
+      "id": "CODE_tp_reassembler_tp_271",
+      "location": "src/tp/tp_reassembler.cpp:271",
       "implements": [
         "REQ_TP_033",
         "REQ_TP_034",
@@ -12993,9 +13054,9 @@
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_328": {
-      "id": "CODE_tp_reassembler_tp_328",
-      "location": "src/tp/tp_reassembler.cpp:328",
+    "CODE_tp_reassembler_tp_338": {
+      "id": "CODE_tp_reassembler_tp_338",
+      "location": "src/tp/tp_reassembler.cpp:338",
       "implements": [
         "REQ_TP_036",
         "REQ_TP_037",
@@ -13008,9 +13069,9 @@
         "feat_req_someiptp_793"
       ]
     },
-    "CODE_tp_reassembler_tp_389": {
-      "id": "CODE_tp_reassembler_tp_389",
-      "location": "src/tp/tp_reassembler.cpp:389",
+    "CODE_tp_reassembler_tp_399": {
+      "id": "CODE_tp_reassembler_tp_399",
+      "location": "src/tp/tp_reassembler.cpp:399",
       "implements": [
         "REQ_TP_039",
         "REQ_TP_040",
@@ -13019,21 +13080,22 @@
         "REQ_TP_043",
         "REQ_TP_039_E01",
         "REQ_TP_080",
-        "REQ_TP_081"
+        "REQ_TP_081",
+        "REQ_SOMEIPTP_797"
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_543": {
-      "id": "CODE_tp_reassembler_tp_543",
-      "location": "src/tp/tp_reassembler.cpp:543",
+    "CODE_tp_reassembler_tp_569": {
+      "id": "CODE_tp_reassembler_tp_569",
+      "location": "src/tp/tp_reassembler.cpp:569",
       "implements": [
         "REQ_TP_079"
       ],
       "satisfies": []
     },
-    "CODE_tp_reassembler_tp_563": {
-      "id": "CODE_tp_reassembler_tp_563",
-      "location": "src/tp/tp_reassembler.cpp:563",
+    "CODE_tp_reassembler_tp_589": {
+      "id": "CODE_tp_reassembler_tp_589",
+      "location": "src/tp/tp_reassembler.cpp:589",
       "implements": [
         "REQ_TP_079"
       ],
@@ -14710,9 +14772,21 @@
       ],
       "satisfies": []
     },
-    "CODE_tp_manager_tp_120": {
-      "id": "CODE_tp_manager_tp_120",
-      "location": "include/tp/tp_manager.h:120",
+    "CODE_tp_manager_tp_147": {
+      "id": "CODE_tp_manager_tp_147",
+      "location": "include/tp/tp_manager.h:147",
+      "implements": [
+        "REQ_TP_055",
+        "REQ_TP_078",
+        "REQ_TP_091"
+      ],
+      "satisfies": [
+        "feat_req_someiptp_785"
+      ]
+    },
+    "CODE_tp_manager_tp_164": {
+      "id": "CODE_tp_manager_tp_164",
+      "location": "include/tp/tp_manager.h:164",
       "implements": [
         "REQ_TP_050",
         "REQ_TP_090"
@@ -14728,6 +14802,14 @@
         "REQ_TP_013",
         "REQ_TP_014",
         "REQ_TP_015"
+      ],
+      "satisfies": []
+    },
+    "CODE_tp_reassembler_tp_70": {
+      "id": "CODE_tp_reassembler_tp_70",
+      "location": "include/tp/tp_reassembler.h:70",
+      "implements": [
+        "REQ_SOMEIPTP_797"
       ],
       "satisfies": []
     },
@@ -19101,6 +19183,47 @@
       "location": "tests/test_tp.cpp:1993",
       "tests": [
         "feat_req_someiptp_782"
+      ]
+    },
+    "TC_TP_OVERLAP_SAME_DATA": {
+      "id": "TC_TP_OVERLAP_SAME_DATA",
+      "name": "TpTest.OverlapSameDataSucceeds (tests/test_tp.cpp:2059)",
+      "location": "tests/test_tp.cpp:2059",
+      "tests": [
+        "feat_req_someiptp_797"
+      ]
+    },
+    "TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS": {
+      "id": "TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS",
+      "name": "TpTest.OverlapDifferentDataFirstWins (tests/test_tp.cpp:2089)",
+      "location": "tests/test_tp.cpp:2089",
+      "tests": [
+        "feat_req_someiptp_797"
+      ]
+    },
+    "TC_TP_EXACT_DUPLICATE_ACCEPTED": {
+      "id": "TC_TP_EXACT_DUPLICATE_ACCEPTED",
+      "name": "TpTest.ExactDuplicateAccepted (tests/test_tp.cpp:2131)",
+      "location": "tests/test_tp.cpp:2131",
+      "tests": [
+        "feat_req_someiptp_797"
+      ]
+    },
+    "TC_TP_HEADER_MATCHES_PAYLOAD": {
+      "id": "TC_TP_HEADER_MATCHES_PAYLOAD",
+      "name": "TpTest.HeaderMatchesPayloadAfterCompletion (tests/test_tp.cpp:2173)",
+      "location": "tests/test_tp.cpp:2173",
+      "tests": [
+        "REQ_TP_077",
+        "REQ_TP_078"
+      ]
+    },
+    "TC_TP_PROCESS_SEGMENT_RETURNS_HEADER": {
+      "id": "TC_TP_PROCESS_SEGMENT_RETURNS_HEADER",
+      "name": "TpTest.ProcessSegmentReturnsHeader (tests/test_tp.cpp:2212)",
+      "location": "tests/test_tp.cpp:2212",
+      "tests": [
+        "REQ_TP_081_ATOM"
       ]
     },
     "TC_test_udp_transport_UdpTransportTest": {
