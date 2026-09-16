@@ -267,7 +267,8 @@ uint32_t be_length = htonl(length_);
 - **clang-tidy**: MISRA C++–aligned static analysis with CI quality gate
 - **cppcheck**: Static analysis for bugs and vulnerabilities
 - **clang-format**: Automatic code formatting
-- **Coverity**: Scheduled deep analysis on `main`
+- **Coverity**: Weekly scheduled scan plus analysis on pushes to `main`
+  (re-enabled in #265 after the Scan service returned)
 
 ### clang-tidy Quality Gate
 

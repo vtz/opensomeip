@@ -15,6 +15,13 @@
 
 ## Unreleased
 
+### CI / Infrastructure
+
+- **Coverity Scan**: Re-enable the weekly Monday 04:00 UTC schedule and
+  `push` to `main` now that scan.coverity.com is serving the project again
+  ([#265](https://github.com/vtz/opensomeip/issues/265)). `workflow_dispatch`
+  remains for a manual verification run.
+
 ### Bug Fixes
 
 - **SOME/IP-SD**: SubscribeEventgroup family is unicast-only. Clients send
