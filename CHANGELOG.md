@@ -58,6 +58,10 @@
 
 ### Bug Fixes
 
+- **E2E**: `E2EConfig::offset` is bits from the start of the Length-covered
+  region (default 64). Non-default offsets and plugins whose
+  `get_header_size()` is not 12 are rejected by `E2EProtection`
+  ([#318](https://github.com/vtz/opensomeip/issues/318)).
 - **Transport**: TCP no longer busy-loops on an invalid length field; resync
   is only at a Magic Cookie. Declared frames larger than `max_receive_buffer`
   report `BUFFER_OVERFLOW` once. UDP rejection IDs are taken from the wire

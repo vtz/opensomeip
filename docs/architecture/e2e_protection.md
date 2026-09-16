@@ -52,7 +52,7 @@ End-to-End (E2E) protection provides data integrity, sequence validation, and fr
 
 ### E2E Header Insertion
 
-According to `feat_req_someip_102`, the E2E header is inserted after the Return Code field. The default offset is 64 bits (8 bytes).
+According to `feat_req_someip_102`, the E2E header is inserted after the Return Code field. `E2EConfig::offset` is bits from the start of the Length-covered region (Request ID); the default of 64 bits places the header between Return Code and Payload. `Message` only represents this default layout. `E2EProtection` rejects any other offset and any plugin whose `get_header_size()` is not 12 bytes.
 
 ### CRC Calculation
 
@@ -131,7 +131,7 @@ These standards are publicly available and not AUTOSAR proprietary.
 ## Error Handling
 
 E2E protection errors are propagated via `Result` codes:
-- `Result::INVALID_ARGUMENT` - CRC mismatch, wrong data ID
+- `Result::INVALID_ARGUMENT` - CRC mismatch, wrong data ID, non-default offset, or non-12-byte profile header
 - `Result::TIMEOUT` - Freshness timeout
 - `Result::NOT_INITIALIZED` - Profile not registered
 

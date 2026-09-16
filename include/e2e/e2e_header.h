@@ -28,8 +28,9 @@ namespace someip::e2e {
  * Represents the E2E header inserted after the Return Code field
  * according to SOME/IP spec feat_req_someip_102 and feat_req_someip_103.
  *
- * The header format is variable size depending on the E2E profile.
- * This structure represents the standard format using public standards.
+ * Message serializes this as a fixed 12-byte header. Plugins that need a
+ * different size are rejected by E2EProtection until Message can represent
+ * variable-size profile bytes.
  */
 struct E2EHeader {
     /**

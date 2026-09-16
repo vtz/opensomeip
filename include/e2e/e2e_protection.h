@@ -50,7 +50,10 @@ public:
      * @brief Protect a message before sending
      *
      * Adds E2E header to the message according to SOME/IP spec feat_req_someip_102.
-     * The header is inserted after the Return Code field.
+     * The header is inserted after the Return Code field (default Offset 64 bits
+     * from the start of the Length-covered region). Non-default
+     * E2EConfig::offset values and profiles whose get_header_size() is
+     * not E2EHeader::get_header_size() (12) are rejected.
      *
      * @param message Message to protect
      * @param config E2E configuration
@@ -62,6 +65,7 @@ public:
      * @brief Validate a received message
      *
      * Validates the E2E header and checks CRC, counter, and freshness.
+     * Applies the same offset and header-size contract as protect().
      *
      * @param message Message to validate
      * @param config E2E configuration

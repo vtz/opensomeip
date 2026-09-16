@@ -10,7 +10,7 @@
 **Implementation Status**: ✅ **COMPLIANT**
 - **Location**: `src/someip/message.cpp:142-146`
 - **Implementation**: E2E header is inserted after Return Code in `serialize()` method
-- **Offset Support**: Configurable via `E2EConfig::offset` (default 8 bytes = 64 bits)
+- **Offset Support**: `E2EConfig::offset` is bits from the Length-covered region; default 64. Non-default offsets are rejected (`#318`)
 - **Verification**: ✅ Header inserted correctly in serialization
 
 #### feat_req_someip_103: E2E Header Format
@@ -107,8 +107,8 @@
 ### Header Format Compliance
 - [x] E2E header inserted after Return Code
 - [x] Default offset of 64 bits (8 bytes) supported
-- [x] Configurable offset supported
-- [x] Variable-size header format supported
+- [x] Non-default offset explicitly rejected (Message layout is fixed)
+- [x] Plugin header size narrowed to the fixed 12-byte `E2EHeader`
 - [x] Header included in Length field calculation
 
 ### Data Protection Compliance
