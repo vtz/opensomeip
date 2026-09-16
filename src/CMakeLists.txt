@@ -57,12 +57,22 @@ endif()
 
 # Library type follows BUILD_SHARED_LIBS (default: STATIC)
 add_library(opensomeip ${OPENSOMEIP_SOURCES})
+
+# Map selected PAL backend dirs onto the installed include tree so
+# find_package(opensomeip) can resolve buffer_pool_impl.h / net_impl.h.
+file(RELATIVE_PATH _OPENSOMEIP_ALLOC_REL "${PROJECT_SOURCE_DIR}/include" "${SOMEIP_ALLOC_IMPL_DIR}")
+file(RELATIVE_PATH _OPENSOMEIP_THREAD_REL "${PROJECT_SOURCE_DIR}/include" "${SOMEIP_THREADING_IMPL_DIR}")
+file(RELATIVE_PATH _OPENSOMEIP_NET_REL "${PROJECT_SOURCE_DIR}/include" "${SOMEIP_NET_IMPL_DIR}")
+
 target_include_directories(opensomeip PUBLIC
     $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${SOMEIP_ALLOC_IMPL_DIR}>
     $<BUILD_INTERFACE:${SOMEIP_THREADING_IMPL_DIR}>
     $<BUILD_INTERFACE:${SOMEIP_NET_IMPL_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/someip>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/someip/${_OPENSOMEIP_ALLOC_REL}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/someip/${_OPENSOMEIP_THREAD_REL}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/someip/${_OPENSOMEIP_NET_REL}>
 )
 
 # Threading: only link pthreads on non-RTOS builds

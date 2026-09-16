@@ -26,7 +26,10 @@
 
 - **CMake**: `find_package(opensomeip)` / `opensomeip::opensomeip` documented
   as the installed package; the old `SomeIP::someip-common` snippet was wrong
-  ([#271](https://github.com/vtz/opensomeip/issues/271)).
+  ([#271](https://github.com/vtz/opensomeip/issues/271)). Host CI installs the
+  package and builds `tests/cmake_package` against it. The exported target now
+  includes the selected PAL backend include dirs and
+  `opensomeipConfig.cmake` calls `find_dependency(Threads)`.
 
 ### Bug Fixes
 

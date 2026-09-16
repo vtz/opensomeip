@@ -103,6 +103,19 @@ jobs:
           export GTEST_OUTPUT="xml:$GITHUB_WORKSPACE/gtest_results/"
           ctest --build-config ${{ matrix.build_type }} --output-on-failure --timeout 30 --no-tests=error --output-junit junit_results.xml
 
+      - name: CMake package smoke (find_package)
+        if: matrix.c_compiler != 'cl'
+        shell: bash
+        run: |
+          prefix="${{ github.workspace }}/install-opensomeip"
+          cmake --install "${{ steps.strings.outputs.build-output-dir }}" --prefix "$prefix"
+          cmake -S "${{ github.workspace }}/tests/cmake_package" \
+            -B "${{ github.workspace }}/build-pkg-smoke" \
+            -DCMAKE_PREFIX_PATH="$prefix" \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          cmake --build "${{ github.workspace }}/build-pkg-smoke"
+          "${{ github.workspace }}/build-pkg-smoke/opensomeip_cmake_package_smoke"
+
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
