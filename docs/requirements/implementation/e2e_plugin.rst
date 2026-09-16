@@ -140,9 +140,17 @@ E2E Header Format
    :priority: high
    :verification: Code inspection of header structure and execution of message serialization tests with E2E headers.
 
-   The E2E header shall be inserted after the Return Code field in the
-   SOME/IP header, with its position determined by the configured offset
-   value (default: 64 bits = 8 bytes).
+   The E2E header shall be inserted immediately after the Return Code field.
+   ``E2EConfig::offset`` is measured in bits from the start of the
+   Length-covered region (Request ID). The default is 64 bits (8 bytes),
+   which places the header between Return Code and Payload
+   (feat_req_someip_102). Non-default offsets are not representable in
+   ``Message`` and shall be rejected by ``E2EProtection::protect`` and
+   ``validate``.
+
+   The shipped ``Message`` / ``E2EHeader`` contract is a fixed 12-byte
+   header. Plugins whose ``get_header_size()`` is not 12 shall be rejected
+   by ``E2EProtection``.
 
    The standard E2E header format shall be:
 
@@ -153,9 +161,10 @@ E2E Header Format
    * Total: 12 bytes (96 bits)
 
    **Rationale**: Complies with SOME/IP specification feat_req_someip_102
-   and feat_req_someip_103.
+   and feat_req_someip_103. Variable-size profile headers are out of
+   scope until ``Message`` can store them.
 
-   **Code Location**: ``include/e2e/e2e_header.h``
+   **Code Location**: ``include/e2e/e2e_header.h``, ``src/e2e/e2e_protection.cpp``
 
 Traceability
 ============
