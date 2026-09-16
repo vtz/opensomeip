@@ -22,6 +22,14 @@
   ([#265](https://github.com/vtz/opensomeip/issues/265)). `workflow_dispatch`
   remains for a manual verification run.
 
+### Documentation
+
+- **Traceability**: Regenerated `docs/specification/spec-mapping-report.md` so
+  `feat_req_someipsd_818` maps to `REQ_SD_818` (unicast Subscribe family) instead
+  of shutdown `REQ_SD_310`. Counts now match the current REQ corpus, including
+  CAPI/PAL records that have no Open SOME/IP `:satisfies:` link
+  ([#309](https://github.com/vtz/opensomeip/issues/309)).
+
 ### Bug Fixes
 
 - **SOME/IP-SD**: SubscribeEventgroup family is unicast-only. Clients send

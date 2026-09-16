@@ -3,37 +3,95 @@
 ## Summary
 
 - **Spec Requirements (open-someip-spec)**: 748
-- **Implementation Requirements (OpenSOMEIP)**: 649
-  - Spec-derived: 467
-  - Implementation-derived: 182
+- **Implementation Requirements (OpenSOMEIP)**: 690
+  - Spec-derived: 498
+  - Implementation-derived: 192
 - **Mapped Spec Requirements**: 748
 - **Unmapped Spec Requirements**: 0
-- **Implementation Reqs Missing Spec Links**: 0
+- **Implementation Reqs Missing Spec Links**: 52
 - **Auto-Corrected Links**: 0
 - **Unresolvable Links**: 0
 
 **Spec Coverage**: 100.0%
 
+## Implementation Requirements Missing Spec Links
+
+These spec-derived requirements should have `:satisfies:` links:
+
+
+### CAPI (12)
+- **REQ_CAPI_002**: Integer Error Codes
+- **REQ_CAPI_003**: Explicit Create/Destroy Ownership
+- **REQ_CAPI_004**: Callback Safety
+- **REQ_CAPI_005**: C API Versioning
+- **REQ_CAPI_006**: Thread Safety Documentation
+- **REQ_CAPI_007**: Exception Firewall
+- **REQ_CAPI_008**: Message and Serialization C API
+- **REQ_CAPI_009**: Transport C API
+- **REQ_CAPI_010**: RPC C API
+- **REQ_CAPI_011**: Service Discovery C API
+- **REQ_CAPI_012**: Events C API
+- **REQ_CAPI_013**: TP and E2E C API
+
+### PAL (39)
+- **REQ_PAL_BUFPOOL_ACQUIRE**: Buffer Pool Acquire
+- **REQ_PAL_BUFPOOL_RELEASE**: Buffer Pool Release
+- **REQ_PAL_BUFPOOL_TIERED**: Tiered Buffer Pool Selection
+- **REQ_PAL_BYTE_HTONL**: PAL Host-to-Network 32-bit Conversion
+- **REQ_PAL_BYTE_HTONS**: PAL Host-to-Network 16-bit Conversion
+- **REQ_PAL_BYTE_NTOHL**: PAL Network-to-Host 32-bit Conversion
+- **REQ_PAL_BYTE_NTOHS**: PAL Network-to-Host 16-bit Conversion
+- **REQ_PAL_CONTAINER_FUNCTION**: Platform Function Type
+- **REQ_PAL_CONTAINER_MAP**: Platform Unordered Map Type
+- **REQ_PAL_CONTAINER_QUEUE**: Platform Queue Type
+- **REQ_PAL_CONTAINER_STRING**: Platform String Type
+- **REQ_PAL_CONTAINER_VECTOR**: Platform Vector Type
+- **REQ_PAL_CV_NOTIFY_ALL**: PAL ConditionVariable Notify All
+- **REQ_PAL_CV_NOTIFY_ONE**: PAL ConditionVariable Notify One
+- **REQ_PAL_CV_OWNERSHIP**: PAL ConditionVariable Mutex Ownership Guarantee
+- **REQ_PAL_CV_WAIT**: PAL ConditionVariable Wait
+- **REQ_PAL_CV_WAIT_PRED**: PAL ConditionVariable Wait with Predicate
+- **REQ_PAL_INTRUSIVE_PTR**: Intrusive Reference Counting for Message
+- **REQ_PAL_LOCK_ACQUIRE**: PAL ScopedLock Acquisition on Construction
+- **REQ_PAL_LOCK_NONCOPY**: PAL ScopedLock Non-Copyable
+- **REQ_PAL_LOCK_RELEASE**: PAL ScopedLock Release on Destruction
+- **REQ_PAL_MEM_ALLOC**: PAL Memory Allocation
+- **REQ_PAL_MEM_INDEPENDENT**: PAL Memory Independence
+- **REQ_PAL_MUTEX_LOCK**: PAL Mutex Lock
+- **REQ_PAL_MUTEX_NONCOPY**: PAL Mutex Non-Copyable
+- **REQ_PAL_MUTEX_TRYLOCK**: PAL Mutex Try Lock
+- **REQ_PAL_MUTEX_UNLOCK**: PAL Mutex Unlock
+- **REQ_PAL_NET_BLOCK**: PAL Socket Set Blocking
+- **REQ_PAL_NET_CLOSE**: PAL Socket Close
+- **REQ_PAL_NET_NONBLOCK**: PAL Socket Set Non-Blocking
+- **REQ_PAL_NET_SHUTDOWN**: PAL Socket Shutdown
+- **REQ_PAL_NOOP_HEAP_VERIFY**: No-Heap Runtime Verification
+- **REQ_PAL_SLEEP_DURATION**: PAL sleep_for Minimum Duration
+- **REQ_PAL_SLEEP_ZERO**: PAL sleep_for Zero Duration
+- **REQ_PAL_STATIC_CONFIG**: Compile-Time Capacity Configuration
+- **REQ_PAL_THREAD_CREATE**: PAL Thread Creation
+- **REQ_PAL_THREAD_JOIN**: PAL Thread Join
+- **REQ_PAL_THREAD_JOINABLE**: PAL Thread Joinable Query
+- **REQ_PAL_THREAD_NONCOPY**: PAL Thread Non-Copyable
+
+### TP (1)
+- **REQ_TP_081_ATOM**: Atomic Header and Payload Completion
+
 ## Spec Requirements Coverage by Category
 
 ### someip-compat.rst
-
 - Total: 18, Mapped: 18, Coverage: 100%
 
 ### someip-ids.rst
-
 - Total: 9, Mapped: 9, Coverage: 100%
 
 ### someip-rpc.rst
-
 - Total: 304, Mapped: 304, Coverage: 100%
 
 ### someip-sd.rst
-
 - Total: 374, Mapped: 374, Coverage: 100%
 
 ### someip-tp.rst
-
 - Total: 43, Mapped: 43, Coverage: 100%
 
 ## Detailed Mapping
@@ -64,7 +122,7 @@
 | feat_req_someip_170 | REQ_SER_098 |
 | feat_req_someip_171 | REQ_SER_001 |
 | feat_req_someip_172 | REQ_SER_001, REQ_SER_002, REQ_SER_003, REQ_SER_004, REQ_SER_005... (+22) |
-| feat_req_someip_2 | REQ_ARCH_001 |
+| feat_req_someip_2 | REQ_ARCH_001, REQ_CAPI_001 |
 | feat_req_someip_224 | REQ_SER_002, REQ_SER_003, REQ_SER_004, REQ_SER_006, REQ_SER_007... (+11) |
 | feat_req_someip_229 | REQ_SER_060 |
 | feat_req_someip_230 | REQ_SER_060, REQ_SER_063 |
@@ -109,7 +167,7 @@
 | feat_req_someip_289 | REQ_SER_094C |
 | feat_req_someip_29 | REQ_MSG_001 |
 | feat_req_someip_299 | REQ_SER_094C |
-| feat_req_someip_3 | REQ_ARCH_001 |
+| feat_req_someip_3 | REQ_ARCH_001, REQ_CAPI_001 |
 | feat_req_someip_30 | REQ_MSG_001 |
 | feat_req_someip_300 | REQ_SER_095 |
 | feat_req_someip_31 | REQ_TRANSPORT_005 |
@@ -314,7 +372,7 @@
 | feat_req_someip_733 | REQ_TRANSPORT_006, REQ_TRANSPORT_014 |
 | feat_req_someip_741 | REQ_TRANSPORT_010 |
 | feat_req_someip_76 | REQ_MSG_010 |
-| feat_req_someip_761 | REQ_MSG_056, REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP |
+| feat_req_someip_761 | REQ_MSG_056, REQ_MSG_060_TP, REQ_MSG_060_TP_RESPONSE, REQ_MSG_061_TP, REQ_MSG_062_TP |
 | feat_req_someip_77 | REQ_MSG_010, REQ_MSG_011, REQ_MSG_012, REQ_MSG_014 |
 | feat_req_someip_78 | REQ_MSG_020 |
 | feat_req_someip_79 | REQ_MSG_020 |
@@ -686,7 +744,7 @@
 | feat_req_someipsd_814 | REQ_SD_291 |
 | feat_req_someipsd_815 | REQ_SD_140 |
 | feat_req_someipsd_816 | REQ_SD_291 |
-| feat_req_someipsd_818 | REQ_SD_310 |
+| feat_req_someipsd_818 | REQ_SD_818 |
 | feat_req_someipsd_819 | REQ_SD_310 |
 | feat_req_someipsd_820 | REQ_SD_113 |
 | feat_req_someipsd_821 | REQ_SD_113 |
@@ -746,20 +804,20 @@
 | feat_req_someipsd_96 | REQ_SD_211 |
 | feat_req_someipsd_97 | REQ_SD_170 |
 | feat_req_someiptp_759 | REQ_TP_001 |
-| feat_req_someiptp_760 | REQ_MSG_013, REQ_TP_001 |
+| feat_req_someiptp_760 | REQ_MSG_013, REQ_TP_001, REQ_TP_090 |
 | feat_req_someiptp_762 | REQ_TP_005 |
 | feat_req_someiptp_763 | REQ_TP_006 |
 | feat_req_someiptp_764 | REQ_TP_001 |
-| feat_req_someiptp_765 | REQ_MSG_056, REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP, REQ_TP_007... (+1) |
+| feat_req_someiptp_765 | REQ_MSG_056, REQ_MSG_060_TP, REQ_MSG_060_TP_RESPONSE, REQ_MSG_061_TP, REQ_MSG_062_TP... (+3) |
 | feat_req_someiptp_766 | REQ_TP_010, REQ_TP_011, REQ_TP_012 |
 | feat_req_someiptp_767 | REQ_TP_013, REQ_TP_014 |
 | feat_req_someiptp_768 | REQ_TP_012, REQ_TP_013, REQ_TP_015 |
 | feat_req_someiptp_769 | REQ_TP_016, REQ_TP_017, REQ_TP_018 |
 | feat_req_someiptp_770 | REQ_TP_019, REQ_TP_020, REQ_TP_021, REQ_TP_033 |
 | feat_req_someiptp_771 | REQ_TP_022 |
-| feat_req_someiptp_772 | REQ_TP_003, REQ_TP_004 |
+| feat_req_someiptp_772 | REQ_TP_003, REQ_TP_004, REQ_TP_044 |
 | feat_req_someiptp_773 | REQ_TP_002 |
-| feat_req_someiptp_774 | REQ_TP_005, REQ_TP_008, REQ_TP_030, REQ_TP_034, REQ_TP_035... (+18) |
+| feat_req_someiptp_774 | REQ_TP_005, REQ_TP_008, REQ_TP_030, REQ_TP_034, REQ_TP_035... (+19) |
 | feat_req_someiptp_775 | REQ_TP_070 |
 | feat_req_someiptp_776 | REQ_TP_076 |
 | feat_req_someiptp_777 | REQ_TP_071 |
@@ -767,24 +825,24 @@
 | feat_req_someiptp_779 | REQ_TP_072 |
 | feat_req_someiptp_780 | REQ_TP_036, REQ_TP_037, REQ_TP_073 |
 | feat_req_someiptp_781 | REQ_TP_031 |
-| feat_req_someiptp_782 | REQ_TP_030 |
+| feat_req_someiptp_782 | REQ_TP_030, REQ_TP_030_E03 |
 | feat_req_someiptp_783 | REQ_TP_033, REQ_TP_039, REQ_TP_041 |
 | feat_req_someiptp_784 | REQ_TP_077 |
-| feat_req_someiptp_785 | REQ_TP_078 |
+| feat_req_someiptp_785 | REQ_TP_078, REQ_TP_091 |
 | feat_req_someiptp_786 | REQ_TP_074 |
 | feat_req_someiptp_787 | REQ_TP_032 |
 | feat_req_someiptp_788 | REQ_TP_070 |
 | feat_req_someiptp_789 | REQ_TP_034, REQ_TP_035, REQ_TP_038 |
 | feat_req_someiptp_790 | REQ_TP_038 |
-| feat_req_someiptp_792 | REQ_TP_043, REQ_TP_056, REQ_TP_062, REQ_TP_082 |
+| feat_req_someiptp_792 | REQ_TP_043, REQ_TP_044, REQ_TP_056, REQ_TP_062, REQ_TP_082 |
 | feat_req_someiptp_793 | REQ_TP_076 |
 | feat_req_someiptp_794 | REQ_TP_031 |
 | feat_req_someiptp_795 | REQ_TP_076 |
 | feat_req_someiptp_796 | REQ_TP_050, REQ_TP_053, REQ_TP_054, REQ_TP_079 |
-| feat_req_someiptp_797 | REQ_TP_081 |
+| feat_req_someiptp_797 | REQ_TP_037, REQ_TP_081, REQ_TP_081_FW |
 | feat_req_someiptp_801 | REQ_TP_060, REQ_TP_061, REQ_TP_075 |
 | feat_req_someiptp_802 | REQ_TP_080 |
 | feat_req_someiptp_803 | REQ_TP_080 |
 | feat_req_someiptp_810 | REQ_TP_081 |
-| feat_req_someiptp_820 | REQ_TP_081 |
+| feat_req_someiptp_820 | REQ_TP_038 |
 | feat_req_someiptp_832 | REQ_TP_082 |
