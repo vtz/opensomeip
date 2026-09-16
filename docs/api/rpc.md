@@ -24,6 +24,7 @@ The RPC layer provides high-level interfaces for making method calls between SOM
   - Request/response correlation
   - Call cancellation support
   - Statistics tracking
+  - Incoming-message rejection callback (`set_message_rejection_handler`)
 
 #### RpcServer
 - **Purpose**: Server-side interface for handling RPC method calls
@@ -34,6 +35,7 @@ The RPC layer provides high-level interfaces for making method calls between SOM
   - Automatic response generation
   - Error handling and return codes
   - Statistics tracking
+  - Incoming-message rejection callback (`set_message_rejection_handler`)
 
 #### RpcTypes
 - **Purpose**: Common types and constants for RPC operations

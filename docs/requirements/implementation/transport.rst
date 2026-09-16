@@ -538,6 +538,34 @@ Magic Cookie Details
    **Code Location**: ``src/transport/tcp_transport.cpp``
 
 
+.. requirement:: Incoming Message Rejection Diagnostics
+   :id: REQ_TRANSPORT_026
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit/integration test: Malformed UDP datagram and complete malformed TCP frame each produce one ``on_message_rejected`` notification and no ``on_message_received``. Incomplete TCP frames do not notify. Parsed Message ID / Request ID are present only when the header bytes were available. Existing listeners that do not override the default remain source-compatible. Covered by MalformedDatagramNotifiesRejectionNotMessage, ParseNextMessageDistinguishesOutcomes, CompleteMalformedFrameNotifiesRejection, ServerRejectionHandlerSeesMalformedRequest.
+
+   The software shall expose an additive, defaulted transport hook for
+   structural rejection of a complete incoming PDU. The hook shall carry
+   the sender endpoint, a local ``Result``, a rejection stage, and Message
+   ID / Request ID only when parsing reached those fields. UDP and TCP
+   transports shall invoke the hook; RPC and event public APIs shall
+   propagate it to an application-registerable callback. Incomplete TCP
+   frames and consumed Magic Cookies shall not be reported as rejections.
+   The hook is local diagnostics only and does not define a protocol
+   error response.
+
+   **Rationale**: Silent deserialize failure makes a rejecting peer look idle.
+
+   **Error Handling**: Notify the listener/callback; do not deliver the PDU
+   as an application message.
+
+   **Code Location**: ``include/transport/message_rejection.h``,
+   ``include/transport/transport.h``, ``src/transport/udp_transport.cpp``,
+   ``src/transport/tcp_transport.cpp``, ``src/rpc/rpc_server.cpp``,
+   ``src/rpc/rpc_client.cpp``, ``src/events/event_subscriber.cpp``,
+   ``src/events/event_publisher.cpp``
+
 .. requirement:: Error - UDP Send Failure
    :id: REQ_TRANSPORT_001_E01
    :status: implemented
@@ -740,6 +768,7 @@ Implementation Files
 --------------------
 
 * ``include/transport/transport.h`` - Transport interface
+* ``include/transport/message_rejection.h`` - Incoming PDU rejection diagnostics
 * ``include/transport/udp_transport.h`` - UDP transport interface
 * ``include/transport/tcp_transport.h`` - TCP transport interface
 * ``include/transport/endpoint.h`` - Endpoint structure

@@ -18,11 +18,14 @@
 #include <someip/message.h>
 #include <someip/types.h>
 #include <transport/endpoint.h>
+#include <transport/message_rejection.h>
 #include <transport/udp_transport.h>
 #include <common/result.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <mutex>
+#include <vector>
 
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
@@ -40,6 +43,7 @@ using namespace someip::rpc;
  * @tests REQ_MSG_114, REQ_MSG_115, REQ_MSG_116, REQ_MSG_118
  * @tests REQ_MSG_127, REQ_MSG_128, REQ_MSG_129, REQ_MSG_130, REQ_MSG_131
  * @tests REQ_MSG_132a, REQ_MSG_132b, REQ_MSG_133a, REQ_MSG_133b, REQ_MSG_133c
+ * @tests REQ_TRANSPORT_026
  */
 class RpcTest : public ::testing::Test {
 protected:
@@ -391,6 +395,63 @@ TEST_F(RpcTest, FireAndForgetServerDoesNotRespond) {
     ASSERT_NE(err, nullptr);
     EXPECT_EQ(err->get_message_type(), static_cast<MessageType>(0x81));
     EXPECT_EQ(err->get_return_code(), ReturnCode::E_WRONG_MESSAGE_TYPE);
+
+    probe.stop();
+    server.shutdown();
+}
+
+/**
+ * @tests REQ_TRANSPORT_026
+ * @brief RpcServer surfaces deserialize rejection through the public handler
+ */
+TEST_F(RpcTest, ServerRejectionHandlerSeesMalformedRequest) {
+    RpcServer server(test_service_id_, 0x01, transport::Endpoint("127.0.0.1", 0));
+    std::atomic<int> method_calls{0};
+    ASSERT_TRUE(server.register_method(test_method_id_,
+        [&](uint16_t, uint16_t, const platform::ByteBuffer&, platform::ByteBuffer&) {
+            method_calls.fetch_add(1);
+            return RpcResult::SUCCESS;
+        }));
+
+    std::mutex mu;
+    std::vector<transport::MessageRejectionInfo> rejections;
+    server.set_message_rejection_handler(
+        [&](const transport::MessageRejectionInfo& info) {
+            std::lock_guard<std::mutex> lock(mu);
+            rejections.push_back(info);
+        });
+    ASSERT_TRUE(server.initialize());
+
+    transport::UdpTransport probe(transport::Endpoint("127.0.0.1", 0));
+    ASSERT_EQ(probe.start(), Result::SUCCESS);
+
+    Message bad(MessageId(test_service_id_, test_method_id_),
+                RequestId(client_id_, 0x0001),
+                MessageType::REQUEST, ReturnCode::E_OK);
+    bad.set_protocol_version(0x99);
+    ASSERT_EQ(probe.send_message(bad, server.get_local_endpoint()), Result::SUCCESS);
+
+    bool saw_rejection = false;
+    for (int i = 0; i < 50; ++i) {
+        {
+            std::lock_guard<std::mutex> lock(mu);
+            saw_rejection = !rejections.empty();
+        }
+        if (saw_rejection) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    EXPECT_TRUE(saw_rejection);
+    EXPECT_EQ(method_calls.load(), 0);
+    {
+        std::lock_guard<std::mutex> lock(mu);
+        ASSERT_EQ(rejections.size(), 1u);
+        EXPECT_EQ(rejections[0].result, Result::MALFORMED_MESSAGE);
+        EXPECT_TRUE(rejections[0].has_message_id);
+        EXPECT_EQ(rejections[0].message_id.service_id, test_service_id_);
+    }
 
     probe.stop();
     server.shutdown();

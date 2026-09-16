@@ -34,6 +34,7 @@ using namespace someip::transport;
  * @tests feat_req_someip_851
  * @tests REQ_TRANSPORT_016, REQ_TRANSPORT_017, REQ_TRANSPORT_018, REQ_TRANSPORT_019
  * @tests REQ_TRANSPORT_020, REQ_TRANSPORT_021, REQ_TRANSPORT_025
+ * @tests REQ_TRANSPORT_026
  * @tests REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04
  * @tests REQ_TRANSPORT_003_E01, REQ_TRANSPORT_016_E01
  */
@@ -81,6 +82,12 @@ public:
         cv_.notify_one();
     }
 
+    void on_message_rejected(const MessageRejectionInfo& info) override {
+        std::scoped_lock lock(mutex_);
+        rejections_.push_back(info);
+        cv_.notify_one();
+    }
+
     bool wait_for_message(std::chrono::milliseconds timeout = std::chrono::milliseconds(1000)) {
         std::unique_lock<std::mutex> lock(mutex_);
         return cv_.wait_for(lock, timeout, [this]() {
@@ -110,6 +117,13 @@ public:
         });
     }
 
+    bool wait_for_rejection(std::chrono::milliseconds timeout = std::chrono::milliseconds(1000)) {
+        std::unique_lock<std::mutex> lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this]() {
+            return !rejections_.empty();
+        });
+    }
+
     std::vector<std::pair<MessagePtr, Endpoint>> get_received_messages() {
         std::scoped_lock lock(mutex_);
         return received_messages_;
@@ -135,10 +149,16 @@ public:
         return last_error_;
     }
 
+    std::vector<MessageRejectionInfo> get_rejections() const {
+        std::scoped_lock lock(mutex_);
+        return rejections_;
+    }
+
 private:
     mutable std::mutex mutex_;
     std::condition_variable cv_;
     std::vector<std::pair<MessagePtr, Endpoint>> received_messages_;
+    std::vector<MessageRejectionInfo> rejections_;
     bool connection_lost_ = false;
     bool connection_established_ = false;
     Endpoint lost_endpoint_;
@@ -601,6 +621,88 @@ TEST_F(TcpTransportTest, ParseIncompleteHeaderStaysInBuffer) {
     MessagePtr parsed;
     EXPECT_FALSE(transport.parse_message_from_buffer(buffer, parsed));
     EXPECT_EQ(buffer.size(), 10u) << "Incomplete bytes must be preserved";
+}
+
+/**
+ * @test_case TC_TCP_REJECT_001
+ * @tests REQ_TRANSPORT_026
+ * @brief parse_next_message distinguishes need-more, cookie, reject, and message
+ */
+TEST_F(TcpTransportTest, ParseNextMessageDistinguishesOutcomes) {
+    TcpTransport transport(config);
+
+    Message original(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    original.set_payload({0x01, 0x02, 0x03, 0x04});
+    platform::ByteBuffer full = original.serialize();
+
+    platform::ByteBuffer incomplete(full.begin(), full.begin() + 10);
+    MessagePtr parsed;
+    Result rejection = Result::SUCCESS;
+    MessageRejectionStage stage = MessageRejectionStage::DESERIALIZE;
+    EXPECT_EQ(transport.parse_next_message(incomplete, parsed, rejection, stage),
+              TcpParseOutcome::NEED_MORE);
+
+    platform::ByteBuffer cookie = TcpTransport::make_magic_cookie_client();
+    EXPECT_EQ(transport.parse_next_message(cookie, parsed, rejection, stage),
+              TcpParseOutcome::CONTROL_FRAME);
+
+    Message bad(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                MessageType::REQUEST, ReturnCode::E_OK);
+    bad.set_protocol_version(0x99);
+    platform::ByteBuffer bad_buf = bad.serialize();
+    EXPECT_EQ(transport.parse_next_message(bad_buf, parsed, rejection, stage),
+              TcpParseOutcome::REJECTED);
+    EXPECT_EQ(rejection, Result::MALFORMED_MESSAGE);
+    EXPECT_EQ(stage, MessageRejectionStage::DESERIALIZE);
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0x1234);
+
+    platform::ByteBuffer good = original.serialize();
+    EXPECT_EQ(transport.parse_next_message(good, parsed, rejection, stage),
+              TcpParseOutcome::MESSAGE);
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0x1234);
+}
+
+/**
+ * @test_case TC_TCP_REJECT_002
+ * @tests REQ_TRANSPORT_026
+ * @brief A complete malformed TCP frame notifies once; an incomplete frame does not
+ */
+TEST_F(TcpTransportTest, CompleteMalformedFrameNotifiesRejection) {
+    TcpTransport server(config);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+    Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+    ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
+    ASSERT_TRUE(server_listener.wait_for_connection_established());
+
+    Message bad(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                MessageType::REQUEST, ReturnCode::E_OK);
+    bad.set_protocol_version(0x99);
+    EXPECT_EQ(client.send_message(bad, server_ep), Result::SUCCESS);
+
+    EXPECT_TRUE(server_listener.wait_for_rejection());
+    EXPECT_FALSE(server_listener.wait_for_message(std::chrono::milliseconds(150)));
+    auto rejections = server_listener.get_rejections();
+    ASSERT_EQ(rejections.size(), 1u);
+    EXPECT_EQ(rejections[0].result, Result::MALFORMED_MESSAGE);
+    EXPECT_TRUE(rejections[0].has_message_id);
+    EXPECT_EQ(rejections[0].message_id.service_id, 0x1234);
+
+    client.disconnect();
+    client.stop();
+    server.stop();
 }
 
 /**

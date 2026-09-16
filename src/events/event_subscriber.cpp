@@ -302,6 +302,12 @@ public:
         default_service_port_ = port;
     }
 
+    void set_message_rejection_handler(
+        platform::Function<void(const transport::MessageRejectionInfo&)> handler) {
+        platform::ScopedLock const lock(rejection_mutex_);
+        rejection_handler_ = std::move(handler);
+    }
+
 private:
     struct SubscriptionInfo {
         EventSubscription subscription;
@@ -413,6 +419,18 @@ private:
         // Handle transport errors
     }
 
+    /** @implements REQ_TRANSPORT_026 */
+    void on_message_rejected(const transport::MessageRejectionInfo& info) override {
+        platform::Function<void(const transport::MessageRejectionInfo&)> handler;
+        {
+            platform::ScopedLock const lock(rejection_mutex_);
+            handler = rejection_handler_;
+        }
+        if (handler) {
+            handler(info);
+        }
+    }
+
     uint16_t client_id_;
     platform::String<> default_service_address_{"0.0.0.0"};
     uint16_t default_service_port_{0};
@@ -426,6 +444,9 @@ private:
     mutable platform::Mutex field_requests_mutex_;  // Lock order: acquire after subscriptions_mutex_
 
     std::atomic<bool> running_;
+
+    platform::Function<void(const transport::MessageRejectionInfo&)> rejection_handler_;
+    mutable platform::Mutex rejection_mutex_;
 };
 
 #ifdef SOMEIP_STATIC_ALLOC
@@ -499,6 +520,11 @@ SubscriptionState EventSubscriber::get_subscription_status(uint16_t service_id, 
 
 bool EventSubscriber::is_ready() const {
     return impl()->is_ready();
+}
+
+void EventSubscriber::set_message_rejection_handler(
+    platform::Function<void(const transport::MessageRejectionInfo&)> handler) {
+    impl()->set_message_rejection_handler(std::move(handler));
 }
 
 EventSubscriber::Statistics EventSubscriber::get_statistics() const {

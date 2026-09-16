@@ -50,6 +50,15 @@
   source-compatible bool wrappers
   ([#316](https://github.com/vtz/opensomeip/issues/316)).
 
+### Added
+
+- **Transport**: Defaulted `ITransportListener::on_message_rejected` plus
+  `set_message_rejection_handler` on RPC and event APIs so complete malformed
+  UDP/TCP frames are visible to applications instead of being dropped silently
+  ([#315](https://github.com/vtz/opensomeip/issues/315)). Structured
+  `Message::try_deserialize` reasons (#316) are not required; failures currently
+  report `Result::MALFORMED_MESSAGE`.
+
 ### Bug Fixes
 
 - **SOME/IP-SD**: SubscribeEventgroup with both a UDP and a TCP
