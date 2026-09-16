@@ -21,6 +21,10 @@
   `push` to `main` now that scan.coverity.com is serving the project again
   ([#265](https://github.com/vtz/opensomeip/issues/265)). `workflow_dispatch`
   remains for a manual verification run.
+- Fork PRs no longer fail the RPM workflow template on empty Docker Hub
+  secrets; Fedora images are pulled anonymously
+  ([#330](https://github.com/vtz/opensomeip/issues/330)). The Python
+  detailed check-run step already skips forks (landed in #325).
 
 ### Bug Fixes
 

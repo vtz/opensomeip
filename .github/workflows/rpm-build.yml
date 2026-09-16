@@ -16,10 +16,10 @@ jobs:
       matrix:
         fedora: ['42', 'rawhide']
     container:
+      # Public Fedora images; do not pass registry credentials. Fork PRs cannot
+      # read DOCKERHUB_* secrets, and empty username/password make GitHub reject
+      # the workflow template before any step runs (see #330).
       image: fedora:${{ matrix.fedora }}
-      credentials:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Install build tools
         run: dnf install -y git rpm-build cmake gcc-c++ ninja-build
