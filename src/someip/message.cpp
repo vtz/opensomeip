@@ -13,6 +13,7 @@
 
 #include "someip/message.h"
 
+#include "common/result.h"
 #include "e2e/e2e_header.h"
 #include "someip/types.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
@@ -204,23 +205,35 @@ platform::ByteBuffer Message::serialize() const {
  * @implements REQ_MSG_090, REQ_MSG_092, REQ_MSG_093
  * @implements REQ_MSG_100, REQ_MSG_100_E02, REQ_MSG_100_E03
  * @implements REQ_MSG_012_E01, REQ_MSG_014_E01, REQ_MSG_014_E02
+ * @implements REQ_MSG_150
  * @satisfies feat_req_someip_45, feat_req_someip_60, feat_req_someip_67
  */
 bool Message::deserialize(const uint8_t* data_ptr, size_t data_size, bool expect_e2e) {
-    platform::ByteBuffer tmp(data_size);
-    if (data_ptr != nullptr && data_size > 0) { std::memcpy(tmp.data(), data_ptr, data_size); }
-    return deserialize(tmp, expect_e2e);
+    return someip::is_success(try_deserialize(data_ptr, data_size, expect_e2e));
 }
 
 bool Message::deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
+    return someip::is_success(try_deserialize(data, expect_e2e));
+}
+
+Result Message::try_deserialize(const uint8_t* data_ptr, size_t data_size, bool expect_e2e) {
+    if (data_size > 0 && data_ptr == nullptr) {
+        return Result::INVALID_ARGUMENT;
+    }
+    platform::ByteBuffer tmp(data_size);
+    if (data_ptr != nullptr && data_size > 0) { std::memcpy(tmp.data(), data_ptr, data_size); }
+    return try_deserialize(tmp, expect_e2e);
+}
+
+Result Message::try_deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
     if (data.size() < MIN_MESSAGE_SIZE) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
 
     size_t offset = 0;
 
     if (offset + sizeof(uint32_t) > data.size()) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
     uint32_t message_id_be = 0;
     std::memcpy(&message_id_be, &data[offset], sizeof(uint32_t));
@@ -228,7 +241,7 @@ bool Message::deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
     offset += sizeof(uint32_t);
 
     if (offset + sizeof(uint32_t) > data.size()) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
     uint32_t length_be = 0;
     std::memcpy(&length_be, &data[offset], sizeof(uint32_t));
@@ -236,7 +249,7 @@ bool Message::deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
     offset += sizeof(uint32_t);
 
     if (offset + sizeof(uint32_t) > data.size()) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
     uint32_t request_id_be = 0;
     std::memcpy(&request_id_be, &data[offset], sizeof(uint32_t));
@@ -244,22 +257,22 @@ bool Message::deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
     offset += sizeof(uint32_t);
 
     if (offset + sizeof(uint8_t) > data.size()) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
     protocol_version_ = data[offset++];
 
     if (offset + sizeof(uint8_t) > data.size()) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
     interface_version_ = data[offset++];
 
     if (offset + sizeof(uint8_t) > data.size()) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
     message_type_ = static_cast<MessageType>(data[offset++]);
 
     if (offset + sizeof(uint8_t) > data.size()) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
     return_code_ = static_cast<ReturnCode>(data[offset++]);
 
@@ -277,23 +290,23 @@ bool Message::deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
                 e2e_header_ = header;
                 offset += e2e_header_size;
             } else {
-                return false;
+                return Result::MALFORMED_MESSAGE;
             }
         } else {
-            return false;
+            return Result::MALFORMED_MESSAGE;
         }
     }
 
     // Calculate expected payload size based on whether we found an E2E header
     if (length_ < 8) {
-        return false;  // Invalid length: must be at least 8 for header
+        return Result::MALFORMED_MESSAGE;
     }
     size_t const e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
     size_t const expected_payload_size = length_ - 8 - e2e_size;
     size_t const actual_payload_size = data.size() - offset;
 
     if (actual_payload_size != expected_payload_size) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
 
     // Copy payload
@@ -306,7 +319,7 @@ bool Message::deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
     // Update timestamp
     update_timestamp();
 
-    return is_valid();
+    return validation_result();
 }
 
 /**
@@ -314,7 +327,7 @@ bool Message::deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
  * @implements REQ_MSG_100, REQ_MSG_100_E01
  */
 bool Message::is_valid() const {
-    return has_valid_header() && has_valid_payload();
+    return validation_result() == Result::SUCCESS;
 }
 
 /**
@@ -439,58 +452,78 @@ bool Message::has_tp_flag() const {
  * @implements REQ_MSG_063, REQ_MSG_064, REQ_MSG_063_E01, REQ_MSG_063_E02
  * @implements REQ_MSG_072, REQ_MSG_072_E01
  * @implements REQ_MSG_041, REQ_MSG_090_E01, REQ_MSG_093
+ * @implements REQ_MSG_150
  * @implements REQ_COMPAT_001, REQ_COMPAT_001_E01, REQ_COMPAT_002, REQ_COMPAT_003_E01, REQ_COMPAT_004
  * @implements REQ_COMPAT_005, REQ_COMPAT_010, REQ_COMPAT_010_E01, REQ_COMPAT_011
  * @implements REQ_COMPAT_020, REQ_COMPAT_020_E01, REQ_COMPAT_021, REQ_COMPAT_022, REQ_COMPAT_023, REQ_COMPAT_024
  * @satisfies feat_req_someip_92, feat_req_someip_100, feat_req_someip_103, feat_req_someip_278
  */
 bool Message::has_valid_header() const {
+    return header_validation_result() == Result::SUCCESS;
+}
+
+Result Message::validation_result() const {
+    Result const header = header_validation_result();
+    if (header != Result::SUCCESS) {
+        return header;
+    }
+    if (!has_valid_payload()) {
+        return Result::BUFFER_OVERFLOW;
+    }
+    return Result::SUCCESS;
+}
+
+Result Message::header_validation_result() const {
     // Check Message ID components (REQ_MSG_002-008)
-    if (!has_valid_message_id()) {
-        return false;
+    if (!has_valid_service_id()) {
+        return Result::INVALID_SERVICE_ID;
+    }
+
+    if (!has_valid_method_id()) {
+        return Result::INVALID_METHOD_ID;
     }
 
     // Check Request ID components (REQ_MSG_021-025)
     if (!has_valid_request_id()) {
-        return false;
+        return Result::INVALID_MESSAGE;
     }
 
     // Check length field (REQ_MSG_012-015)
     if (!has_valid_length()) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
 
     // Check message type (REQ_MSG_051-059)
     if (!has_valid_message_type()) {
-        return false;
+        return Result::INVALID_MESSAGE_TYPE;
     }
 
     // Protocol Version must be 0x01 (REQ_MSG_031). Interface Version is the
     // service major (feat_req_someip_92 / REQ_MSG_041): any uint8_t is valid
     // at the header layer. RPC/application code validates per service.
     if (protocol_version_ != SOMEIP_PROTOCOL_VERSION) {
-        return false;
+        return Result::INVALID_PROTOCOL_VERSION;
     }
 
     // SD SOME/IP wrappers (service 0xFFFF, method 0x8100) keep Interface Version 0x01.
     if (get_service_id() == SOMEIP_SD_SERVICE_ID &&
         get_method_id() == SOMEIP_SD_METHOD_ID &&
         interface_version_ != SOMEIP_SD_INTERFACE_VERSION) {
-        return false;
+        return Result::INVALID_INTERFACE_VERSION;
     }
 
     // Check length consistency
     size_t const e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
     uint32_t const expected_length = 8 + e2e_size + payload_.size();
     if (length_ != expected_length) {
-        return false;
+        return Result::MALFORMED_MESSAGE;
     }
 
     // REQ_MSG_053_E01: NOTIFICATION / TP_NOTIFICATION must carry return code E_OK
     if ((message_type_ == MessageType::NOTIFICATION ||
          message_type_ == MessageType::TP_NOTIFICATION) &&
         return_code_ != ReturnCode::E_OK) {
-        return false;
+        return Result::INVALID_MESSAGE;
     }
 
     // Check return code validity
@@ -513,10 +546,10 @@ bool Message::has_valid_header() const {
         case ReturnCode::E_E2E_NO_NEW_DATA:
             break;
         default:
-            return false;
+            return Result::INVALID_MESSAGE;
     }
 
-    return true;
+    return Result::SUCCESS;
 }
 
 /**

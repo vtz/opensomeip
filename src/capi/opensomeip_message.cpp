@@ -214,9 +214,6 @@ extern "C" opensomeip_result_t opensomeip_message_deserialize(opensomeip_message
     if (!msg) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     if (len > 0 && !data) return OPENSOMEIP_RESULT_INVALID_ARGUMENT;
     try {
-        if (!msg->msg.deserialize(data, len)) {
-            return OPENSOMEIP_RESULT_MALFORMED_MESSAGE;
-        }
-        return OPENSOMEIP_RESULT_SUCCESS;
+        return static_cast<opensomeip_result_t>(msg->msg.try_deserialize(data, len));
     } catch (...) { return OPENSOMEIP_RESULT_INTERNAL_ERROR; }
 }

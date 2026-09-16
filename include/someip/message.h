@@ -17,6 +17,7 @@
 #include "someip/types.h"
 #include "someip/payload_view.h"
 #include "e2e/e2e_header.h"
+#include "common/result.h"
 #include "platform/buffer_pool.h"
 #include "platform/intrusive_ptr.h"
 #include <atomic>
@@ -123,6 +124,16 @@ public:
     bool deserialize(const platform::ByteBuffer& data, bool expect_e2e = false);
     bool deserialize(const uint8_t* data, size_t size, bool expect_e2e = false);
 
+    /**
+     * @brief Deserialize with a structured local Result (not an on-wire ReturnCode)
+     *
+     * Parsed header fields that were read before a failure remain on this
+     * object for receiver diagnostics. deserialize() is a bool wrapper around
+     * this method.
+     */
+    Result try_deserialize(const platform::ByteBuffer& data, bool expect_e2e = false);
+    Result try_deserialize(const uint8_t* data, size_t size, bool expect_e2e = false);
+
     // Validation methods
     bool is_valid() const;
     bool has_valid_header() const;
@@ -197,6 +208,8 @@ private:
     void update_length();
     bool validate_header() const;
     bool validate_payload() const;
+    Result header_validation_result() const;
+    Result validation_result() const;
 };
 
 void intrusive_ptr_add_ref(const Message* p);

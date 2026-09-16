@@ -22,7 +22,7 @@ OpenSOME/IP is organized into self-contained modules, each with its own public h
 
 The core protocol types live in `include/someip/`:
 
-- **`message.h`** -- `Message` class with header fields, payload, and serialization
+- **`message.h`** -- `Message` class with header fields, payload, `serialize()`, `deserialize()`, and `try_deserialize()` (structured `Result`)
 - **`types.h`** -- `MessageId`, `RequestId`, `MessageType`, `ReturnCode`, and other protocol constants
 
 ## UDP Transport

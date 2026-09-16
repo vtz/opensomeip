@@ -13,6 +13,7 @@
 
 #include <gtest/gtest.h>
 #include "someip/message.h"
+#include "common/result.h"
 #include "serialization/serializer.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
@@ -49,7 +50,7 @@ using namespace someip;
  * @tests REQ_MSG_123, REQ_MSG_124, REQ_MSG_125, REQ_MSG_126
  * @tests REQ_MSG_127, REQ_MSG_128, REQ_MSG_129, REQ_MSG_130, REQ_MSG_131
  * @tests REQ_MSG_132a, REQ_MSG_132b, REQ_MSG_133a, REQ_MSG_133b, REQ_MSG_133c
- * @tests REQ_MSG_134, REQ_MSG_135, REQ_MSG_140, REQ_MSG_141
+ * @tests REQ_MSG_134, REQ_MSG_135, REQ_MSG_140, REQ_MSG_141, REQ_MSG_150
  * @tests REQ_MSG_110_E01, REQ_MSG_113_E01, REQ_MSG_114_E01, REQ_MSG_114_E02
  * @tests REQ_MSG_117_E01, REQ_MSG_118_E01, REQ_MSG_120_E01, REQ_MSG_121_E01, REQ_MSG_121_E02
  * @tests REQ_MSG_123_E01, REQ_MSG_124_E01, REQ_MSG_125_E01
@@ -708,6 +709,115 @@ TEST_F(MessageTest, TruncatedBufferDeserialization) {
     Message msg;
     bool result = msg.deserialize(truncated);
     EXPECT_FALSE(result) << "Should reject truncated buffer";
+}
+
+namespace {
+
+platform::ByteBuffer valid_request_wire() {
+    Message original(MessageId(0x1234, 0x0001), RequestId(0x0001, 0x0002),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    original.set_payload({0xAA, 0xBB});
+    return original.serialize();
+}
+
+}  // namespace
+
+/**
+ * @test_case TC_MSG_150
+ * @tests REQ_MSG_150
+ * @brief try_deserialize distinguishes semantic rejection classes
+ */
+TEST_F(MessageTest, TryDeserializeDistinguishesRejectionClasses) {
+    Message msg;
+
+    platform::ByteBuffer truncated = {0x12, 0x34, 0x56, 0x78};
+    EXPECT_EQ(msg.try_deserialize(truncated), Result::MALFORMED_MESSAGE);
+    EXPECT_FALSE(msg.deserialize(truncated));
+
+    platform::ByteBuffer too_short_length = valid_request_wire();
+    too_short_length[4] = 0;
+    too_short_length[5] = 0;
+    too_short_length[6] = 0;
+    too_short_length[7] = 7;  // Length < 8
+    EXPECT_EQ(msg.try_deserialize(too_short_length), Result::MALFORMED_MESSAGE);
+
+    platform::ByteBuffer length_mismatch = valid_request_wire();
+    length_mismatch[7] = 100;  // Length does not match remaining bytes
+    EXPECT_EQ(msg.try_deserialize(length_mismatch), Result::MALFORMED_MESSAGE);
+
+    platform::ByteBuffer bad_protocol = valid_request_wire();
+    bad_protocol[12] = 0x02;
+    EXPECT_EQ(msg.try_deserialize(bad_protocol), Result::INVALID_PROTOCOL_VERSION);
+    EXPECT_EQ(msg.get_protocol_version(), 0x02);
+    EXPECT_EQ(msg.get_service_id(), 0x1234);
+
+    Message sd(MessageId(SOMEIP_SD_SERVICE_ID, SOMEIP_SD_METHOD_ID),
+               RequestId(SOMEIP_SD_CLIENT_ID, 0x0001),
+               MessageType::NOTIFICATION, ReturnCode::E_OK);
+    platform::ByteBuffer sd_wire = sd.serialize();
+    sd_wire[13] = 0x02;
+    EXPECT_EQ(msg.try_deserialize(sd_wire), Result::INVALID_INTERFACE_VERSION);
+    EXPECT_EQ(msg.get_service_id(), SOMEIP_SD_SERVICE_ID);
+
+    platform::ByteBuffer bad_type = valid_request_wire();
+    bad_type[14] = 0x50;
+    EXPECT_EQ(msg.try_deserialize(bad_type), Result::INVALID_MESSAGE_TYPE);
+
+    platform::ByteBuffer unknown_rc = valid_request_wire();
+    unknown_rc[15] = 0x70;
+    EXPECT_EQ(msg.try_deserialize(unknown_rc), Result::INVALID_MESSAGE);
+
+    Message notification(MessageId(0x1234, 0x8001), RequestId(0x0001, 0x0001),
+                         MessageType::NOTIFICATION, ReturnCode::E_NOT_OK);
+    EXPECT_EQ(msg.try_deserialize(notification.serialize()), Result::INVALID_MESSAGE);
+
+    platform::ByteBuffer zero_service = valid_request_wire();
+    zero_service[0] = 0;
+    zero_service[1] = 0;
+    EXPECT_EQ(msg.try_deserialize(zero_service), Result::INVALID_SERVICE_ID);
+
+    platform::ByteBuffer reserved_method = valid_request_wire();
+    reserved_method[2] = 0xFF;
+    reserved_method[3] = 0xFF;
+    EXPECT_EQ(msg.try_deserialize(reserved_method), Result::INVALID_METHOD_ID);
+
+    EXPECT_EQ(msg.try_deserialize(valid_request_wire(), /*expect_e2e=*/true),
+              Result::MALFORMED_MESSAGE);
+
+    platform::ByteBuffer oversized(16 + 65536, 0);
+    oversized[0] = 0x12;
+    oversized[1] = 0x34;
+    oversized[3] = 0x01;  // method 0x0001
+    const uint32_t length = 8 + 65536;
+    oversized[4] = static_cast<uint8_t>((length >> 24) & 0xFF);
+    oversized[5] = static_cast<uint8_t>((length >> 16) & 0xFF);
+    oversized[6] = static_cast<uint8_t>((length >> 8) & 0xFF);
+    oversized[7] = static_cast<uint8_t>(length & 0xFF);
+    oversized[11] = 0x01;  // session
+    oversized[12] = SOMEIP_PROTOCOL_VERSION;
+    oversized[14] = static_cast<uint8_t>(MessageType::REQUEST);
+    EXPECT_EQ(msg.try_deserialize(oversized), Result::BUFFER_OVERFLOW);
+
+    Message round_trip;
+    EXPECT_EQ(round_trip.try_deserialize(valid_request_wire()), Result::SUCCESS);
+    EXPECT_TRUE(round_trip.deserialize(valid_request_wire()));
+}
+
+/**
+ * @test_case TC_MSG_150_E2E
+ * @tests REQ_MSG_150
+ * @brief try_deserialize round-trips a default-layout E2E header
+ */
+TEST_F(MessageTest, TryDeserializeE2EDefaultLayout) {
+    Message original(MessageId(0x1234, 0x0001), RequestId(0x0001, 0x0001));
+    original.set_payload({0x01, 0x02});
+    original.set_e2e_header(e2e::E2EHeader(0x11111111, 1, 0x1234, 0x0001));
+    platform::ByteBuffer wire = original.serialize();
+
+    Message decoded;
+    EXPECT_EQ(decoded.try_deserialize(wire, /*expect_e2e=*/true), Result::SUCCESS);
+    EXPECT_TRUE(decoded.has_e2e_header());
+    EXPECT_EQ(decoded.get_payload().size(), 2u);
 }
 
 // ============================================================================

@@ -22,6 +22,13 @@
   ([#265](https://github.com/vtz/opensomeip/issues/265)). `workflow_dispatch`
   remains for a manual verification run.
 
+### Added
+
+- **Message**: `try_deserialize()` returns a structured `someip::Result` for
+  each semantic rejection class. Existing `deserialize()` overloads remain
+  source-compatible bool wrappers
+  ([#316](https://github.com/vtz/opensomeip/issues/316)).
+
 ### Bug Fixes
 
 - **SOME/IP-SD**: SubscribeEventgroup family is unicast-only. Clients send
