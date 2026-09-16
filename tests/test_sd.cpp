@@ -27,6 +27,7 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <array>
 #include <cstdio>
 #include <utility>
 #include "static_pool_init.h"
@@ -201,6 +202,115 @@ TEST_F(SdTest, IPv4EndpointOptionDeserialization) {
     EXPECT_EQ(deserialized_option.get_protocol(), 0x11);
 }
 
+/**
+ * @test_case TC_SD_IPV6_EP_001
+ * @tests REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_233
+ * @tests feat_req_someipsd_140, feat_req_someipsd_163, feat_req_someipsd_164
+ * @brief IPv6 Endpoint Option (Type 0x06) round-trip with spec offsets
+ */
+TEST_F(SdTest, IPv6EndpointOptionRoundTrip) {
+    IPv6EndpointOption option;
+    IPv6EndpointOption::Address addr{};
+    addr[0] = 0x20;
+    addr[1] = 0x01;
+    addr[2] = 0x0d;
+    addr[3] = 0xb8;
+    addr[15] = 0x01;
+    option.set_ipv6_address(addr);
+    option.set_protocol(0x11);
+    option.set_port(30509);
+
+    auto data = option.serialize();
+    ASSERT_EQ(data.size(), 24u);
+    EXPECT_EQ(data[0], 0x00);
+    EXPECT_EQ(data[1], 0x15);  // Length 21
+    EXPECT_EQ(data[2], 0x06);  // Type
+    EXPECT_EQ(data[3], 0x00);  // Reserved
+    EXPECT_EQ(data[4], 0x20);
+    EXPECT_EQ(data[19], 0x01);
+    EXPECT_EQ(data[20], 0x00);  // reserved before L4
+    EXPECT_EQ(data[21], 0x11);  // L4 protocol (byte 21 from option start)
+    EXPECT_EQ(data[22], 0x77);  // port 30509 = 0x772D
+    EXPECT_EQ(data[23], 0x2D);
+
+    IPv6EndpointOption decoded;
+    size_t offset = 0;
+    ASSERT_TRUE(decoded.deserialize(data, offset));
+    EXPECT_EQ(offset, data.size());
+    EXPECT_EQ(decoded.get_type(), OptionType::IPV6_ENDPOINT);
+    EXPECT_EQ(decoded.get_protocol(), 0x11);
+    EXPECT_EQ(decoded.get_port(), 30509);
+    EXPECT_EQ(decoded.get_ipv6_address(), addr);
+}
+
+/**
+ * @test_case TC_SD_IPV6_MC_001
+ * @tests REQ_SD_074, REQ_SD_235
+ * @tests feat_req_someipsd_737, feat_req_someipsd_738, feat_req_someipsd_739
+ * @tests feat_req_someipsd_750
+ * @brief IPv6 Multicast Option (Type 0x16) round-trip
+ */
+TEST_F(SdTest, IPv6MulticastOptionRoundTrip) {
+    IPv6MulticastOption option;
+    IPv6MulticastOption::Address addr{};
+    addr[0] = 0xff;
+    addr[1] = 0x02;
+    addr[15] = 0x01;
+    option.set_ipv6_address(addr);
+    option.set_protocol(0x11);
+    option.set_port(30490);
+
+    auto data = option.serialize();
+    ASSERT_EQ(data.size(), 24u);
+    EXPECT_EQ(data[1], 0x15);
+    EXPECT_EQ(data[2], 0x16);
+
+    IPv6MulticastOption decoded;
+    size_t offset = 0;
+    ASSERT_TRUE(decoded.deserialize(data, offset));
+    EXPECT_EQ(decoded.get_type(), OptionType::IPV6_MULTICAST);
+    EXPECT_EQ(decoded.get_protocol(), 0x11);
+    EXPECT_EQ(decoded.get_port(), 30490);
+    EXPECT_EQ(decoded.get_ipv6_address(), addr);
+}
+
+/**
+ * @test_case TC_SD_IPV6_MSG_001
+ * @tests REQ_SD_067, REQ_SD_074, REQ_SD_233, REQ_SD_235
+ * @brief SdMessage keeps Types 0x06 and 0x16 instead of skipping them
+ */
+TEST_F(SdTest, SdMessagePreservesIPv6Options) {
+    SdMessage message;
+    ServiceEntry entry(EntryType::OFFER_SERVICE);
+    entry.set_service_id(0x1234);
+    entry.set_index1(0);
+    entry.set_num_opts1(2);
+    ASSERT_TRUE(message.add_entry(std::move(entry)));
+
+    IPv6EndpointOption ep;
+    IPv6EndpointOption::Address ep_addr{};
+    ep_addr[15] = 0x01;
+    ep.set_ipv6_address(ep_addr);
+    ep.set_protocol(0x11);
+    ep.set_port(30509);
+    ASSERT_TRUE(message.add_option(std::move(ep)));
+
+    IPv6MulticastOption mc;
+    IPv6MulticastOption::Address mc_addr{};
+    mc_addr[0] = 0xff;
+    mc.set_ipv6_address(mc_addr);
+    mc.set_protocol(0x11);
+    mc.set_port(30490);
+    ASSERT_TRUE(message.add_option(std::move(mc)));
+
+    auto wire = message.serialize();
+    SdMessage decoded;
+    ASSERT_TRUE(decoded.deserialize(wire));
+    ASSERT_EQ(decoded.get_options().size(), 2u);
+    EXPECT_NE(std::get_if<IPv6EndpointOption>(&decoded.get_options()[0]), nullptr);
+    EXPECT_NE(std::get_if<IPv6MulticastOption>(&decoded.get_options()[1]), nullptr);
+}
+
 // TEST_F(SdTest, IPv4EndpointOptionWithSdMessage) {
 //     // Test IPv4 Endpoint Option integration with SD message
 //     SdMessage message;
@@ -324,8 +434,8 @@ TEST_F(SdTest, EndpointOption) {
 
 /**
  * @test_case TC_SD_009
- * @tests REQ_SD_066, REQ_SD_067, REQ_SD_068
- * @brief Test multicast option structure
+ * @tests REQ_SD_073
+ * @brief Test IPv4 multicast option structure
  */
 TEST_F(SdTest, MulticastOption) {
     IPv4MulticastOption option;
@@ -1764,6 +1874,45 @@ static Message build_subscribe_eventgroup_message(
     return someip_msg;
 }
 
+struct SubscribeEndpointSpec {
+    const char* ip;
+    uint16_t port;
+    uint8_t protocol;
+};
+
+static Message build_subscribe_eventgroup_with_endpoints(
+    uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
+    uint32_t ttl, const SubscribeEndpointSpec* endpoints, size_t endpoint_count) {
+
+    EventGroupEntry entry(EntryType::SUBSCRIBE_EVENTGROUP);
+    entry.set_service_id(service_id);
+    entry.set_instance_id(instance_id);
+    entry.set_eventgroup_id(eventgroup_id);
+    entry.set_major_version(0x01);
+    entry.set_ttl(ttl);
+    entry.set_index1(0);
+    entry.set_num_opts1(static_cast<uint8_t>(endpoint_count));
+
+    SdMessage sd_msg;
+    sd_msg.set_reboot(true);
+    sd_msg.add_entry(std::move(entry));
+    for (size_t i = 0; i < endpoint_count; ++i) {
+        IPv4EndpointOption option;
+        option.set_ipv4_address_from_string(endpoints[i].ip);
+        option.set_port(endpoints[i].port);
+        option.set_protocol(endpoints[i].protocol);
+        sd_msg.add_option(std::move(option));
+    }
+
+    Message someip_msg(
+        MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+        RequestId(SOMEIP_SD_CLIENT_ID, 0x0001),
+        MessageType::NOTIFICATION,
+        ReturnCode::E_OK);
+    someip_msg.set_payload(sd_msg.serialize());
+    return someip_msg;
+}
+
 static Message build_offer_service_message(uint16_t service_id, uint16_t instance_id,
                                            uint32_t ttl, const char* rpc_ip, uint16_t rpc_port) {
     ServiceEntry entry(EntryType::OFFER_SERVICE);
@@ -2686,4 +2835,150 @@ TEST_F(SdIntegrationTest, MulticastSubscribeDoesNotProduceAck) {
     ASSERT_TRUE(unicast_acked) << "Unicast Subscribe must be accepted (positive control)";
     EXPECT_EQ(unicast_ack.get_service_id(), 0x1234u);
     EXPECT_EQ(unicast_ack.get_eventgroup_id(), 0x0001u);
+}
+
+/**
+ * @test_case TC_SD_848
+ * @tests REQ_SD_848
+ * @tests feat_req_someipsd_848
+ * @brief Subscribe with one UDP and one TCP IPv4 endpoint is accepted.
+ */
+TEST_F(SdIntegrationTest, SubscribeAcceptsUdpAndTcpEndpoints) {
+    const uint16_t server_port = get_unique_port();
+    const uint16_t client_port = get_unique_port();
+    const uint16_t tcp_port = get_unique_port();
+
+    auto server_config = create_test_config(server_port, server_port);
+    SdServer server(server_config);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {0x0001}));
+
+    transport::UdpTransportConfig client_cfg;
+    client_cfg.blocking = false;
+    transport::UdpTransport client_transport(
+        transport::Endpoint("0.0.0.0", client_port), client_cfg);
+    ASSERT_EQ(client_transport.start(), Result::SUCCESS);
+
+    const SubscribeEndpointSpec endpoints[] = {
+        {"127.0.0.1", client_port, 0x11},
+        {"127.0.0.1", tcp_port, 0x06},
+    };
+    auto subscribe_msg = build_subscribe_eventgroup_with_endpoints(
+        0x1234, 0x0001, 0x0001, 1800, endpoints, 2);
+
+    transport::Endpoint server_ep("127.0.0.1", server_port);
+    ASSERT_EQ(client_transport.send_message(subscribe_msg, server_ep),
+              Result::SUCCESS);
+
+    EventGroupEntry ack_entry;
+    bool received = receive_sd_ack(client_transport, ack_entry);
+
+    client_transport.stop();
+    server.shutdown();
+
+    if (!received) {
+        GTEST_SKIP() << "ACK not received (loopback may be unavailable)";
+    }
+    EXPECT_EQ(ack_entry.get_service_id(), 0x1234u);
+    EXPECT_GT(ack_entry.get_ttl(), 0u) << "UDP+TCP Subscribe must be ACKed, not NACKed";
+}
+
+/**
+ * @test_case TC_SD_848_DUP
+ * @tests REQ_SD_848
+ * @brief Two UDP endpoint options on Subscribe are a true duplicate and NACKed.
+ */
+TEST_F(SdIntegrationTest, SubscribeRejectsDuplicateUdpEndpoints) {
+    const uint16_t server_port = get_unique_port();
+    const uint16_t client_port = get_unique_port();
+
+    auto server_config = create_test_config(server_port, server_port);
+    SdServer server(server_config);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {0x0001}));
+
+    transport::UdpTransportConfig client_cfg;
+    client_cfg.blocking = false;
+    transport::UdpTransport client_transport(
+        transport::Endpoint("0.0.0.0", client_port), client_cfg);
+    ASSERT_EQ(client_transport.start(), Result::SUCCESS);
+
+    const SubscribeEndpointSpec endpoints[] = {
+        {"127.0.0.1", client_port, 0x11},
+        {"127.0.0.1", static_cast<uint16_t>(client_port + 1), 0x11},
+    };
+    auto subscribe_msg = build_subscribe_eventgroup_with_endpoints(
+        0x1234, 0x0001, 0x0001, 1800, endpoints, 2);
+
+    transport::Endpoint server_ep("127.0.0.1", server_port);
+    ASSERT_EQ(client_transport.send_message(subscribe_msg, server_ep),
+              Result::SUCCESS);
+
+    EventGroupEntry nack_entry;
+    bool received = receive_sd_ack(client_transport, nack_entry);
+
+    client_transport.stop();
+    server.shutdown();
+
+    if (!received) {
+        GTEST_SKIP() << "NACK not received (loopback may be unavailable)";
+    }
+    EXPECT_EQ(nack_entry.get_ttl(), 0u) << "Duplicate UDP endpoints must be NACKed";
+}
+
+/**
+ * @test_case TC_SD_1084
+ * @tests REQ_SD_1084
+ * @tests feat_req_someipsd_1084
+ * @brief Subscribe Ack/NAck are sent to the SD datagram sender, not the event
+ *        IPv4EndpointOption address.
+ */
+TEST_F(SdIntegrationTest, SubscribeAckGoesToSdSenderNotEventEndpoint) {
+    const uint16_t server_port = get_unique_port();
+    const uint16_t sd_sender_port = get_unique_port();
+    const uint16_t event_port = get_unique_port();
+
+    auto server_config = create_test_config(server_port, server_port);
+    SdServer server(server_config);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {0x0001}));
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport sd_sender(transport::Endpoint("0.0.0.0", sd_sender_port), cfg);
+    transport::UdpTransport event_sink(transport::Endpoint("0.0.0.0", event_port), cfg);
+    ASSERT_EQ(sd_sender.start(), Result::SUCCESS);
+    ASSERT_EQ(event_sink.start(), Result::SUCCESS);
+
+    auto subscribe_msg = build_subscribe_eventgroup_message(
+        0x1234, 0x0001, 0x0001, 1800, "127.0.0.1", event_port);
+
+    transport::Endpoint server_ep("127.0.0.1", server_port);
+    ASSERT_EQ(sd_sender.send_message(subscribe_msg, server_ep), Result::SUCCESS);
+
+    EventGroupEntry ack_on_sender;
+    EventGroupEntry ack_on_event;
+    const bool sender_got = receive_sd_ack(sd_sender, ack_on_sender);
+    const bool event_got = receive_sd_ack(event_sink, ack_on_event,
+                                          std::chrono::milliseconds(400));
+
+    sd_sender.stop();
+    event_sink.stop();
+    server.shutdown();
+
+    if (!sender_got) {
+        GTEST_SKIP() << "ACK not received (loopback may be unavailable)";
+    }
+    EXPECT_GT(ack_on_sender.get_ttl(), 0u);
+    EXPECT_FALSE(event_got)
+        << "Ack must not be sent to the event IPv4EndpointOption address";
 }

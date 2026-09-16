@@ -134,8 +134,11 @@ SOME/IP-SD Message:
 ### Option Types
 
 - **IPV4_ENDPOINT (0x04)**: IPv4 unicast endpoint
+- **IPV6_ENDPOINT (0x06)**: IPv6 unicast endpoint (codec; ``AF_INET6`` transport is separate)
 - **IPV4_MULTICAST (0x14)**: IPv4 multicast address
-- **IPV4_SD_ENDPOINT (0x24)**: IPv4 SD endpoint
+- **IPV6_MULTICAST (0x16)**: IPv6 multicast address (codec; ``AF_INET6`` transport is separate)
+- **IPV4_SD_ENDPOINT (0x24)**: IPv4 SD endpoint (type reserved; codec pending)
+- **IPV6_SD_ENDPOINT (0x26)**: IPv6 SD endpoint (type reserved; codec pending)
 
 ### Message Flow
 

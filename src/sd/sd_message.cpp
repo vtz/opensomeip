@@ -154,7 +154,7 @@ bool ServiceEntry::deserialize(const platform::ByteBuffer& data, size_t& offset)
 }
 
 // EventGroupEntry implementation
-/** @implements REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065, REQ_SD_066, REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_074, REQ_SD_075, REQ_SD_076, REQ_SD_077 */
+/** @implements REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065, REQ_SD_066, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_075, REQ_SD_076, REQ_SD_077 */
 platform::ByteBuffer EventGroupEntry::serialize() const {
     platform::ByteBuffer data = SdEntry::serialize();
 
@@ -437,8 +437,114 @@ platform::String<> IPv4MulticastOption::get_ipv4_address_string() const {
     return platform::String<>(buffer.data());
 }
 
+namespace {
+
+constexpr uint16_t kIpv6OptionLength = 0x0015;
+constexpr size_t kIpv6AddressBytes = 16;
+constexpr size_t kIpv6OptionTailBytes = 20;  // address + reserved + proto + port
+
+void append_ipv6_option_tail(platform::ByteBuffer& data,
+                             const std::array<uint8_t, 16>& address,
+                             uint8_t protocol,
+                             uint16_t port) {
+    for (uint8_t byte : address) {
+        data.push_back(byte);
+    }
+    data.push_back(0);  // reserved
+    data.push_back(protocol);
+    data.push_back(static_cast<uint8_t>((static_cast<uint32_t>(port) >> 8U) & 0xFFU));
+    data.push_back(static_cast<uint8_t>(port & 0xFFU));
+    data[0] = static_cast<uint8_t>((static_cast<uint32_t>(kIpv6OptionLength) >> 8U) & 0xFFU);
+    data[1] = static_cast<uint8_t>(kIpv6OptionLength & 0xFFU);
+}
+
+bool read_ipv6_option_tail(const platform::ByteBuffer& data, size_t& offset,
+                           std::array<uint8_t, 16>& address,
+                           uint8_t& protocol,
+                           uint16_t& port) {
+    if (offset + kIpv6OptionTailBytes > data.size()) {
+        return false;
+    }
+    for (size_t i = 0; i < kIpv6AddressBytes; ++i) {
+        address[i] = data[offset++];
+    }
+    offset++;  // reserved
+    protocol = data[offset++];
+    port = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8U) |
+                                 static_cast<uint32_t>(data[offset + 1]));
+    offset += 2;
+    return true;
+}
+
+platform::String<> format_ipv6_address(const std::array<uint8_t, 16>& address) {
+    // Uncompressed 8-hextet form; codecs do not require AF_INET6.
+    std::array<char, 40> buffer{};
+    static constexpr char kHex[] = "0123456789abcdef";
+    char* cursor = buffer.data();
+    for (size_t group = 0; group < 8; ++group) {
+        if (group > 0) {
+            *cursor++ = ':';
+        }
+        const uint8_t hi = address[group * 2];
+        const uint8_t lo = address[(group * 2) + 1];
+        *cursor++ = kHex[(hi >> 4U) & 0x0FU];
+        *cursor++ = kHex[hi & 0x0FU];
+        *cursor++ = kHex[(lo >> 4U) & 0x0FU];
+        *cursor++ = kHex[lo & 0x0FU];
+    }
+    *cursor = '\0';
+    return platform::String<>(buffer.data());
+}
+
+}  // namespace
+
+/** @implements REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_233
+ *  @satisfies feat_req_someipsd_140, feat_req_someipsd_163, feat_req_someipsd_164 */
+platform::ByteBuffer IPv6EndpointOption::serialize() const {
+    platform::ByteBuffer data = SdOption::serialize();
+    append_ipv6_option_tail(data, ipv6_address_, protocol_, port_);
+    return data;
+}
+
+bool IPv6EndpointOption::deserialize(const platform::ByteBuffer& data, size_t& offset) {
+    if (!SdOption::deserialize(data, offset)) {
+        return false;
+    }
+    if (length_ != kIpv6OptionLength) {
+        return false;
+    }
+    return read_ipv6_option_tail(data, offset, ipv6_address_, protocol_, port_);
+}
+
+platform::String<> IPv6EndpointOption::get_ipv6_address_string() const {
+    return format_ipv6_address(ipv6_address_);
+}
+
+/** @implements REQ_SD_074, REQ_SD_235
+ *  @satisfies feat_req_someipsd_737, feat_req_someipsd_738, feat_req_someipsd_739,
+ *             feat_req_someipsd_750 */
+platform::ByteBuffer IPv6MulticastOption::serialize() const {
+    platform::ByteBuffer data = SdOption::serialize();
+    append_ipv6_option_tail(data, ipv6_address_, protocol_, port_);
+    return data;
+}
+
+bool IPv6MulticastOption::deserialize(const platform::ByteBuffer& data, size_t& offset) {
+    if (!SdOption::deserialize(data, offset)) {
+        return false;
+    }
+    if (length_ != kIpv6OptionLength) {
+        return false;
+    }
+    return read_ipv6_option_tail(data, offset, ipv6_address_, protocol_, port_);
+}
+
+platform::String<> IPv6MulticastOption::get_ipv6_address_string() const {
+    return format_ipv6_address(ipv6_address_);
+}
+
 // ConfigurationOption implementation
-/** @implements REQ_SD_236, REQ_SD_243 */
+/** @implements REQ_SD_071, REQ_SD_072, REQ_SD_243 */
 platform::ByteBuffer ConfigurationOption::serialize() const {
     platform::ByteBuffer data = SdOption::serialize();
 
@@ -716,6 +822,24 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
             options_.emplace_back(std::move(option));
         } else if (option_type == OptionType::IPV4_MULTICAST) {
             IPv4MulticastOption option;
+            if (!option.deserialize(data, offset)) {
+                return false;
+            }
+            if (options_.size() >= options_.max_size()) {
+                return false;
+            }
+            options_.emplace_back(std::move(option));
+        } else if (option_type == OptionType::IPV6_ENDPOINT) {
+            IPv6EndpointOption option;
+            if (!option.deserialize(data, offset)) {
+                return false;
+            }
+            if (options_.size() >= options_.max_size()) {
+                return false;
+            }
+            options_.emplace_back(std::move(option));
+        } else if (option_type == OptionType::IPV6_MULTICAST) {
+            IPv6MulticastOption option;
             if (!option.deserialize(data, offset)) {
                 return false;
             }

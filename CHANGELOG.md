@@ -24,6 +24,18 @@
 
 ### Bug Fixes
 
+- **SOME/IP-SD**: SubscribeEventgroup with both a UDP and a TCP
+  IPv4EndpointOption is accepted; only true duplicates (two UDP or two
+  TCP) are NACKed
+  ([#321](https://github.com/vtz/opensomeip/issues/321)).
+- **SOME/IP-SD**: SubscribeEventgroupAck/Nack are sent to the SD datagram
+  sender, not the event IPv4EndpointOption address
+  ([#322](https://github.com/vtz/opensomeip/issues/322)).
+- **SOME/IP-SD**: IPv6 Endpoint (Type 0x06) and IPv6 Multicast (Type 0x16)
+  options are parsed instead of being skipped as unknown. IPv6 SD Endpoint
+  (0x26) and ``AF_INET6`` transport remain out of scope
+  ([#320](https://github.com/vtz/opensomeip/issues/320)).
+
 - **SOME/IP-SD**: SubscribeEventgroup family is unicast-only. Clients send
   Subscribe/StopSubscribe to the Offer datagram source (not the SD multicast
   group); servers ignore Subscribe received on a multicast destination

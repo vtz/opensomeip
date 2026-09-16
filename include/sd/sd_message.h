@@ -19,6 +19,7 @@
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 
+#include <array>
 #include <variant>
 
 namespace someip::sd {
@@ -229,6 +230,79 @@ private:
 };
 
 /**
+ * @brief IPv6 Endpoint Option (Type 0x06, Length 0x0015)
+ * @implements REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_233
+ * @satisfies feat_req_someipsd_140, feat_req_someipsd_163, feat_req_someipsd_164
+ */
+class IPv6EndpointOption : public SdOption {
+public:
+    using Address = std::array<uint8_t, 16>;
+
+    IPv6EndpointOption() : SdOption(OptionType::IPV6_ENDPOINT) {}
+    ~IPv6EndpointOption() override = default;
+    IPv6EndpointOption(const IPv6EndpointOption&) = default;
+    IPv6EndpointOption& operator=(const IPv6EndpointOption&) = default;
+    IPv6EndpointOption(IPv6EndpointOption&&) noexcept = default;
+    IPv6EndpointOption& operator=(IPv6EndpointOption&&) noexcept = default;
+
+    uint8_t get_protocol() const { return protocol_; }
+    void set_protocol(uint8_t protocol) { protocol_ = protocol; }
+
+    const Address& get_ipv6_address() const { return ipv6_address_; }
+    void set_ipv6_address(const Address& address) { ipv6_address_ = address; }
+
+    uint16_t get_port() const { return port_; }
+    void set_port(uint16_t port) { port_ = port; }
+
+    platform::String<> get_ipv6_address_string() const;
+
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
+
+private:
+    Address ipv6_address_{};
+    uint8_t protocol_{0};
+    uint16_t port_{0};
+};
+
+/**
+ * @brief IPv6 Multicast Option (Type 0x16, Length 0x0015, UDP only)
+ * @implements REQ_SD_074, REQ_SD_235
+ * @satisfies feat_req_someipsd_737, feat_req_someipsd_738, feat_req_someipsd_739,
+ *            feat_req_someipsd_750
+ */
+class IPv6MulticastOption : public SdOption {
+public:
+    using Address = std::array<uint8_t, 16>;
+
+    IPv6MulticastOption() : SdOption(OptionType::IPV6_MULTICAST) {}
+    ~IPv6MulticastOption() override = default;
+    IPv6MulticastOption(const IPv6MulticastOption&) = default;
+    IPv6MulticastOption& operator=(const IPv6MulticastOption&) = default;
+    IPv6MulticastOption(IPv6MulticastOption&&) noexcept = default;
+    IPv6MulticastOption& operator=(IPv6MulticastOption&&) noexcept = default;
+
+    const Address& get_ipv6_address() const { return ipv6_address_; }
+    void set_ipv6_address(const Address& address) { ipv6_address_ = address; }
+
+    uint8_t get_protocol() const { return protocol_; }
+    void set_protocol(uint8_t protocol) { protocol_ = protocol; }
+
+    uint16_t get_port() const { return port_; }
+    void set_port(uint16_t port) { port_ = port; }
+
+    platform::String<> get_ipv6_address_string() const;
+
+    platform::ByteBuffer serialize() const override;
+    bool deserialize(const platform::ByteBuffer& data, size_t& offset) override;
+
+private:
+    Address ipv6_address_{};
+    uint8_t protocol_{0x11};
+    uint16_t port_{0};
+};
+
+/**
  * @brief Configuration option for SD messages
  */
 class ConfigurationOption : public SdOption {
@@ -246,7 +320,11 @@ private:
 };
 
 using SdEntryStorage = std::variant<ServiceEntry, EventGroupEntry>;
-using SdOptionStorage = std::variant<ConfigurationOption, IPv4EndpointOption, IPv4MulticastOption>;
+using SdOptionStorage = std::variant<ConfigurationOption,
+                                     IPv4EndpointOption,
+                                     IPv4MulticastOption,
+                                     IPv6EndpointOption,
+                                     IPv6MulticastOption>;
 
 inline const SdEntry* get_entry_ptr(const SdEntryStorage& v) {
     return std::visit([](const auto& e) -> const SdEntry* { return &e; }, v);

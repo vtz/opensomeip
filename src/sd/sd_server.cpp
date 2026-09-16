@@ -33,7 +33,6 @@
 #include "platform/net.h"
 
 #include <algorithm>
-#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
@@ -43,24 +42,6 @@
 #include <utility>
 
 namespace someip::sd {
-
-namespace {
-void uint16_to_str(uint16_t val, platform::String<>& out) {
-    if (val == 0) {
-        out.append("0");
-        return;
-    }
-    std::array<char, 6> digits{};
-    int pos = 5;
-    while (val > 0) {
-        --pos;
-        digits.at(static_cast<size_t>(pos)) = static_cast<char>('0' + (val % 10));
-        val /= 10;
-    }
-    out.append(digits.data() + pos,
-               digits.data() + 5);
-}
-}  // namespace
 
 // NOLINTBEGIN(misc-include-cleaner) - someip_hton*/someip_inet_*/in_addr_t are macros/types from
 // platform/byteorder.h and platform/net.h that misc-include-cleaner cannot trace.
@@ -272,8 +253,8 @@ public:
                 return false;
             }
         }
-        return send_subscribe_response(request, transport::Endpoint(client_ip, client_port),
-                                       acknowledge, ttl_seconds);
+        transport::Endpoint const client_ep(client_ip, client_port);
+        return send_subscribe_response(request, client_ep, acknowledge, ttl_seconds, client_ep);
     }
 
     void set_subscription_accepted_callback(SdServer::SubscriptionAcceptedCallback callback) {
@@ -656,7 +637,9 @@ private:
         }
     }
 
-    /** @implements REQ_SD_347, REQ_SD_349, REQ_SD_350, REQ_SD_351, REQ_SD_352, REQ_SD_353, REQ_SD_354 */
+    /** @implements REQ_SD_347, REQ_SD_349, REQ_SD_350, REQ_SD_351, REQ_SD_352, REQ_SD_353, REQ_SD_354
+     *  @implements REQ_SD_848, REQ_SD_1084
+     *  @satisfies feat_req_someipsd_848, feat_req_someipsd_1084 */
     void handle_eventgroup_subscription_request(const EventGroupEntry& subscription_entry,
                                                const SdMessage& message,
                                                const transport::Endpoint& sender) {
@@ -698,44 +681,62 @@ private:
             return;
         }
 
-        platform::String<> client_ip = sender.get_address();
-        uint16_t client_port = sender.get_port();
-        uint8_t client_protocol = 0x11;
+        platform::String<> event_ip = sender.get_address();
+        uint16_t event_port = sender.get_port();
+        uint8_t event_protocol = 0x11;
+        bool have_udp = false;
+        bool have_tcp = false;
+        bool have_event_endpoint = false;
+        bool has_conflicting_options = false;
+
+        auto consider_ipv4_endpoint = [&](const IPv4EndpointOption& ep) {
+            const uint8_t proto = ep.get_protocol();
+            if (proto == 0x11) {
+                if (have_udp) {
+                    has_conflicting_options = true;
+                    return;
+                }
+                have_udp = true;
+            } else if (proto == 0x06) {
+                if (have_tcp) {
+                    has_conflicting_options = true;
+                    return;
+                }
+                have_tcp = true;
+            } else {
+                has_conflicting_options = true;
+                return;
+            }
+            // Prefer UDP as the event-delivery endpoint when both are present.
+            if (!have_event_endpoint || proto == 0x11) {
+                event_ip = ep.get_ipv4_address_string();
+                event_port = ep.get_port();
+                event_protocol = proto;
+                have_event_endpoint = true;
+            }
+        };
 
         const uint8_t index1 = subscription_entry.get_index1();
         const uint8_t run1 = subscription_entry.get_num_opts1();
         const auto& options = message.get_options();
 
-        bool has_endpoint = false;
-        bool has_conflicting_options = false;
-
         for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
-            const auto& option_var = options[index1 + i];
-            if (const auto* ep = std::get_if<IPv4EndpointOption>(&option_var)) {
-                if (has_endpoint) {
-                    has_conflicting_options = true;
+            if (const auto* ep = std::get_if<IPv4EndpointOption>(&options[index1 + i])) {
+                consider_ipv4_endpoint(*ep);
+                if (has_conflicting_options) {
                     break;
                 }
-                client_ip = ep->get_ipv4_address_string();
-                client_port = ep->get_port();
-                client_protocol = ep->get_protocol();
-                has_endpoint = true;
             }
         }
 
         const uint8_t index2 = subscription_entry.get_index2();
         const uint8_t run2 = subscription_entry.get_num_opts2();
         for (uint8_t i = 0; i < run2 && (index2 + i) < options.size(); ++i) {
-            const auto& option_var = options[index2 + i];
-            if (const auto* ep = std::get_if<IPv4EndpointOption>(&option_var)) {
-                if (has_endpoint) {
-                    has_conflicting_options = true;
+            if (const auto* ep = std::get_if<IPv4EndpointOption>(&options[index2 + i])) {
+                consider_ipv4_endpoint(*ep);
+                if (has_conflicting_options) {
                     break;
                 }
-                client_ip = ep->get_ipv4_address_string();
-                client_port = ep->get_port();
-                client_protocol = ep->get_protocol();
-                has_endpoint = true;
             }
         }
 
@@ -744,34 +745,32 @@ private:
             return;
         }
 
-        if (client_port == 0) {
+        if (event_port == 0) {
             send_subscribe_nack(subscription_entry, sender);
             return;
         }
 
-        (void)client_protocol;
-
-        platform::String<> client_addr(client_ip);
-        client_addr.append(":");
-        uint16_to_str(client_port, client_addr);
-        (void)client_addr;
+        (void)event_protocol;
         send_subscribe_response(
-            subscription_entry, transport::Endpoint(client_ip, client_port), true, ttl);
+            subscription_entry, sender, true, ttl,
+            transport::Endpoint(event_ip, event_port));
     }
 
     void handle_stop_subscribe(const EventGroupEntry& subscription_entry,
                                const transport::Endpoint& sender) {
-        send_subscribe_response(subscription_entry, sender, true, 0);
+        send_subscribe_response(subscription_entry, sender, true, 0, sender);
     }
 
     void send_subscribe_nack(const EventGroupEntry& entry, const transport::Endpoint& client) {
-        send_subscribe_response(entry, client, false, 0);
+        send_subscribe_response(entry, client, false, 0, client);
     }
 
-    /** @implements REQ_SD_272 */
+    /** @implements REQ_SD_272, REQ_SD_1084
+     *  @satisfies feat_req_someipsd_1084 */
     bool send_subscribe_response(const EventGroupEntry& request,
-                                 const transport::Endpoint& client,
-                                 bool acknowledge, uint32_t ttl_seconds) {
+                                 const transport::Endpoint& reply_to,
+                                 bool acknowledge, uint32_t ttl_seconds,
+                                 const transport::Endpoint& event_endpoint) {
         EventGroupEntry response_entry(
             acknowledge ? EntryType::SUBSCRIBE_EVENTGROUP_ACK : EntryType::SUBSCRIBE_EVENTGROUP_NACK);
         response_entry.set_service_id(request.get_service_id());
@@ -815,7 +814,7 @@ private:
             response_message.add_entry(std::move(response_entry));
         }
 
-        const uint16_t session_id = stamp_unicast_tx(response_message, client.get_address());
+        const uint16_t session_id = stamp_unicast_tx(response_message, reply_to.get_address());
         if (session_id == 0) {
             return false;
         }
@@ -831,7 +830,7 @@ private:
         }
         someip_message.set_payload(std::move(serialized));
 
-        const Result result = transport_.send_message(someip_message, client);
+        const Result result = transport_.send_message(someip_message, reply_to);
         if (result == Result::SUCCESS && acknowledge && ttl_seconds > 0) {
             SdServer::SubscriptionAcceptedCallback cb;
             {
@@ -840,7 +839,7 @@ private:
             }
             if (cb) {
                 cb(request.get_service_id(), request.get_instance_id(),
-                   request.get_eventgroup_id(), client);
+                   request.get_eventgroup_id(), event_endpoint);
             }
         }
         return result == Result::SUCCESS;

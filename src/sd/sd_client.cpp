@@ -215,7 +215,7 @@ public:
         return service_subscriptions_.erase(service_id) > 0;
     }
 
-    /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_211, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240, REQ_SD_241, REQ_SD_270, REQ_SD_818
+    /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_211, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_234, REQ_SD_240, REQ_SD_241, REQ_SD_270, REQ_SD_818
      *  @satisfies feat_req_someipsd_818
      */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
@@ -296,7 +296,7 @@ public:
         return true;
     }
 
-    /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240, REQ_SD_818
+    /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_234, REQ_SD_240, REQ_SD_818
      *  @satisfies feat_req_someipsd_818
      */
     bool unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
@@ -552,7 +552,7 @@ private:
         }
     }
 
-    /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240, REQ_SD_346, REQ_SD_348 */
+    /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_234, REQ_SD_240, REQ_SD_346, REQ_SD_348 */
     void handle_service_offer(const ServiceEntry& entry, const SdMessage& message,
                              const transport::Endpoint& sender) {
         ServiceInstance instance;
