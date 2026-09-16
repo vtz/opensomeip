@@ -186,10 +186,23 @@ link_directories(${CMAKE_BINARY_DIR}/vendor/lib)
 
 ### Find Package
 
+After `cmake --install`, a POSIX/host build that did not fetch ETL, FreeRTOS,
+or ThreadX installs `opensomeipConfig.cmake`. Consumers then use:
+
 ```cmake
-find_package(SomeIP REQUIRED)
-target_link_libraries(my_app SomeIP::someip-common)
+find_package(opensomeip REQUIRED)
+target_link_libraries(my_app PRIVATE opensomeip::opensomeip)
 ```
+
+C API consumers link `opensomeip::opensomeip_capi` (it pulls in the C++ core).
+In-tree `add_subdirectory` builds still expose the legacy aliases
+(`someip-common`, `someip-transport`, …); those aliases are **not** part of
+the installed export set.
+
+Package export is skipped when FetchContent'd `etl`, `freertos_kernel`, or
+`threadx` targets are present, because those third-party targets cannot be
+placed in the export set. In that case only the library binaries are
+installed and `find_package(opensomeip)` is not generated.
 
 ## Safety-Oriented Integration (non-certified)
 

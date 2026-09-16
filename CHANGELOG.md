@@ -22,6 +22,12 @@
   ([#265](https://github.com/vtz/opensomeip/issues/265)). `workflow_dispatch`
   remains for a manual verification run.
 
+### Documentation
+
+- **CMake**: `find_package(opensomeip)` / `opensomeip::opensomeip` documented
+  as the installed package; the old `SomeIP::someip-common` snippet was wrong
+  ([#271](https://github.com/vtz/opensomeip/issues/271)).
+
 ### Bug Fixes
 
 - **SOME/IP-SD**: SubscribeEventgroup family is unicast-only. Clients send

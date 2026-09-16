@@ -503,6 +503,13 @@ add_subdirectory(vendor/opensomeip)
 target_link_libraries(your_target PRIVATE someip-transport)
 ```
 
+After installing a host build, consumers can also use the CMake package:
+
+```cmake
+find_package(opensomeip REQUIRED)
+target_link_libraries(your_target PRIVATE opensomeip::opensomeip)
+```
+
 Platform backends (FreeRTOS, ThreadX, lwIP) are **never** fetched unless you explicitly enable them via `SOMEIP_USE_FREERTOS`, `SOMEIP_USE_THREADX`, or `SOMEIP_USE_LWIP`. The Zephyr port uses a separate West/Zephyr module build and is not part of the root CMake tree at all. See the [Integration Guide](docs/INTEGRATION_GUIDE.md) for full details.
 
 ### Safety-Oriented Integration (non-certified)

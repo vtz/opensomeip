@@ -140,11 +140,18 @@ All SOME/IP sources are built as a single static library. Consumers link one tar
 target_link_libraries(my_app opensomeip)
 ```
 
+Installed host builds also export a CMake package:
+
+```cmake
+find_package(opensomeip REQUIRED)
+target_link_libraries(my_app PRIVATE opensomeip::opensomeip)
+```
+
 | Target | Description |
 |--------|-------------|
 | `opensomeip` | Complete SOME/IP stack (core, transport, SD, RPC, events, TP, E2E, serialization) |
 
-For backward compatibility the legacy per-component names (`someip-core`, `someip-transport`, `someip-rpc`, `someip-sd`, `someip-events`, `someip-tp`, `someip-serialization`, `someip-e2e`, `someip-common`) are kept as CMake ALIAS targets that resolve to `opensomeip`. Dead code is eliminated by the linker via `--gc-sections`.
+For backward compatibility the legacy per-component names (`someip-core`, `someip-transport`, `someip-rpc`, `someip-sd`, `someip-events`, `someip-tp`, `someip-serialization`, `someip-e2e`, `someip-common`) are kept as CMake ALIAS targets that resolve to `opensomeip`. Dead code is eliminated by the linker via `--gc-sections`. Those aliases are in-tree only; the installed export set is `opensomeip::opensomeip` (and `opensomeip::opensomeip_capi` when `BUILD_CAPI` is on). Package export is skipped if FetchContent'd `etl`, `freertos_kernel`, or `threadx` targets are present.
 
 ## Dependencies
 
