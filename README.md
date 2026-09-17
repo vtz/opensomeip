@@ -503,12 +503,18 @@ add_subdirectory(vendor/opensomeip)
 target_link_libraries(your_target PRIVATE someip-transport)
 ```
 
-After installing a host build, consumers can also use the CMake package:
+After installing a **POSIX/host** build that did not FetchContent `etl`,
+FreeRTOS, or ThreadX, consumers can use the CMake package:
 
 ```cmake
 find_package(opensomeip REQUIRED)
 target_link_libraries(your_target PRIVATE opensomeip::opensomeip)
 ```
+
+That `find_package` config is **not** generated when the host build defines
+`etl`, `freertos_kernel`, or `threadx` targets (static-allocation or RTOS
+FetchContent). Headers and libraries are still installed. See
+[CMake package export](docs/INTEGRATION_GUIDE.md#find-package).
 
 Platform backends (FreeRTOS, ThreadX, lwIP) are **never** fetched unless you explicitly enable them via `SOMEIP_USE_FREERTOS`, `SOMEIP_USE_THREADX`, or `SOMEIP_USE_LWIP`. The Zephyr port uses a separate West/Zephyr module build and is not part of the root CMake tree at all. See the [Integration Guide](docs/INTEGRATION_GUIDE.md) for full details.
 

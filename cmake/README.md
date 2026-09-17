@@ -151,7 +151,7 @@ target_link_libraries(my_app PRIVATE opensomeip::opensomeip)
 |--------|-------------|
 | `opensomeip` | Complete SOME/IP stack (core, transport, SD, RPC, events, TP, E2E, serialization) |
 
-For backward compatibility the legacy per-component names (`someip-core`, `someip-transport`, `someip-rpc`, `someip-sd`, `someip-events`, `someip-tp`, `someip-serialization`, `someip-e2e`, `someip-common`) are kept as CMake ALIAS targets that resolve to `opensomeip`. Dead code is eliminated by the linker via `--gc-sections`. Those aliases are in-tree only; the installed export set is `opensomeip::opensomeip` (and `opensomeip::opensomeip_capi` when `BUILD_CAPI` is on). Package export is skipped if FetchContent'd `etl`, `freertos_kernel`, or `threadx` targets are present.
+For backward compatibility the legacy per-component names (`someip-core`, `someip-transport`, `someip-rpc`, `someip-sd`, `someip-events`, `someip-tp`, `someip-serialization`, `someip-e2e`, `someip-common`) are kept as CMake ALIAS targets that resolve to `opensomeip`. Dead code is eliminated by the linker via `--gc-sections`. Those aliases are in-tree only; the installed export set is `opensomeip::opensomeip` (and `opensomeip::opensomeip_capi` when `BUILD_CAPI` is on). Package export is skipped if FetchContent'd `etl`, `freertos_kernel`, or `threadx` targets are present; headers and libraries are still installed.
 
 ## Dependencies
 

@@ -201,8 +201,10 @@ the installed export set.
 
 Package export is skipped when FetchContent'd `etl`, `freertos_kernel`, or
 `threadx` targets are present, because those third-party targets cannot be
-placed in the export set. In that case only the library binaries are
-installed and `find_package(opensomeip)` is not generated.
+placed in the export set. Headers and library artifacts are still installed;
+`opensomeipTargets.cmake`, `opensomeipConfig.cmake`, and
+`opensomeipConfigVersion.cmake` are omitted, so `find_package(opensomeip)`
+is not available.
 
 ## Safety-Oriented Integration (non-certified)
 
