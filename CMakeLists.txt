@@ -348,6 +348,11 @@ if(SOMEIP_DEV_TOOLS)
     endif()
 endif()
 
+# GNUInstallDirs must run before add_subdirectory(src). INSTALL_INTERFACE
+# paths in src/CMakeLists.txt expand CMAKE_INSTALL_INCLUDEDIR at configure
+# time; including this module later leaves it empty and exports `/someip`.
+include(GNUInstallDirs)
+
 # Subdirectories
 add_subdirectory(src)
 
@@ -614,7 +619,6 @@ endif()
 # Installation
 ################################################################################
 
-include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/someip
