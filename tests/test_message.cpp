@@ -784,19 +784,24 @@ TEST_F(MessageTest, TryDeserializeDistinguishesRejectionClasses) {
     EXPECT_EQ(msg.try_deserialize(valid_request_wire(), /*expect_e2e=*/true),
               Result::MALFORMED_MESSAGE);
 
+    // Payload 65536 exceeds MAX_TCP_PAYLOAD_SIZE (65535). The static ByteBuffer
+    // slab is 65536 bytes, so 16+65536 cannot be constructed there; keep the
+    // assertion on backends that can allocate it.
     platform::ByteBuffer oversized(16 + 65536, 0);
-    oversized[0] = 0x12;
-    oversized[1] = 0x34;
-    oversized[3] = 0x01;  // method 0x0001
-    const uint32_t length = 8 + 65536;
-    oversized[4] = static_cast<uint8_t>((length >> 24) & 0xFF);
-    oversized[5] = static_cast<uint8_t>((length >> 16) & 0xFF);
-    oversized[6] = static_cast<uint8_t>((length >> 8) & 0xFF);
-    oversized[7] = static_cast<uint8_t>(length & 0xFF);
-    oversized[11] = 0x01;  // session
-    oversized[12] = SOMEIP_PROTOCOL_VERSION;
-    oversized[14] = static_cast<uint8_t>(MessageType::REQUEST);
-    EXPECT_EQ(msg.try_deserialize(oversized), Result::BUFFER_OVERFLOW);
+    if (!oversized.empty()) {
+        oversized[0] = 0x12;
+        oversized[1] = 0x34;
+        oversized[3] = 0x01;  // method 0x0001
+        const uint32_t length = 8 + 65536;
+        oversized[4] = static_cast<uint8_t>((length >> 24) & 0xFF);
+        oversized[5] = static_cast<uint8_t>((length >> 16) & 0xFF);
+        oversized[6] = static_cast<uint8_t>((length >> 8) & 0xFF);
+        oversized[7] = static_cast<uint8_t>(length & 0xFF);
+        oversized[11] = 0x01;  // session
+        oversized[12] = SOMEIP_PROTOCOL_VERSION;
+        oversized[14] = static_cast<uint8_t>(MessageType::REQUEST);
+        EXPECT_EQ(msg.try_deserialize(oversized), Result::BUFFER_OVERFLOW);
+    }
 
     Message round_trip;
     EXPECT_EQ(round_trip.try_deserialize(valid_request_wire()), Result::SUCCESS);
