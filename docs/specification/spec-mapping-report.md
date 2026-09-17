@@ -4,78 +4,15 @@
 
 - **Spec Requirements (open-someip-spec)**: 748
 - **Implementation Requirements (OpenSOMEIP)**: 690
-  - Spec-derived: 498
-  - Implementation-derived: 192
+  - Spec-derived: 445
+  - Implementation-derived: 245
 - **Mapped Spec Requirements**: 748
 - **Unmapped Spec Requirements**: 0
-- **Implementation Reqs Missing Spec Links**: 52
+- **Implementation Reqs Missing Spec Links**: 0
 - **Auto-Corrected Links**: 0
 - **Unresolvable Links**: 0
 
 **Spec Coverage**: 100.0%
-
-## Implementation Requirements Missing Spec Links
-
-These spec-derived requirements should have `:satisfies:` links:
-
-
-### CAPI (12)
-- **REQ_CAPI_002**: Integer Error Codes
-- **REQ_CAPI_003**: Explicit Create/Destroy Ownership
-- **REQ_CAPI_004**: Callback Safety
-- **REQ_CAPI_005**: C API Versioning
-- **REQ_CAPI_006**: Thread Safety Documentation
-- **REQ_CAPI_007**: Exception Firewall
-- **REQ_CAPI_008**: Message and Serialization C API
-- **REQ_CAPI_009**: Transport C API
-- **REQ_CAPI_010**: RPC C API
-- **REQ_CAPI_011**: Service Discovery C API
-- **REQ_CAPI_012**: Events C API
-- **REQ_CAPI_013**: TP and E2E C API
-
-### PAL (39)
-- **REQ_PAL_BUFPOOL_ACQUIRE**: Buffer Pool Acquire
-- **REQ_PAL_BUFPOOL_RELEASE**: Buffer Pool Release
-- **REQ_PAL_BUFPOOL_TIERED**: Tiered Buffer Pool Selection
-- **REQ_PAL_BYTE_HTONL**: PAL Host-to-Network 32-bit Conversion
-- **REQ_PAL_BYTE_HTONS**: PAL Host-to-Network 16-bit Conversion
-- **REQ_PAL_BYTE_NTOHL**: PAL Network-to-Host 32-bit Conversion
-- **REQ_PAL_BYTE_NTOHS**: PAL Network-to-Host 16-bit Conversion
-- **REQ_PAL_CONTAINER_FUNCTION**: Platform Function Type
-- **REQ_PAL_CONTAINER_MAP**: Platform Unordered Map Type
-- **REQ_PAL_CONTAINER_QUEUE**: Platform Queue Type
-- **REQ_PAL_CONTAINER_STRING**: Platform String Type
-- **REQ_PAL_CONTAINER_VECTOR**: Platform Vector Type
-- **REQ_PAL_CV_NOTIFY_ALL**: PAL ConditionVariable Notify All
-- **REQ_PAL_CV_NOTIFY_ONE**: PAL ConditionVariable Notify One
-- **REQ_PAL_CV_OWNERSHIP**: PAL ConditionVariable Mutex Ownership Guarantee
-- **REQ_PAL_CV_WAIT**: PAL ConditionVariable Wait
-- **REQ_PAL_CV_WAIT_PRED**: PAL ConditionVariable Wait with Predicate
-- **REQ_PAL_INTRUSIVE_PTR**: Intrusive Reference Counting for Message
-- **REQ_PAL_LOCK_ACQUIRE**: PAL ScopedLock Acquisition on Construction
-- **REQ_PAL_LOCK_NONCOPY**: PAL ScopedLock Non-Copyable
-- **REQ_PAL_LOCK_RELEASE**: PAL ScopedLock Release on Destruction
-- **REQ_PAL_MEM_ALLOC**: PAL Memory Allocation
-- **REQ_PAL_MEM_INDEPENDENT**: PAL Memory Independence
-- **REQ_PAL_MUTEX_LOCK**: PAL Mutex Lock
-- **REQ_PAL_MUTEX_NONCOPY**: PAL Mutex Non-Copyable
-- **REQ_PAL_MUTEX_TRYLOCK**: PAL Mutex Try Lock
-- **REQ_PAL_MUTEX_UNLOCK**: PAL Mutex Unlock
-- **REQ_PAL_NET_BLOCK**: PAL Socket Set Blocking
-- **REQ_PAL_NET_CLOSE**: PAL Socket Close
-- **REQ_PAL_NET_NONBLOCK**: PAL Socket Set Non-Blocking
-- **REQ_PAL_NET_SHUTDOWN**: PAL Socket Shutdown
-- **REQ_PAL_NOOP_HEAP_VERIFY**: No-Heap Runtime Verification
-- **REQ_PAL_SLEEP_DURATION**: PAL sleep_for Minimum Duration
-- **REQ_PAL_SLEEP_ZERO**: PAL sleep_for Zero Duration
-- **REQ_PAL_STATIC_CONFIG**: Compile-Time Capacity Configuration
-- **REQ_PAL_THREAD_CREATE**: PAL Thread Creation
-- **REQ_PAL_THREAD_JOIN**: PAL Thread Join
-- **REQ_PAL_THREAD_JOINABLE**: PAL Thread Joinable Query
-- **REQ_PAL_THREAD_NONCOPY**: PAL Thread Non-Copyable
-
-### TP (1)
-- **REQ_TP_081_ATOM**: Atomic Header and Payload Completion
 
 ## Spec Requirements Coverage by Category
 

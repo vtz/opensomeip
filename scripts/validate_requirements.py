@@ -159,6 +159,9 @@ def validate_requirements(
                 or "_ARCH_" in req_id  # Architectural
                 or "PLUGIN" in req_id  # Plugin requirements
                 or "MY_" in req_id  # Custom requirements
+                or req_id.startswith("REQ_CAPI_")
+                or req_id.startswith("REQ_PAL_")
+                or req_id.endswith("_ATOM")
             )
 
             if not is_implementation_derived:

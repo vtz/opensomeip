@@ -219,12 +219,14 @@ _IMPL_DERIVED_PREFIXES = (
     "REQ_ARCH_",
     "REQ_PLATFORM_",
     "REQ_E2E_PLUGIN_",
+    "REQ_CAPI_",
+    "REQ_PAL_",
 )
 
 
 def classify_requirement(req_id: str) -> str:
     """Classify requirement as spec-derived or implementation-derived."""
-    if "_E0" in req_id or "_E1" in req_id:
+    if "_E0" in req_id or "_E1" in req_id or req_id.endswith("_ATOM"):
         return "impl_derived"
     for prefix in _IMPL_DERIVED_PREFIXES:
         if req_id.startswith(prefix):
