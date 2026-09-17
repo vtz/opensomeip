@@ -303,6 +303,8 @@ TEST(EventDrivenUdpTransport, MulticastBeforeStart) {
 
     EXPECT_EQ(transport.join_multicast_group("224.0.0.1"), Result::NOT_CONNECTED);
     EXPECT_EQ(transport.leave_multicast_group("224.0.0.1"), Result::NOT_CONNECTED);
+    EXPECT_EQ(transport.connect(Endpoint{"224.0.0.1", 30490, TransportProtocol::MULTICAST_UDP}),
+              Result::NOT_CONNECTED);
     EXPECT_TRUE(adapter.joins_.empty());
     EXPECT_TRUE(adapter.leaves_.empty());
 }
