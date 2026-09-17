@@ -789,7 +789,7 @@ TEST_F(E2ETest, HeaderFieldsPreservedAcrossWire) {
  */
 TEST_F(E2ETest, DefaultConfigOffsetIs64Bits) {
     E2EConfig config;
-    EXPECT_EQ(config.offset, E2EConfig::DEFAULT_OFFSET_BITS);
+    EXPECT_EQ(config.offset_bits, E2EConfig::DEFAULT_OFFSET_BITS);
     EXPECT_EQ(E2EConfig::DEFAULT_OFFSET_BITS, 64u);
 }
 
@@ -823,7 +823,7 @@ TEST_F(E2ETest, DefaultOffsetPlacesHeaderAfterReturnCode) {
  * @test_case TC_E2E_OFFSET_002
  * @tests REQ_E2E_PLUGIN_005
  * @tests feat_req_someip_102
- * @brief Non-default Offset is rejected (Message layout is fixed)
+ * @brief Non-default Offset returns NOT_IMPLEMENTED (Message layout is fixed)
  */
 TEST_F(E2ETest, ProtectAndValidateRejectNonDefaultOffset) {
     E2EProtection protection;
@@ -834,9 +834,9 @@ TEST_F(E2ETest, ProtectAndValidateRejectNonDefaultOffset) {
     ASSERT_EQ(protection.protect(msg, good), Result::SUCCESS);
 
     E2EConfig bad_offset(0x1234);
-    bad_offset.offset = 8;  // former unused default (bytes), not 64 bits
-    EXPECT_EQ(protection.protect(msg, bad_offset), Result::INVALID_ARGUMENT);
-    EXPECT_EQ(protection.validate(msg, bad_offset), Result::INVALID_ARGUMENT);
+    bad_offset.offset_bits = 8;  // former unused default (bytes), not 64 bits
+    EXPECT_EQ(protection.protect(msg, bad_offset), Result::NOT_IMPLEMENTED);
+    EXPECT_EQ(protection.validate(msg, bad_offset), Result::NOT_IMPLEMENTED);
 
     EXPECT_EQ(protection.validate(msg, good), Result::SUCCESS);
 }
@@ -858,7 +858,7 @@ public:
  * @test_case TC_E2E_OFFSET_003
  * @tests REQ_E2E_PLUGIN_005
  * @tests feat_req_someip_103
- * @brief Plugins that do not use the fixed 12-byte E2EHeader are rejected
+ * @brief Plugins that do not use the fixed 12-byte E2EHeader return NOT_IMPLEMENTED
  */
 TEST_F(E2ETest, ProtectAndValidateRejectNonStandardHeaderSize) {
     constexpr uint32_t kProfileId = 0xE2E0FF01;
@@ -874,13 +874,13 @@ TEST_F(E2ETest, ProtectAndValidateRejectNonStandardHeaderSize) {
     config.profile_id = kProfileId;
     config.profile_name = "oversized";
 
-    EXPECT_EQ(protection.protect(msg, config), Result::INVALID_ARGUMENT);
-    EXPECT_EQ(protection.validate(msg, config), Result::INVALID_ARGUMENT);
+    EXPECT_EQ(protection.protect(msg, config), Result::NOT_IMPLEMENTED);
+    EXPECT_EQ(protection.validate(msg, config), Result::NOT_IMPLEMENTED);
 
     E2EConfig by_name(0x1234);
     by_name.profile_name = "oversized";
-    EXPECT_EQ(protection.protect(msg, by_name), Result::INVALID_ARGUMENT);
-    EXPECT_EQ(protection.validate(msg, by_name), Result::INVALID_ARGUMENT);
+    EXPECT_EQ(protection.protect(msg, by_name), Result::NOT_IMPLEMENTED);
+    EXPECT_EQ(protection.validate(msg, by_name), Result::NOT_IMPLEMENTED);
 
     EXPECT_TRUE(registry.unregister_profile(kProfileId));
 }

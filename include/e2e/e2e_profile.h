@@ -60,7 +60,7 @@ public:
      *
      * The shipped Message / E2EHeader contract is a fixed 12-byte header.
      * Plugins that return a size other than E2EHeader::get_header_size()
-     * are rejected by E2EProtection.
+     * cause E2EProtection::protect/validate to return Result::NOT_IMPLEMENTED.
      *
      * @return Header size in bytes
      */

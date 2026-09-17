@@ -46,11 +46,11 @@ Result resolve_supported_profile(const E2EConfig& config, E2EProfile*& profile) 
     if (profile == nullptr) {
         return Result::NOT_INITIALIZED;
     }
-    if (config.offset != E2EConfig::DEFAULT_OFFSET_BITS) {
-        return Result::INVALID_ARGUMENT;
+    if (config.offset_bits != E2EConfig::DEFAULT_OFFSET_BITS) {
+        return Result::NOT_IMPLEMENTED;
     }
     if (profile->get_header_size() != E2EHeader::get_header_size()) {
-        return Result::INVALID_ARGUMENT;
+        return Result::NOT_IMPLEMENTED;
     }
     return Result::SUCCESS;
 }

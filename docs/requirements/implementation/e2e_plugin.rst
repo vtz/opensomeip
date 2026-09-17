@@ -141,16 +141,19 @@ E2E Header Format
    :verification: Code inspection of header structure and execution of message serialization tests with E2E headers.
 
    The E2E header shall be inserted immediately after the Return Code field.
-   ``E2EConfig::offset`` is measured in bits from the start of the
-   Length-covered region (Request ID). The default is 64 bits (8 bytes),
-   which places the header between Return Code and Payload
-   (feat_req_someip_102). Non-default offsets are not representable in
-   ``Message`` and shall be rejected by ``E2EProtection::protect`` and
-   ``validate``.
+   ``E2EConfig::offset_bits`` is the spec Offset, measured in bits from the
+   start of the Length-covered region (Request ID). The default is 64 bits
+   (8 bytes), which places the header between Return Code and Payload
+   (feat_req_someip_102). Non-default Offset values are not representable
+   in ``Message`` and shall return ``Result::NOT_IMPLEMENTED`` from
+   ``E2EProtection::protect`` and ``validate``.
 
    The shipped ``Message`` / ``E2EHeader`` contract is a fixed 12-byte
-   header. Plugins whose ``get_header_size()`` is not 12 shall be rejected
-   by ``E2EProtection``.
+   header. Plugins whose ``get_header_size()`` is not 12 shall return
+   ``Result::NOT_IMPLEMENTED`` from ``E2EProtection``.
+   ``Result::NOT_INITIALIZED`` is returned first when no profile is
+   registered. ``Result::INVALID_ARGUMENT`` is reserved for CRC, Data ID,
+   replay, and true caller errors.
 
    The standard E2E header format shall be:
 
@@ -164,7 +167,8 @@ E2E Header Format
    feat_req_someip_102. Deviates from feat_req_someip_102 (variable Offset)
    and feat_req_someip_103 (variable header size): ``Message`` currently
    stores only the 12-byte header immediately after Return Code, so
-   ``E2EProtection`` rejects any other offset or plugin header size.
+   ``E2EProtection`` returns ``NOT_IMPLEMENTED`` for any other Offset or
+   plugin header size until issue 339 implements those layouts.
 
    **Code Location**: ``include/e2e/e2e_header.h``, ``src/e2e/e2e_protection.cpp``
 
