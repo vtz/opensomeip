@@ -49,8 +49,8 @@ struct E2EConfig {
      * Non-default offsets are not representable in Message today and are
      * rejected by E2EProtection::protect/validate.
      */
-    static constexpr uint32_t kDefaultOffsetBits = 64;
-    uint32_t offset{kDefaultOffsetBits};
+    static constexpr uint32_t DEFAULT_OFFSET_BITS = 64;
+    uint32_t offset{DEFAULT_OFFSET_BITS};
 
     /**
      * @brief Enable CRC calculation

@@ -50,11 +50,14 @@
   source-compatible bool wrappers
   ([#316](https://github.com/vtz/opensomeip/issues/316)).
 
-### Bug Fixes
+### Breaking Changes
 
-- **E2E**: `E2EConfig::offset` is bits from the start of the Length-covered
-  region (default 64). Non-default offsets and plugins whose
-  `get_header_size()` is not 12 are rejected by `E2EProtection`
+- **E2E**: `E2EConfig::offset` changed unit (bytes → bits) and origin (from
+  Return Code → from the start of the Length-covered region / Request ID).
+  The default is now `E2EConfig::DEFAULT_OFFSET_BITS` (64), not `8`. Callers
+  who previously set `offset = 8` must drop that assignment or
+  `protect`/`validate` will return `INVALID_ARGUMENT`. Non-default offsets
+  and plugins whose `get_header_size()` is not 12 are rejected
   ([#318](https://github.com/vtz/opensomeip/issues/318)).
 - **SOME/IP-SD**: SubscribeEventgroup with both a UDP and a TCP
   IPv4EndpointOption is accepted; only true duplicates (two UDP or two
@@ -67,6 +70,8 @@
   options are parsed instead of being skipped as unknown. IPv6 SD Endpoint
   (0x26) and ``AF_INET6`` transport remain out of scope
   ([#320](https://github.com/vtz/opensomeip/issues/320)).
+
+### Bug Fixes
 
 - **SOME/IP-SD**: SubscribeEventgroup family is unicast-only. Clients send
   Subscribe/StopSubscribe to the Offer datagram source (not the SD multicast

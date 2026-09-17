@@ -61,7 +61,7 @@ Configuration for E2E protection.
 - `uint32_t profile_id` - Profile identifier (0 = basic profile)
 - `std::string profile_name` - Profile name ("basic" by default)
 - `uint16_t data_id` - Data ID for identifying protected data
-- `uint32_t offset` - E2E header offset in bits from the start of the Length-covered region (Request ID). Default: `E2EConfig::kDefaultOffsetBits` (64). Non-default values are rejected by `E2EProtection`.
+- `uint32_t offset` - E2E header offset in bits from the start of the Length-covered region (Request ID). Default: `E2EConfig::DEFAULT_OFFSET_BITS` (64). Non-default values are rejected by `E2EProtection`.
 - `bool enable_crc` - Enable CRC calculation
 - `bool enable_counter` - Enable counter mechanism
 - `bool enable_freshness` - Enable freshness value
