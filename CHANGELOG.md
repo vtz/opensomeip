@@ -58,13 +58,21 @@
 
 ### Breaking Changes
 
-- **E2E**: `E2EConfig::offset` changed unit (bytes → bits) and origin (from
-  Return Code → from the start of the Length-covered region / Request ID).
-  The default is now `E2EConfig::DEFAULT_OFFSET_BITS` (64), not `8`. Callers
-  who previously set `offset = 8` must drop that assignment or
-  `protect`/`validate` will return `INVALID_ARGUMENT`. Non-default offsets
-  and plugins whose `get_header_size()` is not 12 are rejected
-  ([#318](https://github.com/vtz/opensomeip/issues/318)).
+- **E2E**: `E2EConfig::offset` is renamed to `offset_bits` (no alias). The
+  field is bits from the start of the Length-covered region / Request ID
+  (Open SOME/IP Offset, feat_req_someip_102). The default is
+  `E2EConfig::DEFAULT_OFFSET_BITS` (64), not the previous unused `8`.
+  Callers who set `offset = 8` must switch to `offset_bits` and drop that
+  assignment. `protect`/`validate` return `NOT_IMPLEMENTED` when
+  `offset_bits` is not the default or the plugin `get_header_size()` is
+  not 12 (`NOT_INITIALIZED` still wins if no profile is registered).
+  `INVALID_ARGUMENT` remains CRC/Data ID/replay and true caller errors.
+  The C ABI is unchanged (Offset is not a C field)
+  ([#318](https://github.com/vtz/opensomeip/issues/318),
+  leftover [#339](https://github.com/vtz/opensomeip/issues/339)).
+
+### Bug Fixes
+
 - **Transport**: TCP no longer busy-loops on an invalid length field; resync
   is only at a Magic Cookie. Declared frames larger than `max_receive_buffer`
   report `BUFFER_OVERFLOW` once. UDP rejection IDs are taken from the wire
@@ -81,8 +89,6 @@
   options are parsed instead of being skipped as unknown. IPv6 SD Endpoint
   (0x26) and ``AF_INET6`` transport remain out of scope
   ([#320](https://github.com/vtz/opensomeip/issues/320)).
-
-### Bug Fixes
 
 - **SOME/IP-SD**: SubscribeEventgroup family is unicast-only. Clients send
   Subscribe/StopSubscribe to the Offer datagram source (not the SD multicast

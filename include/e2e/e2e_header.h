@@ -29,8 +29,8 @@ namespace someip::e2e {
  * according to SOME/IP spec feat_req_someip_102 and feat_req_someip_103.
  *
  * Message serializes this as a fixed 12-byte header. Plugins that need a
- * different size are rejected by E2EProtection until Message can represent
- * variable-size profile bytes.
+ * different size cause E2EProtection to return Result::NOT_IMPLEMENTED until
+ * Message can represent variable-size profile bytes.
  */
 struct E2EHeader {
     /**
