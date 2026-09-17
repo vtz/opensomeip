@@ -36,6 +36,30 @@
 
 namespace someip::transport {
 
+namespace {
+
+uint32_t read_be32_at(const platform::ByteBuffer& buffer, size_t offset) {
+    return (static_cast<uint32_t>(buffer[offset]) << 24U) |
+           (static_cast<uint32_t>(buffer[offset + 1U]) << 16U) |
+           (static_cast<uint32_t>(buffer[offset + 2U]) << 8U) |
+           static_cast<uint32_t>(buffer[offset + 3U]);
+}
+
+void populate_ids_from_header(MessagePtr& message, const platform::ByteBuffer& buffer) {
+    message = platform::allocate_message();
+    if (!message) {
+        return;
+    }
+    if (buffer.size() >= 4) {
+        message->set_message_id(MessageId::from_uint32(read_be32_at(buffer, 0)));
+    }
+    if (buffer.size() >= 12) {
+        message->set_request_id(RequestId::from_uint32(read_be32_at(buffer, 8)));
+    }
+}
+
+}  // namespace
+
 // NOLINTBEGIN(misc-include-cleaner) - sockaddr/timeval/fd_set and someip_* wrappers/macros come from
 // platform/net.h -> net_impl.h; misc-include-cleaner does not trace through this abstraction.
 
@@ -391,6 +415,7 @@ void TcpTransport::disconnect_internal() {
         someip_close_socket(connection_.socket_fd);
         connection_.socket_fd = SOMEIP_INVALID_SOCKET;
         connection_.receive_buffer.clear();
+        framing_skip_remaining_ = 0;
 
         connection_.state = TcpConnectionState::DISCONNECTED;
 
@@ -495,7 +520,7 @@ void TcpTransport::receive_loop() {
                     info.result = rejection;
                     info.stage = stage;
                     if (message) {
-                        fill_rejection_ids(info, *message, Message::get_header_size());
+                        fill_rejection_ids(info, *message, SOMEIP_HEADER_SIZE);
                     }
                     notify_rejection(info);
                     continue;
@@ -627,6 +652,18 @@ TcpParseOutcome TcpTransport::parse_next_message(platform::ByteBuffer& buffer, M
     stage = MessageRejectionStage::TCP_FRAMING;
     message.reset();
 
+    if (framing_skip_remaining_ > 0) {
+        const size_t drop = std::min(buffer.size(), framing_skip_remaining_);
+        if (drop == 0) {
+            return TcpParseOutcome::NEED_MORE;
+        }
+        buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(drop));
+        framing_skip_remaining_ -= drop;
+        if (framing_skip_remaining_ > 0 || buffer.empty()) {
+            return TcpParseOutcome::NEED_MORE;
+        }
+    }
+
     if (buffer.size() > config_.max_receive_buffer) {
         buffer.clear();
         rejection = Result::BUFFER_OVERFLOW;
@@ -642,52 +679,42 @@ TcpParseOutcome TcpTransport::parse_next_message(platform::ByteBuffer& buffer, M
         return TcpParseOutcome::CONTROL_FRAME;
     }
 
-    const uint32_t length_from_client_id =
-        (static_cast<uint32_t>(buffer[4]) << 24U) | (static_cast<uint32_t>(buffer[5]) << 16U) |
-        (static_cast<uint32_t>(buffer[6]) << 8U) | static_cast<uint32_t>(buffer[7]);
+    const uint32_t length_from_client_id = read_be32_at(buffer, 4);
 
     if (length_from_client_id < 8 || length_from_client_id > MAX_MESSAGE_SIZE) {
-        message = platform::allocate_message();
-        if (message) {
-            (void)message->deserialize(buffer.data(), SOMEIP_HEADER_SIZE);
-        }
+        populate_ids_from_header(message, buffer);
 
         size_t search_start = 1;
-        bool found_valid = false;
-
+        bool found_cookie = false;
         while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
             if (is_magic_cookie(buffer, search_start)) {
                 buffer.erase(buffer.begin(),
                              buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
-                found_valid = true;
+                found_cookie = true;
                 break;
             }
-
-            uint32_t const potential_msg_id =
-                (static_cast<uint32_t>(buffer[search_start]) << 24U) |
-                (static_cast<uint32_t>(buffer[search_start + 1]) << 16U) |
-                (static_cast<uint32_t>(buffer[search_start + 2]) << 8U) |
-                static_cast<uint32_t>(buffer[search_start + 3]);
-            if (potential_msg_id != 0) {
-                buffer.erase(buffer.begin(),
-                             buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
-                found_valid = true;
-                break;
-            }
-            search_start++;
+            ++search_start;
         }
-
-        if (!found_valid) {
-            if (buffer.size() > SOMEIP_HEADER_SIZE) {
-                buffer.erase(buffer.begin(),
-                             buffer.begin() + static_cast<std::ptrdiff_t>(buffer.size() - SOMEIP_HEADER_SIZE + 1));
-            }
+        if (!found_cookie) {
+            buffer.erase(buffer.begin(),
+                         buffer.begin() + static_cast<std::ptrdiff_t>(SOMEIP_HEADER_SIZE));
         }
         rejection = Result::MALFORMED_MESSAGE;
         return TcpParseOutcome::REJECTED;
     }
 
-    const size_t total_message_size = 8 + length_from_client_id;
+    const size_t total_message_size = 8U + static_cast<size_t>(length_from_client_id);
+
+    if (total_message_size > config_.max_receive_buffer) {
+        populate_ids_from_header(message, buffer);
+        const size_t consume = std::min(buffer.size(), total_message_size);
+        buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(consume));
+        if (total_message_size > consume) {
+            framing_skip_remaining_ = total_message_size - consume;
+        }
+        rejection = Result::BUFFER_OVERFLOW;
+        return TcpParseOutcome::REJECTED;
+    }
 
     if (buffer.size() < total_message_size) {
         return TcpParseOutcome::NEED_MORE;

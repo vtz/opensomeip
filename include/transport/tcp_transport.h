@@ -274,6 +274,7 @@ private:
     Result receive_data(someip_socket_t socket_fd, platform::ByteBuffer& data);
 
     std::chrono::steady_clock::time_point last_magic_cookie_time_{std::chrono::steady_clock::now()};
+    size_t framing_skip_remaining_{0};
 };
 
 }  // namespace someip::transport

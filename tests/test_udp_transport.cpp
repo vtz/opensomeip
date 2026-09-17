@@ -14,12 +14,14 @@
 #include <gtest/gtest.h>
 #include <transport/udp_transport.h>
 #include <transport/transport.h>
+#include <transport/message_rejection.h>
 #include <someip/message.h>
 #include <platform/buffer_pool.h>
 #include <platform/containers.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <cstdint>
 #include <vector>
 #include "static_pool_init.h"
 
@@ -358,6 +360,16 @@ TEST_F(UdpTransportTest, MalformedDatagramNotifiesRejectionNotMessage) {
 
     sender.stop();
     receiver.stop();
+}
+
+TEST(MessageRejectionIds, ShortWirePrefixReportsMessageIdOnly) {
+    const uint8_t wire[] = {0x12, 0x34, 0x56, 0x78, 0xAA, 0xBB};
+    MessageRejectionInfo info;
+    fill_rejection_ids(info, wire, sizeof(wire));
+    EXPECT_TRUE(info.has_message_id);
+    EXPECT_EQ(info.message_id.service_id, 0x1234);
+    EXPECT_EQ(info.message_id.method_id, 0x5678);
+    EXPECT_FALSE(info.has_request_id);
 }
 
 // Test non-blocking mode behavior (should not block on receive)

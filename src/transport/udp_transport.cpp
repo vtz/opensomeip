@@ -469,9 +469,18 @@ void UdpTransport::receive_loop() {
 
             if (tp_datagram) {
                 const uint32_t sender_ipv4 = ntohl(someip_inet_addr(sender.get_address().c_str()));
+                Result ingest_error = Result::SUCCESS;
                 if (tp_manager_->ingest_datagram(buffer.data(), bytes_received, *message,
-                                                 sender_ipv4, sender.get_port())) {
+                                                 sender_ipv4, sender.get_port(),
+                                                 &ingest_error)) {
                     delivered = true;
+                } else if (ingest_error != Result::SUCCESS) {
+                    MessageRejectionInfo info;
+                    info.sender = sender;
+                    info.result = ingest_error;
+                    info.stage = MessageRejectionStage::TP_REASSEMBLY;
+                    fill_rejection_ids(info, buffer.data(), bytes_received);
+                    notify_rejection(info);
                 }
                 // Incomplete reassembly is not a rejection; wait for more segments.
             } else if (message->deserialize(buffer.data(), bytes_received)) {
@@ -481,7 +490,7 @@ void UdpTransport::receive_loop() {
                 info.sender = sender;
                 info.result = Result::MALFORMED_MESSAGE;
                 info.stage = MessageRejectionStage::DESERIALIZE;
-                fill_rejection_ids(info, *message, bytes_received);
+                fill_rejection_ids(info, buffer.data(), bytes_received);
                 notify_rejection(info);
             }
 

@@ -666,6 +666,103 @@ TEST_F(TcpTransportTest, ParseNextMessageDistinguishesOutcomes) {
 }
 
 /**
+ * @test_case TC_TCP_REJECT_003
+ * @tests REQ_TRANSPORT_026
+ * @brief An invalid TCP length field consumes the 16-byte header (no busy-loop)
+ */
+TEST_F(TcpTransportTest, InvalidLengthConsumesHeader) {
+    TcpTransport transport(config);
+
+    platform::ByteBuffer buffer(16, 0);
+    buffer[0] = 0x12;
+    buffer[1] = 0x34;
+    buffer[2] = 0x56;
+    buffer[3] = 0x78;
+    buffer[8] = 0xAB;
+    buffer[9] = 0xCD;
+    buffer[10] = 0x00;
+    buffer[11] = 0x01;
+
+    MessagePtr parsed;
+    Result rejection = Result::SUCCESS;
+    MessageRejectionStage stage = MessageRejectionStage::DESERIALIZE;
+    EXPECT_EQ(transport.parse_next_message(buffer, parsed, rejection, stage),
+              TcpParseOutcome::REJECTED);
+    EXPECT_EQ(rejection, Result::MALFORMED_MESSAGE);
+    EXPECT_EQ(stage, MessageRejectionStage::TCP_FRAMING);
+    EXPECT_TRUE(buffer.empty());
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_service_id(), 0x1234);
+    EXPECT_EQ(parsed->get_method_id(), 0x5678);
+    EXPECT_EQ(parsed->get_client_id(), 0xABCD);
+
+    EXPECT_EQ(transport.parse_next_message(buffer, parsed, rejection, stage),
+              TcpParseOutcome::NEED_MORE);
+}
+
+/**
+ * @test_case TC_TCP_REJECT_004
+ * @tests REQ_TRANSPORT_026
+ * @brief Invalid length resynchronizes only at a Magic Cookie, not a random Message ID
+ */
+TEST_F(TcpTransportTest, InvalidLengthResyncsAtMagicCookie) {
+    TcpTransport transport(config);
+
+    platform::ByteBuffer buffer(16, 0);
+    buffer[0] = 0x12;
+    buffer[1] = 0x34;
+    buffer[2] = 0x56;
+    buffer[3] = 0x78;
+    auto cookie = TcpTransport::make_magic_cookie_client();
+    buffer.insert(buffer.end(), cookie.begin(), cookie.end());
+
+    MessagePtr parsed;
+    Result rejection = Result::SUCCESS;
+    MessageRejectionStage stage = MessageRejectionStage::DESERIALIZE;
+    EXPECT_EQ(transport.parse_next_message(buffer, parsed, rejection, stage),
+              TcpParseOutcome::REJECTED);
+    EXPECT_EQ(buffer.size(), cookie.size());
+    EXPECT_EQ(transport.parse_next_message(buffer, parsed, rejection, stage),
+              TcpParseOutcome::CONTROL_FRAME);
+    EXPECT_TRUE(buffer.empty());
+}
+
+/**
+ * @test_case TC_TCP_REJECT_005
+ * @tests REQ_TRANSPORT_026
+ * @brief Declared frame larger than max_receive_buffer is BUFFER_OVERFLOW once
+ */
+TEST_F(TcpTransportTest, OversizedDeclaredLengthReportsBufferOverflow) {
+    config.max_receive_buffer = 32;
+    TcpTransport transport(config);
+
+    platform::ByteBuffer buffer(16, 0);
+    buffer[0] = 0x12;
+    buffer[1] = 0x34;
+    buffer[2] = 0x56;
+    buffer[3] = 0x78;
+    buffer[7] = 100;  // length 100 (>= 8, <= MAX); total 108 > 32
+    buffer[8] = 0xAB;
+    buffer[9] = 0xCD;
+    buffer[10] = 0x00;
+    buffer[11] = 0x01;
+
+    MessagePtr parsed;
+    Result rejection = Result::SUCCESS;
+    MessageRejectionStage stage = MessageRejectionStage::DESERIALIZE;
+    EXPECT_EQ(transport.parse_next_message(buffer, parsed, rejection, stage),
+              TcpParseOutcome::REJECTED);
+    EXPECT_EQ(rejection, Result::BUFFER_OVERFLOW);
+    EXPECT_EQ(stage, MessageRejectionStage::TCP_FRAMING);
+    EXPECT_TRUE(buffer.empty());
+
+    platform::ByteBuffer rest(40, 0xAA);
+    EXPECT_EQ(transport.parse_next_message(rest, parsed, rejection, stage),
+              TcpParseOutcome::NEED_MORE);
+    EXPECT_TRUE(rest.empty());
+}
+
+/**
  * @test_case TC_TCP_REJECT_002
  * @tests REQ_TRANSPORT_026
  * @brief A complete malformed TCP frame notifies once; an incomplete frame does not
