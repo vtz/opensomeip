@@ -43,13 +43,14 @@ annotations.
 PR comments are disabled (`comment_mode: "off"`) — results are visible only in
 the Checks tab and as inline annotations.
 
-**Python extra:** on same-repository PRs and `workflow_dispatch`, an additional
-check run (**Python Detailed Test Report**) is created via
-`gh api repos/.../check-runs` with a markdown summary table and up to 50 failed
-test details. Fork PRs skip that step: the default `GITHUB_TOKEN` is read-only
-there, so creating a check run would 403 and fail the job after the tests
-themselves passed ([#330](https://github.com/vtz/opensomeip/issues/330)). The
-CTRF job summary still records the same report.
+**Python extra:** on same-repository PRs, eligible `push` runs, and
+`workflow_dispatch`, an additional check run (**Python Detailed Test Report**)
+is created via `gh api repos/.../check-runs` with a markdown summary table and
+up to 50 failed test details. Fork PRs skip that step: the default
+`GITHUB_TOKEN` is read-only there, so creating a check run would 403 and fail
+the job after the tests themselves passed
+([#330](https://github.com/vtz/opensomeip/issues/330)). The CTRF job summary
+still records the same report.
 
 ## Layer 2: Job Summaries
 
