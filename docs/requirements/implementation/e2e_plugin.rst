@@ -160,9 +160,11 @@ E2E Header Format
    * Freshness Value: 16 bits
    * Total: 12 bytes (96 bits)
 
-   **Rationale**: Complies with SOME/IP specification feat_req_someip_102
-   and feat_req_someip_103. Variable-size profile headers are out of
-   scope until ``Message`` can store them.
+   **Rationale**: Implements the default header placement of
+   feat_req_someip_102. Deviates from feat_req_someip_102 (variable Offset)
+   and feat_req_someip_103 (variable header size): ``Message`` currently
+   stores only the 12-byte header immediately after Return Code, so
+   ``E2EProtection`` rejects any other offset or plugin header size.
 
    **Code Location**: ``include/e2e/e2e_header.h``, ``src/e2e/e2e_protection.cpp``
 

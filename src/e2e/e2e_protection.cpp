@@ -33,13 +33,11 @@ namespace {
  * @satisfies feat_req_someip_103
  */
 Result resolve_supported_profile(const E2EConfig& config, E2EProfile*& profile) {
-    if (config.offset != E2EConfig::kDefaultOffsetBits) {
-        return Result::INVALID_ARGUMENT;
-    }
-
     E2EProfileRegistry& registry = E2EProfileRegistry::instance();
-    profile = registry.get_profile(config.profile_id);
-    if (profile == nullptr) {
+    profile = nullptr;
+    if (config.profile_id != 0) {
+        profile = registry.get_profile(config.profile_id);
+    } else if (!config.profile_name.empty()) {
         profile = registry.get_profile(config.profile_name);
     }
     if (profile == nullptr) {
@@ -47,6 +45,9 @@ Result resolve_supported_profile(const E2EConfig& config, E2EProfile*& profile) 
     }
     if (profile == nullptr) {
         return Result::NOT_INITIALIZED;
+    }
+    if (config.offset != E2EConfig::DEFAULT_OFFSET_BITS) {
+        return Result::INVALID_ARGUMENT;
     }
     if (profile->get_header_size() != E2EHeader::get_header_size()) {
         return Result::INVALID_ARGUMENT;

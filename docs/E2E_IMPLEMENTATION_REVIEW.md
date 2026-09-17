@@ -105,11 +105,15 @@
 ## Specification Compliance Checklist
 
 ### Header Format Compliance
-- [x] E2E header inserted after Return Code
-- [x] Default offset of 64 bits (8 bytes) supported
-- [x] Non-default offset explicitly rejected (Message layout is fixed)
-- [x] Plugin header size narrowed to the fixed 12-byte `E2EHeader`
+- [x] Default layout: E2E header inserted after Return Code
+- [x] Default offset of 64 bits (8 bytes) from the Length-covered region
 - [x] Header included in Length field calculation
+
+### Known deviations from the specification
+- [ ] `feat_req_someip_102` variable Offset: non-default offsets are rejected
+      because `Message` only stores the default layout (`#318`)
+- [ ] `feat_req_someip_103` variable profile header size: plugins whose
+      `get_header_size()` is not 12 are rejected (`#318`)
 
 ### Data Protection Compliance
 - [x] CRC calculation for data integrity

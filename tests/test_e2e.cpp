@@ -789,8 +789,34 @@ TEST_F(E2ETest, HeaderFieldsPreservedAcrossWire) {
  */
 TEST_F(E2ETest, DefaultConfigOffsetIs64Bits) {
     E2EConfig config;
-    EXPECT_EQ(config.offset, E2EConfig::kDefaultOffsetBits);
-    EXPECT_EQ(E2EConfig::kDefaultOffsetBits, 64u);
+    EXPECT_EQ(config.offset, E2EConfig::DEFAULT_OFFSET_BITS);
+    EXPECT_EQ(E2EConfig::DEFAULT_OFFSET_BITS, 64u);
+}
+
+/**
+ * @test_case TC_E2E_OFFSET_001b
+ * @tests REQ_E2E_PLUGIN_005
+ * @tests feat_req_someip_102
+ * @brief Default 64-bit offset places the E2E header immediately after Return Code
+ */
+TEST_F(E2ETest, DefaultOffsetPlacesHeaderAfterReturnCode) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x0001, 0x0001));
+    msg.set_payload(platform::ByteBuffer{0xAA, 0xBB});
+
+    E2EConfig config(0x1234);
+    ASSERT_EQ(protection.protect(msg, config), Result::SUCCESS);
+
+    platform::ByteBuffer const wire = msg.serialize();
+    const size_t someip_header_size = Message::get_header_size();
+    const size_t e2e_header_size = E2EHeader::get_header_size();
+    ASSERT_GE(wire.size(), someip_header_size + e2e_header_size + 2);
+
+    E2EHeader header;
+    ASSERT_TRUE(header.deserialize(wire, someip_header_size));
+    EXPECT_EQ(header.data_id, 0x1234u);
+    EXPECT_EQ(wire[someip_header_size + e2e_header_size], 0xAA);
+    EXPECT_EQ(wire[someip_header_size + e2e_header_size + 1], 0xBB);
 }
 
 /**
@@ -850,6 +876,11 @@ TEST_F(E2ETest, ProtectAndValidateRejectNonStandardHeaderSize) {
 
     EXPECT_EQ(protection.protect(msg, config), Result::INVALID_ARGUMENT);
     EXPECT_EQ(protection.validate(msg, config), Result::INVALID_ARGUMENT);
+
+    E2EConfig by_name(0x1234);
+    by_name.profile_name = "oversized";
+    EXPECT_EQ(protection.protect(msg, by_name), Result::INVALID_ARGUMENT);
+    EXPECT_EQ(protection.validate(msg, by_name), Result::INVALID_ARGUMENT);
 
     EXPECT_TRUE(registry.unregister_profile(kProfileId));
 }
