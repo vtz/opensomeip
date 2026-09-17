@@ -4041,7 +4041,8 @@
 <li><strong>clang-tidy</strong>: MISRA C++–aligned static analysis with CI quality gate</li>
 <li><strong>cppcheck</strong>: Static analysis for bugs and vulnerabilities</li>
 <li><strong>clang-format</strong>: Automatic code formatting</li>
-<li><strong>Coverity</strong>: Scheduled deep analysis on <code>main</code></li>
+<li><strong>Coverity</strong>: Weekly scheduled scan plus analysis on pushes to <code>main</code>
+  (re-enabled in #265 after the Scan service returned)</li>
 </ul>
 <h3 id="clang-tidy-quality-gate">clang-tidy Quality Gate<a class="headerlink" href="#clang-tidy-quality-gate" title="Permanent link">&para;</a></h3>
 <p>Every pull request that touches safety-relevant sources (<code>src/</code>, <code>include/</code>)

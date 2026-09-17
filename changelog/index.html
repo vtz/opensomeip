@@ -2314,6 +2314,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#ci-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI / Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bug-fixes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2757,6 +2768,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#ci-infrastructure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI / Infrastructure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bug-fixes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2910,6 +2932,13 @@
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h3 id="ci-infrastructure">CI / Infrastructure<a class="headerlink" href="#ci-infrastructure" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Coverity Scan</strong>: Re-enable the weekly Monday 04:00 UTC schedule and
+  <code>push</code> to <code>main</code> now that scan.coverity.com is serving the project again
+  (<a href="https://github.com/vtz/opensomeip/issues/265">#265</a>). <code>workflow_dispatch</code>
+  remains for a manual verification run.</li>
+</ul>
 <h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>SOME/IP-SD</strong>: SubscribeEventgroup family is unicast-only. Clients send
