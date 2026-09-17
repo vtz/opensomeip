@@ -19,13 +19,14 @@
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_inet_*/AF_INET/in_addr via net_impl.h
 #include "platform/net.h"
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <iostream>
 #include <utility>
 #include <variant>
-#include <algorithm>
 
 namespace someip::sd {
 
@@ -439,35 +440,42 @@ platform::String<> IPv4MulticastOption::get_ipv4_address_string() const {
 
 namespace {
 
-constexpr uint16_t kIpv6OptionLength = 0x0015;
-constexpr size_t kIpv6AddressBytes = 16;
-constexpr size_t kIpv6OptionTailBytes = 20;  // address + reserved + proto + port
+constexpr uint16_t IPV6_OPTION_LENGTH = 0x0015;
+constexpr size_t IPV6_ADDRESS_BYTES = 16;
+constexpr size_t IPV6_OPTION_TAIL_BYTES = 20;  // address + reserved + proto + port
+
+char hex_digit(uint8_t nibble) {
+    nibble = static_cast<uint8_t>(nibble & 0x0FU);
+    if (nibble < 10U) {
+        return static_cast<char>(static_cast<unsigned>('0') + nibble);
+    }
+    return static_cast<char>(static_cast<unsigned>('a') + (nibble - 10U));
+}
 
 void append_ipv6_option_tail(platform::ByteBuffer& data,
                              const std::array<uint8_t, 16>& address,
                              uint8_t protocol,
                              uint16_t port) {
-    for (uint8_t byte : address) {
+    for (uint8_t const byte : address) {
         data.push_back(byte);
     }
     data.push_back(0);  // reserved
     data.push_back(protocol);
     data.push_back(static_cast<uint8_t>((static_cast<uint32_t>(port) >> 8U) & 0xFFU));
     data.push_back(static_cast<uint8_t>(port & 0xFFU));
-    data[0] = static_cast<uint8_t>((static_cast<uint32_t>(kIpv6OptionLength) >> 8U) & 0xFFU);
-    data[1] = static_cast<uint8_t>(kIpv6OptionLength & 0xFFU);
+    data[0] = static_cast<uint8_t>((static_cast<uint32_t>(IPV6_OPTION_LENGTH) >> 8U) & 0xFFU);
+    data[1] = static_cast<uint8_t>(IPV6_OPTION_LENGTH & 0xFFU);
 }
 
 bool read_ipv6_option_tail(const platform::ByteBuffer& data, size_t& offset,
                            std::array<uint8_t, 16>& address,
                            uint8_t& protocol,
                            uint16_t& port) {
-    if (offset + kIpv6OptionTailBytes > data.size()) {
+    if (offset + IPV6_OPTION_TAIL_BYTES > data.size()) {
         return false;
     }
-    for (size_t i = 0; i < kIpv6AddressBytes; ++i) {
-        address[i] = data[offset++];
-    }
+    std::memcpy(address.data(), data.data() + offset, IPV6_ADDRESS_BYTES);
+    offset += IPV6_ADDRESS_BYTES;
     offset++;  // reserved
     protocol = data[offset++];
     port = static_cast<uint16_t>((static_cast<uint32_t>(data[offset]) << 8U) |
@@ -479,18 +487,20 @@ bool read_ipv6_option_tail(const platform::ByteBuffer& data, size_t& offset,
 platform::String<> format_ipv6_address(const std::array<uint8_t, 16>& address) {
     // Uncompressed 8-hextet form; codecs do not require AF_INET6.
     std::array<char, 40> buffer{};
-    static constexpr char kHex[] = "0123456789abcdef";
-    char* cursor = buffer.data();
+    char* cursor{buffer.data()};
+    const uint8_t* const bytes = address.data();
     for (size_t group = 0; group < 8; ++group) {
         if (group > 0) {
             *cursor++ = ':';
         }
-        const uint8_t hi = address[group * 2];
-        const uint8_t lo = address[(group * 2) + 1];
-        *cursor++ = kHex[(hi >> 4U) & 0x0FU];
-        *cursor++ = kHex[hi & 0x0FU];
-        *cursor++ = kHex[(lo >> 4U) & 0x0FU];
-        *cursor++ = kHex[lo & 0x0FU];
+        const uint8_t hi = bytes[group * 2];
+        const uint8_t lo = bytes[(group * 2) + 1];
+        const auto hi_u = static_cast<unsigned>(hi);
+        const auto lo_u = static_cast<unsigned>(lo);
+        *cursor++ = hex_digit(static_cast<uint8_t>((hi_u >> 4U) & 0x0FU));
+        *cursor++ = hex_digit(static_cast<uint8_t>(hi_u & 0x0FU));
+        *cursor++ = hex_digit(static_cast<uint8_t>((lo_u >> 4U) & 0x0FU));
+        *cursor++ = hex_digit(static_cast<uint8_t>(lo_u & 0x0FU));
     }
     *cursor = '\0';
     return platform::String<>(buffer.data());
@@ -510,7 +520,7 @@ bool IPv6EndpointOption::deserialize(const platform::ByteBuffer& data, size_t& o
     if (!SdOption::deserialize(data, offset)) {
         return false;
     }
-    if (length_ != kIpv6OptionLength) {
+    if (length_ != IPV6_OPTION_LENGTH) {
         return false;
     }
     return read_ipv6_option_tail(data, offset, ipv6_address_, protocol_, port_);
@@ -533,7 +543,7 @@ bool IPv6MulticastOption::deserialize(const platform::ByteBuffer& data, size_t& 
     if (!SdOption::deserialize(data, offset)) {
         return false;
     }
-    if (length_ != kIpv6OptionLength) {
+    if (length_ != IPV6_OPTION_LENGTH) {
         return false;
     }
     return read_ipv6_option_tail(data, offset, ipv6_address_, protocol_, port_);
