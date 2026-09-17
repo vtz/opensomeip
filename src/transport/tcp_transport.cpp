@@ -20,8 +20,10 @@
 #include "platform/memory.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - socket/POSIX types and someip_* helpers from net_impl.h
 #include "platform/net.h"
+#include "platform/buffer_pool.h"
 #include "platform/thread.h"
 #include "someip/message.h"
+#include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/message_rejection.h"
 #include "transport/transport.h"
@@ -35,6 +37,9 @@
 #include <utility>
 
 namespace someip::transport {
+
+// NOLINTBEGIN(misc-include-cleaner) - sockaddr/timeval/fd_set and someip_* wrappers/macros come from
+// platform/net.h -> net_impl.h; misc-include-cleaner does not trace through this abstraction.
 
 namespace {
 
@@ -59,9 +64,6 @@ void populate_ids_from_header(MessagePtr& message, const platform::ByteBuffer& b
 }
 
 }  // namespace
-
-// NOLINTBEGIN(misc-include-cleaner) - sockaddr/timeval/fd_set and someip_* wrappers/macros come from
-// platform/net.h -> net_impl.h; misc-include-cleaner does not trace through this abstraction.
 
 /**
  * @brief TCP Transport constructor
