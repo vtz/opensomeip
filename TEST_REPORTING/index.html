@@ -3095,9 +3095,14 @@ annotations.</p>
 </table>
 <p>PR comments are disabled (<code>comment_mode: "off"</code>) — results are visible only in
 the Checks tab and as inline annotations.</p>
-<p><strong>Python extra:</strong> an additional check run (<strong>Python Detailed Test Report</strong>) is
-created via <code>gh api repos/.../check-runs</code> with a markdown summary table and
-up to 50 failed test details.</p>
+<p><strong>Python extra:</strong> on same-repository PRs, eligible <code>push</code> runs, and
+<code>workflow_dispatch</code>, an additional check run (<strong>Python Detailed Test Report</strong>)
+is created via <code>gh api repos/.../check-runs</code> with a markdown summary table and
+up to 50 failed test details. Fork PRs skip that step: the default
+<code>GITHUB_TOKEN</code> is read-only there, so creating a check run would 403 and fail
+the job after the tests themselves passed
+(<a href="https://github.com/vtz/opensomeip/issues/330">#330</a>). The CTRF job summary
+still records the same report.</p>
 <h2 id="layer-2-job-summaries">Layer 2: Job Summaries<a class="headerlink" href="#layer-2-job-summaries" title="Permanent link">&para;</a></h2>
 <p>Richer reports are written to <code>$GITHUB_STEP_SUMMARY</code> and appear in
 Actions → select workflow run → job → Summary tab.</p>

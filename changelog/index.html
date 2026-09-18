@@ -2938,6 +2938,10 @@
   <code>push</code> to <code>main</code> now that scan.coverity.com is serving the project again
   (<a href="https://github.com/vtz/opensomeip/issues/265">#265</a>). <code>workflow_dispatch</code>
   remains for a manual verification run.</li>
+<li>Fork PRs no longer fail the RPM workflow template on empty Docker Hub
+  secrets; Fedora images are pulled anonymously
+  (<a href="https://github.com/vtz/opensomeip/issues/330">#330</a>). The Python
+  detailed check-run step already skips forks (landed in #325).</li>
 </ul>
 <h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
 <ul>
