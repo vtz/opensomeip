@@ -2325,6 +2325,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bug-fixes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2779,6 +2790,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bug-fixes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2942,6 +2964,15 @@
   secrets; Fedora images are pulled anonymously
   (<a href="https://github.com/vtz/opensomeip/issues/330">#330</a>). The Python
   detailed check-run step already skips forks (landed in #325).</li>
+</ul>
+<h3 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CMake</strong>: <code>find_package(opensomeip)</code> / <code>opensomeip::opensomeip</code> documented
+  as the installed package; the old <code>SomeIP::someip-common</code> snippet was wrong
+  (<a href="https://github.com/vtz/opensomeip/issues/271">#271</a>). Host CI installs the
+  package and builds <code>tests/cmake_package</code> against it. The exported target now
+  includes the selected PAL backend include dirs and
+  <code>opensomeipConfig.cmake</code> calls <code>find_dependency(Threads)</code>.</li>
 </ul>
 <h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
 <ul>
