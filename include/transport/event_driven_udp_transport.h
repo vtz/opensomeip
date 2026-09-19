@@ -1,0 +1,91 @@
+/********************************************************************************
+ * Copyright (c) 2025 Vinicius Tadeu Zein
+ *
+ * See the NOTICE file(s) distributed with this work for additional
+ * information regarding copyright ownership.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Apache License Version 2.0 which is available at
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ ********************************************************************************/
+
+#ifndef SOMEIP_TRANSPORT_EVENT_DRIVEN_UDP_TRANSPORT_H
+#define SOMEIP_TRANSPORT_EVENT_DRIVEN_UDP_TRANSPORT_H
+
+#include <atomic>
+
+#include "platform/buffer_pool.h"
+#include "platform/containers.h"
+#include "platform/thread.h"
+#include "transport/multicast_transport.h"
+#include "transport/transport.h"
+#include "transport/udp_socket_adapter.h"
+
+namespace someip::transport {
+
+/**
+ * @brief Configuration for event-driven UDP transport.
+ */
+struct EventDrivenUdpTransportConfig {
+    platform::String<> multicast_interface;
+    size_t max_message_size{1400};
+};
+
+/**
+ * @brief ITransport implementation driven by an IUdpSocketAdapter.
+ */
+class EventDrivenUdpTransport : public ITransport, public IMulticastTransport {
+   public:
+    explicit EventDrivenUdpTransport(
+        IUdpSocketAdapter& adapter, const Endpoint& local_endpoint,
+        const EventDrivenUdpTransportConfig& config = EventDrivenUdpTransportConfig());
+
+    ~EventDrivenUdpTransport() override;
+
+    EventDrivenUdpTransport(const EventDrivenUdpTransport&) = delete;
+    EventDrivenUdpTransport& operator=(const EventDrivenUdpTransport&) = delete;
+    EventDrivenUdpTransport(EventDrivenUdpTransport&&) = delete;
+    EventDrivenUdpTransport& operator=(EventDrivenUdpTransport&&) = delete;
+
+    /** @brief Check whether the transport was constructed with a valid endpoint. */
+    [[nodiscard]] bool is_valid() const
+    {
+        return local_endpoint_.is_valid();
+    }
+
+    [[nodiscard]] Result send_message(const Message& message, const Endpoint& endpoint) override;
+    MessagePtr receive_message() override;
+    Result connect(const Endpoint& endpoint) override;
+    Result disconnect() override;
+    bool is_connected() const override;
+    Endpoint get_local_endpoint() const override;
+    void set_listener(ITransportListener* listener) override;
+    Result start() override;
+    Result stop() override;
+    bool is_running() const override;
+
+    Result join_multicast_group(const platform::String<>& multicast_address) override;
+    Result leave_multicast_group(const platform::String<>& multicast_address) override;
+
+   private:
+    void on_adapter_receive(const platform::ByteBuffer& data, const Endpoint& sender);
+    static bool is_multicast_ipv4(const platform::String<>& address);
+
+    IUdpSocketAdapter& adapter_;
+    Endpoint local_endpoint_;
+    EventDrivenUdpTransportConfig config_;
+    std::atomic<bool> running_{false};
+    std::atomic<bool> opened_{false};
+    std::atomic<ITransportListener*> listener_{nullptr};
+
+    platform::Queue<MessagePtr> receive_queue_;
+    platform::Mutex queue_mutex_;
+
+    static constexpr size_t MAX_UDP_PAYLOAD = 65507;
+};
+
+}  // namespace someip::transport
+
+#endif  // SOMEIP_TRANSPORT_EVENT_DRIVEN_UDP_TRANSPORT_H
