@@ -486,6 +486,10 @@ someip::Result use_transport(someip::transport::ITransport& network) {
 
 Custom backends and deterministic test transports can implement `ITransport`
 without changing RPC/event implementations. No event-driven backend is required.
+The injected backend owns endpoint selection and any prior configuration; the
+facade does not impose the default RPC port or create a multicast membership.
+Multicast reception requires a backend that manages its own group memberships;
+the injection API does not add SD integration or multicast controls to `ITransport`.
 
 **Lifecycle contract**
 
@@ -496,23 +500,48 @@ without changing RPC/event implementations. No event-driven backend is required.
   The no-listener precondition is caller-guaranteed; `ITransport` has no listener
   query with which to check it.
 - Lifecycle operations must not throw. The injected `stop()` must synchronously
-  drain all callbacks, even when returning an error or cleaning up a failed
+  drain callbacks and prevent subsequent delivery, even when returning an error or cleaning up a failed
   `start()`. Detaching the listener alone is not a callback-draining barrier.
-- The facade detaches its listener and stops the transport before clearing
-  callback-owned state. Failed initialization also detaches and stops, so a
-  partially started backend can be cleaned up and retried.
+- The facade stops the transport before detaching its listener, then discards
+  queued receive messages from the completed session before clearing callback
+  state. This avoids switching live traffic to polling mode during shutdown and
+  retaining pooled messages across restarts. Failed initialization uses the same
+  cleanup path. On borrowed backends this also consumes queued data; their
+  `receive_message()` must be non-blocking and eventually return `nullptr`.
+  If `stop()` reports an error while `is_running()` remains true, another
+  `shutdown()` retries the owned session's cleanup, including after failed
+  initialization. A successful stop with a still-running backend reports
+  `INVALID_STATE`. This recovery path does not make a backend that violates the
+  callback-draining contract safe.
   Pending RPC completion callbacks now run after the transport is stopped,
   rather than before the stop operation.
-  Subscriber teardown releases callback captures one entry at a time, so it
-  never holds a whole fixed-capacity map on the shutdown stack. The value moved
-  out of the map is destroyed outside the subscriber's mutexes. Note that with
+  A synchronous RPC timeout cancels its pending call. If a response or shutdown
+  has already extracted that callback, the waiter keeps its stack state alive
+  until the extracted callable is released. This drain may extend beyond the
+  nominal response deadline; it adds no shared-pointer allocation in static builds.
+  Subscriber and RPC-server teardown release stored callbacks one entry at a time,
+  avoiding a whole fixed-capacity map on the shutdown stack. The value moved
+  out of the map is destroyed outside the facade's mutexes. Note that with
   inplace callable storage (`SOMEIP_STATIC_ALLOC`) moving a capture also
   destroys the moved-from source in place, so a capture destructor that calls
-  back into the subscriber must still not rely on being invoked unlocked.
+  back into the facade must still not rely on being invoked unlocked. Callback
+  capture copy/move operations and destructors must not re-enter the facade.
+  Shared owners whose moved-from destruction is inert can release their last
+  reference after unlocking.
+- Subscriber notification and field handlers are invoked from snapshots after
+  releasing the subscription and field mutexes. A handler may query state,
+  unsubscribe, or request the next field value. The accepted notification's
+  field callback is removed before invocation, so a reentrant request belongs
+  to the next response. Snapshotting does not serialize application callbacks
+  across concurrent transport deliveries.
 - Reinitialization registers the listener again. Destruction without
   initialization does not touch the borrowed transport; destruction after a
   successful initialization shuts it down without deleting it.
-- Serialize lifecycle calls externally. Do not initialize, shut down, or destroy
+  It does not restore cleared method registrations, published event definitions
+  or field caches, subscriptions, or pending field callbacks: register them again.
+- Serialize lifecycle calls externally and quiesce application mutations of
+  registrations/subscriptions before shutdown. Join outstanding calls before
+  destroying the facade. Do not initialize, shut down, or destroy
   a facade from a transport or application callback: stopping there could wait
   for the callback itself.
 - `get_transport_result()` reports the latest lifecycle result, not asynchronous
@@ -527,6 +556,10 @@ externally running/shared transports, and new C injection entry points remain
 out of scope. Existing C API entry points retain their default behavior.
 The implementation keeps owned default transports inline and does not introduce
 a heap allocation for the borrowed transport in static-allocation builds.
+That choice reserves a disengaged UDP storage slot even for a borrowed backend,
+inside the existing fixed-size facade storage. It trades storage for a single
+implementation and unchanged public object sizes. Both default and injected
+paths dispatch through `ITransport`; no performance improvement is claimed.
 
 ## Service Development
 

@@ -53,7 +53,10 @@ public:
 
     /**
      * @brief Borrow an exclusive, stopped transport instead of creating UDP.
+     * @param client_id Unique client identifier.
      * @param transport Must outlive this client; the client manages start/stop.
+     * @param interface_version Service major / Interface Version for outgoing calls.
+     * @note Local binding and transport configuration belong to the supplied backend.
      * @see transport::ITransport for the injected-transport lifecycle contract.
      */
     RpcClient(uint16_t client_id, transport::ITransport& transport,
@@ -83,6 +86,8 @@ public:
 
     /**
      * @brief Result of the last transport start/stop (including failed-start cleanup).
+     * @return SUCCESS initially, otherwise the last lifecycle outcome; not a receive error.
+     * @note Safe to query during initialize/shutdown; object destruction must be serialized.
      */
     Result get_transport_result() const;
 
@@ -106,6 +111,9 @@ public:
      * @param parameters Serialized method parameters
      * @param timeout Call timeout configuration
      * @return Synchronous result with return values or error
+     * @note A timeout cancels the pending call, then waits for any already-extracted
+     *       callback copies to finish. This lifetime barrier can exceed response_timeout.
+     *       Join outstanding calls before destroying the client.
      */
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
                                    const platform::ByteBuffer& parameters,
@@ -113,6 +121,8 @@ public:
 
     /**
      * @brief Synchronous RPC method call to an explicit service endpoint
+     * @note The same extracted-callback lifetime barrier applies to this overload;
+     *       cancellation does not permit returning while a callback still uses the waiter.
      */
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
                                    const platform::ByteBuffer& parameters,

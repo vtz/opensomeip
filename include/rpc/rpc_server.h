@@ -68,7 +68,10 @@ public:
 
     /**
      * @brief Borrow an exclusive, stopped transport instead of creating UDP.
+     * @param service_id Service identifier handled by this server.
      * @param transport Must outlive this server; the server manages start/stop.
+     * @param interface_version Service major / Interface Version accepted by this server.
+     * @note The supplied backend controls its bind endpoint; no default port is imposed.
      * @see transport::ITransport for the injected-transport lifecycle contract.
      */
     RpcServer(uint16_t service_id, transport::ITransport& transport,
@@ -98,6 +101,8 @@ public:
 
     /**
      * @brief Result of the last transport start/stop (including failed-start cleanup).
+     * @return SUCCESS initially, otherwise the last lifecycle outcome; not a receive error.
+     * @note Safe to query during initialize/shutdown; object destruction must be serialized.
      */
     Result get_transport_result() const;
 

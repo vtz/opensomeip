@@ -23,6 +23,11 @@
 
 namespace someip::transport::detail {
 
+/**
+ * @brief Exclusive transport lifecycle for RPC/event facades.
+ * @implements REQ_ARCH_002, REQ_ARCH_003
+ * @note Lifecycle calls require external serialization; only result() is concurrent.
+ */
 class TransportSession {
    public:
     explicit TransportSession(const Endpoint& endpoint)
@@ -50,36 +55,55 @@ class TransportSession {
         return transport_;
     }
 
+    /**
+     * @brief Register the listener and start an exclusive transport.
+     * @param listener Callback target, kept alive through the stop barrier.
+     * @return Start error, cleanup error in preference, or INVALID_STATE for an active transport.
+     */
     Result start(ITransportListener& listener)
     {
-        if (transport_.is_running()) {
+        if (active_ || transport_.is_running()) {
             result_ = Result::INVALID_STATE;
             return Result::INVALID_STATE;
         }
 
         transport_.set_listener(&listener);
+        active_ = true;
         const Result started = transport_.start();
         if (started != Result::SUCCESS) {
-            transport_.set_listener(nullptr);
-            const Result stopped = transport_.stop();
+            stop();
+            const Result stopped = result_.load();
             result_ = stopped == Result::SUCCESS ? started : stopped;
             return result_.load();
         }
-        active_ = true;
         result_ = Result::SUCCESS;
         return Result::SUCCESS;
     }
 
+    /**
+     * @brief Quiesce delivery before detaching and releasing the receive queue.
+     * @note A still-running backend retains cleanup ownership for a later retry.
+     */
     void stop()
     {
         if (!active_) {
             return;
         }
+        // stop() is the callback barrier; detaching first could switch live input to polling.
+        const Result stopped = transport_.stop();
         transport_.set_listener(nullptr);
-        result_ = transport_.stop();
-        active_ = false;
+        active_ = transport_.is_running();
+        if (!active_) {
+            while (transport_.receive_message()) {
+                // Discard final queued arrivals from this facade's completed receive session.
+            }
+        }
+        result_ = (stopped == Result::SUCCESS && active_) ? Result::INVALID_STATE : stopped;
     }
 
+    /**
+     * @return The last lifecycle result; reading it does not serialize lifecycle calls.
+     */
     Result result() const
     {
         return result_.load();

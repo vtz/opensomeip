@@ -279,6 +279,20 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   one entry at a time so teardown does not hold a whole fixed-capacity map on
   the stack. Pending RPC completion callbacks now run after the transport is
   stopped, rather than before.
+- **Transport injection**: Keep private helper includes usable in the Zephyr
+  module without exporting a source include root. Stop before listener detachment
+  and discard queued receives at the session boundary. Retain cleanup ownership
+  for retry when a quiesced backend still reports running after a stop failure.
+- **Callbacks**: Invoke event subscriber notification/field callbacks outside
+  storage mutexes; discard failed-send field callbacks. Release RPC-server
+  handler storage one entry at a time after the transport has drained. Remove a
+  completed field request before invocation so a reentrant request survives for
+  the next response. Capture copy/move/destruction still must not re-enter a
+  facade while its storage mutex is held. SD lifecycle changes remain deferred.
+- **RPC**: Fix a pre-existing extracted-callback lifetime race by keeping
+  synchronous wait state alive until extracted response/shutdown
+  callbacks are released, even if timeout cancellation no longer finds the
+  pending call. The lifetime barrier does not allocate shared state on the heap.
 - **SOME/IP-SD**: SubscribeEventgroup with both a UDP and a TCP
   IPv4EndpointOption is accepted; only true duplicates (two UDP or two
   TCP) are NACKed

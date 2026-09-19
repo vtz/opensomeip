@@ -76,7 +76,6 @@ target_include_directories(opensomeip PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/someip/${_OPENSOMEIP_THREAD_REL}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/someip/${_OPENSOMEIP_NET_REL}>
 )
-target_include_directories(opensomeip PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Threading: only link pthreads on non-RTOS builds
 if(NOT SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_THREADX)

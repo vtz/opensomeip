@@ -13,29 +13,27 @@
 
 #include "events/event_subscriber.h"
 
-// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
-#include <new>
-
-#include "common/result.h"
-#include "events/event_types.h"
 #include <array>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <new>  // NOLINT(misc-include-cleaner) - static allocation placement new
 #include <optional>
 #include <unordered_map>
 #include <utility>
 
-// NOLINTNEXTLINE(misc-include-cleaner) - platform::String via containers dispatch header
-#include "platform/containers.h"
+#include "../common/callback_storage.h"
+#include "../transport/transport_session.h"
+#include "common/result.h"
+#include "events/event_types.h"
+#include "platform/containers.h"  // NOLINT(misc-include-cleaner) - PAL dispatch
 #include "platform/thread.h"
 #include "someip/message.h"
 #include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
-#include "transport/transport_session.h"
 
 namespace someip::events {
 
@@ -68,29 +66,6 @@ void uint16_to_str(uint16_t val, platform::String<>& out) {
                digits.data() + 5);
 }
 
-template <typename Map>
-// NOLINTNEXTLINE(misc-include-cleaner) - platform::Mutex from platform/thread.h dispatch header
-void release_entries(Map& entries, platform::Mutex& mutex)
-{
-    while (true) {
-        // Bound teardown storage to one entry so fixed-capacity maps do not copy
-        // their whole capacity onto the shutdown stack.
-        //
-        // The moved-to value is destroyed outside the lock. With inplace callable
-        // storage (static backend) the move also destroys the moved-from source
-        // under the lock, so only the moved-to destruction is unlocked there.
-        std::optional<typename Map::mapped_type> released;
-        {
-            platform::ScopedLock const lock(mutex);
-            if (entries.empty()) {
-                return;
-            }
-            auto entry = entries.begin();
-            released.emplace(std::move(entry->second));
-            entries.erase(entry);
-        }
-    }
-}
 }  // namespace
 
 // NOLINTBEGIN(misc-include-cleaner) - platform::Mutex from platform/thread.h (IWYU false positives in impl).
@@ -143,14 +118,15 @@ public:
 
     void shutdown() {
         if (!running_) {
+            transport_session_.stop();
             return;
         }
 
         running_ = false;
         transport_session_.stop();
 
-        release_entries(subscriptions_, subscriptions_mutex_);
-        release_entries(field_requests_, field_requests_mutex_);
+        someip::detail::release_entries(subscriptions_, subscriptions_mutex_);
+        someip::detail::release_entries(field_requests_, field_requests_mutex_);
     }
 
     /** @implements REQ_MSG_122, REQ_TRANSPORT_014 */
@@ -175,6 +151,9 @@ public:
 
         // Store subscription
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
+        if (!running_) {
+            return false;
+        }
         const platform::String<> key = make_subscription_key(service_id, instance_id, eventgroup_id);
         if (subscriptions_.size() >= subscriptions_.max_size() &&
             subscriptions_.find(key) == subscriptions_.end()) {
@@ -263,6 +242,9 @@ public:
         }
 
         platform::ScopedLock const field_lock(field_requests_mutex_);
+        if (!running_) {
+            return false;
+        }
         const platform::String<> key = make_field_key(service_id, 0, event_id);
         if (field_requests_.size() >= field_requests_.max_size() &&
             field_requests_.find(key) == field_requests_.end()) {
@@ -280,7 +262,11 @@ public:
         payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(event_id) & 0xFFU));
         field_msg.set_payload(payload);
 
-        return transport_.send_message(field_msg, service_endpoint) == Result::SUCCESS;
+        if (transport_.send_message(field_msg, service_endpoint) != Result::SUCCESS) {
+            field_requests_.erase(key);
+            return false;
+        }
+        return true;
     }
 
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
@@ -397,49 +383,46 @@ private:
             return;
         }
 
-        // Check if this is for one of our subscriptions
-        platform::ScopedLock const subs_lock(subscriptions_mutex_);
-
         uint16_t const service_id = message->get_service_id();
         uint16_t const event_id = message->get_method_id();  // Event ID is in method ID field for notifications
 
-        // Find matching subscription (we need to check all subscriptions for this service)
-        for (auto& sub_pair : subscriptions_) {
-            auto& sub_info = sub_pair.second;
-            if (sub_info.subscription.service_id == service_id) {
-                // Create event notification
-                EventNotification notification(service_id, sub_info.subscription.instance_id, event_id);
-                notification.client_id = message->get_client_id();
-                notification.session_id = message->get_session_id();
-                notification.event_data = message->get_payload();
-
-                // Call notification callback
-                if (sub_info.notification_callback) {
-                    sub_info.notification_callback(notification);
+        EventNotificationCallback notification_callback;
+        EventNotificationCallback field_callback;
+        std::optional<EventNotification> notification;
+        {
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
+            for (auto& sub_pair : subscriptions_) {
+                auto& sub_info = sub_pair.second;
+                if (sub_info.subscription.service_id == service_id) {
+                    notification.emplace(service_id, sub_info.subscription.instance_id, event_id);
+                    notification->client_id = message->get_client_id();
+                    notification->session_id = message->get_session_id();
+                    notification->event_data = message->get_payload();
+                    notification_callback = sub_info.notification_callback;
+                    sub_info.subscription.state = SubscriptionState::SUBSCRIBED;
+                    sub_info.subscription.last_notification = std::chrono::steady_clock::now();
+                    break;
                 }
-
-                // Update subscription state
-                sub_info.subscription.state = SubscriptionState::SUBSCRIBED;
-                sub_info.subscription.last_notification = std::chrono::steady_clock::now();
-
-                break;
             }
         }
 
-        // Check if this is a field response
-        platform::ScopedLock const field_lock(field_requests_mutex_);
-        platform::String<> const field_key = make_field_key(service_id, 0, event_id);  // Simplified
-
-        auto field_it = field_requests_.find(field_key);
-        if (field_it != field_requests_.end()) {
-            EventNotification notification(service_id, 0, event_id);
-            notification.event_data = message->get_payload();
-
-            if (field_it->second) {
-                field_it->second(notification);
+        {
+            platform::ScopedLock const field_lock(field_requests_mutex_);
+            platform::String<> const field_key = make_field_key(service_id, 0, event_id);
+            auto field_it = field_requests_.find(field_key);
+            if (field_it != field_requests_.end()) {
+                field_callback = field_it->second;
+                field_requests_.erase(field_it);
             }
+        }
 
-            field_requests_.erase(field_it);
+        if (notification && notification_callback) {
+            notification_callback(*notification);
+        }
+        if (field_callback) {
+            EventNotification field_notification(service_id, 0, event_id);
+            field_notification.event_data = message->get_payload();
+            field_callback(field_notification);
         }
     }
 
@@ -484,10 +467,10 @@ private:
     transport::ITransport& transport_;
 
     platform::UnorderedMap<platform::String<>, SubscriptionInfo> subscriptions_;
-    mutable platform::Mutex subscriptions_mutex_;  // Lock order: acquire before field_requests_mutex_
+    mutable platform::Mutex subscriptions_mutex_;
 
     platform::UnorderedMap<platform::String<>, EventNotificationCallback> field_requests_;
-    mutable platform::Mutex field_requests_mutex_;  // Lock order: acquire after subscriptions_mutex_
+    mutable platform::Mutex field_requests_mutex_;
 
     std::atomic<bool> running_;
 

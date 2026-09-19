@@ -13,29 +13,28 @@
 
 #include "rpc/rpc_server.h"
 
-// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
-#include <new>
-
-#include "common/result.h"
-// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
 #include <atomic>
 #include <cstdint>
 #include <memory>
+#include <new>  // NOLINT(misc-include-cleaner) - static allocation placement new
 #include <unordered_map>
 #include <utility>
 
-#include "platform/containers.h"
+#include "../common/callback_storage.h"
+#include "../transport/transport_session.h"
+#include "common/result.h"
+#include "platform/containers.h"  // NOLINT(misc-include-cleaner) - PAL dispatch
 #include "platform/thread.h"
 #include "rpc/rpc_types.h"
 #include "someip/message.h"
 #include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
-#include "transport/transport_session.h"
 
 namespace someip::rpc {
 
-// NOLINTBEGIN(misc-include-cleaner) - platform::Mutex from platform/thread.h (IWYU false positives in impl).
+// NOLINTBEGIN(misc-include-cleaner) - platform::Mutex from platform/thread.h (IWYU false positives
+// in impl).
 
 /**
  * @brief RPC Server implementation
@@ -88,15 +87,14 @@ public:
 
     void shutdown() {
         if (!running_) {
+            transport_session_.stop();
             return;
         }
 
         running_ = false;
         transport_session_.stop();
 
-        // Clear all method handlers
-        platform::ScopedLock const lock(methods_mutex_);
-        method_handlers_.clear();
+        someip::detail::release_entries(method_handlers_, methods_mutex_);
     }
 
     bool register_method(MethodId method_id, MethodHandler handler, MethodSemantics semantics) {

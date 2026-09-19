@@ -13,28 +13,25 @@
 
 #include "events/event_publisher.h"
 
-// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
-#include <new>
-
-#include "common/result.h"
-#include "events/event_types.h"
-// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <new>  // NOLINT(misc-include-cleaner) - static allocation placement new
 #include <optional>
 #include <unordered_map>
 #include <utility>
 
-#include "platform/containers.h"
+#include "../transport/transport_session.h"
+#include "common/result.h"
+#include "events/event_types.h"
+#include "platform/containers.h"  // NOLINT(misc-include-cleaner) - PAL dispatch
 #include "platform/thread.h"
 #include "someip/message.h"
 #include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
-#include "transport/transport_session.h"
 
 namespace someip::events {
 
@@ -92,6 +89,7 @@ public:
 
     void shutdown() {
         if (!running_) {
+            transport_session_.stop();
             return;
         }
 

@@ -14,6 +14,7 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <deque>
 #include <functional>
 #include <future>
 #include <gtest/gtest.h>
@@ -33,6 +34,10 @@
 #include "static_pool_init.h"
 #include "transport/transport.h"
 
+/**
+ * @test_case TC_TRANSPORT_INJECTION
+ * @tests REQ_ARCH_002, REQ_ARCH_003, REQ_ARCH_004
+ */
 namespace {
 
 using namespace someip;
@@ -58,12 +63,19 @@ class FakeTransport final : public transport::ITransport {
         std::lock_guard<std::mutex> lock(mutex_);
         messages.push_back(message);
         destinations.push_back(endpoint);
+        sent_.notify_all();
         return Result::SUCCESS;
     }
 
     MessagePtr receive_message() override
     {
-        return nullptr;
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (queued_messages.empty()) {
+            return nullptr;
+        }
+        auto message = queued_messages.front();
+        queued_messages.pop_front();
+        return message;
     }
     Result connect(const Endpoint&) override
     {
@@ -98,7 +110,8 @@ class FakeTransport final : public transport::ITransport {
     Result stop() override
     {
         ++stops;
-        running_ = false;
+        listener_present_at_stop = listener() != nullptr;
+        running_ = remain_running_on_stop;
         if (on_stop) {
             on_stop();
         }
@@ -141,13 +154,22 @@ class FakeTransport final : public transport::ITransport {
         return true;
     }
 
+    void wait_for_send()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        sent_.wait(lock, [this] { return !messages.empty(); });
+    }
+
     Result start_result{Result::SUCCESS};
     Result stop_result{Result::SUCCESS};
     Result send_result{Result::SUCCESS};
+    bool remain_running_on_stop{false};
+    bool listener_present_at_stop{false};
     std::atomic<unsigned> starts{0};
     std::atomic<unsigned> stops{0};
     std::vector<Message> messages;
     std::vector<Endpoint> destinations;
+    std::deque<MessagePtr> queued_messages;
     std::function<void()> before_dispatch;
     std::function<void()> on_stop;
 
@@ -155,6 +177,7 @@ class FakeTransport final : public transport::ITransport {
     std::atomic<bool> running_{false};
     std::mutex mutex_;
     std::condition_variable drained_;
+    std::condition_variable sent_;
     ITransportListener* listener_{nullptr};
     unsigned in_flight_{0};
 };
@@ -309,6 +332,87 @@ TYPED_TEST(TransportInjectionTest, ReportsStopAndFailedStartCleanupErrors)
     EXPECT_EQ(facade->get_transport_result(), Result::INTERNAL_ERROR);
     EXPECT_EQ(transport.listener(), nullptr);
     EXPECT_FALSE(transport.is_running());
+}
+
+/**
+ * @test_case TC_INJECTED_RECEIVE_SESSION_DRAIN
+ * @tests REQ_ARCH_002, REQ_ARCH_003
+ */
+TYPED_TEST(TransportInjectionTest, StopsBeforeDetachingAndReleasesQueuedMessagesOnEveryRestart)
+{
+    FakeTransport transport;
+    auto facade = make_facade<TypeParam>(transport);
+    for (unsigned iteration = 0; iteration < 40; ++iteration) {
+        ASSERT_TRUE(facade->initialize());
+        auto message = platform::allocate_message();
+        ASSERT_NE(message, nullptr);
+        transport.queued_messages.push_back(message);
+        message.reset();
+        facade->shutdown();
+        EXPECT_TRUE(transport.listener_present_at_stop);
+        EXPECT_TRUE(transport.queued_messages.empty());
+        EXPECT_EQ(transport.listener(), nullptr);
+    }
+}
+
+/**
+ * @test_case TC_INJECTED_STOP_RETRY
+ * @tests REQ_ARCH_004
+ */
+TYPED_TEST(TransportInjectionTest, RetriesStopWithoutStealingAnotherSession)
+{
+    FakeTransport transport;
+    auto facade = make_facade<TypeParam>(transport);
+    ASSERT_TRUE(facade->initialize());
+    transport.stop_result = Result::NETWORK_ERROR;
+    transport.remain_running_on_stop = true;
+    facade->shutdown();
+    EXPECT_EQ(facade->get_transport_result(), Result::NETWORK_ERROR);
+    EXPECT_EQ(transport.stops, 1u);
+    EXPECT_EQ(transport.listener(), nullptr);
+    EXPECT_FALSE(facade->initialize());
+
+    transport.stop_result = Result::SUCCESS;
+    transport.remain_running_on_stop = false;
+    facade->shutdown();
+    EXPECT_EQ(transport.stops, 2u);
+    EXPECT_EQ(facade->get_transport_result(), Result::SUCCESS);
+    ASSERT_TRUE(facade->initialize());
+}
+
+/**
+ * @test_case TC_INJECTED_FAILED_START_RETRY
+ * @tests REQ_ARCH_003, REQ_ARCH_004
+ */
+TYPED_TEST(TransportInjectionTest, FailedStartCleanupCanBeRetried)
+{
+    FakeTransport transport;
+    auto facade = make_facade<TypeParam>(transport);
+    transport.start_result = Result::NETWORK_ERROR;
+    transport.stop_result = Result::INTERNAL_ERROR;
+    transport.remain_running_on_stop = true;
+    EXPECT_FALSE(facade->initialize());
+    EXPECT_EQ(facade->get_transport_result(), Result::INTERNAL_ERROR);
+    EXPECT_EQ(transport.listener(), nullptr);
+    transport.remain_running_on_stop = false;
+    transport.stop_result = Result::SUCCESS;
+    facade->shutdown();
+    EXPECT_EQ(transport.stops, 2u);
+    transport.start_result = Result::SUCCESS;
+    ASSERT_TRUE(facade->initialize());
+}
+
+TYPED_TEST(TransportInjectionTest, SuccessfulStopMustLeaveTheBackendStopped)
+{
+    FakeTransport transport;
+    auto facade = make_facade<TypeParam>(transport);
+    ASSERT_TRUE(facade->initialize());
+    transport.remain_running_on_stop = true;
+    facade->shutdown();
+    EXPECT_EQ(facade->get_transport_result(), Result::INVALID_STATE);
+    transport.remain_running_on_stop = false;
+    facade->shutdown();
+    EXPECT_EQ(facade->get_transport_result(), Result::SUCCESS);
 }
 
 TYPED_TEST(TransportInjectionTest, CanReplaceFacadeWithoutReplacingTransport)
@@ -507,6 +611,193 @@ TEST(TransportInjectionRouting, SubscriberReleasesCallbackCapturesOutsideLocks)
     subscriber.shutdown();
     EXPECT_EQ(subscription_releases, 1u);
     EXPECT_EQ(field_releases, 1u);
+}
+
+/**
+ * @test_case TC_EVENT_NOTIFICATION_REENTRANCY
+ * @tests REQ_ARCH_002
+ */
+TEST(TransportInjectionRouting, NotificationCallbackCanQueryAndUnsubscribe)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    unsigned calls = 0;
+    ASSERT_TRUE(
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+            ++calls;
+            EXPECT_EQ(subscriber.get_active_subscriptions().size(), 1u);
+            EXPECT_TRUE(subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP));
+        }));
+    const auto message = make_dispatch_message<events::EventSubscriber>();
+    ASSERT_NE(message, nullptr);
+    ASSERT_TRUE(transport.emit(message));
+    ASSERT_TRUE(transport.emit(message));
+    EXPECT_EQ(calls, 1u);
+    EXPECT_TRUE(subscriber.get_active_subscriptions().empty());
+}
+
+/**
+ * @test_case TC_EVENT_FIELD_REENTRANCY
+ * @tests REQ_ARCH_002
+ */
+TEST(TransportInjectionRouting, FieldCallbackCanRequestTheNextValue)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    unsigned calls = 0;
+    ASSERT_TRUE(subscriber.request_field(SERVICE, 1, EVENT, [&](const events::EventNotification&) {
+        ++calls;
+        EXPECT_TRUE(subscriber.get_active_subscriptions().empty());
+        EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                             [&](const events::EventNotification&) { ++calls; }));
+    }));
+    const auto message = make_dispatch_message<events::EventSubscriber>();
+    ASSERT_NE(message, nullptr);
+    ASSERT_TRUE(transport.emit(message));
+    EXPECT_EQ(calls, 1u);
+    ASSERT_TRUE(transport.emit(message));
+    EXPECT_EQ(calls, 2u);
+}
+
+/**
+ * @test_case TC_EVENT_FIELD_SEND_FAILURE
+ * @tests REQ_ARCH_003, REQ_ARCH_004
+ */
+TEST(TransportInjectionRouting, FailedFieldSendDoesNotRetainCallback)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    transport.send_result = Result::NETWORK_ERROR;
+    unsigned calls = 0;
+    EXPECT_FALSE(subscriber.request_field(SERVICE, 1, EVENT,
+                                          [&](const events::EventNotification&) { ++calls; }));
+    const auto message = make_dispatch_message<events::EventSubscriber>();
+    ASSERT_NE(message, nullptr);
+    ASSERT_TRUE(transport.emit(message));
+    EXPECT_EQ(calls, 0u);
+}
+
+/**
+ * @test_case TC_RPC_HANDLER_RELEASE
+ * @tests REQ_ARCH_002, REQ_ARCH_003
+ */
+TEST(TransportInjectionRouting, ServerReleasesLastHandlerReferenceOutsideMethodMutex)
+{
+    struct Capture {
+        Capture(rpc::RpcServer& server, unsigned& releases) : server(server), releases(releases)
+        {
+        }
+        ~Capture()
+        {
+            if (server.get_registered_methods().empty()) {
+                ++releases;
+            }
+        }
+        rpc::RpcServer& server;
+        unsigned& releases;
+    };
+    FakeTransport transport;
+    unsigned releases = 0;
+    rpc::RpcServer server(SERVICE, transport);
+    auto capture = std::make_shared<Capture>(server, releases);
+    ASSERT_TRUE(server.register_method(
+        METHOD, [capture](uint16_t, uint16_t, const platform::ByteBuffer&, platform::ByteBuffer&) {
+            return rpc::RpcResult::SUCCESS;
+        }));
+    capture.reset();
+    ASSERT_TRUE(server.initialize());
+    server.shutdown();
+    EXPECT_EQ(releases, 1u);
+}
+
+/**
+ * @test_case TC_RPC_SYNC_TIMEOUT_DURING_STOP
+ * @tests REQ_ARCH_003, REQ_MSG_118
+ */
+TEST(TransportInjectionRouting, SyncTimeoutCancelsWhileTransportStopIsBlocked)
+{
+    FakeTransport transport;
+    rpc::RpcClient client(7, transport);
+    ASSERT_TRUE(client.initialize());
+    std::promise<void> stopping;
+    std::promise<void> release;
+    auto released = release.get_future().share();
+    transport.on_stop = [&] {
+        stopping.set_value();
+        released.wait();
+    };
+    rpc::RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::milliseconds(100);
+    auto call = std::async(std::launch::async, [&] {
+        return client.call_method_sync(SERVICE, METHOD, {}, PEER, timeout);
+    });
+    transport.wait_for_send();
+    auto shutdown = std::async(std::launch::async, [&] { client.shutdown(); });
+    stopping.get_future().wait();
+    const auto status = call.wait_for(std::chrono::seconds(2));
+    EXPECT_EQ(status, std::future_status::ready);
+    if (status == std::future_status::ready) {
+        EXPECT_EQ(call.get().result, rpc::RpcResult::TIMEOUT);
+    }
+    release.set_value();
+    shutdown.get();
+    if (call.valid()) {
+        static_cast<void>(call.get());
+    }
+}
+
+/**
+ * @test_case TC_RPC_SYNC_EXTRACTED_CALLBACK_LIFETIME
+ * @tests REQ_ARCH_003, REQ_MSG_118
+ */
+TEST(TransportInjectionRouting, SyncStateOutlivesCallbacksExtractedByShutdown)
+{
+    FakeTransport transport;
+    rpc::RpcClient client(7, transport);
+    ASSERT_TRUE(client.initialize());
+    rpc::RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::milliseconds(1000);
+    auto sync_call = std::async(std::launch::async, [&] {
+        return client.call_method_sync(SERVICE, METHOD, {}, PEER, timeout);
+    });
+    transport.wait_for_send();
+
+    std::promise<void> entered;
+    std::promise<void> release;
+    auto released = release.get_future().share();
+    const auto blocker = client.call_method_async(
+        SERVICE, METHOD + 1, {},
+        [&](const rpc::RpcResponse&) {
+            entered.set_value();
+            released.wait();
+        },
+        PEER);
+    EXPECT_NE(blocker, 0u);
+    if (blocker == 0) {
+        static_cast<void>(sync_call.get());
+        return;
+    }
+    auto shutdown = std::async(std::launch::async, [&] { client.shutdown(); });
+    entered.get_future().wait();
+    // Both callbacks are now owned by the shutdown sweep, not pending_calls_.
+    // ASan detects expired stack access when this ordering is run against the old implementation.
+    const auto status = sync_call.wait_for(std::chrono::milliseconds(1200));
+    if (status == std::future_status::ready) {
+        // Map iteration may have already delivered the sync shutdown completion.
+        EXPECT_EQ(sync_call.get().result, rpc::RpcResult::INTERNAL_ERROR);
+    }
+    release.set_value();
+    shutdown.get();
+    if (sync_call.valid()) {
+        const auto result = sync_call.get().result;
+        EXPECT_TRUE(result == rpc::RpcResult::TIMEOUT || result == rpc::RpcResult::INTERNAL_ERROR);
+    }
 }
 
 }  // namespace

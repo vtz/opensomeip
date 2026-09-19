@@ -50,7 +50,9 @@ public:
 
     /**
      * @brief Borrow an exclusive, stopped transport instead of creating UDP.
+     * @param client_id Client identifier used for event requests.
      * @param transport Must outlive this subscriber; the subscriber manages start/stop.
+     * @note Local binding and transport configuration belong to the supplied backend.
      * @see transport::ITransport for the injected-transport lifecycle contract.
      */
     EventSubscriber(uint16_t client_id, transport::ITransport& transport);
@@ -79,6 +81,8 @@ public:
 
     /**
      * @brief Result of the last transport start/stop (including failed-start cleanup).
+     * @return SUCCESS initially, otherwise the last lifecycle outcome; not a receive error.
+     * @note Safe to query during initialize/shutdown; object destruction must be serialized.
      */
     Result get_transport_result() const;
 

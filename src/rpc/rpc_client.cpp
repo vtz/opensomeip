@@ -13,29 +13,26 @@
 
 #include "rpc/rpc_client.h"
 
-// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
-#include <new>
-
-#include "common/result.h"
-#include "core/session_manager.h"
-// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <new>  // NOLINT(misc-include-cleaner) - static allocation placement new
 #include <optional>
 #include <unordered_map>
 #include <utility>
 
-#include "platform/containers.h"
+#include "../transport/transport_session.h"
+#include "common/result.h"
+#include "core/session_manager.h"
+#include "platform/containers.h"  // NOLINT(misc-include-cleaner) - PAL dispatch
 #include "platform/thread.h"
 #include "rpc/rpc_types.h"
 #include "someip/message.h"
 #include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
-#include "transport/transport_session.h"
 
 namespace someip::rpc {
 
@@ -99,6 +96,7 @@ public:
 
     void shutdown() {
         if (!running_) {
+            transport_session_.stop();
             return;
         }
 
@@ -120,6 +118,8 @@ public:
         }
         for (auto& [cb, resp] : shutdown_cbs) {
             cb(resp);
+            // Release completed waiters before invoking another application callback.
+            cb = nullptr;
         }
     }
 
@@ -156,17 +156,53 @@ public:
             platform::Mutex mtx;
             std::optional<RpcResponse> resp;
             std::atomic<bool> ready{false};
+            std::atomic<unsigned> callbacks{0};
         };
         SyncState state;
 
+        // Cancellation can lose to a callback already extracted from pending_calls_.
+        // Keep the stack state alive until every callable copy has finished with it.
+        struct SyncCallback {
+            explicit SyncCallback(SyncState& value) : state(&value)
+            {
+                state->callbacks.fetch_add(1, std::memory_order_relaxed);
+            }
+            SyncCallback(const SyncCallback& other) : state(other.state)
+            {
+                if (state != nullptr) {
+                    state->callbacks.fetch_add(1, std::memory_order_relaxed);
+                }
+            }
+            SyncCallback(SyncCallback&& other) noexcept : state(std::exchange(other.state, nullptr))
+            {
+            }
+            SyncCallback& operator=(const SyncCallback&) = delete;
+            SyncCallback& operator=(SyncCallback&&) = delete;
+            ~SyncCallback()
+            {
+                if (state != nullptr) {
+                    state->callbacks.fetch_sub(1, std::memory_order_release);
+                }
+            }
+            void operator()(const RpcResponse& response) const
+            {
+                platform::ScopedLock const lk(state->mtx);
+                state->resp.emplace(response);
+                state->ready.store(true);
+            }
+            SyncState* state;
+        };
+        const auto drain_callbacks = [&state] {
+            while (state.callbacks.load(std::memory_order_acquire) != 0) {
+                platform::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        };
+
         const auto handle = call_method_async(service_id, method_id, parameters,
-            [&state](const RpcResponse& response) {
-                platform::ScopedLock const lk(state.mtx);
-                state.resp.emplace(response);
-                state.ready.store(true);
-            }, server_endpoint, timeout);
+                                              SyncCallback(state), server_endpoint, timeout);
 
         if (handle == 0) {
+            drain_callbacks();
             return {RpcResult::INTERNAL_ERROR, {}, std::chrono::milliseconds(0)};
         }
 
@@ -176,6 +212,7 @@ public:
             auto now = std::chrono::steady_clock::now();
             if (now >= deadline) {
                 cancel_call(handle);
+                drain_callbacks();
                 return {RpcResult::TIMEOUT, {}, timeout.response_timeout};
             }
             const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
@@ -183,6 +220,7 @@ public:
             platform::this_thread::sleep_for(sleep_time);
         }
 
+        drain_callbacks();
         {
             platform::ScopedLock const lk(state.mtx);
             if (!state.resp.has_value()) {
@@ -235,6 +273,9 @@ public:
         RpcCallHandle handle = 0;
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
+            if (!running_) {
+                return 0;
+            }
             if (pending_calls_.size() >= pending_calls_.max_size()) {
                 return 0;
             }
