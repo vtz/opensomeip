@@ -94,6 +94,18 @@ protected:
  *
  * This interface defines the contract for all transport implementations
  * (UDP, TCP, etc.) in the SOME/IP stack.
+ *
+ * RPC/event facades may borrow an exclusive transport. It must outlive the
+ * facade, be stopped and have no listener when initialize() is called, and
+ * must not be used by another facade or by the caller until shutdown returns.
+ * Construction does not register a listener. The facade manages start/stop
+ * and detaches its listener on shutdown or failed initialization.
+ *
+ * Injected implementations must not throw from lifecycle operations. stop()
+ * must quiesce all callbacks before returning, even on an error or after a
+ * failed start(). Lifecycle calls must be serialized externally and must not
+ * be made from a transport/application callback. Sharing a running transport
+ * requires a separate dispatcher and is not supported by these overloads.
  */
 class ITransport {
 public:

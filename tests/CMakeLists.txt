@@ -18,6 +18,11 @@ if(BUILD_TESTS)
     add_executable(test_rpc test_rpc.cpp)
     target_link_libraries(test_rpc someip-rpc gtest_main)
 
+    add_executable(test_transport_injection test_transport_injection.cpp)
+    target_link_libraries(test_transport_injection opensomeip gtest_main)
+    add_test(NAME TransportInjectionTest COMMAND test_transport_injection)
+    set_tests_properties(TransportInjectionTest PROPERTIES TIMEOUT 30)
+
 # SD tests
 add_executable(test_sd test_sd.cpp)
 target_link_libraries(test_sd someip-sd gtest_main)

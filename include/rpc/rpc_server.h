@@ -14,11 +14,12 @@
 #ifndef SOMEIP_RPC_SERVER_H
 #define SOMEIP_RPC_SERVER_H
 
-#include "rpc/rpc_types.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
+#include "rpc/rpc_types.h"
 #include "transport/endpoint.h"
 #include "transport/message_rejection.h"
+#include "transport/transport.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -66,6 +67,14 @@ public:
                            transport::Endpoint("127.0.0.1", SOMEIP_DEFAULT_RPC_PORT));
 
     /**
+     * @brief Borrow an exclusive, stopped transport instead of creating UDP.
+     * @param transport Must outlive this server; the server manages start/stop.
+     * @see transport::ITransport for the injected-transport lifecycle contract.
+     */
+    RpcServer(uint16_t service_id, transport::ITransport& transport,
+              uint8_t interface_version = 0x01);
+
+    /**
      * @brief Destructor
      */
     ~RpcServer();
@@ -86,6 +95,11 @@ public:
      * @brief Shutdown the RPC server
      */
     void shutdown();
+
+    /**
+     * @brief Result of the last transport start/stop (including failed-start cleanup).
+     */
+    Result get_transport_result() const;
 
     /**
      * @brief Register a method handler

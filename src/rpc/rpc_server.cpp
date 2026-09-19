@@ -18,6 +18,12 @@
 
 #include "common/result.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
+#include <atomic>
+#include <cstdint>
+#include <memory>
+#include <unordered_map>
+#include <utility>
+
 #include "platform/containers.h"
 #include "platform/thread.h"
 #include "rpc/rpc_types.h"
@@ -25,13 +31,7 @@
 #include "someip/types.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
-#include "transport/udp_transport.h"
-
-#include <atomic>
-#include <cstdint>
-#include <memory>
-#include <unordered_map>
-#include <utility>
+#include "transport/transport_session.h"
 
 namespace someip::rpc {
 
@@ -48,14 +48,14 @@ namespace someip::rpc {
  */
 class RpcServerImpl : public transport::ITransportListener {
 public:
-    RpcServerImpl(uint16_t service_id, uint8_t interface_version,
-                  const transport::Endpoint& bind_endpoint)
+    template <typename Transport>
+    RpcServerImpl(uint16_t service_id, uint8_t interface_version, Transport&& transport)
         : service_id_(service_id),
           interface_version_(interface_version),
-          transport_(bind_endpoint),
-          running_(false) {
-
-        transport_.set_listener(this);
+          transport_session_(std::forward<Transport>(transport)),
+          transport_(transport_session_.get()),
+          running_(false)
+    {
     }
 
     ~RpcServerImpl() override
@@ -68,12 +68,17 @@ public:
     RpcServerImpl(RpcServerImpl&&) = delete;
     RpcServerImpl& operator=(RpcServerImpl&&) = delete;
 
+    Result get_transport_result() const
+    {
+        return transport_session_.result();
+    }
+
     bool initialize() {
         if (running_) {
             return true;
         }
 
-        if (transport_.start() != Result::SUCCESS) {
+        if (transport_session_.start(*this) != Result::SUCCESS) {
             return false;
         }
 
@@ -87,12 +92,11 @@ public:
         }
 
         running_ = false;
+        transport_session_.stop();
 
         // Clear all method handlers
         platform::ScopedLock const lock(methods_mutex_);
         method_handlers_.clear();
-
-        transport_.stop();
     }
 
     bool register_method(MethodId method_id, MethodHandler handler, MethodSemantics semantics) {
@@ -303,7 +307,8 @@ private:
 
     uint16_t service_id_;
     uint8_t interface_version_;
-    transport::UdpTransport transport_;
+    transport::detail::TransportSession transport_session_;
+    transport::ITransport& transport_;
 
     platform::UnorderedMap<MethodId, RegisteredMethod, 32> method_handlers_;
     mutable platform::Mutex methods_mutex_;
@@ -331,6 +336,18 @@ RpcServer::RpcServer(uint16_t service_id, uint8_t interface_version,
 }
 #endif
 
+RpcServer::RpcServer(uint16_t service_id, transport::ITransport& transport,
+                     uint8_t interface_version)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) RpcServerImpl(service_id, interface_version, transport);
+}
+#else
+    : impl_(std::make_unique<RpcServerImpl>(service_id, interface_version, transport))
+{
+}
+#endif
+
 RpcServer::~RpcServer() {
 #ifdef SOMEIP_STATIC_ALLOC
     impl()->~RpcServerImpl();
@@ -343,6 +360,11 @@ bool RpcServer::initialize() {
 
 void RpcServer::shutdown() {
     impl()->shutdown();
+}
+
+Result RpcServer::get_transport_result() const
+{
+    return impl()->get_transport_result();
 }
 
 bool RpcServer::register_method(MethodId method_id, MethodHandler handler, MethodSemantics semantics) {

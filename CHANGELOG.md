@@ -183,6 +183,12 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   frame and reports `OUT_OF_MEMORY` via `on_error` so the stream is not stalled
   with complete unparsed PDUs
   ([#178](https://github.com/vtz/opensomeip/pull/178)).
+- **RPC / Events**: Add constructor overloads accepting a caller-owned,
+  exclusive `ITransport`, with component-managed lifecycle and
+  `get_transport_result()` diagnostics. Existing default UDP construction and
+  C API entry points are unchanged. This is an initial increment of
+  [#341](https://github.com/vtz/opensomeip/issues/341); SD injection and shared
+  transport dispatch remain separate work.
 - **Message**: `try_deserialize()` returns a structured `someip::Result` for
   each semantic rejection class. Existing `deserialize()` overloads remain
   source-compatible bool wrappers
@@ -266,6 +272,9 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   report `BUFFER_OVERFLOW` once. UDP rejection IDs are taken from the wire
   prefix, and malformed SOME/IP-TP datagrams report `TP_REASSEMBLY`
   ([#315](https://github.com/vtz/opensomeip/issues/315)).
+- **RPC / Events**: Re-register receive listeners on reinitialization, detach
+  them after a failed start, and drain transport callbacks before clearing
+  handler/subscription state during shutdown.
 - **SOME/IP-SD**: SubscribeEventgroup with both a UDP and a TCP
   IPv4EndpointOption is accepted; only true duplicates (two UDP or two
   TCP) are NACKed

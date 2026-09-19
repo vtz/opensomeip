@@ -19,15 +19,6 @@
 #include "common/result.h"
 #include "core/session_manager.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
-#include "platform/containers.h"
-#include "platform/thread.h"
-#include "rpc/rpc_types.h"
-#include "someip/message.h"
-#include "someip/types.h"
-#include "transport/endpoint.h"
-#include "transport/transport.h"
-#include "transport/udp_transport.h"
-
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -36,6 +27,15 @@
 #include <optional>
 #include <unordered_map>
 #include <utility>
+
+#include "platform/containers.h"
+#include "platform/thread.h"
+#include "rpc/rpc_types.h"
+#include "someip/message.h"
+#include "someip/types.h"
+#include "transport/endpoint.h"
+#include "transport/transport.h"
+#include "transport/transport_session.h"
 
 namespace someip::rpc {
 
@@ -52,15 +52,15 @@ namespace someip::rpc {
  */
 class RpcClientImpl : public transport::ITransportListener {
 public:
-    RpcClientImpl(uint16_t client_id, uint8_t interface_version,
-                  const transport::Endpoint& local_bind)
+    template <typename Transport>
+    RpcClientImpl(uint16_t client_id, uint8_t interface_version, Transport&& transport)
         : client_id_(client_id),
           interface_version_(interface_version),
-          transport_(local_bind),
+          transport_session_(std::forward<Transport>(transport)),
+          transport_(transport_session_.get()),
           next_call_handle_(1),
-          running_(false) {
-
-        transport_.set_listener(this);
+          running_(false)
+    {
     }
 
     ~RpcClientImpl() noexcept override
@@ -79,12 +79,17 @@ public:
     RpcClientImpl(RpcClientImpl&&) = delete;
     RpcClientImpl& operator=(RpcClientImpl&&) = delete;
 
+    Result get_transport_result() const
+    {
+        return transport_session_.result();
+    }
+
     bool initialize() {
         if (running_) {
             return true;
         }
 
-        if (transport_.start() != Result::SUCCESS) {
+        if (transport_session_.start(*this) != Result::SUCCESS) {
             return false;
         }
 
@@ -98,6 +103,7 @@ public:
         }
 
         running_ = false;
+        transport_session_.stop();
 
         platform::Vector<std::pair<RpcCallback, RpcResponse>> shutdown_cbs;
         {
@@ -115,8 +121,6 @@ public:
         for (auto& [cb, resp] : shutdown_cbs) {
             cb(resp);
         }
-
-        transport_.stop();
     }
 
     void set_remote_endpoint(const transport::Endpoint& ep) {
@@ -378,7 +382,8 @@ private:
     uint16_t client_id_;
     uint8_t interface_version_;
     SessionManager session_manager_;
-    transport::UdpTransport transport_;
+    transport::detail::TransportSession transport_session_;
+    transport::ITransport& transport_;
 
     std::optional<transport::Endpoint> remote_endpoint_;
     mutable platform::Mutex remote_mutex_;
@@ -409,6 +414,18 @@ RpcClient::RpcClient(uint16_t client_id, uint8_t interface_version,
 }
 #endif
 
+RpcClient::RpcClient(uint16_t client_id, transport::ITransport& transport,
+                     uint8_t interface_version)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) RpcClientImpl(client_id, interface_version, transport);
+}
+#else
+    : impl_(std::make_unique<RpcClientImpl>(client_id, interface_version, transport))
+{
+}
+#endif
+
 RpcClient::~RpcClient() {
 #ifdef SOMEIP_STATIC_ALLOC
     impl()->~RpcClientImpl();
@@ -421,6 +438,11 @@ bool RpcClient::initialize() {
 
 void RpcClient::shutdown() {
     impl()->shutdown();
+}
+
+Result RpcClient::get_transport_result() const
+{
+    return impl()->get_transport_result();
 }
 
 void RpcClient::set_remote_endpoint(const transport::Endpoint& ep) {

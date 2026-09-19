@@ -19,14 +19,6 @@
 #include "common/result.h"
 #include "events/event_types.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::String via containers dispatch header
-#include "platform/containers.h"
-#include "platform/thread.h"
-#include "someip/message.h"
-#include "someip/types.h"
-#include "transport/endpoint.h"
-#include "transport/transport.h"
-#include "transport/udp_transport.h"
-
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -35,6 +27,14 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+
+#include "platform/containers.h"
+#include "platform/thread.h"
+#include "someip/message.h"
+#include "someip/types.h"
+#include "transport/endpoint.h"
+#include "transport/transport.h"
+#include "transport/transport_session.h"
 
 namespace someip::events {
 
@@ -79,12 +79,13 @@ void uint16_to_str(uint16_t val, platform::String<>& out) {
  */
 class EventSubscriberImpl : public transport::ITransportListener {
 public:
-    explicit EventSubscriberImpl(uint16_t client_id)
+    template <typename Transport>
+    EventSubscriberImpl(uint16_t client_id, Transport&& transport)
         : client_id_(client_id),
-          transport_(transport::Endpoint("0.0.0.0", 0)),
-          running_(false) {
-
-        transport_.set_listener(this);
+          transport_session_(std::forward<Transport>(transport)),
+          transport_(transport_session_.get()),
+          running_(false)
+    {
     }
 
     ~EventSubscriberImpl() override
@@ -97,12 +98,17 @@ public:
     EventSubscriberImpl(EventSubscriberImpl&&) = delete;
     EventSubscriberImpl& operator=(EventSubscriberImpl&&) = delete;
 
+    Result get_transport_result() const
+    {
+        return transport_session_.result();
+    }
+
     bool initialize() {
         if (running_) {
             return true;
         }
 
-        if (transport_.start() != Result::SUCCESS) {
+        if (transport_session_.start(*this) != Result::SUCCESS) {
             return false;
         }
 
@@ -116,12 +122,13 @@ public:
         }
 
         running_ = false;
+        transport_session_.stop();
 
         // Clear all subscriptions and callbacks
         platform::ScopedLock const subs_lock(subscriptions_mutex_);
         subscriptions_.clear();
-
-        transport_.stop();
+        platform::ScopedLock const fields_lock(field_requests_mutex_);
+        field_requests_.clear();
     }
 
     /** @implements REQ_MSG_122, REQ_TRANSPORT_014 */
@@ -451,7 +458,8 @@ private:
     platform::String<> default_service_address_{"0.0.0.0"};
     uint16_t default_service_port_{0};
     EndpointResolver endpoint_resolver_;
-    transport::UdpTransport transport_;
+    transport::detail::TransportSession transport_session_;
+    transport::ITransport& transport_;
 
     platform::UnorderedMap<platform::String<>, SubscriptionInfo> subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;  // Lock order: acquire before field_requests_mutex_
@@ -474,10 +482,22 @@ static_assert(sizeof(EventSubscriberImpl) <= SOMEIP_PIMPL_EVENTSUB_SIZE,
 EventSubscriber::EventSubscriber(uint16_t client_id)
 #ifdef SOMEIP_STATIC_ALLOC
 {
-    new (impl_storage_) EventSubscriberImpl(client_id);
+    new (impl_storage_) EventSubscriberImpl(client_id, transport::Endpoint("0.0.0.0", 0));
 }
 #else
-    : impl_(std::make_unique<EventSubscriberImpl>(client_id)) {
+    : impl_(std::make_unique<EventSubscriberImpl>(client_id, transport::Endpoint("0.0.0.0", 0)))
+{
+}
+#endif
+
+EventSubscriber::EventSubscriber(uint16_t client_id, transport::ITransport& transport)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) EventSubscriberImpl(client_id, transport);
+}
+#else
+    : impl_(std::make_unique<EventSubscriberImpl>(client_id, transport))
+{
 }
 #endif
 
@@ -501,6 +521,11 @@ bool EventSubscriber::initialize() {
 
 void EventSubscriber::shutdown() {
     impl()->shutdown();
+}
+
+Result EventSubscriber::get_transport_result() const
+{
+    return impl()->get_transport_result();
 }
 
 bool EventSubscriber::subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,

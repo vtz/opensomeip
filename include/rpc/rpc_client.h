@@ -14,10 +14,11 @@
 #ifndef SOMEIP_RPC_CLIENT_H
 #define SOMEIP_RPC_CLIENT_H
 
-#include "rpc/rpc_types.h"
 #include "platform/buffer_pool.h"
+#include "rpc/rpc_types.h"
 #include "transport/endpoint.h"
 #include "transport/message_rejection.h"
+#include "transport/transport.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -51,6 +52,14 @@ public:
                        const transport::Endpoint& local_bind = transport::Endpoint("0.0.0.0", 0));
 
     /**
+     * @brief Borrow an exclusive, stopped transport instead of creating UDP.
+     * @param transport Must outlive this client; the client manages start/stop.
+     * @see transport::ITransport for the injected-transport lifecycle contract.
+     */
+    RpcClient(uint16_t client_id, transport::ITransport& transport,
+              uint8_t interface_version = 0x01);
+
+    /**
      * @brief Destructor
      */
     ~RpcClient();
@@ -71,6 +80,11 @@ public:
      * @brief Shutdown the RPC client
      */
     void shutdown();
+
+    /**
+     * @brief Result of the last transport start/stop (including failed-start cleanup).
+     */
+    Result get_transport_result() const;
 
     /**
      * @brief Set the default destination for method calls

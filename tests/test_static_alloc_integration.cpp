@@ -22,8 +22,11 @@
  * @tests REQ_PLATFORM_STATIC_002
  */
 
+#include <cstring>
 #include <gtest/gtest.h>
 
+#include "events/event_publisher.h"
+#include "events/event_subscriber.h"
 #include "malloc_trap.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
@@ -31,15 +34,12 @@
 #include "platform/memory.h"
 #include "rpc/rpc_client.h"
 #include "rpc/rpc_server.h"
-#include "events/event_publisher.h"
-#include "events/event_subscriber.h"
 #include "sd/sd_client.h"
 #include "sd/sd_server.h"
 #include "someip/message.h"
 #include "someip/payload_view.h"
 #include "static_config.h"
-
-#include <cstring>
+#include "transport/udp_transport.h"
 
 namespace someip::platform {
 namespace {
@@ -71,6 +71,25 @@ protected:
         if (slot) release_buffer(slot);
     }
 };
+
+TEST_F(StaticAllocIntegrationTest, BorrowedTransportFacadeConstructionUnderTrap)
+{
+    const transport::Endpoint bind("0.0.0.0", 0);
+    transport::UdpTransport client_transport(bind);
+    transport::UdpTransport server_transport(bind);
+    transport::UdpTransport publisher_transport(bind);
+    transport::UdpTransport subscriber_transport(bind);
+
+    MallocTrapGuard guard;
+    rpc::RpcClient client(7, client_transport);
+    rpc::RpcServer server(0x1234, server_transport);
+    events::EventPublisher publisher(0x1234, 1, publisher_transport);
+    events::EventSubscriber subscriber(7, subscriber_transport);
+    EXPECT_EQ(client.get_transport_result(), Result::SUCCESS);
+    EXPECT_EQ(server.get_transport_result(), Result::SUCCESS);
+    EXPECT_EQ(publisher.get_transport_result(), Result::SUCCESS);
+    EXPECT_EQ(subscriber.get_transport_result(), Result::SUCCESS);
+}
 
 /**
  * @test_case TC_STATIC_INT_ROUNDTRIP

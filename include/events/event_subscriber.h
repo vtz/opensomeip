@@ -19,6 +19,7 @@
 #include "platform/containers.h"
 #include "transport/endpoint.h"
 #include "transport/message_rejection.h"
+#include "transport/transport.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -48,6 +49,13 @@ public:
     explicit EventSubscriber(uint16_t client_id);
 
     /**
+     * @brief Borrow an exclusive, stopped transport instead of creating UDP.
+     * @param transport Must outlive this subscriber; the subscriber manages start/stop.
+     * @see transport::ITransport for the injected-transport lifecycle contract.
+     */
+    EventSubscriber(uint16_t client_id, transport::ITransport& transport);
+
+    /**
      * @brief Destructor
      */
     ~EventSubscriber();
@@ -68,6 +76,11 @@ public:
      * @brief Shutdown the event subscriber
      */
     void shutdown();
+
+    /**
+     * @brief Result of the last transport start/stop (including failed-start cleanup).
+     */
+    Result get_transport_result() const;
 
     /**
      * @brief Set the service endpoint used when no resolver is configured.

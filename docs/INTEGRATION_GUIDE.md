@@ -452,6 +452,72 @@ public:
 };
 ```
 
+### Injecting a Transport into RPC and Events
+
+The following C++ constructor overloads accept an existing `ITransport`:
+
+| API | Injected constructor |
+|-----|----------------------|
+| `RpcClient` | `(client_id, transport, interface_version = 0x01)` |
+| `RpcServer` | `(service_id, transport, interface_version = 0x01)` |
+| `EventPublisher` | `(service_id, instance_id, transport)` |
+| `EventSubscriber` | `(client_id, transport)` |
+
+The caller owns the transport object and must keep it alive until the facade is
+destroyed. The facade exclusively manages that transport's listener and
+start/stop lifecycle. Construction does not register a listener or start the
+transport. Existing constructors continue to own a private UDP transport.
+
+```cpp
+#include "rpc/rpc_client.h"
+#include "transport/udp_transport.h"
+
+someip::Result use_transport(someip::transport::ITransport& network) {
+    someip::rpc::RpcClient client(0x1234, network);
+    if (!client.initialize()) {
+        return client.get_transport_result();
+    }
+    client.set_remote_endpoint(someip::transport::Endpoint("192.0.2.1", 30501));
+    // Make RPC calls through client here.
+    client.shutdown();
+    return client.get_transport_result();
+}
+```
+
+Custom backends and deterministic test transports can implement `ITransport`
+without changing RPC/event implementations. No event-driven backend is required.
+
+**Lifecycle contract**
+
+- Supply a stopped transport with no listener. Do not share it with another
+  facade, start it independently, or replace its listener while borrowed.
+  `initialize()` rejects an already-running transport with `INVALID_STATE`
+  without stealing its listener or stopping it.
+- Lifecycle operations must not throw. The injected `stop()` must synchronously
+  drain all callbacks, even when returning an error or cleaning up a failed
+  `start()`. Detaching the listener alone is not a callback-draining barrier.
+- The facade detaches its listener and stops the transport before clearing
+  callback-owned state. Failed initialization also detaches and stops, so a
+  partially started backend can be cleaned up and retried.
+- Reinitialization registers the listener again. Destruction without
+  initialization does not touch the borrowed transport; destruction after a
+  successful initialization shuts it down without deleting it.
+- Serialize lifecycle calls externally. Do not initialize, shut down, or destroy
+  a facade from a transport or application callback: stopping there could wait
+  for the callback itself.
+- `get_transport_result()` reports the latest lifecycle result, not asynchronous
+  receive errors. A cleanup failure takes precedence over the original failed
+  start. Repeated `initialize()`/`shutdown()` calls that do no work retain the
+  result. Existing boolean initialization and void shutdown signatures remain
+  unchanged.
+
+This is the first increment of [#341](https://github.com/vtz/opensomeip/issues/341),
+not a shared-socket dispatcher or a complete runtime coordinator. SD injection,
+externally running/shared transports, and new C injection entry points remain
+out of scope. Existing C API entry points retain their default behavior.
+The implementation keeps owned default transports inline and does not introduce
+a heap allocation for the borrowed transport in static-allocation builds.
+
 ## Service Development
 
 ### Service Definition
