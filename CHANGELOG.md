@@ -163,10 +163,30 @@
 - `UdpTransport::receive_message_with_sender(Endpoint& sender)` — polling
   mode variant that also returns the sender's endpoint for reply
   addressing without requiring a listener.
+- `TcpTransport::receive_message_with_sender(Endpoint& sender)` — the same
+  polling helper on TCP, so a multi-peer server can reply without a
+  listener (#319).
 - `RpcClient::send_request_no_return()` — fire-and-forget `REQUEST_NO_RETURN`
   (message type 0x01) with no pending-call wait (#308).
 - `RpcServer::register_method(..., MethodSemantics)` — request/response vs
   fire-and-forget method semantics (#308).
+
+- `TcpTransport::connection_count()`, `max_connections()`,
+  `is_peer_connected(const Endpoint&)` and
+  `disconnect_peer(const Endpoint&)` — inspect and manage individual
+  peers now that a server serves several at once. `disconnect_peer()`
+  closes one connection and reports `on_connection_lost()` for it, while
+  `disconnect()` continues to close every connection the transport holds.
+
+- `SOMEIP_MAX_TCP_CONNECTIONS` (default 10, matching the long-standing
+  `TcpTransportConfig::max_connections` default) sizes the TCP connection
+  table at compile time. It is defined in `static_config.h` and forwarded
+  from CMake like the other static-alloc knobs, so
+  `-DSOMEIP_MAX_TCP_CONNECTIONS` reaches the compiler. The configured
+  limit is clamped to it and reported by `max_connections()`. Raising it
+  on a static-allocation build usually means raising the
+  `SOMEIP_BYTE_POOL_*` counts too, since each served connection may hold
+  a pooled receive buffer.
 
 ### Bug Fixes
 
@@ -201,6 +221,45 @@
 - RPC: `RpcClient` sends to a configured offered-service endpoint instead of
   defaulting to `127.0.0.1:30490` (the SD port). `RpcServer` binds
   `127.0.0.1:30501` by default (#301).
+- **TCP**: a server now serves several clients concurrently. It previously
+  kept a single connection and closed every surplus accepted socket, so
+  only the first client was ever served (#319). Socket I/O is serialised
+  per connection instead of across the whole transport, so one peer that
+  is slow to drain no longer stalls traffic to the others, and
+  `send_message()` routes by its endpoint argument rather than to the one
+  stored socket.
+- **TCP**: connections beyond the limit are now accepted and closed
+  immediately, so the client observes a refusal, instead of completing a
+  handshake into the backlog and waiting on a server that will never
+  serve it (`REQ_TRANSPORT_003_E01`).
+- **TCP**: `send_data()` no longer retries `EAGAIN` forever. It now gives
+  up after `TcpTransportConfig::send_timeout`, returning `TIMEOUT` when
+  nothing was written and `CONNECTION_LOST` when a partial write left the
+  peer's stream unframeable, in which case that peer is closed. The
+  unbounded retry could hold a connection's I/O lock indefinitely against
+  a peer that stopped reading, which in turn made `disconnect_peer()`,
+  `stop()` and the destructor block forever.
+- **TCP**: `get_connection_state()` reports `CONNECTING` while an outbound
+  `connect()` handshake is in progress, then `CONNECTED` or
+  `DISCONNECTED` (`REQ_TRANSPORT_003a`). `DISCONNECTING` is still
+  reported while a peer is being torn down.
+- **TCP**: a peer that reconnects from the same source port now replaces
+  its own stale connection. The accept path retires a still-ACTIVE entry
+  for that endpoint before allocating, so the table no longer holds two
+  entries for one peer — which made `find_active_peer_locked()` hand out
+  the dead descriptor — and no longer refuses the replacement outright
+  when the stale entry occupied the last free slot.
+- **TCP**: `connect()` restores blocking mode on the socket it hands to
+  the connection table. It was left non-blocking from the bounded
+  handshake, so `SO_SNDTIMEO` did not apply and `send_data()` spun on
+  `EAGAIN` for a full `send_timeout`, burning a core while holding that
+  connection's I/O lock.
+- **TCP**: `SOMEIP_MAX_TCP_CONNECTIONS` of 0 is now rejected at compile
+  time instead of building a server that refuses every connection.
+- **TCP**: `connect()` on a server-mode transport always returns
+  `INVALID_STATE`. The mode guard now runs before the already-connected
+  short-circuit, which any ACTIVE slot — including an accepted peer — had
+  been satisfying, so a serving server incorrectly returned `SUCCESS`.
 
 ### Interop Notes
 
