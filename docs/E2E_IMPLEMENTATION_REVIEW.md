@@ -10,7 +10,7 @@
 **Implementation Status**: ✅ **COMPLIANT**
 - **Location**: `src/someip/message.cpp:142-146`
 - **Implementation**: E2E header is inserted after Return Code in `serialize()` method
-- **Offset Support**: Configurable via `E2EConfig::offset` (default 8 bytes = 64 bits)
+- **Offset Support**: `E2EConfig::offset_bits` is the spec Offset in bits from the Length-covered region; default 64. Non-default Offsets return `NOT_IMPLEMENTED` ([#339](https://github.com/vtz/opensomeip/issues/339))
 - **Verification**: ✅ Header inserted correctly in serialization
 
 #### feat_req_someip_103: E2E Header Format
@@ -105,11 +105,17 @@
 ## Specification Compliance Checklist
 
 ### Header Format Compliance
-- [x] E2E header inserted after Return Code
-- [x] Default offset of 64 bits (8 bytes) supported
-- [x] Configurable offset supported
-- [x] Variable-size header format supported
+- [x] Default layout: E2E header inserted after Return Code
+- [x] Default offset of 64 bits (8 bytes) from the Length-covered region
 - [x] Header included in Length field calculation
+
+### Known deviations from the specification
+- [ ] `feat_req_someip_102` variable Offset: non-default `offset_bits` returns
+      `NOT_IMPLEMENTED` because `Message` only stores the default layout
+      ([#339](https://github.com/vtz/opensomeip/issues/339), leftover of #318)
+- [ ] `feat_req_someip_103` variable profile header size: plugins whose
+      `get_header_size()` is not 12 return `NOT_IMPLEMENTED`
+      ([#339](https://github.com/vtz/opensomeip/issues/339), leftover of #318)
 
 ### Data Protection Compliance
 - [x] CRC calculation for data integrity

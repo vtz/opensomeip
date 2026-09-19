@@ -24,33 +24,53 @@
 
 namespace someip::e2e {
 
+namespace {
+
+/**
+ * Resolve the active profile and reject layouts Message cannot represent.
+ * @implements REQ_E2E_PLUGIN_005
+ * @satisfies feat_req_someip_102
+ * @satisfies feat_req_someip_103
+ */
+Result resolve_supported_profile(const E2EConfig& config, E2EProfile*& profile) {
+    E2EProfileRegistry& registry = E2EProfileRegistry::instance();
+    profile = nullptr;
+    if (config.profile_id != 0) {
+        profile = registry.get_profile(config.profile_id);
+    } else if (!config.profile_name.empty()) {
+        profile = registry.get_profile(config.profile_name);
+    }
+    if (profile == nullptr) {
+        profile = registry.get_default_profile();
+    }
+    if (profile == nullptr) {
+        return Result::NOT_INITIALIZED;
+    }
+    if (config.offset_bits != E2EConfig::DEFAULT_OFFSET_BITS) {
+        return Result::NOT_IMPLEMENTED;
+    }
+    if (profile->get_header_size() != E2EHeader::get_header_size()) {
+        return Result::NOT_IMPLEMENTED;
+    }
+    return Result::SUCCESS;
+}
+
+}  // namespace
+
 /**
  * @brief Add E2E protection to a SOME/IP message
  * @implements REQ_E2E_PLUGIN_001
  * @implements REQ_E2E_PLUGIN_004
+ * @implements REQ_E2E_PLUGIN_005
  * @satisfies feat_req_someip_102
  * @satisfies feat_req_someip_103
  */
 Result E2EProtection::protect(Message& message, const E2EConfig& config) {
-    // Get profile from registry
-    E2EProfileRegistry& registry = E2EProfileRegistry::instance();
-    E2EProfile* profile = registry.get_profile(config.profile_id);
-
-    // If profile not found by ID, try by name
-    if (profile == nullptr) {
-        profile = registry.get_profile(config.profile_name);
+    E2EProfile* profile = nullptr;
+    Result const layout = resolve_supported_profile(config, profile);
+    if (layout != Result::SUCCESS) {
+        return layout;
     }
-
-    // If still not found, use default profile
-    if (profile == nullptr) {
-        profile = registry.get_default_profile();
-    }
-
-    if (profile == nullptr) {
-        return Result::NOT_INITIALIZED;  // Basic profile not initialized
-    }
-
-    // Call profile's protect method
     return profile->protect(message, config);
 }
 
@@ -58,28 +78,16 @@ Result E2EProtection::protect(Message& message, const E2EConfig& config) {
  * @brief Validate E2E protection of a SOME/IP message
  * @implements REQ_E2E_PLUGIN_001
  * @implements REQ_E2E_PLUGIN_004
+ * @implements REQ_E2E_PLUGIN_005
  * @satisfies feat_req_someip_102
  * @satisfies feat_req_someip_103
  */
 Result E2EProtection::validate(const Message& message, const E2EConfig& config) {
-    // Get profile from registry
-    E2EProfileRegistry& registry = E2EProfileRegistry::instance();
-    E2EProfile* profile = registry.get_profile(config.profile_id);
-
-    // If profile not found by ID, try by name
-    if (profile == nullptr) {
-        profile = registry.get_profile(config.profile_name);
+    E2EProfile* profile = nullptr;
+    Result const layout = resolve_supported_profile(config, profile);
+    if (layout != Result::SUCCESS) {
+        return layout;
     }
-
-    // If still not found, use default profile
-    if (profile == nullptr) {
-        profile = registry.get_default_profile();
-    }
-
-    if (profile == nullptr) {
-        return Result::NOT_INITIALIZED;  // Basic profile not initialized
-    }
-
     return profile->validate(message, config);
 }
 

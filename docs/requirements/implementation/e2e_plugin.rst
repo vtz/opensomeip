@@ -140,9 +140,20 @@ E2E Header Format
    :priority: high
    :verification: Code inspection of header structure and execution of message serialization tests with E2E headers.
 
-   The E2E header shall be inserted after the Return Code field in the
-   SOME/IP header, with its position determined by the configured offset
-   value (default: 64 bits = 8 bytes).
+   The E2E header shall be inserted immediately after the Return Code field.
+   ``E2EConfig::offset_bits`` is the spec Offset, measured in bits from the
+   start of the Length-covered region (Request ID). The default is 64 bits
+   (8 bytes), which places the header between Return Code and Payload
+   (feat_req_someip_102). Non-default Offset values are not representable
+   in ``Message`` and shall return ``Result::NOT_IMPLEMENTED`` from
+   ``E2EProtection::protect`` and ``validate``.
+
+   The shipped ``Message`` / ``E2EHeader`` contract is a fixed 12-byte
+   header. Plugins whose ``get_header_size()`` is not 12 shall return
+   ``Result::NOT_IMPLEMENTED`` from ``E2EProtection``.
+   ``Result::NOT_INITIALIZED`` is returned first when no profile is
+   registered. ``Result::INVALID_ARGUMENT`` is reserved for CRC, Data ID,
+   replay, and true caller errors.
 
    The standard E2E header format shall be:
 
@@ -152,10 +163,14 @@ E2E Header Format
    * Freshness Value: 16 bits
    * Total: 12 bytes (96 bits)
 
-   **Rationale**: Complies with SOME/IP specification feat_req_someip_102
-   and feat_req_someip_103.
+   **Rationale**: Implements the default header placement of
+   feat_req_someip_102. Deviates from feat_req_someip_102 (variable Offset)
+   and feat_req_someip_103 (variable header size): ``Message`` currently
+   stores only the 12-byte header immediately after Return Code, so
+   ``E2EProtection`` returns ``NOT_IMPLEMENTED`` for any other Offset or
+   plugin header size until issue 339 implements those layouts.
 
-   **Code Location**: ``include/e2e/e2e_header.h``
+   **Code Location**: ``include/e2e/e2e_header.h``, ``src/e2e/e2e_protection.cpp``
 
 Traceability
 ============

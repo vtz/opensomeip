@@ -13,6 +13,7 @@
 
 #include <gtest/gtest.h>
 #include <cstddef>
+#include <memory>
 #include "e2e/e2e_protection.h"
 #include "e2e/e2e_header.h"
 #include "e2e/e2e_config.h"
@@ -778,4 +779,108 @@ TEST_F(E2ETest, HeaderFieldsPreservedAcrossWire) {
     EXPECT_EQ(decoded.counter, 42u);
     EXPECT_EQ(decoded.data_id, 0x1234u);
     EXPECT_EQ(decoded.freshness_value, 0x5678u);
+}
+
+/**
+ * @test_case TC_E2E_OFFSET_001
+ * @tests REQ_E2E_PLUGIN_005
+ * @tests feat_req_someip_102
+ * @brief Default offset is 64 bits from the Length-covered region
+ */
+TEST_F(E2ETest, DefaultConfigOffsetIs64Bits) {
+    E2EConfig config;
+    EXPECT_EQ(config.offset_bits, E2EConfig::DEFAULT_OFFSET_BITS);
+    EXPECT_EQ(E2EConfig::DEFAULT_OFFSET_BITS, 64u);
+}
+
+/**
+ * @test_case TC_E2E_OFFSET_001b
+ * @tests REQ_E2E_PLUGIN_005
+ * @tests feat_req_someip_102
+ * @brief Default 64-bit offset places the E2E header immediately after Return Code
+ */
+TEST_F(E2ETest, DefaultOffsetPlacesHeaderAfterReturnCode) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x0001, 0x0001));
+    msg.set_payload(platform::ByteBuffer{0xAA, 0xBB});
+
+    E2EConfig config(0x1234);
+    ASSERT_EQ(protection.protect(msg, config), Result::SUCCESS);
+
+    platform::ByteBuffer const wire = msg.serialize();
+    const size_t someip_header_size = Message::get_header_size();
+    const size_t e2e_header_size = E2EHeader::get_header_size();
+    ASSERT_GE(wire.size(), someip_header_size + e2e_header_size + 2);
+
+    E2EHeader header;
+    ASSERT_TRUE(header.deserialize(wire, someip_header_size));
+    EXPECT_EQ(header.data_id, 0x1234u);
+    EXPECT_EQ(wire[someip_header_size + e2e_header_size], 0xAA);
+    EXPECT_EQ(wire[someip_header_size + e2e_header_size + 1], 0xBB);
+}
+
+/**
+ * @test_case TC_E2E_OFFSET_002
+ * @tests REQ_E2E_PLUGIN_005
+ * @tests feat_req_someip_102
+ * @brief Non-default Offset returns NOT_IMPLEMENTED (Message layout is fixed)
+ */
+TEST_F(E2ETest, ProtectAndValidateRejectNonDefaultOffset) {
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x0001, 0x0001));
+    msg.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
+
+    E2EConfig good(0x1234);
+    ASSERT_EQ(protection.protect(msg, good), Result::SUCCESS);
+
+    E2EConfig bad_offset(0x1234);
+    bad_offset.offset_bits = 8;  // former unused default (bytes), not 64 bits
+    EXPECT_EQ(protection.protect(msg, bad_offset), Result::NOT_IMPLEMENTED);
+    EXPECT_EQ(protection.validate(msg, bad_offset), Result::NOT_IMPLEMENTED);
+
+    EXPECT_EQ(protection.validate(msg, good), Result::SUCCESS);
+}
+
+namespace {
+
+class OversizedHeaderProfile : public E2EProfile {
+public:
+    Result protect(Message&, const E2EConfig&) override { return Result::SUCCESS; }
+    Result validate(const Message&, const E2EConfig&) override { return Result::SUCCESS; }
+    size_t get_header_size() const override { return E2EHeader::get_header_size() + 4; }
+    platform::String<> get_profile_name() const override { return "oversized"; }
+    uint32_t get_profile_id() const override { return 0xE2E0FF01; }
+};
+
+}  // namespace
+
+/**
+ * @test_case TC_E2E_OFFSET_003
+ * @tests REQ_E2E_PLUGIN_005
+ * @tests feat_req_someip_103
+ * @brief Plugins that do not use the fixed 12-byte E2EHeader return NOT_IMPLEMENTED
+ */
+TEST_F(E2ETest, ProtectAndValidateRejectNonStandardHeaderSize) {
+    constexpr uint32_t kProfileId = 0xE2E0FF01;
+    E2EProfileRegistry& registry = E2EProfileRegistry::instance();
+    registry.unregister_profile(kProfileId);
+    ASSERT_TRUE(registry.register_profile(std::make_unique<OversizedHeaderProfile>()));
+
+    E2EProtection protection;
+    Message msg(MessageId(0x1234, 0x5678), RequestId(0x0001, 0x0001));
+    msg.set_payload(platform::ByteBuffer{0x01});
+
+    E2EConfig config(0x1234);
+    config.profile_id = kProfileId;
+    config.profile_name = "oversized";
+
+    EXPECT_EQ(protection.protect(msg, config), Result::NOT_IMPLEMENTED);
+    EXPECT_EQ(protection.validate(msg, config), Result::NOT_IMPLEMENTED);
+
+    E2EConfig by_name(0x1234);
+    by_name.profile_name = "oversized";
+    EXPECT_EQ(protection.protect(msg, by_name), Result::NOT_IMPLEMENTED);
+    EXPECT_EQ(protection.validate(msg, by_name), Result::NOT_IMPLEMENTED);
+
+    EXPECT_TRUE(registry.unregister_profile(kProfileId));
 }

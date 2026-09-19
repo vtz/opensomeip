@@ -66,7 +66,7 @@ Configuration for E2E protection.
 - `uint32_t profile_id` - Profile identifier (0 = basic profile)
 - `std::string profile_name` - Profile name ("basic" by default)
 - `uint16_t data_id` - Data ID for identifying protected data
-- `uint32_t offset` - Offset from Return Code (default: 8 bytes)
+- `uint32_t offset_bits` - Spec Offset of the E2E header, in bits from the start of the Length-covered region (Request ID). Default: `E2EConfig::DEFAULT_OFFSET_BITS` (64). Non-default values return `Result::NOT_IMPLEMENTED` from `E2EProtection`.
 - `bool enable_crc` - Enable CRC calculation
 - `bool enable_counter` - Enable counter mechanism
 - `bool enable_freshness` - Enable freshness value
@@ -86,7 +86,7 @@ E2E protection header structure.
 
 ### E2EProfile
 
-Abstract interface for E2E protection profiles. Allows external profiles (e.g., AUTOSAR) to be plugged in.
+Abstract interface for E2E protection profiles. Allows external profiles (e.g., AUTOSAR) to be plugged in. Plugins must return `E2EHeader::get_header_size()` (12 bytes); other sizes return `Result::NOT_IMPLEMENTED` because `Message` stores a fixed `E2EHeader`.
 
 ### E2EProfileRegistry
 
@@ -119,7 +119,8 @@ See the E2E protection examples under `examples/e2e_protection/` for a working i
 
 E2E protection returns `Result` codes:
 - `Result::SUCCESS` - Operation successful
-- `Result::INVALID_ARGUMENT` - Invalid configuration or message
+- `Result::INVALID_ARGUMENT` - CRC mismatch, wrong data ID, replay, or true caller errors
+- `Result::NOT_IMPLEMENTED` - non-default Offset (`offset_bits`) or non-12-byte profile header
 - `Result::TIMEOUT` - Freshness timeout detected
 - `Result::NOT_INITIALIZED` - Basic profile not initialized
 - Other error codes as appropriate
