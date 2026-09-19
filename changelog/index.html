@@ -3035,10 +3035,25 @@
 </ul>
 <h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>SOME/IP-SD</strong>: SubscribeEventgroup family is unicast-only. Clients send
+<li><strong>SOME/IP-SD</strong>: SubscribeEventgroup with both a UDP and a TCP
+  IPv4EndpointOption is accepted; only true duplicates (two UDP or two
+  TCP) are NACKed
+  (<a href="https://github.com/vtz/opensomeip/issues/321">#321</a>).</li>
+<li><strong>SOME/IP-SD</strong>: SubscribeEventgroupAck/Nack are sent to the SD datagram
+  sender, not the event IPv4EndpointOption address
+  (<a href="https://github.com/vtz/opensomeip/issues/322">#322</a>).</li>
+<li>
+<p><strong>SOME/IP-SD</strong>: IPv6 Endpoint (Type 0x06) and IPv6 Multicast (Type 0x16)
+  options are parsed instead of being skipped as unknown. IPv6 SD Endpoint
+  (0x26) and <code>AF_INET6</code> transport remain out of scope
+  (<a href="https://github.com/vtz/opensomeip/issues/320">#320</a>).</p>
+</li>
+<li>
+<p><strong>SOME/IP-SD</strong>: SubscribeEventgroup family is unicast-only. Clients send
   Subscribe/StopSubscribe to the Offer datagram source (not the SD multicast
   group); servers ignore Subscribe received on a multicast destination
-  (<a href="https://github.com/vtz/opensomeip/issues/294">#294</a>).</li>
+  (<a href="https://github.com/vtz/opensomeip/issues/294">#294</a>).</p>
+</li>
 <li><strong>SOME/IP-SD</strong>: Clients process SubscribeEventgroupAck/Nack and expose
   <code>SdClient::get_eventgroup_subscription_state()</code>
   (<a href="https://github.com/vtz/opensomeip/issues/295">#295</a>).</li>

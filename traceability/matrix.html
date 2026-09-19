@@ -21,14 +21,14 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-09-19 00:48:39</p>
+    <p>Generated: 2026-09-19 00:50:37</p>
 
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
-            <li>Total Requirements: 691</li>
-            <li>Code References: 340</li>
-            <li>Test Cases: 474</li>
+            <li>Total Requirements: 693</li>
+            <li>Code References: 344</li>
+            <li>Test Cases: 480</li>
         </ul>
     </div>
 
@@ -46,7 +46,7 @@
             <td>REQ_ARCH_001</td>
             <td>Modular Architecture</td>
             <td>feat_req_someip_2, feat_req_someip_3, feat_req_someip_4, feat_req_someip_14, feat_req_someip_15, feat_req_someip_697</td>
-            <td class="code-ref">CODE_event_publisher_events_43, CODE_event_subscriber_events_61, CODE_rpc_client_rpc_44, CODE_rpc_server_rpc_40, CODE_sd_client_sd_55, CODE_sd_message_sd_43, CODE_sd_server_sd_79, CODE_types_someip_28</td>
+            <td class="code-ref">CODE_event_publisher_events_43, CODE_event_subscriber_events_61, CODE_rpc_client_rpc_44, CODE_rpc_server_rpc_40, CODE_sd_client_sd_55, CODE_sd_message_sd_44, CODE_sd_server_sd_60, CODE_types_someip_28</td>
             <td>TC_test_someip_system_SomeIpSystemTest, TC_test_events_EventsTest, TC_test_message_MessageTest, TC_test_rpc_RpcTest, TC_test_sd_SdTest, TC_test_serialization_26, TC_test_tp_TpTest, TC_test_echo_integration_74, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -54,7 +54,7 @@
             <td>REQ_ARCH_002</td>
             <td>Thread Safety</td>
             <td>-</td>
-            <td class="code-ref">CODE_session_manager_core_33, CODE_event_publisher_events_43, CODE_event_subscriber_events_61, CODE_rpc_client_rpc_44, CODE_rpc_server_rpc_40, CODE_sd_client_sd_55, CODE_sd_server_sd_79</td>
+            <td class="code-ref">CODE_session_manager_core_33, CODE_event_publisher_events_43, CODE_event_subscriber_events_61, CODE_rpc_client_rpc_44, CODE_rpc_server_rpc_40, CODE_sd_client_sd_55, CODE_sd_server_sd_60</td>
             <td>TC_test_platform_threading_14, TC_test_rpc_RpcTest, TC_test_sd_SdTest, TC_test_session_manager_SessionManagerTest, TC_SM_REMOVE_001, TC_SM_REMOVE_002, TC_SM_GET_001, TC_SM_MULTI_001, TC_SM_STATE_001, TC_SM_STATE_002, TC_SM_ACTIVITY_001, TC_SM_ACTIVITY_002, TC_SM_EXPIRY_001, TC_SM_EXPIRY_002, TC_SM_COUNT_001, TC_SM_STRUCT_001, TC_SM_STRUCT_002, TC_SM_STRUCT_003, TC_SM_STRUCT_004, TC_SM_CAPACITY_001, TC_test_tp_TpTest, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1094,7 +1094,7 @@
             <td>REQ_MSG_113</td>
             <td>Eventgroup ID Support</td>
             <td>feat_req_someip_545, feat_req_someip_546, feat_req_someip_547, feat_req_someip_670</td>
-            <td class="code-ref">CODE_sd_message_sd_264, CODE_sd_types_sd_77</td>
+            <td class="code-ref">CODE_sd_message_sd_342, CODE_sd_types_sd_77</td>
             <td>TC_test_message_MessageTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2022,7 +2022,7 @@
             <td>REQ_SD_001</td>
             <td>SD Service ID</td>
             <td>feat_req_someipsd_141</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2030,7 +2030,7 @@
             <td>REQ_SD_001_E01</td>
             <td>Error - SD Message Too Short</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_86</td>
+            <td class="code-ref">CODE_sd_message_sd_87</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_001, TC_SD_DESER_002, TC_SD_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2038,7 +2038,7 @@
             <td>REQ_SD_001_E02</td>
             <td>Error - SD Entries Length Mismatch</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_86</td>
+            <td class="code-ref">CODE_sd_message_sd_87</td>
             <td>TC_test_sd_SdTest, TC_SD_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2046,7 +2046,7 @@
             <td>REQ_SD_002</td>
             <td>SD Method ID</td>
             <td>feat_req_someipsd_142</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2054,7 +2054,7 @@
             <td>REQ_SD_003</td>
             <td>SD Client ID</td>
             <td>feat_req_someipsd_144</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2062,7 +2062,7 @@
             <td>REQ_SD_004</td>
             <td>SD Protocol Version</td>
             <td>feat_req_someipsd_147</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2070,7 +2070,7 @@
             <td>REQ_SD_005</td>
             <td>SD Interface Version</td>
             <td>feat_req_someipsd_148</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2078,7 +2078,7 @@
             <td>REQ_SD_006</td>
             <td>SD Message Type</td>
             <td>feat_req_someipsd_205</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2086,7 +2086,7 @@
             <td>REQ_SD_007</td>
             <td>SD Return Code</td>
             <td>feat_req_someipsd_208, feat_req_someipsd_209</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_010</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2094,7 +2094,7 @@
             <td>REQ_SD_010</td>
             <td>Parse SD Flags Byte</td>
             <td>feat_req_someipsd_100, feat_req_someipsd_209, feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2102,7 +2102,7 @@
             <td>REQ_SD_010_E01</td>
             <td>Error - SD Session ID Non-Incremental</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_86</td>
+            <td class="code-ref">CODE_sd_message_sd_87</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_001, TC_SD_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2110,7 +2110,7 @@
             <td>REQ_SD_010_E02</td>
             <td>Error - SD Reserved Flags</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_86</td>
+            <td class="code-ref">CODE_sd_message_sd_87</td>
             <td>TC_test_sd_SdTest, TC_SD_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2118,7 +2118,7 @@
             <td>REQ_SD_011</td>
             <td>Extract Reboot Flag</td>
             <td>feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2126,7 +2126,7 @@
             <td>REQ_SD_012</td>
             <td>Extract Unicast Flag</td>
             <td>feat_req_someipsd_100, feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2134,7 +2134,7 @@
             <td>REQ_SD_013</td>
             <td>Validate Reserved Flags</td>
             <td>feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_FLAGS_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2142,7 +2142,7 @@
             <td>REQ_SD_014</td>
             <td>Ignore Reserved Flags on Receive</td>
             <td>feat_req_someipsd_148, feat_req_someipsd_213</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2150,7 +2150,7 @@
             <td>REQ_SD_020</td>
             <td>Parse Entries Length Field</td>
             <td>feat_req_someipsd_575</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2158,7 +2158,7 @@
             <td>REQ_SD_020_E01</td>
             <td>Error - Invalid Entries Length</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_86</td>
+            <td class="code-ref">CODE_sd_message_sd_87</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2166,7 +2166,7 @@
             <td>REQ_SD_020_E02</td>
             <td>Error - Entries Length Not Multiple of Entry Size</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_86</td>
+            <td class="code-ref">CODE_sd_message_sd_87</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2174,7 +2174,7 @@
             <td>REQ_SD_021</td>
             <td>Parse Entry Type</td>
             <td>feat_req_someipsd_575, feat_req_someipsd_625, feat_req_someipsd_626</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2182,7 +2182,7 @@
             <td>REQ_SD_021_E01</td>
             <td>Error - SD Options Array Too Large</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_86</td>
+            <td class="code-ref">CODE_sd_message_sd_87</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2190,7 +2190,7 @@
             <td>REQ_SD_022</td>
             <td>Entry Size Calculation</td>
             <td>feat_req_someipsd_575, feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2198,7 +2198,7 @@
             <td>REQ_SD_022_E01</td>
             <td>Error - Truncated Entry</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_86</td>
+            <td class="code-ref">CODE_sd_message_sd_87</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_004</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2206,7 +2206,7 @@
             <td>REQ_SD_023</td>
             <td>Parse Type 0 Find Service Entry</td>
             <td>feat_req_someipsd_626</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2214,7 +2214,7 @@
             <td>REQ_SD_024</td>
             <td>Parse Type 1 Offer Service Entry</td>
             <td>feat_req_someipsd_626</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2222,7 +2222,7 @@
             <td>REQ_SD_025</td>
             <td>Parse Type 6 Subscribe Eventgroup Entry</td>
             <td>feat_req_someipsd_629</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2230,7 +2230,7 @@
             <td>REQ_SD_026</td>
             <td>Parse Type 7 Subscribe Eventgroup Ack Entry</td>
             <td>feat_req_someipsd_630</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2238,7 +2238,7 @@
             <td>REQ_SD_030</td>
             <td>Parse Service ID in Entry</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2246,7 +2246,7 @@
             <td>REQ_SD_030_E01</td>
             <td>Error - SD Entry References No Options</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest, TC_SD_E03, TC_SD_ADD_ENTRY_RETURNS_BOOL</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2254,7 +2254,7 @@
             <td>REQ_SD_031</td>
             <td>Parse Instance ID in Entry</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2262,7 +2262,7 @@
             <td>REQ_SD_032</td>
             <td>Instance ID Wildcard</td>
             <td>feat_req_someipsd_625, feat_req_someipsd_734</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2270,7 +2270,7 @@
             <td>REQ_SD_033</td>
             <td>Parse Major Version and TTL</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2278,7 +2278,7 @@
             <td>REQ_SD_034</td>
             <td>Parse Minor Version</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2286,7 +2286,7 @@
             <td>REQ_SD_035</td>
             <td>Parse Eventgroup ID</td>
             <td>feat_req_someipsd_629</td>
-            <td class="code-ref">CODE_sd_message_sd_43</td>
+            <td class="code-ref">CODE_sd_message_sd_44</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2294,7 +2294,7 @@
             <td>REQ_SD_040</td>
             <td>Store Service Offer TTL</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2302,7 +2302,7 @@
             <td>REQ_SD_040_E01</td>
             <td>Error - Service List Full</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_128</td>
+            <td class="code-ref">CODE_sd_message_sd_129</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_004, TC_SD_SERVER_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2310,7 +2310,7 @@
             <td>REQ_SD_041</td>
             <td>Decrement TTL Periodically</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2318,7 +2318,7 @@
             <td>REQ_SD_041_E01</td>
             <td>Error - TTL Underflow Protection</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_128</td>
+            <td class="code-ref">CODE_sd_message_sd_129</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_005, TC_SD_CLIENT_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2326,7 +2326,7 @@
             <td>REQ_SD_042</td>
             <td>Remove Service on TTL Expiry</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2334,7 +2334,7 @@
             <td>REQ_SD_043</td>
             <td>Infinite TTL Value</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2342,7 +2342,7 @@
             <td>REQ_SD_044</td>
             <td>Stop Offer TTL Zero</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2350,7 +2350,7 @@
             <td>REQ_SD_044_E01</td>
             <td>Error - SD Entry With Invalid TTL Format</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_128</td>
+            <td class="code-ref">CODE_sd_message_sd_129</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2358,7 +2358,7 @@
             <td>REQ_SD_045</td>
             <td>Reset TTL on New Offer</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2366,7 +2366,7 @@
             <td>REQ_SD_046</td>
             <td>Notify Application on Service Availability Change</td>
             <td>feat_req_someipsd_14</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2374,7 +2374,7 @@
             <td>REQ_SD_050</td>
             <td>Track Session ID per Endpoint</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2382,7 +2382,7 @@
             <td>REQ_SD_050_E01</td>
             <td>Error - SD Malformed Option Length</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_128</td>
+            <td class="code-ref">CODE_sd_message_sd_129</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_005, TC_SD_E04</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2390,7 +2390,7 @@
             <td>REQ_SD_051</td>
             <td>Compare Session ID for Reboot Detection</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2398,7 +2398,7 @@
             <td>REQ_SD_052</td>
             <td>Detect Reboot on Session ID Regression</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2406,7 +2406,7 @@
             <td>REQ_SD_052_E01</td>
             <td>Error - Session ID Wrap-Around Handling</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_128</td>
+            <td class="code-ref">CODE_sd_message_sd_129</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2414,7 +2414,7 @@
             <td>REQ_SD_053</td>
             <td>Detect Reboot on Reboot Flag</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2422,7 +2422,7 @@
             <td>REQ_SD_054</td>
             <td>Trigger Reboot Detection Event</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest, TC_SD_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2430,7 +2430,7 @@
             <td>REQ_SD_055</td>
             <td>Clear Cached Services on Reboot</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2438,7 +2438,7 @@
             <td>REQ_SD_056</td>
             <td>Update Stored Session ID</td>
             <td>feat_req_someipsd_795</td>
-            <td class="code-ref">CODE_sd_message_sd_104</td>
+            <td class="code-ref">CODE_sd_message_sd_105</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2446,7 +2446,7 @@
             <td>REQ_SD_060</td>
             <td>Parse Options Length Field</td>
             <td>feat_req_someipsd_1096</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
             <td>TC_test_sd_SdTest, TC_SD_002, TC_SD_004, TC_SD_005, TC_SD_008, TC_SD_COUNTER_001, TC_SD_SPEC_304</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2454,7 +2454,7 @@
             <td>REQ_SD_060_E01</td>
             <td>Error - SD Offer Without Endpoint Option</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_186</td>
+            <td class="code-ref">CODE_sd_message_sd_187</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_006, TC_SD_E05</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2462,7 +2462,7 @@
             <td>REQ_SD_060_E02</td>
             <td>Error - SD TTL Zero in Offer</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_186</td>
+            <td class="code-ref">CODE_sd_message_sd_187</td>
             <td>TC_test_sd_SdTest, TC_SD_E05</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2470,7 +2470,7 @@
             <td>REQ_SD_061</td>
             <td>Parse Option Type</td>
             <td>feat_req_someipsd_1096, feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
             <td>TC_test_sd_SdTest, TC_SD_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2478,7 +2478,7 @@
             <td>REQ_SD_061_E01</td>
             <td>Error - Invalid Option Type</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_186</td>
+            <td class="code-ref">CODE_sd_message_sd_187</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2486,7 +2486,7 @@
             <td>REQ_SD_062</td>
             <td>Parse Option Length</td>
             <td>feat_req_someipsd_1096, feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
             <td>TC_test_sd_SdTest, TC_SD_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2494,7 +2494,7 @@
             <td>REQ_SD_062_E01</td>
             <td>Error - Truncated Option</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_186</td>
+            <td class="code-ref">CODE_sd_message_sd_187</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2502,7 +2502,7 @@
             <td>REQ_SD_063</td>
             <td>Parse IPv4 Endpoint Option Type</td>
             <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
             <td>TC_test_sd_SdTest, TC_SD_004, TC_SD_005, TC_SD_008</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2510,7 +2510,7 @@
             <td>REQ_SD_064</td>
             <td>Extract IPv4 Address</td>
             <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
             <td>TC_test_sd_SdTest, TC_SD_004, TC_SD_005, TC_SD_008</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2518,7 +2518,7 @@
             <td>REQ_SD_064_E01</td>
             <td>Error - Invalid IP Address</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_186, CODE_sd_message_sd_280, CODE_sd_message_sd_376</td>
+            <td class="code-ref">CODE_sd_message_sd_187, CODE_sd_message_sd_281, CODE_sd_message_sd_377</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_008</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2526,7 +2526,7 @@
             <td>REQ_SD_065</td>
             <td>Extract IPv4 Port Number</td>
             <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
             <td>TC_test_sd_SdTest, TC_SD_004, TC_SD_005</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2534,47 +2534,47 @@
             <td>REQ_SD_066</td>
             <td>Extract IPv4 Protocol</td>
             <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
-            <td>TC_test_sd_SdTest, TC_SD_009</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
+            <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_067</td>
             <td>Parse IPv6 Endpoint Option Type</td>
-            <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
-            <td>TC_test_sd_SdTest, TC_SD_009</td>
+            <td>feat_req_someipsd_140</td>
+            <td class="code-ref">CODE_sd_message_sd_511, CODE_sd_message_sd_232</td>
+            <td>TC_test_sd_SdTest, TC_SD_IPV6_EP_001, TC_SD_IPV6_MSG_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_068</td>
             <td>Extract IPv6 Address</td>
-            <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
-            <td>TC_test_sd_SdTest, TC_SD_009</td>
+            <td>feat_req_someipsd_163, feat_req_someipsd_164</td>
+            <td class="code-ref">CODE_sd_message_sd_511, CODE_sd_message_sd_232</td>
+            <td>TC_test_sd_SdTest, TC_SD_IPV6_EP_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_069</td>
             <td>Extract IPv6 Port Number</td>
-            <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
-            <td>TC_test_sd_SdTest</td>
+            <td>feat_req_someipsd_163, feat_req_someipsd_164</td>
+            <td class="code-ref">CODE_sd_message_sd_511, CODE_sd_message_sd_232</td>
+            <td>TC_test_sd_SdTest, TC_SD_IPV6_EP_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_070</td>
             <td>Extract IPv6 Protocol</td>
-            <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
-            <td>TC_test_sd_SdTest, TC_SD_SESSION_001, TC_SD_SESSION_002, TC_SD_SESSION_003, TC_SD_SESSION_004, TC_SD_SESSION_005, TC_SD_SESSION_REBOOT_001</td>
+            <td>feat_req_someipsd_163, feat_req_someipsd_164</td>
+            <td class="code-ref">CODE_sd_message_sd_511, CODE_sd_message_sd_232</td>
+            <td>TC_test_sd_SdTest, TC_SD_IPV6_EP_001, TC_SD_SESSION_001, TC_SD_SESSION_002, TC_SD_SESSION_003, TC_SD_SESSION_004, TC_SD_SESSION_005, TC_SD_SESSION_REBOOT_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_070_E01</td>
             <td>Error - SD FindService Timeout</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_186</td>
+            <td class="code-ref">CODE_sd_message_sd_187</td>
             <td>TC_test_sd_SdTest, TC_SD_E06</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2582,7 +2582,7 @@
             <td>REQ_SD_071</td>
             <td>Parse Configuration Option Type</td>
             <td>feat_req_someipsd_1163</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158, CODE_sd_message_sd_557</td>
             <td>TC_test_sd_SdTest, TC_SD_SESSION_001, TC_SD_SESSION_002, TC_SD_SESSION_003, TC_SD_SESSION_004, TC_SD_SESSION_005, TC_SD_SESSION_REBOOT_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2590,7 +2590,7 @@
             <td>REQ_SD_072</td>
             <td>Parse Configuration String</td>
             <td>feat_req_someipsd_1163</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158, CODE_sd_message_sd_557</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2598,23 +2598,23 @@
             <td>REQ_SD_073</td>
             <td>Parse IPv4 Multicast Option Type</td>
             <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
-            <td>TC_test_sd_SdTest</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
+            <td>TC_test_sd_SdTest, TC_SD_009</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_074</td>
             <td>Parse IPv6 Multicast Option Type</td>
-            <td>feat_req_someipsd_1112</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
-            <td>TC_test_sd_SdTest</td>
+            <td>feat_req_someipsd_737</td>
+            <td class="code-ref">CODE_sd_message_sd_533, CODE_sd_message_sd_268</td>
+            <td>TC_test_sd_SdTest, TC_SD_IPV6_MC_001, TC_SD_IPV6_MSG_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_075</td>
             <td>Parse First Option Index</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2622,7 +2622,7 @@
             <td>REQ_SD_075_E01</td>
             <td>Error - Option Index Out of Range</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_186</td>
+            <td class="code-ref">CODE_sd_message_sd_187</td>
             <td>TC_test_sd_SdTest, TC_SD_DESER_008</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2630,7 +2630,7 @@
             <td>REQ_SD_076</td>
             <td>Parse Second Option Index</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2638,7 +2638,7 @@
             <td>REQ_SD_077</td>
             <td>Parse Option Counts</td>
             <td>feat_req_someipsd_625</td>
-            <td class="code-ref">CODE_sd_message_sd_157</td>
+            <td class="code-ref">CODE_sd_message_sd_158</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2646,7 +2646,7 @@
             <td>REQ_SD_080</td>
             <td>Service Find State</td>
             <td>feat_req_someipsd_632</td>
-            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_108</td>
+            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_89</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2654,7 +2654,7 @@
             <td>REQ_SD_080_E01</td>
             <td>Error - SD Subscription Conflict</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_server_sd_108</td>
+            <td class="code-ref">CODE_sd_server_sd_89</td>
             <td>TC_test_sd_SdTest, TC_SD_E07</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2662,7 +2662,7 @@
             <td>REQ_SD_081</td>
             <td>Send Find Service Message</td>
             <td>feat_req_someipsd_632</td>
-            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_108</td>
+            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_89</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2670,7 +2670,7 @@
             <td>REQ_SD_082</td>
             <td>Service Available State</td>
             <td>feat_req_someipsd_632</td>
-            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_108</td>
+            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_89</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2678,7 +2678,7 @@
             <td>REQ_SD_083</td>
             <td>Offer Service Generation</td>
             <td>feat_req_someipsd_633</td>
-            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_108</td>
+            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_89</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2686,7 +2686,7 @@
             <td>REQ_SD_083_E01</td>
             <td>Error - SD Multiple Subscriptions Same Client</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_server_sd_108</td>
+            <td class="code-ref">CODE_sd_server_sd_89</td>
             <td>TC_test_sd_SdTest, TC_SD_E08</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2694,7 +2694,7 @@
             <td>REQ_SD_084</td>
             <td>Stop Offer Generation</td>
             <td>feat_req_someipsd_634</td>
-            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_108</td>
+            <td class="code-ref">CODE_sd_client_sd_86, CODE_sd_server_sd_89</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2702,7 +2702,7 @@
             <td>REQ_SD_090</td>
             <td>Subscribe Eventgroup Request</td>
             <td>feat_req_someipsd_629</td>
-            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_131</td>
+            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_112</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2710,7 +2710,7 @@
             <td>REQ_SD_091</td>
             <td>Subscribe Eventgroup Acknowledgment</td>
             <td>feat_req_someipsd_630</td>
-            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_131</td>
+            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_112</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2718,7 +2718,7 @@
             <td>REQ_SD_092</td>
             <td>Subscribe Eventgroup Negative Acknowledgment</td>
             <td>feat_req_someipsd_630</td>
-            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_131</td>
+            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_112</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2726,7 +2726,7 @@
             <td>REQ_SD_093</td>
             <td>Subscription Renewal</td>
             <td>feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_131</td>
+            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_112</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2734,7 +2734,7 @@
             <td>REQ_SD_094</td>
             <td>Stop Subscribe Generation</td>
             <td>feat_req_someipsd_629</td>
-            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_131</td>
+            <td class="code-ref">CODE_sd_client_sd_108, CODE_sd_server_sd_112</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2742,7 +2742,7 @@
             <td>REQ_SD_100</td>
             <td>Initial Offer Delay</td>
             <td>feat_req_someipsd_425</td>
-            <td class="code-ref">CODE_sd_client_sd_128, CODE_sd_server_sd_155</td>
+            <td class="code-ref">CODE_sd_client_sd_128, CODE_sd_server_sd_136</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2750,7 +2750,7 @@
             <td>REQ_SD_101</td>
             <td>Offer Repetition</td>
             <td>feat_req_someipsd_425</td>
-            <td class="code-ref">CODE_sd_client_sd_128, CODE_sd_server_sd_155</td>
+            <td class="code-ref">CODE_sd_client_sd_128, CODE_sd_server_sd_136</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2758,7 +2758,7 @@
             <td>REQ_SD_102</td>
             <td>Cyclic Offer</td>
             <td>feat_req_someipsd_425</td>
-            <td class="code-ref">CODE_sd_client_sd_128, CODE_sd_server_sd_155</td>
+            <td class="code-ref">CODE_sd_client_sd_128, CODE_sd_server_sd_136</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2766,15 +2766,23 @@
             <td>REQ_SD_103</td>
             <td>Find Repetition</td>
             <td>feat_req_someipsd_632</td>
-            <td class="code-ref">CODE_sd_client_sd_128, CODE_sd_server_sd_155</td>
+            <td class="code-ref">CODE_sd_client_sd_128, CODE_sd_server_sd_136</td>
             <td>TC_test_sd_SdTest</td>
+            <td><span class="status-ok">✓ Complete</span></td>
+        </tr>
+        <tr>
+            <td>REQ_SD_1084</td>
+            <td>Subscribe Ack/NAck Reply Address</td>
+            <td>feat_req_someipsd_1084</td>
+            <td class="code-ref">CODE_sd_server_sd_640, CODE_sd_server_sd_768</td>
+            <td>TC_SD_1084</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_110</td>
             <td>SD Initial Wait Phase</td>
             <td>feat_req_someipsd_63, feat_req_someipsd_64, feat_req_someipsd_65, feat_req_someipsd_773</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_488</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_469</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_004, TC_SD_TTL_OFFER_001, TC_SD_SPEC_299_OFFER</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2782,7 +2790,7 @@
             <td>REQ_SD_111</td>
             <td>SD Repetition Phase</td>
             <td>feat_req_someipsd_67, feat_req_someipsd_73, feat_req_someipsd_76, feat_req_someipsd_867</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_407, CODE_sd_server_sd_488, CODE_sd_types_sd_118, CODE_sd_types_sd_125</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_388, CODE_sd_server_sd_469, CODE_sd_types_sd_118, CODE_sd_types_sd_125</td>
             <td>TC_test_sd_SdTest, TC_SD_REPETITION_INTERVAL_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2790,7 +2798,7 @@
             <td>REQ_SD_112</td>
             <td>SD Main Phase</td>
             <td>feat_req_someipsd_79, feat_req_someipsd_80, feat_req_someipsd_81, feat_req_someipsd_425, feat_req_someipsd_866</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_407, CODE_sd_server_sd_488, CODE_sd_types_sd_125</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_388, CODE_sd_server_sd_469, CODE_sd_types_sd_125</td>
             <td>TC_test_sd_SdTest, TC_SD_REPETITION_INTERVAL_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2798,7 +2806,7 @@
             <td>REQ_SD_113</td>
             <td>SD Shutdown Behavior</td>
             <td>feat_req_someipsd_820, feat_req_someipsd_821, feat_req_someipsd_830</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_488</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_469</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2822,7 +2830,7 @@
             <td>REQ_SD_115</td>
             <td>OfferService Entry Processing</td>
             <td>feat_req_someipsd_252, feat_req_someipsd_253, feat_req_someipsd_633</td>
-            <td class="code-ref">CODE_sd_server_sd_257</td>
+            <td class="code-ref">CODE_sd_server_sd_238</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2830,7 +2838,7 @@
             <td>REQ_SD_115_E01</td>
             <td>Error - SD Offer with Invalid Endpoint</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_server_sd_257</td>
+            <td class="code-ref">CODE_sd_server_sd_238</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2838,7 +2846,7 @@
             <td>REQ_SD_115_E02</td>
             <td>Error - SD Duplicate Offer Handling</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_server_sd_257</td>
+            <td class="code-ref">CODE_sd_server_sd_238</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2870,7 +2878,7 @@
             <td>REQ_SD_117</td>
             <td>SubscribeEventgroup Entry Processing</td>
             <td>feat_req_someipsd_321, feat_req_someipsd_322, feat_req_someipsd_629</td>
-            <td class="code-ref">CODE_sd_server_sd_257</td>
+            <td class="code-ref">CODE_sd_server_sd_238</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2878,7 +2886,7 @@
             <td>REQ_SD_118</td>
             <td>StopSubscribeEventgroup Processing</td>
             <td>feat_req_someipsd_433, feat_req_someipsd_629</td>
-            <td class="code-ref">CODE_sd_server_sd_257</td>
+            <td class="code-ref">CODE_sd_server_sd_238</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2886,7 +2894,7 @@
             <td>REQ_SD_119</td>
             <td>SubscribeEventgroupAck Processing</td>
             <td>feat_req_someipsd_613, feat_req_someipsd_614, feat_req_someipsd_630</td>
-            <td class="code-ref">CODE_sd_client_sd_502, CODE_sd_client_sd_530, CODE_sd_client_sd_783, CODE_sd_server_sd_257</td>
+            <td class="code-ref">CODE_sd_client_sd_502, CODE_sd_client_sd_530, CODE_sd_client_sd_783, CODE_sd_server_sd_238</td>
             <td>TC_test_sd_SdTest, TC_SD_SPEC_613, TC_SD_PY_818</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2894,7 +2902,7 @@
             <td>REQ_SD_119_E01</td>
             <td>Error - SD Unknown Entry Type</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_server_sd_257</td>
+            <td class="code-ref">CODE_sd_server_sd_238</td>
             <td>TC_test_sd_SdTest, TC_SD_E11</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2902,7 +2910,7 @@
             <td>REQ_SD_120</td>
             <td>SubscribeEventgroupNack Processing</td>
             <td>feat_req_someipsd_618, feat_req_someipsd_630</td>
-            <td class="code-ref">CODE_sd_client_sd_502, CODE_sd_client_sd_530, CODE_sd_client_sd_783, CODE_sd_message_sd_248</td>
+            <td class="code-ref">CODE_sd_client_sd_502, CODE_sd_client_sd_530, CODE_sd_client_sd_783, CODE_sd_message_sd_249</td>
             <td>TC_test_sd_SdTest, TC_SD_SPEC_120</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2926,7 +2934,7 @@
             <td>REQ_SD_122</td>
             <td>IPv4 SD Endpoint Option</td>
             <td>feat_req_someipsd_1081, feat_req_someipsd_1086</td>
-            <td class="code-ref">CODE_sd_message_sd_248</td>
+            <td class="code-ref">CODE_sd_message_sd_249</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2934,7 +2942,7 @@
             <td>REQ_SD_123</td>
             <td>IPv6 SD Endpoint Option</td>
             <td>feat_req_someipsd_1135</td>
-            <td class="code-ref">CODE_sd_message_sd_248</td>
+            <td class="code-ref">CODE_sd_message_sd_249</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2982,7 +2990,7 @@
             <td>REQ_SD_130</td>
             <td>Server Service State Machine</td>
             <td>feat_req_someipsd_627, feat_req_someipsd_628, feat_req_someipsd_629</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_488</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_469</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -2998,7 +3006,7 @@
             <td>REQ_SD_132</td>
             <td>Eventgroup Subscription State Machine</td>
             <td>feat_req_someipsd_632, feat_req_someipsd_633, feat_req_someipsd_634</td>
-            <td class="code-ref">CODE_sd_message_sd_346</td>
+            <td class="code-ref">CODE_sd_message_sd_347</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3014,7 +3022,7 @@
             <td>REQ_SD_140</td>
             <td>Service Endpoint Association</td>
             <td>feat_req_someipsd_810, feat_req_someipsd_815</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_488</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_469</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3022,7 +3030,7 @@
             <td>REQ_SD_141</td>
             <td>Multicast Endpoint Association</td>
             <td>feat_req_someipsd_722, feat_req_someipsd_723</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_488</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_469</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3030,7 +3038,7 @@
             <td>REQ_SD_142</td>
             <td>Initial Event Sending</td>
             <td>feat_req_someipsd_789, feat_req_someipsd_833</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_488</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_469</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3038,7 +3046,7 @@
             <td>REQ_SD_150</td>
             <td>SD Malformed Message Handling</td>
             <td>feat_req_someipsd_900, feat_req_someipsd_1220</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_488</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_469</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3046,7 +3054,7 @@
             <td>REQ_SD_151</td>
             <td>SD Invalid Entry Handling</td>
             <td>feat_req_someipsd_1141, feat_req_someipsd_1233</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_488</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_469</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3054,7 +3062,7 @@
             <td>REQ_SD_152</td>
             <td>SD TTL Expiry Handling</td>
             <td>feat_req_someipsd_681, feat_req_someipsd_682, feat_req_someipsd_748</td>
-            <td class="code-ref">CODE_sd_server_sd_155, CODE_sd_server_sd_488</td>
+            <td class="code-ref">CODE_sd_server_sd_136, CODE_sd_server_sd_469</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3062,7 +3070,7 @@
             <td>REQ_SD_160</td>
             <td>SD Multicast Transmission</td>
             <td>feat_req_someipsd_100, feat_req_someipsd_105</td>
-            <td class="code-ref">CODE_sd_client_sd_555, CODE_sd_message_sd_346</td>
+            <td class="code-ref">CODE_sd_client_sd_555, CODE_sd_message_sd_347</td>
             <td>TC_test_sd_SdTest, TC_SD_INTEGRATION_004</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3102,7 +3110,7 @@
             <td>REQ_SD_200A</td>
             <td>SD Message Structure - Flags and Reserved</td>
             <td>feat_req_someipsd_38, feat_req_someipsd_39, feat_req_someipsd_40</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613, CODE_sd_message_sd_26, CODE_sd_message_sd_264</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729, CODE_sd_message_sd_27, CODE_sd_message_sd_342</td>
             <td>TC_test_sd_SdTest, TC_SD_UNKNOWN_ENTRY_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3110,7 +3118,7 @@
             <td>REQ_SD_200B</td>
             <td>SD Entries Array Format</td>
             <td>feat_req_someipsd_41, feat_req_someipsd_42, feat_req_someipsd_44</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613, CODE_sd_message_sd_26, CODE_sd_message_sd_65</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729, CODE_sd_message_sd_27, CODE_sd_message_sd_66</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3118,7 +3126,7 @@
             <td>REQ_SD_200C</td>
             <td>SD Options Array Format</td>
             <td>feat_req_someipsd_1, feat_req_someipsd_2, feat_req_someipsd_13</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613, CODE_sd_message_sd_26, CODE_sd_message_sd_264</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729, CODE_sd_message_sd_27, CODE_sd_message_sd_342</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3126,7 +3134,7 @@
             <td>REQ_SD_201</td>
             <td>SD Transport Requirements</td>
             <td>feat_req_someipsd_46, feat_req_someipsd_47</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3134,7 +3142,7 @@
             <td>REQ_SD_202</td>
             <td>SD ECU Internal Interface</td>
             <td>feat_req_someipsd_22, feat_req_someipsd_23, feat_req_someipsd_24, feat_req_someipsd_25, feat_req_someipsd_26, feat_req_someipsd_27, feat_req_someipsd_16, feat_req_someipsd_17, feat_req_someipsd_18</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3166,7 +3174,7 @@
             <td>REQ_SD_220</td>
             <td>SD Entry Common Fields</td>
             <td>feat_req_someipsd_122, feat_req_someipsd_126, feat_req_someipsd_127, feat_req_someipsd_128, feat_req_someipsd_129, feat_req_someipsd_212, feat_req_someipsd_214</td>
-            <td class="code-ref">CODE_sd_server_sd_218, CODE_sd_server_sd_541</td>
+            <td class="code-ref">CODE_sd_server_sd_199, CODE_sd_server_sd_522</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3174,7 +3182,7 @@
             <td>REQ_SD_221</td>
             <td>SD Service Entry Format</td>
             <td>feat_req_someipsd_133, feat_req_someipsd_137, feat_req_someipsd_138, feat_req_someipsd_139, feat_req_someipsd_140</td>
-            <td class="code-ref">CODE_sd_server_sd_218, CODE_sd_server_sd_541</td>
+            <td class="code-ref">CODE_sd_server_sd_199, CODE_sd_server_sd_522</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3182,7 +3190,7 @@
             <td>REQ_SD_222</td>
             <td>SD Eventgroup Entry Format</td>
             <td>feat_req_someipsd_149, feat_req_someipsd_151, feat_req_someipsd_152, feat_req_someipsd_157, feat_req_someipsd_158</td>
-            <td class="code-ref">CODE_sd_server_sd_218, CODE_sd_server_sd_541</td>
+            <td class="code-ref">CODE_sd_server_sd_199, CODE_sd_server_sd_522</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3198,7 +3206,7 @@
             <td>REQ_SD_223</td>
             <td>SD Entry Multiple Entries per Message</td>
             <td>feat_req_someipsd_159, feat_req_someipsd_160, feat_req_someipsd_161, feat_req_someipsd_162, feat_req_someipsd_163, feat_req_someipsd_164</td>
-            <td class="code-ref">CODE_sd_server_sd_218, CODE_sd_server_sd_541</td>
+            <td class="code-ref">CODE_sd_server_sd_199, CODE_sd_server_sd_522</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3229,9 +3237,9 @@
         <tr>
             <td>REQ_SD_233</td>
             <td>SD IPv6 Endpoint Option Format</td>
-            <td>feat_req_someipsd_203, feat_req_someipsd_204</td>
-            <td class="code-ref">CODE_sd_client_sd_218, CODE_sd_client_sd_299, CODE_sd_client_sd_555</td>
-            <td>TC_test_sd_SdTest</td>
+            <td>feat_req_someipsd_140, feat_req_someipsd_163, feat_req_someipsd_164</td>
+            <td class="code-ref">CODE_sd_message_sd_511, CODE_sd_message_sd_232</td>
+            <td>TC_test_sd_SdTest, TC_SD_IPV6_EP_001, TC_SD_IPV6_MSG_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -3246,15 +3254,15 @@
             <td>REQ_SD_235</td>
             <td>SD IPv6 Multicast Option Format</td>
             <td>feat_req_someipsd_737, feat_req_someipsd_738, feat_req_someipsd_739, feat_req_someipsd_750</td>
-            <td class="code-ref">CODE_sd_client_sd_218, CODE_sd_client_sd_299, CODE_sd_client_sd_555</td>
-            <td>TC_test_sd_SdTest</td>
+            <td class="code-ref">CODE_sd_message_sd_533, CODE_sd_message_sd_268</td>
+            <td>TC_test_sd_SdTest, TC_SD_IPV6_MC_001, TC_SD_IPV6_MSG_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_236</td>
             <td>SD IPv4 SD Endpoint Option Format</td>
-            <td>feat_req_someipsd_1080, feat_req_someipsd_1082, feat_req_someipsd_1083, feat_req_someipsd_1084, feat_req_someipsd_1087</td>
-            <td class="code-ref">CODE_sd_message_sd_441, CODE_sd_message_sd_458</td>
+            <td>feat_req_someipsd_1080, feat_req_someipsd_1082, feat_req_someipsd_1083, feat_req_someipsd_1085, feat_req_someipsd_1087</td>
+            <td class="code-ref">CODE_sd_message_sd_574</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3286,7 +3294,7 @@
             <td>REQ_SD_243</td>
             <td>SD Endpoint Option Processing</td>
             <td>feat_req_someipsd_1101, feat_req_someipsd_1102, feat_req_someipsd_1103</td>
-            <td class="code-ref">CODE_sd_message_sd_441, CODE_sd_message_sd_458</td>
+            <td class="code-ref">CODE_sd_message_sd_557, CODE_sd_message_sd_574</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3294,7 +3302,7 @@
             <td>REQ_SD_250</td>
             <td>SD FindService Message Construction</td>
             <td>feat_req_someipsd_217, feat_req_someipsd_218, feat_req_someipsd_219, feat_req_someipsd_220</td>
-            <td class="code-ref">CODE_sd_server_sd_218, CODE_sd_server_sd_382, CODE_sd_server_sd_407</td>
+            <td class="code-ref">CODE_sd_server_sd_199, CODE_sd_server_sd_363, CODE_sd_server_sd_388</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3302,7 +3310,7 @@
             <td>REQ_SD_251</td>
             <td>SD FindService Response Behavior</td>
             <td>feat_req_someipsd_224, feat_req_someipsd_225, feat_req_someipsd_227, feat_req_someipsd_766, feat_req_someipsd_767</td>
-            <td class="code-ref">CODE_sd_server_sd_218, CODE_sd_server_sd_382, CODE_sd_server_sd_407</td>
+            <td class="code-ref">CODE_sd_server_sd_199, CODE_sd_server_sd_363, CODE_sd_server_sd_388</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3310,7 +3318,7 @@
             <td>REQ_SD_260</td>
             <td>SD OfferService Message Construction</td>
             <td>feat_req_someipsd_221, feat_req_someipsd_233, feat_req_someipsd_235, feat_req_someipsd_236, feat_req_someipsd_237</td>
-            <td class="code-ref">CODE_sd_server_sd_218, CODE_sd_server_sd_382, CODE_sd_server_sd_407</td>
+            <td class="code-ref">CODE_sd_server_sd_199, CODE_sd_server_sd_363, CODE_sd_server_sd_388</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3318,7 +3326,7 @@
             <td>REQ_SD_261</td>
             <td>SD StopOfferService Construction</td>
             <td>feat_req_someipsd_256, feat_req_someipsd_261, feat_req_someipsd_262</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest, TC_SD_SPEC_299_STOP</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3326,7 +3334,7 @@
             <td>REQ_SD_270</td>
             <td>SD SubscribeEventgroup Construction</td>
             <td>feat_req_someipsd_230, feat_req_someipsd_429, feat_req_someipsd_430, feat_req_someipsd_431, feat_req_someipsd_432, feat_req_someipsd_428</td>
-            <td class="code-ref">CODE_sd_client_sd_218, CODE_sd_server_sd_239</td>
+            <td class="code-ref">CODE_sd_client_sd_218, CODE_sd_server_sd_220</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3342,7 +3350,7 @@
             <td>REQ_SD_272</td>
             <td>SD SubscribeEventgroupAck Construction</td>
             <td>feat_req_someipsd_612, feat_req_someipsd_613, feat_req_someipsd_614, feat_req_someipsd_619, feat_req_someipsd_844</td>
-            <td class="code-ref">CODE_sd_server_sd_239, CODE_sd_server_sd_257, CODE_sd_server_sd_771</td>
+            <td class="code-ref">CODE_sd_server_sd_220, CODE_sd_server_sd_238, CODE_sd_server_sd_768</td>
             <td>TC_test_sd_SdTest, TC_SD_SPEC_272, TC_SD_SPEC_272_UNICAST</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3350,7 +3358,7 @@
             <td>REQ_SD_273</td>
             <td>SD SubscribeEventgroupNack Construction</td>
             <td>feat_req_someipsd_617, feat_req_someipsd_869, feat_req_someipsd_870</td>
-            <td class="code-ref">CODE_sd_server_sd_239</td>
+            <td class="code-ref">CODE_sd_server_sd_220</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3366,7 +3374,7 @@
             <td>REQ_SD_280</td>
             <td>SD Timing Configuration</td>
             <td>feat_req_someipsd_66, feat_req_someipsd_68, feat_req_someipsd_72</td>
-            <td class="code-ref">CODE_sd_server_sd_849</td>
+            <td class="code-ref">CODE_sd_server_sd_848</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3382,7 +3390,7 @@
             <td>REQ_SD_282</td>
             <td>SD Multicast Group Management</td>
             <td>feat_req_someipsd_101, feat_req_someipsd_102, feat_req_someipsd_103, feat_req_someipsd_104</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3390,7 +3398,7 @@
             <td>REQ_SD_283</td>
             <td>SD Response Delay Configuration</td>
             <td>feat_req_someipsd_106, feat_req_someipsd_107, feat_req_someipsd_109</td>
-            <td class="code-ref">CODE_sd_server_sd_849</td>
+            <td class="code-ref">CODE_sd_server_sd_848</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3398,7 +3406,7 @@
             <td>REQ_SD_290</td>
             <td>SD Server Endpoint Registration</td>
             <td>feat_req_someipsd_806, feat_req_someipsd_807, feat_req_someipsd_808, feat_req_someipsd_809, feat_req_someipsd_811</td>
-            <td class="code-ref">CODE_sd_server_sd_574</td>
+            <td class="code-ref">CODE_sd_server_sd_555</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3406,7 +3414,7 @@
             <td>REQ_SD_291</td>
             <td>SD Client Endpoint Resolution</td>
             <td>feat_req_someipsd_812, feat_req_someipsd_813, feat_req_someipsd_814, feat_req_someipsd_816</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3414,7 +3422,7 @@
             <td>REQ_SD_292</td>
             <td>SD Multicast Endpoint Handling</td>
             <td>feat_req_someipsd_751, feat_req_someipsd_752, feat_req_someipsd_754, feat_req_someipsd_755, feat_req_someipsd_756, feat_req_someipsd_757, feat_req_someipsd_758</td>
-            <td class="code-ref">CODE_sd_server_sd_574</td>
+            <td class="code-ref">CODE_sd_server_sd_555</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3430,7 +3438,7 @@
             <td>REQ_SD_300</td>
             <td>SD Service Offer Processing</td>
             <td>feat_req_someipsd_762, feat_req_someipsd_763, feat_req_someipsd_828, feat_req_someipsd_829</td>
-            <td class="code-ref">CODE_sd_server_sd_617</td>
+            <td class="code-ref">CODE_sd_server_sd_598</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3438,7 +3446,7 @@
             <td>REQ_SD_301</td>
             <td>SD Service State Tracking</td>
             <td>feat_req_someipsd_771, feat_req_someipsd_772, feat_req_someipsd_776, feat_req_someipsd_777, feat_req_someipsd_778</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3446,7 +3454,7 @@
             <td>REQ_SD_302</td>
             <td>SD Subscription State Tracking</td>
             <td>feat_req_someipsd_779, feat_req_someipsd_780, feat_req_someipsd_781, feat_req_someipsd_782, feat_req_someipsd_783</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3454,7 +3462,7 @@
             <td>REQ_SD_303</td>
             <td>SD Service Registry Management</td>
             <td>feat_req_someipsd_784, feat_req_someipsd_785, feat_req_someipsd_786, feat_req_someipsd_787, feat_req_someipsd_788</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3478,7 +3486,7 @@
             <td>REQ_SD_312</td>
             <td>SD Service Stop Handling</td>
             <td>feat_req_someipsd_831, feat_req_someipsd_832, feat_req_someipsd_834</td>
-            <td class="code-ref">CODE_sd_server_sd_617</td>
+            <td class="code-ref">CODE_sd_server_sd_598</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3486,7 +3494,7 @@
             <td>REQ_SD_320</td>
             <td>SD Non-SOME/IP Service Announcement</td>
             <td>feat_req_someipsd_497, feat_req_someipsd_498, feat_req_someipsd_499, feat_req_someipsd_500, feat_req_someipsd_501, feat_req_someipsd_502, feat_req_someipsd_503</td>
-            <td class="code-ref">CODE_sd_message_sd_549, CODE_sd_message_sd_613</td>
+            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_729</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3494,7 +3502,7 @@
             <td>REQ_SD_330</td>
             <td>SD Initial Event Sending</td>
             <td>feat_req_someipsd_833, feat_req_someipsd_1166, feat_req_someipsd_1167, feat_req_someipsd_1168</td>
-            <td class="code-ref">CODE_sd_server_sd_642</td>
+            <td class="code-ref">CODE_sd_server_sd_623</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3518,7 +3526,7 @@
             <td>REQ_SD_341</td>
             <td>SD Option Conflict Resolution</td>
             <td>feat_req_someipsd_1140, feat_req_someipsd_1147, feat_req_someipsd_1149</td>
-            <td class="code-ref">CODE_sd_client_sd_815, CODE_sd_server_sd_642</td>
+            <td class="code-ref">CODE_sd_client_sd_815, CODE_sd_server_sd_623</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3526,7 +3534,7 @@
             <td>REQ_SD_342</td>
             <td>SD Security Considerations</td>
             <td>feat_req_someipsd_1176, feat_req_someipsd_1177, feat_req_someipsd_1178, feat_req_someipsd_1179, feat_req_someipsd_1180, feat_req_someipsd_1182, feat_req_someipsd_1184</td>
-            <td class="code-ref">CODE_sd_client_sd_815, CODE_sd_server_sd_642</td>
+            <td class="code-ref">CODE_sd_client_sd_815, CODE_sd_server_sd_623</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3534,7 +3542,7 @@
             <td>REQ_SD_343</td>
             <td>SD IPv4 SD Endpoint Processing</td>
             <td>feat_req_someipsd_1151, feat_req_someipsd_1152, feat_req_someipsd_1153, feat_req_someipsd_1154, feat_req_someipsd_1155, feat_req_someipsd_1156</td>
-            <td class="code-ref">CODE_sd_client_sd_815, CODE_sd_server_sd_642</td>
+            <td class="code-ref">CODE_sd_client_sd_815, CODE_sd_server_sd_623</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3542,7 +3550,7 @@
             <td>REQ_SD_344</td>
             <td>SD Mandatory Feature Set</td>
             <td>feat_req_someipsd_1248, feat_req_someipsd_1249, feat_req_someipsd_1250, feat_req_someipsd_1251, feat_req_someipsd_1252, feat_req_someipsd_1253</td>
-            <td class="code-ref">CODE_sd_client_sd_815, CODE_sd_server_sd_642</td>
+            <td class="code-ref">CODE_sd_client_sd_815, CODE_sd_server_sd_623</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3550,7 +3558,7 @@
             <td>REQ_SD_345</td>
             <td>SD Unicast Flag Processing</td>
             <td>feat_req_someipsd_1187, feat_req_someipsd_1188</td>
-            <td class="code-ref">CODE_sd_server_sd_642</td>
+            <td class="code-ref">CODE_sd_server_sd_623</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3566,7 +3574,7 @@
             <td>REQ_SD_347</td>
             <td>SD Subscription Renewal</td>
             <td>feat_req_someipsd_839, feat_req_someipsd_840, feat_req_someipsd_841, feat_req_someipsd_842, feat_req_someipsd_843</td>
-            <td class="code-ref">CODE_sd_server_sd_659</td>
+            <td class="code-ref">CODE_sd_server_sd_640</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3581,8 +3589,8 @@
         <tr>
             <td>REQ_SD_349</td>
             <td>SD Duplicate Offer Handling</td>
-            <td>feat_req_someipsd_844, feat_req_someipsd_848, feat_req_someipsd_849, feat_req_someipsd_850, feat_req_someipsd_851</td>
-            <td class="code-ref">CODE_sd_server_sd_659</td>
+            <td>feat_req_someipsd_844, feat_req_someipsd_849, feat_req_someipsd_850, feat_req_someipsd_851</td>
+            <td class="code-ref">CODE_sd_server_sd_640</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3590,7 +3598,7 @@
             <td>REQ_SD_350</td>
             <td>SD Entry Aggregation</td>
             <td>feat_req_someipsd_852, feat_req_someipsd_853, feat_req_someipsd_854, feat_req_someipsd_855, feat_req_someipsd_856</td>
-            <td class="code-ref">CODE_sd_server_sd_659</td>
+            <td class="code-ref">CODE_sd_server_sd_640</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3598,7 +3606,7 @@
             <td>REQ_SD_351</td>
             <td>SD Startup Behavior</td>
             <td>feat_req_someipsd_857, feat_req_someipsd_858, feat_req_someipsd_862, feat_req_someipsd_864</td>
-            <td class="code-ref">CODE_sd_server_sd_659</td>
+            <td class="code-ref">CODE_sd_server_sd_640</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3606,7 +3614,7 @@
             <td>REQ_SD_352</td>
             <td>SD Advanced Reboot Detection</td>
             <td>feat_req_someipsd_796, feat_req_someipsd_797, feat_req_someipsd_798</td>
-            <td class="code-ref">CODE_sd_server_sd_659</td>
+            <td class="code-ref">CODE_sd_server_sd_640</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3614,7 +3622,7 @@
             <td>REQ_SD_353</td>
             <td>SD Service Timeout Handling</td>
             <td>feat_req_someipsd_790, feat_req_someipsd_791</td>
-            <td class="code-ref">CODE_sd_server_sd_659</td>
+            <td class="code-ref">CODE_sd_server_sd_640</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3622,7 +3630,7 @@
             <td>REQ_SD_354</td>
             <td>SD Subscribe Multicast Handling</td>
             <td>feat_req_someipsd_747, feat_req_someipsd_1134, feat_req_someipsd_1136, feat_req_someipsd_1137</td>
-            <td class="code-ref">CODE_sd_server_sd_659</td>
+            <td class="code-ref">CODE_sd_server_sd_640</td>
             <td>TC_test_sd_SdTest</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3646,8 +3654,16 @@
             <td>REQ_SD_818</td>
             <td>Subscribe Family Unicast Transport</td>
             <td>feat_req_someipsd_818</td>
-            <td class="code-ref">CODE_sd_client_sd_218, CODE_sd_client_sd_299, CODE_sd_server_sd_574, CODE_sd_server_sd_617</td>
+            <td class="code-ref">CODE_sd_client_sd_218, CODE_sd_client_sd_299, CODE_sd_server_sd_555, CODE_sd_server_sd_598</td>
             <td>TC_test_sd_SdTest, TC_SD_SPEC_818, TC_SD_SPEC_818_RX, TC_SD_PY_818, TC_SD_PY_DEMO</td>
+            <td><span class="status-ok">✓ Complete</span></td>
+        </tr>
+        <tr>
+            <td>REQ_SD_848</td>
+            <td>Subscribe IPv4 UDP and TCP Endpoints</td>
+            <td>feat_req_someipsd_848</td>
+            <td class="code-ref">CODE_sd_server_sd_640</td>
+            <td>TC_SD_848, TC_SD_848_DUP</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -6369,13 +6385,13 @@
         <tr>
             <td>CODE_sd_client_sd_218</td>
             <td class="code-ref">src/sd/sd_client.cpp:218</td>
-            <td>REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_211, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240, REQ_SD_241, REQ_SD_270, REQ_SD_818</td>
+            <td>REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_211, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_234, REQ_SD_240, REQ_SD_241, REQ_SD_270, REQ_SD_818</td>
             <td>feat_req_someipsd_818</td>
         </tr>
         <tr>
             <td>CODE_sd_client_sd_299</td>
             <td class="code-ref">src/sd/sd_client.cpp:299</td>
-            <td>REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240, REQ_SD_818</td>
+            <td>REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_234, REQ_SD_240, REQ_SD_818</td>
             <td>feat_req_someipsd_818</td>
         </tr>
         <tr>
@@ -6399,7 +6415,7 @@
         <tr>
             <td>CODE_sd_client_sd_555</td>
             <td class="code-ref">src/sd/sd_client.cpp:555</td>
-            <td>REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_240, REQ_SD_346, REQ_SD_348</td>
+            <td>REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_234, REQ_SD_240, REQ_SD_346, REQ_SD_348</td>
             <td>-</td>
         </tr>
         <tr>
@@ -6427,213 +6443,237 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_104</td>
-            <td class="code-ref">src/sd/sd_message.cpp:104</td>
+            <td>CODE_sd_message_sd_105</td>
+            <td class="code-ref">src/sd/sd_message.cpp:105</td>
             <td>REQ_SD_040, REQ_SD_041, REQ_SD_042, REQ_SD_043, REQ_SD_044, REQ_SD_045, REQ_SD_046, REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054, REQ_SD_055, REQ_SD_056</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_128</td>
-            <td class="code-ref">src/sd/sd_message.cpp:128</td>
+            <td>CODE_sd_message_sd_129</td>
+            <td class="code-ref">src/sd/sd_message.cpp:129</td>
             <td>REQ_SD_040_E01, REQ_SD_041_E01, REQ_SD_044_E01, REQ_SD_050_E01, REQ_SD_052_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_157</td>
-            <td class="code-ref">src/sd/sd_message.cpp:157</td>
-            <td>REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065, REQ_SD_066, REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_074, REQ_SD_075, REQ_SD_076, REQ_SD_077</td>
+            <td>CODE_sd_message_sd_158</td>
+            <td class="code-ref">src/sd/sd_message.cpp:158</td>
+            <td>REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065, REQ_SD_066, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_075, REQ_SD_076, REQ_SD_077</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_186</td>
-            <td class="code-ref">src/sd/sd_message.cpp:186</td>
+            <td>CODE_sd_message_sd_187</td>
+            <td class="code-ref">src/sd/sd_message.cpp:187</td>
             <td>REQ_SD_060_E01, REQ_SD_060_E02, REQ_SD_061_E01, REQ_SD_062_E01, REQ_SD_064_E01, REQ_SD_070_E01, REQ_SD_075_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_248</td>
-            <td class="code-ref">src/sd/sd_message.cpp:248</td>
+            <td>CODE_sd_message_sd_232</td>
+            <td class="code-ref">include/sd/sd_message.h:232</td>
+            <td>REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_233</td>
+            <td>feat_req_someipsd_140, feat_req_someipsd_163, feat_req_someipsd_164</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_message_sd_249</td>
+            <td class="code-ref">src/sd/sd_message.cpp:249</td>
             <td>REQ_SD_120, REQ_SD_122, REQ_SD_123</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_26</td>
-            <td class="code-ref">include/sd/sd_message.h:26</td>
+            <td>CODE_sd_message_sd_268</td>
+            <td class="code-ref">include/sd/sd_message.h:268</td>
+            <td>REQ_SD_074, REQ_SD_235</td>
+            <td>feat_req_someipsd_737, feat_req_someipsd_738, feat_req_someipsd_739</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_message_sd_27</td>
+            <td class="code-ref">include/sd/sd_message.h:27</td>
             <td>REQ_SD_200A, REQ_SD_200B, REQ_SD_200C</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_264</td>
-            <td class="code-ref">include/sd/sd_message.h:264</td>
+            <td>CODE_sd_message_sd_281</td>
+            <td class="code-ref">src/sd/sd_message.cpp:281</td>
+            <td>REQ_SD_064_E01</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_message_sd_342</td>
+            <td class="code-ref">include/sd/sd_message.h:342</td>
             <td>REQ_SD_200A, REQ_SD_200C, REQ_MSG_113</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_280</td>
-            <td class="code-ref">src/sd/sd_message.cpp:280</td>
-            <td>REQ_SD_064_E01</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_sd_message_sd_346</td>
-            <td class="code-ref">src/sd/sd_message.cpp:346</td>
+            <td>CODE_sd_message_sd_347</td>
+            <td class="code-ref">src/sd/sd_message.cpp:347</td>
             <td>REQ_SD_132, REQ_SD_160</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_36</td>
-            <td class="code-ref">src/sd/sd_message.cpp:36</td>
+            <td>CODE_sd_message_sd_37</td>
+            <td class="code-ref">src/sd/sd_message.cpp:37</td>
             <td>-</td>
             <td>feat_req_someipsd_300, feat_req_someipsd_301</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_376</td>
-            <td class="code-ref">src/sd/sd_message.cpp:376</td>
+            <td>CODE_sd_message_sd_377</td>
+            <td class="code-ref">src/sd/sd_message.cpp:377</td>
             <td>REQ_SD_064_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_43</td>
-            <td class="code-ref">src/sd/sd_message.cpp:43</td>
+            <td>CODE_sd_message_sd_44</td>
+            <td class="code-ref">src/sd/sd_message.cpp:44</td>
             <td>REQ_ARCH_001, REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007, REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014, REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026, REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_441</td>
-            <td class="code-ref">src/sd/sd_message.cpp:441</td>
+            <td>CODE_sd_message_sd_511</td>
+            <td class="code-ref">src/sd/sd_message.cpp:511</td>
+            <td>REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_233</td>
+            <td>feat_req_someipsd_140, feat_req_someipsd_163, feat_req_someipsd_164</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_message_sd_533</td>
+            <td class="code-ref">src/sd/sd_message.cpp:533</td>
+            <td>REQ_SD_074, REQ_SD_235</td>
+            <td>feat_req_someipsd_737, feat_req_someipsd_738, feat_req_someipsd_739</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_message_sd_557</td>
+            <td class="code-ref">src/sd/sd_message.cpp:557</td>
+            <td>REQ_SD_071, REQ_SD_072, REQ_SD_243</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_message_sd_574</td>
+            <td class="code-ref">src/sd/sd_message.cpp:574</td>
             <td>REQ_SD_236, REQ_SD_243</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_458</td>
-            <td class="code-ref">src/sd/sd_message.cpp:458</td>
-            <td>REQ_SD_236, REQ_SD_243</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_sd_message_sd_549</td>
-            <td class="code-ref">src/sd/sd_message.cpp:549</td>
-            <td>REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_sd_message_sd_613</td>
-            <td class="code-ref">src/sd/sd_message.cpp:613</td>
-            <td>REQ_SD_030_E01, REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_sd_message_sd_65</td>
-            <td class="code-ref">include/sd/sd_message.h:65</td>
+            <td>CODE_sd_message_sd_66</td>
+            <td class="code-ref">include/sd/sd_message.h:66</td>
             <td>REQ_SD_200B</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_86</td>
-            <td class="code-ref">src/sd/sd_message.cpp:86</td>
+            <td>CODE_sd_message_sd_665</td>
+            <td class="code-ref">src/sd/sd_message.cpp:665</td>
+            <td>REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_message_sd_729</td>
+            <td class="code-ref">src/sd/sd_message.cpp:729</td>
+            <td>REQ_SD_030_E01, REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_message_sd_87</td>
+            <td class="code-ref">src/sd/sd_message.cpp:87</td>
             <td>REQ_SD_001_E01, REQ_SD_001_E02, REQ_SD_010_E01, REQ_SD_010_E02, REQ_SD_020_E01, REQ_SD_020_E02, REQ_SD_021_E01, REQ_SD_022_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_108</td>
-            <td class="code-ref">src/sd/sd_server.cpp:108</td>
-            <td>REQ_SD_080, REQ_SD_080_E01, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_083_E01, REQ_SD_084</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_sd_server_sd_131</td>
-            <td class="code-ref">src/sd/sd_server.cpp:131</td>
+            <td>CODE_sd_server_sd_112</td>
+            <td class="code-ref">src/sd/sd_server.cpp:112</td>
             <td>REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_155</td>
-            <td class="code-ref">src/sd/sd_server.cpp:155</td>
+            <td>CODE_sd_server_sd_136</td>
+            <td class="code-ref">src/sd/sd_server.cpp:136</td>
             <td>REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_218</td>
-            <td class="code-ref">src/sd/sd_server.cpp:218</td>
+            <td>CODE_sd_server_sd_199</td>
+            <td class="code-ref">src/sd/sd_server.cpp:199</td>
             <td>REQ_SD_220, REQ_SD_221, REQ_SD_222, REQ_SD_223, REQ_SD_250, REQ_SD_251, REQ_SD_260</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_239</td>
-            <td class="code-ref">src/sd/sd_server.cpp:239</td>
+            <td>CODE_sd_server_sd_220</td>
+            <td class="code-ref">src/sd/sd_server.cpp:220</td>
             <td>REQ_SD_270, REQ_SD_272, REQ_SD_273</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_257</td>
-            <td class="code-ref">src/sd/sd_server.cpp:257</td>
+            <td>CODE_sd_server_sd_238</td>
+            <td class="code-ref">src/sd/sd_server.cpp:238</td>
             <td>REQ_SD_115, REQ_SD_115_E01, REQ_SD_115_E02, REQ_SD_117, REQ_SD_118, REQ_SD_119, REQ_SD_119_E01, REQ_SD_272</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_382</td>
-            <td class="code-ref">src/sd/sd_server.cpp:382</td>
+            <td>CODE_sd_server_sd_363</td>
+            <td class="code-ref">src/sd/sd_server.cpp:363</td>
             <td>REQ_SD_250, REQ_SD_251, REQ_SD_260</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_407</td>
-            <td class="code-ref">src/sd/sd_server.cpp:407</td>
+            <td>CODE_sd_server_sd_388</td>
+            <td class="code-ref">src/sd/sd_server.cpp:388</td>
             <td>REQ_SD_111, REQ_SD_112, REQ_SD_250, REQ_SD_251, REQ_SD_260</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_488</td>
-            <td class="code-ref">src/sd/sd_server.cpp:488</td>
+            <td>CODE_sd_server_sd_469</td>
+            <td class="code-ref">src/sd/sd_server.cpp:469</td>
             <td>REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_541</td>
-            <td class="code-ref">src/sd/sd_server.cpp:541</td>
+            <td>CODE_sd_server_sd_522</td>
+            <td class="code-ref">src/sd/sd_server.cpp:522</td>
             <td>REQ_SD_220, REQ_SD_221, REQ_SD_222, REQ_SD_223</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_574</td>
-            <td class="code-ref">src/sd/sd_server.cpp:574</td>
+            <td>CODE_sd_server_sd_555</td>
+            <td class="code-ref">src/sd/sd_server.cpp:555</td>
             <td>REQ_SD_290, REQ_SD_292, REQ_SD_818</td>
             <td>feat_req_someipsd_818</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_617</td>
-            <td class="code-ref">src/sd/sd_server.cpp:617</td>
+            <td>CODE_sd_server_sd_598</td>
+            <td class="code-ref">src/sd/sd_server.cpp:598</td>
             <td>REQ_SD_300, REQ_SD_312, REQ_SD_818</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_642</td>
-            <td class="code-ref">src/sd/sd_server.cpp:642</td>
-            <td>REQ_SD_330, REQ_SD_341, REQ_SD_342, REQ_SD_343, REQ_SD_344, REQ_SD_345</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_sd_server_sd_659</td>
-            <td class="code-ref">src/sd/sd_server.cpp:659</td>
-            <td>REQ_SD_347, REQ_SD_349, REQ_SD_350, REQ_SD_351, REQ_SD_352, REQ_SD_353, REQ_SD_354</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_sd_server_sd_771</td>
-            <td class="code-ref">src/sd/sd_server.cpp:771</td>
-            <td>REQ_SD_272</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_sd_server_sd_79</td>
-            <td class="code-ref">src/sd/sd_server.cpp:79</td>
+            <td>CODE_sd_server_sd_60</td>
+            <td class="code-ref">src/sd/sd_server.cpp:60</td>
             <td>REQ_ARCH_001, REQ_ARCH_002</td>
             <td>feat_req_someipsd_200, feat_req_someipsd_201, feat_req_someipsd_202</td>
         </tr>
         <tr>
-            <td>CODE_sd_server_sd_849</td>
-            <td class="code-ref">src/sd/sd_server.cpp:849</td>
+            <td>CODE_sd_server_sd_623</td>
+            <td class="code-ref">src/sd/sd_server.cpp:623</td>
+            <td>REQ_SD_330, REQ_SD_341, REQ_SD_342, REQ_SD_343, REQ_SD_344, REQ_SD_345</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_server_sd_640</td>
+            <td class="code-ref">src/sd/sd_server.cpp:640</td>
+            <td>REQ_SD_347, REQ_SD_349, REQ_SD_350, REQ_SD_351, REQ_SD_352, REQ_SD_353, REQ_SD_354, REQ_SD_848, REQ_SD_1084</td>
+            <td>feat_req_someipsd_848, feat_req_someipsd_1084</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_server_sd_768</td>
+            <td class="code-ref">src/sd/sd_server.cpp:768</td>
+            <td>REQ_SD_272, REQ_SD_1084</td>
+            <td>feat_req_someipsd_1084</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_server_sd_848</td>
+            <td class="code-ref">src/sd/sd_server.cpp:848</td>
             <td>REQ_SD_280, REQ_SD_283</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_server_sd_89</td>
+            <td class="code-ref">src/sd/sd_server.cpp:89</td>
+            <td>REQ_SD_080, REQ_SD_080_E01, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_083_E01, REQ_SD_084</td>
             <td>-</td>
         </tr>
         <tr>
@@ -8808,267 +8848,303 @@
         </tr>
         <tr>
             <td>TC_SD_001</td>
-            <td>SdTest.EntryTypes (tests/test_sd.cpp:98)</td>
-            <td class="code-ref">tests/test_sd.cpp:98</td>
+            <td>SdTest.EntryTypes (tests/test_sd.cpp:99)</td>
+            <td class="code-ref">tests/test_sd.cpp:99</td>
             <td>REQ_SD_001, REQ_SD_002</td>
         </tr>
         <tr>
             <td>TC_SD_002</td>
-            <td>SdTest.OptionTypes (tests/test_sd.cpp:110)</td>
-            <td class="code-ref">tests/test_sd.cpp:110</td>
+            <td>SdTest.OptionTypes (tests/test_sd.cpp:111)</td>
+            <td class="code-ref">tests/test_sd.cpp:111</td>
             <td>REQ_SD_060, REQ_SD_061, REQ_SD_062</td>
         </tr>
         <tr>
             <td>TC_SD_003</td>
-            <td>SdTest.Instance (tests/test_sd.cpp:121)</td>
-            <td class="code-ref">tests/test_sd.cpp:121</td>
+            <td>SdTest.Instance (tests/test_sd.cpp:122)</td>
+            <td class="code-ref">tests/test_sd.cpp:122</td>
             <td>REQ_SD_010, REQ_SD_011, REQ_SD_012</td>
         </tr>
         <tr>
             <td>TC_SD_004</td>
-            <td>SdTest.IPv4EndpointOptionSerialization (tests/test_sd.cpp:139)</td>
-            <td class="code-ref">tests/test_sd.cpp:139</td>
+            <td>SdTest.IPv4EndpointOptionSerialization (tests/test_sd.cpp:140)</td>
+            <td class="code-ref">tests/test_sd.cpp:140</td>
             <td>REQ_SD_060, REQ_SD_063, REQ_SD_064, REQ_SD_065</td>
         </tr>
         <tr>
             <td>TC_SD_005</td>
-            <td>SdTest.IPv4EndpointOptionDeserialization (tests/test_sd.cpp:182)</td>
-            <td class="code-ref">tests/test_sd.cpp:182</td>
+            <td>SdTest.IPv4EndpointOptionDeserialization (tests/test_sd.cpp:183)</td>
+            <td class="code-ref">tests/test_sd.cpp:183</td>
             <td>REQ_SD_060, REQ_SD_063, REQ_SD_064, REQ_SD_065</td>
         </tr>
         <tr>
             <td>TC_SD_006</td>
-            <td>SdTest.ServiceEntry (tests/test_sd.cpp:265)</td>
-            <td class="code-ref">tests/test_sd.cpp:265</td>
+            <td>SdTest.ServiceEntry (tests/test_sd.cpp:375)</td>
+            <td class="code-ref">tests/test_sd.cpp:375</td>
             <td>REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023</td>
         </tr>
         <tr>
             <td>TC_SD_007</td>
-            <td>SdTest.EventGroupEntry (tests/test_sd.cpp:285)</td>
-            <td class="code-ref">tests/test_sd.cpp:285</td>
+            <td>SdTest.EventGroupEntry (tests/test_sd.cpp:395)</td>
+            <td class="code-ref">tests/test_sd.cpp:395</td>
             <td>REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054</td>
         </tr>
         <tr>
             <td>TC_SD_008</td>
-            <td>SdTest.EndpointOption (tests/test_sd.cpp:307)</td>
-            <td class="code-ref">tests/test_sd.cpp:307</td>
+            <td>SdTest.EndpointOption (tests/test_sd.cpp:417)</td>
+            <td class="code-ref">tests/test_sd.cpp:417</td>
             <td>REQ_SD_060, REQ_SD_063, REQ_SD_064</td>
         </tr>
         <tr>
             <td>TC_SD_009</td>
-            <td>SdTest.MulticastOption (tests/test_sd.cpp:325)</td>
-            <td class="code-ref">tests/test_sd.cpp:325</td>
-            <td>REQ_SD_066, REQ_SD_067, REQ_SD_068</td>
+            <td>SdTest.MulticastOption (tests/test_sd.cpp:435)</td>
+            <td class="code-ref">tests/test_sd.cpp:435</td>
+            <td>REQ_SD_073</td>
         </tr>
         <tr>
             <td>TC_SD_010</td>
-            <td>SdTest.SdMessage (tests/test_sd.cpp:341)</td>
-            <td class="code-ref">tests/test_sd.cpp:341</td>
+            <td>SdTest.SdMessage (tests/test_sd.cpp:451)</td>
+            <td class="code-ref">tests/test_sd.cpp:451</td>
             <td>REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007</td>
         </tr>
         <tr>
+            <td>TC_SD_1084</td>
+            <td>SdIntegrationTest.SubscribeAckGoesToSdSenderNotEventEndpoint (tests/test_sd.cpp:2935)</td>
+            <td class="code-ref">tests/test_sd.cpp:2935</td>
+            <td>REQ_SD_1084, feat_req_someipsd_1084</td>
+        </tr>
+        <tr>
+            <td>TC_SD_848</td>
+            <td>SdIntegrationTest.SubscribeAcceptsUdpAndTcpEndpoints (tests/test_sd.cpp:2840)</td>
+            <td class="code-ref">tests/test_sd.cpp:2840</td>
+            <td>REQ_SD_848, feat_req_someipsd_848</td>
+        </tr>
+        <tr>
+            <td>TC_SD_848_DUP</td>
+            <td>SdIntegrationTest.SubscribeRejectsDuplicateUdpEndpoints (tests/test_sd.cpp:2889)</td>
+            <td class="code-ref">tests/test_sd.cpp:2889</td>
+            <td>REQ_SD_848</td>
+        </tr>
+        <tr>
             <td>TC_SD_ADD_ENTRY_RETURNS_BOOL</td>
-            <td>SdTest.AddEntryReturnsBool (tests/test_sd.cpp:2019)</td>
-            <td class="code-ref">tests/test_sd.cpp:2019</td>
+            <td>SdTest.AddEntryReturnsBool (tests/test_sd.cpp:2168)</td>
+            <td class="code-ref">tests/test_sd.cpp:2168</td>
             <td>REQ_SD_030_E01</td>
         </tr>
         <tr>
             <td>TC_SD_CLIENT_001</td>
-            <td>SdTest.ClientDoubleSubscribe (tests/test_sd.cpp:1108)</td>
-            <td class="code-ref">tests/test_sd.cpp:1108</td>
+            <td>SdTest.ClientDoubleSubscribe (tests/test_sd.cpp:1218)</td>
+            <td class="code-ref">tests/test_sd.cpp:1218</td>
             <td>REQ_SD_041_E01</td>
         </tr>
         <tr>
             <td>TC_SD_COUNTER_001</td>
-            <td>SdTest.EventGroupEntryCounterRoundTrip (tests/test_sd.cpp:2037)</td>
-            <td class="code-ref">tests/test_sd.cpp:2037</td>
+            <td>SdTest.EventGroupEntryCounterRoundTrip (tests/test_sd.cpp:2186)</td>
+            <td class="code-ref">tests/test_sd.cpp:2186</td>
             <td>REQ_SD_060</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_001</td>
-            <td>SdTest.DeserializeEmptyBuffer (tests/test_sd.cpp:979)</td>
-            <td class="code-ref">tests/test_sd.cpp:979</td>
+            <td>SdTest.DeserializeEmptyBuffer (tests/test_sd.cpp:1089)</td>
+            <td class="code-ref">tests/test_sd.cpp:1089</td>
             <td>REQ_SD_001_E01, REQ_SD_010_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_002</td>
-            <td>SdTest.DeserializeTruncatedHeader (tests/test_sd.cpp:990)</td>
-            <td class="code-ref">tests/test_sd.cpp:990</td>
+            <td>SdTest.DeserializeTruncatedHeader (tests/test_sd.cpp:1100)</td>
+            <td class="code-ref">tests/test_sd.cpp:1100</td>
             <td>REQ_SD_001_E01, REQ_SD_020_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_003</td>
-            <td>SdTest.DeserializeInvalidLength (tests/test_sd.cpp:1001)</td>
-            <td class="code-ref">tests/test_sd.cpp:1001</td>
+            <td>SdTest.DeserializeInvalidLength (tests/test_sd.cpp:1111)</td>
+            <td class="code-ref">tests/test_sd.cpp:1111</td>
             <td>REQ_SD_020_E02, REQ_SD_021_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_004</td>
-            <td>SdTest.ServiceEntryDeserializeTruncated (tests/test_sd.cpp:1016)</td>
-            <td class="code-ref">tests/test_sd.cpp:1016</td>
+            <td>SdTest.ServiceEntryDeserializeTruncated (tests/test_sd.cpp:1126)</td>
+            <td class="code-ref">tests/test_sd.cpp:1126</td>
             <td>REQ_SD_022_E01, REQ_SD_040_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_005</td>
-            <td>SdTest.EventGroupEntryDeserializeTruncated (tests/test_sd.cpp:1028)</td>
-            <td class="code-ref">tests/test_sd.cpp:1028</td>
+            <td>SdTest.EventGroupEntryDeserializeTruncated (tests/test_sd.cpp:1138)</td>
+            <td class="code-ref">tests/test_sd.cpp:1138</td>
             <td>REQ_SD_041_E01, REQ_SD_050_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_006</td>
-            <td>SdTest.IPv4EndpointOptionDeserializeTruncated (tests/test_sd.cpp:1040)</td>
-            <td class="code-ref">tests/test_sd.cpp:1040</td>
+            <td>SdTest.IPv4EndpointOptionDeserializeTruncated (tests/test_sd.cpp:1150)</td>
+            <td class="code-ref">tests/test_sd.cpp:1150</td>
             <td>REQ_SD_052_E01, REQ_SD_060_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_007</td>
-            <td>SdTest.MulticastOptionDeserializeTruncated (tests/test_sd.cpp:1052)</td>
-            <td class="code-ref">tests/test_sd.cpp:1052</td>
+            <td>SdTest.MulticastOptionDeserializeTruncated (tests/test_sd.cpp:1162)</td>
+            <td class="code-ref">tests/test_sd.cpp:1162</td>
             <td>REQ_SD_061_E01, REQ_SD_062_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_008</td>
-            <td>SdTest.IPv4EndpointInvalidAddress (tests/test_sd.cpp:1064)</td>
-            <td class="code-ref">tests/test_sd.cpp:1064</td>
+            <td>SdTest.IPv4EndpointInvalidAddress (tests/test_sd.cpp:1174)</td>
+            <td class="code-ref">tests/test_sd.cpp:1174</td>
             <td>REQ_SD_064_E01, REQ_SD_075_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E01</td>
-            <td>SdTest.InvalidSdMessageHeader (tests/test_sd.cpp:1134)</td>
-            <td class="code-ref">tests/test_sd.cpp:1134</td>
+            <td>SdTest.InvalidSdMessageHeader (tests/test_sd.cpp:1244)</td>
+            <td class="code-ref">tests/test_sd.cpp:1244</td>
             <td>REQ_SD_001_E01, REQ_SD_001_E02</td>
         </tr>
         <tr>
             <td>TC_SD_E02</td>
-            <td>SdTest.TruncatedEntriesArray (tests/test_sd.cpp:1155)</td>
-            <td class="code-ref">tests/test_sd.cpp:1155</td>
+            <td>SdTest.TruncatedEntriesArray (tests/test_sd.cpp:1265)</td>
+            <td class="code-ref">tests/test_sd.cpp:1265</td>
             <td>REQ_SD_010_E01, REQ_SD_010_E02</td>
         </tr>
         <tr>
             <td>TC_SD_E03</td>
-            <td>SdTest.StopOfferZeroTtl (tests/test_sd.cpp:1172)</td>
-            <td class="code-ref">tests/test_sd.cpp:1172</td>
+            <td>SdTest.StopOfferZeroTtl (tests/test_sd.cpp:1282)</td>
+            <td class="code-ref">tests/test_sd.cpp:1282</td>
             <td>REQ_SD_030_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E04</td>
-            <td>SdTest.FindServiceWildcard (tests/test_sd.cpp:1188)</td>
-            <td class="code-ref">tests/test_sd.cpp:1188</td>
+            <td>SdTest.FindServiceWildcard (tests/test_sd.cpp:1298)</td>
+            <td class="code-ref">tests/test_sd.cpp:1298</td>
             <td>REQ_SD_050_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E05</td>
-            <td>SdTest.InvalidOptionLength (tests/test_sd.cpp:1204)</td>
-            <td class="code-ref">tests/test_sd.cpp:1204</td>
+            <td>SdTest.InvalidOptionLength (tests/test_sd.cpp:1314)</td>
+            <td class="code-ref">tests/test_sd.cpp:1314</td>
             <td>REQ_SD_060_E01, REQ_SD_060_E02</td>
         </tr>
         <tr>
             <td>TC_SD_E06</td>
-            <td>SdTest.SubscribeNonExistentService (tests/test_sd.cpp:1226)</td>
-            <td class="code-ref">tests/test_sd.cpp:1226</td>
+            <td>SdTest.SubscribeNonExistentService (tests/test_sd.cpp:1336)</td>
+            <td class="code-ref">tests/test_sd.cpp:1336</td>
             <td>REQ_SD_070_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E07</td>
-            <td>SdTest.EmptyEntriesArray (tests/test_sd.cpp:1246)</td>
-            <td class="code-ref">tests/test_sd.cpp:1246</td>
+            <td>SdTest.EmptyEntriesArray (tests/test_sd.cpp:1356)</td>
+            <td class="code-ref">tests/test_sd.cpp:1356</td>
             <td>REQ_SD_080_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E08</td>
-            <td>SdTest.SubscriptionMaxTtl (tests/test_sd.cpp:1265)</td>
-            <td class="code-ref">tests/test_sd.cpp:1265</td>
+            <td>SdTest.SubscriptionMaxTtl (tests/test_sd.cpp:1375)</td>
+            <td class="code-ref">tests/test_sd.cpp:1375</td>
             <td>REQ_SD_083_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E09</td>
-            <td>SdTest.ReOfferAfterStop (tests/test_sd.cpp:1280)</td>
-            <td class="code-ref">tests/test_sd.cpp:1280</td>
+            <td>SdTest.ReOfferAfterStop (tests/test_sd.cpp:1390)</td>
+            <td class="code-ref">tests/test_sd.cpp:1390</td>
             <td>REQ_SD_113_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E10</td>
-            <td>SdTest.MalformedOptionIndex (tests/test_sd.cpp:1308)</td>
-            <td class="code-ref">tests/test_sd.cpp:1308</td>
+            <td>SdTest.MalformedOptionIndex (tests/test_sd.cpp:1418)</td>
+            <td class="code-ref">tests/test_sd.cpp:1418</td>
             <td>REQ_SD_116_E01, REQ_SD_116_E02</td>
         </tr>
         <tr>
             <td>TC_SD_E11</td>
-            <td>SdTest.UnsupportedEntryType (tests/test_sd.cpp:1324)</td>
-            <td class="code-ref">tests/test_sd.cpp:1324</td>
+            <td>SdTest.UnsupportedEntryType (tests/test_sd.cpp:1434)</td>
+            <td class="code-ref">tests/test_sd.cpp:1434</td>
             <td>REQ_SD_119_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E12</td>
-            <td>unknown (tests/test_sd.cpp:1346)</td>
-            <td class="code-ref">tests/test_sd.cpp:1346</td>
+            <td>unknown (tests/test_sd.cpp:1456)</td>
+            <td class="code-ref">tests/test_sd.cpp:1456</td>
             <td>REQ_SD_120_E01</td>
         </tr>
         <tr>
             <td>TC_SD_FLAGS_001</td>
-            <td>SdTest.SdMessageUnicastFlagDefaultOnPreparedTx (tests/test_sd.cpp:2122)</td>
-            <td class="code-ref">tests/test_sd.cpp:2122</td>
+            <td>SdTest.SdMessageUnicastFlagDefaultOnPreparedTx (tests/test_sd.cpp:2271)</td>
+            <td class="code-ref">tests/test_sd.cpp:2271</td>
             <td>REQ_SD_013</td>
         </tr>
         <tr>
             <td>TC_SD_INITIAL_WAIT_001</td>
-            <td>SdTest.InitialWaitOverrideAndRange (tests/test_sd.cpp:2170)</td>
-            <td class="code-ref">tests/test_sd.cpp:2170</td>
+            <td>SdTest.InitialWaitOverrideAndRange (tests/test_sd.cpp:2319)</td>
+            <td class="code-ref">tests/test_sd.cpp:2319</td>
             <td>REQ_SD_180</td>
         </tr>
         <tr>
             <td>TC_SD_INTEGRATION_001</td>
-            <td>SdIntegrationTest.ServerOfferService (tests/test_sd.cpp:746)</td>
-            <td class="code-ref">tests/test_sd.cpp:746</td>
+            <td>SdIntegrationTest.ServerOfferService (tests/test_sd.cpp:856)</td>
+            <td class="code-ref">tests/test_sd.cpp:856</td>
             <td>REQ_SD_030, REQ_SD_031, REQ_SD_032</td>
         </tr>
         <tr>
             <td>TC_SD_INTEGRATION_002</td>
-            <td>SdIntegrationTest.ServerStopOfferService (tests/test_sd.cpp:790)</td>
-            <td class="code-ref">tests/test_sd.cpp:790</td>
+            <td>SdIntegrationTest.ServerStopOfferService (tests/test_sd.cpp:900)</td>
+            <td class="code-ref">tests/test_sd.cpp:900</td>
             <td>REQ_SD_033, REQ_SD_034</td>
         </tr>
         <tr>
             <td>TC_SD_INTEGRATION_003</td>
-            <td>SdIntegrationTest.ClientSubscribeUnsubscribeService (tests/test_sd.cpp:850)</td>
-            <td class="code-ref">tests/test_sd.cpp:850</td>
+            <td>SdIntegrationTest.ClientSubscribeUnsubscribeService (tests/test_sd.cpp:960)</td>
+            <td class="code-ref">tests/test_sd.cpp:960</td>
             <td>REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093</td>
         </tr>
         <tr>
             <td>TC_SD_INTEGRATION_004</td>
-            <td>SdIntegrationTest.MinorVersionSurvivesServerToClient (tests/test_sd.cpp:879)</td>
-            <td class="code-ref">tests/test_sd.cpp:879</td>
+            <td>SdIntegrationTest.MinorVersionSurvivesServerToClient (tests/test_sd.cpp:989)</td>
+            <td class="code-ref">tests/test_sd.cpp:989</td>
             <td>REQ_SD_110, REQ_SD_160, REQ_SD_161</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_001</td>
-            <td>SdTest.IPv4EndpointOptionSerializesLength9 (tests/test_sd.cpp:459)</td>
-            <td class="code-ref">tests/test_sd.cpp:459</td>
+            <td>SdTest.IPv4EndpointOptionSerializesLength9 (tests/test_sd.cpp:569)</td>
+            <td class="code-ref">tests/test_sd.cpp:569</td>
             <td>feat_req_someipsd_129</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_002</td>
-            <td>SdTest.IPv4EndpointOptionSerializesAddressNBO (tests/test_sd.cpp:481)</td>
-            <td class="code-ref">tests/test_sd.cpp:481</td>
+            <td>SdTest.IPv4EndpointOptionSerializesAddressNBO (tests/test_sd.cpp:591)</td>
+            <td class="code-ref">tests/test_sd.cpp:591</td>
             <td>feat_req_someipsd_129</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_003</td>
-            <td>SdTest.IPv4EndpointOptionDeserializesSpecCompliantPacket (tests/test_sd.cpp:503)</td>
-            <td class="code-ref">tests/test_sd.cpp:503</td>
+            <td>SdTest.IPv4EndpointOptionDeserializesSpecCompliantPacket (tests/test_sd.cpp:613)</td>
+            <td class="code-ref">tests/test_sd.cpp:613</td>
             <td>feat_req_someipsd_129</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_004</td>
-            <td>SdTest.IPv4EndpointOptionSpecCompliantRoundTrip (tests/test_sd.cpp:533)</td>
-            <td class="code-ref">tests/test_sd.cpp:533</td>
+            <td>SdTest.IPv4EndpointOptionSpecCompliantRoundTrip (tests/test_sd.cpp:643)</td>
+            <td class="code-ref">tests/test_sd.cpp:643</td>
             <td>feat_req_someipsd_129</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_005</td>
-            <td>SdTest.VsomeipInteropScenario (tests/test_sd.cpp:566)</td>
-            <td class="code-ref">tests/test_sd.cpp:566</td>
+            <td>SdTest.VsomeipInteropScenario (tests/test_sd.cpp:676)</td>
+            <td class="code-ref">tests/test_sd.cpp:676</td>
             <td>feat_req_someipsd_129</td>
+        </tr>
+        <tr>
+            <td>TC_SD_IPV6_EP_001</td>
+            <td>SdTest.IPv6EndpointOptionRoundTrip (tests/test_sd.cpp:205)</td>
+            <td class="code-ref">tests/test_sd.cpp:205</td>
+            <td>REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_233, feat_req_someipsd_140, feat_req_someipsd_163, feat_req_someipsd_164</td>
+        </tr>
+        <tr>
+            <td>TC_SD_IPV6_MC_001</td>
+            <td>SdTest.IPv6MulticastOptionRoundTrip (tests/test_sd.cpp:246)</td>
+            <td class="code-ref">tests/test_sd.cpp:246</td>
+            <td>REQ_SD_074, REQ_SD_235, feat_req_someipsd_737, feat_req_someipsd_738, feat_req_someipsd_739, feat_req_someipsd_750</td>
+        </tr>
+        <tr>
+            <td>TC_SD_IPV6_MSG_001</td>
+            <td>SdTest.SdMessagePreservesIPv6Options (tests/test_sd.cpp:277)</td>
+            <td class="code-ref">tests/test_sd.cpp:277</td>
+            <td>REQ_SD_067, REQ_SD_074, REQ_SD_233, REQ_SD_235</td>
         </tr>
         <tr>
             <td>TC_SD_PY_818</td>
@@ -9084,176 +9160,176 @@
         </tr>
         <tr>
             <td>TC_SD_REG_001</td>
-            <td>SdTest.ServiceEntryMinorVersion32Bit (tests/test_sd.cpp:1355)</td>
-            <td class="code-ref">tests/test_sd.cpp:1355</td>
+            <td>SdTest.ServiceEntryMinorVersion32Bit (tests/test_sd.cpp:1465)</td>
+            <td class="code-ref">tests/test_sd.cpp:1465</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_002</td>
-            <td>SdTest.ServiceEntryMinorVersionMax (tests/test_sd.cpp:1386)</td>
-            <td class="code-ref">tests/test_sd.cpp:1386</td>
+            <td>SdTest.ServiceEntryMinorVersionMax (tests/test_sd.cpp:1496)</td>
+            <td class="code-ref">tests/test_sd.cpp:1496</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_003</td>
-            <td>SdTest.ConfigurationOptionLengthIncludesReserved (tests/test_sd.cpp:1405)</td>
-            <td class="code-ref">tests/test_sd.cpp:1405</td>
+            <td>SdTest.ConfigurationOptionLengthIncludesReserved (tests/test_sd.cpp:1515)</td>
+            <td class="code-ref">tests/test_sd.cpp:1515</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_004</td>
-            <td>SdTest.ConfigurationOptionInteropDeserialize (tests/test_sd.cpp:1434)</td>
-            <td class="code-ref">tests/test_sd.cpp:1434</td>
+            <td>SdTest.ConfigurationOptionInteropDeserialize (tests/test_sd.cpp:1544)</td>
+            <td class="code-ref">tests/test_sd.cpp:1544</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_005</td>
-            <td>SdTest.UnknownOptionSkipCorrectBytes (tests/test_sd.cpp:1461)</td>
-            <td class="code-ref">tests/test_sd.cpp:1461</td>
+            <td>SdTest.UnknownOptionSkipCorrectBytes (tests/test_sd.cpp:1571)</td>
+            <td class="code-ref">tests/test_sd.cpp:1571</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_006</td>
-            <td>SdTest.FullMessageMinorVersion32BitRoundTrip (tests/test_sd.cpp:1529)</td>
-            <td class="code-ref">tests/test_sd.cpp:1529</td>
+            <td>SdTest.FullMessageMinorVersion32BitRoundTrip (tests/test_sd.cpp:1639)</td>
+            <td class="code-ref">tests/test_sd.cpp:1639</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_007</td>
-            <td>SdTest.MinorVersionPreservedThroughOfferPath (tests/test_sd.cpp:1564)</td>
-            <td class="code-ref">tests/test_sd.cpp:1564</td>
+            <td>SdTest.MinorVersionPreservedThroughOfferPath (tests/test_sd.cpp:1674)</td>
+            <td class="code-ref">tests/test_sd.cpp:1674</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REPETITION_INTERVAL_001</td>
-            <td>SdTest.RepetitionIntervalExponentialThenCyclic (tests/test_sd.cpp:2196)</td>
-            <td class="code-ref">tests/test_sd.cpp:2196</td>
+            <td>SdTest.RepetitionIntervalExponentialThenCyclic (tests/test_sd.cpp:2345)</td>
+            <td class="code-ref">tests/test_sd.cpp:2345</td>
             <td>REQ_SD_111, REQ_SD_112</td>
         </tr>
         <tr>
             <td>TC_SD_SERVER_001</td>
-            <td>SdTest.ServerDuplicateOffer (tests/test_sd.cpp:1083)</td>
-            <td class="code-ref">tests/test_sd.cpp:1083</td>
+            <td>SdTest.ServerDuplicateOffer (tests/test_sd.cpp:1193)</td>
+            <td class="code-ref">tests/test_sd.cpp:1193</td>
             <td>REQ_SD_040_E01</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_001</td>
-            <td>SdTest.SessionIdStartsAtOne (tests/test_sd.cpp:1655)</td>
-            <td class="code-ref">tests/test_sd.cpp:1655</td>
+            <td>SdTest.SessionIdStartsAtOne (tests/test_sd.cpp:1765)</td>
+            <td class="code-ref">tests/test_sd.cpp:1765</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_002</td>
-            <td>SdTest.SessionIdIncrements (tests/test_sd.cpp:1665)</td>
-            <td class="code-ref">tests/test_sd.cpp:1665</td>
+            <td>SdTest.SessionIdIncrements (tests/test_sd.cpp:1775)</td>
+            <td class="code-ref">tests/test_sd.cpp:1775</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_003</td>
-            <td>SdTest.SessionIdWrapAroundSkipsZero (tests/test_sd.cpp:1677)</td>
-            <td class="code-ref">tests/test_sd.cpp:1677</td>
+            <td>SdTest.SessionIdWrapAroundSkipsZero (tests/test_sd.cpp:1787)</td>
+            <td class="code-ref">tests/test_sd.cpp:1787</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_004</td>
-            <td>SdTest.UnicastSessionIdsIsolatedPerPeer (tests/test_sd.cpp:1692)</td>
-            <td class="code-ref">tests/test_sd.cpp:1692</td>
+            <td>SdTest.UnicastSessionIdsIsolatedPerPeer (tests/test_sd.cpp:1802)</td>
+            <td class="code-ref">tests/test_sd.cpp:1802</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_005</td>
-            <td>SdTest.SdMessageSessionIdAccessor (tests/test_sd.cpp:1708)</td>
-            <td class="code-ref">tests/test_sd.cpp:1708</td>
+            <td>SdTest.SdMessageSessionIdAccessor (tests/test_sd.cpp:1818)</td>
+            <td class="code-ref">tests/test_sd.cpp:1818</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_REBOOT_001</td>
-            <td>SdTest.SdSessionRebootClearsOnWrap (tests/test_sd.cpp:2106)</td>
-            <td class="code-ref">tests/test_sd.cpp:2106</td>
+            <td>SdTest.SdSessionRebootClearsOnWrap (tests/test_sd.cpp:2255)</td>
+            <td class="code-ref">tests/test_sd.cpp:2255</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_120</td>
-            <td>SdIntegrationTest.ClientProcessesSubscribeNack (tests/test_sd.cpp:2342)</td>
-            <td class="code-ref">tests/test_sd.cpp:2342</td>
+            <td>SdIntegrationTest.ClientProcessesSubscribeNack (tests/test_sd.cpp:2491)</td>
+            <td class="code-ref">tests/test_sd.cpp:2491</td>
             <td>REQ_SD_120</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_272</td>
-            <td>SdIntegrationTest.AckMulticastOptionUsesEventgroupEndpoint (tests/test_sd.cpp:2397)</td>
-            <td class="code-ref">tests/test_sd.cpp:2397</td>
+            <td>SdIntegrationTest.AckMulticastOptionUsesEventgroupEndpoint (tests/test_sd.cpp:2546)</td>
+            <td class="code-ref">tests/test_sd.cpp:2546</td>
             <td>REQ_SD_272</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_272_UNICAST</td>
-            <td>SdIntegrationTest.AckOmitsMulticastOptionForUnicastEventgroup (tests/test_sd.cpp:2440)</td>
-            <td class="code-ref">tests/test_sd.cpp:2440</td>
+            <td>SdIntegrationTest.AckOmitsMulticastOptionForUnicastEventgroup (tests/test_sd.cpp:2589)</td>
+            <td class="code-ref">tests/test_sd.cpp:2589</td>
             <td>REQ_SD_272</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_299_OFFER</td>
-            <td>SdIntegrationTest.OfferDoesNotUseTtlZero (tests/test_sd.cpp:2542)</td>
-            <td class="code-ref">tests/test_sd.cpp:2542</td>
+            <td>SdIntegrationTest.OfferDoesNotUseTtlZero (tests/test_sd.cpp:2691)</td>
+            <td class="code-ref">tests/test_sd.cpp:2691</td>
             <td>REQ_SD_110</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_299_STOP</td>
-            <td>SdIntegrationTest.StopOfferUsesTtlZero (tests/test_sd.cpp:2586)</td>
-            <td class="code-ref">tests/test_sd.cpp:2586</td>
+            <td>SdIntegrationTest.StopOfferUsesTtlZero (tests/test_sd.cpp:2735)</td>
+            <td class="code-ref">tests/test_sd.cpp:2735</td>
             <td>REQ_SD_261</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_304</td>
-            <td>SdIntegrationTest.AckCopiesSubscribeCounter (tests/test_sd.cpp:2481)</td>
-            <td class="code-ref">tests/test_sd.cpp:2481</td>
+            <td>SdIntegrationTest.AckCopiesSubscribeCounter (tests/test_sd.cpp:2630)</td>
+            <td class="code-ref">tests/test_sd.cpp:2630</td>
             <td>REQ_SD_060</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_613</td>
-            <td>SdIntegrationTest.ClientProcessesSubscribeAck (tests/test_sd.cpp:2285)</td>
-            <td class="code-ref">tests/test_sd.cpp:2285</td>
+            <td>SdIntegrationTest.ClientProcessesSubscribeAck (tests/test_sd.cpp:2434)</td>
+            <td class="code-ref">tests/test_sd.cpp:2434</td>
             <td>REQ_SD_119, feat_req_someipsd_613</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_818</td>
-            <td>SdIntegrationTest.SubscribeSentToUnicastNotMulticast (tests/test_sd.cpp:2217)</td>
-            <td class="code-ref">tests/test_sd.cpp:2217</td>
+            <td>SdIntegrationTest.SubscribeSentToUnicastNotMulticast (tests/test_sd.cpp:2366)</td>
+            <td class="code-ref">tests/test_sd.cpp:2366</td>
             <td>REQ_SD_818, feat_req_someipsd_818</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_818_RX</td>
-            <td>SdIntegrationTest.MulticastSubscribeDoesNotProduceAck (tests/test_sd.cpp:2635)</td>
-            <td class="code-ref">tests/test_sd.cpp:2635</td>
+            <td>SdIntegrationTest.MulticastSubscribeDoesNotProduceAck (tests/test_sd.cpp:2784)</td>
+            <td class="code-ref">tests/test_sd.cpp:2784</td>
             <td>REQ_SD_818, feat_req_someipsd_818</td>
         </tr>
         <tr>
             <td>TC_SD_TTL_001</td>
-            <td>SdIntegrationTest.SubscriptionACKReflectsRequestedTTL (tests/test_sd.cpp:1888)</td>
-            <td class="code-ref">tests/test_sd.cpp:1888</td>
+            <td>SdIntegrationTest.SubscriptionACKReflectsRequestedTTL (tests/test_sd.cpp:2037)</td>
+            <td class="code-ref">tests/test_sd.cpp:2037</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_TTL_002</td>
-            <td>SdIntegrationTest.StopSubscribeEventgroupTTLZero (tests/test_sd.cpp:1937)</td>
-            <td class="code-ref">tests/test_sd.cpp:1937</td>
+            <td>SdIntegrationTest.StopSubscribeEventgroupTTLZero (tests/test_sd.cpp:2086)</td>
+            <td class="code-ref">tests/test_sd.cpp:2086</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_TTL_003</td>
-            <td>SdIntegrationTest.EventPublisherStopsEventsAfterTTLExpiry (tests/test_sd.cpp:1984)</td>
-            <td class="code-ref">tests/test_sd.cpp:1984</td>
+            <td>SdIntegrationTest.EventPublisherStopsEventsAfterTTLExpiry (tests/test_sd.cpp:2133)</td>
+            <td class="code-ref">tests/test_sd.cpp:2133</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_TTL_OFFER_001</td>
-            <td>SdTest.OfferRejectsOrAppliesDefaultTtl (tests/test_sd.cpp:2146)</td>
-            <td class="code-ref">tests/test_sd.cpp:2146</td>
+            <td>SdTest.OfferRejectsOrAppliesDefaultTtl (tests/test_sd.cpp:2295)</td>
+            <td class="code-ref">tests/test_sd.cpp:2295</td>
             <td>REQ_SD_110</td>
         </tr>
         <tr>
             <td>TC_SD_UNKNOWN_ENTRY_001</td>
-            <td>SdTest.UnknownEntryTypeDoesNotDropOffer (tests/test_sd.cpp:2065)</td>
-            <td class="code-ref">tests/test_sd.cpp:2065</td>
+            <td>SdTest.UnknownEntryTypeDoesNotDropOffer (tests/test_sd.cpp:2214)</td>
+            <td class="code-ref">tests/test_sd.cpp:2214</td>
             <td>REQ_SD_200A</td>
         </tr>
         <tr>
@@ -10398,8 +10474,8 @@
         </tr>
         <tr>
             <td>TC_test_sd_SdTest</td>
-            <td>SdTest (tests/test_sd.cpp:37)</td>
-            <td class="code-ref">tests/test_sd.cpp:37</td>
+            <td>SdTest (tests/test_sd.cpp:38)</td>
+            <td class="code-ref">tests/test_sd.cpp:38</td>
             <td>REQ_ARCH_001, REQ_ARCH_002, REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007, REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014, REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026, REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035, REQ_SD_040, REQ_SD_041, REQ_SD_042, REQ_SD_043, REQ_SD_044, REQ_SD_045, REQ_SD_046, REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054, REQ_SD_055, REQ_SD_056, REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065, REQ_SD_066, REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_074, REQ_SD_075, REQ_SD_076, REQ_SD_077, REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084, REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094, REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_001_E01, REQ_SD_010_E01, REQ_SD_020_E01, REQ_SD_020_E02, REQ_SD_021_E01, REQ_SD_022_E01, REQ_SD_040_E01, REQ_SD_041_E01, REQ_SD_050_E01, REQ_SD_052_E01, REQ_SD_060_E01, REQ_SD_061_E01, REQ_SD_062_E01, REQ_SD_064_E01, REQ_SD_075_E01, REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_114, REQ_SD_115, REQ_SD_116, REQ_SD_117, REQ_SD_118, REQ_SD_119, REQ_SD_120, REQ_SD_121, REQ_SD_122, REQ_SD_123, REQ_SD_124, REQ_SD_125, REQ_SD_126, REQ_SD_127, REQ_SD_130, REQ_SD_131, REQ_SD_132, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152, REQ_SD_160, REQ_SD_161, REQ_SD_170, REQ_SD_171, REQ_SD_180, REQ_SD_200a, REQ_SD_200b, REQ_SD_200c, REQ_SD_201, REQ_SD_202, REQ_SD_210, REQ_SD_211, REQ_SD_212, REQ_SD_220, REQ_SD_221, REQ_SD_222, REQ_SD_223, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_236, REQ_SD_240, REQ_SD_241, REQ_SD_242, REQ_SD_243, REQ_SD_250, REQ_SD_251, REQ_SD_260, REQ_SD_261, REQ_SD_270, REQ_SD_271, REQ_SD_272, REQ_SD_273, REQ_SD_274, REQ_SD_280, REQ_SD_281, REQ_SD_282, REQ_SD_283, REQ_SD_290, REQ_SD_291, REQ_SD_292, REQ_SD_293, REQ_SD_300, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_310, REQ_SD_311, REQ_SD_312, REQ_SD_320, REQ_SD_330, REQ_SD_331, REQ_SD_340, REQ_SD_341, REQ_SD_342, REQ_SD_343, REQ_SD_344, REQ_SD_345, REQ_SD_346, REQ_SD_347, REQ_SD_348, REQ_SD_349, REQ_SD_350, REQ_SD_351, REQ_SD_352, REQ_SD_353, REQ_SD_354, REQ_SD_355, REQ_SD_356, REQ_COMPAT_030, REQ_SD_001_E02, REQ_SD_010_E02, REQ_SD_030_E01, REQ_SD_044_E01, REQ_SD_060_E02, REQ_SD_070_E01, REQ_SD_080_E01, REQ_SD_083_E01, REQ_SD_113_E01, REQ_SD_115_E01, REQ_SD_115_E02, REQ_SD_116_E01, REQ_SD_116_E02, REQ_SD_119_E01, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_134_E01, REQ_SD_222_E01, feat_req_someipsd_100, feat_req_someipsd_200, feat_req_someipsd_300, feat_req_someipsd_613, feat_req_someipsd_818, REQ_SD_818</td>
         </tr>
         <tr>

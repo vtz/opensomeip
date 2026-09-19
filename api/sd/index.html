@@ -3372,8 +3372,11 @@
 <h3 id="option-types">Option Types<a class="headerlink" href="#option-types" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>IPV4_ENDPOINT (0x04)</strong>: IPv4 unicast endpoint</li>
+<li><strong>IPV6_ENDPOINT (0x06)</strong>: IPv6 unicast endpoint (codec; <code>AF_INET6</code> transport is separate)</li>
 <li><strong>IPV4_MULTICAST (0x14)</strong>: IPv4 multicast address</li>
-<li><strong>IPV4_SD_ENDPOINT (0x24)</strong>: IPv4 SD endpoint</li>
+<li><strong>IPV6_MULTICAST (0x16)</strong>: IPv6 multicast address (codec; <code>AF_INET6</code> transport is separate)</li>
+<li><strong>IPV4_SD_ENDPOINT (0x24)</strong>: IPv4 SD endpoint (type reserved; codec pending)</li>
+<li><strong>IPV6_SD_ENDPOINT (0x26)</strong>: IPv6 SD endpoint (type reserved; codec pending)</li>
 </ul>
 <h3 id="message-flow">Message Flow<a class="headerlink" href="#message-flow" title="Permanent link">&para;</a></h3>
 <h4 id="service-offering">Service Offering<a class="headerlink" href="#service-offering" title="Permanent link">&para;</a></h4>

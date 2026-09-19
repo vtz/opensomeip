@@ -920,63 +920,64 @@ IPv6 Endpoint Option
 
 .. requirement:: Parse IPv6 Endpoint Option Type
    :id: REQ_SD_067
-   :satisfies: feat_req_someipsd_1112
+   :satisfies: feat_req_someipsd_140
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Option Type 0x06 is parsed as IPv6 Endpoint.
+   :verification: Unit test: Serialize/deserialize Option Type 0x06 as IPv6 Endpoint. Covered by IPv6EndpointOptionRoundTrip and SdMessagePreservesIPv6Options.
 
    The software shall recognize Option Type 0x06 as an IPv6 Endpoint
-   option.
+   option and keep it in the parsed option list (not skip it as unknown).
 
    **Rationale**: IPv6 Endpoint provides service endpoint information.
 
-   **Code Location**: ``src/sd/sd_message.cpp``
+   **Code Location**: ``include/sd/sd_message.h`` (``IPv6EndpointOption``), ``src/sd/sd_message.cpp``
 
 .. requirement:: Extract IPv6 Address
    :id: REQ_SD_068
-   :satisfies: feat_req_someipsd_1112
+   :satisfies: feat_req_someipsd_163, feat_req_someipsd_164
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify IPv6 address is extracted from bytes 4-19 of option.
+   :verification: Unit test: Verify IPv6 address is extracted from bytes 4-19 of the option. Covered by IPv6EndpointOptionRoundTrip.
 
    The software shall extract the IPv6 address from bytes 4-19 of the
-   IPv6 Endpoint option (16 bytes).
+   IPv6 Endpoint option (16 bytes), measured from the start of the option
+   (Length field).
 
    **Rationale**: IPv6 address is needed for service communication.
 
-   **Code Location**: ``src/sd/sd_message.cpp``
+   **Code Location**: ``src/sd/sd_message.cpp`` (``IPv6EndpointOption::deserialize``)
 
 .. requirement:: Extract IPv6 Port Number
    :id: REQ_SD_069
-   :satisfies: feat_req_someipsd_1112
+   :satisfies: feat_req_someipsd_163, feat_req_someipsd_164
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify port number is extracted from bytes 21-22 of IPv6 option.
+   :verification: Unit test: Verify port is extracted from bytes 22-23 of the IPv6 option. Covered by IPv6EndpointOptionRoundTrip.
 
-   The software shall extract the port number from bytes 21-22 of the
-   IPv6 Endpoint option in Big Endian byte order.
+   The software shall extract the port number from bytes 22-23 of the
+   IPv6 Endpoint option (relative to option start) in Big Endian order.
 
    **Rationale**: Port number is needed for service communication.
 
-   **Code Location**: ``src/sd/sd_message.cpp``
+   **Code Location**: ``src/sd/sd_message.cpp`` (``IPv6EndpointOption::deserialize``)
 
 .. requirement:: Extract IPv6 Protocol
    :id: REQ_SD_070
-   :satisfies: feat_req_someipsd_1112
+   :satisfies: feat_req_someipsd_163, feat_req_someipsd_164
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Client calls find_service(0x1234), verify FindService entry is sent with Service ID=0x1234 via multicast.
+   :verification: Unit test: Verify L4 protocol is extracted from byte 21 of the IPv6 option. Covered by IPv6EndpointOptionRoundTrip.
 
-   The software shall extract the L4 protocol from byte 20 of the IPv6
-   Endpoint option (UDP=0x11, TCP=0x06).
+   The software shall extract the L4 protocol from byte 21 of the IPv6
+   Endpoint option (relative to option start; UDP=0x11, TCP=0x06).
 
    **Rationale**: Protocol type determines transport layer.
 
-   **Code Location**: ``src/sd/sd_message.cpp``
+   **Code Location**: ``src/sd/sd_message.cpp`` (``IPv6EndpointOption::deserialize``)
 
 Configuration Option
 --------------------
@@ -1031,18 +1032,18 @@ Multicast Endpoint Options
 
 .. requirement:: Parse IPv6 Multicast Option Type
    :id: REQ_SD_074
-   :satisfies: feat_req_someipsd_1112
+   :satisfies: feat_req_someipsd_737
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Verify Option Type 0x16 is parsed as IPv6 Multicast.
+   :verification: Unit test: Verify Option Type 0x16 is parsed as IPv6 Multicast. Covered by IPv6MulticastOptionRoundTrip.
 
    The software shall recognize Option Type 0x16 as an IPv6 Multicast
-   Endpoint option.
+   Endpoint option and keep it in the parsed option list.
 
    **Rationale**: Multicast endpoint for event distribution.
 
-   **Code Location**: ``src/sd/sd_message.cpp``
+   **Code Location**: ``include/sd/sd_message.h`` (``IPv6MulticastOption``), ``src/sd/sd_message.cpp``
 
 Option Index References
 -----------------------
@@ -2173,18 +2174,21 @@ SD Option Format Details
 
 .. requirement:: SD IPv6 Endpoint Option Format
    :id: REQ_SD_233
-   :satisfies: feat_req_someipsd_203, feat_req_someipsd_204
+   :satisfies: feat_req_someipsd_140, feat_req_someipsd_163, feat_req_someipsd_164
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Serialize IPv6EndpointOption with valid IPv6 address and port, verify type=0x06 and 16-byte address field.
+   :verification: Unit test: Serialize IPv6EndpointOption with a 16-byte address and port, verify type=0x06 and Length=0x0015. Covered by IPv6EndpointOptionRoundTrip.
 
    The software shall parse IPv6 Endpoint Options (Type 0x06) containing
    IPv6 address (16 bytes), reserved byte, protocol, and port number.
 
+   End-to-end ``AF_INET6`` transport and IPv6 SD Endpoint Option Type
+   ``0x26`` are out of scope for this requirement.
+
    **Rationale**: IPv6 support enables SD in IPv6 networks.
 
-   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription, acknowledge=true/false)
+   **Code Location**: ``src/sd/sd_message.cpp`` (``IPv6EndpointOption``)
 
 .. requirement:: SD IPv4 Multicast Option Format
    :id: REQ_SD_234
@@ -2207,22 +2211,22 @@ SD Option Format Details
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Serialize IPv6MulticastOption with valid multicast IPv6 address, verify type=0x16 and 16-byte address field.
+   :verification: Unit test: Serialize IPv6MulticastOption, verify type=0x16 and Length=0x0015. Covered by IPv6MulticastOptionRoundTrip.
 
    The software shall parse IPv6 Multicast Options (Type 0x16) containing
    multicast IPv6 address, protocol (UDP only), and port number.
 
    **Rationale**: IPv6 multicast support enables SD in IPv6 networks.
 
-   **Code Location**: ``src/sd/sd_server.cpp`` (process_sd_entries, entry type dispatch)
+   **Code Location**: ``src/sd/sd_message.cpp`` (``IPv6MulticastOption``)
 
 .. requirement:: SD IPv4 SD Endpoint Option Format
    :id: REQ_SD_236
-   :satisfies: feat_req_someipsd_1080, feat_req_someipsd_1082, feat_req_someipsd_1083, feat_req_someipsd_1084, feat_req_someipsd_1087
-   :status: implemented
+   :satisfies: feat_req_someipsd_1080, feat_req_someipsd_1082, feat_req_someipsd_1083, feat_req_someipsd_1085, feat_req_someipsd_1087
+   :status: pending
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Serialize IPv4 SD EndpointOption (type=0x24), verify it is not referenced by entries.
+   :verification: Pending: Type 0x24 is declared in ``OptionType`` but has no codec class; ``SdMessage::deserialize`` still skips it as unknown.
 
    The software shall parse IPv4 SD Endpoint Options (Type 0x24)
    containing the SD communication endpoint. This option is not
@@ -2230,7 +2234,7 @@ SD Option Format Details
 
    **Rationale**: SD endpoint option carries the SD communication endpoint independently of entries.
 
-   **Code Location**: ``src/sd/sd_message.cpp`` (SdOption, IPv4EndpointOption, IPv4MulticastOption)
+   **Code Location**: not implemented (see REQ_SD_1084 for reply addressing using the datagram source until Type 0x24 is parsed)
 
 
 SD Option Referencing Details
@@ -2684,6 +2688,45 @@ SD Shutdown and Recovery
 
    **Code Location**: ``src/sd/sd_client.cpp`` (subscribe_eventgroup, unsubscribe_eventgroup), ``src/sd/sd_server.cpp`` (process_sd_entries multicast filter)
 
+.. requirement:: Subscribe IPv4 UDP and TCP Endpoints
+   :id: REQ_SD_848
+   :satisfies: feat_req_someipsd_848
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Integration test: SubscribeEventgroup with one UDP and one TCP IPv4EndpointOption is ACKed; two UDP options are NACKed. Covered by SubscribeAcceptsUdpAndTcpEndpoints and SubscribeRejectsDuplicateUdpEndpoints.
+
+   A SubscribeEventgroup entry may reference one IPv4 Endpoint Option per
+   L4 protocol (one UDP and/or one TCP). True duplicates (two UDP or two
+   TCP endpoints) shall be rejected with SubscribeEventgroupNack.
+
+   **Rationale**: The client signals the UDP and/or TCP ports on which it is
+   ready to receive events.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (handle_eventgroup_subscription_request)
+
+.. requirement:: Subscribe Ack/NAck Reply Address
+   :id: REQ_SD_1084
+   :satisfies: feat_req_someipsd_1084
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Integration test: when the IPv4EndpointOption port differs from the SD datagram source port, SubscribeEventgroupAck is received on the source socket. Covered by SubscribeAckGoesToSdSenderNotEventEndpoint.
+
+   SubscribeEventgroupAck and SubscribeEventgroupNack shall be sent to the
+   source IP address and source port of the received SD datagram, not to
+   the IPv4 Endpoint Option used for event delivery.
+
+   If an IPv4 SD Endpoint Option (Type 0x24) is present, the specification
+   requires that option to override the datagram source. Type 0x24 is not
+   yet parsed (REQ_SD_236 pending), so this implementation uses the
+   datagram source until that codec exists.
+
+   **Rationale**: The endpoint option address is for event delivery; SD
+   replies must reach the SD protocol peer.
+
+   **Code Location**: ``src/sd/sd_server.cpp`` (send_subscribe_response)
+
 .. requirement:: SD Reboot Recovery
    :id: REQ_SD_311
    :satisfies: feat_req_someipsd_871, feat_req_someipsd_793, feat_req_someipsd_794
@@ -2911,7 +2954,7 @@ SD Advanced Features
 
 .. requirement:: SD Duplicate Offer Handling
    :id: REQ_SD_349
-   :satisfies: feat_req_someipsd_844, feat_req_someipsd_848, feat_req_someipsd_849, feat_req_someipsd_850, feat_req_someipsd_851
+   :satisfies: feat_req_someipsd_844, feat_req_someipsd_849, feat_req_someipsd_850, feat_req_someipsd_851
    :status: implemented
    :priority: medium
    :category: happy_path
