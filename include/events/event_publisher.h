@@ -17,6 +17,7 @@
 #include "event_types.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
+#include "transport/message_rejection.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -188,6 +189,14 @@ public:
      * @return true if ready for event publication
      */
     bool is_ready() const;
+
+    /**
+     * @brief Observe structural rejections of incoming messages.
+     *
+     * @implements REQ_TRANSPORT_026
+     */
+    void set_message_rejection_handler(
+        platform::Function<void(const transport::MessageRejectionInfo&)> handler);
 
     /**
      * @brief Get publisher statistics

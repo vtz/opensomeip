@@ -296,6 +296,12 @@ public:
         return RpcClient::Statistics{};
     }
 
+    void set_message_rejection_handler(
+        platform::Function<void(const transport::MessageRejectionInfo&)> handler) {
+        platform::ScopedLock const lock(rejection_mutex_);
+        rejection_handler_ = std::move(handler);
+    }
+
 private:
     struct PendingCall {
         uint16_t service_id{};
@@ -357,6 +363,18 @@ private:
         // TODO: Handle transport errors
     }
 
+    /** @implements REQ_TRANSPORT_026 */
+    void on_message_rejected(const transport::MessageRejectionInfo& info) override {
+        platform::Function<void(const transport::MessageRejectionInfo&)> handler;
+        {
+            platform::ScopedLock const lock(rejection_mutex_);
+            handler = rejection_handler_;
+        }
+        if (handler) {
+            handler(info);
+        }
+    }
+
     uint16_t client_id_;
     uint8_t interface_version_;
     SessionManager session_manager_;
@@ -369,6 +387,9 @@ private:
     mutable platform::Mutex pending_calls_mutex_;
     std::atomic<RpcCallHandle> next_call_handle_;
     std::atomic<bool> running_;
+
+    platform::Function<void(const transport::MessageRejectionInfo&)> rejection_handler_;
+    mutable platform::Mutex rejection_mutex_;
 };
 
 #ifdef SOMEIP_STATIC_ALLOC
@@ -451,6 +472,11 @@ bool RpcClient::cancel_call(RpcCallHandle handle) {
 
 bool RpcClient::is_ready() const {
     return impl()->is_ready();
+}
+
+void RpcClient::set_message_rejection_handler(
+    platform::Function<void(const transport::MessageRejectionInfo&)> handler) {
+    impl()->set_message_rejection_handler(std::move(handler));
 }
 
 RpcClient::Statistics RpcClient::get_statistics() const {

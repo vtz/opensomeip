@@ -30,7 +30,13 @@ The core protocol types live in `include/someip/`:
 The transport layer in `include/transport/`:
 
 - **`udp_transport.h`** -- `UdpTransport` for sending and receiving SOME/IP messages over UDP
+- **`tcp_transport.h`** -- `TcpTransport` for stream-oriented SOME/IP
 - **`endpoint.h`** -- `Endpoint` representing a network address and port pair
+- **`message_rejection.h`** -- `MessageRejectionInfo` for local receive diagnostics.
+  `ITransportListener::on_message_rejected` is a defaulted hook; `RpcClient`,
+  `RpcServer`, `EventSubscriber`, and `EventPublisher` expose
+  `set_message_rejection_handler` so applications can observe structural
+  rejections without implementing `ITransportListener`.
 
 ## Common Utilities
 

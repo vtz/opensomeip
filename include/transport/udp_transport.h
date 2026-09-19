@@ -145,6 +145,7 @@ private:
     Result bind_socket();
     Result configure_multicast(const Endpoint& endpoint);
     void receive_loop();
+    void notify_rejection(const MessageRejectionInfo& info);
     Result send_data(const platform::ByteBuffer& data, const Endpoint& endpoint);
     Result receive_data(platform::ByteBuffer& data, Endpoint& sender, Endpoint& destination,
                        size_t& bytes_received);

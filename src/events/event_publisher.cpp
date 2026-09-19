@@ -422,6 +422,12 @@ public:
         return EventPublisher::Statistics{};
     }
 
+    void set_message_rejection_handler(
+        platform::Function<void(const transport::MessageRejectionInfo&)> handler) {
+        platform::ScopedLock const lock(rejection_mutex_);
+        rejection_handler_ = std::move(handler);
+    }
+
 private:
     static constexpr uint32_t TTL_INFINITE = 0xFFFFFF;
 
@@ -563,6 +569,18 @@ private:
         // Handle transport errors
     }
 
+    /** @implements REQ_TRANSPORT_026 */
+    void on_message_rejected(const transport::MessageRejectionInfo& info) override {
+        platform::Function<void(const transport::MessageRejectionInfo&)> handler;
+        {
+            platform::ScopedLock const lock(rejection_mutex_);
+            handler = rejection_handler_;
+        }
+        if (handler) {
+            handler(info);
+        }
+    }
+
     uint16_t service_id_;
     uint16_t instance_id_;
     platform::String<> default_client_address_{"0.0.0.0"};
@@ -580,6 +598,9 @@ private:
     std::optional<platform::Thread> publish_timer_thread_;
     std::atomic<uint16_t> next_session_id_;
     std::atomic<bool> running_;
+
+    platform::Function<void(const transport::MessageRejectionInfo&)> rejection_handler_;
+    mutable platform::Mutex rejection_mutex_;
 };
 
 #ifdef SOMEIP_STATIC_ALLOC
@@ -665,6 +686,11 @@ platform::Vector<uint16_t> EventPublisher::get_subscriptions(uint16_t eventgroup
 
 bool EventPublisher::is_ready() const {
     return impl()->is_ready();
+}
+
+void EventPublisher::set_message_rejection_handler(
+    platform::Function<void(const transport::MessageRejectionInfo&)> handler) {
+    impl()->set_message_rejection_handler(std::move(handler));
 }
 
 EventPublisher::Statistics EventPublisher::get_statistics() const {

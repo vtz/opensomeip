@@ -36,6 +36,19 @@ enum class TcpConnectionState : uint8_t {
 };
 
 /**
+ * @brief Outcome of one TCP stream parse attempt.
+ *
+ * Distinguishes "need more bytes" from a consumed control frame and a
+ * rejected complete message so receive_loop can keep reading.
+ */
+enum class TcpParseOutcome : uint8_t {
+    NEED_MORE,      ///< Incomplete header or payload; leave bytes in the buffer
+    CONTROL_FRAME,  ///< Magic Cookie consumed; not an application message
+    REJECTED,       ///< Complete frame failed framing or deserialize
+    MESSAGE         ///< Application message extracted into the out-parameter
+};
+
+/**
  * @brief TCP Connection Information
  */
 struct TcpConnection {
@@ -203,6 +216,21 @@ public:
      */
     bool parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message);
 
+    /**
+     * @brief Parse the next TCP framing unit.
+     *
+     * @param buffer Accumulation buffer (modified in-place)
+     * @param message [out] Parsed message when the outcome is MESSAGE; may hold
+     *        partial header fields when the outcome is REJECTED
+     * @param rejection [out] Local result when the outcome is REJECTED
+     * @param stage [out] Rejection stage when the outcome is REJECTED
+     * @return Framing outcome (need more / cookie / rejected / message)
+     *
+     * @implements REQ_TRANSPORT_026
+     */
+    TcpParseOutcome parse_next_message(platform::ByteBuffer& buffer, MessagePtr& message,
+                                       Result& rejection, MessageRejectionStage& stage);
+
     static constexpr size_t SOMEIP_HEADER_SIZE = 16;
     static constexpr size_t MAX_MESSAGE_SIZE = 65535;
 
@@ -232,6 +260,7 @@ private:
     someip_socket_t listen_socket_fd_{SOMEIP_INVALID_SOCKET};
 
     void deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender);
+    void notify_rejection(const MessageRejectionInfo& info);
     someip_socket_t accept_connection_with_peer(Endpoint& peer_endpoint);
     Result create_socket();
     Result bind_socket();
@@ -245,6 +274,7 @@ private:
     Result receive_data(someip_socket_t socket_fd, platform::ByteBuffer& data);
 
     std::chrono::steady_clock::time_point last_magic_cookie_time_{std::chrono::steady_clock::now()};
+    size_t framing_skip_remaining_{0};
 };
 
 }  // namespace someip::transport

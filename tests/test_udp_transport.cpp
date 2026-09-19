@@ -14,12 +14,14 @@
 #include <gtest/gtest.h>
 #include <transport/udp_transport.h>
 #include <transport/transport.h>
+#include <transport/message_rejection.h>
 #include <someip/message.h>
 #include <platform/buffer_pool.h>
 #include <platform/containers.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <cstdint>
 #include <vector>
 #include "static_pool_init.h"
 
@@ -38,6 +40,7 @@ using namespace someip::transport;
  * @tests REQ_TRANSPORT_006, REQ_TRANSPORT_010, REQ_TRANSPORT_011
  * @tests REQ_TRANSPORT_012, REQ_TRANSPORT_013, REQ_TRANSPORT_014, REQ_TRANSPORT_015
  * @tests REQ_TRANSPORT_022, REQ_TRANSPORT_023, REQ_TRANSPORT_024
+ * @tests REQ_TRANSPORT_026
  * @tests REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03
  * @tests REQ_TRANSPORT_006_E01, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02
  * @tests REQ_TRANSPORT_014_E01
@@ -94,6 +97,12 @@ public:
         cv_.notify_one();
     }
 
+    void on_message_rejected(const MessageRejectionInfo& info) override {
+        std::scoped_lock lock(mutex_);
+        rejections_.push_back(info);
+        cv_.notify_one();
+    }
+
     // Helper methods
     bool wait_for_message(std::chrono::milliseconds timeout = std::chrono::milliseconds(1000)) {
         std::unique_lock lock(mutex_);
@@ -103,6 +112,11 @@ public:
     bool wait_for_error(std::chrono::milliseconds timeout = std::chrono::milliseconds(1000)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this]() { return error_count_ > 0; });
+    }
+
+    bool wait_for_rejection(std::chrono::milliseconds timeout = std::chrono::milliseconds(1000)) {
+        std::unique_lock lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this]() { return !rejections_.empty(); });
     }
 
     bool wait_for_messages(size_t expected_count,
@@ -125,9 +139,11 @@ public:
         connection_established_ = false;
         last_error_ = Result::SUCCESS;
         error_count_ = 0;
+        rejections_.clear();
     }
 
     std::vector<std::pair<MessagePtr, Endpoint>> received_messages_;
+    std::vector<MessageRejectionInfo> rejections_;
     std::atomic<bool> connection_lost_{false};
     std::atomic<bool> connection_established_{false};
     std::atomic<Result> last_error_{Result::SUCCESS};
@@ -295,6 +311,65 @@ TEST_F(UdpTransportTest, MessageRoundTrip) {
     // Clean up
     sender.stop();
     receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_REJECT_001
+ * @tests REQ_TRANSPORT_026
+ * @brief A malformed UDP datagram produces one rejection and no message callback
+ */
+TEST_F(UdpTransportTest, MalformedDatagramNotifiesRejectionNotMessage) {
+    config.blocking = true;
+    config.enable_tp = false;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    TestUdpListener receiver_listener;
+    sender.set_listener(&sender_listener);
+    receiver.set_listener(&receiver_listener);
+
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    Message bad;
+    bad.set_service_id(0x1234);
+    bad.set_method_id(0x5678);
+    bad.set_client_id(0x9ABC);
+    bad.set_session_id(0x0001);
+    bad.set_protocol_version(0x99);
+    bad.set_interface_version(1);
+    bad.set_message_type(MessageType::REQUEST);
+    bad.set_return_code(ReturnCode::E_OK);
+    bad.set_payload({0x01, 0x02});
+
+    EXPECT_EQ(sender.send_message(bad, receiver.get_local_endpoint()), Result::SUCCESS);
+
+    EXPECT_TRUE(receiver_listener.wait_for_rejection());
+    EXPECT_FALSE(receiver_listener.wait_for_message(std::chrono::milliseconds(150)));
+    ASSERT_EQ(receiver_listener.rejections_.size(), 1u);
+    EXPECT_EQ(receiver_listener.received_messages_.size(), 0u);
+    const MessageRejectionInfo& info = receiver_listener.rejections_[0];
+    EXPECT_EQ(info.result, Result::MALFORMED_MESSAGE);
+    EXPECT_EQ(info.stage, MessageRejectionStage::DESERIALIZE);
+    EXPECT_TRUE(info.has_message_id);
+    EXPECT_EQ(info.message_id.service_id, 0x1234);
+    EXPECT_EQ(info.message_id.method_id, 0x5678);
+    EXPECT_TRUE(info.has_request_id);
+    EXPECT_EQ(info.request_id.client_id, 0x9ABC);
+
+    sender.stop();
+    receiver.stop();
+}
+
+TEST(MessageRejectionIds, ShortWirePrefixReportsMessageIdOnly) {
+    const uint8_t wire[] = {0x12, 0x34, 0x56, 0x78, 0xAA, 0xBB};
+    MessageRejectionInfo info;
+    fill_rejection_ids(info, wire, sizeof(wire));
+    EXPECT_TRUE(info.has_message_id);
+    EXPECT_EQ(info.message_id.service_id, 0x1234);
+    EXPECT_EQ(info.message_id.method_id, 0x5678);
+    EXPECT_FALSE(info.has_request_id);
 }
 
 // Test non-blocking mode behavior (should not block on receive)

@@ -16,6 +16,7 @@
 #include <tp/tp_segmenter.h>
 #include <tp/tp_reassembler.h>
 #include <someip/message.h>
+#include <common/result.h>
 #include <e2e/e2e_header.h>
 #include <algorithm>
 #include <thread>
@@ -1848,6 +1849,18 @@ TEST_F(TpTest, RejectInvalidReconstructedHeader) {
     EXPECT_FALSE(manager.ingest_datagram(datagram.data(), datagram.size(), complete));
 }
 
+TEST_F(TpTest, IngestDatagramReportsErrorOnLengthMismatch) {
+    TpManager manager(config);
+    ASSERT_TRUE(manager.initialize());
+
+    platform::ByteBuffer datagram(20, 0);
+    datagram[14] = 0x20;  // TP flag; declared length 0 does not match size 20
+    Result err = Result::SUCCESS;
+    Message complete;
+    EXPECT_FALSE(manager.ingest_datagram(datagram.data(), datagram.size(), complete, 0, 0, &err));
+    EXPECT_EQ(err, Result::MALFORMED_MESSAGE);
+}
+
 // ============================================================================
 // Fix 1: Misaligned non-final segment rejection (feat_req_someiptp_772)
 // ============================================================================
@@ -1889,8 +1902,10 @@ TEST_F(TpTest, MisalignedNonFinalSegmentRejected) {
     std::fill(datagram.begin() + 20, datagram.end(), 0xAA);
 
     Message complete;
-    EXPECT_FALSE(manager.ingest_datagram(datagram.data(), datagram.size(), complete))
+    Result err = Result::SUCCESS;
+    EXPECT_FALSE(manager.ingest_datagram(datagram.data(), datagram.size(), complete, 0, 0, &err))
         << "Non-final segment with 17-byte payload (not 16-aligned) must be rejected";
+    EXPECT_EQ(err, Result::MALFORMED_MESSAGE);
 }
 
 /**

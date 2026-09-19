@@ -13,9 +13,11 @@
 
 #include "tp/tp_manager.h"
 
+#include "common/result.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 #include "platform/thread.h"
+
 #include "someip/message.h"
 #include "someip/types.h"
 #include "tp/tp_reassembler.h"
@@ -193,9 +195,17 @@ bool assemble_message_from_tp(const std::array<uint8_t, 16>& hdr,
  * @satisfies feat_req_someiptp_785
  */
 bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_complete,
-                                uint32_t sender_ipv4, uint16_t sender_port) {
+                                uint32_t sender_ipv4, uint16_t sender_port,
+                                Result* ingest_error) {
+    if (ingest_error != nullptr) {
+        *ingest_error = Result::SUCCESS;
+    }
+
     TpSegment segment;
     if (!parse_wire_segment(data, size, segment)) {
+        if (ingest_error != nullptr) {
+            *ingest_error = Result::MALFORMED_MESSAGE;
+        }
         return false;
     }
     segment.sender_ipv4 = sender_ipv4;
@@ -204,6 +214,9 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
     receiver_statistics_.segments_received.fetch_add(1, std::memory_order_relaxed);
 
     if (!reassembler_) {
+        if (ingest_error != nullptr) {
+            *ingest_error = Result::NOT_INITIALIZED;
+        }
         return false;
     }
 
@@ -213,6 +226,9 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
     std::array<uint8_t, 16> hdr{};
     platform::ByteBuffer complete_payload;
     if (!reassembler_->process_segment(segment, complete_payload, &hdr)) {
+        if (ingest_error != nullptr) {
+            *ingest_error = Result::MALFORMED_MESSAGE;
+        }
         return false;
     }
     if (complete_payload.empty()) {
@@ -221,7 +237,13 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
 
     receiver_statistics_.messages_reassembled.fetch_add(1, std::memory_order_relaxed);
 
-    return assemble_message_from_tp(hdr, complete_payload, out_complete);
+    if (!assemble_message_from_tp(hdr, complete_payload, out_complete)) {
+        if (ingest_error != nullptr) {
+            *ingest_error = Result::MALFORMED_MESSAGE;
+        }
+        return false;
+    }
+    return true;
 }
 
 /**

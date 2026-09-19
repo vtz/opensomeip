@@ -49,9 +49,20 @@
   each semantic rejection class. Existing `deserialize()` overloads remain
   source-compatible bool wrappers
   ([#316](https://github.com/vtz/opensomeip/issues/316)).
+- **Transport**: Defaulted `ITransportListener::on_message_rejected` plus
+  `set_message_rejection_handler` on RPC and event APIs so complete malformed
+  UDP/TCP frames are visible to applications instead of being dropped silently
+  ([#315](https://github.com/vtz/opensomeip/issues/315)). Structured
+  `Message::try_deserialize` reasons (#316) are not required; failures currently
+  report `Result::MALFORMED_MESSAGE`.
 
 ### Bug Fixes
 
+- **Transport**: TCP no longer busy-loops on an invalid length field; resync
+  is only at a Magic Cookie. Declared frames larger than `max_receive_buffer`
+  report `BUFFER_OVERFLOW` once. UDP rejection IDs are taken from the wire
+  prefix, and malformed SOME/IP-TP datagrams report `TP_REASSEMBLY`
+  ([#315](https://github.com/vtz/opensomeip/issues/315)).
 - **SOME/IP-SD**: SubscribeEventgroup with both a UDP and a TCP
   IPv4EndpointOption is accepted; only true duplicates (two UDP or two
   TCP) are NACKed

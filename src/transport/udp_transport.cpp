@@ -23,6 +23,7 @@
 #include "tp/tp_manager.h"
 #include "tp/tp_types.h"
 #include "transport/endpoint.h"
+#include "transport/message_rejection.h"
 #include "transport/transport.h"
 
 #include <array>
@@ -430,7 +431,7 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
     return Result::SUCCESS;
 }
 
-/** @implements REQ_TRANSPORT_010, REQ_TP_091
+/** @implements REQ_TRANSPORT_010, REQ_TP_091, REQ_TRANSPORT_026
  *  @satisfies feat_req_someiptp_785 */
 void UdpTransport::receive_loop() {
     platform::ByteBuffer buffer(config_.receive_buffer_size);
@@ -453,6 +454,12 @@ void UdpTransport::receive_loop() {
         if (result == Result::SUCCESS && bytes_received > 0) {
             MessagePtr const message = platform::allocate_message();
             if (!message) {
+                MessageRejectionInfo info;
+                info.sender = sender;
+                info.result = Result::OUT_OF_MEMORY;
+                info.stage = MessageRejectionStage::DESERIALIZE;
+                fill_rejection_ids(info, buffer.data(), bytes_received);
+                notify_rejection(info);
                 continue;
             }
 
@@ -463,12 +470,29 @@ void UdpTransport::receive_loop() {
 
             if (tp_datagram) {
                 const uint32_t sender_ipv4 = ntohl(someip_inet_addr(sender.get_address().c_str()));
+                Result ingest_error = Result::SUCCESS;
                 if (tp_manager_->ingest_datagram(buffer.data(), bytes_received, *message,
-                                                 sender_ipv4, sender.get_port())) {
+                                                 sender_ipv4, sender.get_port(),
+                                                 &ingest_error)) {
                     delivered = true;
+                } else if (ingest_error != Result::SUCCESS) {
+                    MessageRejectionInfo info;
+                    info.sender = sender;
+                    info.result = ingest_error;
+                    info.stage = MessageRejectionStage::TP_REASSEMBLY;
+                    fill_rejection_ids(info, buffer.data(), bytes_received);
+                    notify_rejection(info);
                 }
+                // Incomplete reassembly is not a rejection; wait for more segments.
             } else if (message->deserialize(buffer.data(), bytes_received)) {
                 delivered = true;
+            } else {
+                MessageRejectionInfo info;
+                info.sender = sender;
+                info.result = Result::MALFORMED_MESSAGE;
+                info.stage = MessageRejectionStage::DESERIALIZE;
+                fill_rejection_ids(info, buffer.data(), bytes_received);
+                notify_rejection(info);
             }
 
             if (delivered) {
@@ -497,6 +521,13 @@ void UdpTransport::receive_loop() {
                 platform::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
         }
+    }
+}
+
+/** @implements REQ_TRANSPORT_026 */
+void UdpTransport::notify_rejection(const MessageRejectionInfo& info) {
+    if (auto* l = listener_.load(std::memory_order_acquire)) {
+        l->on_message_rejected(info);
     }
 }
 

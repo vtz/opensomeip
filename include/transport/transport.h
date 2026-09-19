@@ -15,6 +15,7 @@
 #define SOMEIP_TRANSPORT_TRANSPORT_H
 
 #include "transport/endpoint.h"
+#include "transport/message_rejection.h"
 #include "someip/message.h"
 #include "common/result.h"
 #include <memory>
@@ -73,6 +74,16 @@ public:
      * @param error The error that occurred
      */
     virtual void on_error(Result error) = 0;
+
+    /**
+     * @brief Called when a complete incoming PDU is structurally rejected.
+     *
+     * Default is a no-op so existing listeners remain source-compatible.
+     * Incomplete TCP frames and consumed Magic Cookies do not invoke this.
+     *
+     * @implements REQ_TRANSPORT_026
+     */
+    virtual void on_message_rejected(const MessageRejectionInfo& /*info*/) {}
 
 protected:
     ITransportListener() = default;

@@ -20,9 +20,12 @@
 #include "platform/memory.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - socket/POSIX types and someip_* helpers from net_impl.h
 #include "platform/net.h"
+#include "platform/buffer_pool.h"
 #include "platform/thread.h"
 #include "someip/message.h"
+#include "someip/types.h"
 #include "transport/endpoint.h"
+#include "transport/message_rejection.h"
 #include "transport/transport.h"
 
 #include <algorithm>
@@ -37,6 +40,30 @@ namespace someip::transport {
 
 // NOLINTBEGIN(misc-include-cleaner) - sockaddr/timeval/fd_set and someip_* wrappers/macros come from
 // platform/net.h -> net_impl.h; misc-include-cleaner does not trace through this abstraction.
+
+namespace {
+
+uint32_t read_be32_at(const platform::ByteBuffer& buffer, size_t offset) {
+    return (static_cast<uint32_t>(buffer[offset]) << 24U) |
+           (static_cast<uint32_t>(buffer[offset + 1U]) << 16U) |
+           (static_cast<uint32_t>(buffer[offset + 2U]) << 8U) |
+           static_cast<uint32_t>(buffer[offset + 3U]);
+}
+
+void populate_ids_from_header(MessagePtr& message, const platform::ByteBuffer& buffer) {
+    message = platform::allocate_message();
+    if (!message) {
+        return;
+    }
+    if (buffer.size() >= 4) {
+        message->set_message_id(MessageId::from_uint32(read_be32_at(buffer, 0)));
+    }
+    if (buffer.size() >= 12) {
+        message->set_request_id(RequestId::from_uint32(read_be32_at(buffer, 8)));
+    }
+}
+
+}  // namespace
 
 /**
  * @brief TCP Transport constructor
@@ -390,6 +417,7 @@ void TcpTransport::disconnect_internal() {
         someip_close_socket(connection_.socket_fd);
         connection_.socket_fd = SOMEIP_INVALID_SOCKET;
         connection_.receive_buffer.clear();
+        framing_skip_remaining_ = 0;
 
         connection_.state = TcpConnectionState::DISCONNECTED;
 
@@ -412,6 +440,13 @@ void TcpTransport::deliver_or_enqueue(const MessagePtr& message, const Endpoint&
     } else {
         platform::ScopedLock const q_lock(queue_mutex_);
         message_queue_.emplace(message, sender);
+    }
+}
+
+/** @implements REQ_TRANSPORT_026 */
+void TcpTransport::notify_rejection(const MessageRejectionInfo& info) {
+    if (auto* l = listener_.load(std::memory_order_acquire)) {
+        l->on_message_rejected(info);
     }
 }
 
@@ -464,14 +499,39 @@ void TcpTransport::receive_loop() {
             for (;;) {
                 MessagePtr message;
                 Endpoint sender_ep;
+                TcpParseOutcome outcome = TcpParseOutcome::NEED_MORE;
+                Result rejection = Result::SUCCESS;
+                MessageRejectionStage stage = MessageRejectionStage::DESERIALIZE;
+                std::array<uint8_t, 12> header_prefix{};
+                size_t prefix_len = 0;
                 {
                     platform::ScopedLock const conn_lock(connection_mutex_);
                     if (connection_.receive_buffer.empty()) { break; }
-                    if (!parse_message_from_buffer(connection_.receive_buffer, message)) {
-                        break;
-                    }
+                    prefix_len = std::min(header_prefix.size(), connection_.receive_buffer.size());
+                    std::copy_n(connection_.receive_buffer.data(), prefix_len, header_prefix.data());
+                    outcome = parse_next_message(connection_.receive_buffer, message, rejection,
+                                                 stage);
                     connection_.update_activity();
                     sender_ep = connection_.remote_endpoint;
+                }
+                if (outcome == TcpParseOutcome::NEED_MORE) {
+                    break;
+                }
+                if (outcome == TcpParseOutcome::CONTROL_FRAME) {
+                    continue;
+                }
+                if (outcome == TcpParseOutcome::REJECTED) {
+                    MessageRejectionInfo info;
+                    info.sender = sender_ep;
+                    info.result = rejection;
+                    info.stage = stage;
+                    if (message) {
+                        fill_rejection_ids(info, *message, SOMEIP_HEADER_SIZE);
+                    } else {
+                        fill_rejection_ids(info, header_prefix.data(), prefix_len);
+                    }
+                    notify_rejection(info);
+                    continue;
                 }
                 deliver_or_enqueue(message, sender_ep);
             }
@@ -588,78 +648,101 @@ Result TcpTransport::receive_data(someip_socket_t socket_fd, platform::ByteBuffe
 }
 
 bool TcpTransport::parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message) {
-    // For TCP, we expect complete messages in the buffer since TCP is stream-oriented
-    // but our current implementation receives data in chunks
+    Result unused = Result::SUCCESS;
+    MessageRejectionStage unused_stage = MessageRejectionStage::DESERIALIZE;
+    return parse_next_message(buffer, message, unused, unused_stage) == TcpParseOutcome::MESSAGE;
+}
 
-    // Enforce maximum receive buffer size
+/** @implements REQ_TRANSPORT_026 */
+TcpParseOutcome TcpTransport::parse_next_message(platform::ByteBuffer& buffer, MessagePtr& message,
+                                                 Result& rejection, MessageRejectionStage& stage) {
+    rejection = Result::SUCCESS;
+    stage = MessageRejectionStage::TCP_FRAMING;
+    message.reset();
+
+    if (framing_skip_remaining_ > 0) {
+        const size_t drop = std::min(buffer.size(), framing_skip_remaining_);
+        if (drop == 0) {
+            return TcpParseOutcome::NEED_MORE;
+        }
+        buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(drop));
+        framing_skip_remaining_ -= drop;
+        if (framing_skip_remaining_ > 0 || buffer.empty()) {
+            return TcpParseOutcome::NEED_MORE;
+        }
+    }
+
     if (buffer.size() > config_.max_receive_buffer) {
-        buffer.clear();  // Clear oversized buffer
-        return false;
+        buffer.clear();
+        rejection = Result::BUFFER_OVERFLOW;
+        return TcpParseOutcome::REJECTED;
     }
 
     if (buffer.size() < SOMEIP_HEADER_SIZE) {
-        return false;
+        return TcpParseOutcome::NEED_MORE;
     }
 
     if (is_magic_cookie(buffer, 0)) {
         buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(SOMEIP_HEADER_SIZE));
-        return false;
+        return TcpParseOutcome::CONTROL_FRAME;
     }
 
-    const uint32_t length_from_client_id =
-        (static_cast<uint32_t>(buffer[4]) << 24U) | (static_cast<uint32_t>(buffer[5]) << 16U) |
-        (static_cast<uint32_t>(buffer[6]) << 8U) | static_cast<uint32_t>(buffer[7]);
+    const uint32_t length_from_client_id = read_be32_at(buffer, 4);
 
     if (length_from_client_id < 8 || length_from_client_id > MAX_MESSAGE_SIZE) {
-        size_t search_start = 1;
-        bool found_valid = false;
+        populate_ids_from_header(message, buffer);
 
+        size_t search_start = 1;
+        bool found_cookie = false;
         while (search_start + SOMEIP_HEADER_SIZE <= buffer.size()) {
             if (is_magic_cookie(buffer, search_start)) {
                 buffer.erase(buffer.begin(),
                              buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
-                found_valid = true;
+                found_cookie = true;
                 break;
             }
-
-            uint32_t const potential_msg_id =
-                (static_cast<uint32_t>(buffer[search_start]) << 24U) |
-                (static_cast<uint32_t>(buffer[search_start + 1]) << 16U) |
-                (static_cast<uint32_t>(buffer[search_start + 2]) << 8U) |
-                static_cast<uint32_t>(buffer[search_start + 3]);
-            if (potential_msg_id != 0) {
-                buffer.erase(buffer.begin(),
-                             buffer.begin() + static_cast<std::ptrdiff_t>(search_start));
-                found_valid = true;
-                break;
-            }
-            search_start++;
+            ++search_start;
         }
-
-        if (!found_valid) {
-            if (buffer.size() > SOMEIP_HEADER_SIZE) {
-                buffer.erase(buffer.begin(),
-                             buffer.begin() + static_cast<std::ptrdiff_t>(buffer.size() - SOMEIP_HEADER_SIZE + 1));
-            }
+        if (!found_cookie) {
+            buffer.erase(buffer.begin(),
+                         buffer.begin() + static_cast<std::ptrdiff_t>(SOMEIP_HEADER_SIZE));
         }
-        return false;
+        rejection = Result::MALFORMED_MESSAGE;
+        return TcpParseOutcome::REJECTED;
     }
 
-    // Total message size = message_id(4) + length(4) + length_from_client_id
-    const size_t total_message_size = 8 + length_from_client_id;
+    const size_t total_message_size = 8U + static_cast<size_t>(length_from_client_id);
+
+    if (total_message_size > config_.max_receive_buffer) {
+        populate_ids_from_header(message, buffer);
+        const size_t consume = std::min(buffer.size(), total_message_size);
+        buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(consume));
+        if (total_message_size > consume) {
+            framing_skip_remaining_ = total_message_size - consume;
+        }
+        rejection = Result::BUFFER_OVERFLOW;
+        return TcpParseOutcome::REJECTED;
+    }
 
     if (buffer.size() < total_message_size) {
-        return false;  // Need more data
+        return TcpParseOutcome::NEED_MORE;
     }
 
-    // Extract message data
     const auto msg_end = buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size);
     const platform::ByteBuffer message_data(buffer.begin(), msg_end);
     buffer.erase(buffer.begin(), msg_end);
 
-    // Parse message
     message = platform::allocate_message();
-    return message && message->deserialize(message_data);
+    if (!message) {
+        rejection = Result::OUT_OF_MEMORY;
+        return TcpParseOutcome::REJECTED;
+    }
+    if (!message->deserialize(message_data)) {
+        rejection = Result::MALFORMED_MESSAGE;
+        stage = MessageRejectionStage::DESERIALIZE;
+        return TcpParseOutcome::REJECTED;
+    }
+    return TcpParseOutcome::MESSAGE;
 }
 
 /** @implements REQ_TRANSPORT_020, REQ_TRANSPORT_025 */
