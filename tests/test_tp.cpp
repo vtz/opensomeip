@@ -1902,8 +1902,10 @@ TEST_F(TpTest, MisalignedNonFinalSegmentRejected) {
     std::fill(datagram.begin() + 20, datagram.end(), 0xAA);
 
     Message complete;
-    EXPECT_FALSE(manager.ingest_datagram(datagram.data(), datagram.size(), complete))
+    Result err = Result::SUCCESS;
+    EXPECT_FALSE(manager.ingest_datagram(datagram.data(), datagram.size(), complete, 0, 0, &err))
         << "Non-final segment with 17-byte payload (not 16-aligned) must be rejected";
+    EXPECT_EQ(err, Result::MALFORMED_MESSAGE);
 }
 
 /**

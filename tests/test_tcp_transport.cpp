@@ -17,6 +17,8 @@
 #include <someip/message.h>
 #include <platform/buffer_pool.h>
 #include <platform/containers.h>
+#include <platform/net.h>
+#include <array>
 #include <thread>
 #include <chrono>
 #include "static_pool_init.h"
@@ -799,6 +801,45 @@ TEST_F(TcpTransportTest, CompleteMalformedFrameNotifiesRejection) {
 
     client.disconnect();
     client.stop();
+    server.stop();
+}
+
+/**
+ * @test_case TC_TCP_REJECT_002b
+ * @tests REQ_TRANSPORT_026
+ * @brief An incomplete TCP header notifies neither rejection nor message
+ */
+TEST_F(TcpTransportTest, IncompleteHeaderDoesNotNotifyRejection) {
+    TcpTransport server(config);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+    const Endpoint server_ep = server.get_local_endpoint();
+
+    const someip_socket_t fd = someip_socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ASSERT_NE(fd, SOMEIP_INVALID_SOCKET);
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(server_ep.get_port());
+    ASSERT_EQ(someip_inet_pton(AF_INET, server_ep.get_address().c_str(), &addr.sin_addr), 1);
+    ASSERT_EQ(someip_connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)), 0);
+    ASSERT_TRUE(server_listener.wait_for_connection_established());
+
+    const std::array<uint8_t, 8> partial{
+        0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x10};
+    ASSERT_EQ(someip_send(fd, partial.data(), partial.size(), 0),
+              static_cast<ssize_t>(partial.size()));
+
+    EXPECT_FALSE(server_listener.wait_for_rejection(std::chrono::milliseconds(150)));
+    EXPECT_FALSE(server_listener.wait_for_message(std::chrono::milliseconds(150)));
+    EXPECT_TRUE(server_listener.get_rejections().empty());
+    EXPECT_TRUE(server_listener.get_received_messages().empty());
+
+    someip_close_socket(fd);
     server.stop();
 }
 

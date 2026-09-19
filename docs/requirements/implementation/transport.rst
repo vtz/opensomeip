@@ -543,7 +543,7 @@ Magic Cookie Details
    :status: implemented
    :priority: high
    :category: error_path
-   :verification: Unit/integration test: Malformed UDP datagram and complete malformed TCP frame each produce one ``on_message_rejected`` notification and no ``on_message_received``. Incomplete TCP frames do not notify. Parsed Message ID / Request ID are present only when the header bytes were available. Existing listeners that do not override the default remain source-compatible. Covered by MalformedDatagramNotifiesRejectionNotMessage, ParseNextMessageDistinguishesOutcomes, CompleteMalformedFrameNotifiesRejection, ServerRejectionHandlerSeesMalformedRequest.
+   :verification: Unit/integration test: Malformed UDP datagram and complete malformed TCP frame each produce one ``on_message_rejected`` notification and no ``on_message_received``. Incomplete TCP frames do not notify. Parsed Message ID / Request ID are present only when the header bytes were available. Existing listeners that do not override the default remain source-compatible. Covered by MalformedDatagramNotifiesRejectionNotMessage, ParseNextMessageDistinguishesOutcomes, CompleteMalformedFrameNotifiesRejection, IncompleteHeaderDoesNotNotifyRejection, ServerRejectionHandlerSeesMalformedRequest.
 
    The software shall expose an additive, defaulted transport hook for
    structural rejection of a complete incoming PDU. The hook shall carry

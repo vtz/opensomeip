@@ -156,7 +156,10 @@ public:
      * @return true if a complete valid message is ready
      *
      * @param ingest_error When non-null, set to SUCCESS on incomplete reassembly
-     *        and to a failure code when the datagram is structurally rejected.
+     *        (process_segment accepted the segment but the message is not
+     *        complete) and to a failure code when the datagram is structurally
+     *        rejected, including process_segment failures. Incomplete must not
+     *        be reported as a transport rejection.
      * @return true if a complete message is ready
      * @implements REQ_TP_055, REQ_TP_078, REQ_TP_091
      * @satisfies feat_req_someiptp_785

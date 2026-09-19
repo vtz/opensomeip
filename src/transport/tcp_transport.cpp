@@ -502,9 +502,13 @@ void TcpTransport::receive_loop() {
                 TcpParseOutcome outcome = TcpParseOutcome::NEED_MORE;
                 Result rejection = Result::SUCCESS;
                 MessageRejectionStage stage = MessageRejectionStage::DESERIALIZE;
+                std::array<uint8_t, 12> header_prefix{};
+                size_t prefix_len = 0;
                 {
                     platform::ScopedLock const conn_lock(connection_mutex_);
                     if (connection_.receive_buffer.empty()) { break; }
+                    prefix_len = std::min(header_prefix.size(), connection_.receive_buffer.size());
+                    std::copy_n(connection_.receive_buffer.data(), prefix_len, header_prefix.data());
                     outcome = parse_next_message(connection_.receive_buffer, message, rejection,
                                                  stage);
                     connection_.update_activity();
@@ -523,6 +527,8 @@ void TcpTransport::receive_loop() {
                     info.stage = stage;
                     if (message) {
                         fill_rejection_ids(info, *message, SOMEIP_HEADER_SIZE);
+                    } else {
+                        fill_rejection_ids(info, header_prefix.data(), prefix_len);
                     }
                     notify_rejection(info);
                     continue;

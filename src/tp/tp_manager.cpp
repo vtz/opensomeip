@@ -226,6 +226,9 @@ bool TpManager::ingest_datagram(const uint8_t* data, size_t size, Message& out_c
     std::array<uint8_t, 16> hdr{};
     platform::ByteBuffer complete_payload;
     if (!reassembler_->process_segment(segment, complete_payload, &hdr)) {
+        if (ingest_error != nullptr) {
+            *ingest_error = Result::MALFORMED_MESSAGE;
+        }
         return false;
     }
     if (complete_payload.empty()) {

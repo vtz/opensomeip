@@ -458,6 +458,7 @@ void UdpTransport::receive_loop() {
                 info.sender = sender;
                 info.result = Result::OUT_OF_MEMORY;
                 info.stage = MessageRejectionStage::DESERIALIZE;
+                fill_rejection_ids(info, buffer.data(), bytes_received);
                 notify_rejection(info);
                 continue;
             }
