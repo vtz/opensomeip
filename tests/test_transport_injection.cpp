@@ -170,6 +170,31 @@ std::unique_ptr<Facade> make_facade(FakeTransport& transport)
     }
 }
 
+/// Builds a message the facade's receive handler accepts, so dispatch reaches
+/// the facade mutex instead of returning early on a message-type check.
+/// EventPublisher has no receive handler body, so nothing reaches a lock there.
+template <typename Facade>
+MessagePtr make_dispatch_message()
+{
+    MessagePtr message = platform::allocate_message();
+    if (!message) {
+        return message;
+    }
+    if constexpr (std::is_same_v<Facade, rpc::RpcClient>) {
+        *message = Message(MessageId(SERVICE, METHOD), RequestId(7, 1), MessageType::RESPONSE,
+                           ReturnCode::E_OK);
+    }
+    else if constexpr (std::is_same_v<Facade, events::EventSubscriber>) {
+        *message = Message(MessageId(SERVICE, EVENT), RequestId(0, 1), MessageType::NOTIFICATION,
+                           ReturnCode::E_OK);
+    }
+    else {
+        *message = Message(MessageId(SERVICE, METHOD), RequestId(7, 1), MessageType::REQUEST,
+                           ReturnCode::E_OK);
+    }
+    return message;
+}
+
 template <typename Facade>
 class TransportInjectionTest : public ::testing::Test {};
 
@@ -308,10 +333,10 @@ TYPED_TEST(TransportInjectionTest, ShutdownWaitsForInFlightDispatchWithoutHoldin
     FakeTransport transport;
     auto facade = make_facade<TypeParam>(transport);
     ASSERT_TRUE(facade->initialize());
-    auto message = platform::allocate_message();
+    // The handler must accept this message, otherwise it returns before taking
+    // the facade mutex and the test cannot detect stop-after-lock ordering.
+    MessagePtr message = make_dispatch_message<TypeParam>();
     ASSERT_NE(message, nullptr);
-    *message = Message(MessageId(SERVICE, METHOD), RequestId(7, 1), MessageType::REQUEST,
-                       ReturnCode::E_OK);
     std::promise<void> entered;
     std::promise<void> release;
     std::promise<void> stopping;
@@ -445,6 +470,8 @@ TEST(TransportInjectionRouting, EventSubscriberReceivesInjectedNotification)
 
 TEST(TransportInjectionRouting, SubscriberReleasesCallbackCapturesOutsideLocks)
 {
+    // Destroying this while subscriptions_mutex_ is held would deadlock, so it
+    // detects a capture released under the lock rather than after it.
     struct ReleaseProbe {
         ReleaseProbe(events::EventSubscriber& subscriber, unsigned& releases)
             : subscriber(subscriber), releases(releases)
@@ -461,18 +488,25 @@ TEST(TransportInjectionRouting, SubscriberReleasesCallbackCapturesOutsideLocks)
     };
 
     FakeTransport transport;
-    unsigned releases = 0;
+    unsigned subscription_releases = 0;
+    unsigned field_releases = 0;
     events::EventSubscriber subscriber(7, transport);
     subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
     ASSERT_TRUE(subscriber.initialize());
-    auto capture = std::make_shared<ReleaseProbe>(subscriber, releases);
-    ASSERT_TRUE(subscriber.subscribe_eventgroup(SERVICE, 1, GROUP,
-                                                [capture](const events::EventNotification&) {}));
+
+    // Independent probes, so each map is proven to release its own captures.
+    auto subscription_probe = std::make_shared<ReleaseProbe>(subscriber, subscription_releases);
+    auto field_probe = std::make_shared<ReleaseProbe>(subscriber, field_releases);
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(
+        SERVICE, 1, GROUP, [subscription_probe](const events::EventNotification&) {}));
     ASSERT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
-                                         [capture](const events::EventNotification&) {}));
-    capture.reset();
+                                         [field_probe](const events::EventNotification&) {}));
+    subscription_probe.reset();
+    field_probe.reset();
+
     subscriber.shutdown();
-    EXPECT_EQ(releases, 1u);
+    EXPECT_EQ(subscription_releases, 1u);
+    EXPECT_EQ(field_releases, 1u);
 }
 
 }  // namespace

@@ -275,9 +275,10 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
 - **RPC / Events**: Re-register receive listeners on reinitialization, detach
   them after a failed start, and drain transport callbacks before clearing
   handler/subscription state during shutdown. Clear pending field-request
-  callbacks on subscriber shutdown and release subscriber callback captures
-  outside its mutexes. Pending RPC completion callbacks now run after the
-  transport is stopped, rather than before.
+  callbacks on subscriber shutdown, and release subscriber callback captures
+  one entry at a time so teardown does not hold a whole fixed-capacity map on
+  the stack. Pending RPC completion callbacks now run after the transport is
+  stopped, rather than before.
 - **SOME/IP-SD**: SubscribeEventgroup with both a UDP and a TCP
   IPv4EndpointOption is accepted; only true duplicates (two UDP or two
   TCP) are NACKed

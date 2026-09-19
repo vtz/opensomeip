@@ -69,9 +69,16 @@ void uint16_to_str(uint16_t val, platform::String<>& out) {
 }
 
 template <typename Map>
-void release_entries(Map& entries, platform::Mutex& mutex) {
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::Mutex from platform/thread.h dispatch header
+void release_entries(Map& entries, platform::Mutex& mutex)
+{
     while (true) {
-        // One entry bounds stack use for fixed-capacity maps; destroy it unlocked.
+        // Bound teardown storage to one entry so fixed-capacity maps do not copy
+        // their whole capacity onto the shutdown stack.
+        //
+        // The moved-to value is destroyed outside the lock. With inplace callable
+        // storage (static backend) the move also destroys the moved-from source
+        // under the lock, so only the moved-to destruction is unlocked there.
         std::optional<typename Map::mapped_type> released;
         {
             platform::ScopedLock const lock(mutex);

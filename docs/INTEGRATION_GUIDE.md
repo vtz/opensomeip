@@ -503,8 +503,12 @@ without changing RPC/event implementations. No event-driven backend is required.
   partially started backend can be cleaned up and retried.
   Pending RPC completion callbacks now run after the transport is stopped,
   rather than before the stop operation.
-  Subscriber callback captures are released outside its mutexes, one entry at
-  a time, avoiding full fixed-capacity map copies on the shutdown stack.
+  Subscriber teardown releases callback captures one entry at a time, so it
+  never holds a whole fixed-capacity map on the shutdown stack. The value moved
+  out of the map is destroyed outside the subscriber's mutexes. Note that with
+  inplace callable storage (`SOMEIP_STATIC_ALLOC`) moving a capture also
+  destroys the moved-from source in place, so a capture destructor that calls
+  back into the subscriber must still not rely on being invoked unlocked.
 - Reinitialization registers the listener again. Destruction without
   initialization does not touch the borrowed transport; destruction after a
   successful initialization shuts it down without deleting it.
