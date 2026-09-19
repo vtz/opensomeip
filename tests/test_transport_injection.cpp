@@ -55,6 +55,7 @@ class FakeTransport final : public transport::ITransport {
         if (send_result != Result::SUCCESS) {
             return send_result;
         }
+        std::lock_guard<std::mutex> lock(mutex_);
         messages.push_back(message);
         destinations.push_back(endpoint);
         return Result::SUCCESS;
@@ -440,6 +441,38 @@ TEST(TransportInjectionRouting, EventSubscriberReceivesInjectedNotification)
     ASSERT_TRUE(transport.emit(message));
     EXPECT_FALSE(stale_field_callback);
     EXPECT_EQ(notifications, 1u);
+}
+
+TEST(TransportInjectionRouting, SubscriberReleasesCallbackCapturesOutsideLocks)
+{
+    struct ReleaseProbe {
+        ReleaseProbe(events::EventSubscriber& subscriber, unsigned& releases)
+            : subscriber(subscriber), releases(releases)
+        {
+        }
+        ~ReleaseProbe()
+        {
+            if (subscriber.get_active_subscriptions().empty()) {
+                ++releases;
+            }
+        }
+        events::EventSubscriber& subscriber;
+        unsigned& releases;
+    };
+
+    FakeTransport transport;
+    unsigned releases = 0;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    auto capture = std::make_shared<ReleaseProbe>(subscriber, releases);
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(SERVICE, 1, GROUP,
+                                                [capture](const events::EventNotification&) {}));
+    ASSERT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                         [capture](const events::EventNotification&) {}));
+    capture.reset();
+    subscriber.shutdown();
+    EXPECT_EQ(releases, 1u);
 }
 
 }  // namespace

@@ -18,16 +18,17 @@
 
 #include "common/result.h"
 #include "events/event_types.h"
-// NOLINTNEXTLINE(misc-include-cleaner) - platform::String via containers dispatch header
 #include <array>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <unordered_map>
 #include <utility>
 
+// NOLINTNEXTLINE(misc-include-cleaner) - platform::String via containers dispatch header
 #include "platform/containers.h"
 #include "platform/thread.h"
 #include "someip/message.h"
@@ -65,6 +66,23 @@ void uint16_to_str(uint16_t val, platform::String<>& out) {
     }
     out.append(digits.data() + pos,
                digits.data() + 5);
+}
+
+template <typename Map>
+void release_entries(Map& entries, platform::Mutex& mutex) {
+    while (true) {
+        // One entry bounds stack use for fixed-capacity maps; destroy it unlocked.
+        std::optional<typename Map::mapped_type> released;
+        {
+            platform::ScopedLock const lock(mutex);
+            if (entries.empty()) {
+                return;
+            }
+            auto entry = entries.begin();
+            released.emplace(std::move(entry->second));
+            entries.erase(entry);
+        }
+    }
 }
 }  // namespace
 
@@ -124,11 +142,8 @@ public:
         running_ = false;
         transport_session_.stop();
 
-        // Clear all subscriptions and callbacks
-        platform::ScopedLock const subs_lock(subscriptions_mutex_);
-        subscriptions_.clear();
-        platform::ScopedLock const fields_lock(field_requests_mutex_);
-        field_requests_.clear();
+        release_entries(subscriptions_, subscriptions_mutex_);
+        release_entries(field_requests_, field_requests_mutex_);
     }
 
     /** @implements REQ_MSG_122, REQ_TRANSPORT_014 */

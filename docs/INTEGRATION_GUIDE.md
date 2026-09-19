@@ -473,7 +473,7 @@ transport. Existing constructors continue to own a private UDP transport.
 #include "transport/udp_transport.h"
 
 someip::Result use_transport(someip::transport::ITransport& network) {
-    someip::rpc::RpcClient client(0x1234, network);
+    someip::rpc::RpcClient client(0x0007, network);
     if (!client.initialize()) {
         return client.get_transport_result();
     }
@@ -493,12 +493,18 @@ without changing RPC/event implementations. No event-driven backend is required.
   facade, start it independently, or replace its listener while borrowed.
   `initialize()` rejects an already-running transport with `INVALID_STATE`
   without stealing its listener or stopping it.
+  The no-listener precondition is caller-guaranteed; `ITransport` has no listener
+  query with which to check it.
 - Lifecycle operations must not throw. The injected `stop()` must synchronously
   drain all callbacks, even when returning an error or cleaning up a failed
   `start()`. Detaching the listener alone is not a callback-draining barrier.
 - The facade detaches its listener and stops the transport before clearing
   callback-owned state. Failed initialization also detaches and stops, so a
   partially started backend can be cleaned up and retried.
+  Pending RPC completion callbacks now run after the transport is stopped,
+  rather than before the stop operation.
+  Subscriber callback captures are released outside its mutexes, one entry at
+  a time, avoiding full fixed-capacity map copies on the shutdown stack.
 - Reinitialization registers the listener again. Destruction without
   initialization does not touch the borrowed transport; destruction after a
   successful initialization shuts it down without deleting it.

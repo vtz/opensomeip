@@ -34,6 +34,12 @@ class TransportSession {
     {
     }
 
+    ~TransportSession()
+    {
+        // Facades must still stop before destroying their callback-owned state.
+        stop();
+    }
+
     TransportSession(const TransportSession&) = delete;
     TransportSession& operator=(const TransportSession&) = delete;
     TransportSession(TransportSession&&) = delete;

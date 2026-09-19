@@ -274,7 +274,10 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   ([#315](https://github.com/vtz/opensomeip/issues/315)).
 - **RPC / Events**: Re-register receive listeners on reinitialization, detach
   them after a failed start, and drain transport callbacks before clearing
-  handler/subscription state during shutdown.
+  handler/subscription state during shutdown. Clear pending field-request
+  callbacks on subscriber shutdown and release subscriber callback captures
+  outside its mutexes. Pending RPC completion callbacks now run after the
+  transport is stopped, rather than before.
 - **SOME/IP-SD**: SubscribeEventgroup with both a UDP and a TCP
   IPv4EndpointOption is accepted; only true duplicates (two UDP or two
   TCP) are NACKed

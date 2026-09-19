@@ -100,6 +100,8 @@ protected:
  * must not be used by another facade or by the caller until shutdown returns.
  * Construction does not register a listener. The facade manages start/stop
  * and detaches its listener on shutdown or failed initialization.
+ * The running-state precondition is checked; absence of an existing listener
+ * is the caller's responsibility because this interface has no listener query.
  *
  * Injected implementations must not throw from lifecycle operations. stop()
  * must quiesce all callbacks before returning, even on an error or after a
