@@ -1818,6 +1818,24 @@ Header Informational References
 
    **Code Location**: ``src/events/event_publisher.cpp``, ``src/sd/sd_client.cpp``
 
+.. requirement:: Structured Deserialize Outcome
+   :id: REQ_MSG_150
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: ``try_deserialize`` distinguishes truncated buffers, length mismatch, invalid protocol version, invalid SD interface version, invalid message type, unknown return code, missing E2E layout, invalid Service/Method ID, and oversized payload. ``deserialize`` remains a bool wrapper.
+
+   ``Message::try_deserialize`` shall return a structured ``someip::Result``
+   identifying the semantic rejection class. ``Message::deserialize`` shall
+   remain a source-compatible ``bool`` wrapper. Failures shall use local
+   ``Result`` values, not on-wire ``ReturnCode``. Header fields parsed
+   before the failure shall remain available on the ``Message`` object.
+
+   **Rationale**: Receive-path diagnostics need distinguishable parse
+   failures without collapsing every check to ``false``.
+
+   **Code Location**: ``include/someip/message.h``, ``src/someip/message.cpp``
+
 
 .. requirement:: Error - Invalid Service Instance ID
    :id: REQ_MSG_110_E01

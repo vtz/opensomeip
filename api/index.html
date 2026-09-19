@@ -2848,7 +2848,7 @@
 <h2 id="core-types">Core Types<a class="headerlink" href="#core-types" title="Permanent link">&para;</a></h2>
 <p>The core protocol types live in <code>include/someip/</code>:</p>
 <ul>
-<li><strong><code>message.h</code></strong> -- <code>Message</code> class with header fields, payload, and serialization</li>
+<li><strong><code>message.h</code></strong> -- <code>Message</code> class with header fields, payload, <code>serialize()</code>, <code>deserialize()</code>, and <code>try_deserialize()</code> (structured <code>Result</code>)</li>
 <li><strong><code>types.h</code></strong> -- <code>MessageId</code>, <code>RequestId</code>, <code>MessageType</code>, <code>ReturnCode</code>, and other protocol constants</li>
 </ul>
 <h2 id="udp-transport">UDP Transport<a class="headerlink" href="#udp-transport" title="Permanent link">&para;</a></h2>

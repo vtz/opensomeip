@@ -1,15 +1,15 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-09-18 23:35:00
+Generated: 2026-09-19 00:48:39
 
 ## Summary
 
-- **Total Requirements**: 690
-- **Fully Traced (impl + tests)**: 609 (88.3%)
+- **Total Requirements**: 691
+- **Fully Traced (impl + tests)**: 610 (88.3%)
 - **Missing Implementation**: 78
 - **Missing Tests**: 12
-- **Missing Spec Links (all)**: 156
-- **Missing Spec Links (required only)**: 4
+- **Missing Spec Links (all)**: 157
+- **Missing Spec Links (required only)**: 5
 
 ### Requirement Categories
 
@@ -17,7 +17,7 @@ Generated: 2026-09-18 23:35:00
 |----------|-------|-------------|--------|-------------|
 | Architectural (derived) | 8 | 7 (88%) | 7 (88%) | 3 (38%) |
 | Error Handling (derived) | 155 | 130 (84%) | 151 (97%) | 10 (6%) |
-| Message Header | 92 | 87 (95%) | 92 (100%) | 92 (100%) |
+| Message Header | 93 | 88 (95%) | 93 (100%) | 92 (99%) |
 | Other | 90 | 75 (83%) | 85 (94%) | 87 (97%) |
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
 | Serialization | 75 | 52 (69%) | 75 (100%) | 75 (100%) |
@@ -29,7 +29,7 @@ Generated: 2026-09-18 23:35:00
 **Note**: Error handling, architectural, and plugin requirements are implementation-derived and
 may not require direct spec links.
 
-- **Spec-Derived Requirements**: 522
+- **Spec-Derived Requirements**: 523
 - **Implementation-Derived Requirements**: 168
 
 ### Priority Breakdown
@@ -38,14 +38,14 @@ may not require direct spec links.
 |----------|-------|-------------|--------|----------|
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 55 | 55 | 98% |
-| Medium | 419 | 369 | 413 | 88% |
+| Medium | 420 | 370 | 414 | 88% |
 | Low | 183 | 156 | 178 | 85% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 444 |
+| Unit Tests | 446 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -149,6 +149,7 @@ may not require direct spec links.
 These requirements should have spec links but don't:
 
 - REQ_TP_081_ATOM
+- REQ_MSG_150
 - REQ_CAPI_004
 - REQ_CAPI_005
 - REQ_PLATFORM_ARCH_001
