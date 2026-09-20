@@ -55,6 +55,9 @@
 namespace someip {
 namespace platform {
 
+/** @brief Opaque identity of a task, usable for per-thread reentrancy checks. */
+using ThreadId = TaskHandle_t;
+
 /** @implements REQ_PLATFORM_FREERTOS_001 */
 class Mutex {
 public:
@@ -257,6 +260,9 @@ void sleep_for(const std::chrono::duration<Rep, Period>& d) {
     }
     vTaskDelay(ticks);
 }
+
+/** @brief Identity of the calling task, used to detect same-thread reentrancy. */
+inline ThreadId get_id() { return xTaskGetCurrentTaskHandle(); }
 
 } // namespace this_thread
 

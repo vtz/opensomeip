@@ -523,11 +523,20 @@ the injection API does not add SD integration or multicast controls to `ITranspo
   the registration under that same mutex, and scope-bound cleanup unregisters
   it on exceptions. An already-completed response wins over a competing timeout.
   Calls do not wait for unrelated application callbacks or allocate shared wait
-  state. The response-time budget starts before the transport send; sending and
-  scheduling still follow the backend's blocking and tick-granularity behavior.
+  state. The response-time budget starts after the transport send returns, so a
+  backend that blocks in `send_message()` does not consume the reply budget;
+  scheduling still follows the backend's tick granularity, and the observed call
+  time therefore includes the send. Submission refused because the client is
+  stopped or its pending-call table is full reports `SERVICE_NOT_AVAILABLE`.
   Shutdown completes all synchronous calls before invoking asynchronous
-  callbacks; it attempts all of those callbacks before rethrowing the first
-  callback exception to an explicit C++ shutdown caller.
+  callbacks and attempts every one of them. `shutdown()` is no-throw: a throwing
+  application callback is swallowed rather than propagated, because `shutdown()`
+  returns `void` and is commonly called from a destructor.
+  Call handles are never `0`; that value is reserved as the "no handle"
+  sentinel and is skipped when the counter wraps.
+  A call's session-manager entry is released when it completes, is cancelled, or
+  is swept by shutdown, so long-running clients no longer exhaust the session
+  table.
   Subscriber and RPC-server teardown release stored callbacks one entry at a time,
   avoiding a whole fixed-capacity map on the shutdown stack. The value moved
   out of the map is destroyed outside the facade's mutexes. Note that with

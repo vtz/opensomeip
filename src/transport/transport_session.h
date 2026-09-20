@@ -83,23 +83,29 @@ class TransportSession {
     /**
      * @brief Quiesce delivery before detaching and releasing the receive queue.
      * @note A still-running backend retains cleanup ownership for a later retry.
+     * @note Safe to call concurrently: only the caller that claims the exchange
+     *       actually stops the backend, so two racing shutdown() calls (or a
+     *       destructor racing an explicit shutdown()) never both reach
+     *       transport_.stop() for the same session.
      */
     Result stop()
     {
-        if (!active_) {
+        if (!active_.exchange(false)) {
             return Result::SUCCESS;
         }
         // stop() is the callback barrier; detaching first could switch live input to polling.
         const Result stopped = transport_.stop();
         transport_.set_listener(nullptr);
-        active_ = transport_.is_running();
-        if (!active_ && session_started_) {
+        const bool still_running = transport_.is_running();
+        // Re-arm if the backend is still running so the documented retry path still works.
+        active_ = still_running;
+        if (!still_running && session_started_) {
             while (transport_.receive_message()) {
                 // Discard final queued arrivals from this facade's completed receive session.
             }
             session_started_ = false;
         }
-        result_ = (stopped == Result::SUCCESS && active_) ? Result::INVALID_STATE : stopped;
+        result_ = (stopped == Result::SUCCESS && still_running) ? Result::INVALID_STATE : stopped;
         return stopped;
     }
 
@@ -115,8 +121,8 @@ class TransportSession {
     std::optional<UdpTransport> owned_;
     ITransport& transport_;
     std::atomic<Result> result_{Result::SUCCESS};
-    bool active_{false};
-    bool session_started_{false};
+    std::atomic<bool> active_{false};
+    std::atomic<bool> session_started_{false};
 };
 
 }  // namespace someip::transport::detail

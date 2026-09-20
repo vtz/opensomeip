@@ -858,8 +858,11 @@ TEST(TransportInjectionRouting, ThrowingSendUnregistersTheSynchronousWaiter)
     EXPECT_NO_THROW(client.shutdown());
 }
 
-TEST(TransportInjectionRouting, ShutdownCompletesAllCallsBeforeRethrowingCallbackFailure)
+TEST(TransportInjectionRouting, ShutdownCompletesAllCallsAndSwallowsCallbackFailure)
 {
+    // shutdown() is a void public API commonly invoked from application RAII
+    // destructors, so a throwing callback must not escape it; every pending
+    // callback must still be attempted.
     FakeTransport transport;
     rpc::RpcClient client(7, transport);
     ASSERT_TRUE(client.initialize());
@@ -875,7 +878,7 @@ TEST(TransportInjectionRouting, ShutdownCompletesAllCallsBeforeRethrowingCallbac
                       PEER),
                   0u);
     }
-    EXPECT_THROW(client.shutdown(), std::runtime_error);
+    EXPECT_NO_THROW(client.shutdown());
     EXPECT_EQ(callbacks, 3u);
     EXPECT_FALSE(transport.is_running());
     EXPECT_NO_THROW(client.shutdown());
@@ -1105,7 +1108,20 @@ TEST(TransportInjectionRouting,
             return subscriber.unsubscribe_eventgroup(service, 1, GROUP);
         }));
     }
-    EXPECT_TRUE(wait_for_subscription_count(subscriber, 6));
+    // unsubscriptions[0] targets SERVICE, whose notification callback is still
+    // blocked, so its barrier must hold it open until we release below.
+    EXPECT_EQ(unsubscriptions[0].wait_for(std::chrono::milliseconds(50)),
+              std::future_status::timeout);
+    // NOTE: this deliberately does NOT assert an exact mid-flight subscription
+    // count. It used to check for exactly 6, which was only deterministic
+    // because pending() matched ANY in-flight dispatch: every one of the seven
+    // unsubscribers blocked on SERVICE's callback, pinning the count. Now that
+    // the barrier is scoped to the subscription actually being removed, the
+    // other six are free to complete as soon as they win unsubscribe_mutex_, so
+    // the count races past 6. Asserting 6 again would re-encode the over-broad
+    // barrier as a requirement. Also note the six are not guaranteed to finish
+    // promptly either: unsubscribe_mutex_ is global and is held across the
+    // blocking wait, so if SERVICE wins that mutex first they queue behind it.
     release.set_value();
     EXPECT_TRUE(dispatch.get());
     for (auto& unsubscription : unsubscriptions) {

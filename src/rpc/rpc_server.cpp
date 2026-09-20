@@ -59,7 +59,13 @@ public:
 
     ~RpcServerImpl() override
     {
+#ifdef __cpp_exceptions
+        try {
+            shutdown();
+        } catch (...) {}  // NOLINT(bugprone-empty-catch) destructor must not throw
+#else
         shutdown();
+#endif
     }
 
     RpcServerImpl(const RpcServerImpl&) = delete;

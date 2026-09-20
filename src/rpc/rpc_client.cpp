@@ -21,9 +21,6 @@
 #include <optional>
 #include <unordered_map>
 #include <utility>
-#ifdef __cpp_exceptions
-#include <exception>
-#endif
 
 #include "../transport/transport_session.h"
 #include "common/result.h"
@@ -54,6 +51,10 @@ class RpcClientImpl : public transport::ITransportListener {
         std::optional<RpcResponse> response;
     };
 
+    // `handle == 0` cannot be used as an "unregistered" sentinel: 0 is also a
+    // legal RpcCallHandle once next_call_handle_ wraps past 2^32. `armed_`
+    // tracks registration state explicitly so the sentinel value is never
+    // ambiguous with a real handle.
     class PendingRegistration {
        public:
         explicit PendingRegistration(RpcClientImpl& client) : client_(client)
@@ -61,23 +62,40 @@ class RpcClientImpl : public transport::ITransportListener {
         }
         ~PendingRegistration()
         {
-            if (handle != 0) {
+            if (armed_) {
                 platform::ScopedLock const lock(client_.pending_calls_mutex_);
-                client_.pending_calls_.erase(handle);
+                auto it = client_.pending_calls_.find(handle_);
+                if (it != client_.pending_calls_.end()) {
+                    client_.session_manager_.remove_session(it->second.session_id);
+                    client_.pending_calls_.erase(it);
+                }
             }
         }
         PendingRegistration(const PendingRegistration&) = delete;
         PendingRegistration& operator=(const PendingRegistration&) = delete;
         PendingRegistration(PendingRegistration&&) = delete;
         PendingRegistration& operator=(PendingRegistration&&) = delete;
+
+        // Marks `handle` as owned by this registration; must be called with a
+        // handle already present in pending_calls_.
+        void arm(RpcCallHandle handle)
+        {
+            handle_ = handle;
+            armed_ = true;
+        }
+
+        // Disarms the registration (the caller takes over cleanup responsibility,
+        // or the entry has already been erased elsewhere) and returns the handle.
         RpcCallHandle release()
         {
-            return std::exchange(handle, 0);
+            armed_ = false;
+            return handle_;
         }
-        RpcCallHandle handle{0};
 
        private:
         RpcClientImpl& client_;
+        RpcCallHandle handle_{0};
+        bool armed_{false};
     };
 
 public:
@@ -147,6 +165,7 @@ public:
                 }
             }
             for (auto& pair : pending_calls_) {
+                session_manager_.remove_session(pair.second.session_id);
                 if (pair.second.callback) {
                     shutdown_cbs.emplace_back(
                         std::move(pair.second.callback),
@@ -156,29 +175,21 @@ public:
             }
             pending_calls_.clear();
         }
-#ifdef __cpp_exceptions
-        std::exception_ptr failure;
-#endif
+        // shutdown() is a void public API that application RAII wrappers routinely
+        // call from their own destructors, which are implicitly noexcept. Every
+        // pending callback is still attempted, but a throwing callback must not
+        // prevent later callbacks from running or escape this function.
         for (auto& [cb, resp] : shutdown_cbs) {
 #ifdef __cpp_exceptions
             try {
                 cb(resp);
             }
-            catch (...) {
-                if (!failure) {
-                    failure = std::current_exception();
-                }
-            }
+            catch (...) {}  // NOLINT(bugprone-empty-catch) shutdown() must not throw
 #else
             cb(resp);
 #endif
             cb = nullptr;
         }
-#ifdef __cpp_exceptions
-        if (failure) {
-            std::rethrow_exception(failure);
-        }
-#endif
     }
 
     void set_remote_endpoint(const transport::Endpoint& ep) {
@@ -211,25 +222,42 @@ public:
                                    const RpcTimeout& timeout) {
         SyncWaiter waiter;
         PendingRegistration registration(*this);
-        const auto started = std::chrono::steady_clock::now();
-        registration.handle = submit_call(service_id, method_id, parameters, nullptr,
-                                          server_endpoint, timeout, &waiter);
-        if (registration.handle == 0) {
-            return {RpcResult::INTERNAL_ERROR, {}, std::chrono::milliseconds(0)};
+        RpcResult submit_failure = RpcResult::INTERNAL_ERROR;
+        // submit_call performs the unbounded, blocking transport send; the
+        // response-time budget must only cover the wait for a reply, so the
+        // clock starts after submission succeeds, not before it.
+        const RpcCallHandle handle = submit_call(service_id, method_id, parameters, nullptr,
+                                                 server_endpoint, timeout, &waiter,
+                                                 &submit_failure);
+        if (handle == 0) {
+            return {submit_failure, {}, std::chrono::milliseconds(0)};
         }
+        registration.arm(handle);
+
+        const auto started = std::chrono::steady_clock::now();
         const auto deadline = started + timeout.response_timeout;
         while (true) {
             {
                 platform::ScopedLock const lock(pending_calls_mutex_);
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::steady_clock::now() - started);
-                // Completion and timeout removal arbitrate under the same mutex.
+                // Completion and timeout removal arbitrate under the same mutex;
+                // an already-delivered response must win over an expired deadline.
                 if (waiter.response) {
+                    // on_message_received already erased pending_calls_ for this
+                    // handle; just disarm so ~PendingRegistration does not
+                    // re-acquire the mutex to erase an entry that is gone.
+                    registration.release();
                     return {waiter.response->result, std::move(waiter.response->return_values),
                             elapsed};
                 }
                 if (std::chrono::steady_clock::now() >= deadline) {
-                    pending_calls_.erase(registration.release());
+                    const auto timed_out_handle = registration.release();
+                    auto it = pending_calls_.find(timed_out_handle);
+                    if (it != pending_calls_.end()) {
+                        session_manager_.remove_session(it->second.session_id);
+                        pending_calls_.erase(it);
+                    }
                     return {RpcResult::TIMEOUT, {}, elapsed};
                 }
             }
@@ -263,14 +291,25 @@ public:
     RpcCallHandle submit_call(uint16_t service_id, MethodId method_id,
                               const platform::ByteBuffer& parameters, RpcCallback callback,
                               const transport::Endpoint& server_endpoint, const RpcTimeout& timeout,
-                              SyncWaiter* waiter)
+                              SyncWaiter* waiter, RpcResult* failure_reason = nullptr)
     {
-        if (!running_) {
+        auto fail = [failure_reason](RpcResult reason) -> RpcCallHandle {
+            if (failure_reason != nullptr) {
+                *failure_reason = reason;
+            }
             return 0;
+        };
+
+        if (!running_) {
+            return fail(RpcResult::SERVICE_NOT_AVAILABLE);
         }
 
-        // Create session for this call
+        // Create session for this call. SOME/IP session ids are never 0; a 0
+        // return means the session table has no capacity left.
         const uint16_t session_id = session_manager_.create_session(client_id_);
+        if (session_id == 0) {
+            return fail(RpcResult::SERVICE_NOT_AVAILABLE);
+        }
 
         // Create request message — Interface Version is the service major
         MessageId const msg_id(service_id, method_id);
@@ -289,17 +328,26 @@ public:
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
             if (!running_) {
-                return 0;
+                session_manager_.remove_session(session_id);
+                return fail(RpcResult::SERVICE_NOT_AVAILABLE);
             }
             if (pending_calls_.size() >= pending_calls_.max_size()) {
-                return 0;
+                session_manager_.remove_session(session_id);
+                return fail(RpcResult::SERVICE_NOT_AVAILABLE);
             }
-            registration.handle = next_call_handle_++;
-            pending_calls_[registration.handle] = std::move(call_info);
+            // Post-increment can legally wrap to 0; 0 is reserved as the
+            // "no handle" sentinel, so skip it rather than issue it.
+            RpcCallHandle handle = next_call_handle_.fetch_add(1, std::memory_order_relaxed);
+            if (handle == 0) {
+                handle = next_call_handle_.fetch_add(1, std::memory_order_relaxed);
+            }
+            registration.arm(handle);
+            pending_calls_[handle] = std::move(call_info);
         }
 
         if (transport_.send_message(request, server_endpoint) != Result::SUCCESS) {
-            return 0;
+            // ~PendingRegistration erases the entry and releases its session.
+            return fail(RpcResult::INTERNAL_ERROR);
         }
 
         return registration.release();
@@ -343,6 +391,7 @@ public:
                 cancel_resp = RpcResponse(it->second.service_id, it->second.method_id,
                                           client_id_, it->second.session_id, RpcResult::INTERNAL_ERROR);
             }
+            session_manager_.remove_session(it->second.session_id);
             pending_calls_.erase(it);
         }
         if (cancel_cb) {
@@ -405,12 +454,14 @@ private:
 
                     if (it->second.waiter != nullptr) {
                         it->second.waiter->response.emplace(std::move(recv_resp));
+                        session_manager_.remove_session(it->second.session_id);
                         pending_calls_.erase(it);
                         return;
                     }
                     else if (it->second.callback) {
                         recv_cb = std::move(it->second.callback);
                     }
+                    session_manager_.remove_session(it->second.session_id);
                     pending_calls_.erase(it);
                     break;
                 }

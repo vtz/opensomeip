@@ -49,6 +49,9 @@
 namespace someip {
 namespace platform {
 
+/** @brief Opaque identity of a thread, usable for per-thread reentrancy checks. */
+using ThreadId = TX_THREAD*;
+
 /** @implements REQ_PLATFORM_THREADX_001, REQ_PAL_MUTEX_LOCK, REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_TRYLOCK, REQ_PAL_MUTEX_NONCOPY, REQ_PAL_MUTEX_UNLOCK_E01 */
 class Mutex {
 public:
@@ -295,6 +298,9 @@ void sleep_for(const std::chrono::duration<Rep, Period>& d) {
     if (ticks == 0) ticks = 1;
     tx_thread_sleep(ticks);
 }
+
+/** @brief Identity of the calling thread, used to detect same-thread reentrancy. */
+inline ThreadId get_id() { return tx_thread_identify(); }
 
 } // namespace this_thread
 

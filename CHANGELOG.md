@@ -293,7 +293,47 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   than application callbacks. Response, cancellation and exception cleanup share
   the pending-call mutex, avoiding both expired stack access and an unbounded
   callback lifetime drain. Complete synchronous calls before asynchronous
-  shutdown callbacks, attempt every callback, then rethrow the first exception.
+  shutdown callbacks and attempt every callback. `shutdown()` is no-throw: a
+  throwing application callback no longer escapes the `void` API, which could
+  terminate the process when `shutdown()` is called from a destructor.
+- **RPC**: Never issue call handle `0`. It doubles as the "not registered"
+  sentinel, so once `next_call_handle_` wrapped past 2^32 a pending entry was
+  inserted and then abandoned holding a pointer to the caller's expired stack
+  frame (ASan: `stack-use-after-return`). Registrations now track an explicit
+  armed flag instead of overloading the handle value.
+- **RPC**: Start the response-timeout budget after the transport send returns,
+  so a slow blocking send can no longer consume the whole budget and report
+  `TIMEOUT` for a request the client never waited on. Report
+  `SERVICE_NOT_AVAILABLE` rather than `INTERNAL_ERROR` when submission is
+  refused because the client is stopped or the pending-call table is full.
+- **RPC**: Release session-manager entries when a call completes, is cancelled,
+  or is swept by shutdown, and reject submission when no session id is
+  available. Sessions previously leaked for the client's lifetime; once the
+  table filled, every request reused session id 0 and concurrent calls to the
+  same method could receive each other's responses.
+- **Events**: Detect unsubscribe reentrancy from the dispatching thread's
+  identity rather than a `thread_local`. `thread_local` has no per-task backing
+  on the FreeRTOS and ThreadX ARM ports, where all tasks shared one block, so
+  an unrelated thread was treated as reentrant and skipped the barrier.
+- **Events**: Scope the unsubscribe barrier to the subscription being removed
+  and publish the matched key while the subscription mutex is still held, so a
+  dispatch that has already snapshotted its callback cannot be missed. Always
+  run the barrier on the external path, including when the entry was already
+  removed by a reentrant call — that case is exactly when an application
+  concludes teardown is safe.
+- **Events**: Remove a subscription even when its service endpoint no longer
+  resolves; the unsubscribe send is best-effort and the entry was previously
+  left permanently unremovable.
+- **Events**: Drain in-flight notification dispatches during `shutdown()` and
+  hand off with any external unsubscriber before tearing down the dispatch
+  mutex and condition variable they may still be parked on.
+- **Transport**: Make `TransportSession::active_` atomic and claim stop
+  ownership with a single exchange, so two concurrent `shutdown()` calls (or a
+  destructor racing an explicit one) cannot both close the socket and join the
+  receive thread.
+- **RPC / Events**: Give `~RpcServerImpl`, `~EventPublisherImpl` and
+  `~EventSubscriberImpl` the exception firewall `~RpcClientImpl` already had;
+  each reaches a caller-supplied `ITransport::stop()`.
 - **Events**: External unsubscription waits for previously admitted notification
   dispatches; callback-initiated unsubscription remains reentrant. Reject duplicate
   pending field requests without replacing the original callback. Bound callback

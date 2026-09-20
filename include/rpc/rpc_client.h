@@ -82,8 +82,9 @@ public:
     /**
      * @brief Shutdown the RPC client
      * @note All pending synchronous calls are completed before application callbacks run.
-     *       Explicit shutdown attempts every pending application callback, then rethrows
-     *       the first callback exception when exceptions are enabled.
+     *       Explicit shutdown attempts every pending application callback; a callback that
+     *       throws is caught and discarded so this function never throws (safe to call from
+     *       an application RAII wrapper's destructor).
      */
     void shutdown();
 
@@ -117,8 +118,9 @@ public:
      * @note Completion and timeout removal are serialized under the pending-call mutex;
      *       an already completed response wins over timeout. No application-callback
      *       lifetime drain is performed. Join outstanding calls before destroying the client.
-     *       The response-time budget starts before sending; transport send duration and
-     *       scheduler granularity can extend the observed call time.
+     *       The response-time budget starts after the request has been handed to the
+     *       transport (i.e. once the, possibly blocking, send completes); the reported
+     *       elapsed time reflects only the wait for a reply, not the send duration.
      */
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
                                    const platform::ByteBuffer& parameters,

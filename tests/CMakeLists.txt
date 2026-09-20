@@ -23,6 +23,21 @@ if(BUILD_TESTS)
     add_test(NAME TransportInjectionTest COMMAND test_transport_injection)
     set_tests_properties(TransportInjectionTest PROPERTIES TIMEOUT 30)
 
+    add_executable(test_subscriber_dispatch test_subscriber_dispatch.cpp)
+    target_link_libraries(test_subscriber_dispatch opensomeip gtest_main)
+    add_test(NAME SubscriberDispatchTest COMMAND test_subscriber_dispatch)
+    set_tests_properties(SubscriberDispatchTest PROPERTIES TIMEOUT 60)
+
+    add_executable(test_rpc_sync_lifetime test_rpc_sync_lifetime.cpp)
+    target_link_libraries(test_rpc_sync_lifetime opensomeip gtest_main)
+    add_test(NAME RpcSyncLifetimeTest COMMAND test_rpc_sync_lifetime)
+    set_tests_properties(RpcSyncLifetimeTest PROPERTIES TIMEOUT 60)
+
+    add_executable(test_facade_teardown test_facade_teardown.cpp)
+    target_link_libraries(test_facade_teardown opensomeip gtest_main)
+    add_test(NAME FacadeTeardownTest COMMAND test_facade_teardown)
+    set_tests_properties(FacadeTeardownTest PROPERTIES TIMEOUT 60)
+
 # SD tests
 add_executable(test_sd test_sd.cpp)
 target_link_libraries(test_sd someip-sd gtest_main)

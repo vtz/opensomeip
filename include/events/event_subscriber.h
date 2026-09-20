@@ -127,12 +127,35 @@ public:
      * @param service_id Service identifier
      * @param instance_id Service instance identifier
      * @param eventgroup_id Event group identifier
-     * @return true if unsubscription request sent, false on error
-     * @note An external call waits for notification dispatches admitted before removal;
-     *       later notifications do not extend that wait. External unsubscribers serialize.
-     *       A call from this subscriber's callback skips the wait to avoid self-deadlock:
-     *       current and overlapping callbacks may still use their captured state until
-     *       they return. Callback capture copy/move/destruction must not re-enter this object.
+     * @return true if this eventgroup was subscribed (false only if it was not found)
+     * @note An external call ALWAYS waits for the notification dispatch, if any, that is
+     *       currently delivering *this exact* (service_id, instance_id, eventgroup_id)
+     *       subscription -- whether or not this call is the one that actually erased it.
+     *       This matters because a reentrant call from that dispatch's own callback (see
+     *       below) may have already erased the subscription moments earlier while its
+     *       callback -- and the DispatchFrame guarding its captured state -- is still on
+     *       the stack; waiting only when @c true was returned would let this call free
+     *       that state out from under the still-running callback. The wait is scoped to
+     *       this subscription only: an unrelated in-flight dispatch for a different
+     *       eventgroup never blocks it, and later notifications for THIS eventgroup
+     *       (admitted after this call) do not extend the wait. External unsubscribers
+     *       for different subscriptions run concurrently; unsubscribers for the SAME
+     *       subscription serialize on each other.
+     *       A call made from this subscriber's own notification callback (reentrant,
+     *       detected per-thread) skips the wait to avoid self-deadlock: the current and
+     *       any overlapping callbacks may still use their captured state until they
+     *       return. Callback capture copy/move/destruction must not re-enter this object.
+     * @warning Reentrancy is detected per CALLING THREAD, not per call stack. Calling
+     *          unsubscribe_eventgroup() for a subscription from a DIFFERENT thread that a
+     *          notification callback for that same subscription is synchronously blocked
+     *          on (e.g. the callback offloads work to a worker thread and joins it, and
+     *          that worker calls unsubscribe_eventgroup(); or two subscribers'
+     *          notification callbacks synchronously unsubscribe each other) is NOT
+     *          recognized as reentrant. It takes the external, blocking path and
+     *          deadlocks waiting for a dispatch that can never finish. This is prohibited:
+     *          only call unsubscribe_eventgroup() for a subscription either from a thread
+     *          uninvolved in delivering its notifications, or synchronously from within
+     *          that subscription's own notification callback on the delivering thread.
      */
     bool unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id);
 
@@ -148,6 +171,13 @@ public:
      * @note A second request for an already-pending field is rejected without replacing
      *       its callback or sending another request. The field becomes available again
      *       on response or shutdown; no field-request timeout is provided.
+     * @note Pending field requests are keyed by (service_id, event_id) only -- NOT by
+     *       instance_id. A SOME/IP notification carries no instance id, so the response
+     *       cannot be attributed to a specific instance; @p instance_id here only
+     *       addresses the initial request message. Consequently a pending field request
+     *       for one instance also blocks (as "already pending") a request for the same
+     *       service_id/event_id on a DIFFERENT instance, and whichever instance's
+     *       notification arrives first satisfies the pending callback.
      */
     bool request_field(uint16_t service_id, uint16_t instance_id, uint16_t event_id,
                       EventNotificationCallback callback);

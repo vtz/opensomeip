@@ -45,6 +45,14 @@ inline void vTaskDelay(TickType_t ticks) {
         std::chrono::milliseconds((static_cast<uint64_t>(ticks) * 1000) / configTICK_RATE_HZ));
 }
 
+inline TaskHandle_t xTaskGetCurrentTaskHandle() {
+    // Distinct per host thread: each std::thread that calls this gets its own
+    // thread_local instance, so the returned address is a stable per-thread id
+    // (unlike task_sentinel above, which is shared by every created task).
+    thread_local MockTaskHandle self_sentinel;
+    return &self_sentinel;
+}
+
 inline TickType_t xTaskGetTickCount() {
     static auto start = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::steady_clock::now() - start;

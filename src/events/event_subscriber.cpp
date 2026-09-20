@@ -81,7 +81,7 @@ class EventSubscriberImpl : public transport::ITransportListener {
     class DispatchFrame {
        public:
         explicit DispatchFrame(EventSubscriberImpl& owner)
-            : owner_(owner), previous_in_thread_(current_frame)
+            : owner_(owner), owner_thread_(platform::this_thread::get_id())
         {
             platform::ScopedLock const lock(owner_.dispatch_mutex_);
             // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer) - requires the lock
@@ -89,37 +89,75 @@ class EventSubscriberImpl : public transport::ITransportListener {
             // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer) - requires the lock
             next_ = owner_.active_dispatches_;
             owner_.active_dispatches_ = this;
-            current_frame = this;
         }
         ~DispatchFrame()
         {
-            current_frame = previous_in_thread_;
             platform::ScopedLock const lock(owner_.dispatch_mutex_);
             auto** entry = &owner_.active_dispatches_;
             while (*entry != this) {
                 entry = &(*entry)->next_;
             }
             *entry = next_;
-            owner_.dispatch_drained_.notify_one();
+            // notify_all(): shutdown() and an external unsubscribe() can both be
+            // parked on dispatch_drained_ at the same time; notify_one() could
+            // wake the wrong one and leave the other stuck.
+            owner_.dispatch_drained_.notify_all();
         }
         DispatchFrame(const DispatchFrame&) = delete;
         DispatchFrame& operator=(const DispatchFrame&) = delete;
         DispatchFrame(DispatchFrame&&) = delete;
         DispatchFrame& operator=(DispatchFrame&&) = delete;
 
+        /**
+         * @brief Record the subscription key this notification matched, if any.
+         *
+         * Called at most once, after the subscriptions_mutex_ lookup in
+         * on_message_received. Left empty when no subscription matched.
+         * Guarded by owner_.dispatch_mutex_ so unsubscribe_eventgroup() can
+         * safely read it from a different thread.
+         */
+        void set_matched_key(platform::String<> key)
+        {
+            platform::ScopedLock const lock(owner_.dispatch_mutex_);
+            matched_key_ = std::move(key);
+        }
+
+        /**
+         * @brief True if the calling thread is already inside a dispatch for
+         *        this owner (i.e. this call is reentrant from a notification
+         *        callback belonging to the same EventSubscriberImpl).
+         *
+         * Reentrancy is detected per-thread: a DIFFERENT thread synchronously
+         * waiting on a notification callback (e.g. joining a worker it
+         * offloaded the callback to) is NOT recognized as reentrant and will
+         * take the external, blocking path below -- see the @note on
+         * EventSubscriber::unsubscribe_eventgroup for the resulting deadlock
+         * hazard.
+         */
         static bool reentrant(const EventSubscriberImpl& owner)
         {
-            for (auto* frame = current_frame; frame != nullptr; frame = frame->previous_in_thread_) {
-                if (&frame->owner_ == &owner) {
+            platform::ScopedLock const lock(owner.dispatch_mutex_);
+            const platform::ThreadId self = platform::this_thread::get_id();
+            for (auto* frame = owner.active_dispatches_; frame != nullptr; frame = frame->next_) {
+                if (&frame->owner_ == &owner && frame->owner_thread_ == self) {
                     return true;
                 }
             }
             return false;
         }
-        static bool pending(const DispatchFrame* frame, uint64_t cutoff)
+
+        /**
+         * @brief True if a still-active frame was admitted at or before
+         *        @p cutoff AND matched @p key, i.e. an unsubscribe() for that
+         *        exact subscription must keep waiting.
+         *
+         * Callers must already hold owner_.dispatch_mutex_ (this is invoked
+         * from inside the dispatch_drained_ wait predicate).
+         */
+        static bool pending(const DispatchFrame* frame, uint64_t cutoff, const platform::String<>& key)
         {
             for (; frame != nullptr; frame = frame->next_) {
-                if (frame->ticket_ <= cutoff) {
+                if (frame->ticket_ <= cutoff && frame->matched_key_ == key) {
                     return true;
                 }
             }
@@ -130,8 +168,9 @@ class EventSubscriberImpl : public transport::ITransportListener {
         EventSubscriberImpl& owner_;
         uint64_t ticket_{0};
         DispatchFrame* next_{nullptr};
-        DispatchFrame* previous_in_thread_{nullptr};
-        inline static thread_local DispatchFrame* current_frame{nullptr};
+        platform::ThreadId owner_thread_;
+        // Guarded by owner_.dispatch_mutex_.
+        platform::String<> matched_key_;
     };
 
 public:
@@ -144,9 +183,15 @@ public:
     {
     }
 
-    ~EventSubscriberImpl() override
+    ~EventSubscriberImpl() noexcept override
     {
+#ifdef __cpp_exceptions
+        try {
+            shutdown();
+        } catch (...) {}  // NOLINT(bugprone-empty-catch) destructor must not throw
+#else
         shutdown();
+#endif
     }
 
     EventSubscriberImpl(const EventSubscriberImpl&) = delete;
@@ -179,7 +224,24 @@ public:
         }
 
         running_ = false;
-        transport_session_.stop();
+        transport_session_.stop();  // Guarantees no NEW DispatchFrame is admitted after this returns.
+
+        // Drain any DispatchFrame still running a notification callback before
+        // tearing down dispatch_mutex_/dispatch_drained_ (used by ~DispatchFrame).
+        {
+            platform::ScopedLock const dispatch_lock(dispatch_mutex_);
+            dispatch_drained_.wait(dispatch_mutex_, [&] {
+                return active_dispatches_ == nullptr;
+            });
+        }
+
+        // Hand off with any external unsubscribe_eventgroup() call: it holds
+        // unsubscribe_mutex_ for the entirety of its own dispatch_drained_ wait,
+        // so acquiring (and immediately releasing) it here proves none is still
+        // in flight before subscriptions_/field_requests_ are torn down.
+        {
+            platform::ScopedLock const unsubscribe_lock(unsubscribe_mutex_);
+        }
 
         someip::detail::release_entries(subscriptions_, subscriptions_mutex_);
         someip::detail::release_entries(field_requests_, field_requests_mutex_);
@@ -248,14 +310,17 @@ public:
         }
         // One external waiter avoids relying on a PAL-wide broadcast operation.
         platform::ScopedLock const unsubscribe_lock(unsubscribe_mutex_);
+        const platform::String<> key = make_subscription_key(service_id, instance_id, eventgroup_id);
         uint64_t cutoff = 0;
         const bool removed = remove_subscription(service_id, instance_id, eventgroup_id, &cutoff);
-        if (removed) {
-            platform::ScopedLock const dispatch_lock(dispatch_mutex_);
-            dispatch_drained_.wait(dispatch_mutex_, [&] {
-                return !DispatchFrame::pending(active_dispatches_, cutoff);
-            });
-        }
+        // Always wait, whether or not this call actually erased the entry: a
+        // reentrant call from this subscription's own callback may have erased
+        // it moments ago while its DispatchFrame is still on the stack, and
+        // that callback's captured state must not be freed out from under it.
+        platform::ScopedLock const dispatch_lock(dispatch_mutex_);
+        dispatch_drained_.wait(dispatch_mutex_, [&] {
+            return !DispatchFrame::pending(active_dispatches_, cutoff, key);
+        });
         return removed;
     }
 
@@ -263,48 +328,57 @@ public:
     bool remove_subscription(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                              uint64_t* cutoff = nullptr)
     {
-        if (!running_) {
-            return false;
+        bool found = false;
+        if (running_) {
+            platform::ScopedLock const subs_lock(subscriptions_mutex_);
+            const platform::String<> key = make_subscription_key(service_id, instance_id, eventgroup_id);
+
+            auto it = subscriptions_.find(key);
+            if (it != subscriptions_.end()) {
+                found = true;
+
+                // Best-effort: the unsubscribe message is sent when the endpoint
+                // resolves, but the local subscription is erased either way so a
+                // subscription whose service never resolves a port isn't stuck
+                // forever (it was never reachable to notify in the first place).
+                const transport::Endpoint service_endpoint =
+                    resolve_service_endpoint(service_id, instance_id);
+                // Unresolved destinations fail before send. Local removal still
+                // proceeds so a subscription that never had a remote port is not stuck.
+                if (is_resolved_remote_destination(service_endpoint)) {
+                    MessageId const msg_id(service_id, 0x0002);
+                    Message unsubscription_msg(msg_id, RequestId(client_id_, 0x0002),
+                                               MessageType::REQUEST, ReturnCode::E_OK);
+
+                    // Add unsubscription data to payload
+                    platform::ByteBuffer payload;
+                    payload.push_back(static_cast<uint8_t>(
+                        (static_cast<uint32_t>(eventgroup_id) >> 8U) & 0xFFU));
+                    payload.push_back(
+                        static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
+                    unsubscription_msg.set_payload(payload);
+
+                    const Result result = transport_.send_message(unsubscription_msg, service_endpoint);
+                    if (result != Result::SUCCESS) {
+                        // Log error or handle failure
+                    }
+                }
+
+                subscriptions_.erase(it);
+            }
         }
-
-        platform::ScopedLock const subs_lock(subscriptions_mutex_);
-        const platform::String<> key = make_subscription_key(service_id, instance_id, eventgroup_id);
-
-        auto it = subscriptions_.find(key);
-        if (it == subscriptions_.end()) {
-            return false;
-        }
-
-        const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
-        if (!is_resolved_remote_destination(service_endpoint)) {
-            return false;
-        }
-
-        MessageId const msg_id(service_id, 0x0002);
-        Message unsubscription_msg(msg_id, RequestId(client_id_, 0x0002),
-                                   MessageType::REQUEST, ReturnCode::E_OK);
-
-        // Add unsubscription data to payload
-        platform::ByteBuffer payload;
-        payload.push_back(static_cast<uint8_t>((static_cast<uint32_t>(eventgroup_id) >> 8U) & 0xFFU));
-        payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(eventgroup_id) & 0xFFU));
-        unsubscription_msg.set_payload(payload);
-
-        const Result result = transport_.send_message(unsubscription_msg, service_endpoint);
-        if (result != Result::SUCCESS) {
-            // Log error or handle failure
-        }
-
-        // Remove subscription
-        subscriptions_.erase(it);
         if (cutoff != nullptr) {
-            // Dispatch never holds this mutex while acquiring subscriptions_mutex_.
+            // Dispatch never holds this mutex while acquiring subscriptions_mutex_
+            // (already released above); read unconditionally so the caller can
+            // scope its barrier wait even when nothing was found here (see
+            // unsubscribe_eventgroup()).
             platform::ScopedLock const dispatch_lock(dispatch_mutex_);
             *cutoff = next_dispatch_ticket_;
         }
-        return true;
+        return found;
     }
 
+public:
     /** @implements REQ_TRANSPORT_014 */
     bool request_field(uint16_t service_id, uint16_t instance_id, uint16_t event_id,
                       EventNotificationCallback callback) {
@@ -326,7 +400,7 @@ public:
         if (!running_) {
             return false;
         }
-        const platform::String<> key = make_field_key(service_id, 0, event_id);
+        const platform::String<> key = make_field_key(service_id, event_id);
         if (field_requests_.find(key) != field_requests_.end() ||
             field_requests_.size() >= field_requests_.max_size()) {
             return false;
@@ -448,11 +522,14 @@ private:
         return key;
     }
 
-    platform::String<> make_field_key(uint16_t service_id, uint16_t instance_id, uint16_t event_id) {
+    // Deliberately NOT instance-scoped: a SOME/IP notification (see
+    // someip::Message) carries no instance id, so on_message_received() has no
+    // way to recover which instance a field response came from. Keying this on
+    // instance_id would let the two call sites drift and silently stop
+    // matching (see the @note on EventSubscriber::request_field).
+    platform::String<> make_field_key(uint16_t service_id, uint16_t event_id) {
         platform::String<> key;
         uint16_to_str(service_id, key);
-        key.append(":");
-        uint16_to_str(instance_id, key);
         key.append(":");
         uint16_to_str(event_id, key);
         return key;
@@ -464,7 +541,9 @@ private:
             return;
         }
         // Registered before snapshots; destroyed after local callable copies, including unwind.
-        DispatchFrame const dispatch(*this);
+        // Non-const: the matched subscription key is recorded onto it below so
+        // unsubscribe_eventgroup() can scope its barrier wait to this subscription.
+        DispatchFrame dispatch(*this);
 
         uint16_t const service_id = message->get_service_id();
         uint16_t const event_id = message->get_method_id();  // Event ID is in method ID field for notifications
@@ -472,25 +551,44 @@ private:
         EventNotificationCallback notification_callback;
         EventNotificationCallback field_callback;
         std::optional<EventNotification> notification;
+        uint16_t notified_instance_id = 0;
+        platform::String<> matched_key;
         {
             platform::ScopedLock const subs_lock(subscriptions_mutex_);
             for (auto& sub_pair : subscriptions_) {
                 auto& sub_info = sub_pair.second;
                 if (sub_info.subscription.service_id == service_id) {
-                    notification.emplace(service_id, sub_info.subscription.instance_id, event_id);
+                    notified_instance_id = sub_info.subscription.instance_id;
+                    notification.emplace(service_id, notified_instance_id, event_id);
                     notification->client_id = message->get_client_id();
                     notification->session_id = message->get_session_id();
                     notification_callback = sub_info.notification_callback;
                     sub_info.subscription.state = SubscriptionState::SUBSCRIBED;
                     sub_info.subscription.last_notification = std::chrono::steady_clock::now();
+                    matched_key = sub_pair.first;
                     break;
                 }
             }
+            // Publish the key while subscriptions_mutex_ is STILL held. This is
+            // load-bearing, not tidiness: remove_subscription() holds this same
+            // mutex across both the erase and the cutoff read, so publishing here
+            // makes "this frame snapshotted the callback" and "unsubscribe chose a
+            // cutoff" strictly ordered. Publishing after the unlock leaves a window
+            // where a frame that already copied notification_callback still has an
+            // empty key, so pending() reports nothing pending, unsubscribe returns,
+            // the caller frees the captured state, and the callback then runs
+            // against it. Left empty when no subscription matched, so a real
+            // unsubscribe key never accidentally matches this frame.
+            // Lock order subscriptions_mutex_ -> dispatch_mutex_ matches
+            // remove_subscription(); no other path takes them the other way round.
+            dispatch.set_matched_key(std::move(matched_key));
         }
 
         {
             platform::ScopedLock const field_lock(field_requests_mutex_);
-            platform::String<> const field_key = make_field_key(service_id, 0, event_id);
+            // Not instance-scoped: see make_field_key()'s comment. notified_instance_id
+            // is unused here on purpose -- the wire notification carries no instance id.
+            platform::String<> const field_key = make_field_key(service_id, event_id);
             auto field_it = field_requests_.find(field_key);
             if (field_it != field_requests_.end()) {
                 field_callback = std::move(field_it->second);
@@ -555,7 +653,7 @@ private:
     platform::UnorderedMap<platform::String<>, EventNotificationCallback> field_requests_;
     mutable platform::Mutex field_requests_mutex_;
     platform::Mutex unsubscribe_mutex_;
-    platform::Mutex dispatch_mutex_;
+    mutable platform::Mutex dispatch_mutex_;
     platform::ConditionVariable dispatch_drained_;
     DispatchFrame* active_dispatches_{nullptr};
     uint64_t next_dispatch_ticket_{0};
