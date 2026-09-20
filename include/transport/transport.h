@@ -104,9 +104,10 @@ protected:
  * is the caller's responsibility because this interface has no listener query.
  *
  * Injected implementations must not throw from lifecycle operations. stop()
- * must quiesce callbacks and prevent subsequent delivery before returning,
- * even on an error or after a failed start(). The facade then discards any
- * queued messages from the ended session. Draining requires receive_message()
+ * must quiesce callbacks and receive producers before returning, even on an
+ * error or after a failed start(). After a successfully started session is
+ * stopped, the facade discards queued messages. A failed start preserves the
+ * lender's queue. Draining requires receive_message()
  * to be non-blocking and eventually return nullptr;
  * the facade consumes and discards queued data, including on a borrowed backend.
  * Resource cleanup failure can be reported separately from callback quiescence;

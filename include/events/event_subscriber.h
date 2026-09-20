@@ -128,6 +128,11 @@ public:
      * @param instance_id Service instance identifier
      * @param eventgroup_id Event group identifier
      * @return true if unsubscription request sent, false on error
+     * @note An external call waits for notification dispatches admitted before removal;
+     *       later notifications do not extend that wait. External unsubscribers serialize.
+     *       A call from this subscriber's callback skips the wait to avoid self-deadlock:
+     *       current and overlapping callbacks may still use their captured state until
+     *       they return. Callback capture copy/move/destruction must not re-enter this object.
      */
     bool unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id);
 
@@ -138,8 +143,11 @@ public:
      * @param instance_id Service instance identifier
      * @param event_id Field identifier
      * @param callback Callback for field value response
-     * @return true if request sent, false if the remote destination is unresolved
-     *         or the send fails
+     * @return true if request sent, false if the remote destination is unresolved,
+     *         the field is already pending, or the send fails
+     * @note A second request for an already-pending field is rejected without replacing
+     *       its callback or sending another request. The field becomes available again
+     *       on response or shutdown; no field-request timeout is provided.
      */
     bool request_field(uint16_t service_id, uint16_t instance_id, uint16_t event_id,
                       EventNotificationCallback callback);

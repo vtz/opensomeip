@@ -25,7 +25,10 @@ typedef uint32_t StackType_t;
 #define configQUEUE_REGISTRY_SIZE 8
 #define tskIDLE_PRIORITY       0
 
-#define pdMS_TO_TICKS(ms) ((TickType_t)(ms))
+#ifndef configTICK_RATE_HZ
+#define configTICK_RATE_HZ 1000
+#endif
+#define pdMS_TO_TICKS(ms) ((TickType_t)(((ms) * configTICK_RATE_HZ) / 1000))
 #define errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY ((BaseType_t)-1)
 
 #endif /* MOCK_FREERTOS_H */

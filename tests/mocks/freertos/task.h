@@ -18,6 +18,7 @@ typedef void (*TaskFunction_t)(void*);
 
 namespace mock_detail {
 inline MockTaskHandle task_sentinel;
+inline std::atomic<TickType_t> last_delay_ticks{portMAX_DELAY};
 } // namespace mock_detail
 
 inline BaseType_t xTaskCreate(
@@ -39,14 +40,18 @@ inline void vTaskDelete(TaskHandle_t /*handle*/) {
 }
 
 inline void vTaskDelay(TickType_t ticks) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(ticks));
+    mock_detail::last_delay_ticks = ticks;
+    std::this_thread::sleep_for(
+        std::chrono::milliseconds((static_cast<uint64_t>(ticks) * 1000) / configTICK_RATE_HZ));
 }
 
 inline TickType_t xTaskGetTickCount() {
     static auto start = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::steady_clock::now() - start;
     return static_cast<TickType_t>(
-        std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+        (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() *
+         configTICK_RATE_HZ) /
+        1000);
 }
 
 #endif /* MOCK_FREERTOS_TASK_H */

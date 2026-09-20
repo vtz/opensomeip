@@ -289,10 +289,19 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   completed field request before invocation so a reentrant request survives for
   the next response. Capture copy/move/destruction still must not re-enter a
   facade while its storage mutex is held. SD lifecycle changes remain deferred.
-- **RPC**: Fix a pre-existing extracted-callback lifetime race by keeping
-  synchronous wait state alive until extracted response/shutdown
-  callbacks are released, even if timeout cancellation no longer finds the
-  pending call. The lifetime barrier does not allocate shared state on the heap.
+- **RPC**: Represent synchronous calls as revocable wait registrations rather
+  than application callbacks. Response, cancellation and exception cleanup share
+  the pending-call mutex, avoiding both expired stack access and an unbounded
+  callback lifetime drain. Complete synchronous calls before asynchronous
+  shutdown callbacks, attempt every callback, then rethrow the first exception.
+- **Events**: External unsubscription waits for previously admitted notification
+  dispatches; callback-initiated unsubscription remains reentrant. Reject duplicate
+  pending field requests without replacing the original callback. Bound callback
+  storage teardown and reject method registration while server shutdown runs.
+- **Transport lifecycle**: Preserve lender-owned queued receives after failed
+  initialization; retain the start error when cleanup succeeds.
+- **FreeRTOS**: Ensure a positive millisecond sleep blocks for at least one tick
+  instead of becoming a zero-tick yield below a 1 kHz tick rate.
 - **SOME/IP-SD**: SubscribeEventgroup with both a UDP and a TCP
   IPv4EndpointOption is accepted; only true duplicates (two UDP or two
   TCP) are NACKed

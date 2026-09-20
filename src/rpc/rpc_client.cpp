@@ -13,7 +13,6 @@
 
 #include "rpc/rpc_client.h"
 
-#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -22,6 +21,9 @@
 #include <optional>
 #include <unordered_map>
 #include <utility>
+#ifdef __cpp_exceptions
+#include <exception>
+#endif
 
 #include "../transport/transport_session.h"
 #include "common/result.h"
@@ -48,6 +50,36 @@ namespace someip::rpc {
  * @satisfies feat_req_someip_92
  */
 class RpcClientImpl : public transport::ITransportListener {
+    struct SyncWaiter {
+        std::optional<RpcResponse> response;
+    };
+
+    class PendingRegistration {
+       public:
+        explicit PendingRegistration(RpcClientImpl& client) : client_(client)
+        {
+        }
+        ~PendingRegistration()
+        {
+            if (handle != 0) {
+                platform::ScopedLock const lock(client_.pending_calls_mutex_);
+                client_.pending_calls_.erase(handle);
+            }
+        }
+        PendingRegistration(const PendingRegistration&) = delete;
+        PendingRegistration& operator=(const PendingRegistration&) = delete;
+        PendingRegistration(PendingRegistration&&) = delete;
+        PendingRegistration& operator=(PendingRegistration&&) = delete;
+        RpcCallHandle release()
+        {
+            return std::exchange(handle, 0);
+        }
+        RpcCallHandle handle{0};
+
+       private:
+        RpcClientImpl& client_;
+    };
+
 public:
     template <typename Transport>
     RpcClientImpl(uint16_t client_id, uint8_t interface_version, Transport&& transport)
@@ -106,21 +138,47 @@ public:
         platform::Vector<std::pair<RpcCallback, RpcResponse>> shutdown_cbs;
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
+            // Complete stack-owned waiters before copying or invoking application callbacks.
+            for (auto& pair : pending_calls_) {
+                auto& call = pair.second;
+                if (call.waiter != nullptr) {
+                    call.waiter->response.emplace(call.service_id, call.method_id, client_id_,
+                                                  call.session_id, RpcResult::INTERNAL_ERROR);
+                }
+            }
             for (auto& pair : pending_calls_) {
                 if (pair.second.callback) {
                     shutdown_cbs.emplace_back(
-                        pair.second.callback,
-                        RpcResponse(pair.second.service_id, pair.second.method_id,
-                                    client_id_, pair.second.session_id, RpcResult::INTERNAL_ERROR));
+                        std::move(pair.second.callback),
+                        RpcResponse(pair.second.service_id, pair.second.method_id, client_id_,
+                                    pair.second.session_id, RpcResult::INTERNAL_ERROR));
                 }
             }
             pending_calls_.clear();
         }
+#ifdef __cpp_exceptions
+        std::exception_ptr failure;
+#endif
         for (auto& [cb, resp] : shutdown_cbs) {
+#ifdef __cpp_exceptions
+            try {
+                cb(resp);
+            }
+            catch (...) {
+                if (!failure) {
+                    failure = std::current_exception();
+                }
+            }
+#else
             cb(resp);
-            // Release completed waiters before invoking another application callback.
+#endif
             cb = nullptr;
         }
+#ifdef __cpp_exceptions
+        if (failure) {
+            std::rethrow_exception(failure);
+        }
+#endif
     }
 
     void set_remote_endpoint(const transport::Endpoint& ep) {
@@ -151,82 +209,31 @@ public:
                                    const platform::ByteBuffer& parameters,
                                    const transport::Endpoint& server_endpoint,
                                    const RpcTimeout& timeout) {
-
-        struct SyncState {
-            platform::Mutex mtx;
-            std::optional<RpcResponse> resp;
-            std::atomic<bool> ready{false};
-            std::atomic<unsigned> callbacks{0};
-        };
-        SyncState state;
-
-        // Cancellation can lose to a callback already extracted from pending_calls_.
-        // Keep the stack state alive until every callable copy has finished with it.
-        struct SyncCallback {
-            explicit SyncCallback(SyncState& value) : state(&value)
-            {
-                state->callbacks.fetch_add(1, std::memory_order_relaxed);
-            }
-            SyncCallback(const SyncCallback& other) : state(other.state)
-            {
-                if (state != nullptr) {
-                    state->callbacks.fetch_add(1, std::memory_order_relaxed);
-                }
-            }
-            SyncCallback(SyncCallback&& other) noexcept : state(std::exchange(other.state, nullptr))
-            {
-            }
-            SyncCallback& operator=(const SyncCallback&) = delete;
-            SyncCallback& operator=(SyncCallback&&) = delete;
-            ~SyncCallback()
-            {
-                if (state != nullptr) {
-                    state->callbacks.fetch_sub(1, std::memory_order_release);
-                }
-            }
-            void operator()(const RpcResponse& response) const
-            {
-                platform::ScopedLock const lk(state->mtx);
-                state->resp.emplace(response);
-                state->ready.store(true);
-            }
-            SyncState* state;
-        };
-        const auto drain_callbacks = [&state] {
-            while (state.callbacks.load(std::memory_order_acquire) != 0) {
-                platform::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
-        };
-
-        const auto handle = call_method_async(service_id, method_id, parameters,
-                                              SyncCallback(state), server_endpoint, timeout);
-
-        if (handle == 0) {
-            drain_callbacks();
+        SyncWaiter waiter;
+        PendingRegistration registration(*this);
+        const auto started = std::chrono::steady_clock::now();
+        registration.handle = submit_call(service_id, method_id, parameters, nullptr,
+                                          server_endpoint, timeout, &waiter);
+        if (registration.handle == 0) {
             return {RpcResult::INTERNAL_ERROR, {}, std::chrono::milliseconds(0)};
         }
-
-        const auto deadline = std::chrono::steady_clock::now()
-                       + std::chrono::milliseconds(timeout.response_timeout);
-        while (!state.ready.load()) {
-            auto now = std::chrono::steady_clock::now();
-            if (now >= deadline) {
-                cancel_call(handle);
-                drain_callbacks();
-                return {RpcResult::TIMEOUT, {}, timeout.response_timeout};
+        const auto deadline = started + timeout.response_timeout;
+        while (true) {
+            {
+                platform::ScopedLock const lock(pending_calls_mutex_);
+                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::steady_clock::now() - started);
+                // Completion and timeout removal arbitrate under the same mutex.
+                if (waiter.response) {
+                    return {waiter.response->result, std::move(waiter.response->return_values),
+                            elapsed};
+                }
+                if (std::chrono::steady_clock::now() >= deadline) {
+                    pending_calls_.erase(registration.release());
+                    return {RpcResult::TIMEOUT, {}, elapsed};
+                }
             }
-            const auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - now);
-            const auto sleep_time = std::min(remaining, std::chrono::milliseconds(1));
-            platform::this_thread::sleep_for(sleep_time);
-        }
-
-        drain_callbacks();
-        {
-            platform::ScopedLock const lk(state.mtx);
-            if (!state.resp.has_value()) {
-                return {RpcResult::INTERNAL_ERROR, {}, std::chrono::milliseconds(0)};
-            }
-            return {state.resp->result, state.resp->return_values, std::chrono::milliseconds(0)};
+            platform::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
     }
 
@@ -248,7 +255,16 @@ public:
                                     RpcCallback callback,
                                     const transport::Endpoint& server_endpoint,
                                     const RpcTimeout& timeout) {
+        return submit_call(service_id, method_id, parameters, std::move(callback), server_endpoint,
+                           timeout, nullptr);
+    }
 
+   private:
+    RpcCallHandle submit_call(uint16_t service_id, MethodId method_id,
+                              const platform::ByteBuffer& parameters, RpcCallback callback,
+                              const transport::Endpoint& server_endpoint, const RpcTimeout& timeout,
+                              SyncWaiter* waiter)
+    {
         if (!running_) {
             return 0;
         }
@@ -265,12 +281,11 @@ public:
 
         // Create pending call record
         PendingCall call_info{
-            service_id, method_id, session_id,
-            std::chrono::steady_clock::now(),
-            timeout, std::move(callback)
-        };
+            service_id, method_id,           session_id, std::chrono::steady_clock::now(),
+            timeout,    std::move(callback), waiter};
 
-        RpcCallHandle handle = 0;
+        // Erase on failed sends and exceptions before the caller's waiter can expire.
+        PendingRegistration registration(*this);
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
             if (!running_) {
@@ -279,19 +294,18 @@ public:
             if (pending_calls_.size() >= pending_calls_.max_size()) {
                 return 0;
             }
-            handle = next_call_handle_++;
-            pending_calls_[handle] = std::move(call_info);
+            registration.handle = next_call_handle_++;
+            pending_calls_[registration.handle] = std::move(call_info);
         }
 
         if (transport_.send_message(request, server_endpoint) != Result::SUCCESS) {
-            platform::ScopedLock const lock(pending_calls_mutex_);
-            pending_calls_.erase(handle);
             return 0;
         }
 
-        return handle;
+        return registration.release();
     }
 
+   public:
     /** @implements REQ_MSG_052 */
     bool send_request_no_return(uint16_t service_id, MethodId method_id,
                                 const platform::ByteBuffer& params,
@@ -319,8 +333,13 @@ public:
             if (it == pending_calls_.end()) {
                 return false;
             }
+            if (it->second.waiter != nullptr) {
+                it->second.waiter->response.emplace(it->second.service_id, it->second.method_id,
+                                                    client_id_, it->second.session_id,
+                                                    RpcResult::INTERNAL_ERROR);
+            }
             if (it->second.callback) {
-                cancel_cb = it->second.callback;
+                cancel_cb = std::move(it->second.callback);
                 cancel_resp = RpcResponse(it->second.service_id, it->second.method_id,
                                           client_id_, it->second.session_id, RpcResult::INTERNAL_ERROR);
             }
@@ -355,6 +374,7 @@ private:
         std::chrono::steady_clock::time_point start_time;
         RpcTimeout timeout;
         RpcCallback callback;
+        SyncWaiter* waiter{nullptr};
     };
 
     /** @implements REQ_MSG_118, REQ_MSG_118_E01 */
@@ -383,8 +403,13 @@ private:
                                             message->get_client_id(), message->get_session_id(), result);
                     recv_resp.return_values = message->get_payload();
 
-                    if (it->second.callback) {
-                        recv_cb = it->second.callback;
+                    if (it->second.waiter != nullptr) {
+                        it->second.waiter->response.emplace(std::move(recv_resp));
+                        pending_calls_.erase(it);
+                        return;
+                    }
+                    else if (it->second.callback) {
+                        recv_cb = std::move(it->second.callback);
                     }
                     pending_calls_.erase(it);
                     break;

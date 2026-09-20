@@ -251,7 +251,11 @@ template <typename Rep, typename Period>
 void sleep_for(const std::chrono::duration<Rep, Period>& d) {
     auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
     if (ms <= 0) return;
-    vTaskDelay(pdMS_TO_TICKS(ms));
+    TickType_t ticks = pdMS_TO_TICKS(ms);
+    if (ticks == 0) {
+        ticks = 1;
+    }
+    vTaskDelay(ticks);
 }
 
 } // namespace this_thread

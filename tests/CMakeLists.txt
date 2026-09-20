@@ -110,6 +110,16 @@ target_link_libraries(test_e2e someip-core gtest_main)
             ${CMAKE_SOURCE_DIR}/include/platform/freertos
         )
 
+        add_executable(test_freertos_sleep test_freertos_sleep.cpp)
+        target_include_directories(test_freertos_sleep BEFORE PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/mocks/freertos
+            ${CMAKE_SOURCE_DIR}/include
+            ${CMAKE_SOURCE_DIR}/include/platform/dynamic
+            ${CMAKE_SOURCE_DIR}/include/platform/freertos)
+        target_compile_definitions(test_freertos_sleep PRIVATE configTICK_RATE_HZ=100)
+        target_link_libraries(test_freertos_sleep PRIVATE gtest_main Threads::Threads)
+        add_test(NAME FreeRtosSleepTest COMMAND test_freertos_sleep)
+
         # ThreadX PAL via mock
         add_pal_mock_test(test_pal_threadx_mock
             test_pal_threadx_mock.cpp

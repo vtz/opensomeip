@@ -78,6 +78,62 @@ void uint16_to_str(uint16_t val, platform::String<>& out) {
  * @satisfies feat_req_someip_731
  */
 class EventSubscriberImpl : public transport::ITransportListener {
+    class DispatchFrame {
+       public:
+        explicit DispatchFrame(EventSubscriberImpl& owner)
+            : owner_(owner), previous_in_thread_(current_frame)
+        {
+            platform::ScopedLock const lock(owner_.dispatch_mutex_);
+            // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer) - requires the lock
+            ticket_ = ++owner_.next_dispatch_ticket_;
+            // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer) - requires the lock
+            next_ = owner_.active_dispatches_;
+            owner_.active_dispatches_ = this;
+            current_frame = this;
+        }
+        ~DispatchFrame()
+        {
+            current_frame = previous_in_thread_;
+            platform::ScopedLock const lock(owner_.dispatch_mutex_);
+            auto** entry = &owner_.active_dispatches_;
+            while (*entry != this) {
+                entry = &(*entry)->next_;
+            }
+            *entry = next_;
+            owner_.dispatch_drained_.notify_one();
+        }
+        DispatchFrame(const DispatchFrame&) = delete;
+        DispatchFrame& operator=(const DispatchFrame&) = delete;
+        DispatchFrame(DispatchFrame&&) = delete;
+        DispatchFrame& operator=(DispatchFrame&&) = delete;
+
+        static bool reentrant(const EventSubscriberImpl& owner)
+        {
+            for (auto* frame = current_frame; frame != nullptr; frame = frame->previous_in_thread_) {
+                if (&frame->owner_ == &owner) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        static bool pending(const DispatchFrame* frame, uint64_t cutoff)
+        {
+            for (; frame != nullptr; frame = frame->next_) {
+                if (frame->ticket_ <= cutoff) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+       private:
+        EventSubscriberImpl& owner_;
+        uint64_t ticket_{0};
+        DispatchFrame* next_{nullptr};
+        DispatchFrame* previous_in_thread_{nullptr};
+        inline static thread_local DispatchFrame* current_frame{nullptr};
+    };
+
 public:
     template <typename Transport>
     EventSubscriberImpl(uint16_t client_id, Transport&& transport)
@@ -187,6 +243,26 @@ public:
     }
 
     bool unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
+        if (DispatchFrame::reentrant(*this)) {
+            return remove_subscription(service_id, instance_id, eventgroup_id);
+        }
+        // One external waiter avoids relying on a PAL-wide broadcast operation.
+        platform::ScopedLock const unsubscribe_lock(unsubscribe_mutex_);
+        uint64_t cutoff = 0;
+        const bool removed = remove_subscription(service_id, instance_id, eventgroup_id, &cutoff);
+        if (removed) {
+            platform::ScopedLock const dispatch_lock(dispatch_mutex_);
+            dispatch_drained_.wait(dispatch_mutex_, [&] {
+                return !DispatchFrame::pending(active_dispatches_, cutoff);
+            });
+        }
+        return removed;
+    }
+
+   private:
+    bool remove_subscription(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
+                             uint64_t* cutoff = nullptr)
+    {
         if (!running_) {
             return false;
         }
@@ -221,6 +297,11 @@ public:
 
         // Remove subscription
         subscriptions_.erase(it);
+        if (cutoff != nullptr) {
+            // Dispatch never holds this mutex while acquiring subscriptions_mutex_.
+            platform::ScopedLock const dispatch_lock(dispatch_mutex_);
+            *cutoff = next_dispatch_ticket_;
+        }
         return true;
     }
 
@@ -246,8 +327,8 @@ public:
             return false;
         }
         const platform::String<> key = make_field_key(service_id, 0, event_id);
-        if (field_requests_.size() >= field_requests_.max_size() &&
-            field_requests_.find(key) == field_requests_.end()) {
+        if (field_requests_.find(key) != field_requests_.end() ||
+            field_requests_.size() >= field_requests_.max_size()) {
             return false;
         }
         field_requests_[key] = std::move(callback);
@@ -382,6 +463,8 @@ private:
         if (message->get_message_type() != MessageType::NOTIFICATION) {
             return;
         }
+        // Registered before snapshots; destroyed after local callable copies, including unwind.
+        DispatchFrame const dispatch(*this);
 
         uint16_t const service_id = message->get_service_id();
         uint16_t const event_id = message->get_method_id();  // Event ID is in method ID field for notifications
@@ -397,7 +480,6 @@ private:
                     notification.emplace(service_id, sub_info.subscription.instance_id, event_id);
                     notification->client_id = message->get_client_id();
                     notification->session_id = message->get_session_id();
-                    notification->event_data = message->get_payload();
                     notification_callback = sub_info.notification_callback;
                     sub_info.subscription.state = SubscriptionState::SUBSCRIBED;
                     sub_info.subscription.last_notification = std::chrono::steady_clock::now();
@@ -411,12 +493,13 @@ private:
             platform::String<> const field_key = make_field_key(service_id, 0, event_id);
             auto field_it = field_requests_.find(field_key);
             if (field_it != field_requests_.end()) {
-                field_callback = field_it->second;
+                field_callback = std::move(field_it->second);
                 field_requests_.erase(field_it);
             }
         }
 
         if (notification && notification_callback) {
+            notification->event_data = message->get_payload();
             notification_callback(*notification);
         }
         if (field_callback) {
@@ -471,6 +554,11 @@ private:
 
     platform::UnorderedMap<platform::String<>, EventNotificationCallback> field_requests_;
     mutable platform::Mutex field_requests_mutex_;
+    platform::Mutex unsubscribe_mutex_;
+    platform::Mutex dispatch_mutex_;
+    platform::ConditionVariable dispatch_drained_;
+    DispatchFrame* active_dispatches_{nullptr};
+    uint64_t next_dispatch_ticket_{0};
 
     std::atomic<bool> running_;
 

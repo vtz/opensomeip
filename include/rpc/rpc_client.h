@@ -81,6 +81,9 @@ public:
 
     /**
      * @brief Shutdown the RPC client
+     * @note All pending synchronous calls are completed before application callbacks run.
+     *       Explicit shutdown attempts every pending application callback, then rethrows
+     *       the first callback exception when exceptions are enabled.
      */
     void shutdown();
 
@@ -111,9 +114,11 @@ public:
      * @param parameters Serialized method parameters
      * @param timeout Call timeout configuration
      * @return Synchronous result with return values or error
-     * @note A timeout cancels the pending call, then waits for any already-extracted
-     *       callback copies to finish. This lifetime barrier can exceed response_timeout.
-     *       Join outstanding calls before destroying the client.
+     * @note Completion and timeout removal are serialized under the pending-call mutex;
+     *       an already completed response wins over timeout. No application-callback
+     *       lifetime drain is performed. Join outstanding calls before destroying the client.
+     *       The response-time budget starts before sending; transport send duration and
+     *       scheduler granularity can extend the observed call time.
      */
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
                                    const platform::ByteBuffer& parameters,
@@ -121,8 +126,7 @@ public:
 
     /**
      * @brief Synchronous RPC method call to an explicit service endpoint
-     * @note The same extracted-callback lifetime barrier applies to this overload;
-     *       cancellation does not permit returning while a callback still uses the waiter.
+     * @note Uses the same completion/timeout arbitration as the configured-endpoint overload.
      */
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
                                    const platform::ByteBuffer& parameters,

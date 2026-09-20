@@ -71,11 +71,11 @@ class TransportSession {
         active_ = true;
         const Result started = transport_.start();
         if (started != Result::SUCCESS) {
-            stop();
-            const Result stopped = result_.load();
+            const Result stopped = stop();
             result_ = stopped == Result::SUCCESS ? started : stopped;
             return result_.load();
         }
+        session_started_ = true;
         result_ = Result::SUCCESS;
         return Result::SUCCESS;
     }
@@ -84,21 +84,23 @@ class TransportSession {
      * @brief Quiesce delivery before detaching and releasing the receive queue.
      * @note A still-running backend retains cleanup ownership for a later retry.
      */
-    void stop()
+    Result stop()
     {
         if (!active_) {
-            return;
+            return Result::SUCCESS;
         }
         // stop() is the callback barrier; detaching first could switch live input to polling.
         const Result stopped = transport_.stop();
         transport_.set_listener(nullptr);
         active_ = transport_.is_running();
-        if (!active_) {
+        if (!active_ && session_started_) {
             while (transport_.receive_message()) {
                 // Discard final queued arrivals from this facade's completed receive session.
             }
+            session_started_ = false;
         }
         result_ = (stopped == Result::SUCCESS && active_) ? Result::INVALID_STATE : stopped;
+        return stopped;
     }
 
     /**
@@ -114,6 +116,7 @@ class TransportSession {
     ITransport& transport_;
     std::atomic<Result> result_{Result::SUCCESS};
     bool active_{false};
+    bool session_started_{false};
 };
 
 }  // namespace someip::transport::detail

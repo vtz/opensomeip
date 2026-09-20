@@ -92,13 +92,25 @@ public:
         }
 
         running_ = false;
+        {
+            platform::ScopedLock const lock(methods_mutex_);
+            shutting_down_ = true;
+        }
         transport_session_.stop();
 
         someip::detail::release_entries(method_handlers_, methods_mutex_);
+        {
+            platform::ScopedLock const lock(methods_mutex_);
+            shutting_down_ = false;
+        }
     }
 
     bool register_method(MethodId method_id, MethodHandler handler, MethodSemantics semantics) {
         platform::ScopedLock const lock(methods_mutex_);
+        // Registration before initialize() is supported; registration during teardown is not.
+        if (shutting_down_) {
+            return false;
+        }
 
         // Check if already registered
         const bool already_exists = method_handlers_.count(method_id) > 0;
@@ -310,6 +322,7 @@ private:
 
     platform::UnorderedMap<MethodId, RegisteredMethod, 32> method_handlers_;
     mutable platform::Mutex methods_mutex_;
+    bool shutting_down_{false};
 
     std::atomic<bool> running_;
 

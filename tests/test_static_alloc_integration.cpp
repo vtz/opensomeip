@@ -105,7 +105,7 @@ TEST_F(StaticAllocIntegrationTest, BorrowedTransportFacadeConstructionUnderTrap)
  * @test_case TC_STATIC_INT_SYNC_CALLBACK_LIFETIME
  * @tests REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_003
  */
-TEST_F(StaticAllocIntegrationTest, SyncCallbackLifetimeBarrierDoesNotAllocate)
+TEST_F(StaticAllocIntegrationTest, SyncWaitRegistrationDoesNotAllocate)
 {
     rpc::RpcClient client(7);
     ASSERT_TRUE(client.initialize());

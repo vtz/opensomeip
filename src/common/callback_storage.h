@@ -31,7 +31,13 @@ template <typename Map>
 // NOLINTNEXTLINE(misc-include-cleaner) - platform::Mutex from platform/thread.h dispatch header
 void release_entries(Map& entries, platform::Mutex& mutex)
 {
-    while (true) {
+    typename Map::size_type remaining = 0;
+    {
+        platform::ScopedLock const lock(mutex);
+        remaining = entries.size();
+    }
+    while (remaining > 0) {
+        --remaining;
         std::optional<typename Map::mapped_type> released;
         {
             platform::ScopedLock const lock(mutex);

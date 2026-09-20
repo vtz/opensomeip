@@ -500,13 +500,16 @@ the injection API does not add SD integration or multicast controls to `ITranspo
   The no-listener precondition is caller-guaranteed; `ITransport` has no listener
   query with which to check it.
 - Lifecycle operations must not throw. The injected `stop()` must synchronously
-  drain callbacks and prevent subsequent delivery, even when returning an error or cleaning up a failed
-  `start()`. Detaching the listener alone is not a callback-draining barrier.
+  drain callbacks and stop receive producers, even when returning an error or
+  cleaning up a failed `start()`. Detaching the listener alone is not a
+  callback-draining barrier. A backend that continues receiving after a failed
+  stop violates this contract; retry support cannot make that behavior safe.
 - The facade stops the transport before detaching its listener, then discards
   queued receive messages from the completed session before clearing callback
   state. This avoids switching live traffic to polling mode during shutdown and
-  retaining pooled messages across restarts. Failed initialization uses the same
-  cleanup path. On borrowed backends this also consumes queued data; their
+  retaining pooled messages across restarts. Failed initialization stops and
+  detaches but preserves the lender's pre-existing queue. After a successful
+  initialization, stopped-session cleanup also consumes borrowed queued data; its
   `receive_message()` must be non-blocking and eventually return `nullptr`.
   If `stop()` reports an error while `is_running()` remains true, another
   `shutdown()` retries the owned session's cleanup, including after failed
@@ -515,10 +518,16 @@ the injection API does not add SD integration or multicast controls to `ITranspo
   callback-draining contract safe.
   Pending RPC completion callbacks now run after the transport is stopped,
   rather than before the stop operation.
-  A synchronous RPC timeout cancels its pending call. If a response or shutdown
-  has already extracted that callback, the waiter keeps its stack state alive
-  until the extracted callable is released. This drain may extend beyond the
-  nominal response deadline; it adds no shared-pointer allocation in static builds.
+  Synchronous RPC waiters are private registrations completed only under the
+  pending-call mutex, never exported as application callbacks. Timeout removes
+  the registration under that same mutex, and scope-bound cleanup unregisters
+  it on exceptions. An already-completed response wins over a competing timeout.
+  Calls do not wait for unrelated application callbacks or allocate shared wait
+  state. The response-time budget starts before the transport send; sending and
+  scheduling still follow the backend's blocking and tick-granularity behavior.
+  Shutdown completes all synchronous calls before invoking asynchronous
+  callbacks; it attempts all of those callbacks before rethrowing the first
+  callback exception to an explicit C++ shutdown caller.
   Subscriber and RPC-server teardown release stored callbacks one entry at a time,
   avoiding a whole fixed-capacity map on the shutdown stack. The value moved
   out of the map is destroyed outside the facade's mutexes. Note that with
@@ -534,6 +543,15 @@ the injection API does not add SD integration or multicast controls to `ITranspo
   field callback is removed before invocation, so a reentrant request belongs
   to the next response. Snapshotting does not serialize application callbacks
   across concurrent transport deliveries.
+  External `unsubscribe_eventgroup()` calls serialize and wait for notification
+  dispatches admitted before removal, including their local callback copies.
+  Dispatches admitted after removal do not extend the barrier. Unsubscription
+  from a callback of the same subscriber bypasses the wait and serialization
+  gate; that callback and overlapping callbacks may still use their captured
+  state until they return.
+  A duplicate pending field request is rejected before sending, preserving the
+  first callback. A missing response occupies that field key until shutdown:
+  field cancellation/timeouts are not introduced here.
 - Reinitialization registers the listener again. Destruction without
   initialization does not touch the borrowed transport; destruction after a
   successful initialization shuts it down without deleting it.
@@ -549,6 +567,10 @@ the injection API does not add SD integration or multicast controls to `ITranspo
   start. Repeated `initialize()`/`shutdown()` calls that do no work retain the
   result. Existing boolean initialization and void shutdown signatures remain
   unchanged.
+  If start fails and cleanup itself returns success, the start error remains
+  the reported cause even if the backend incorrectly still reports running.
+  A later successful cleanup reports `SUCCESS`; this accessor is not a history
+  of all earlier failures.
 
 This is the first increment of [#341](https://github.com/vtz/opensomeip/issues/341),
 not a shared-socket dispatcher or a complete runtime coordinator. SD injection,

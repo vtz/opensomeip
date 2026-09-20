@@ -24,7 +24,9 @@
 #include <thread>
 #include <type_traits>
 #include <vector>
+#include <stdexcept>
 
+#include "../src/common/callback_storage.h"
 #include "events/event_publisher.h"
 #include "events/event_subscriber.h"
 #include "platform/memory.h"
@@ -60,10 +62,15 @@ class FakeTransport final : public transport::ITransport {
         if (send_result != Result::SUCCESS) {
             return send_result;
         }
-        std::lock_guard<std::mutex> lock(mutex_);
-        messages.push_back(message);
-        destinations.push_back(endpoint);
-        sent_.notify_all();
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            messages.push_back(message);
+            destinations.push_back(endpoint);
+            sent_.notify_all();
+        }
+        if (on_send) {
+            on_send(message);
+        }
         return Result::SUCCESS;
     }
 
@@ -142,15 +149,24 @@ class FakeTransport final : public transport::ITransport {
             target = listener_;
             ++in_flight_;
         }
+        struct CompleteDispatch {
+            explicit CompleteDispatch(FakeTransport& transport) : transport(transport)
+            {
+            }
+            ~CompleteDispatch()
+            {
+                {
+                    std::lock_guard<std::mutex> lock(transport.mutex_);
+                    --transport.in_flight_;
+                }
+                transport.drained_.notify_all();
+            }
+            FakeTransport& transport;
+        } completion(*this);
         if (before_dispatch) {
             before_dispatch();
         }
         target->on_message_received(message, sender, get_local_endpoint());
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            --in_flight_;
-        }
-        drained_.notify_all();
         return true;
     }
 
@@ -172,6 +188,7 @@ class FakeTransport final : public transport::ITransport {
     std::deque<MessagePtr> queued_messages;
     std::function<void()> before_dispatch;
     std::function<void()> on_stop;
+    std::function<void(const Message&)> on_send;
 
    private:
     std::atomic<bool> running_{false};
@@ -598,7 +615,7 @@ TEST(TransportInjectionRouting, SubscriberReleasesCallbackCapturesOutsideLocks)
     subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
     ASSERT_TRUE(subscriber.initialize());
 
-    // Independent probes, so each map is proven to release its own captures.
+    // Independent probes count both releases; the helper test checks its actual mutex.
     auto subscription_probe = std::make_shared<ReleaseProbe>(subscriber, subscription_releases);
     auto field_probe = std::make_shared<ReleaseProbe>(subscriber, field_releases);
     ASSERT_TRUE(subscriber.subscribe_eventgroup(
@@ -756,13 +773,13 @@ TEST(TransportInjectionRouting, SyncTimeoutCancelsWhileTransportStopIsBlocked)
  * @test_case TC_RPC_SYNC_EXTRACTED_CALLBACK_LIFETIME
  * @tests REQ_ARCH_003, REQ_MSG_118
  */
-TEST(TransportInjectionRouting, SyncStateOutlivesCallbacksExtractedByShutdown)
+TEST(TransportInjectionRouting, SyncWaiterCompletesWhileUnrelatedShutdownCallbackBlocks)
 {
     FakeTransport transport;
     rpc::RpcClient client(7, transport);
     ASSERT_TRUE(client.initialize());
     rpc::RpcTimeout timeout;
-    timeout.response_timeout = std::chrono::milliseconds(1000);
+    timeout.response_timeout = std::chrono::seconds(5);
     auto sync_call = std::async(std::launch::async, [&] {
         return client.call_method_sync(SERVICE, METHOD, {}, PEER, timeout);
     });
@@ -785,9 +802,9 @@ TEST(TransportInjectionRouting, SyncStateOutlivesCallbacksExtractedByShutdown)
     }
     auto shutdown = std::async(std::launch::async, [&] { client.shutdown(); });
     entered.get_future().wait();
-    // Both callbacks are now owned by the shutdown sweep, not pending_calls_.
-    // ASan detects expired stack access when this ordering is run against the old implementation.
-    const auto status = sync_call.wait_for(std::chrono::milliseconds(1200));
+    // Synchronous completion must not wait for an unrelated application callback.
+    const auto status = sync_call.wait_for(std::chrono::seconds(1));
+    EXPECT_EQ(status, std::future_status::ready);
     if (status == std::future_status::ready) {
         // Map iteration may have already delivered the sync shutdown completion.
         EXPECT_EQ(sync_call.get().result, rpc::RpcResult::INTERNAL_ERROR);
@@ -796,8 +813,350 @@ TEST(TransportInjectionRouting, SyncStateOutlivesCallbacksExtractedByShutdown)
     shutdown.get();
     if (sync_call.valid()) {
         const auto result = sync_call.get().result;
-        EXPECT_TRUE(result == rpc::RpcResult::TIMEOUT || result == rpc::RpcResult::INTERNAL_ERROR);
+        EXPECT_EQ(result, rpc::RpcResult::INTERNAL_ERROR);
     }
 }
+
+TEST(TransportInjectionRouting, SyncResponseAlreadyDeliveredWinsOverExpiredDeadline)
+{
+    FakeTransport transport;
+    rpc::RpcClient client(7, transport);
+    ASSERT_TRUE(client.initialize());
+    transport.on_send = [&](const Message& request) {
+        auto response = platform::allocate_message();
+        ASSERT_NE(response, nullptr);
+        *response = Message(request.get_message_id(), request.get_request_id(),
+                            MessageType::RESPONSE, ReturnCode::E_OK);
+        response->set_payload({0xAB});
+        EXPECT_TRUE(transport.emit(response));
+    };
+    rpc::RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::milliseconds(0);
+    const auto result = client.call_method_sync(SERVICE, METHOD, {}, PEER, timeout);
+    EXPECT_EQ(result.result, rpc::RpcResult::SUCCESS);
+    ASSERT_EQ(result.return_values.size(), 1u);
+    EXPECT_EQ(result.return_values[0], 0xAB);
+}
+
+#ifdef __cpp_exceptions
+TEST(TransportInjectionRouting, ThrowingSendUnregistersTheSynchronousWaiter)
+{
+    FakeTransport transport;
+    rpc::RpcClient client(7, transport);
+    ASSERT_TRUE(client.initialize());
+    transport.on_send = [](const Message&) { throw std::runtime_error("send"); };
+    EXPECT_THROW(client.call_method_sync(SERVICE, METHOD, {}, PEER), std::runtime_error);
+    // This is the first call on a fresh client; its registration must already be gone.
+    EXPECT_FALSE(client.cancel_call(1));
+    ASSERT_EQ(transport.messages.size(), 1u);
+    auto response = platform::allocate_message();
+    ASSERT_NE(response, nullptr);
+    *response =
+        Message(transport.messages[0].get_message_id(), transport.messages[0].get_request_id(),
+                MessageType::RESPONSE, ReturnCode::E_OK);
+    EXPECT_TRUE(transport.emit(response));
+    EXPECT_NO_THROW(client.shutdown());
+}
+
+TEST(TransportInjectionRouting, ShutdownCompletesAllCallsBeforeRethrowingCallbackFailure)
+{
+    FakeTransport transport;
+    rpc::RpcClient client(7, transport);
+    ASSERT_TRUE(client.initialize());
+    unsigned callbacks = 0;
+    for (uint16_t method = METHOD; method < METHOD + 3; ++method) {
+        ASSERT_NE(client.call_method_async(
+                      SERVICE, method, {},
+                      [&](const rpc::RpcResponse& response) {
+                          ++callbacks;
+                          EXPECT_EQ(response.result, rpc::RpcResult::INTERNAL_ERROR);
+                          throw std::runtime_error("callback");
+                      },
+                      PEER),
+                  0u);
+    }
+    EXPECT_THROW(client.shutdown(), std::runtime_error);
+    EXPECT_EQ(callbacks, 3u);
+    EXPECT_FALSE(transport.is_running());
+    EXPECT_NO_THROW(client.shutdown());
+}
+#endif
+
+TYPED_TEST(TransportInjectionTest, FailedStartPreservesTheLendersQueuedMessages)
+{
+    FakeTransport transport;
+    auto message = platform::allocate_message();
+    ASSERT_NE(message, nullptr);
+    transport.queued_messages.push_back(message);
+    transport.start_result = Result::NETWORK_ERROR;
+    auto facade = make_facade<TypeParam>(transport);
+    EXPECT_FALSE(facade->initialize());
+    EXPECT_EQ(facade->get_transport_result(), Result::NETWORK_ERROR);
+    ASSERT_EQ(transport.queued_messages.size(), 1u);
+    EXPECT_EQ(transport.receive_message(), message);
+}
+
+TYPED_TEST(TransportInjectionTest, StartErrorRemainsTheCauseWhenCleanupReturnsSuccess)
+{
+    FakeTransport transport;
+    auto facade = make_facade<TypeParam>(transport);
+    transport.start_result = Result::NETWORK_ERROR;
+    transport.remain_running_on_stop = true;
+    EXPECT_FALSE(facade->initialize());
+    EXPECT_EQ(facade->get_transport_result(), Result::NETWORK_ERROR);
+    transport.remain_running_on_stop = false;
+    facade->shutdown();
+    EXPECT_EQ(facade->get_transport_result(), Result::SUCCESS);
+}
+
+TEST(TransportInjectionRouting, DuplicateFieldRequestPreservesTheAcceptedCallback)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    unsigned first = 0;
+    unsigned second = 0;
+    ASSERT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                         [&](const events::EventNotification&) { ++first; }));
+    transport.send_result = Result::NETWORK_ERROR;
+    EXPECT_FALSE(subscriber.request_field(SERVICE, 1, EVENT,
+                                          [&](const events::EventNotification&) { ++second; }));
+    transport.send_result = Result::SUCCESS;
+    EXPECT_FALSE(subscriber.request_field(SERVICE, 1, EVENT,
+                                          [&](const events::EventNotification&) { ++second; }));
+    ASSERT_EQ(transport.messages.size(), 1u);
+    const auto message = make_dispatch_message<events::EventSubscriber>();
+    ASSERT_NE(message, nullptr);
+    EXPECT_TRUE(transport.emit(message));
+    EXPECT_EQ(first, 1u);
+    EXPECT_EQ(second, 0u);
+    EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                         [&](const events::EventNotification&) { ++second; }));
+}
+
+TEST(TransportInjectionRouting, CallbackStorageDestroysEachExtractedValueOutsideItsMutex)
+{
+    struct Probe {
+        Probe(platform::Mutex& mutex, bool& unlocked) : mutex(mutex), unlocked(unlocked)
+        {
+        }
+        ~Probe()
+        {
+            unlocked = mutex.try_lock();
+            if (unlocked) {
+                mutex.unlock();
+            }
+        }
+        platform::Mutex& mutex;
+        bool& unlocked;
+    };
+    platform::Mutex mutex;
+    bool unlocked = false;
+    platform::UnorderedMap<unsigned, std::shared_ptr<Probe>> entries;
+    entries[1] = std::make_shared<Probe>(mutex, unlocked);
+    someip::detail::release_entries(entries, mutex);
+    EXPECT_TRUE(entries.empty());
+    EXPECT_TRUE(unlocked);
+}
+
+TEST(TransportInjectionRouting, CallbackStorageDrainUsesAnInitialEntryBound)
+{
+    struct Reinsert {
+        explicit Reinsert(platform::UnorderedMap<unsigned, std::shared_ptr<Reinsert>>& entries)
+            : entries(entries) {}
+        ~Reinsert() { entries[2] = nullptr; }
+        platform::UnorderedMap<unsigned, std::shared_ptr<Reinsert>>& entries;
+    };
+    platform::UnorderedMap<unsigned, std::shared_ptr<Reinsert>> entries;
+    platform::Mutex mutex;
+    entries[1] = std::make_shared<Reinsert>(entries);
+    someip::detail::release_entries(entries, mutex);
+    ASSERT_EQ(entries.size(), 1u);
+    EXPECT_NE(entries.find(2), entries.end());
+}
+
+TEST(TransportInjectionRouting, ServerRejectsRegistrationDuringShutdownButAllowsItBeforeRestart)
+{
+    FakeTransport transport;
+    rpc::RpcServer server(SERVICE, transport);
+    auto handler = [](uint16_t, uint16_t, const platform::ByteBuffer&, platform::ByteBuffer&) {
+        return rpc::RpcResult::SUCCESS;
+    };
+    ASSERT_TRUE(server.register_method(METHOD, handler));
+    ASSERT_TRUE(server.initialize());
+    transport.on_stop = [&] { EXPECT_FALSE(server.register_method(METHOD + 1, handler)); };
+    server.shutdown();
+    EXPECT_TRUE(server.get_registered_methods().empty());
+    EXPECT_TRUE(server.register_method(METHOD + 1, handler));
+    transport.on_stop = nullptr;
+}
+
+bool wait_for_subscription_count(events::EventSubscriber& subscriber, size_t expected)
+{
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+    do {
+        if (subscriber.get_active_subscriptions().size() == expected) {
+            return true;
+        }
+        std::this_thread::yield();
+    } while (std::chrono::steady_clock::now() < deadline);
+    return false;
+}
+
+TEST(TransportInjectionRouting, ExternalUnsubscribeWaitsForCallbackAndCaptureRelease)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    std::promise<void> entered;
+    std::promise<void> release;
+    auto released = release.get_future().share();
+    ASSERT_TRUE(
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+            entered.set_value();
+            released.wait();
+        }));
+    const auto message = make_dispatch_message<events::EventSubscriber>();
+    ASSERT_NE(message, nullptr);
+    auto dispatch = std::async(std::launch::async, [&] { return transport.emit(message); });
+    entered.get_future().wait();
+    auto unsubscribe = std::async(
+        std::launch::async, [&] { return subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP); });
+    EXPECT_TRUE(wait_for_subscription_count(subscriber, 0));
+    EXPECT_EQ(unsubscribe.wait_for(std::chrono::milliseconds(0)), std::future_status::timeout);
+    release.set_value();
+    EXPECT_TRUE(dispatch.get());
+    EXPECT_TRUE(unsubscribe.get());
+}
+
+TEST(TransportInjectionRouting, LaterNotificationsDoNotExtendAnUnsubscribeBarrier)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    std::promise<void> first_entered;
+    std::promise<void> first_release;
+    auto first_released = first_release.get_future().share();
+    std::promise<void> later_entered;
+    std::promise<void> later_release;
+    auto later_released = later_release.get_future().share();
+    ASSERT_TRUE(
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+            first_entered.set_value();
+            first_released.wait();
+        }));
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(SERVICE + 1, 1, GROUP,
+                                                [&](const events::EventNotification&) {
+                                                    later_entered.set_value();
+                                                    later_released.wait();
+                                                }));
+    auto first_message = make_dispatch_message<events::EventSubscriber>();
+    auto later_message = make_dispatch_message<events::EventSubscriber>();
+    ASSERT_NE(first_message, nullptr);
+    ASSERT_NE(later_message, nullptr);
+    later_message->set_service_id(SERVICE + 1);
+    auto first_dispatch =
+        std::async(std::launch::async, [&] { return transport.emit(first_message); });
+    first_entered.get_future().wait();
+    auto unsubscribe = std::async(
+        std::launch::async, [&] { return subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP); });
+    EXPECT_TRUE(wait_for_subscription_count(subscriber, 1));
+    auto later_dispatch =
+        std::async(std::launch::async, [&] { return transport.emit(later_message); });
+    later_entered.get_future().wait();
+    first_release.set_value();
+    EXPECT_TRUE(first_dispatch.get());
+    EXPECT_EQ(unsubscribe.wait_for(std::chrono::seconds(1)), std::future_status::ready);
+    later_release.set_value();
+    EXPECT_TRUE(later_dispatch.get());
+    EXPECT_TRUE(unsubscribe.get());
+}
+
+TEST(TransportInjectionRouting,
+     ConcurrentUnsubscribersCompleteAndCallbackUnsubscribeDoesNotDeadlock)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    std::promise<void> entered;
+    std::promise<void> release;
+    auto released = release.get_future().share();
+    ASSERT_TRUE(
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+            entered.set_value();
+            released.wait();
+            static_cast<void>(subscriber.unsubscribe_eventgroup(SERVICE + 1, 1, GROUP));
+        }));
+    for (uint16_t service = SERVICE + 1; service < SERVICE + 7; ++service) {
+        ASSERT_TRUE(subscriber.subscribe_eventgroup(service, 1, GROUP,
+                                                    [](const events::EventNotification&) {}));
+    }
+    const auto message = make_dispatch_message<events::EventSubscriber>();
+    ASSERT_NE(message, nullptr);
+    auto dispatch = std::async(std::launch::async, [&] { return transport.emit(message); });
+    entered.get_future().wait();
+    std::vector<std::future<bool>> unsubscriptions;
+    for (uint16_t service = SERVICE; service < SERVICE + 7; ++service) {
+        unsubscriptions.push_back(std::async(std::launch::async, [&, service] {
+            return subscriber.unsubscribe_eventgroup(service, 1, GROUP);
+        }));
+    }
+    EXPECT_TRUE(wait_for_subscription_count(subscriber, 6));
+    release.set_value();
+    EXPECT_TRUE(dispatch.get());
+    for (auto& unsubscription : unsubscriptions) {
+        EXPECT_EQ(unsubscription.wait_for(std::chrono::seconds(1)), std::future_status::ready);
+        static_cast<void>(unsubscription.get());
+    }
+    EXPECT_TRUE(subscriber.get_active_subscriptions().empty());
+}
+
+TEST(TransportInjectionRouting, NestedSubscriberCallbacksRecognizeAnOuterDispatch)
+{
+    FakeTransport outer_transport;
+    FakeTransport inner_transport;
+    events::EventSubscriber outer(7, outer_transport);
+    events::EventSubscriber inner(8, inner_transport);
+    outer.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    inner.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(outer.initialize());
+    ASSERT_TRUE(inner.initialize());
+    const auto message = make_dispatch_message<events::EventSubscriber>();
+    ASSERT_NE(message, nullptr);
+    ASSERT_TRUE(inner.subscribe_eventgroup(SERVICE, 1, GROUP,
+        [&](const events::EventNotification&) {
+            EXPECT_TRUE(outer.unsubscribe_eventgroup(SERVICE, 1, GROUP));
+        }));
+    ASSERT_TRUE(outer.subscribe_eventgroup(SERVICE, 1, GROUP,
+        [&](const events::EventNotification&) {
+            EXPECT_TRUE(inner_transport.emit(message));
+        }));
+    EXPECT_TRUE(outer_transport.emit(message));
+    EXPECT_TRUE(outer.get_active_subscriptions().empty());
+}
+
+#ifdef __cpp_exceptions
+TEST(TransportInjectionRouting, ThrowingNotificationReleasesItsDispatchFrame)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(
+        SERVICE, 1, GROUP,
+        [](const events::EventNotification&) { throw std::runtime_error("notification"); }));
+    const auto message = make_dispatch_message<events::EventSubscriber>();
+    ASSERT_NE(message, nullptr);
+    EXPECT_THROW(transport.emit(message), std::runtime_error);
+    auto unsubscribe = std::async(
+        std::launch::async, [&] { return subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP); });
+    EXPECT_EQ(unsubscribe.wait_for(std::chrono::seconds(1)), std::future_status::ready);
+    EXPECT_TRUE(unsubscribe.get());
+}
+#endif
 
 }  // namespace
