@@ -527,16 +527,19 @@ the injection API does not add SD integration or multicast controls to `ITranspo
   backend that blocks in `send_message()` does not consume the reply budget;
   scheduling still follows the backend's tick granularity, and the observed call
   time therefore includes the send. Submission refused because the client is
-  stopped or its pending-call table is full reports `SERVICE_NOT_AVAILABLE`.
+  stopped or its pending-call/session capacity is full reports `SERVICE_NOT_AVAILABLE`.
   Shutdown completes all synchronous calls before invoking asynchronous
   callbacks and attempts every one of them. `shutdown()` is no-throw: a throwing
-  application callback is swallowed rather than propagated, because `shutdown()`
-  returns `void` and is commonly called from a destructor.
+  application callback is not propagated. Applications that need to observe
+  callback exceptions must handle/report them inside their callback; transport
+  lifecycle diagnostics do not record application callback failures.
   Call handles are never `0`; that value is reserved as the "no handle"
   sentinel and is skipped when the counter wraps.
   A call's session-manager entry is released when it completes, is cancelled, or
-  is swept by shutdown, so long-running clients no longer exhaust the session
-  table.
+  is swept by shutdown. Fire-and-forget calls release the entry after sending,
+  and submission exceptions release it before a pending call takes ownership.
+  An unanswered asynchronous call still occupies capacity until cancellation
+  or shutdown; automatic asynchronous timeout sweeping is not added here.
   Subscriber and RPC-server teardown release stored callbacks one entry at a time,
   avoiding a whole fixed-capacity map on the shutdown stack. The value moved
   out of the map is destroyed outside the facade's mutexes. Note that with

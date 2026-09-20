@@ -261,7 +261,8 @@ void sleep_for(const std::chrono::duration<Rep, Period>& d) {
     vTaskDelay(ticks);
 }
 
-/** @brief Identity of the calling task, used to detect same-thread reentrancy. */
+/** @brief Identity of the calling task.
+ * @implements REQ_PAL_THREAD_ID */
 inline ThreadId get_id() { return xTaskGetCurrentTaskHandle(); }
 
 } // namespace this_thread

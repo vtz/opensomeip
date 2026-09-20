@@ -76,7 +76,8 @@ private:
 namespace this_thread {
 using std::this_thread::sleep_for;
 
-/** @brief Identity of the calling thread, used to detect same-thread reentrancy. */
+/** @brief Identity of the calling thread.
+ * @implements REQ_PAL_THREAD_ID */
 using std::this_thread::get_id;
 } // namespace this_thread
 

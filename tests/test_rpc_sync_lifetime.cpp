@@ -115,6 +115,13 @@ class FakeTransport final : public transport::ITransport {
         return messages.size();
     }
 
+    void clear_sent_messages()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        messages.clear();
+        destinations.clear();
+    }
+
     Result start() override
     {
         running_ = true;
@@ -430,8 +437,48 @@ TEST(RpcSyncLifetime, ManySequentialSyncCallsCompletePromptly)
         ASSERT_EQ(result.result, rpc::RpcResult::SUCCESS);
         ASSERT_EQ(result.return_values.size(), 1u);
         EXPECT_EQ(result.return_values[0], i);
+        // Retained Message copies own static-pool buffers even after the RPC completes.
+        transport.clear_sent_messages();
     }
 }
+
+TEST(RpcSyncLifetime, FireAndForgetCallsReleaseTheirSessionIds)
+{
+    FakeTransport transport;
+    rpc::RpcClient client(7, transport);
+    ASSERT_TRUE(client.initialize());
+    transport.on_send = [](const Message& request) { EXPECT_NE(request.get_session_id(), 0u); };
+    for (unsigned i = 0; i < 512; ++i) {
+        ASSERT_TRUE(client.send_request_no_return(SERVICE, METHOD, {}, PEER));
+        transport.clear_sent_messages();
+    }
+}
+
+#ifdef SOMEIP_STATIC_ALLOC
+TEST(RpcSyncLifetime, RejectedPendingCallsDoNotConsumeSessionCapacity)
+{
+    FakeTransport transport;
+    rpc::RpcClient client(7, transport);
+    ASSERT_TRUE(client.initialize());
+    std::vector<rpc::RpcCallHandle> handles;
+    for (unsigned i = 0; i < 32; ++i) {
+        const auto handle = client.call_method_async(SERVICE, METHOD, {}, nullptr, PEER);
+        ASSERT_NE(handle, 0u);
+        handles.push_back(handle);
+    }
+    // Filling pending calls must not leak sessions on further rejected submissions.
+    for (unsigned i = 0; i < 512; ++i) {
+        EXPECT_EQ(client.call_method_async(SERVICE, METHOD, {}, nullptr, PEER), 0u);
+    }
+    EXPECT_TRUE(client.send_request_no_return(SERVICE, METHOD, {}, PEER));
+    ASSERT_FALSE(transport.messages.empty());
+    EXPECT_NE(transport.messages.back().get_session_id(), 0u);
+    for (auto handle : handles) {
+        EXPECT_TRUE(client.cancel_call(handle));
+    }
+    EXPECT_TRUE(client.send_request_no_return(SERVICE, METHOD, {}, PEER));
+}
+#endif
 
 /**
  * @test_case TC_RPC_CANCEL_STILL_WORKS

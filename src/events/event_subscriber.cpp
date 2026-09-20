@@ -329,8 +329,8 @@ public:
                              uint64_t* cutoff = nullptr)
     {
         bool found = false;
+        platform::ScopedLock const subs_lock(subscriptions_mutex_);
         if (running_) {
-            platform::ScopedLock const subs_lock(subscriptions_mutex_);
             const platform::String<> key = make_subscription_key(service_id, instance_id, eventgroup_id);
 
             auto it = subscriptions_.find(key);
@@ -368,10 +368,8 @@ public:
             }
         }
         if (cutoff != nullptr) {
-            // Dispatch never holds this mutex while acquiring subscriptions_mutex_
-            // (already released above); read unconditionally so the caller can
-            // scope its barrier wait even when nothing was found here (see
-            // unsubscribe_eventgroup()).
+            // Keep removal and cutoff sampling atomic with respect to resubscription.
+            // Dispatch never holds dispatch_mutex_ while acquiring subscriptions_mutex_.
             platform::ScopedLock const dispatch_lock(dispatch_mutex_);
             *cutoff = next_dispatch_ticket_;
         }

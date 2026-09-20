@@ -51,10 +51,33 @@ class RpcClientImpl : public transport::ITransportListener {
         std::optional<RpcResponse> response;
     };
 
-    // `handle == 0` cannot be used as an "unregistered" sentinel: 0 is also a
-    // legal RpcCallHandle once next_call_handle_ wraps past 2^32. `armed_`
-    // tracks registration state explicitly so the sentinel value is never
-    // ambiguous with a real handle.
+    class SessionRegistration {
+       public:
+        SessionRegistration(SessionManager& manager, uint16_t session_id)
+            : manager_(manager), session_id_(session_id)
+        {
+        }
+        ~SessionRegistration()
+        {
+            if (session_id_ != 0) {
+                manager_.remove_session(session_id_);
+            }
+        }
+        SessionRegistration(const SessionRegistration&) = delete;
+        SessionRegistration& operator=(const SessionRegistration&) = delete;
+        SessionRegistration(SessionRegistration&&) = delete;
+        SessionRegistration& operator=(SessionRegistration&&) = delete;
+        void release()
+        {
+            session_id_ = 0;
+        }
+
+       private:
+        SessionManager& manager_;
+        uint16_t session_id_;
+    };
+
+    // Registration ownership is explicit; public handle 0 remains reserved for failure.
     class PendingRegistration {
        public:
         explicit PendingRegistration(RpcClientImpl& client) : client_(client)
@@ -310,6 +333,7 @@ public:
         if (session_id == 0) {
             return fail(RpcResult::SERVICE_NOT_AVAILABLE);
         }
+        SessionRegistration session(session_manager_, session_id);
 
         // Create request message — Interface Version is the service major
         MessageId const msg_id(service_id, method_id);
@@ -328,21 +352,19 @@ public:
         {
             platform::ScopedLock const lock(pending_calls_mutex_);
             if (!running_) {
-                session_manager_.remove_session(session_id);
                 return fail(RpcResult::SERVICE_NOT_AVAILABLE);
             }
             if (pending_calls_.size() >= pending_calls_.max_size()) {
-                session_manager_.remove_session(session_id);
                 return fail(RpcResult::SERVICE_NOT_AVAILABLE);
             }
-            // Post-increment can legally wrap to 0; 0 is reserved as the
-            // "no handle" sentinel, so skip it rather than issue it.
+            // Never overwrite an outstanding registration when the counter wraps.
             RpcCallHandle handle = next_call_handle_.fetch_add(1, std::memory_order_relaxed);
-            if (handle == 0) {
+            while (handle == 0 || pending_calls_.find(handle) != pending_calls_.end()) {
                 handle = next_call_handle_.fetch_add(1, std::memory_order_relaxed);
             }
+            pending_calls_.insert({handle, std::move(call_info)});
             registration.arm(handle);
-            pending_calls_[handle] = std::move(call_info);
+            session.release();
         }
 
         if (transport_.send_message(request, server_endpoint) != Result::SUCCESS) {
@@ -363,6 +385,10 @@ public:
         }
 
         const uint16_t session_id = session_manager_.create_session(client_id_);
+        if (session_id == 0) {
+            return false;
+        }
+        const SessionRegistration session(session_manager_, session_id);
         MessageId const msg_id(service_id, method_id);
         RequestId const req_id(client_id_, session_id);
         Message request(msg_id, req_id, MessageType::REQUEST_NO_RETURN, ReturnCode::E_OK);

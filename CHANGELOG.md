@@ -272,6 +272,11 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   report `BUFFER_OVERFLOW` once. UDP rejection IDs are taken from the wire
   prefix, and malformed SOME/IP-TP datagrams report `TP_REASSEMBLY`
   ([#315](https://github.com/vtz/opensomeip/issues/315)).
+- **RPC**: Release fire-and-forget sessions and guard session ownership while
+  constructing a request or inserting its pending registration. Skip both zero
+  and still-live call handles when the counter wraps.
+- **Tests**: Release retained request captures between sequential RPCs so the
+  static-allocation regression does not exhaust the byte-buffer pool itself.
 - **RPC / Events**: Re-register receive listeners on reinitialization, detach
   them after a failed start, and drain transport callbacks before clearing
   handler/subscription state during shutdown. Clear pending field-request

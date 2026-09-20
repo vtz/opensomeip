@@ -76,6 +76,10 @@ public:
 
     /**
      * @brief Shutdown the event subscriber
+     * @warning Must not be called from a notification/field callback or its capture
+     *          destructor, on either a default or injected transport: shutdown waits
+     *          for callback completion. Initiate shutdown from an independent owner
+     *          thread and join outstanding API calls before destroying the subscriber.
      */
     void shutdown();
 
@@ -138,9 +142,9 @@ public:
      *       that state out from under the still-running callback. The wait is scoped to
      *       this subscription only: an unrelated in-flight dispatch for a different
      *       eventgroup never blocks it, and later notifications for THIS eventgroup
-     *       (admitted after this call) do not extend the wait. External unsubscribers
-     *       for different subscriptions run concurrently; unsubscribers for the SAME
-     *       subscription serialize on each other.
+     *       (admitted after removal and cutoff sampling) do not extend the wait.
+     *       External unsubscribe calls serialize across this subscriber, including
+     *       calls for different subscriptions; the dispatch wait itself is key-scoped.
      *       A call made from this subscriber's own notification callback (reentrant,
      *       detected per-thread) skips the wait to avoid self-deadlock: the current and
      *       any overlapping callbacks may still use their captured state until they

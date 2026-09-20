@@ -526,8 +526,8 @@ OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_event_subscriber_subscribe(op
                                                            void* user_data);
 
 /** @implements REQ_CAPI_004, REQ_CAPI_012
- *  Blocks until every notification callback admitted for this subscriber
- *  before the eventgroup's removal has returned. Calling it from inside a
+ *  Blocks until notification callbacks matched to this exact subscription
+ *  and admitted before removal have returned. Calling it from inside a
  *  notification callback of the same subscriber is safe and does not block.
  *  Calling it from a different thread that a notification callback is
  *  synchronously waiting on will deadlock. */

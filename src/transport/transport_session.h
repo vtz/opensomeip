@@ -83,10 +83,9 @@ class TransportSession {
     /**
      * @brief Quiesce delivery before detaching and releasing the receive queue.
      * @note A still-running backend retains cleanup ownership for a later retry.
-     * @note Safe to call concurrently: only the caller that claims the exchange
-     *       actually stops the backend, so two racing shutdown() calls (or a
-     *       destructor racing an explicit shutdown()) never both reach
-     *       transport_.stop() for the same session.
+     * @note The exchange prevents duplicate backend stops, but a non-claiming
+     *       caller returns without waiting for quiescence. Lifecycle operations
+     *       and destruction still require external serialization.
      */
     Result stop()
     {

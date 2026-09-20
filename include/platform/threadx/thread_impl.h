@@ -299,7 +299,8 @@ void sleep_for(const std::chrono::duration<Rep, Period>& d) {
     tx_thread_sleep(ticks);
 }
 
-/** @brief Identity of the calling thread, used to detect same-thread reentrancy. */
+/** @brief Identity of the calling thread.
+ * @implements REQ_PAL_THREAD_ID */
 inline ThreadId get_id() { return tx_thread_identify(); }
 
 } // namespace this_thread
