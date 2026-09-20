@@ -429,6 +429,43 @@ TEST_F(UdpTransportTest, MulticastInterfaceConfiguration) {
     transport.stop();
 }
 
+// REQ_TRANSPORT_011_E01: a failed membership must be reported, not swallowed.
+// 192.0.2.1 is TEST-NET-1 (RFC 5737) and is never a local interface address, so
+// IP_ADD_MEMBERSHIP fails regardless of whether the host supports multicast.
+TEST_F(UdpTransportTest, MulticastJoinFailureIsReportedWithDiagnostics) {
+    config.multicast_interface = "192.0.2.1";
+
+    UdpTransport transport(local_endpoint, config);
+    TestUdpListener listener;
+    transport.set_listener(&listener);
+
+    EXPECT_EQ(transport.start(), Result::SUCCESS);
+
+    EXPECT_EQ(transport.join_multicast_group("224.0.0.1"), Result::MULTICAST_ERROR);
+
+    auto const error = transport.last_multicast_error();
+    ASSERT_TRUE(error.has_value());
+    EXPECT_EQ(error->group_address, "224.0.0.1");
+    EXPECT_EQ(error->interface_address, "192.0.2.1");
+    EXPECT_NE(error->system_error, 0);
+
+    transport.stop();
+}
+
+// A successful join must clear any previously recorded failure context.
+TEST_F(UdpTransportTest, MulticastJoinSuccessClearsDiagnostics) {
+    UdpTransport transport(local_endpoint, config);
+    TestUdpListener listener;
+    transport.set_listener(&listener);
+
+    EXPECT_EQ(transport.start(), Result::SUCCESS);
+    EXPECT_EQ(transport.join_multicast_group("224.0.0.1"), Result::SUCCESS);
+    EXPECT_FALSE(transport.last_multicast_error().has_value());
+    EXPECT_EQ(transport.leave_multicast_group("224.0.0.1"), Result::SUCCESS);
+
+    transport.stop();
+}
+
 // Test SO_REUSEPORT option for multicast SD port sharing
 TEST_F(UdpTransportTest, ReusePortConfiguration) {
     config.reuse_port = true;

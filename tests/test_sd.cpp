@@ -1212,6 +1212,102 @@ TEST_F(SdTest, ServerDuplicateOffer) {
 }
 
 // ============================================================================
+// Multicast Membership Reporting and Recovery Tests
+// ============================================================================
+
+/**
+ * @test_case TC_SD_SERVER_MC_001
+ * @tests REQ_TRANSPORT_011_E01
+ * @brief A successful SD multicast join reports Joined
+ */
+TEST_F(SdTest, ServerReportsJoinedOnSuccessfulMulticastJoin) {
+    SdConfig config;
+    auto server = std::make_shared<SdServer>(config);
+
+    ASSERT_TRUE(server->initialize());
+    EXPECT_EQ(server->multicast_state(), MulticastState::JOINED);
+
+    server->shutdown();
+}
+
+/**
+ * @test_case TC_SD_SERVER_MC_002
+ * @tests REQ_TRANSPORT_011_E01
+ * @brief A failed SD multicast join leaves the server explicitly degraded
+ *
+ * The server still starts, because it can still answer unicast SD, but the
+ * failure is observable rather than reported as a normal start.
+ */
+TEST_F(SdTest, ServerReportsDegradedStateWhenMulticastJoinFails) {
+    SdConfig config;
+    // make_sd_transport_config() maps unicast_address to the multicast interface.
+    // 192.0.2.1 is TEST-NET-1 (RFC 5737) and is never locally assigned, so the
+    // group stays valid and IP_ADD_MEMBERSHIP itself fails.
+    config.unicast_address = "192.0.2.1";
+    auto server = std::make_shared<SdServer>(config);
+
+    ASSERT_TRUE(server->initialize());
+    EXPECT_EQ(server->multicast_state(), MulticastState::RETRYING);
+
+    server->shutdown();
+}
+
+/**
+ * @test_case TC_SD_SERVER_MC_003
+ * @tests REQ_TRANSPORT_011_E03
+ * @brief Re-attempts are bounded and exhaustion is reported
+ */
+TEST_F(SdTest, ServerMulticastRejoinIsBoundedAndReportsExhaustion) {
+    SdConfig config;
+    config.unicast_address = "192.0.2.1";  // Interface never present: join always fails.
+    config.multicast_rejoin_max_attempts = 1;
+    config.multicast_rejoin_interval = std::chrono::milliseconds(10);
+    auto server = std::make_shared<SdServer>(config);
+
+    ASSERT_TRUE(server->initialize());
+
+    // The offer timer drives the re-attempt, so poll rather than assume a tick rate.
+    for (int i = 0; i < 40 && server->multicast_state() != MulticastState::EXHAUSTED; ++i) {
+        platform::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    EXPECT_EQ(server->multicast_state(), MulticastState::EXHAUSTED);
+
+    server->shutdown();
+}
+
+/**
+ * @test_case TC_SD_SERVER_MC_004
+ * @tests REQ_TRANSPORT_011_E03
+ * @brief A zero bound disables re-attempt and reports exhaustion immediately
+ */
+TEST_F(SdTest, ServerMulticastRejoinCanBeDisabled) {
+    SdConfig config;
+    config.unicast_address = "192.0.2.1";
+    config.multicast_rejoin_max_attempts = 0;
+    auto server = std::make_shared<SdServer>(config);
+
+    ASSERT_TRUE(server->initialize());
+    EXPECT_EQ(server->multicast_state(), MulticastState::EXHAUSTED);
+
+    server->shutdown();
+}
+
+/**
+ * @test_case TC_SD_CLIENT_MC_001
+ * @tests REQ_TRANSPORT_011_E01
+ * @brief A client with no failed eventgroup membership reports Joined
+ */
+TEST_F(SdTest, ClientReportsJoinedWithNoFailedEventgroupMembership) {
+    SdConfig config;
+    auto client = std::make_shared<SdClient>(config);
+
+    ASSERT_TRUE(client->initialize());
+    EXPECT_EQ(client->eventgroup_multicast_state(), MulticastState::JOINED);
+
+    client->shutdown();
+}
+
+// ============================================================================
 // SD Client Error Handling Tests
 // ============================================================================
 

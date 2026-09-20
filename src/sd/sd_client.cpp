@@ -93,6 +93,11 @@ public:
             return false;
         }
 
+        // Deliberately fail closed here, unlike SdServer. A client that cannot
+        // receive SD multicast cannot discover anything, and initialize()
+        // returning false is already an explicit, caller-visible failure that
+        // can be retried. Re-attempt is reserved for the paths where the
+        // failure would otherwise be invisible.
         if (!join_multicast_group()) {
             transport_.stop();
             return false;
@@ -106,12 +111,32 @@ public:
     }
 
     /** @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094 */
+    /**
+     * @brief Aggregate local eventgroup multicast state
+     *
+     * Independent of subscription acceptance, which is reported separately.
+     * @implements REQ_TRANSPORT_011_E01
+     */
+    MulticastState eventgroup_multicast_state() const {
+        platform::ScopedLock const lock(pending_multicast_mutex_);
+        bool any_exhausted = multicast_tracking_full_;
+        for (const auto& pending : pending_multicast_joins_) {
+            if (!pending.exhausted) {
+                return MulticastState::RETRYING;
+            }
+            any_exhausted = true;
+        }
+        return any_exhausted ? MulticastState::EXHAUSTED : MulticastState::JOINED;
+    }
+
     void shutdown() {
         if (!running_) {
             return;
         }
 
         running_ = false;
+
+        clear_multicast_tracking();
 
         stop_maintenance_loop();
 
@@ -414,6 +439,7 @@ private:
                 flush_pending_finds();
                 process_find_timeouts();
                 process_ttl_expiry();
+                retry_pending_multicast_joins();
             }
         });
     }
@@ -493,6 +519,70 @@ private:
 
     bool join_multicast_group() {
         return transport_.join_multicast_group(config_.multicast_address) == Result::SUCCESS;
+    }
+
+    void record_pending_multicast_join(const platform::String<>& group) {
+        platform::ScopedLock const lock(pending_multicast_mutex_);
+        for (auto& pending : pending_multicast_joins_) {
+            if (pending.group == group) {
+                return;
+            }
+        }
+
+        // A peer chooses the multicast group in a SubscribeEventgroupAck, so the
+        // number of distinct groups whose join fails is not under local control.
+        // Cap the tracking rather than growing it: the dynamic backend's Vector
+        // is a std::vector and would grow without bound, and the static
+        // backend's is fixed-capacity and would trip the ETL error handler.
+        if (pending_multicast_joins_.size() >= MAX_PENDING_MULTICAST_JOINS) {
+            multicast_tracking_full_ = true;
+            return;
+        }
+        PendingMulticastJoin entry;
+        entry.group = group;
+        entry.exhausted = (config_.multicast_rejoin_max_attempts == 0);
+        entry.next_attempt = std::chrono::steady_clock::now() + config_.multicast_rejoin_interval;
+        pending_multicast_joins_.push_back(entry);
+    }
+
+    void clear_pending_multicast_join(const platform::String<>& group) {
+        platform::ScopedLock const lock(pending_multicast_mutex_);
+        for (auto it = pending_multicast_joins_.begin(); it != pending_multicast_joins_.end(); ++it) {
+            if (it->group == group) {
+                pending_multicast_joins_.erase(it);
+                return;
+            }
+        }
+    }
+
+    void clear_multicast_tracking() {
+        platform::ScopedLock const lock(pending_multicast_mutex_);
+        pending_multicast_joins_.clear();
+        multicast_tracking_full_ = false;
+    }
+
+    /** @implements REQ_TRANSPORT_011_E03 */
+    void retry_pending_multicast_joins() {
+        platform::ScopedLock const lock(pending_multicast_mutex_);
+        const auto now = std::chrono::steady_clock::now();
+        for (auto it = pending_multicast_joins_.begin(); it != pending_multicast_joins_.end();) {
+            // The maintenance loop ticks every 20ms, far faster than a link comes
+            // up, so attempts are spaced by wall clock rather than by tick.
+            if (it->exhausted || now < it->next_attempt) {
+                ++it;
+                continue;
+            }
+
+            if (transport_.join_multicast_group(it->group) == Result::SUCCESS) {
+                it = pending_multicast_joins_.erase(it);
+                continue;
+            }
+
+            ++it->attempts;
+            it->next_attempt = now + config_.multicast_rejoin_interval;
+            it->exhausted = (it->attempts >= config_.multicast_rejoin_max_attempts);
+            ++it;
+        }
     }
 
     void leave_multicast_group() {
@@ -718,6 +808,21 @@ private:
     std::atomic<bool> running_;
 
     std::optional<platform::Thread> maintenance_thread_;
+    mutable platform::Mutex pending_multicast_mutex_;
+    struct PendingMulticastJoin {
+        platform::String<> group;
+        uint8_t attempts{0};
+        bool exhausted{false};
+        std::chrono::steady_clock::time_point next_attempt;
+    };
+    // Exhausted entries are retained rather than erased so the aggregate state
+    // stays accurate, and so a later successful join for the same group clears it.
+    // That retention is why the count must be bounded explicitly.
+    static constexpr size_t MAX_PENDING_MULTICAST_JOINS = 16;
+    platform::Vector<PendingMulticastJoin> pending_multicast_joins_;
+    // Set when a join failure could not be tracked because the cap was reached.
+    // Such a group is never re-attempted, so the aggregate state reports it.
+    bool multicast_tracking_full_{false};
 
     platform::UnorderedMap<uint64_t, CachedService, 32> cached_services_;
     platform::UnorderedMap<uint64_t, EventGroupSubscription, 32> eventgroup_subscriptions_;
@@ -804,9 +909,19 @@ private:
         const uint8_t index1 = entry.get_index1();
         const uint8_t run1 = entry.get_num_opts1();
         const auto& options = message.get_options();
+        // The peer has accepted the subscription; that is recorded above and is
+        // not affected by what follows. Joining the eventgroup's multicast group
+        // is a separate, local fact: if it fails the subscription stays accepted
+        // but events cannot arrive, so the failure is tracked and re-attempted
+        // rather than discarded.
         for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
             if (const auto* mc = std::get_if<IPv4MulticastOption>(&options[index1 + i])) {
-                static_cast<void>(transport_.join_multicast_group(mc->get_ipv4_address_string()));
+                const auto group = mc->get_ipv4_address_string();
+                if (transport_.join_multicast_group(group) == Result::SUCCESS) {
+                    clear_pending_multicast_join(group);
+                } else {
+                    record_pending_multicast_join(group);
+                }
             }
         }
     }
@@ -873,6 +988,10 @@ SdClient::~SdClient() {
 
 bool SdClient::initialize() {
     return impl()->initialize();
+}
+
+MulticastState SdClient::eventgroup_multicast_state() const {
+    return impl()->eventgroup_multicast_state();
 }
 
 void SdClient::shutdown() {

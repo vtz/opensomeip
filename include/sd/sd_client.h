@@ -61,6 +61,16 @@ public:
     bool initialize();
 
     /**
+     * @brief Local eventgroup multicast membership state
+     *
+     * Reported independently of subscription acceptance: a peer may have
+     * acknowledged a SubscribeEventgroup while the local membership required to
+     * receive those events failed. Retrying while bounded re-attempts are in
+     * progress, Exhausted once they ran out.
+     */
+    MulticastState eventgroup_multicast_state() const;
+
+    /**
      * @brief Shutdown the SD client
      */
     void shutdown();

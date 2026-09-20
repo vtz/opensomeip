@@ -31,6 +31,7 @@ enum class Result : uint8_t {
     CONNECTION_REFUSED = 0x04,
     TIMEOUT = 0x05,
     INVALID_ENDPOINT = 0x06,
+    MULTICAST_ERROR = 0x07,
 
     // Protocol errors
     INVALID_MESSAGE = 0x10,

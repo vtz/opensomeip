@@ -61,6 +61,19 @@ struct UdpTransportConfig {
 };
 
 /**
+ * @brief Diagnostic context for the most recent multicast membership failure
+ *
+ * REQ_TRANSPORT_011_E01 requires the group address and interface to be recorded
+ * when a join fails. The project has no logging facility, so the context is
+ * exposed through the API instead of written to a log.
+ */
+struct MulticastError {
+    platform::String<> group_address;      ///< Multicast group the join targeted
+    platform::String<> interface_address;  ///< Configured interface, empty when INADDR_ANY
+    int system_error{0};                   ///< Platform socket error captured at failure
+};
+
+/**
  * @brief UDP transport implementation
  *
  * This class provides UDP-based transport for SOME/IP messages.
@@ -112,8 +125,22 @@ public:
     bool is_running() const override;
 
     // Multicast support
+    /**
+     * @brief Join a multicast group
+     *
+     * @return Result::SUCCESS on success, Result::MULTICAST_ERROR when the
+     *         membership operation fails. On failure the group and interface
+     *         are retrievable via last_multicast_error().
+     * @implements REQ_TRANSPORT_011_E01
+     */
     Result join_multicast_group(const platform::String<>& multicast_address);
     Result leave_multicast_group(const platform::String<>& multicast_address);
+
+    /**
+     * @brief Context of the most recent failed membership operation
+     * @return The failure context, or nullopt if the last join succeeded
+     */
+    std::optional<MulticastError> last_multicast_error() const;
 
     // Disable copy and assignment
     UdpTransport(const UdpTransport&) = delete;
@@ -133,7 +160,8 @@ private:
     platform::Mutex queue_mutex_;
     platform::ConditionVariable queue_cv_;
 
-    platform::Mutex socket_mutex_;
+    mutable platform::Mutex socket_mutex_;
+    std::optional<MulticastError> last_multicast_error_;
 
     std::unique_ptr<tp::TpManager> tp_manager_;
 
@@ -152,6 +180,9 @@ private:
     sockaddr_in create_sockaddr(const Endpoint& endpoint) const;
     Endpoint sockaddr_to_endpoint(const sockaddr_in& addr) const;
     bool is_multicast_address(const platform::String<>& address) const;
+    // Both require socket_mutex_ to be held by the caller.
+    void record_multicast_error(const platform::String<>& multicast_address);
+    void clear_multicast_error();
 };
 
 }  // namespace someip::transport

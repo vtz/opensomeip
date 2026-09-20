@@ -128,6 +128,15 @@ public:
     bool is_ready() const;
 
     /**
+     * @brief Local SD multicast membership state
+     *
+     * Joined after a successful join. Retrying when the join failed and bounded
+     * re-attempts are in progress. Exhausted when they ran out: the server is
+     * running but cannot receive multicast SD.
+     */
+    MulticastState multicast_state() const;
+
+    /**
      * @brief Get server statistics
      *
      * @return Statistics about SD operations

@@ -20,6 +20,7 @@ std::string to_string(Result result) {
         {Result::CONNECTION_REFUSED, "CONNECTION_REFUSED"},
         {Result::TIMEOUT, "TIMEOUT"},
         {Result::INVALID_ENDPOINT, "INVALID_ENDPOINT"},
+        {Result::MULTICAST_ERROR, "MULTICAST_ERROR"},
         {Result::INVALID_MESSAGE, "INVALID_MESSAGE"},
         {Result::INVALID_MESSAGE_TYPE, "INVALID_MESSAGE_TYPE"},
         {Result::INVALID_SERVICE_ID, "INVALID_SERVICE_ID"},

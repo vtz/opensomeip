@@ -603,15 +603,40 @@ Magic Cookie Details
    :status: implemented
    :priority: medium
    :category: error_path
-   :verification: Unit test: Join multicast group on interface with no multicast support, verify error is returned.
+   :verification: Unit test: Join a multicast group with the interface set to a TEST-NET-1 address (RFC 5737) so IP_ADD_MEMBERSHIP fails independently of host multicast support, verify MULTICAST_ERROR is returned and the group and interface are retrievable.
 
    The software shall return an error when multicast group join fails.
 
    **Rationale**: Failed multicast joins prevent SD and event reception.
 
-   **Error Handling**: Return MULTICAST_ERROR and log group address and interface.
+   **Error Handling**: Return MULTICAST_ERROR and record group address and
+   interface. The project has no logging facility, so the context is exposed
+   through ``UdpTransport::last_multicast_error()`` rather than written to a log.
 
    **Code Location**: ``src/transport/udp_transport.cpp``
+
+.. requirement:: Error - Multicast Join Recovery
+   :id: REQ_TRANSPORT_011_E03
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Configure a TEST-NET-1 multicast interface so IP_ADD_MEMBERSHIP always fails, set multicast_rejoin_max_attempts=1, and verify the membership is re-attempted on the existing SD periodic loop and then reports Exhausted rather than being retried indefinitely. Verify a zero bound disables re-attempt. Recovery to the joined state after a transient failure needs a transport that can be made to fail once and then succeed, so it is not covered until transport injection is available.
+
+   The software shall re-attempt a failed multicast group join a bounded number
+   of times and report exhaustion.
+
+   **Rationale**: Reporting a join failure without any means of recovery leaves
+   the caller holding an error it cannot act on: the membership is owned by the
+   transport and no API re-attempts it. A transient condition such as an
+   interface that is not yet up when the socket is configured would otherwise
+   remain failed for the lifetime of the process. REQ_TRANSPORT_002_E01 already
+   pairs error reporting with scheduled recovery for the analogous TCP failure,
+   and REQ_TRANSPORT_016_E01 bounds that recovery.
+
+   **Error Handling**: Re-attempt from the existing SD periodic work up to
+   ``SdConfig::multicast_rejoin_max_attempts``, then report ``Exhausted``.
+
+   **Code Location**: ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
 
 .. requirement:: Error - Port Already In Use
    :id: REQ_TRANSPORT_014_E01
