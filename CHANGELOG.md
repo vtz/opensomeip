@@ -73,6 +73,10 @@
 
 ### Bug Fixes
 
+- **E2E**: profile resolution stays sequential (ID, then name, then default).
+  A non-zero unregistered `profile_id` no longer skips `profile_name` and
+  silently protect/validate with the default 12-byte profile
+  ([#318](https://github.com/vtz/opensomeip/issues/318)).
 - **Transport**: TCP no longer busy-loops on an invalid length field; resync
   is only at a Magic Cookie. Declared frames larger than `max_receive_buffer`
   report `BUFFER_OVERFLOW` once. UDP rejection IDs are taken from the wire

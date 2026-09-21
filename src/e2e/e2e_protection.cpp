@@ -37,7 +37,8 @@ Result resolve_supported_profile(const E2EConfig& config, E2EProfile*& profile) 
     profile = nullptr;
     if (config.profile_id != 0) {
         profile = registry.get_profile(config.profile_id);
-    } else if (!config.profile_name.empty()) {
+    }
+    if (profile == nullptr && !config.profile_name.empty()) {
         profile = registry.get_profile(config.profile_name);
     }
     if (profile == nullptr) {

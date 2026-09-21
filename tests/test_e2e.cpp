@@ -882,5 +882,14 @@ TEST_F(E2ETest, ProtectAndValidateRejectNonStandardHeaderSize) {
     EXPECT_EQ(protection.protect(msg, by_name), Result::NOT_IMPLEMENTED);
     EXPECT_EQ(protection.validate(msg, by_name), Result::NOT_IMPLEMENTED);
 
+    // Unregistered ID must still fall through to a registered name. Exclusive
+    // ID-or-name lookup would skip "oversized" and silently protect with the
+    // default 12-byte profile instead.
+    E2EConfig unregistered_id(0x1234);
+    unregistered_id.profile_id = 9999;
+    unregistered_id.profile_name = "oversized";
+    EXPECT_EQ(protection.protect(msg, unregistered_id), Result::NOT_IMPLEMENTED);
+    EXPECT_EQ(protection.validate(msg, unregistered_id), Result::NOT_IMPLEMENTED);
+
     EXPECT_TRUE(registry.unregister_profile(kProfileId));
 }
