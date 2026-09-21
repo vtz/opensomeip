@@ -123,13 +123,22 @@ public:
     [[nodiscard]] virtual Result connect(const Endpoint& endpoint) = 0;
 
     /**
-     * @brief Disconnect from endpoint (TCP only)
+     * @brief Disconnect (TCP)
+     *
+     * For TCP, this closes every connection the transport holds: a client
+     * closes its outbound peer, a server closes all accepted peers. Use
+     * TcpTransport::disconnect_peer() to close one server-side peer.
+     *
      * @return Result of the operation
      */
     [[nodiscard]] virtual Result disconnect() = 0;
 
     /**
      * @brief Check if connected
+     *
+     * For TCP, true when any peer is connected. Inspect individual peers
+     * with TcpTransport::is_peer_connected().
+     *
      * @return true if connected, false otherwise
      */
     virtual bool is_connected() const = 0;
