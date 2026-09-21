@@ -42,8 +42,13 @@ TEST(FreeRtosSleep, FractionalTicksRoundUpWithoutExtendingExactTicks)
     EXPECT_EQ(mock_detail::last_delay_ticks.load(), 3u);
 }
 
+/**
+ * @test_case TC_FREERTOS_SLEEP_FRACTIONAL_MILLISECOND
+ * @tests REQ_PAL_SLEEP_DURATION, REQ_PAL_SLEEP_ZERO
+ */
 TEST(FreeRtosSleep, PositiveSubMillisecondDurationsRequestOneTick)
 {
+    mock_detail::last_delay_ticks = portMAX_DELAY;
     someip::platform::this_thread::sleep_for(std::chrono::microseconds(500));
     EXPECT_EQ(mock_detail::last_delay_ticks.load(), 1u);
     mock_detail::last_delay_ticks = portMAX_DELAY;

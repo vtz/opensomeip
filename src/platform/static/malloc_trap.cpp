@@ -41,7 +41,8 @@
 
 namespace someip::platform {
 
-static thread_local bool g_trap_armed = false;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+static thread_local bool g_trap_armed = false;
 
 void malloc_trap_arm() { g_trap_armed = true; }
 void malloc_trap_disarm() { g_trap_armed = false; }
