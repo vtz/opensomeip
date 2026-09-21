@@ -15,16 +15,19 @@
  * End-to-end integration tests for the static-allocation backend.
  *
  * Each test arms the malloc trap around protocol operations to prove
- * zero heap usage.  Pools are warmed up BEFORE arming so that lazy
- * first-use initialisation (if any) doesn't trip the trap.
+ * zero heap usage on the calling thread. Pools are warmed up BEFORE arming so
+ * that lazy first-use initialisation (if any) doesn't trip the trap.
  *
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
  */
 
+#include <atomic>
 #include <chrono>
+#include <cstdlib>
 #include <cstring>
 #include <gtest/gtest.h>
+#include <thread>
 
 #include "events/event_publisher.h"
 #include "events/event_subscriber.h"
@@ -45,7 +48,7 @@
 namespace someip::platform {
 namespace {
 
-/// RAII guard: arms the malloc trap on construction, disarms on destruction.
+/// RAII guard: arms the calling thread's malloc trap, disarms on destruction.
 /// Prevents the trap from staying armed when ASSERT_* macros abort a test.
 class MallocTrapGuard {
 public:
@@ -121,6 +124,75 @@ TEST_F(StaticAllocIntegrationTest, SyncWaitRegistrationDoesNotAllocate)
     }
     client.shutdown();
     EXPECT_EQ(peer.stop(), Result::SUCCESS);
+}
+
+/**
+ * @test_case TC_STATIC_INT_TRAP_THREAD_SCOPE
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ */
+TEST_F(StaticAllocIntegrationTest, ArmedTrapDoesNotAffectAnotherThreadsAllocation)
+{
+    std::atomic<bool> allocate{false};
+    std::atomic<bool> complete{false};
+    bool worker_armed = true;
+    bool allocated = false;
+    bool caller_still_armed = false;
+    std::thread worker([&] {
+        while (!allocate.load()) {
+            std::this_thread::yield();
+        }
+        worker_armed = malloc_trap_is_armed();
+        void* (*volatile heap_allocate)(size_t) = &std::malloc;
+        void (*volatile heap_release)(void*) = &std::free;
+        void* memory = heap_allocate(64);
+        allocated = memory != nullptr;
+        heap_release(memory);
+        malloc_trap_arm();
+        malloc_trap_disarm();
+        complete.store(true);
+    });
+    {
+        MallocTrapGuard guard;
+        allocate.store(true);
+        while (!complete.load()) {
+            std::this_thread::yield();
+        }
+        caller_still_armed = malloc_trap_is_armed();
+    }
+    worker.join();
+    EXPECT_FALSE(worker_armed);
+    EXPECT_TRUE(allocated);
+    EXPECT_TRUE(caller_still_armed);
+    EXPECT_FALSE(malloc_trap_is_armed());
+}
+
+/**
+ * @test_case TC_STATIC_INT_TRAP_ARMED_ALLOC
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ */
+TEST(StaticAllocTrapDeathTest, ArmedCallingThreadStillTrapsHeapAllocation)
+{
+    EXPECT_DEATH_IF_SUPPORTED(
+        {
+            void* (*volatile heap_allocate)(size_t) = &std::malloc;
+            malloc_trap_arm();
+            static_cast<void>(heap_allocate(64));
+        },
+        "MALLOC TRAP:");
+}
+
+TEST(StaticAllocTrapDeathTest, ArmedWorkerThreadStillTrapsHeapAllocation)
+{
+    EXPECT_DEATH_IF_SUPPORTED(
+        {
+            std::thread worker([] {
+                void* (*volatile heap_allocate)(size_t) = &std::malloc;
+                malloc_trap_arm();
+                static_cast<void>(heap_allocate(64));
+            });
+            worker.join();
+        },
+        "MALLOC TRAP:");
 }
 
 /**

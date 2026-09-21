@@ -16,18 +16,19 @@
  *
  * Armable heap trap: overrides malloc/free/new/delete.
  *
- * When armed, any heap allocation triggers __builtin_trap() (portable
- * across GCC, Clang, MSVC — no glibc dependency).
+ * When armed, any heap allocation on the calling thread triggers __builtin_trap()
+ * (portable across GCC, Clang, MSVC — no glibc dependency).
  *
  * When disarmed (default), calls pass through to the real allocator via
  * dlsym(RTLD_NEXT, "malloc") so test-framework code (GTest, std::thread,
  * etc.) can still allocate.
  *
  * Test code arms the trap around protocol operations to verify zero heap
- * allocations, then disarms before test-framework teardown.
+ * allocations on that thread, then disarms before test-framework teardown.
+ * Background threads are unaffected unless they explicitly arm their own trap.
  *
- * NOT compiled into the main library; only linked into dedicated
- * trap-verification test binaries.
+ * NOT compiled into the main library; only linked directly into dedicated
+ * trap-verification executables so trap TLS access does not allocate.
  */
 
 #ifdef SOMEIP_MALLOC_TRAP
@@ -40,7 +41,7 @@
 
 namespace someip::platform {
 
-static bool g_trap_armed = false;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
+static thread_local bool g_trap_armed = false;  // NOLINT(cppcoreguidelines-avoid-non-const-global-variables)
 
 void malloc_trap_arm() { g_trap_armed = true; }
 void malloc_trap_disarm() { g_trap_armed = false; }

@@ -252,9 +252,10 @@ namespace this_thread {
 /** @implements REQ_PAL_SLEEP_DURATION, REQ_PAL_SLEEP_ZERO */
 template <typename Rep, typename Period>
 void sleep_for(const std::chrono::duration<Rep, Period>& d) {
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
+    const auto ms = std::chrono::ceil<std::chrono::milliseconds>(d).count();
     if (ms <= 0) return;
-    TickType_t ticks = pdMS_TO_TICKS(ms);
+    TickType_t ticks = static_cast<TickType_t>(
+        (static_cast<uint64_t>(ms) * configTICK_RATE_HZ + 999U) / 1000U);
     if (ticks == 0) {
         ticks = 1;
     }

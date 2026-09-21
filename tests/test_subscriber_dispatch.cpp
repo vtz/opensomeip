@@ -34,6 +34,7 @@
 #include <gtest/gtest.h>
 #include <mutex>
 #include <stdexcept>
+#include <thread>
 #include <vector>
 
 #include "events/event_subscriber.h"
