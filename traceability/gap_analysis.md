@@ -1,15 +1,15 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-09-19 00:50:37
+Generated: 2026-09-21 04:09:47
 
 ## Summary
 
-- **Total Requirements**: 693
-- **Fully Traced (impl + tests)**: 612 (88.3%)
+- **Total Requirements**: 694
+- **Fully Traced (impl + tests)**: 613 (88.3%)
 - **Missing Implementation**: 78
 - **Missing Tests**: 12
-- **Missing Spec Links (all)**: 157
-- **Missing Spec Links (required only)**: 5
+- **Missing Spec Links (all)**: 158
+- **Missing Spec Links (required only)**: 6
 
 ### Requirement Categories
 
@@ -22,14 +22,14 @@ Generated: 2026-09-19 00:50:37
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
 | Serialization | 75 | 52 (69%) | 75 (100%) | 75 (100%) |
 | Service Discovery | 173 | 169 (98%) | 173 (100%) | 173 (100%) |
-| Transport Layer | 29 | 27 (93%) | 29 (100%) | 29 (100%) |
+| Transport Layer | 30 | 28 (93%) | 30 (100%) | 29 (97%) |
 | Transport Protocol | 65 | 62 (95%) | 63 (97%) | 64 (98%) |
 
 
 **Note**: Error handling, architectural, and plugin requirements are implementation-derived and
 may not require direct spec links.
 
-- **Spec-Derived Requirements**: 525
+- **Spec-Derived Requirements**: 526
 - **Implementation-Derived Requirements**: 168
 
 ### Priority Breakdown
@@ -38,14 +38,14 @@ may not require direct spec links.
 |----------|-------|-------------|--------|----------|
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 55 | 55 | 98% |
-| Medium | 422 | 372 | 416 | 88% |
+| Medium | 423 | 373 | 417 | 88% |
 | Low | 183 | 156 | 178 | 85% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 452 |
+| Unit Tests | 460 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -150,6 +150,7 @@ These requirements should have spec links but don't:
 
 - REQ_TP_081_ATOM
 - REQ_MSG_150
+- REQ_TRANSPORT_026
 - REQ_CAPI_004
 - REQ_CAPI_005
 - REQ_PLATFORM_ARCH_001

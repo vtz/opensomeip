@@ -2855,7 +2855,13 @@
 <p>The transport layer in <code>include/transport/</code>:</p>
 <ul>
 <li><strong><code>udp_transport.h</code></strong> -- <code>UdpTransport</code> for sending and receiving SOME/IP messages over UDP</li>
+<li><strong><code>tcp_transport.h</code></strong> -- <code>TcpTransport</code> for stream-oriented SOME/IP</li>
 <li><strong><code>endpoint.h</code></strong> -- <code>Endpoint</code> representing a network address and port pair</li>
+<li><strong><code>message_rejection.h</code></strong> -- <code>MessageRejectionInfo</code> for local receive diagnostics.
+  <code>ITransportListener::on_message_rejected</code> is a defaulted hook; <code>RpcClient</code>,
+  <code>RpcServer</code>, <code>EventSubscriber</code>, and <code>EventPublisher</code> expose
+  <code>set_message_rejection_handler</code> so applications can observe structural
+  rejections without implementing <code>ITransportListener</code>.</li>
 </ul>
 <h2 id="common-utilities">Common Utilities<a class="headerlink" href="#common-utilities" title="Permanent link">&para;</a></h2>
 <p>Shared utilities in <code>include/common/</code>:</p>
