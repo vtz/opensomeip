@@ -394,6 +394,160 @@ public:
 };
 ```
 
+### Injecting a Transport into RPC and Events
+
+The following C++ constructor overloads accept an existing `ITransport`:
+
+| API | Injected constructor |
+|-----|----------------------|
+| `RpcClient` | `(client_id, transport, interface_version = 0x01)` |
+| `RpcServer` | `(service_id, transport, interface_version = 0x01)` |
+| `EventPublisher` | `(service_id, instance_id, transport)` |
+| `EventSubscriber` | `(client_id, transport)` |
+
+The caller owns the transport object and must keep it alive until the facade is
+destroyed. The facade exclusively manages that transport's listener and
+start/stop lifecycle. Construction does not register a listener or start the
+transport. Existing constructors continue to own a private UDP transport.
+
+```cpp
+#include "rpc/rpc_client.h"
+#include "transport/udp_transport.h"
+
+someip::Result use_transport(someip::transport::ITransport& network) {
+    someip::rpc::RpcClient client(0x0007, network);
+    if (!client.initialize()) {
+        return client.get_transport_result();
+    }
+    client.set_remote_endpoint(someip::transport::Endpoint("192.0.2.1", 30501));
+    // Make RPC calls through client here.
+    client.shutdown();
+    return client.get_transport_result();
+}
+```
+
+Custom backends and deterministic test transports can implement `ITransport`
+without changing RPC/event implementations. No event-driven backend is required.
+The injected backend owns endpoint selection and any prior configuration; the
+facade does not impose the default RPC port or create a multicast membership.
+Multicast reception requires a backend that manages its own group memberships;
+the injection API does not add SD integration or multicast controls to `ITransport`.
+
+**Lifecycle contract**
+
+- Supply a stopped transport with no listener. Do not share it with another
+  facade, start it independently, or replace its listener while borrowed.
+  `initialize()` rejects an already-running transport with `INVALID_STATE`
+  without stealing its listener or stopping it.
+  The no-listener precondition is caller-guaranteed; `ITransport` has no listener
+  query with which to check it.
+- Lifecycle operations must not throw. The injected `stop()` must synchronously
+  drain callbacks and stop receive producers, even when returning an error or
+  cleaning up a failed `start()`. Detaching the listener alone is not a
+  callback-draining barrier. A backend that continues receiving after a failed
+  stop violates this contract; retry support cannot make that behavior safe.
+- The facade stops the transport before detaching its listener, then discards
+  queued receive messages from the completed session before clearing callback
+  state. This avoids switching live traffic to polling mode during shutdown and
+  retaining pooled messages across restarts. Failed initialization stops and
+  detaches but preserves the lender's pre-existing queue. After a successful
+  initialization, stopped-session cleanup also consumes borrowed queued data; its
+  `receive_message()` must be non-blocking and eventually return `nullptr`.
+  If `stop()` reports an error while `is_running()` remains true, another
+  `shutdown()` retries the owned session's cleanup, including after failed
+  initialization. A successful stop with a still-running backend reports
+  `INVALID_STATE`. This recovery path does not make a backend that violates the
+  callback-draining contract safe.
+  Pending RPC completion callbacks now run after the transport is stopped,
+  rather than before the stop operation.
+  Synchronous RPC waiters are private registrations completed only under the
+  pending-call mutex, never exported as application callbacks. Timeout removes
+  the registration under that same mutex, and scope-bound cleanup unregisters
+  it on exceptions. An already-completed response wins over a competing timeout.
+  Calls do not wait for unrelated application callbacks or allocate shared wait
+  state. The response-time budget starts after the transport send returns, so a
+  backend that blocks in `send_message()` does not consume the reply budget;
+  scheduling still follows the backend's tick granularity, and the observed call
+  time therefore includes the send. Submission refused because the client is
+  stopped or its pending-call/session capacity is full reports `SERVICE_NOT_AVAILABLE`.
+  Shutdown completes all synchronous calls before invoking asynchronous
+  callbacks and attempts every one of them. `shutdown()` is no-throw: a throwing
+  application callback is not propagated. Applications that need to observe
+  callback exceptions must handle/report them inside their callback; transport
+  lifecycle diagnostics do not record application callback failures.
+  Call handles are never `0`; that value is reserved as the "no handle"
+  sentinel and is skipped when the counter wraps.
+  A call's session-manager entry is released when it completes, is cancelled, or
+  is swept by shutdown. Fire-and-forget calls release the entry after sending,
+  and submission exceptions release it before a pending call takes ownership.
+  An unanswered asynchronous call still occupies capacity until cancellation
+  or shutdown; automatic asynchronous timeout sweeping is not added here.
+  Subscriber and RPC-server teardown release stored callbacks one entry at a time,
+  avoiding a whole fixed-capacity map on the shutdown stack. The value moved
+  out of the map is destroyed outside the facade's mutexes. Note that with
+  inplace callable storage (`SOMEIP_STATIC_ALLOC`) moving a capture also
+  destroys the moved-from source in place, so a capture destructor that calls
+  back into the facade must still not rely on being invoked unlocked. Callback
+  capture copy/move operations and destructors must not re-enter the facade.
+  Shared owners whose moved-from destruction is inert can release their last
+  reference after unlocking.
+- Each subscriber supports one instance/eventgroup key per service. It rejects
+  a distinct same-service key before sending or mutating the existing subscription;
+  exact-key renewal and different services remain supported. Wire notifications
+  lack instance/eventgroup identity, and optional filters are stored metadata,
+  not enforced routing rules. The same admission restriction applies to the C API.
+- Subscriber notification and field handlers are invoked from snapshots after
+  releasing the subscription and field mutexes. A handler may query state,
+  unsubscribe, or request the next field value. The accepted notification's
+  field callback is removed before invocation, so a reentrant request belongs
+  to the next response. Snapshotting does not serialize application callbacks
+  across concurrent transport deliveries.
+  External `unsubscribe_eventgroup()` calls serialize and wait for notification
+  dispatches admitted before removal, including their local callback copies.
+  Dispatches admitted after removal do not extend the barrier. Unsubscription
+  from a callback of the same subscriber bypasses the wait and serialization
+  gate; that callback and overlapping callbacks may still use their captured
+  state until they return.
+  A duplicate pending field request is rejected before sending, preserving the
+  first callback. A missing response occupies that field key until shutdown:
+  field cancellation/timeouts are not introduced here.
+- Reinitialization registers the listener again. Destruction without
+  initialization does not touch the borrowed transport; destruction after a
+  successful initialization shuts it down without deleting it.
+  It does not restore cleared method registrations, published event definitions
+  or field caches, subscriptions, or pending field callbacks: register them again.
+- `RpcServer` serializes initialization and complete shutdown internally, including
+  cleanup retries. Method registration is allowed before initialization and after
+  shutdown, but rejected while teardown is in progress. A registration that wins
+  the method lock before shutdown begins can succeed and then be cleared.
+  Other facades still require external lifecycle serialization.
+- Serialize lifecycle calls externally where required and quiesce application mutations of
+  registrations/subscriptions before shutdown. Join outstanding calls before
+  destroying the facade. Do not initialize, shut down, or destroy
+  a facade from a transport or application callback: stopping there could wait
+  for the callback itself.
+- `get_transport_result()` reports the latest lifecycle result, not asynchronous
+  receive errors. A cleanup failure takes precedence over the original failed
+  start. Repeated `initialize()`/`shutdown()` calls that do no work retain the
+  result. Existing boolean initialization and void shutdown signatures remain
+  unchanged.
+  If start fails and cleanup itself returns success, the start error remains
+  the reported cause even if the backend incorrectly still reports running.
+  A later successful cleanup reports `SUCCESS`; this accessor is not a history
+  of all earlier failures.
+
+This is the first increment of [#341](https://github.com/vtz/opensomeip/issues/341),
+not a shared-socket dispatcher or a complete runtime coordinator. SD injection,
+externally running/shared transports, and new C injection entry points remain
+out of scope. Existing C API signatures and default transport construction remain
+unchanged; event subscriptions follow the admission restriction above.
+The implementation keeps owned default transports inline and does not introduce
+a heap allocation for the borrowed transport in static-allocation builds.
+That choice reserves a disengaged UDP storage slot even for a borrowed backend,
+inside the existing fixed-size facade storage. It trades storage for a single
+implementation and unchanged public object sizes. Both default and injected
+paths dispatch through `ITransport`; no performance improvement is claimed.
+
 ## Service Development
 
 ### Service Definition

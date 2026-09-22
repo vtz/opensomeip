@@ -45,6 +45,12 @@
 
 ### Added
 
+- **RPC / Events**: Add constructor overloads accepting a caller-owned,
+  exclusive `ITransport`, with component-managed lifecycle and
+  `get_transport_result()` diagnostics. Existing default UDP construction and
+  C API entry points are unchanged. This is an initial increment of
+  [#341](https://github.com/vtz/opensomeip/issues/341); SD injection and shared
+  transport dispatch remain separate work.
 - **Message**: `try_deserialize()` returns a structured `someip::Result` for
   each semantic rejection class. Existing `deserialize()` overloads remain
   source-compatible bool wrappers
@@ -58,6 +64,98 @@
 
 ### Bug Fixes
 
+- **Events**: Reject distinct instance/eventgroup subscriptions for the same service
+  on one subscriber, rather than choosing an arbitrary callback for notifications
+  lacking that identity. Exact-key renewal and different services remain supported.
+  The C API follows the same restriction. Document that filter metadata is not
+  enforced and selective sending remains pending.
+- **RPC server**: Serialize initialize/shutdown through complete cleanup, gate method
+  registration before stopping dispatch, and release the gate on exceptional exits.
+  Registration before initialization remains supported.
+- **FreeRTOS**: Split oversized sleeps into full-width finite tick chunks instead
+  of narrowing away the requested delay. Batch arithmetic before multiplication
+  and round the final remainder upward.
+- **Tests**: Bound callback-entry waits and release parked callbacks on assertion
+  failure before joining async workers.
+- **FreeRTOS**: Round positive sleep requests upward when converting milliseconds
+  to ticks, including fractional ticks such as 11 ms at 100 Hz.
+- **Static-allocation tests**: Scope the host heap trap to the thread that arms it,
+  so live transport threads cannot trigger another thread's trap.
+- **RPC**: Release fire-and-forget sessions and guard session ownership while
+  constructing a request or inserting its pending registration. Skip both zero
+  and still-live call handles when the counter wraps.
+- **Tests**: Release retained request captures between sequential RPCs so the
+  static-allocation regression does not exhaust the byte-buffer pool itself.
+- **RPC / Events**: Re-register receive listeners on reinitialization, detach
+  them after a failed start, and drain transport callbacks before clearing
+  handler/subscription state during shutdown. Clear pending field-request
+  callbacks on subscriber shutdown, and release subscriber callback captures
+  one entry at a time so teardown does not hold a whole fixed-capacity map on
+  the stack. Pending RPC completion callbacks now run after the transport is
+  stopped, rather than before.
+- **Transport injection**: Keep private helper includes usable in the Zephyr
+  module without exporting a source include root. Stop before listener detachment
+  and discard queued receives at the session boundary. Retain cleanup ownership
+  for retry when a quiesced backend still reports running after a stop failure.
+- **Callbacks**: Invoke event subscriber notification/field callbacks outside
+  storage mutexes; discard failed-send field callbacks. Release RPC-server
+  handler storage one entry at a time after the transport has drained. Remove a
+  completed field request before invocation so a reentrant request survives for
+  the next response. Capture copy/move/destruction still must not re-enter a
+  facade while its storage mutex is held. SD lifecycle changes remain deferred.
+- **RPC**: Represent synchronous calls as revocable wait registrations rather
+  than application callbacks. Response, cancellation and exception cleanup share
+  the pending-call mutex, avoiding both expired stack access and an unbounded
+  callback lifetime drain. Complete synchronous calls before asynchronous
+  shutdown callbacks and attempt every callback. `shutdown()` is no-throw: a
+  throwing application callback no longer escapes the `void` API, which could
+  terminate the process when `shutdown()` is called from a destructor.
+- **RPC**: Never issue call handle `0`. It doubles as the "not registered"
+  sentinel, so once `next_call_handle_` wrapped past 2^32 a pending entry was
+  inserted and then abandoned holding a pointer to the caller's expired stack
+  frame (ASan: `stack-use-after-return`). Registrations now track an explicit
+  armed flag instead of overloading the handle value.
+- **RPC**: Start the response-timeout budget after the transport send returns,
+  so a slow blocking send can no longer consume the whole budget and report
+  `TIMEOUT` for a request the client never waited on. Report
+  `SERVICE_NOT_AVAILABLE` rather than `INTERNAL_ERROR` when submission is
+  refused because the client is stopped or the pending-call table is full.
+- **RPC**: Release session-manager entries when a call completes, is cancelled,
+  or is swept by shutdown, and reject submission when no session id is
+  available. Sessions previously leaked for the client's lifetime; once the
+  table filled, every request reused session id 0 and concurrent calls to the
+  same method could receive each other's responses.
+- **Events**: Detect unsubscribe reentrancy from the dispatching thread's
+  identity rather than a `thread_local`. `thread_local` has no per-task backing
+  on the FreeRTOS and ThreadX ARM ports, where all tasks shared one block, so
+  an unrelated thread was treated as reentrant and skipped the barrier.
+- **Events**: Scope the unsubscribe barrier to the subscription being removed
+  and publish the matched key while the subscription mutex is still held, so a
+  dispatch that has already snapshotted its callback cannot be missed. Always
+  run the barrier on the external path, including when the entry was already
+  removed by a reentrant call — that case is exactly when an application
+  concludes teardown is safe.
+- **Events**: Remove a subscription even when its service endpoint no longer
+  resolves; the unsubscribe send is best-effort and the entry was previously
+  left permanently unremovable.
+- **Events**: Drain in-flight notification dispatches during `shutdown()` and
+  hand off with any external unsubscriber before tearing down the dispatch
+  mutex and condition variable they may still be parked on.
+- **Transport**: Make `TransportSession::active_` atomic and claim stop
+  ownership with a single exchange, so two concurrent `shutdown()` calls (or a
+  destructor racing an explicit one) cannot both close the socket and join the
+  receive thread.
+- **RPC / Events**: Give `~RpcServerImpl`, `~EventPublisherImpl` and
+  `~EventSubscriberImpl` the exception firewall `~RpcClientImpl` already had;
+  each reaches a caller-supplied `ITransport::stop()`.
+- **Events**: External unsubscription waits for previously admitted notification
+  dispatches; callback-initiated unsubscription remains reentrant. Reject duplicate
+  pending field requests without replacing the original callback. Bound callback
+  storage teardown and reject method registration while server shutdown runs.
+- **Transport lifecycle**: Preserve lender-owned queued receives after failed
+  initialization; retain the start error when cleanup succeeds.
+- **FreeRTOS**: Ensure a positive millisecond sleep blocks for at least one tick
+  instead of becoming a zero-tick yield below a 1 kHz tick rate.
 - **Transport**: TCP no longer busy-loops on an invalid length field; resync
   is only at a Magic Cookie. Declared frames larger than `max_receive_buffer`
   report `BUFFER_OVERFLOW` once. UDP rejection IDs are taken from the wire

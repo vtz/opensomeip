@@ -31,7 +31,7 @@ The Events layer implements SOME/IP event notifications and field publications, 
 #### EventSubscriber
 - **Purpose**: Client-side event reception and field requests
 - **Features**:
-  - Event group subscription with filters
+  - Event group subscription (one instance/eventgroup per service per subscriber)
   - Event notification callbacks
   - Field value requests (polling)
   - Subscription status tracking
@@ -150,6 +150,14 @@ subscriber.subscribe_eventgroup(service_id, instance_id, 0x0001,
                                notification_callback);
 ```
 
+Each subscriber accepts only one `(instance_id, eventgroup_id)` for a given
+`service_id`. A different group or instance for that service is rejected without
+sending or replacing the original callback. Exact-key renewal and subscriptions
+to different services remain supported; unsubscribe releases the service slot.
+This restriction also applies through the C API. Notifications contain service
+and event IDs but no instance/eventgroup identity, and the current subscriber API
+has no receive-endpoint binding that could disambiguate them.
+
 ## Fields vs Events
 
 ### Fields
@@ -166,12 +174,14 @@ subscriber.subscribe_eventgroup(service_id, instance_id, 0x0001,
 
 ## Filters and Selectors
 
-Event filters allow selective notifications:
+Filter metadata is stored but is not evaluated during event delivery. Filters
+are not an event-to-group membership map and cannot disambiguate subscriptions.
+Selective sending/filter enforcement remains unimplemented (`REQ_MSG_122`).
 
 ```cpp
 std::vector<EventFilter> filters = {
-    {0x8001, {0x01}},  // Only temperature > threshold
-    {0x8002, {0x00}}   // Only speed changes
+    {0x8001, {0x01}},  // Metadata only; no threshold is applied
+    {0x8002, {0x00}}
 };
 
 subscriber.subscribe_eventgroup(service_id, instance_id, eventgroup_id,
@@ -204,7 +214,7 @@ Client Request → PENDING → SUBSCRIBED → Active Notifications
 
 ### Subscriber Optimizations
 - **Callback Efficiency**: Fast notification processing
-- **Filter Application**: Server-side filtering when possible
+- **Filter Metadata**: Stored for future filtering support; not currently enforced
 - **Connection Management**: Automatic reconnection
 - **Resource Limits**: Configurable subscription limits
 

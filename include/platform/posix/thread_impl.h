@@ -28,6 +28,9 @@ namespace someip::platform {
 /** @implements REQ_PLATFORM_POSIX_001, REQ_PAL_MUTEX_LOCK, REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_TRYLOCK, REQ_PAL_MUTEX_NONCOPY */
 using Mutex = std::mutex;
 
+/** @brief Opaque identity of a thread, usable for per-thread reentrancy checks. */
+using ThreadId = std::thread::id;
+
 /** @implements REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_JOINABLE, REQ_PAL_THREAD_JOIN, REQ_PAL_THREAD_NONCOPY, REQ_PAL_THREAD_CREATE_E01, REQ_PAL_THREAD_DTOR_E01 */
 class Thread {
 public:
@@ -91,6 +94,10 @@ private:
 namespace this_thread {
 /** @implements REQ_PAL_SLEEP_DURATION, REQ_PAL_SLEEP_ZERO */
 using std::this_thread::sleep_for;
+
+/** @brief Identity of the calling thread.
+ * @implements REQ_PAL_THREAD_ID */
+using std::this_thread::get_id;
 } // namespace this_thread
 
 }  // namespace someip::platform

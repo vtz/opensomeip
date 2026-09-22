@@ -228,4 +228,12 @@ inline UINT tx_thread_sleep(ULONG ticks) {
     return TX_SUCCESS;
 }
 
+inline TX_THREAD* tx_thread_identify() {
+    // Distinct per host thread: each std::thread that calls this gets its own
+    // thread_local instance, giving a stable per-thread identity usable for
+    // reentrancy checks, the same way a real TX_THREAD* would.
+    thread_local TX_THREAD self_sentinel;
+    return &self_sentinel;
+}
+
 #endif /* MOCK_TX_API_H */

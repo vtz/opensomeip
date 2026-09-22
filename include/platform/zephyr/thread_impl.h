@@ -26,6 +26,9 @@
 namespace someip {
 namespace platform {
 
+/** @brief Opaque identity of a thread, usable for per-thread reentrancy checks. */
+using ThreadId = k_tid_t;
+
 /** @implements REQ_PLATFORM_ZEPHYR_001, REQ_PAL_MUTEX_LOCK, REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_TRYLOCK, REQ_PAL_MUTEX_NONCOPY, REQ_PAL_MUTEX_UNLOCK_E01 */
 class Mutex {
 public:
@@ -156,6 +159,10 @@ void sleep_for(const std::chrono::duration<Rep, Period>& d) {
         ms -= chunk;
     }
 }
+
+/** @brief Identity of the calling thread.
+ * @implements REQ_PAL_THREAD_ID */
+inline ThreadId get_id() { return k_current_get(); }
 
 } // namespace this_thread
 

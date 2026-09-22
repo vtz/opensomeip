@@ -516,7 +516,12 @@ OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_event_subscriber_destroy(open
 OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_event_subscriber_initialize(opensomeip_event_subscriber_t* s);
 OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_event_subscriber_shutdown(opensomeip_event_subscriber_t* s);
 
-/** @implements REQ_CAPI_004, REQ_CAPI_012 */
+/** @implements REQ_CAPI_004, REQ_CAPI_012
+ *  Each subscriber supports only one instance/eventgroup key per service.
+ *  A distinct same-service key returns OPENSOMEIP_RESULT_INTERNAL_ERROR without
+ *  sending or replacing the existing subscription. Exact-key renewal and
+ *  different services are supported; unsubscribe releases the service slot.
+ *  Notifications do not carry instance/eventgroup identity. */
 OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_event_subscriber_subscribe(opensomeip_event_subscriber_t* s,
                                                            uint16_t service_id,
                                                            uint16_t instance_id,
@@ -524,6 +529,12 @@ OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_event_subscriber_subscribe(op
                                                            opensomeip_event_callback_t callback,
                                                            void* user_data);
 
+/** @implements REQ_CAPI_004, REQ_CAPI_012
+ *  Blocks until notification callbacks matched to this exact subscription
+ *  and admitted before removal have returned. Calling it from inside a
+ *  notification callback of the same subscriber is safe and does not block.
+ *  Calling it from a different thread that a notification callback is
+ *  synchronously waiting on will deadlock. */
 OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_event_subscriber_unsubscribe(opensomeip_event_subscriber_t* s,
                                                              uint16_t service_id,
                                                              uint16_t instance_id,

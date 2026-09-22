@@ -14,10 +14,11 @@
 #ifndef SOMEIP_RPC_CLIENT_H
 #define SOMEIP_RPC_CLIENT_H
 
-#include "rpc/rpc_types.h"
 #include "platform/buffer_pool.h"
+#include "rpc/rpc_types.h"
 #include "transport/endpoint.h"
 #include "transport/message_rejection.h"
+#include "transport/transport.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -51,6 +52,17 @@ public:
                        const transport::Endpoint& local_bind = transport::Endpoint("0.0.0.0", 0));
 
     /**
+     * @brief Borrow an exclusive, stopped transport instead of creating UDP.
+     * @param client_id Unique client identifier.
+     * @param transport Must outlive this client; the client manages start/stop.
+     * @param interface_version Service major / Interface Version for outgoing calls.
+     * @note Local binding and transport configuration belong to the supplied backend.
+     * @see transport::ITransport for the injected-transport lifecycle contract.
+     */
+    RpcClient(uint16_t client_id, transport::ITransport& transport,
+              uint8_t interface_version = 0x01);
+
+    /**
      * @brief Destructor
      */
     ~RpcClient();
@@ -69,8 +81,19 @@ public:
 
     /**
      * @brief Shutdown the RPC client
+     * @note All pending synchronous calls are completed before application callbacks run.
+     *       Explicit shutdown attempts every pending application callback; a callback that
+     *       throws is caught and discarded so this function never throws (safe to call from
+     *       an application RAII wrapper's destructor).
      */
     void shutdown();
+
+    /**
+     * @brief Result of the last transport start/stop (including failed-start cleanup).
+     * @return SUCCESS initially, otherwise the last lifecycle outcome; not a receive error.
+     * @note Safe to query during initialize/shutdown; object destruction must be serialized.
+     */
+    Result get_transport_result() const;
 
     /**
      * @brief Set the default destination for method calls
@@ -92,6 +115,12 @@ public:
      * @param parameters Serialized method parameters
      * @param timeout Call timeout configuration
      * @return Synchronous result with return values or error
+     * @note Completion and timeout removal are serialized under the pending-call mutex;
+     *       an already completed response wins over timeout. No application-callback
+     *       lifetime drain is performed. Join outstanding calls before destroying the client.
+     *       The response-time budget starts after the request has been handed to the
+     *       transport (i.e. once the, possibly blocking, send completes); the reported
+     *       elapsed time reflects only the wait for a reply, not the send duration.
      */
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
                                    const platform::ByteBuffer& parameters,
@@ -99,6 +128,7 @@ public:
 
     /**
      * @brief Synchronous RPC method call to an explicit service endpoint
+     * @note Uses the same completion/timeout arbitration as the configured-endpoint overload.
      */
     RpcSyncResult call_method_sync(uint16_t service_id, MethodId method_id,
                                    const platform::ByteBuffer& parameters,

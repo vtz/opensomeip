@@ -14,11 +14,12 @@
 #ifndef SOMEIP_RPC_SERVER_H
 #define SOMEIP_RPC_SERVER_H
 
-#include "rpc/rpc_types.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
+#include "rpc/rpc_types.h"
 #include "transport/endpoint.h"
 #include "transport/message_rejection.h"
+#include "transport/transport.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -66,6 +67,17 @@ public:
                            transport::Endpoint("127.0.0.1", SOMEIP_DEFAULT_RPC_PORT));
 
     /**
+     * @brief Borrow an exclusive, stopped transport instead of creating UDP.
+     * @param service_id Service identifier handled by this server.
+     * @param transport Must outlive this server; the server manages start/stop.
+     * @param interface_version Service major / Interface Version accepted by this server.
+     * @note The supplied backend controls its bind endpoint; no default port is imposed.
+     * @see transport::ITransport for the injected-transport lifecycle contract.
+     */
+    RpcServer(uint16_t service_id, transport::ITransport& transport,
+              uint8_t interface_version = 0x01);
+
+    /**
      * @brief Destructor
      */
     ~RpcServer();
@@ -79,13 +91,27 @@ public:
     /**
      * @brief Initialize the RPC server
      * @return true on success, false on failure
+     * @note Serialized with shutdown(). Method registration before initialization is allowed.
+     * @warning Do not call lifecycle operations from method/transport callbacks or capture
+     *          destructors. Join outstanding API calls before destroying the server.
      */
     bool initialize();
 
     /**
      * @brief Shutdown the RPC server
+     * @note Serialized with initialize() and other shutdown() calls through complete cleanup.
+     *       Registration is rejected during teardown and allowed again after it finishes.
+     * @warning Must not be called from method/transport callbacks or capture destructors:
+     *          stopping the transport waits for callbacks to finish.
      */
     void shutdown();
+
+    /**
+     * @brief Result of the last transport start/stop (including failed-start cleanup).
+     * @return SUCCESS initially, otherwise the last lifecycle outcome; not a receive error.
+     * @note Safe to query during initialize/shutdown; object destruction must be serialized.
+     */
+    Result get_transport_result() const;
 
     /**
      * @brief Register a method handler

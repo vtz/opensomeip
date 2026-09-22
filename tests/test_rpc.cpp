@@ -63,6 +63,34 @@ protected:
     uint16_t client_id_;
 };
 
+TEST_F(RpcTest, DefaultTransportsReceiveAfterRestart)
+{
+    RpcServer server(test_service_id_, 1, transport::Endpoint("127.0.0.1", 0));
+    RpcClient client(client_id_);
+    RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::milliseconds(1000);
+
+    for (int iteration = 0; iteration < 2; ++iteration) {
+        ASSERT_TRUE(server.register_method(test_method_id_,
+                                           [](uint16_t, uint16_t, const platform::ByteBuffer& input,
+                                              platform::ByteBuffer& output) {
+                                               output = input;
+                                               return RpcResult::SUCCESS;
+                                           }));
+        ASSERT_TRUE(server.initialize());
+        ASSERT_TRUE(client.initialize());
+        const platform::ByteBuffer parameters{0x12, 0x34};
+        const auto response = client.call_method_sync(test_service_id_, test_method_id_, parameters,
+                                                      server.get_local_endpoint(), timeout);
+        EXPECT_EQ(response.result, RpcResult::SUCCESS);
+        EXPECT_EQ(response.return_values, parameters);
+        client.shutdown();
+        server.shutdown();
+        EXPECT_EQ(client.get_transport_result(), Result::SUCCESS);
+        EXPECT_EQ(server.get_transport_result(), Result::SUCCESS);
+    }
+}
+
 // Test RPC types
 TEST_F(RpcTest, RpcResultValues) {
     EXPECT_EQ(static_cast<int>(RpcResult::SUCCESS), 0);

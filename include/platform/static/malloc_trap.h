@@ -8,9 +8,11 @@
 #define SOMEIP_PLATFORM_STATIC_MALLOC_TRAP_H
 
 /**
- * @brief Armable heap trap API for verifying zero-heap operation.
+ * @brief Calling-thread heap trap API for verifying zero-heap operation.
  *
  * @implements REQ_PAL_NOOP_HEAP_VERIFY
+ * @note Each thread starts disarmed. Arming or disarming does not affect other
+ *       threads; background work must arm its own trap if it is to be checked.
  */
 
 namespace someip::platform {

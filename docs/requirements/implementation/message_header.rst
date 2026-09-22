@@ -1521,17 +1521,23 @@ Event and Field Support
 .. requirement:: Selective Event Sending
    :id: REQ_MSG_122
    :satisfies: feat_req_someip_804, feat_req_someip_806
-   :status: implemented
+   :status: pending
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Set event filter on subscriber to accept only eventgroup_id=0x01, publish events for groups 0x01 and 0x02, verify subscriber receives only 0x01.
+   :verification: Pending: demonstrate application-controlled selection of recipients and verify excluded clients receive no notification.
 
    The software should support sending events to a subset of subscribed
    clients, controlled by the application.
 
    **Rationale**: Selective sending reduces bandwidth when not all subscribers need every event.
 
-   **Code Location**: ``src/events/event_subscriber.cpp`` (set_event_filters), ``include/events/event_types.h`` (EventFilter)
+   **Implementation limitation**: ``EventFilter`` metadata is stored but not
+   evaluated during delivery; ``set_event_filters`` is not evidence of selective
+   sending. Each ``EventSubscriber`` accepts only one instance/eventgroup key per
+   service because notifications do not carry instance/eventgroup identity.
+   Admission tests in ``tests/test_subscriber_dispatch.cpp`` cover that restriction,
+   not selective sending. Supporting multiple keys requires an explicit receive
+   binding/membership design; optional filters alone cannot provide it.
 
 .. requirement:: Field Getter Support
    :id: REQ_MSG_123

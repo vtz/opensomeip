@@ -15,15 +15,22 @@
  * End-to-end integration tests for the static-allocation backend.
  *
  * Each test arms the malloc trap around protocol operations to prove
- * zero heap usage.  Pools are warmed up BEFORE arming so that lazy
- * first-use initialisation (if any) doesn't trip the trap.
+ * zero heap usage on the calling thread. Pools are warmed up BEFORE arming so
+ * that lazy first-use initialisation (if any) doesn't trip the trap.
  *
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
  */
 
+#include <atomic>
+#include <chrono>
+#include <cstdlib>
+#include <cstring>
 #include <gtest/gtest.h>
+#include <thread>
 
+#include "events/event_publisher.h"
+#include "events/event_subscriber.h"
 #include "malloc_trap.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
@@ -31,20 +38,17 @@
 #include "platform/memory.h"
 #include "rpc/rpc_client.h"
 #include "rpc/rpc_server.h"
-#include "events/event_publisher.h"
-#include "events/event_subscriber.h"
 #include "sd/sd_client.h"
 #include "sd/sd_server.h"
 #include "someip/message.h"
 #include "someip/payload_view.h"
 #include "static_config.h"
-
-#include <cstring>
+#include "transport/udp_transport.h"
 
 namespace someip::platform {
 namespace {
 
-/// RAII guard: arms the malloc trap on construction, disarms on destruction.
+/// RAII guard: arms the calling thread's malloc trap, disarms on destruction.
 /// Prevents the trap from staying armed when ASSERT_* macros abort a test.
 class MallocTrapGuard {
 public:
@@ -71,6 +75,125 @@ protected:
         if (slot) release_buffer(slot);
     }
 };
+
+/**
+ * @test_case TC_STATIC_INT_BORROWED_TRANSPORT
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_003
+ */
+TEST_F(StaticAllocIntegrationTest, BorrowedTransportFacadeConstructionUnderTrap)
+{
+    const transport::Endpoint bind("0.0.0.0", 0);
+    transport::UdpTransport network(bind);
+
+    MallocTrapGuard guard;
+    {
+        rpc::RpcClient client(7, network);
+        EXPECT_EQ(client.get_transport_result(), Result::SUCCESS);
+    }
+    {
+        rpc::RpcServer server(0x1234, network);
+        EXPECT_EQ(server.get_transport_result(), Result::SUCCESS);
+    }
+    {
+        events::EventPublisher publisher(0x1234, 1, network);
+        EXPECT_EQ(publisher.get_transport_result(), Result::SUCCESS);
+    }
+    {
+        events::EventSubscriber subscriber(7, network);
+        EXPECT_EQ(subscriber.get_transport_result(), Result::SUCCESS);
+    }
+}
+
+/**
+ * @test_case TC_STATIC_INT_SYNC_CALLBACK_LIFETIME
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_003
+ */
+TEST_F(StaticAllocIntegrationTest, SyncWaitRegistrationDoesNotAllocate)
+{
+    rpc::RpcClient client(7);
+    ASSERT_TRUE(client.initialize());
+    transport::UdpTransport peer(transport::Endpoint("127.0.0.1", 0));
+    ASSERT_EQ(peer.start(), Result::SUCCESS);
+    rpc::RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::milliseconds(0);
+    {
+        MallocTrapGuard guard;
+        const auto result =
+            client.call_method_sync(0x1234, 0x0042, {}, peer.get_local_endpoint(), timeout);
+        EXPECT_EQ(result.result, rpc::RpcResult::TIMEOUT);
+    }
+    client.shutdown();
+    EXPECT_EQ(peer.stop(), Result::SUCCESS);
+}
+
+/**
+ * @test_case TC_STATIC_INT_TRAP_THREAD_SCOPE
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ */
+TEST_F(StaticAllocIntegrationTest, ArmedTrapDoesNotAffectAnotherThreadsAllocation)
+{
+    std::atomic<bool> allocate{false};
+    std::atomic<bool> complete{false};
+    bool worker_armed = true;
+    bool allocated = false;
+    bool caller_still_armed = false;
+    std::thread worker([&] {
+        while (!allocate.load()) {
+            std::this_thread::yield();
+        }
+        worker_armed = malloc_trap_is_armed();
+        void* (*volatile heap_allocate)(size_t) = &std::malloc;
+        void (*volatile heap_release)(void*) = &std::free;
+        void* memory = heap_allocate(64);
+        allocated = memory != nullptr;
+        heap_release(memory);
+        malloc_trap_arm();
+        malloc_trap_disarm();
+        complete.store(true);
+    });
+    {
+        MallocTrapGuard guard;
+        allocate.store(true);
+        while (!complete.load()) {
+            std::this_thread::yield();
+        }
+        caller_still_armed = malloc_trap_is_armed();
+    }
+    worker.join();
+    EXPECT_FALSE(worker_armed);
+    EXPECT_TRUE(allocated);
+    EXPECT_TRUE(caller_still_armed);
+    EXPECT_FALSE(malloc_trap_is_armed());
+}
+
+/**
+ * @test_case TC_STATIC_INT_TRAP_ARMED_ALLOC
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ */
+TEST(StaticAllocTrapDeathTest, ArmedCallingThreadStillTrapsHeapAllocation)
+{
+    EXPECT_DEATH_IF_SUPPORTED(
+        {
+            void* (*volatile heap_allocate)(size_t) = &std::malloc;
+            malloc_trap_arm();
+            static_cast<void>(heap_allocate(64));
+        },
+        "MALLOC TRAP:");
+}
+
+TEST(StaticAllocTrapDeathTest, ArmedWorkerThreadStillTrapsHeapAllocation)
+{
+    EXPECT_DEATH_IF_SUPPORTED(
+        {
+            std::thread worker([] {
+                void* (*volatile heap_allocate)(size_t) = &std::malloc;
+                malloc_trap_arm();
+                static_cast<void>(heap_allocate(64));
+            });
+            worker.join();
+        },
+        "MALLOC TRAP:");
+}
 
 /**
  * @test_case TC_STATIC_INT_ROUNDTRIP

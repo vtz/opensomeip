@@ -120,6 +120,7 @@ struct EventConfig {
 
 /**
  * @brief Event filter for selective notifications
+ * @note Filter metadata is currently stored but not evaluated during event delivery.
  */
 struct EventFilter {
     uint16_t event_id{0};
