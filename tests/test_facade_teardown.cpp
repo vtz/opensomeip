@@ -14,12 +14,15 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <functional>
+#include <future>
 #include <gtest/gtest.h>
 #include <mutex>
 #include <stdexcept>
 #include <thread>
 
 #include "../src/transport/transport_session.h"
+#include "callback_release_guard.h"
 #include "events/event_publisher.h"
 #include "rpc/rpc_server.h"
 #include "someip/message.h"
@@ -103,6 +106,9 @@ class FakeTransport final : public transport::ITransport {
         // caller observe active_ == true and enter here concurrently.
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         ++stop_calls;
+        if (on_stop) {
+            on_stop();
+        }
         running_ = remain_running_on_stop;
         --in_progress_;
         if (throw_on_stop) {
@@ -129,12 +135,21 @@ class FakeTransport final : public transport::ITransport {
     std::atomic<unsigned> starts{0};
     std::atomic<unsigned> stop_calls{0};
     std::atomic<int> max_concurrent_stops{0};
+    std::function<void()> on_stop;
 
    private:
     std::atomic<bool> running_{false};
     std::atomic<int> in_progress_{0};
     std::mutex mutex_;
     ITransportListener* listener_{nullptr};
+};
+
+struct ResetStopHook {
+    FakeTransport& transport;
+    ~ResetStopHook()
+    {
+        transport.on_stop = nullptr;
+    }
 };
 
 /**
@@ -164,6 +179,101 @@ TEST(FacadeTeardownTest, ConcurrentShutdownCallsStopExactlyOnceOnRpcServer)
     EXPECT_EQ(transport.listener(), nullptr);
     EXPECT_FALSE(transport.is_running());
 }
+
+/**
+ * @test_case TC_RPC_SHUTDOWN_SERIALIZATION
+ * @tests REQ_ARCH_002
+ */
+TEST(FacadeTeardownTest, ShutdownCallersWaitForTheCompleteTeardown)
+{
+    FakeTransport transport;
+    rpc::RpcServer server(SERVICE, transport);
+    ResetStopHook const reset_hook{transport};
+    const auto handler = [](uint16_t, uint16_t, const platform::ByteBuffer&,
+                            platform::ByteBuffer&) { return rpc::RpcResult::SUCCESS; };
+    ASSERT_TRUE(server.register_method(1, handler));
+    ASSERT_TRUE(server.initialize());
+    std::promise<void> entered;
+    std::promise<void> release;
+    std::promise<void> second_entered;
+    auto released = release.get_future().share();
+    std::future<void> first;
+    std::future<void> second;
+    test::CallbackReleaseGuard release_guard(release);
+    transport.on_stop = [&] {
+        entered.set_value();
+        EXPECT_EQ(released.wait_for(std::chrono::seconds(5)), std::future_status::ready);
+    };
+    first = std::async(std::launch::async, [&] { server.shutdown(); });
+    ASSERT_EQ(entered.get_future().wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    second = std::async(std::launch::async, [&] {
+        second_entered.set_value();
+        server.shutdown();
+    });
+    ASSERT_EQ(second_entered.get_future().wait_for(std::chrono::seconds(2)),
+              std::future_status::ready);
+    EXPECT_EQ(second.wait_for(std::chrono::milliseconds(50)), std::future_status::timeout);
+    EXPECT_FALSE(server.register_method(2, handler));
+    release_guard.release();
+    ASSERT_EQ(first.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    first.get();
+    ASSERT_EQ(second.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    second.get();
+    EXPECT_EQ(transport.stop_calls, 1u);
+    EXPECT_TRUE(server.get_registered_methods().empty());
+    EXPECT_TRUE(server.register_method(2, handler));
+    transport.on_stop = nullptr;
+}
+
+TEST(FacadeTeardownTest, InitializationWaitsForShutdownCleanup)
+{
+    FakeTransport transport;
+    rpc::RpcServer server(SERVICE, transport);
+    ResetStopHook const reset_hook{transport};
+    ASSERT_TRUE(server.initialize());
+    std::promise<void> entered;
+    std::promise<void> release;
+    std::promise<void> initialize_entered;
+    auto released = release.get_future().share();
+    std::future<void> shutdown;
+    std::future<bool> initialize;
+    test::CallbackReleaseGuard release_guard(release);
+    transport.on_stop = [&] {
+        entered.set_value();
+        EXPECT_EQ(released.wait_for(std::chrono::seconds(5)), std::future_status::ready);
+    };
+    shutdown = std::async(std::launch::async, [&] { server.shutdown(); });
+    ASSERT_EQ(entered.get_future().wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    initialize = std::async(std::launch::async, [&] {
+        initialize_entered.set_value();
+        return server.initialize();
+    });
+    ASSERT_EQ(initialize_entered.get_future().wait_for(std::chrono::seconds(2)),
+              std::future_status::ready);
+    EXPECT_EQ(initialize.wait_for(std::chrono::milliseconds(50)), std::future_status::timeout);
+    release_guard.release();
+    ASSERT_EQ(shutdown.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    shutdown.get();
+    ASSERT_EQ(initialize.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    EXPECT_TRUE(initialize.get());
+    EXPECT_EQ(transport.starts, 2u);
+    transport.on_stop = nullptr;
+}
+
+#ifdef __cpp_exceptions
+TEST(FacadeTeardownTest, ShutdownGateIsReleasedOnException)
+{
+    FakeTransport transport;
+    rpc::RpcServer server(SERVICE, transport);
+    ASSERT_TRUE(server.initialize());
+    transport.throw_on_stop = true;
+    EXPECT_THROW(server.shutdown(), std::runtime_error);
+    EXPECT_TRUE(
+        server.register_method(1, [](uint16_t, uint16_t, const platform::ByteBuffer&,
+                                     platform::ByteBuffer&) { return rpc::RpcResult::SUCCESS; }));
+    transport.throw_on_stop = false;
+}
+#endif
 
 // EventPublisher also owns a cyclic-publish timer thread that shutdown()
 // joins; concurrently racing EventPublisher::shutdown() from two threads can

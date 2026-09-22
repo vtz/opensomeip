@@ -272,6 +272,19 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   report `BUFFER_OVERFLOW` once. UDP rejection IDs are taken from the wire
   prefix, and malformed SOME/IP-TP datagrams report `TP_REASSEMBLY`
   ([#315](https://github.com/vtz/opensomeip/issues/315)).
+- **Events**: Reject distinct instance/eventgroup subscriptions for the same service
+  on one subscriber, rather than choosing an arbitrary callback for notifications
+  lacking that identity. Exact-key renewal and different services remain supported.
+  The C API follows the same restriction. Document that filter metadata is not
+  enforced and selective sending remains pending.
+- **RPC server**: Serialize initialize/shutdown through complete cleanup, gate method
+  registration before stopping dispatch, and release the gate on exceptional exits.
+  Registration before initialization remains supported.
+- **FreeRTOS**: Split oversized sleeps into full-width finite tick chunks instead
+  of narrowing away the requested delay. Batch arithmetic before multiplication
+  and round the final remainder upward.
+- **Tests**: Bound callback-entry waits and release parked callbacks on assertion
+  failure before joining async workers.
 - **FreeRTOS**: Round positive sleep requests upward when converting milliseconds
   to ticks, including fractional ticks such as 11 ms at 100 Hz.
 - **Static-allocation tests**: Scope the host heap trap to the thread that arms it,

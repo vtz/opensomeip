@@ -135,6 +135,25 @@ target_link_libraries(test_e2e someip-core gtest_main)
         target_link_libraries(test_freertos_sleep PRIVATE gtest_main Threads::Threads)
         add_test(NAME FreeRtosSleepTest COMMAND test_freertos_sleep)
 
+        foreach(tick_bits 16 32)
+            foreach(tick_rate 100 128)
+                set(sleep_target test_freertos_sleep_${tick_bits}_${tick_rate})
+                add_executable(${sleep_target} test_freertos_sleep_chunks.cpp)
+                target_include_directories(${sleep_target} BEFORE PRIVATE
+                    ${CMAKE_CURRENT_SOURCE_DIR}/mocks/freertos
+                    ${CMAKE_SOURCE_DIR}/include
+                    ${CMAKE_SOURCE_DIR}/include/platform/dynamic
+                    ${CMAKE_SOURCE_DIR}/include/platform/freertos)
+                target_compile_definitions(${sleep_target} PRIVATE
+                    configTICK_RATE_HZ=${tick_rate}
+                    configUSE_16_BIT_TICKS=$<STREQUAL:${tick_bits},16>
+                    SOMEIP_FREERTOS_CAPTURE_DELAYS)
+                target_link_libraries(${sleep_target} PRIVATE gtest_main Threads::Threads)
+                add_test(NAME FreeRtosSleepChunks${tick_bits}_${tick_rate} COMMAND ${sleep_target})
+                set_tests_properties(FreeRtosSleepChunks${tick_bits}_${tick_rate} PROPERTIES TIMEOUT 10)
+            endforeach()
+        endforeach()
+
         # ThreadX PAL via mock
         add_pal_mock_test(test_pal_threadx_mock
             test_pal_threadx_mock.cpp

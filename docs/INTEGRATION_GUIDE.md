@@ -549,6 +549,11 @@ the injection API does not add SD integration or multicast controls to `ITranspo
   capture copy/move operations and destructors must not re-enter the facade.
   Shared owners whose moved-from destruction is inert can release their last
   reference after unlocking.
+- Each subscriber supports one instance/eventgroup key per service. It rejects
+  a distinct same-service key before sending or mutating the existing subscription;
+  exact-key renewal and different services remain supported. Wire notifications
+  lack instance/eventgroup identity, and optional filters are stored metadata,
+  not enforced routing rules. The same admission restriction applies to the C API.
 - Subscriber notification and field handlers are invoked from snapshots after
   releasing the subscription and field mutexes. A handler may query state,
   unsubscribe, or request the next field value. The accepted notification's
@@ -569,7 +574,12 @@ the injection API does not add SD integration or multicast controls to `ITranspo
   successful initialization shuts it down without deleting it.
   It does not restore cleared method registrations, published event definitions
   or field caches, subscriptions, or pending field callbacks: register them again.
-- Serialize lifecycle calls externally and quiesce application mutations of
+- `RpcServer` serializes initialization and complete shutdown internally, including
+  cleanup retries. Method registration is allowed before initialization and after
+  shutdown, but rejected while teardown is in progress. A registration that wins
+  the method lock before shutdown begins can succeed and then be cleared.
+  Other facades still require external lifecycle serialization.
+- Serialize lifecycle calls externally where required and quiesce application mutations of
   registrations/subscriptions before shutdown. Join outstanding calls before
   destroying the facade. Do not initialize, shut down, or destroy
   a facade from a transport or application callback: stopping there could wait
@@ -587,7 +597,8 @@ the injection API does not add SD integration or multicast controls to `ITranspo
 This is the first increment of [#341](https://github.com/vtz/opensomeip/issues/341),
 not a shared-socket dispatcher or a complete runtime coordinator. SD injection,
 externally running/shared transports, and new C injection entry points remain
-out of scope. Existing C API entry points retain their default behavior.
+out of scope. Existing C API signatures and default transport construction remain
+unchanged; event subscriptions follow the admission restriction above.
 The implementation keeps owned default transports inline and does not introduce
 a heap allocation for the borrowed transport in static-allocation builds.
 That choice reserves a disengaged UDP storage slot even for a borrowed backend,

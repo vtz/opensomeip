@@ -39,9 +39,11 @@
 #include <semphr.h>
 
 #include "platform/containers.h"
+#include "platform/freertos/delay_ticks.h"
 
 #include <chrono>
 #include <cstdint>
+#include <limits>
 #include <tuple>
 
 #ifndef SOMEIP_FREERTOS_THREAD_STACK_SIZE
@@ -250,16 +252,25 @@ private:
 namespace this_thread {
 
 /** @implements REQ_PAL_SLEEP_DURATION, REQ_PAL_SLEEP_ZERO */
+// The rounded duration must fit in std::chrono::milliseconds::rep.
 template <typename Rep, typename Period>
 void sleep_for(const std::chrono::duration<Rep, Period>& d) {
     const auto ms = std::chrono::ceil<std::chrono::milliseconds>(d).count();
     if (ms <= 0) return;
-    TickType_t ticks = static_cast<TickType_t>(
-        (static_cast<uint64_t>(ms) * configTICK_RATE_HZ + 999U) / 1000U);
-    if (ticks == 0) {
-        ticks = 1;
+    static_assert(configTICK_RATE_HZ > 0);
+    static_assert(configTICK_RATE_HZ <= std::numeric_limits<uint32_t>::max());
+    auto remaining_ms = static_cast<uint64_t>(ms);
+    constexpr auto max_chunk = static_cast<uint64_t>(std::numeric_limits<TickType_t>::max());
+    while (remaining_ms != 0) {
+        const auto batch = detail::next_delay_batch(remaining_ms, configTICK_RATE_HZ);
+        remaining_ms = batch.remaining_ms;
+        auto ticks = batch.ticks;
+        while (ticks != 0) {
+            const auto chunk = ticks < max_chunk ? ticks : max_chunk;
+            vTaskDelay(static_cast<TickType_t>(chunk));
+            ticks -= chunk;
+        }
     }
-    vTaskDelay(ticks);
 }
 
 /** @brief Identity of the calling task.

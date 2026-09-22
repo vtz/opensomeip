@@ -116,9 +116,15 @@ public:
      * @param eventgroup_id Event group identifier
      * @param notification_callback Callback for event notifications
      * @param status_callback Callback for subscription status changes
-     * @param filters Optional filters for selective notifications
+     * @param filters Stored filter metadata; not enforced on received notifications
      * @return true if subscription request sent, false if the remote destination
-     *         is unresolved or the send fails
+     *         is unresolved, another instance/eventgroup of the same service is
+     *         already subscribed, or the send fails
+     * @note Only one (instance_id, eventgroup_id) per service_id is supported by this
+     *       subscriber. A distinct key for the same service is rejected without sending
+     *       or changing the existing subscription. Renewal of the exact key is allowed.
+     *       Wire notifications lack instance/eventgroup identity; endpoint resolution
+     *       and optional filters do not supply an unambiguous receive binding.
      */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                             EventNotificationCallback notification_callback,
@@ -187,12 +193,12 @@ public:
                       EventNotificationCallback callback);
 
     /**
-     * @brief Set event filter for selective notifications
+     * @brief Store event filter metadata (not enforced on received notifications)
      *
      * @param service_id Service identifier
      * @param instance_id Service instance identifier
      * @param eventgroup_id Event group identifier
-     * @param filters New filters to apply
+     * @param filters New filters to store
      * @return true if filters updated, false on error
      */
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,

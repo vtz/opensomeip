@@ -91,11 +91,18 @@ public:
     /**
      * @brief Initialize the RPC server
      * @return true on success, false on failure
+     * @note Serialized with shutdown(). Method registration before initialization is allowed.
+     * @warning Do not call lifecycle operations from method/transport callbacks or capture
+     *          destructors. Join outstanding API calls before destroying the server.
      */
     bool initialize();
 
     /**
      * @brief Shutdown the RPC server
+     * @note Serialized with initialize() and other shutdown() calls through complete cleanup.
+     *       Registration is rejected during teardown and allowed again after it finishes.
+     * @warning Must not be called from method/transport callbacks or capture destructors:
+     *          stopping the transport waits for callbacks to finish.
      */
     void shutdown();
 

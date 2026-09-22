@@ -46,6 +46,27 @@ namespace someip::rpc {
  * @satisfies feat_req_someip_92
  */
 class RpcServerImpl : public transport::ITransportListener {
+    class ShutdownGate {
+       public:
+        explicit ShutdownGate(RpcServerImpl& owner) : owner_(owner)
+        {
+            platform::ScopedLock const lock(owner_.methods_mutex_);
+            owner_.shutting_down_ = true;
+        }
+        ~ShutdownGate()
+        {
+            platform::ScopedLock const lock(owner_.methods_mutex_);
+            owner_.shutting_down_ = false;
+        }
+        ShutdownGate(const ShutdownGate&) = delete;
+        ShutdownGate& operator=(const ShutdownGate&) = delete;
+        ShutdownGate(ShutdownGate&&) = delete;
+        ShutdownGate& operator=(ShutdownGate&&) = delete;
+
+       private:
+        RpcServerImpl& owner_;
+    };
+
 public:
     template <typename Transport>
     RpcServerImpl(uint16_t service_id, uint8_t interface_version, Transport&& transport)
@@ -79,6 +100,7 @@ public:
     }
 
     bool initialize() {
+        platform::ScopedLock const lifecycle_lock(lifecycle_mutex_);
         if (running_) {
             return true;
         }
@@ -92,23 +114,17 @@ public:
     }
 
     void shutdown() {
+        platform::ScopedLock const lifecycle_lock(lifecycle_mutex_);
+        ShutdownGate const gate(*this);
         if (!running_) {
             transport_session_.stop();
             return;
         }
 
         running_ = false;
-        {
-            platform::ScopedLock const lock(methods_mutex_);
-            shutting_down_ = true;
-        }
         transport_session_.stop();
 
         someip::detail::release_entries(method_handlers_, methods_mutex_);
-        {
-            platform::ScopedLock const lock(methods_mutex_);
-            shutting_down_ = false;
-        }
     }
 
     bool register_method(MethodId method_id, MethodHandler handler, MethodSemantics semantics) {
@@ -328,6 +344,7 @@ private:
 
     platform::UnorderedMap<MethodId, RegisteredMethod, 32> method_handlers_;
     mutable platform::Mutex methods_mutex_;
+    platform::Mutex lifecycle_mutex_;
     bool shutting_down_{false};
 
     std::atomic<bool> running_;

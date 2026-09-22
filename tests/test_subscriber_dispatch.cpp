@@ -37,6 +37,7 @@
 #include <thread>
 #include <vector>
 
+#include "callback_release_guard.h"
 #include "events/event_subscriber.h"
 #include "platform/memory.h"
 #include "someip/message.h"
@@ -161,6 +162,127 @@ bool wait_for_subscription_count(events::EventSubscriber& subscriber, size_t exp
     return false;
 }
 
+TEST(SubscriberDispatchHarness, ScopeExitReleasesCallbackBeforeJoining)
+{
+    std::promise<void> entered;
+    std::promise<void> release;
+    auto released = release.get_future().share();
+    std::future<std::future_status> dispatch;
+    {
+        test::CallbackReleaseGuard release_guard(release);
+        dispatch = std::async(std::launch::async, [&] {
+            entered.set_value();
+            return released.wait_for(std::chrono::seconds(5));
+        });
+        ASSERT_EQ(entered.get_future().wait_for(std::chrono::seconds(2)),
+                  std::future_status::ready);
+        // No explicit release: the same cleanup runs on assertion failure.
+    }
+    ASSERT_EQ(dispatch.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    EXPECT_EQ(dispatch.get(), std::future_status::ready);
+}
+
+TEST(SubscriberDispatchHarness, MissingCallbackEntryHasABoundedWait)
+{
+    std::promise<void> entered;
+    std::promise<void> release;
+    auto released = release.get_future().share();
+    std::future<void> dispatch;
+    test::CallbackReleaseGuard release_guard(release);
+    dispatch = std::async(std::launch::async, [] {});
+    EXPECT_EQ(entered.get_future().wait_for(std::chrono::milliseconds(20)),
+              std::future_status::timeout);
+    release_guard.release();
+    release_guard.release();
+    EXPECT_EQ(released.wait_for(std::chrono::milliseconds(0)), std::future_status::ready);
+    ASSERT_EQ(dispatch.wait_for(std::chrono::seconds(2)), std::future_status::ready);
+    dispatch.get();
+}
+
+/**
+ * @test_case TC_EVENT_UNAMBIGUOUS_SUBSCRIPTION
+ * @tests REQ_ARCH_002
+ */
+TEST(SubscriberDispatch, RejectsAmbiguousServiceSubscriptionsWithoutReplacingCallback)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(1, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    unsigned original_calls = 0;
+    unsigned other_calls = 0;
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A,
+                                                [&](const events::EventNotification& notification) {
+                                                    ++original_calls;
+                                                    EXPECT_EQ(notification.instance_id, 1u);
+                                                }));
+    const size_t sent = transport.messages.size();
+    EXPECT_FALSE(subscriber.subscribe_eventgroup(
+        SERVICE, 1, GROUP_B, [&](const events::EventNotification&) { ++other_calls; }));
+    EXPECT_FALSE(subscriber.subscribe_eventgroup(
+        SERVICE, 2, GROUP_A, [&](const events::EventNotification&) { ++other_calls; }));
+    EXPECT_EQ(transport.messages.size(), sent);
+    ASSERT_EQ(subscriber.get_active_subscriptions().size(), 1u);
+    auto message = make_notification(SERVICE, EVENT);
+    ASSERT_NE(message, nullptr);
+    ASSERT_TRUE(transport.emit(message));
+    EXPECT_EQ(original_calls, 1u);
+    EXPECT_EQ(other_calls, 0u);
+
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(
+        SERVICE, 1, GROUP_A, [&](const events::EventNotification&) { ++other_calls; }));
+    ASSERT_TRUE(transport.emit(message));
+    EXPECT_EQ(original_calls, 1u);
+    EXPECT_EQ(other_calls, 1u);
+
+    ASSERT_TRUE(subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP_A));
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(SERVICE, 2, GROUP_B,
+                                                [&](const events::EventNotification& notification) {
+                                                    ++other_calls;
+                                                    EXPECT_EQ(notification.instance_id, 2u);
+                                                }));
+    ASSERT_TRUE(transport.emit(message));
+    EXPECT_EQ(other_calls, 2u);
+}
+
+TEST(SubscriberDispatch, DifferentServicesRemainIndependentlyRoutable)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(1, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    unsigned first = 0;
+    unsigned second = 0;
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(
+        SERVICE, 1, GROUP_A, [&](const events::EventNotification&) { ++first; }));
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(
+        SERVICE_B, 2, GROUP_B, [&](const events::EventNotification&) { ++second; }));
+    auto message = make_notification(SERVICE, EVENT);
+    ASSERT_NE(message, nullptr);
+    ASSERT_TRUE(transport.emit(message));
+    EXPECT_EQ(first, 1u);
+    EXPECT_EQ(second, 0u);
+    message->set_service_id(SERVICE_B);
+    ASSERT_TRUE(transport.emit(message));
+    EXPECT_EQ(first, 1u);
+    EXPECT_EQ(second, 1u);
+}
+
+TEST(SubscriberDispatch, FailedSubscriptionDoesNotReserveTheService)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(1, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    transport.send_result = Result::NETWORK_ERROR;
+    EXPECT_FALSE(subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A,
+                                                 [](const events::EventNotification&) {}));
+    EXPECT_TRUE(subscriber.get_active_subscriptions().empty());
+    transport.send_result = Result::SUCCESS;
+    ASSERT_TRUE(subscriber.subscribe_eventgroup(SERVICE, 2, GROUP_B,
+                                                [](const events::EventNotification&) {}));
+}
+
 // ---------------------------------------------------------------------------
 // B1: DispatchFrame reentrancy is keyed on a PAL thread id, not a thread_local
 // chain. This is directly observable on host as: a call to
@@ -179,27 +301,32 @@ TEST(SubscriberDispatch, ReentrancyIsPerCallingThreadNotGlobal)
     std::promise<void> entered;
     std::promise<void> release;
     auto released = release.get_future().share();
+    std::future<bool> dispatch;
+    std::future<bool> unsubscribe;
+    test::CallbackReleaseGuard release_guard(release);
     ASSERT_TRUE(subscriber.subscribe_eventgroup(
         SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
             entered.set_value();
-            released.wait();
+            EXPECT_EQ(released.wait_for(std::chrono::seconds(5)), std::future_status::ready);
         }));
 
     const auto message = make_notification(SERVICE, EVENT);
     ASSERT_NE(message, nullptr);
-    auto dispatch = std::async(std::launch::async, [&] { return transport.emit(message); });
-    entered.get_future().wait();
+    dispatch = std::async(std::launch::async, [&, message] { return transport.emit(message); });
+    ASSERT_EQ(entered.get_future().wait_for(std::chrono::seconds(2)), std::future_status::ready);
 
     // Different thread than the one running the callback above: must be
     // treated as external and block on the barrier, not skip it as reentrant.
-    auto unsubscribe = std::async(std::launch::async,
-        [&] { return subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP_A); });
+    unsubscribe = std::async(
+        std::launch::async, [&] { return subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP_A); });
 
     EXPECT_EQ(unsubscribe.wait_for(std::chrono::milliseconds(200)), std::future_status::timeout)
         << "a call from an unrelated thread must not be misidentified as reentrant";
 
-    release.set_value();
+    release_guard.release();
+    ASSERT_EQ(dispatch.wait_for(std::chrono::seconds(2)), std::future_status::ready);
     EXPECT_TRUE(dispatch.get());
+    ASSERT_EQ(unsubscribe.wait_for(std::chrono::seconds(2)), std::future_status::ready);
     EXPECT_TRUE(unsubscribe.get());
 }
 
@@ -224,32 +351,37 @@ TEST(SubscriberDispatch, ExternalUnsubscribeWaitsEvenWhenAlreadyRemoved)
     std::promise<void> erased;
     std::promise<void> release;
     auto released = release.get_future().share();
+    std::future<bool> dispatch;
+    std::future<bool> second_unsubscribe;
+    test::CallbackReleaseGuard release_guard(release);
     ASSERT_TRUE(subscriber.subscribe_eventgroup(
         SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
             // Reentrant self-unsubscribe: erases the subscription while this
             // DispatchFrame (and this callback's captured state) is still alive.
             EXPECT_TRUE(subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP_A));
             erased.set_value();
-            released.wait();
+            EXPECT_EQ(released.wait_for(std::chrono::seconds(5)), std::future_status::ready);
         }));
 
     const auto message = make_notification(SERVICE, EVENT);
     ASSERT_NE(message, nullptr);
-    auto dispatch = std::async(std::launch::async, [&] { return transport.emit(message); });
-    erased.get_future().wait();
+    dispatch = std::async(std::launch::async, [&, message] { return transport.emit(message); });
+    ASSERT_EQ(erased.get_future().wait_for(std::chrono::seconds(2)), std::future_status::ready);
     ASSERT_TRUE(wait_for_subscription_count(subscriber, 0));
 
     // External, idempotent second unsubscribe of the same (already-gone)
     // subscription while the original callback is still running.
-    auto second_unsubscribe = std::async(std::launch::async,
-        [&] { return subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP_A); });
+    second_unsubscribe = std::async(
+        std::launch::async, [&] { return subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP_A); });
 
     EXPECT_EQ(second_unsubscribe.wait_for(std::chrono::milliseconds(200)),
               std::future_status::timeout)
         << "must wait for the in-flight callback even though nothing is left to erase";
 
-    release.set_value();
+    release_guard.release();
+    ASSERT_EQ(dispatch.wait_for(std::chrono::seconds(2)), std::future_status::ready);
     EXPECT_TRUE(dispatch.get());
+    ASSERT_EQ(second_unsubscribe.wait_for(std::chrono::seconds(2)), std::future_status::ready);
     EXPECT_FALSE(second_unsubscribe.get());  // genuinely not found this time
 }
 
@@ -270,23 +402,28 @@ TEST(SubscriberDispatch, ShutdownDrainsInFlightDispatchBeforeReturning)
     std::promise<void> entered;
     std::promise<void> release;
     auto released = release.get_future().share();
+    std::future<bool> dispatch;
+    std::future<void> shutdown;
+    test::CallbackReleaseGuard release_guard(release);
     ASSERT_TRUE(subscriber.subscribe_eventgroup(
         SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
             entered.set_value();
-            released.wait();
+            EXPECT_EQ(released.wait_for(std::chrono::seconds(5)), std::future_status::ready);
         }));
 
     const auto message = make_notification(SERVICE, EVENT);
     ASSERT_NE(message, nullptr);
-    auto dispatch = std::async(std::launch::async, [&] { return transport.emit(message); });
-    entered.get_future().wait();
+    dispatch = std::async(std::launch::async, [&, message] { return transport.emit(message); });
+    ASSERT_EQ(entered.get_future().wait_for(std::chrono::seconds(2)), std::future_status::ready);
 
-    auto shutdown = std::async(std::launch::async, [&] { subscriber.shutdown(); });
+    shutdown = std::async(std::launch::async, [&] { subscriber.shutdown(); });
     EXPECT_EQ(shutdown.wait_for(std::chrono::milliseconds(200)), std::future_status::timeout)
         << "shutdown() must not return while a notification callback is still running";
 
-    release.set_value();
+    release_guard.release();
+    ASSERT_EQ(dispatch.wait_for(std::chrono::seconds(2)), std::future_status::ready);
     EXPECT_TRUE(dispatch.get());
+    ASSERT_EQ(shutdown.wait_for(std::chrono::seconds(2)), std::future_status::ready);
     shutdown.get();
 }
 
@@ -307,27 +444,32 @@ TEST(SubscriberDispatch, UnsubscribeIsScopedToItsOwnSubscription)
     std::promise<void> entered;
     std::promise<void> release;
     auto released = release.get_future().share();
+    std::future<bool> dispatch;
+    std::future<bool> unrelated_unsubscribe;
+    test::CallbackReleaseGuard release_guard(release);
     ASSERT_TRUE(subscriber.subscribe_eventgroup(
         SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
             entered.set_value();
-            released.wait();
+            EXPECT_EQ(released.wait_for(std::chrono::seconds(5)), std::future_status::ready);
         }));
     ASSERT_TRUE(subscriber.subscribe_eventgroup(
         SERVICE_B, 1, GROUP_B, [](const events::EventNotification&) {}));
 
     const auto message = make_notification(SERVICE, EVENT);
     ASSERT_NE(message, nullptr);
-    auto dispatch = std::async(std::launch::async, [&] { return transport.emit(message); });
-    entered.get_future().wait();
+    dispatch = std::async(std::launch::async, [&, message] { return transport.emit(message); });
+    ASSERT_EQ(entered.get_future().wait_for(std::chrono::seconds(2)), std::future_status::ready);
 
     // Unrelated subscription: must not wait on SERVICE/GROUP_A's callback.
-    auto unrelated_unsubscribe = std::async(std::launch::async,
-        [&] { return subscriber.unsubscribe_eventgroup(SERVICE_B, 1, GROUP_B); });
-    EXPECT_EQ(unrelated_unsubscribe.wait_for(std::chrono::seconds(1)), std::future_status::ready)
+    unrelated_unsubscribe = std::async(std::launch::async, [&] {
+        return subscriber.unsubscribe_eventgroup(SERVICE_B, 1, GROUP_B);
+    });
+    ASSERT_EQ(unrelated_unsubscribe.wait_for(std::chrono::seconds(2)), std::future_status::ready)
         << "an unrelated in-flight dispatch must not block this unsubscribe";
     EXPECT_TRUE(unrelated_unsubscribe.get());
 
-    release.set_value();
+    release_guard.release();
+    ASSERT_EQ(dispatch.wait_for(std::chrono::seconds(2)), std::future_status::ready);
     EXPECT_TRUE(dispatch.get());
 }
 

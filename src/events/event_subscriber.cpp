@@ -273,6 +273,11 @@ public:
             return false;
         }
         const platform::String<> key = make_subscription_key(service_id, instance_id, eventgroup_id);
+        for (const auto& entry : subscriptions_) {
+            if (entry.second.subscription.service_id == service_id && entry.first != key) {
+                return false;
+            }
+        }
         if (subscriptions_.size() >= subscriptions_.max_size() &&
             subscriptions_.find(key) == subscriptions_.end()) {
             return false;

@@ -8,10 +8,15 @@
 
 #include <cstdint>
 #include <cassert>
+#include <limits>
 
 typedef int32_t  BaseType_t;
 typedef uint32_t UBaseType_t;
+#if defined(configUSE_16_BIT_TICKS) && configUSE_16_BIT_TICKS == 1
+typedef uint16_t TickType_t;
+#else
 typedef uint32_t TickType_t;
+#endif
 typedef uint32_t StackType_t;
 
 #define pdTRUE   ((BaseType_t)1)
@@ -19,7 +24,7 @@ typedef uint32_t StackType_t;
 #define pdPASS   pdTRUE
 #define pdFAIL   pdFALSE
 
-#define portMAX_DELAY          ((TickType_t)0xFFFFFFFF)
+#define portMAX_DELAY (std::numeric_limits<TickType_t>::max())
 #define configASSERT(x)        do { if (!(x)) assert(false); } while (0)
 #define configMINIMAL_STACK_SIZE 128
 #define configQUEUE_REGISTRY_SIZE 8
