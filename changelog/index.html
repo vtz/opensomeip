@@ -2358,6 +2358,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bug-fixes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2441,7 +2452,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+  <a href="#breaking-changes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -2845,6 +2856,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bug-fixes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2928,7 +2950,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+  <a href="#breaking-changes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -3039,8 +3061,27 @@
   <code>Message::try_deserialize</code> reasons (#316) are not required; failures currently
   report <code>Result::MALFORMED_MESSAGE</code>.</li>
 </ul>
+<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>E2E</strong>: <code>E2EConfig::offset</code> is renamed to <code>offset_bits</code> (no alias). The
+  field is bits from the start of the Length-covered region / Request ID
+  (Open SOME/IP Offset, feat_req_someip_102). The default is
+  <code>E2EConfig::DEFAULT_OFFSET_BITS</code> (64), not the previous unused <code>8</code>.
+  Callers who set <code>offset = 8</code> must switch to <code>offset_bits</code> and drop that
+  assignment. <code>protect</code>/<code>validate</code> return <code>NOT_IMPLEMENTED</code> when
+  <code>offset_bits</code> is not the default or the plugin <code>get_header_size()</code> is
+  not 12 (<code>NOT_INITIALIZED</code> still wins if no profile is registered).
+  <code>INVALID_ARGUMENT</code> remains CRC/Data ID/replay and true caller errors.
+  The C ABI is unchanged (Offset is not a C field)
+  (<a href="https://github.com/vtz/opensomeip/issues/318">#318</a>,
+  leftover <a href="https://github.com/vtz/opensomeip/issues/339">#339</a>).</li>
+</ul>
 <h3 id="bug-fixes">Bug Fixes<a class="headerlink" href="#bug-fixes" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>E2E</strong>: profile resolution stays sequential (ID, then name, then default).
+  A non-zero unregistered <code>profile_id</code> no longer skips <code>profile_name</code> and
+  silently protect/validate with the default 12-byte profile
+  (<a href="https://github.com/vtz/opensomeip/issues/318">#318</a>).</li>
 <li><strong>Transport</strong>: TCP no longer busy-loops on an invalid length field; resync
   is only at a Magic Cookie. Declared frames larger than <code>max_receive_buffer</code>
   report <code>BUFFER_OVERFLOW</code> once. UDP rejection IDs are taken from the wire
@@ -3227,7 +3268,7 @@
   combined TP+E2E path is tracked for a future release.</li>
 </ul>
 <h2 id="unreleased-static-allocation-backend-featureno-heap-static-alloc">Unreleased — Static Allocation Backend (<code>feature/no-heap-static-alloc</code>)<a class="headerlink" href="#unreleased-static-allocation-backend-featureno-heap-static-alloc" title="Permanent link">&para;</a></h2>
-<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
+<h3 id="breaking-changes_1">Breaking Changes<a class="headerlink" href="#breaking-changes_1" title="Permanent link">&para;</a></h3>
 <p>This release introduces a compile-time static allocation backend.  When
 <code>SOMEIP_USE_STATIC_ALLOC=ON</code>, the following public types change their
 underlying representation:</p>

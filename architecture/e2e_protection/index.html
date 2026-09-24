@@ -3193,7 +3193,7 @@
 </ol>
 <h2 id="implementation-details">Implementation Details<a class="headerlink" href="#implementation-details" title="Permanent link">&para;</a></h2>
 <h3 id="e2e-header-insertion">E2E Header Insertion<a class="headerlink" href="#e2e-header-insertion" title="Permanent link">&para;</a></h3>
-<p>According to <code>feat_req_someip_102</code>, the E2E header is inserted after the Return Code field. The default offset is 64 bits (8 bytes).</p>
+<p>According to <code>feat_req_someip_102</code>, the E2E header is inserted after the Return Code field. <code>E2EConfig::offset_bits</code> is the spec Offset in bits from the start of the Length-covered region (Request ID); the default of 64 bits places the header between Return Code and Payload. <code>Message</code> only represents this default layout. <code>E2EProtection</code> returns <code>Result::NOT_IMPLEMENTED</code> for any other Offset and for any plugin whose <code>get_header_size()</code> is not 12 bytes. <code>Result::NOT_INITIALIZED</code> is returned first when no profile is registered. Implementing those layouts is <a href="https://github.com/vtz/opensomeip/issues/339">#339</a>.</p>
 <h3 id="crc-calculation">CRC Calculation<a class="headerlink" href="#crc-calculation" title="Permanent link">&para;</a></h3>
 <p>CRC algorithms implemented:
 - <strong>SAE-J1850</strong>: 8-bit CRC (polynomial 0x1D)
@@ -3249,7 +3249,8 @@ safety-critical applications without proper validation.</p>
 </ul>
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <p>E2E protection errors are propagated via <code>Result</code> codes:
-- <code>Result::INVALID_ARGUMENT</code> - CRC mismatch, wrong data ID
+- <code>Result::INVALID_ARGUMENT</code> - CRC mismatch, wrong data ID, or true caller errors
+- <code>Result::NOT_IMPLEMENTED</code> - non-default Offset (<code>offset_bits</code>) or non-12-byte profile header
 - <code>Result::TIMEOUT</code> - Freshness timeout
 - <code>Result::NOT_INITIALIZED</code> - Profile not registered</p>
 <h2 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h2>

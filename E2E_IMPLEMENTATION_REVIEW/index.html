@@ -2768,6 +2768,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#known-deviations-from-the-specification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known deviations from the specification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#data-protection-compliance" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2922,7 +2933,7 @@
 <p><strong>Implementation Status</strong>: ✅ <strong>COMPLIANT</strong>
 - <strong>Location</strong>: <code>src/someip/message.cpp:142-146</code>
 - <strong>Implementation</strong>: E2E header is inserted after Return Code in <code>serialize()</code> method
-- <strong>Offset Support</strong>: Configurable via <code>E2EConfig::offset</code> (default 8 bytes = 64 bits)
+- <strong>Offset Support</strong>: <code>E2EConfig::offset_bits</code> is the spec Offset in bits from the Length-covered region; default 64. Non-default Offsets return <code>NOT_IMPLEMENTED</code> (<a href="https://github.com/vtz/opensomeip/issues/339">#339</a>)
 - <strong>Verification</strong>: ✅ Header inserted correctly in serialization</p>
 <h4 id="feat_req_someip_103-e2e-header-format">feat_req_someip_103: E2E Header Format<a class="headerlink" href="#feat_req_someip_103-e2e-header-format" title="Permanent link">&para;</a></h4>
 <p><strong>Requirement</strong>: Shows the SOME/IP header format with E2E header (variable size depending on E2E profile)</p>
@@ -3074,11 +3085,18 @@
 <h2 id="specification-compliance-checklist">Specification Compliance Checklist<a class="headerlink" href="#specification-compliance-checklist" title="Permanent link">&para;</a></h2>
 <h3 id="header-format-compliance">Header Format Compliance<a class="headerlink" href="#header-format-compliance" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> E2E header inserted after Return Code</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Default offset of 64 bits (8 bytes) supported</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Configurable offset supported</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Variable-size header format supported</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Default layout: E2E header inserted after Return Code</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Default offset of 64 bits (8 bytes) from the Length-covered region</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled checked/><span class="task-list-indicator"></span></label> Header included in Length field calculation</li>
+</ul>
+<h3 id="known-deviations-from-the-specification">Known deviations from the specification<a class="headerlink" href="#known-deviations-from-the-specification" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>feat_req_someip_102</code> variable Offset: non-default <code>offset_bits</code> returns
+      <code>NOT_IMPLEMENTED</code> because <code>Message</code> only stores the default layout
+      (<a href="https://github.com/vtz/opensomeip/issues/339">#339</a>, leftover of #318)</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>feat_req_someip_103</code> variable profile header size: plugins whose
+      <code>get_header_size()</code> is not 12 return <code>NOT_IMPLEMENTED</code>
+      (<a href="https://github.com/vtz/opensomeip/issues/339">#339</a>, leftover of #318)</li>
 </ul>
 <h3 id="data-protection-compliance">Data Protection Compliance<a class="headerlink" href="#data-protection-compliance" title="Permanent link">&para;</a></h3>
 <ul class="task-list">
