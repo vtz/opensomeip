@@ -42,10 +42,19 @@ struct E2EConfig {
     uint16_t data_id{0};
 
     /**
-     * @brief Offset from Return Code field (default 64 bits = 8 bytes)
-     * According to SOME/IP spec feat_req_someip_102
+     * @brief Spec Offset of the E2E header, stored in bits.
+     *
+     * Open SOME/IP feat_req_someip_102 names this field Offset and measures
+     * it in bits from the start of the Length-covered region (Request ID).
+     * Default 64 bits (8 bytes) places the header immediately after Return
+     * Code (wire byte 16).
+     *
+     * Non-default Offset values are not representable in Message today.
+     * E2EProtection::protect/validate return Result::NOT_IMPLEMENTED for
+     * any value other than DEFAULT_OFFSET_BITS.
      */
-    uint32_t offset{8};
+    static constexpr uint32_t DEFAULT_OFFSET_BITS = 64;
+    uint32_t offset_bits{DEFAULT_OFFSET_BITS};
 
     /**
      * @brief Enable CRC calculation

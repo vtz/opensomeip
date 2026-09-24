@@ -56,8 +56,27 @@
   `Message::try_deserialize` reasons (#316) are not required; failures currently
   report `Result::MALFORMED_MESSAGE`.
 
+### Breaking Changes
+
+- **E2E**: `E2EConfig::offset` is renamed to `offset_bits` (no alias). The
+  field is bits from the start of the Length-covered region / Request ID
+  (Open SOME/IP Offset, feat_req_someip_102). The default is
+  `E2EConfig::DEFAULT_OFFSET_BITS` (64), not the previous unused `8`.
+  Callers who set `offset = 8` must switch to `offset_bits` and drop that
+  assignment. `protect`/`validate` return `NOT_IMPLEMENTED` when
+  `offset_bits` is not the default or the plugin `get_header_size()` is
+  not 12 (`NOT_INITIALIZED` still wins if no profile is registered).
+  `INVALID_ARGUMENT` remains CRC/Data ID/replay and true caller errors.
+  The C ABI is unchanged (Offset is not a C field)
+  ([#318](https://github.com/vtz/opensomeip/issues/318),
+  leftover [#339](https://github.com/vtz/opensomeip/issues/339)).
+
 ### Bug Fixes
 
+- **E2E**: profile resolution stays sequential (ID, then name, then default).
+  A non-zero unregistered `profile_id` no longer skips `profile_name` and
+  silently protect/validate with the default 12-byte profile
+  ([#318](https://github.com/vtz/opensomeip/issues/318)).
 - **Transport**: TCP no longer busy-loops on an invalid length field; resync
   is only at a Magic Cookie. Declared frames larger than `max_receive_buffer`
   report `BUFFER_OVERFLOW` once. UDP rejection IDs are taken from the wire
