@@ -69,13 +69,11 @@ FEAT_REQ_PATTERN = re.compile(r"(feat_req_[a-z0-9_]+)", re.IGNORECASE)
 TEST_REF_PATTERN = re.compile(r"((?:REQ_|feat_req_)[A-Za-z0-9_]+)", re.IGNORECASE)
 BRIEF_PATTERN = re.compile(r"@brief\s+(.+?)(?:\n|\*\/|$)", re.IGNORECASE)
 
-# Patterns for function/class detection
-CPP_FUNCTION_PATTERN = re.compile(
-    r"^(?:virtual\s+)?(?:static\s+)?(?:inline\s+)?"
-    r"(?:\w+(?:<[^>]*>)?(?:::)?)+\s+"
-    r"(\w+)\s*\([^)]*\)",
-    re.MULTILINE,
-)
+# Patterns for function/class detection.
+# Keep the C++ name matcher linear-time: the previous return-type + [^)]* pattern
+# catastrophically backtracks on multi-line constructors such as
+# `Class::Class(Type& a, ...)` when scanned after @implements comments.
+CPP_FUNCTION_PATTERN = re.compile(r"(?:(\w+)::)?(\w+)\s*\(")
 CPP_CLASS_PATTERN = re.compile(r"^(?:class|struct)\s+(\w+)", re.MULTILINE)
 GTEST_PATTERN = re.compile(r"TEST(?:_F)?\s*\(\s*(\w+)\s*,\s*(\w+)\s*\)")
 PYTEST_PATTERN = re.compile(r"^def\s+(test_\w+)\s*\(", re.MULTILINE)
@@ -132,10 +130,10 @@ def find_following_function(content: str, comment_end: int) -> str | None:
     # Look at the next 500 characters after the comment
     following = content[comment_end : comment_end + 500]
 
-    # Try to find a C++ function
+    # Try to find a C++ function or constructor (group 2 is the name)
     match = CPP_FUNCTION_PATTERN.search(following)
     if match:
-        return match.group(1)
+        return match.group(2)
 
     # Try to find a class
     match = CPP_CLASS_PATTERN.search(following)
