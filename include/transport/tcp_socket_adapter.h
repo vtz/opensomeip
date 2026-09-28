@@ -81,10 +81,18 @@ class ITcpSocketAdapter {
     [[nodiscard]] virtual Result send(const platform::ByteBuffer& data) = 0;
 
     /**
-     * Quiescence guarantee: after any set_*_callback(nullptr) returns, the
-     * adapter must not invoke that previously registered callback.
-     * Implementations must ensure no in-flight callback is executing when
-     * the setter returns.
+     * Callback ordering: connected, receive, and disconnected callbacks for a
+     * given connection must not run concurrently. Deliver connected before any
+     * receive that reports the peer endpoint, and disconnected after the last
+     * receive for that connection.
+     *
+     * Quiescence: after any set_*_callback(nullptr) returns to an *external*
+     * caller, the adapter must not invoke that previously registered callback,
+     * and no in-flight callback from another thread may still be executing.
+     * When clear is invoked *from inside* the active callback (e.g. a listener
+     * calls stop() from on_message_received), the setter must return without
+     * waiting for that same callback to finish — otherwise a single-threaded
+     * adapter would deadlock.
      */
     virtual void set_receive_callback(TcpReceiveCallback callback) = 0;
     virtual void set_connected_callback(TcpConnectedCallback callback) = 0;

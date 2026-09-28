@@ -119,6 +119,15 @@ heap intentionally:
 These are not called on the hot path and do not violate the zero-heap
 guarantee for message allocation, serialization, and transport operations.
 
+### Event-driven transports
+
+`EventDrivenUdpTransport` and `EventDrivenTcpTransport` are static-alloc
+compatible: they use `platform::` containers (`ByteBuffer`, `Queue`,
+`Function`, …) and deliver or enqueue one complete frame at a time. They do
+not stage unbounded `std::vector<MessagePtr>` bursts on the receive path.
+Pool exhaustion on TCP consumes the current complete frame and reports
+`OUT_OF_MEMORY` via `on_error` so the stream is not stalled.
+
 ## 5. Thread Safety
 
 - All pool operations (`allocate_message`, `acquire_buffer`,

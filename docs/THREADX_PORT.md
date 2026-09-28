@@ -116,6 +116,23 @@ static buffer:
 - **Release**: Calls the Message destructor, then
   `tx_block_release()`.
 
+## Event-Driven Transports (callback / netconn stacks)
+
+Polling `UdpTransport` / `TcpTransport` use the platform socket API and
+worker threads. ThreadX + lwIP deployments that expose **callback or
+netconn** receive paths should integrate via the event-driven adapters
+instead:
+
+| Piece | Role |
+|-------|------|
+| `IUdpSocketAdapter` / `ITcpSocketAdapter` | Integrator-owned socket façade; invoke receive/connected/disconnected callbacks from the stack's event context |
+| `EventDrivenUdpTransport` / `EventDrivenTcpTransport` | `ITransport` implementations that parse and deliver SOME/IP on those callbacks |
+| Quiescence | Clearing a callback (`set_*_callback(nullptr)`) from outside an active callback must wait until no in-flight invocation remains; clear from *inside* the active callback must not wait for itself (avoids deadlock on single-threaded adapters) |
+| Static allocation | These transports use `platform::` containers and deliver one frame at a time — no unbounded staging `vector` of complete messages |
+
+SD multicast join/leave goes through `IMulticastTransport` (implemented by
+both `UdpTransport` and `EventDrivenUdpTransport`).
+
 ## Integrator Example
 
 ```cmake

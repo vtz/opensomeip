@@ -103,6 +103,20 @@ heap fragmentation:
 - **Locking**: One FreeRTOS mutex per pool; all alloc/release
   operations are under that mutex.
 
+## Event-Driven Transports (callback / netconn stacks)
+
+Polling `UdpTransport` / `TcpTransport` use the platform socket API and
+worker threads. FreeRTOS + lwIP deployments that expose **callback or
+netconn** receive paths should integrate via the event-driven adapters
+instead:
+
+| Piece | Role |
+|-------|------|
+| `IUdpSocketAdapter` / `ITcpSocketAdapter` | Integrator-owned socket façade; invoke receive/connected/disconnected callbacks from the stack's event context |
+| `EventDrivenUdpTransport` / `EventDrivenTcpTransport` | `ITransport` implementations that parse and deliver SOME/IP on those callbacks |
+| Quiescence | Clearing a callback from outside an active callback must wait until no in-flight invocation remains; clear from *inside* the active callback must not wait for itself |
+| Static allocation | Event-driven transports use `platform::` containers and deliver one frame at a time — no unbounded staging of complete messages |
+
 ## Integrator Example
 
 ```cmake

@@ -895,3 +895,47 @@ TEST(EventDrivenTcpTransport, ReceiveBufferExhaustionResetsAndSignals) {
 
     transport.stop();
 }
+
+/**
+ * @brief Listener may call stop() from on_message_received without deadlocking.
+ *
+ * Assumption: the adapter is single-threaded (callbacks are not concurrent) and
+ * clearing callbacks from inside the active receive callback returns without
+ * waiting for that same callback to finish (see ITcpSocketAdapter quiescence).
+ */
+TEST(EventDrivenTcpTransport, StopFromListenerDoesNotDeadlock) {
+    MockTcpAdapter adapter;
+    EventDrivenTcpTransport transport(adapter);
+
+    class StoppingListener : public ITransportListener {
+    public:
+        explicit StoppingListener(EventDrivenTcpTransport& transport) : transport_(transport) {}
+
+        void on_message_received(MessagePtr /*message*/, const Endpoint& /*sender*/) override {
+            ++messages_;
+            stop_result_ = transport_.stop();
+            stopped_ = true;
+        }
+
+        void on_connection_lost(const Endpoint& /*endpoint*/) override {}
+        void on_connection_established(const Endpoint& /*endpoint*/) override {}
+        void on_error(Result /*error*/) override {}
+
+        EventDrivenTcpTransport& transport_;
+        int messages_{0};
+        bool stopped_{false};
+        Result stop_result_{Result::SUCCESS};
+    } listener(transport);
+
+    transport.set_listener(&listener);
+    ASSERT_EQ(transport.initialize(Endpoint{"127.0.0.1", 0}), Result::SUCCESS);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+    adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
+
+    adapter.inject_receive(make_tcp_sample_message().serialize());
+
+    EXPECT_EQ(listener.messages_, 1);
+    EXPECT_TRUE(listener.stopped_);
+    EXPECT_EQ(listener.stop_result_, Result::SUCCESS);
+    EXPECT_FALSE(transport.is_running());
+}

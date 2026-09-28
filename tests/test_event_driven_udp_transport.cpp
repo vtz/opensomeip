@@ -308,3 +308,45 @@ TEST(EventDrivenUdpTransport, MulticastBeforeStart) {
     EXPECT_TRUE(adapter.joins_.empty());
     EXPECT_TRUE(adapter.leaves_.empty());
 }
+
+/**
+ * @brief Listener may call stop() from on_message_received without deadlocking.
+ *
+ * Assumption: the adapter is single-threaded (callbacks are not concurrent) and
+ * clearing the receive callback from inside the active callback returns without
+ * waiting for that same callback to finish (see IUdpSocketAdapter quiescence).
+ */
+TEST(EventDrivenUdpTransport, StopFromListenerDoesNotDeadlock) {
+    MockUdpAdapter adapter;
+    EventDrivenUdpTransport transport(adapter, Endpoint{"127.0.0.1", 0});
+
+    class StoppingListener : public ITransportListener {
+    public:
+        explicit StoppingListener(EventDrivenUdpTransport& transport) : transport_(transport) {}
+
+        void on_message_received(MessagePtr /*message*/, const Endpoint& /*sender*/) override {
+            ++messages_;
+            stop_result_ = transport_.stop();
+            stopped_ = true;
+        }
+
+        void on_connection_lost(const Endpoint& /*endpoint*/) override {}
+        void on_connection_established(const Endpoint& /*endpoint*/) override {}
+        void on_error(Result /*error*/) override {}
+
+        EventDrivenUdpTransport& transport_;
+        int messages_{0};
+        bool stopped_{false};
+        Result stop_result_{Result::SUCCESS};
+    } listener(transport);
+
+    transport.set_listener(&listener);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+
+    adapter.inject_receive(make_sample_message().serialize(), Endpoint{"10.0.0.5", 5000});
+
+    EXPECT_EQ(listener.messages_, 1);
+    EXPECT_TRUE(listener.stopped_);
+    EXPECT_EQ(listener.stop_result_, Result::SUCCESS);
+    EXPECT_FALSE(transport.is_running());
+}

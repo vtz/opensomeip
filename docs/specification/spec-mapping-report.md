@@ -3,16 +3,40 @@
 ## Summary
 
 - **Spec Requirements (open-someip-spec)**: 748
-- **Implementation Requirements (OpenSOMEIP)**: 693
-  - Spec-derived: 448
+- **Implementation Requirements (OpenSOMEIP)**: 697
+  - Spec-derived: 452
   - Implementation-derived: 245
-- **Mapped Spec Requirements**: 747
-- **Unmapped Spec Requirements**: 1
-- **Implementation Reqs Missing Spec Links**: 0
+- **Mapped Spec Requirements**: 745
+- **Unmapped Spec Requirements**: 3
+- **Implementation Reqs Missing Spec Links**: 2
 - **Auto-Corrected Links**: 0
 - **Unresolvable Links**: 0
 
-**Spec Coverage**: 99.9%
+**Spec Coverage**: 99.6%
+
+## Intentionally Unmapped Spec Requirements
+
+These spec entries remain unmapped on purpose. They still count toward the unmapped total so coverage stays honest.
+
+| Spec Requirement | Rationale |
+|------------------|-----------|
+| feat_req_someip_668 | Informational cross-reference only: Request ID handling in SOME/IP-SD is deferred to the SD chapter. Not about unaligned PDU reception; previously mis-linked to REQ_TRANSPORT_024 and removed intentionally. |
+
+## Unexpected Unmapped Spec Requirements
+
+- feat_req_someipsd_203
+- feat_req_someipsd_204
+
+## Implementation Requirements Missing Spec Links
+
+These spec-derived requirements should have `:satisfies:` links:
+
+
+### MSG (1)
+- **REQ_MSG_150**: Structured Deserialize Outcome
+
+### TRANSPORT (1)
+- **REQ_TRANSPORT_026**: Incoming Message Rejection Diagnostics
 
 ## Spec Requirements Coverage by Category
 
@@ -23,11 +47,12 @@
 - Total: 9, Mapped: 9, Coverage: 100%
 
 ### someip-rpc.rst
-- Total: 304, Mapped: 303, Coverage: 99.7%
+- Total: 304, Mapped: 303, Coverage: 100%
 - Unmapped: feat_req_someip_668
 
 ### someip-sd.rst
-- Total: 374, Mapped: 374, Coverage: 100%
+- Total: 374, Mapped: 372, Coverage: 99%
+- Unmapped: feat_req_someipsd_203, feat_req_someipsd_204
 
 ### someip-tp.rst
 - Total: 43, Mapped: 43, Coverage: 100%
@@ -379,8 +404,8 @@
 | feat_req_someipsd_1081 | REQ_SD_122 |
 | feat_req_someipsd_1082 | REQ_SD_236 |
 | feat_req_someipsd_1083 | REQ_SD_236 |
-| feat_req_someipsd_1084 | REQ_SD_236 |
-| feat_req_someipsd_1085 | REQ_SD_126 |
+| feat_req_someipsd_1084 | REQ_SD_1084 |
+| feat_req_someipsd_1085 | REQ_SD_126, REQ_SD_236 |
 | feat_req_someipsd_1086 | REQ_SD_122 |
 | feat_req_someipsd_1087 | REQ_SD_236 |
 | feat_req_someipsd_109 | REQ_SD_283 |
@@ -394,7 +419,7 @@
 | feat_req_someipsd_1102 | REQ_SD_243 |
 | feat_req_someipsd_1103 | REQ_SD_243 |
 | feat_req_someipsd_1111 | REQ_SD_293 |
-| feat_req_someipsd_1112 | REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065... (+7) |
+| feat_req_someipsd_1112 | REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065... (+2) |
 | feat_req_someipsd_1113 | REQ_SD_293 |
 | feat_req_someipsd_1114 | REQ_SD_293 |
 | feat_req_someipsd_1134 | REQ_SD_354 |
@@ -464,7 +489,7 @@
 | feat_req_someipsd_138 | REQ_SD_221 |
 | feat_req_someipsd_139 | REQ_SD_221 |
 | feat_req_someipsd_14 | REQ_SD_046 |
-| feat_req_someipsd_140 | REQ_SD_221 |
+| feat_req_someipsd_140 | REQ_SD_067, REQ_SD_221, REQ_SD_233 |
 | feat_req_someipsd_141 | REQ_SD_001 |
 | feat_req_someipsd_142 | REQ_SD_002 |
 | feat_req_someipsd_144 | REQ_SD_003 |
@@ -483,8 +508,8 @@
 | feat_req_someipsd_160 | REQ_SD_223 |
 | feat_req_someipsd_161 | REQ_SD_223 |
 | feat_req_someipsd_162 | REQ_SD_223 |
-| feat_req_someipsd_163 | REQ_SD_223 |
-| feat_req_someipsd_164 | REQ_SD_223 |
+| feat_req_someipsd_163 | REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_223, REQ_SD_233 |
+| feat_req_someipsd_164 | REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_223, REQ_SD_233 |
 | feat_req_someipsd_17 | REQ_SD_202 |
 | feat_req_someipsd_174 | REQ_SD_121 |
 | feat_req_someipsd_175 | REQ_SD_121 |
@@ -497,8 +522,6 @@
 | feat_req_someipsd_2 | REQ_SD_200C |
 | feat_req_someipsd_200 | REQ_SD_232 |
 | feat_req_someipsd_201 | REQ_SD_232 |
-| feat_req_someipsd_203 | REQ_SD_233 |
-| feat_req_someipsd_204 | REQ_SD_233 |
 | feat_req_someipsd_205 | REQ_SD_006 |
 | feat_req_someipsd_208 | REQ_SD_007 |
 | feat_req_someipsd_209 | REQ_SD_007, REQ_SD_010 |
@@ -617,7 +640,7 @@
 | feat_req_someipsd_733 | REQ_SD_234 |
 | feat_req_someipsd_734 | REQ_SD_032 |
 | feat_req_someipsd_736 | REQ_SD_180 |
-| feat_req_someipsd_737 | REQ_SD_235 |
+| feat_req_someipsd_737 | REQ_SD_074, REQ_SD_235 |
 | feat_req_someipsd_738 | REQ_SD_235 |
 | feat_req_someipsd_739 | REQ_SD_235 |
 | feat_req_someipsd_74 | REQ_SD_281 |
@@ -707,7 +730,7 @@
 | feat_req_someipsd_842 | REQ_SD_347 |
 | feat_req_someipsd_843 | REQ_SD_347 |
 | feat_req_someipsd_844 | REQ_SD_272, REQ_SD_349 |
-| feat_req_someipsd_848 | REQ_SD_349 |
+| feat_req_someipsd_848 | REQ_SD_848 |
 | feat_req_someipsd_849 | REQ_SD_349 |
 | feat_req_someipsd_85 | REQ_SD_212 |
 | feat_req_someipsd_850 | REQ_SD_349 |

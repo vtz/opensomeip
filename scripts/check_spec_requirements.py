@@ -35,6 +35,16 @@ from collections import defaultdict
 from pathlib import Path
 
 
+# Spec IDs left intentionally unmapped (documented so coverage stays honest).
+INTENTIONAL_UNMAPPED_SPEC_REQS = {
+    "feat_req_someip_668": (
+        "Informational cross-reference only: Request ID handling in SOME/IP-SD is "
+        "deferred to the SD chapter. Not about unaligned PDU reception; previously "
+        "mis-linked to REQ_TRANSPORT_024 and removed intentionally."
+    ),
+}
+
+
 def extract_spec_requirements(spec_dir: Path) -> dict[str, dict]:
     """Extract feat_req_* requirements from open-someip-spec RST files."""
     spec_reqs = {}
@@ -327,6 +337,30 @@ def generate_report(
     lines.append(f"- **Unresolvable Links**: {len(analysis['unresolvable_links'])}")
     lines.append("")
     lines.append(f"**Spec Coverage**: {coverage:.1f}%\n")
+
+    intentional = sorted(
+        sid for sid in analysis["unmapped_spec_reqs"] if sid in INTENTIONAL_UNMAPPED_SPEC_REQS
+    )
+    if intentional:
+        lines.append("## Intentionally Unmapped Spec Requirements\n")
+        lines.append(
+            "These spec entries remain unmapped on purpose. They still count toward "
+            "the unmapped total so coverage stays honest.\n"
+        )
+        lines.append("| Spec Requirement | Rationale |")
+        lines.append("|------------------|-----------|")
+        for sid in intentional:
+            lines.append(f"| {sid} | {INTENTIONAL_UNMAPPED_SPEC_REQS[sid]} |")
+        lines.append("")
+
+    unexpected_unmapped = sorted(
+        sid for sid in analysis["unmapped_spec_reqs"] if sid not in INTENTIONAL_UNMAPPED_SPEC_REQS
+    )
+    if unexpected_unmapped:
+        lines.append("## Unexpected Unmapped Spec Requirements\n")
+        for sid in unexpected_unmapped:
+            lines.append(f"- {sid}")
+        lines.append("")
 
     # Auto-corrections
     if analysis["auto_corrections"]:

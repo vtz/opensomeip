@@ -307,7 +307,10 @@ void EventDrivenTcpTransport::on_adapter_connected(const Endpoint& remote)
     if (!running_.load()) {
         return;
     }
-    connection_remote_ = remote;
+    {
+        const platform::ScopedLock lock(queue_mutex_);
+        connection_remote_ = remote;
+    }
     ITransportListener* const cb = listener_.load(std::memory_order_acquire);
     if (cb != nullptr) {
         cb->on_connection_established(remote);
@@ -319,9 +322,10 @@ void EventDrivenTcpTransport::on_adapter_disconnected()
     if (!running_.load()) {
         return;
     }
-    const Endpoint lost = connection_remote_;
+    Endpoint lost;
     {
         const platform::ScopedLock lock(queue_mutex_);
+        lost = connection_remote_;
         receive_buffer_.clear();
     }
     ITransportListener* const cb = listener_.load(std::memory_order_acquire);

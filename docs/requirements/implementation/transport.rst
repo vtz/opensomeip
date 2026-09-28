@@ -47,7 +47,8 @@ UDP Transport
    **Rationale**: UDP unicast is the foundation for SOME/IP point-to-point
    communication.
 
-   **Code Location**: ``src/transport/udp_transport.cpp``
+   **Code Location**: ``src/transport/udp_transport.cpp``,
+   ``src/transport/event_driven_udp_transport.cpp``
 
 .. requirement:: UDP Multicast Support
    :id: REQ_TRANSPORT_001b
@@ -63,7 +64,9 @@ UDP Transport
    **Rationale**: Multicast is required for Service Discovery and
    eventgroup subscriptions.
 
-   **Code Location**: ``src/transport/udp_transport.cpp``
+   **Code Location**: ``src/transport/udp_transport.cpp``,
+   ``src/transport/event_driven_udp_transport.cpp``,
+   ``include/transport/multicast_transport.h``
 
 .. requirement:: Non-Blocking I/O and Thread Safety
    :id: REQ_TRANSPORT_001c
@@ -243,7 +246,9 @@ Transport Interface
    **Rationale**: Abstract interface enables transport-agnostic
    application code and testing.
 
-   **Code Location**: ``include/transport/transport.h``
+   **Code Location**: ``include/transport/transport.h``,
+   ``src/transport/event_driven_udp_transport.cpp``,
+   ``src/transport/event_driven_tcp_transport.cpp``
 
 Endpoint Configuration
 ----------------------
@@ -304,7 +309,8 @@ Transport Protocol Binding
 
    **Rationale**: Multicast reduces bandwidth for events delivered to many subscribers.
 
-   **Code Location**: ``src/transport/udp_transport.cpp`` (join_multicast_group, configure_multicast)
+   **Code Location**: ``src/transport/udp_transport.cpp`` (join_multicast_group, configure_multicast),
+   ``src/transport/event_driven_udp_transport.cpp``, ``include/transport/multicast_transport.h``
 
 .. requirement:: Multicast Threshold Switching
    :id: REQ_TRANSPORT_012
@@ -517,6 +523,9 @@ Service Instance Binding
    when multiple messages are transported in a single UDP or TCP PDU.
 
    **Rationale**: Unaligned message handling supports nPDU and multi-message PDUs.
+   ``feat_req_someip_668`` is an informational cross-reference about Request ID
+   handling in SOME/IP-SD (deferred to the SD chapter), not unaligned reception;
+   it is intentionally left unmapped rather than attached here.
 
    **Code Location**: ``src/transport/tcp_transport.cpp`` (parse_message_from_buffer), ``src/transport/udp_transport.cpp``, ``src/transport/event_driven_tcp_transport.cpp``
 
@@ -869,14 +878,19 @@ Traceability
 Implementation Files
 --------------------
 
-* ``include/transport/transport.h`` - Transport interface
+* ``include/transport/transport.h`` - Transport interface (REQ_TRANSPORT_005)
 * ``include/transport/message_rejection.h`` - Incoming PDU rejection diagnostics
 * ``include/transport/udp_transport.h`` - UDP transport interface
 * ``include/transport/tcp_transport.h`` - TCP transport interface
-* ``include/transport/event_driven_tcp_transport.h`` - Event-driven TCP transport
+* ``include/transport/event_driven_udp_transport.h`` - Event-driven UDP transport (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_005, REQ_TRANSPORT_011)
+* ``include/transport/event_driven_tcp_transport.h`` - Event-driven TCP transport (REQ_TRANSPORT_024, REQ_TRANSPORT_027, REQ_TRANSPORT_028, REQ_TRANSPORT_029)
+* ``include/transport/udp_socket_adapter.h`` - UDP socket adapter for event-driven path (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_011)
+* ``include/transport/tcp_socket_adapter.h`` - TCP socket adapter for event-driven path (REQ_TRANSPORT_024, REQ_TRANSPORT_027)
+* ``include/transport/multicast_transport.h`` - Multicast join/leave interface (REQ_TRANSPORT_001b, REQ_TRANSPORT_011)
 * ``include/transport/endpoint.h`` - Endpoint structure
 * ``src/transport/udp_transport.cpp`` - UDP implementation
 * ``src/transport/tcp_transport.cpp`` - TCP implementation
+* ``src/transport/event_driven_udp_transport.cpp`` - Event-driven UDP implementation (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_005, REQ_TRANSPORT_011)
 * ``src/transport/event_driven_tcp_transport.cpp`` - Event-driven TCP implementation
 
 Test Files
@@ -884,6 +898,7 @@ Test Files
 
 * ``tests/test_udp_transport.cpp`` - UDP transport tests
 * ``tests/test_tcp_transport.cpp`` - TCP transport tests
+* ``tests/test_event_driven_udp_transport.cpp`` - Event-driven UDP transport tests (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_011)
 * ``tests/test_event_driven_tcp_transport.cpp`` - Event-driven TCP transport tests
 
 Examples

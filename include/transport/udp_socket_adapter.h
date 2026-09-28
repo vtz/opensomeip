@@ -83,9 +83,16 @@ class IUdpSocketAdapter {
      * The adapter must invoke the callback for each received datagram from the
      * integrator's event loop or I/O thread.
      *
-     * Quiescence guarantee: after set_receive_callback(nullptr) returns, the
-     * adapter must not invoke any previously registered callback. Implementations
-     * must ensure no in-flight callback is executing when the setter returns.
+     * Callback ordering: connected/receive callbacks for a given socket must not
+     * run concurrently with each other. Deliver connected before the first receive
+     * that depends on the peer endpoint.
+     *
+     * Quiescence: after set_receive_callback(nullptr) returns to an *external*
+     * caller, the adapter must not invoke any previously registered callback, and
+     * no in-flight callback from another thread may still be executing. When
+     * clear is invoked *from inside* the active receive callback (e.g. listener
+     * calls stop()), the setter must return without waiting for that same
+     * callback to finish — otherwise a single-threaded adapter would deadlock.
      */
     virtual void set_receive_callback(UdpReceiveCallback callback) = 0;
 

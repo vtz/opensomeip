@@ -29,6 +29,7 @@
 
 namespace someip::transport {
 
+/** @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_005, REQ_TRANSPORT_011 */
 EventDrivenUdpTransport::EventDrivenUdpTransport(IUdpSocketAdapter& adapter,
                                                  const Endpoint& local_endpoint,
                                                  const EventDrivenUdpTransportConfig& config)
@@ -47,6 +48,7 @@ EventDrivenUdpTransport::~EventDrivenUdpTransport()
     stop();
 }
 
+/** @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_005 */
 Result EventDrivenUdpTransport::send_message(const Message& message, const Endpoint& endpoint)
 {
     if (!is_running()) {
@@ -78,6 +80,7 @@ MessagePtr EventDrivenUdpTransport::receive_message()
     return message;
 }
 
+/** @implements REQ_TRANSPORT_001b, REQ_TRANSPORT_011 */
 Result EventDrivenUdpTransport::connect(const Endpoint& endpoint)
 {
     if (!endpoint.is_valid()) {
@@ -118,6 +121,7 @@ void EventDrivenUdpTransport::set_listener(ITransportListener* listener)
     listener_.store(listener, std::memory_order_release);
 }
 
+/** @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_005 */
 Result EventDrivenUdpTransport::start()
 {
     if (is_running()) {
@@ -164,6 +168,7 @@ bool EventDrivenUdpTransport::is_running() const
     return running_.load();
 }
 
+/** @implements REQ_TRANSPORT_001b, REQ_TRANSPORT_011 */
 Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& multicast_address)
 {
     if (!opened_.load()) {
@@ -175,6 +180,7 @@ Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& m
     return adapter_.join_multicast(multicast_address, config_.multicast_interface);
 }
 
+/** @implements REQ_TRANSPORT_001b, REQ_TRANSPORT_011 */
 Result EventDrivenUdpTransport::leave_multicast_group(const platform::String<>& multicast_address)
 {
     if (!opened_.load()) {
@@ -186,6 +192,7 @@ Result EventDrivenUdpTransport::leave_multicast_group(const platform::String<>& 
     return adapter_.leave_multicast(multicast_address, config_.multicast_interface);
 }
 
+/** @implements REQ_TRANSPORT_001a, REQ_TRANSPORT_005, REQ_PAL_MEM_EXHAUST_E01 */
 void EventDrivenUdpTransport::on_adapter_receive(const platform::ByteBuffer& data,
                                                  const Endpoint& sender)
 {

@@ -375,6 +375,44 @@ if (msg) {
 }
 ```
 
+### Event-Driven Transports (adapter / callback stacks)
+
+`UdpTransport` and `TcpTransport` poll sockets on worker threads. For stacks
+that deliver bytes via callbacks (or when you already own the socket), use the
+event-driven path:
+
+1. Implement `IUdpSocketAdapter` or `ITcpSocketAdapter` around your socket.
+2. Construct `EventDrivenUdpTransport` / `EventDrivenTcpTransport` with that
+   adapter.
+3. For TCP, call `initialize()` (and optionally `enable_server_mode()`) before
+   `start()`.
+4. Install an `ITransportListener` **or** poll `receive_message()` — same
+   mutually exclusive contract as the threaded transports.
+
+Adapter contract (short):
+
+- Deliver `connected` before any `receive` that depends on the peer endpoint;
+  do not run those callbacks concurrently for one connection.
+- Clearing callbacks from outside an active callback must quiesce in-flight
+  work; clearing from *inside* the active callback must return without waiting
+  for itself (so `stop()` from `on_message_received` cannot deadlock on a
+  single-threaded adapter).
+
+```cpp
+#include "transport/event_driven_udp_transport.h"
+#include "transport/udp_socket_adapter.h"
+
+class MyUdpAdapter : public IUdpSocketAdapter {
+    // open/close/send/join/leave + set_receive_callback ...
+};
+
+MyUdpAdapter adapter;
+EventDrivenUdpTransport transport(adapter, Endpoint{"0.0.0.0", 30490});
+transport.set_listener(&app);
+transport.start();
+// From your I/O path: adapter invokes the registered receive callback.
+```
+
 ### Custom Transport Implementation
 
 ```cpp
