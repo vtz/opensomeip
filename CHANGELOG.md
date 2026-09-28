@@ -45,6 +45,15 @@
 
 ### Added
 
+- **Transport**: Event-driven `IUdpSocketAdapter` / `ITcpSocketAdapter` plus
+  `EventDrivenUdpTransport` and `EventDrivenTcpTransport` so integrators can
+  drive `ITransport` from an existing reactor without BSD sockets
+  ([#172](https://github.com/vtz/opensomeip/issues/172)). TCP receive parses
+  and delivers one SOME/IP frame at a time (no bounded staging list). Message
+  pool exhaustion consumes the current complete frame and reports
+  `OUT_OF_MEMORY` via `on_error` (same code as event-driven UDP) so the stream
+  is not stalled; incomplete trailing bytes stay in `receive_buffer_`
+  ([#178](https://github.com/vtz/opensomeip/pull/178)).
 - **Message**: `try_deserialize()` returns a structured `someip::Result` for
   each semantic rejection class. Existing `deserialize()` overloads remain
   source-compatible bool wrappers

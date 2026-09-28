@@ -515,7 +515,7 @@ Service Instance Binding
 
    **Rationale**: Unaligned message handling supports nPDU and multi-message PDUs.
 
-   **Code Location**: ``src/transport/tcp_transport.cpp`` (parse_message_from_buffer), ``src/transport/udp_transport.cpp``
+   **Code Location**: ``src/transport/tcp_transport.cpp`` (parse_message_from_buffer), ``src/transport/udp_transport.cpp``, ``src/transport/event_driven_tcp_transport.cpp``
 
 
 Magic Cookie Details
@@ -562,7 +562,9 @@ Magic Cookie Details
 
    **Code Location**: ``include/transport/message_rejection.h``,
    ``include/transport/transport.h``, ``src/transport/udp_transport.cpp``,
-   ``src/transport/tcp_transport.cpp``, ``src/rpc/rpc_server.cpp``,
+   ``src/transport/tcp_transport.cpp``,
+   ``src/transport/event_driven_tcp_transport.cpp``,
+   ``src/rpc/rpc_server.cpp``,
    ``src/rpc/rpc_client.cpp``, ``src/events/event_subscriber.cpp``,
    ``src/events/event_publisher.cpp``
 

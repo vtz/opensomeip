@@ -15,11 +15,15 @@
 #define SOMEIP_TRANSPORT_EVENT_DRIVEN_TCP_TRANSPORT_H
 
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
 #include <utility>
 
+#include "common/result.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 #include "platform/thread.h"
+#include "transport/message_rejection.h"
 #include "transport/tcp_socket_adapter.h"
 #include "transport/transport.h"
 
@@ -39,6 +43,15 @@ struct EventDrivenTcpTransportConfig {
  * that are not part of the ITransport interface. Callers must use the
  * concrete type to call initialize(), and optionally enable_server_mode()
  * / try_accept_connection() for server-side usage, before calling start().
+ *
+ * Receive follows TcpTransport::receive_loop: parse one complete SOME/IP
+ * frame under the queue mutex, unlock, then deliver_or_enqueue (listener XOR
+ * queue). A complete frame is erased from receive_buffer_ only after it is
+ * delivered, queued, rejected, or consumed on pool exhaustion. Incomplete
+ * trailing bytes stay in the buffer. allocate_message() failure consumes the
+ * current complete frame and reports Result::OUT_OF_MEMORY via on_error
+ * (same code as EventDrivenUdpTransport); parsing continues so the TCP
+ * stream is not stalled.
  */
 class EventDrivenTcpTransport : public ITransport {
    public:
@@ -76,11 +89,27 @@ class EventDrivenTcpTransport : public ITransport {
     Result stop() override;
     bool is_running() const override;
 
+    /**
+     * @brief Test seam: the next @p count allocate_message() calls in the
+     *        receive path return nullptr. Not for production use.
+     */
+    void testing_fail_next_allocations(size_t count);
+
    private:
+    enum class ParseOutcome : uint8_t {
+        NEED_MORE,
+        CONTROL_FRAME,
+        REJECTED,
+        MESSAGE
+    };
+
     void on_adapter_receive(const platform::ByteBuffer& data);
     void on_adapter_connected(const Endpoint& remote);
     void on_adapter_disconnected();
-    bool parse_message_from_buffer(platform::ByteBuffer& buffer, MessagePtr& message);
+    void deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender);
+    void notify_rejection(const MessageRejectionInfo& info);
+    ParseOutcome parse_next_message(platform::ByteBuffer& buffer, MessagePtr& message,
+                                    Result& rejection, MessageRejectionStage& stage);
     static bool is_magic_cookie(const platform::ByteBuffer& data, size_t offset);
 
     ITcpSocketAdapter& adapter_;
@@ -96,6 +125,7 @@ class EventDrivenTcpTransport : public ITransport {
     platform::ByteBuffer receive_buffer_;
     platform::Queue<std::pair<MessagePtr, Endpoint>> message_queue_;
     platform::Mutex queue_mutex_;
+    size_t fail_next_allocations_{0};
 
     static const size_t SOMEIP_HEADER_SIZE;
     static const size_t MAX_MESSAGE_SIZE;

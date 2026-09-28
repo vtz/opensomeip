@@ -164,7 +164,7 @@ These requirements have no detected implementation.
 - **REQ_TRANSPORT_021**: Magic Cookie Fallback Heuristic → `src/transport/tcp_transport.cpp`
 - **REQ_TRANSPORT_022**: Multiple Service Instance Port Binding → `src/sd/sd_server.cpp`
 - **REQ_TRANSPORT_023**: Client Server Address Resolution → `src/sd/sd_client.cpp`
-- **REQ_TRANSPORT_024**: Unaligned Message Reception → `src/transport/tcp_transport.cpp`
+- **REQ_TRANSPORT_024**: Unaligned Message Reception → `src/transport/tcp_transport.cpp`, `src/transport/event_driven_tcp_transport.cpp`
 - **REQ_TRANSPORT_025**: Magic Cookie Message Format → `src/transport/tcp_transport.cpp`
 
 ### Serialization (33 missing)

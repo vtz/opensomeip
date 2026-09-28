@@ -13,6 +13,8 @@
 
 #include "transport/event_driven_tcp_transport.h"
 
+#include <algorithm>
+#include <array>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -27,6 +29,7 @@
 #include "platform/thread.h"
 #include "someip/message.h"
 #include "transport/endpoint.h"
+#include "transport/message_rejection.h"
 #include "transport/tcp_socket_adapter.h"
 #include "transport/transport.h"
 
@@ -209,33 +212,93 @@ bool EventDrivenTcpTransport::is_running() const
     return running_.load();
 }
 
+void EventDrivenTcpTransport::testing_fail_next_allocations(size_t count)
+{
+    const platform::ScopedLock lock(queue_mutex_);
+    fail_next_allocations_ = count;
+}
+
+/** @implements REQ_TRANSPORT_024 */
+void EventDrivenTcpTransport::deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender)
+{
+    ITransportListener* const cb = listener_.load(std::memory_order_acquire);
+    if (cb != nullptr) {
+        cb->on_message_received(message, sender);
+    } else {
+        const platform::ScopedLock lock(queue_mutex_);
+        // NOLINTNEXTLINE(modernize-use-emplace,hicpp-use-emplace)
+        message_queue_.push(std::pair<MessagePtr, Endpoint>{message, sender});
+    }
+}
+
+/** @implements REQ_TRANSPORT_026 */
+void EventDrivenTcpTransport::notify_rejection(const MessageRejectionInfo& info)
+{
+    ITransportListener* const cb = listener_.load(std::memory_order_acquire);
+    if (cb != nullptr) {
+        cb->on_message_rejected(info);
+    }
+}
+
+/** @implements REQ_TRANSPORT_024, REQ_TRANSPORT_026, REQ_PAL_MEM_EXHAUST_E01 */
 void EventDrivenTcpTransport::on_adapter_receive(const platform::ByteBuffer& data)
 {
     if (!running_.load() || !initialized_.load()) {
         return;
     }
 
-    platform::Vector<MessagePtr> delivered;
     {
         const platform::ScopedLock lock(queue_mutex_);
         if (!data.empty()) {
             receive_buffer_.insert(receive_buffer_.end(), data.data(), data.data() + data.size());
         }
-        MessagePtr message;
-        while (parse_message_from_buffer(receive_buffer_, message)) {
-            delivered.push_back(message);
-        }
     }
 
-    ITransportListener* const cb = listener_.load(std::memory_order_acquire);
-    for (const MessagePtr& m : delivered) {
-        if (cb != nullptr) {
-            cb->on_message_received(m, connection_remote_);
-        } else {
+    for (;;) {
+        MessagePtr message;
+        Endpoint sender_ep;
+        ParseOutcome outcome = ParseOutcome::NEED_MORE;
+        Result rejection = Result::SUCCESS;
+        MessageRejectionStage stage = MessageRejectionStage::DESERIALIZE;
+        std::array<uint8_t, 12> header_prefix{};
+        size_t prefix_len = 0;
+        {
             const platform::ScopedLock lock(queue_mutex_);
-            // NOLINTNEXTLINE(modernize-use-emplace,hicpp-use-emplace)
-            message_queue_.push(std::pair<MessagePtr, Endpoint>{m, connection_remote_});
+            if (receive_buffer_.empty()) {
+                break;
+            }
+            prefix_len = std::min(header_prefix.size(), receive_buffer_.size());
+            std::copy_n(receive_buffer_.data(), prefix_len, header_prefix.data());
+            outcome = parse_next_message(receive_buffer_, message, rejection, stage);
+            sender_ep = connection_remote_;
         }
+        if (outcome == ParseOutcome::NEED_MORE) {
+            break;
+        }
+        if (outcome == ParseOutcome::CONTROL_FRAME) {
+            continue;
+        }
+        if (outcome == ParseOutcome::REJECTED) {
+            if (rejection == Result::OUT_OF_MEMORY) {
+                ITransportListener* const cb = listener_.load(std::memory_order_acquire);
+                if (cb != nullptr) {
+                    cb->on_error(Result::OUT_OF_MEMORY);
+                }
+                continue;
+            }
+            MessageRejectionInfo info;
+            info.sender = sender_ep;
+            info.result = rejection;
+            info.stage = stage;
+            if (message) {
+                fill_rejection_ids(info, *message, SOMEIP_HEADER_SIZE);
+            } else {
+                fill_rejection_ids(info, header_prefix.data(), prefix_len);
+            }
+            notify_rejection(info);
+            continue;
+        }
+        deliver_or_enqueue(message, sender_ep);
     }
 }
 
@@ -267,23 +330,29 @@ void EventDrivenTcpTransport::on_adapter_disconnected()
     }
 }
 
-bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& buffer,
-                                                        MessagePtr& message)
+EventDrivenTcpTransport::ParseOutcome EventDrivenTcpTransport::parse_next_message(
+    platform::ByteBuffer& buffer, MessagePtr& message, Result& rejection,
+    MessageRejectionStage& stage)
 {
+    rejection = Result::SUCCESS;
+    stage = MessageRejectionStage::TCP_FRAMING;
+    message.reset();
+
     for (;;) {
         if (buffer.size() > config_.max_receive_buffer) {
             buffer.clear();
-            return false;
+            rejection = Result::BUFFER_OVERFLOW;
+            return ParseOutcome::REJECTED;
         }
 
         if (buffer.size() < SOMEIP_HEADER_SIZE) {
-            return false;
+            return ParseOutcome::NEED_MORE;
         }
 
         if (is_magic_cookie(buffer, 0)) {
             buffer.erase(buffer.begin(),
                          buffer.begin() + static_cast<std::ptrdiff_t>(SOMEIP_HEADER_SIZE));
-            continue;
+            return ParseOutcome::CONTROL_FRAME;
         }
 
         const uint32_t message_length =
@@ -317,7 +386,8 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& bu
 
             if (!found_valid_header) {
                 buffer.clear();
-                return false;
+                rejection = Result::MALFORMED_MESSAGE;
+                return ParseOutcome::REJECTED;
             }
             continue;
         }
@@ -325,17 +395,30 @@ bool EventDrivenTcpTransport::parse_message_from_buffer(platform::ByteBuffer& bu
         const size_t total_message_size = 8 + message_length;
 
         if (buffer.size() < total_message_size) {
-            return false;
+            return ParseOutcome::NEED_MORE;
         }
 
         const platform::ByteBuffer message_data(buffer.data(), buffer.data() + total_message_size);
         buffer.erase(buffer.begin(),
                      buffer.begin() + static_cast<std::ptrdiff_t>(total_message_size));
 
-        message = platform::allocate_message();
-        if ((message != nullptr) && message->deserialize(message_data)) {
-            return true;
+        if (fail_next_allocations_ > 0) {
+            --fail_next_allocations_;
+            rejection = Result::OUT_OF_MEMORY;
+            return ParseOutcome::REJECTED;
         }
+
+        message = platform::allocate_message();
+        if (message == nullptr) {
+            rejection = Result::OUT_OF_MEMORY;
+            return ParseOutcome::REJECTED;
+        }
+        if (!message->deserialize(message_data)) {
+            rejection = Result::MALFORMED_MESSAGE;
+            stage = MessageRejectionStage::DESERIALIZE;
+            return ParseOutcome::REJECTED;
+        }
+        return ParseOutcome::MESSAGE;
     }
 }
 

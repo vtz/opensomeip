@@ -17,8 +17,12 @@
 #include <transport/transport.h>
 #include <someip/message.h>
 #include <atomic>
-#include <mutex>
+#include <chrono>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <mutex>
+#include <vector>
 
 #include "static_pool_init.h"
 
@@ -56,9 +60,27 @@ public:
         cv_.notify_one();
     }
 
+    void on_message_rejected(const MessageRejectionInfo& info) override {
+        std::scoped_lock lock(mutex_);
+        rejections_.push_back(info);
+        cv_.notify_one();
+    }
+
     bool wait_for_message(std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this]() { return !received_messages_.empty(); });
+    }
+
+    bool wait_for_messages(size_t count,
+                           std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
+        std::unique_lock lock(mutex_);
+        return cv_.wait_for(lock, timeout,
+                            [this, count]() { return received_messages_.size() >= count; });
+    }
+
+    bool wait_for_error(std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
+        std::unique_lock lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this]() { return error_count_ > 0; });
     }
 
     bool wait_for_connection(std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
@@ -81,6 +103,16 @@ public:
         return received_messages_.at(index).first->get_service_id();
     }
 
+    uint16_t message_session_id(size_t index) const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.at(index).first->get_session_id();
+    }
+
+    size_t rejection_count() const {
+        std::scoped_lock lock(mutex_);
+        return rejections_.size();
+    }
+
     std::atomic<int> connection_established_count_{0};
     std::atomic<int> connection_lost_count_{0};
     std::atomic<Result> last_error_{Result::SUCCESS};
@@ -92,6 +124,7 @@ private:
     mutable std::mutex mutex_;
     std::condition_variable cv_;
     std::vector<std::pair<MessagePtr, Endpoint>> received_messages_;
+    std::vector<MessageRejectionInfo> rejections_;
 };
 
 class MockTcpAdapter : public ITcpSocketAdapter {
@@ -219,18 +252,27 @@ private:
     Result connect_result_{Result::SUCCESS};
 };
 
-Message make_tcp_sample_message() {
+Message make_tcp_sample_message(uint16_t service_id = 0x1234, uint16_t session_id = 0xDEF0) {
     Message message;
-    message.set_service_id(0x1234);
+    message.set_service_id(service_id);
     message.set_method_id(0x5678);
     message.set_client_id(0x9ABC);
-    message.set_session_id(0xDEF0);
+    message.set_session_id(session_id);
     message.set_protocol_version(1);
     message.set_interface_version(1);
     message.set_message_type(MessageType::REQUEST);
     message.set_return_code(ReturnCode::E_OK);
     message.set_payload({0x01, 0x02, 0x03});
     return message;
+}
+
+platform::ByteBuffer concatenate_frames(const std::vector<Message>& messages) {
+    platform::ByteBuffer combined;
+    for (const Message& message : messages) {
+        platform::ByteBuffer raw = message.serialize();
+        combined.insert(combined.end(), raw.begin(), raw.end());
+    }
+    return combined;
 }
 
 } // namespace
@@ -546,6 +588,226 @@ TEST(EventDrivenTcpTransport, ServerMagicCookieIsSkipped) {
     ASSERT_TRUE(listener.wait_for_message());
     ASSERT_EQ(listener.message_count(), 1u);
     EXPECT_EQ(listener.message_service_id(0), sent.get_service_id());
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_ED_TCP_NPDU_001
+ * @tests REQ_TRANSPORT_024, REQ_PAL_CONTAINER_CAPACITY_EXHAUST
+ * @brief One adapter callback with more than 32 concatenated frames delivers all in order.
+ *
+ * The listener records session IDs and drops the MessagePtr so a 16-slot static
+ * pool can recycle across the burst. The old bounded `delivered` vector could
+ * not hold 40 frames even when the pool could recycle.
+ */
+TEST(EventDrivenTcpTransport, ConcatenatedBurstDeliversAllInOrder) {
+    MockTcpAdapter adapter;
+    EventDrivenTcpTransport transport(adapter);
+
+    class BurstListener : public ITransportListener {
+    public:
+        void on_message_received(MessagePtr message, const Endpoint& /*sender*/) override {
+            std::scoped_lock lock(mutex_);
+            sessions_.push_back(message->get_session_id());
+            cv_.notify_one();
+        }
+        void on_connection_lost(const Endpoint& /*endpoint*/) override {}
+        void on_connection_established(const Endpoint& /*endpoint*/) override {}
+        void on_error(Result error) override {
+            std::scoped_lock lock(mutex_);
+            last_error_ = error;
+            error_count_++;
+            cv_.notify_one();
+        }
+
+        bool wait_for(size_t count,
+                      std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
+            std::unique_lock lock(mutex_);
+            return cv_.wait_for(lock, timeout, [this, count]() { return sessions_.size() >= count; });
+        }
+
+        std::vector<uint16_t> sessions() const {
+            std::scoped_lock lock(mutex_);
+            return sessions_;
+        }
+
+        std::atomic<int> error_count_{0};
+        std::atomic<Result> last_error_{Result::SUCCESS};
+
+    private:
+        mutable std::mutex mutex_;
+        std::condition_variable cv_;
+        std::vector<uint16_t> sessions_;
+    } listener;
+
+    transport.set_listener(&listener);
+
+    ASSERT_EQ(transport.initialize(Endpoint{"127.0.0.1", 0}), Result::SUCCESS);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+    adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
+
+    constexpr size_t kFrameCount = 40;
+    std::vector<Message> messages;
+    messages.reserve(kFrameCount);
+    for (size_t i = 0; i < kFrameCount; ++i) {
+        messages.push_back(make_tcp_sample_message(0x1234, static_cast<uint16_t>(i + 1)));
+    }
+    adapter.inject_receive(concatenate_frames(messages));
+
+    ASSERT_TRUE(listener.wait_for(kFrameCount));
+    std::vector<uint16_t> sessions = listener.sessions();
+    ASSERT_EQ(sessions.size(), kFrameCount);
+    for (size_t i = 0; i < kFrameCount; ++i) {
+        EXPECT_EQ(sessions[i], static_cast<uint16_t>(i + 1));
+    }
+    EXPECT_EQ(transport.receive_message(), nullptr);
+    EXPECT_EQ(listener.error_count_.load(), 0);
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_ED_TCP_QUEUE_001
+ * @tests REQ_TRANSPORT_024
+ * @brief Without a listener, concatenated frames are queued in order and not dropped.
+ */
+TEST(EventDrivenTcpTransport, ConcatenatedBurstEnqueuedWithoutListener) {
+    MockTcpAdapter adapter;
+    EventDrivenTcpTransport transport(adapter);
+
+    ASSERT_EQ(transport.initialize(Endpoint{"127.0.0.1", 0}), Result::SUCCESS);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+    adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
+
+    std::vector<Message> messages = {
+        make_tcp_sample_message(0x1111, 1),
+        make_tcp_sample_message(0x2222, 2),
+        make_tcp_sample_message(0x3333, 3),
+    };
+    adapter.inject_receive(concatenate_frames(messages));
+
+    for (size_t i = 0; i < messages.size(); ++i) {
+        MessagePtr queued = transport.receive_message();
+        ASSERT_NE(queued, nullptr);
+        EXPECT_EQ(queued->get_service_id(), messages[i].get_service_id());
+        EXPECT_EQ(queued->get_session_id(), messages[i].get_session_id());
+    }
+    EXPECT_EQ(transport.receive_message(), nullptr);
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_ED_TCP_FRAG_001
+ * @tests REQ_TRANSPORT_024
+ * @brief Incomplete trailing frame is left for the next adapter callback.
+ */
+TEST(EventDrivenTcpTransport, IncompleteTrailingFrameLeftForNextCallback) {
+    MockTcpAdapter adapter;
+    EventDrivenTcpTransport transport(adapter);
+    TestEventTcpListener listener;
+    transport.set_listener(&listener);
+
+    ASSERT_EQ(transport.initialize(Endpoint{"127.0.0.1", 0}), Result::SUCCESS);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+    adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
+
+    Message first = make_tcp_sample_message(0x1001, 1);
+    Message second = make_tcp_sample_message(0x1002, 2);
+    Message third = make_tcp_sample_message(0x1003, 3);
+    platform::ByteBuffer first_raw = first.serialize();
+    platform::ByteBuffer second_raw = second.serialize();
+    platform::ByteBuffer third_raw = third.serialize();
+
+    platform::ByteBuffer combined;
+    combined.insert(combined.end(), first_raw.begin(), first_raw.end());
+    combined.insert(combined.end(), second_raw.begin(), second_raw.end());
+    const size_t partial = third_raw.size() / 2;
+    combined.insert(combined.end(), third_raw.begin(),
+                    third_raw.begin() + static_cast<std::ptrdiff_t>(partial));
+
+    adapter.inject_receive(combined);
+    ASSERT_TRUE(listener.wait_for_messages(2));
+    ASSERT_EQ(listener.message_count(), 2u);
+    EXPECT_EQ(listener.message_session_id(0), 1);
+    EXPECT_EQ(listener.message_session_id(1), 2);
+
+    platform::ByteBuffer rest(third_raw.begin() + static_cast<std::ptrdiff_t>(partial),
+                              third_raw.end());
+    adapter.inject_receive(rest);
+    ASSERT_TRUE(listener.wait_for_messages(3));
+    ASSERT_EQ(listener.message_count(), 3u);
+    EXPECT_EQ(listener.message_session_id(2), 3);
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_ED_TCP_OOM_001
+ * @tests REQ_PAL_MEM_EXHAUST_E01
+ * @brief Pool exhaustion consumes the current complete frame, notifies OOM, and keeps parsing.
+ */
+TEST(EventDrivenTcpTransport, AllocFailureConsumesFrameAndNotifiesOom) {
+    MockTcpAdapter adapter;
+    EventDrivenTcpTransport transport(adapter);
+    TestEventTcpListener listener;
+    transport.set_listener(&listener);
+
+    ASSERT_EQ(transport.initialize(Endpoint{"127.0.0.1", 0}), Result::SUCCESS);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+    adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
+
+    transport.testing_fail_next_allocations(1);
+
+    std::vector<Message> messages = {
+        make_tcp_sample_message(0x2001, 1),
+        make_tcp_sample_message(0x2002, 2),
+        make_tcp_sample_message(0x2003, 3),
+    };
+    adapter.inject_receive(concatenate_frames(messages));
+
+    ASSERT_TRUE(listener.wait_for_error());
+    EXPECT_EQ(listener.last_error_.load(), Result::OUT_OF_MEMORY);
+    EXPECT_EQ(listener.error_count_.load(), 1);
+    ASSERT_TRUE(listener.wait_for_messages(2));
+    ASSERT_EQ(listener.message_count(), 2u);
+    EXPECT_EQ(listener.message_session_id(0), 2);
+    EXPECT_EQ(listener.message_session_id(1), 3);
+    EXPECT_EQ(listener.rejection_count(), 0u);
+
+    adapter.inject_receive(make_tcp_sample_message(0x2004, 4).serialize());
+    ASSERT_TRUE(listener.wait_for_messages(3));
+    EXPECT_EQ(listener.message_session_id(2), 4);
+    EXPECT_EQ(listener.error_count_.load(), 1);
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_ED_TCP_REJECT_001
+ * @tests REQ_TRANSPORT_026
+ * @brief A complete malformed frame is rejected and does not stall later frames.
+ */
+TEST(EventDrivenTcpTransport, CompleteMalformedFrameNotifiesRejection) {
+    MockTcpAdapter adapter;
+    EventDrivenTcpTransport transport(adapter);
+    TestEventTcpListener listener;
+    transport.set_listener(&listener);
+
+    ASSERT_EQ(transport.initialize(Endpoint{"127.0.0.1", 0}), Result::SUCCESS);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+    adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
+
+    Message bad = make_tcp_sample_message(0x3001, 1);
+    bad.set_protocol_version(0x99);
+    Message good = make_tcp_sample_message(0x3002, 2);
+    adapter.inject_receive(concatenate_frames({bad, good}));
+
+    ASSERT_TRUE(listener.wait_for_messages(1));
+    ASSERT_EQ(listener.message_count(), 1u);
+    EXPECT_EQ(listener.message_session_id(0), 2);
+    ASSERT_EQ(listener.rejection_count(), 1u);
 
     transport.stop();
 }
