@@ -34,7 +34,6 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-
 # Spec IDs left intentionally unmapped (documented so coverage stays honest).
 INTENTIONAL_UNMAPPED_SPEC_REQS = {
     "feat_req_someip_668": (
