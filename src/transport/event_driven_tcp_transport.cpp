@@ -218,7 +218,7 @@ void EventDrivenTcpTransport::testing_fail_next_allocations(size_t count)
     fail_next_allocations_ = count;
 }
 
-/** @implements REQ_TRANSPORT_024 */
+/** @implements REQ_TRANSPORT_024, REQ_TRANSPORT_027 */
 void EventDrivenTcpTransport::deliver_or_enqueue(const MessagePtr& message, const Endpoint& sender)
 {
     ITransportListener* const cb = listener_.load(std::memory_order_acquire);
@@ -231,7 +231,7 @@ void EventDrivenTcpTransport::deliver_or_enqueue(const MessagePtr& message, cons
     }
 }
 
-/** @implements REQ_TRANSPORT_026 */
+/** @implements REQ_TRANSPORT_026, REQ_TRANSPORT_028 */
 void EventDrivenTcpTransport::notify_rejection(const MessageRejectionInfo& info)
 {
     ITransportListener* const cb = listener_.load(std::memory_order_acquire);
@@ -240,7 +240,7 @@ void EventDrivenTcpTransport::notify_rejection(const MessageRejectionInfo& info)
     }
 }
 
-/** @implements REQ_TRANSPORT_024, REQ_TRANSPORT_026, REQ_PAL_MEM_EXHAUST_E01 */
+/** @implements REQ_TRANSPORT_024, REQ_TRANSPORT_027, REQ_TRANSPORT_028, REQ_TRANSPORT_029, REQ_TRANSPORT_026, REQ_PAL_MEM_EXHAUST_E01 */
 void EventDrivenTcpTransport::on_adapter_receive(const platform::ByteBuffer& data)
 {
     if (!running_.load() || !initialized_.load()) {
@@ -339,13 +339,14 @@ EventDrivenTcpTransport::ParseOutcome EventDrivenTcpTransport::parse_next_messag
     message.reset();
 
     for (;;) {
-        if (buffer.size() > config_.max_receive_buffer) {
-            buffer.clear();
-            rejection = Result::BUFFER_OVERFLOW;
-            return ParseOutcome::REJECTED;
-        }
-
         if (buffer.size() < SOMEIP_HEADER_SIZE) {
+            // Retain only an incomplete trailer. If it already exceeds the
+            // configured reassembly limit, discard and signal (REQ_TRANSPORT_028).
+            if (buffer.size() > config_.max_receive_buffer) {
+                buffer.clear();
+                rejection = Result::BUFFER_OVERFLOW;
+                return ParseOutcome::REJECTED;
+            }
             return ParseOutcome::NEED_MORE;
         }
 
@@ -394,7 +395,18 @@ EventDrivenTcpTransport::ParseOutcome EventDrivenTcpTransport::parse_next_messag
 
         const size_t total_message_size = 8 + message_length;
 
+        if (total_message_size > config_.max_receive_buffer) {
+            buffer.clear();
+            rejection = Result::BUFFER_OVERFLOW;
+            return ParseOutcome::REJECTED;
+        }
+
         if (buffer.size() < total_message_size) {
+            if (buffer.size() > config_.max_receive_buffer) {
+                buffer.clear();
+                rejection = Result::BUFFER_OVERFLOW;
+                return ParseOutcome::REJECTED;
+            }
             return ParseOutcome::NEED_MORE;
         }
 

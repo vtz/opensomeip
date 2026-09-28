@@ -3,16 +3,16 @@
 ## Summary
 
 - **Spec Requirements (open-someip-spec)**: 748
-- **Implementation Requirements (OpenSOMEIP)**: 690
-  - Spec-derived: 445
+- **Implementation Requirements (OpenSOMEIP)**: 693
+  - Spec-derived: 448
   - Implementation-derived: 245
-- **Mapped Spec Requirements**: 748
-- **Unmapped Spec Requirements**: 0
+- **Mapped Spec Requirements**: 747
+- **Unmapped Spec Requirements**: 1
 - **Implementation Reqs Missing Spec Links**: 0
 - **Auto-Corrected Links**: 0
 - **Unresolvable Links**: 0
 
-**Spec Coverage**: 100.0%
+**Spec Coverage**: 99.9%
 
 ## Spec Requirements Coverage by Category
 
@@ -23,7 +23,8 @@
 - Total: 9, Mapped: 9, Coverage: 100%
 
 ### someip-rpc.rst
-- Total: 304, Mapped: 304, Coverage: 100%
+- Total: 304, Mapped: 303, Coverage: 99.7%
+- Unmapped: feat_req_someip_668
 
 ### someip-sd.rst
 - Total: 374, Mapped: 374, Coverage: 100%
@@ -158,7 +159,7 @@
 | feat_req_someip_43 | REQ_MSG_001 |
 | feat_req_someip_430 | REQ_TRANSPORT_004A |
 | feat_req_someip_434 | REQ_TRANSPORT_004A |
-| feat_req_someip_435 | REQ_TRANSPORT_004A |
+| feat_req_someip_435 | REQ_TRANSPORT_004A, REQ_TRANSPORT_028, REQ_TRANSPORT_029 |
 | feat_req_someip_436 | REQ_TRANSPORT_004B |
 | feat_req_someip_437 | REQ_TRANSPORT_004B |
 | feat_req_someip_438 | REQ_TRANSPORT_004B |
@@ -208,7 +209,7 @@
 | feat_req_someip_582 | REQ_SER_051, REQ_SER_055 |
 | feat_req_someip_583 | REQ_SER_097 |
 | feat_req_someip_584 | REQ_TRANSPORT_001B |
-| feat_req_someip_585 | REQ_TRANSPORT_002B |
+| feat_req_someip_585 | REQ_TRANSPORT_002B, REQ_TRANSPORT_027 |
 | feat_req_someip_586 | REQ_TRANSPORT_020 |
 | feat_req_someip_589 | REQ_TRANSPORT_025 |
 | feat_req_someip_59 | REQ_MSG_002, REQ_MSG_003 |
@@ -260,11 +261,10 @@
 | feat_req_someip_661 | REQ_TRANSPORT_002B, REQ_TRANSPORT_006, REQ_TRANSPORT_015 |
 | feat_req_someip_662 | REQ_SER_052, REQ_SER_103 |
 | feat_req_someip_663 | REQ_TRANSPORT_010 |
-| feat_req_someip_664 | REQ_TRANSPORT_001C, REQ_TRANSPORT_024 |
+| feat_req_someip_664 | REQ_TRANSPORT_001C, REQ_TRANSPORT_024, REQ_TRANSPORT_027 |
 | feat_req_someip_665 | REQ_SER_050, REQ_TRANSPORT_023 |
 | feat_req_someip_666 | REQ_SER_103 |
 | feat_req_someip_667 | REQ_MSG_119 |
-| feat_req_someip_668 | REQ_TRANSPORT_024 |
 | feat_req_someip_669 | REQ_MSG_118 |
 | feat_req_someip_67 | REQ_MSG_007 |
 | feat_req_someip_670 | REQ_MSG_113 |
@@ -294,7 +294,7 @@
 | feat_req_someip_699 | REQ_MSG_021, REQ_MSG_025 |
 | feat_req_someip_700 | REQ_MSG_023 |
 | feat_req_someip_701 | REQ_MSG_120 |
-| feat_req_someip_702 | REQ_TRANSPORT_010 |
+| feat_req_someip_702 | REQ_TRANSPORT_010, REQ_TRANSPORT_027, REQ_TRANSPORT_028 |
 | feat_req_someip_703 | REQ_MSG_031 |
 | feat_req_someip_704 | REQ_MSG_130 |
 | feat_req_someip_711 | REQ_SER_062, REQ_SER_080, REQ_SER_081, REQ_SER_082 |
@@ -310,7 +310,7 @@
 | feat_req_someip_741 | REQ_TRANSPORT_010 |
 | feat_req_someip_76 | REQ_MSG_010 |
 | feat_req_someip_761 | REQ_MSG_056, REQ_MSG_060_TP, REQ_MSG_060_TP_RESPONSE, REQ_MSG_061_TP, REQ_MSG_062_TP |
-| feat_req_someip_77 | REQ_MSG_010, REQ_MSG_011, REQ_MSG_012, REQ_MSG_014 |
+| feat_req_someip_77 | REQ_MSG_010, REQ_MSG_011, REQ_MSG_012, REQ_MSG_014, REQ_TRANSPORT_027 |
 | feat_req_someip_78 | REQ_MSG_020 |
 | feat_req_someip_79 | REQ_MSG_020 |
 | feat_req_someip_798 | REQ_MSG_012, REQ_MSG_014, REQ_MSG_015 |

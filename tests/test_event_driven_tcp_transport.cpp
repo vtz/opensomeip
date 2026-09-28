@@ -83,6 +83,11 @@ public:
         return cv_.wait_for(lock, timeout, [this]() { return error_count_ > 0; });
     }
 
+    bool wait_for_rejection(std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
+        std::unique_lock lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this]() { return !rejections_.empty(); });
+    }
+
     bool wait_for_connection(std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this]() { return connection_established_count_ > 0; });
@@ -111,6 +116,17 @@ public:
     size_t rejection_count() const {
         std::scoped_lock lock(mutex_);
         return rejections_.size();
+    }
+
+    Result last_rejection_result() const {
+        std::scoped_lock lock(mutex_);
+        return rejections_.empty() ? Result::SUCCESS : rejections_.back().result;
+    }
+
+    MessageRejectionStage last_rejection_stage() const {
+        std::scoped_lock lock(mutex_);
+        return rejections_.empty() ? MessageRejectionStage::DESERIALIZE
+                                   : rejections_.back().stage;
     }
 
     std::atomic<int> connection_established_count_{0};
@@ -594,12 +610,12 @@ TEST(EventDrivenTcpTransport, ServerMagicCookieIsSkipped) {
 
 /**
  * @test_case TC_ED_TCP_NPDU_001
- * @tests REQ_TRANSPORT_024, REQ_PAL_CONTAINER_CAPACITY_EXHAUST
+ * @tests REQ_TRANSPORT_027, REQ_TRANSPORT_024
  * @brief One adapter callback with more than 32 concatenated frames delivers all in order.
  *
  * The listener records session IDs and drops the MessagePtr so a 16-slot static
- * pool can recycle across the burst. The old bounded `delivered` vector could
- * not hold 40 frames even when the pool could recycle.
+ * pool can recycle across the burst. Parse-one/deliver-one avoids a bounded
+ * staging vector that could not hold 40 frames even when the pool could recycle.
  */
 TEST(EventDrivenTcpTransport, ConcatenatedBurstDeliversAllInOrder) {
     MockTcpAdapter adapter;
@@ -669,7 +685,7 @@ TEST(EventDrivenTcpTransport, ConcatenatedBurstDeliversAllInOrder) {
 
 /**
  * @test_case TC_ED_TCP_QUEUE_001
- * @tests REQ_TRANSPORT_024
+ * @tests REQ_TRANSPORT_027
  * @brief Without a listener, concatenated frames are queued in order and not dropped.
  */
 TEST(EventDrivenTcpTransport, ConcatenatedBurstEnqueuedWithoutListener) {
@@ -700,7 +716,7 @@ TEST(EventDrivenTcpTransport, ConcatenatedBurstEnqueuedWithoutListener) {
 
 /**
  * @test_case TC_ED_TCP_FRAG_001
- * @tests REQ_TRANSPORT_024
+ * @tests REQ_TRANSPORT_027, REQ_TRANSPORT_028
  * @brief Incomplete trailing frame is left for the next adapter callback.
  */
 TEST(EventDrivenTcpTransport, IncompleteTrailingFrameLeftForNextCallback) {
@@ -745,7 +761,7 @@ TEST(EventDrivenTcpTransport, IncompleteTrailingFrameLeftForNextCallback) {
 
 /**
  * @test_case TC_ED_TCP_OOM_001
- * @tests REQ_PAL_MEM_EXHAUST_E01
+ * @tests REQ_TRANSPORT_029, REQ_PAL_MEM_EXHAUST_E01
  * @brief Pool exhaustion consumes the current complete frame, notifies OOM, and keeps parsing.
  */
 TEST(EventDrivenTcpTransport, AllocFailureConsumesFrameAndNotifiesOom) {
@@ -808,6 +824,74 @@ TEST(EventDrivenTcpTransport, CompleteMalformedFrameNotifiesRejection) {
     ASSERT_EQ(listener.message_count(), 1u);
     EXPECT_EQ(listener.message_session_id(0), 2);
     ASSERT_EQ(listener.rejection_count(), 1u);
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_ED_TCP_BUF_001
+ * @tests REQ_TRANSPORT_028, REQ_TRANSPORT_027
+ * @brief Complete frames are delivered before buffer exhaustion resets and signals.
+ *
+ * A single callback carries two complete frames plus a Length-declared frame
+ * larger than max_receive_buffer. The complete frames must be delivered in
+ * order; the oversized declaration discards the reassembly buffer and reports
+ * BUFFER_OVERFLOW via on_message_rejected (not silent, not on_error).
+ */
+TEST(EventDrivenTcpTransport, ReceiveBufferExhaustionResetsAndSignals) {
+    MockTcpAdapter adapter;
+    EventDrivenTcpTransportConfig config;
+    config.max_receive_buffer = 64;
+    EventDrivenTcpTransport transport(adapter, config);
+    TestEventTcpListener listener;
+    transport.set_listener(&listener);
+
+    ASSERT_EQ(transport.initialize(Endpoint{"127.0.0.1", 0}), Result::SUCCESS);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+    adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
+
+    Message first = make_tcp_sample_message(0x4001, 1);
+    Message second = make_tcp_sample_message(0x4002, 2);
+    platform::ByteBuffer first_raw = first.serialize();
+    platform::ByteBuffer second_raw = second.serialize();
+    ASSERT_LT(first_raw.size() + second_raw.size(), config.max_receive_buffer);
+
+    // Declared Length implies a frame larger than max_receive_buffer.
+    platform::ByteBuffer oversized_header = {
+        0x40, 0x03, 0x00, 0x01,  // service/method
+        0x00, 0x00, 0x01, 0x00,  // length = 256 → total 264 bytes
+        0x00, 0x01, 0x00, 0x03,  // client/session
+        0x01, 0x01, 0x00, 0x00   // proto/iface/type/return
+    };
+
+    platform::ByteBuffer combined;
+    combined.insert(combined.end(), first_raw.begin(), first_raw.end());
+    combined.insert(combined.end(), second_raw.begin(), second_raw.end());
+    combined.insert(combined.end(), oversized_header.begin(), oversized_header.end());
+    // Pad past max_receive_buffer so a regress-to-early-clear would also drop
+    // the complete frames if it ran before parse-one/deliver-one.
+    while (combined.size() <= config.max_receive_buffer + oversized_header.size()) {
+        combined.push_back(0xAB);
+    }
+
+    adapter.inject_receive(combined);
+
+    ASSERT_TRUE(listener.wait_for_messages(2));
+    ASSERT_EQ(listener.message_count(), 2u);
+    EXPECT_EQ(listener.message_session_id(0), 1);
+    EXPECT_EQ(listener.message_session_id(1), 2);
+
+    ASSERT_TRUE(listener.wait_for_rejection());
+    ASSERT_EQ(listener.rejection_count(), 1u);
+    EXPECT_EQ(listener.last_rejection_result(), Result::BUFFER_OVERFLOW);
+    EXPECT_EQ(listener.last_rejection_stage(), MessageRejectionStage::TCP_FRAMING);
+    EXPECT_EQ(listener.error_count_.load(), 0);
+
+    // Stream continues after reset: a later complete frame still delivers.
+    adapter.inject_receive(make_tcp_sample_message(0x4004, 4).serialize());
+    ASSERT_TRUE(listener.wait_for_messages(3));
+    EXPECT_EQ(listener.message_session_id(2), 4);
+    EXPECT_EQ(listener.rejection_count(), 1u);
 
     transport.stop();
 }

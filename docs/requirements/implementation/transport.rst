@@ -277,15 +277,18 @@ Transport Protocol Binding
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Integration test: Send 3 SOME/IP messages in a single UDP datagram, receive and verify all 3 are parsed correctly.
+   :verification: Integration test: Send 3 SOME/IP messages in a single UDP datagram, receive and verify all 3 are parsed correctly. TCP: see REQ_TRANSPORT_027.
 
    The software shall support transporting more than one SOME/IP message
    in a single transport layer PDU (nPDU feature). For cyclic senders,
-   nPDU shall be supported without explicit configuration.
+   nPDU shall be supported without explicit configuration. Receive-side
+   TCP multi-message extraction and ordered delivery are refined in
+   ``REQ_TRANSPORT_027``.
 
    **Rationale**: nPDU reduces per-message overhead for high-frequency communication.
 
-   **Code Location**: ``src/transport/udp_transport.cpp`` (send_data, receive_loop)
+   **Code Location**: ``src/transport/udp_transport.cpp`` (send_data, receive_loop),
+   ``src/transport/event_driven_tcp_transport.cpp``, ``src/transport/tcp_transport.cpp``
 
 .. requirement:: UDP Multicast Support
    :id: REQ_TRANSPORT_011
@@ -504,7 +507,7 @@ Service Instance Binding
 
 .. requirement:: Unaligned Message Reception
    :id: REQ_TRANSPORT_024
-   :satisfies: feat_req_someip_664, feat_req_someip_668
+   :satisfies: feat_req_someip_664
    :status: implemented
    :priority: medium
    :category: happy_path
@@ -516,6 +519,103 @@ Service Instance Binding
    **Rationale**: Unaligned message handling supports nPDU and multi-message PDUs.
 
    **Code Location**: ``src/transport/tcp_transport.cpp`` (parse_message_from_buffer), ``src/transport/udp_transport.cpp``, ``src/transport/event_driven_tcp_transport.cpp``
+
+.. requirement:: TCP Stream Multi-Message Extraction and Ordered Delivery
+   :id: REQ_TRANSPORT_027
+   :satisfies: feat_req_someip_702, feat_req_someip_664, feat_req_someip_585, feat_req_someip_77
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Inject one TCP adapter callback containing N concatenated complete SOME/IP frames plus an incomplete trailing fragment; verify all N frames are delivered in order to the listener (or polling queue when no listener), that delivery of each frame completes before the next frame is parsed, that no bounded MessagePtr staging vector is used, and that only the incomplete trailing bytes remain in the reassembly buffer. Covered by ConcatenatedBurstDeliversAllInOrder, ConcatenatedBurstEnqueuedWithoutListener, IncompleteTrailingFrameLeftForNextCallback.
+
+   When a TCP segment carries one or more SOME/IP messages (nPDU on TCP),
+   the transport shall extract every complete message in stream order.
+   Message boundaries shall be determined from the SOME/IP Length field.
+   Each complete message shall be delivered to the installed
+   ``ITransportListener`` **or** enqueued for ``receive_message()``
+   (exclusive; never both) before the next complete message is parsed from
+   the reassembly buffer. The transport shall not accumulate complete
+   frames into a bounded ``MessagePtr`` staging container before delivery.
+   Only an incomplete trailing fragment may remain buffered after processing
+   a receive callback.
+
+   **Rationale**: feat_req_someip_702 requires nPDU receive on TCP segments;
+   feat_req_someip_77 defines Length-based framing; feat_req_someip_585
+   requires a SOME/IP header per payload; feat_req_someip_664 requires
+   unaligned multi-message reception. One-at-a-time delivery avoids silent
+   truncation on capacity-bounded containers.
+
+   **Code Location**: ``src/transport/event_driven_tcp_transport.cpp``
+   (``on_adapter_receive``, ``parse_next_message``, ``deliver_or_enqueue``),
+   ``src/transport/tcp_transport.cpp`` (``receive_loop``, ``parse_next_message``)
+
+.. requirement:: TCP Reassembly Buffer Retention and Exhaustion
+   :id: REQ_TRANSPORT_028
+   :satisfies: feat_req_someip_702, feat_req_someip_435
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: After delivering any complete frames from a callback, force the retained incomplete reassembly bytes (or a declared frame) past ``max_receive_buffer``; verify the reassembly buffer is discarded, ``Result::BUFFER_OVERFLOW`` is signaled via ``on_message_rejected`` (TCP framing stage), no complete unparsed PDUs remain buffered, and the drop is not silent. Covered by ReceiveBufferExhaustionResetsAndSignals.
+
+   After extracting complete messages, only an incomplete trailing fragment
+   shall be retained in the TCP reassembly buffer
+   (``max_receive_buffer`` / equivalent). If the reassembly buffer cannot
+   hold the retained bytes, or a Length-declared frame exceeds
+   ``max_receive_buffer``, the transport shall discard the buffered stream
+   state for that connection and signal the application with
+   ``Result::BUFFER_OVERFLOW`` through ``ITransportListener::on_message_rejected``
+   (``MessageRejectionStage::TCP_FRAMING``), matching the threaded
+   ``TcpTransport`` rejection path. The transport shall not retain complete
+   unparsed PDUs to stall the peer, and shall not discard without a signal.
+
+   **Rationale**: Open SOME/IP requires multi-message TCP segments
+   (feat_req_someip_702) and notes TCP “exactly once” reliability with
+   further error handling left to the application (feat_req_someip_435).
+   The specification does not prescribe a local reassembly-buffer
+   exhaustion policy; this requirement is an OpenSOMEIP implementation
+   refinement of that TCP binding: reset the buffer and notify rather than
+   silent drop or stalling complete frames.
+
+   **Error Handling**: Clear the reassembly buffer; invoke
+   ``on_message_rejected`` with ``BUFFER_OVERFLOW``; continue the connection
+   without leaving complete unparsed frames buffered.
+
+   **Code Location**: ``src/transport/event_driven_tcp_transport.cpp``
+   (``on_adapter_receive``, ``parse_next_message``),
+   ``src/transport/tcp_transport.cpp`` (``parse_next_message``)
+
+.. requirement:: TCP Receive Message-Pool Exhaustion
+   :id: REQ_TRANSPORT_029
+   :satisfies: feat_req_someip_435
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: Force ``allocate_message()`` failure for the first complete frame in a multi-frame TCP callback; verify that frame’s bytes are consumed (not left in the reassembly buffer), ``on_error(OUT_OF_MEMORY)`` is invoked once, later complete frames in the same callback are still delivered, and ``on_message_rejected`` is not used for this capacity case. Covered by AllocFailureConsumesFrameAndNotifiesOom.
+
+   Message-pool exhaustion (``allocate_message()`` returning ``nullptr``) is a
+   separate platform/PAL limit from reassembly-buffer exhaustion
+   (``REQ_TRANSPORT_028``). On the event-driven TCP receive path, when a
+   complete frame has been delimited but ``allocate_message()`` fails, the
+   transport shall consume that frame’s bytes from the reassembly buffer,
+   notify ``ITransportListener::on_error(Result::OUT_OF_MEMORY)``, and
+   continue parsing any subsequent complete frames in the same callback.
+   Complete frames shall not be left buffered to stall the peer. This path
+   shall not use ``on_message_rejected`` for pool exhaustion (that hook is
+   for structural PDU rejection per ``REQ_TRANSPORT_026``).
+
+   **Rationale**: feat_req_someip_435 leaves further error handling to the
+   application; Open SOME/IP does not define a Message-pool policy. This
+   OpenSOMEIP rule aligns pool exhaustion with the consume-and-notify
+   spirit of ``REQ_TRANSPORT_028`` while keeping the observable signal
+   distinct (``on_error`` vs ``on_message_rejected``) because the failure
+   is a PAL allocation limit, not a Length/framing buffer limit.
+   ``REQ_PAL_MEM_EXHAUST_E01`` defines the pool’s ``nullptr`` contract.
+
+   **Error Handling**: Consume the current complete frame; call
+   ``on_error(OUT_OF_MEMORY)``; continue parsing.
+
+   **Code Location**: ``src/transport/event_driven_tcp_transport.cpp``
+   (``on_adapter_receive``, ``parse_next_message``)
 
 
 Magic Cookie Details
@@ -773,15 +873,18 @@ Implementation Files
 * ``include/transport/message_rejection.h`` - Incoming PDU rejection diagnostics
 * ``include/transport/udp_transport.h`` - UDP transport interface
 * ``include/transport/tcp_transport.h`` - TCP transport interface
+* ``include/transport/event_driven_tcp_transport.h`` - Event-driven TCP transport
 * ``include/transport/endpoint.h`` - Endpoint structure
 * ``src/transport/udp_transport.cpp`` - UDP implementation
 * ``src/transport/tcp_transport.cpp`` - TCP implementation
+* ``src/transport/event_driven_tcp_transport.cpp`` - Event-driven TCP implementation
 
 Test Files
 ----------
 
 * ``tests/test_udp_transport.cpp`` - UDP transport tests
 * ``tests/test_tcp_transport.cpp`` - TCP transport tests
+* ``tests/test_event_driven_tcp_transport.cpp`` - Event-driven TCP transport tests
 
 Examples
 --------

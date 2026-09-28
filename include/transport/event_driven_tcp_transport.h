@@ -44,14 +44,14 @@ struct EventDrivenTcpTransportConfig {
  * concrete type to call initialize(), and optionally enable_server_mode()
  * / try_accept_connection() for server-side usage, before calling start().
  *
- * Receive follows TcpTransport::receive_loop: parse one complete SOME/IP
+ * Receive contract (REQ_TRANSPORT_027/028/029): parse one complete SOME/IP
  * frame under the queue mutex, unlock, then deliver_or_enqueue (listener XOR
- * queue). A complete frame is erased from receive_buffer_ only after it is
- * delivered, queued, rejected, or consumed on pool exhaustion. Incomplete
- * trailing bytes stay in the buffer. allocate_message() failure consumes the
- * current complete frame and reports Result::OUT_OF_MEMORY via on_error
- * (same code as EventDrivenUdpTransport); parsing continues so the TCP
- * stream is not stalled.
+ * queue). Incomplete trailing bytes may remain in receive_buffer_. If the
+ * reassembly buffer cannot retain those bytes (max_receive_buffer), the
+ * buffer is discarded and BUFFER_OVERFLOW is reported via on_message_rejected.
+ * allocate_message() failure consumes the current complete frame and reports
+ * OUT_OF_MEMORY via on_error; parsing continues so the TCP stream is not
+ * stalled with complete unparsed PDUs.
  */
 class EventDrivenTcpTransport : public ITransport {
    public:

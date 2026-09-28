@@ -166,6 +166,10 @@ These requirements have no detected implementation.
 - **REQ_TRANSPORT_023**: Client Server Address Resolution → `src/sd/sd_client.cpp`
 - **REQ_TRANSPORT_024**: Unaligned Message Reception → `src/transport/tcp_transport.cpp`, `src/transport/event_driven_tcp_transport.cpp`
 - **REQ_TRANSPORT_025**: Magic Cookie Message Format → `src/transport/tcp_transport.cpp`
+- **REQ_TRANSPORT_026**: Incoming Message Rejection Diagnostics → `src/transport/udp_transport.cpp`, `src/transport/tcp_transport.cpp`, `src/transport/event_driven_tcp_transport.cpp`
+- **REQ_TRANSPORT_027**: TCP Stream Multi-Message Extraction and Ordered Delivery → `src/transport/event_driven_tcp_transport.cpp`, `src/transport/tcp_transport.cpp`
+- **REQ_TRANSPORT_028**: TCP Reassembly Buffer Retention and Exhaustion → `src/transport/event_driven_tcp_transport.cpp`, `src/transport/tcp_transport.cpp`
+- **REQ_TRANSPORT_029**: TCP Receive Message-Pool Exhaustion → `src/transport/event_driven_tcp_transport.cpp`
 
 ### Serialization (33 missing)
 
