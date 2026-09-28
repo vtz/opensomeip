@@ -67,7 +67,7 @@ in OpenSOMEIP, including UDP and TCP transports.</p>
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h2>
 <section id="udp-transport">
 <h3>UDP Transport<a class="headerlink" href="#udp-transport" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-1caea24f">
+<div class="need_container docutils container" id="SNCB-e0c2f2ea">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_001a">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -89,13 +89,14 @@ to local address and port, sending messages to unicast destinations,
 and receiving messages from any source.</p>
 <p><strong>Rationale</strong>: UDP unicast is the foundation for SOME/IP point-to-point
 communication.</p>
-<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code></p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code>,
+<code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_udp_transport.cpp</span></code></p>
 </td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-4e9e8fdd">
+<div class="need_container docutils container" id="SNCB-bec3f265">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_001b">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -116,13 +117,15 @@ communication.</p>
 multicast group join/leave for receiving multicast traffic.</p>
 <p><strong>Rationale</strong>: Multicast is required for Service Discovery and
 eventgroup subscriptions.</p>
-<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code></p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code>,
+<code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_udp_transport.cpp</span></code>,
+<code class="docutils literal notranslate"><span class="pre">include/transport/multicast_transport.h</span></code></p>
 </td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-d7f968f6">
+<div class="need_container docutils container" id="SNCB-ce64ef0f">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_001c">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -152,7 +155,7 @@ with event loops and multi-threaded applications.</p>
 </section>
 <section id="tcp-transport">
 <h3>TCP Transport<a class="headerlink" href="#tcp-transport" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-7cafe1aa">
+<div class="need_container docutils container" id="SNCB-fa858a9c">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_002a">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -180,7 +183,7 @@ responder roles in TCP communication.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b8f0dfb2">
+<div class="need_container docutils container" id="SNCB-0346322f">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_002b">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -211,7 +214,7 @@ state management enables robust reconnection.</p>
 </section>
 <section id="connection-management">
 <h3>Connection Management<a class="headerlink" href="#connection-management" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-12845be4">
+<div class="need_container docutils container" id="SNCB-8b0ab6f2">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_003a">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -238,7 +241,7 @@ to react to connection lifecycle events.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-1fc280a6">
+<div class="need_container docutils container" id="SNCB-aeccc181">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_003b">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -269,7 +272,7 @@ resource release and predictable behavior on failures.</p>
 </section>
 <section id="error-recovery">
 <h3>Error Recovery<a class="headerlink" href="#error-recovery" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-aa34b625">
+<div class="need_container docutils container" id="SNCB-9b150c1d">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_004a">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -296,7 +299,7 @@ resolve on retry.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-a731be6b">
+<div class="need_container docutils container" id="SNCB-63fa5b67">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_004b">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -323,7 +326,7 @@ reopening restores communication.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-f1eaf10c">
+<div class="need_container docutils container" id="SNCB-d114c061">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_004c">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -350,7 +353,7 @@ production environments.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-0de50789">
+<div class="need_container docutils container" id="SNCB-a64ed78c">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_004d">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -380,7 +383,7 @@ retry adapts to different deployment requirements.</p>
 </section>
 <section id="transport-interface">
 <h3>Transport Interface<a class="headerlink" href="#transport-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-b5612516">
+<div class="need_container docutils container" id="SNCB-fbd65374">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_005">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -408,7 +411,9 @@ retry adapts to different deployment requirements.</p>
 </ul>
 <p><strong>Rationale</strong>: Abstract interface enables transport-agnostic
 application code and testing.</p>
-<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/transport/transport.h</span></code></p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/transport/transport.h</span></code>,
+<code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_udp_transport.cpp</span></code>,
+<code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_tcp_transport.cpp</span></code></p>
 </td>
 </tr>
 </tbody>
@@ -417,7 +422,7 @@ application code and testing.</p>
 </section>
 <section id="endpoint-configuration">
 <h3>Endpoint Configuration<a class="headerlink" href="#endpoint-configuration" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-eebd2114">
+<div class="need_container docutils container" id="SNCB-1b797249">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_006">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -454,7 +459,7 @@ network communication.</p>
 </section>
 <section id="transport-protocol-binding">
 <h2>Transport Protocol Binding<a class="headerlink" href="#transport-protocol-binding" title="Link to this heading">¶</a></h2>
-<div class="need_container docutils container" id="SNCB-065f7d03">
+<div class="need_container docutils container" id="SNCB-1c11a317">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_010">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -473,15 +478,18 @@ network communication.</p>
 </tr>
 <tr class="need content row-odd"><td class="need content" colspan="1"><p>The software shall support transporting more than one SOME/IP message
 in a single transport layer PDU (nPDU feature). For cyclic senders,
-nPDU shall be supported without explicit configuration.</p>
+nPDU shall be supported without explicit configuration. Receive-side
+TCP multi-message extraction and ordered delivery are refined in
+<code class="docutils literal notranslate"><span class="pre">REQ_TRANSPORT_027</span></code>.</p>
 <p><strong>Rationale</strong>: nPDU reduces per-message overhead for high-frequency communication.</p>
-<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code> (send_data, receive_loop)</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code> (send_data, receive_loop),
+<code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_tcp_transport.cpp</span></code>, <code class="docutils literal notranslate"><span class="pre">src/transport/tcp_transport.cpp</span></code></p>
 </td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-79190795">
+<div class="need_container docutils container" id="SNCB-6eaff4fd">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_011">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -502,13 +510,14 @@ nPDU shall be supported without explicit configuration.</p>
 Multicast eventgroups shall use unicast for initial field events.
 Clients shall support receiving via unicast and/or multicast.</p>
 <p><strong>Rationale</strong>: Multicast reduces bandwidth for events delivered to many subscribers.</p>
-<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code> (join_multicast_group, configure_multicast)</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code> (join_multicast_group, configure_multicast),
+<code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_udp_transport.cpp</span></code>, <code class="docutils literal notranslate"><span class="pre">include/transport/multicast_transport.h</span></code></p>
 </td>
 </tr>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-5b063de1">
+<div class="need_container docutils container" id="SNCB-34abdcdc">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_012">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -534,7 +543,7 @@ unicast and multicast based on the Multicast-Threshold configuration.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-d4452a0b">
+<div class="need_container docutils container" id="SNCB-2d5c3c0d">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_013">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -560,7 +569,7 @@ independent of the number of controllers, cores, and IP addresses.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-ac33bf8a">
+<div class="need_container docutils container" id="SNCB-889a6c43">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_014">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -587,7 +596,7 @@ communication.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b11cd00a">
+<div class="need_container docutils container" id="SNCB-e824ba31">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_015">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -616,7 +625,7 @@ for dynamic ports.</p>
 </section>
 <section id="tcp-connection-management">
 <h2>TCP Connection Management<a class="headerlink" href="#tcp-connection-management" title="Link to this heading">¶</a></h2>
-<div class="need_container docutils container" id="SNCB-7e99ef1a">
+<div class="need_container docutils container" id="SNCB-201736fe">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_016">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -643,7 +652,7 @@ The client is responsible for re-establishing failed connections.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-69e71092">
+<div class="need_container docutils container" id="SNCB-1c1217a0">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_017">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -670,7 +679,7 @@ shared across services to minimize connection count.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-80c6a24f">
+<div class="need_container docutils container" id="SNCB-34107ba2">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_018">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -697,7 +706,7 @@ connections preemptively.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b06848b4">
+<div class="need_container docutils container" id="SNCB-dfaace15">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_019">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -726,7 +735,7 @@ TCP connection is lost.</p>
 </section>
 <section id="magic-cookie-support">
 <h2>Magic Cookie Support<a class="headerlink" href="#magic-cookie-support" title="Link to this heading">¶</a></h2>
-<div class="need_container docutils container" id="SNCB-dc399f26">
+<div class="need_container docutils container" id="SNCB-97e567e6">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_020">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -754,7 +763,7 @@ Client ID 0xDEAD, Session ID 0xBEEF).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-802a5eb9">
+<div class="need_container docutils container" id="SNCB-dfee0eb7">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_021">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -783,7 +792,7 @@ Magic Cookie Messages every 10 seconds on active connections.</p>
 </section>
 <section id="service-instance-binding">
 <h2>Service Instance Binding<a class="headerlink" href="#service-instance-binding" title="Link to this heading">¶</a></h2>
-<div class="need_container docutils container" id="SNCB-bc5e1696">
+<div class="need_container docutils container" id="SNCB-a5717f96">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_022">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -810,7 +819,7 @@ on one ECU shall listen on different ports.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-86639c26">
+<div class="need_container docutils container" id="SNCB-aa51d57c">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_023">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -836,7 +845,7 @@ server via SOME/IP-SD for communication.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-40980fc0">
+<div class="need_container docutils container" id="SNCB-ed83ba28">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_024">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -848,15 +857,146 @@ server via SOME/IP-SD for communication.</p>
 <div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
 <div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">medium</span></span></div>
 </span></span></div>
-<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><span class="needs_dead_link forbidden">feat_req_someip_664</span>, <span class="needs_dead_link forbidden">feat_req_someip_668</span></span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><span class="needs_dead_link forbidden">feat_req_someip_664</span></span></span></div>
 </span></div>
 </div>
 </td>
 </tr>
 <tr class="need content row-odd"><td class="need content" colspan="1"><p>The software shall be capable of receiving unaligned SOME/IP messages
 when multiple messages are transported in a single UDP or TCP PDU.</p>
-<p><strong>Rationale</strong>: Unaligned message handling supports nPDU and multi-message PDUs.</p>
-<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/tcp_transport.cpp</span></code> (parse_message_from_buffer), <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code></p>
+<p><strong>Rationale</strong>: Unaligned message handling supports nPDU and multi-message PDUs.
+<code class="docutils literal notranslate"><span class="pre">feat_req_someip_668</span></code> is an informational cross-reference about Request ID
+handling in SOME/IP-SD (deferred to the SD chapter), not unaligned reception;
+it is intentionally left unmapped rather than attached here.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/tcp_transport.cpp</span></code> (parse_message_from_buffer), <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code>, <code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_tcp_transport.cpp</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="need_container docutils container" id="SNCB-82a58657">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_027">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">TCP Stream Multi-Message Extraction and Ordered Delivery</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_TRANSPORT_027" title="REQ_TRANSPORT_027">REQ_TRANSPORT_027</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><span class="needs_dead_link forbidden">feat_req_someip_77</span>, <span class="needs_dead_link forbidden">feat_req_someip_585</span>, <span class="needs_dead_link forbidden">feat_req_someip_664</span>, <span class="needs_dead_link forbidden">feat_req_someip_702</span></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>When a TCP segment carries one or more SOME/IP messages (nPDU on TCP),
+the transport shall extract every complete message in stream order.
+Message boundaries shall be determined from the SOME/IP Length field.
+Each complete message shall be delivered to the installed
+<code class="docutils literal notranslate"><span class="pre">ITransportListener</span></code> <strong>or</strong> enqueued for <code class="docutils literal notranslate"><span class="pre">receive_message()</span></code>
+(exclusive; never both) before the next complete message is parsed from
+the reassembly buffer. The transport shall not accumulate complete
+frames into a bounded <code class="docutils literal notranslate"><span class="pre">MessagePtr</span></code> staging container before delivery.
+Only an incomplete trailing fragment may remain buffered after processing
+a receive callback.</p>
+<p><strong>Rationale</strong>: feat_req_someip_702 requires nPDU receive on TCP segments;
+feat_req_someip_77 defines Length-based framing; feat_req_someip_585
+requires a SOME/IP header per payload; feat_req_someip_664 requires
+unaligned multi-message reception. One-at-a-time delivery avoids silent
+truncation on capacity-bounded containers.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_tcp_transport.cpp</span></code>
+(<code class="docutils literal notranslate"><span class="pre">on_adapter_receive</span></code>, <code class="docutils literal notranslate"><span class="pre">parse_next_message</span></code>, <code class="docutils literal notranslate"><span class="pre">deliver_or_enqueue</span></code>),
+<code class="docutils literal notranslate"><span class="pre">src/transport/tcp_transport.cpp</span></code> (<code class="docutils literal notranslate"><span class="pre">receive_loop</span></code>, <code class="docutils literal notranslate"><span class="pre">parse_next_message</span></code>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="need_container docutils container" id="SNCB-6bb1e019">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_028">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">TCP Reassembly Buffer Retention and Exhaustion</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_TRANSPORT_028" title="REQ_TRANSPORT_028">REQ_TRANSPORT_028</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><span class="needs_dead_link forbidden">feat_req_someip_435</span>, <span class="needs_dead_link forbidden">feat_req_someip_702</span></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>After extracting complete messages, only an incomplete trailing fragment
+shall be retained in the TCP reassembly buffer
+(<code class="docutils literal notranslate"><span class="pre">max_receive_buffer</span></code> / equivalent). If the reassembly buffer cannot
+hold the retained bytes, or a Length-declared frame exceeds
+<code class="docutils literal notranslate"><span class="pre">max_receive_buffer</span></code>, the transport shall discard the buffered stream
+state for that connection and signal the application with
+<code class="docutils literal notranslate"><span class="pre">Result::BUFFER_OVERFLOW</span></code> through <code class="docutils literal notranslate"><span class="pre">ITransportListener::on_message_rejected</span></code>
+(<code class="docutils literal notranslate"><span class="pre">MessageRejectionStage::TCP_FRAMING</span></code>), matching the threaded
+<code class="docutils literal notranslate"><span class="pre">TcpTransport</span></code> rejection path. The transport shall not retain complete
+unparsed PDUs to stall the peer, and shall not discard without a signal.</p>
+<p><strong>Rationale</strong>: Open SOME/IP requires multi-message TCP segments
+(feat_req_someip_702) and notes TCP “exactly once” reliability with
+further error handling left to the application (feat_req_someip_435).
+The specification does not prescribe a local reassembly-buffer
+exhaustion policy; this requirement is an OpenSOMEIP implementation
+refinement of that TCP binding: reset the buffer and notify rather than
+silent drop or stalling complete frames.</p>
+<p><strong>Error Handling</strong>: Clear the reassembly buffer; invoke
+<code class="docutils literal notranslate"><span class="pre">on_message_rejected</span></code> with <code class="docutils literal notranslate"><span class="pre">BUFFER_OVERFLOW</span></code>; continue the connection
+without leaving complete unparsed frames buffered.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_tcp_transport.cpp</span></code>
+(<code class="docutils literal notranslate"><span class="pre">on_adapter_receive</span></code>, <code class="docutils literal notranslate"><span class="pre">parse_next_message</span></code>),
+<code class="docutils literal notranslate"><span class="pre">src/transport/tcp_transport.cpp</span></code> (<code class="docutils literal notranslate"><span class="pre">parse_next_message</span></code>)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="need_container docutils container" id="SNCB-3fa7f42f">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_029">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">TCP Receive Message-Pool Exhaustion</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_TRANSPORT_029" title="REQ_TRANSPORT_029">REQ_TRANSPORT_029</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span><div class="line">satisfies: <span class="satisfies"><span><span class="needs_dead_link forbidden">feat_req_someip_435</span></span></span></div>
+</span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>Message-pool exhaustion (<code class="docutils literal notranslate"><span class="pre">allocate_message()</span></code> returning <code class="docutils literal notranslate"><span class="pre">nullptr</span></code>) is a
+separate platform/PAL limit from reassembly-buffer exhaustion
+(<code class="docutils literal notranslate"><span class="pre">REQ_TRANSPORT_028</span></code>). On the event-driven TCP receive path, when a
+complete frame has been delimited but <code class="docutils literal notranslate"><span class="pre">allocate_message()</span></code> fails, the
+transport shall consume that frame’s bytes from the reassembly buffer,
+notify <code class="docutils literal notranslate"><span class="pre">ITransportListener::on_error(Result::OUT_OF_MEMORY)</span></code>, and
+continue parsing any subsequent complete frames in the same callback.
+Complete frames shall not be left buffered to stall the peer. This path
+shall not use <code class="docutils literal notranslate"><span class="pre">on_message_rejected</span></code> for pool exhaustion (that hook is
+for structural PDU rejection per <code class="docutils literal notranslate"><span class="pre">REQ_TRANSPORT_026</span></code>).</p>
+<p><strong>Rationale</strong>: feat_req_someip_435 leaves further error handling to the
+application; Open SOME/IP does not define a Message-pool policy. This
+OpenSOMEIP rule aligns pool exhaustion with the consume-and-notify
+spirit of <code class="docutils literal notranslate"><span class="pre">REQ_TRANSPORT_028</span></code> while keeping the observable signal
+distinct (<code class="docutils literal notranslate"><span class="pre">on_error</span></code> vs <code class="docutils literal notranslate"><span class="pre">on_message_rejected</span></code>) because the failure
+is a PAL allocation limit, not a Length/framing buffer limit.
+<code class="docutils literal notranslate"><span class="pre">REQ_PAL_MEM_EXHAUST_E01</span></code> defines the pool’s <code class="docutils literal notranslate"><span class="pre">nullptr</span></code> contract.</p>
+<p><strong>Error Handling</strong>: Consume the current complete frame; call
+<code class="docutils literal notranslate"><span class="pre">on_error(OUT_OF_MEMORY)</span></code>; continue parsing.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_tcp_transport.cpp</span></code>
+(<code class="docutils literal notranslate"><span class="pre">on_adapter_receive</span></code>, <code class="docutils literal notranslate"><span class="pre">parse_next_message</span></code>)</p>
 </td>
 </tr>
 </tbody>
@@ -865,7 +1005,7 @@ when multiple messages are transported in a single UDP or TCP PDU.</p>
 </section>
 <section id="magic-cookie-details">
 <h2>Magic Cookie Details<a class="headerlink" href="#magic-cookie-details" title="Link to this heading">¶</a></h2>
-<div class="need_container docutils container" id="SNCB-628e9967">
+<div class="need_container docutils container" id="SNCB-2f062c40">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_025">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -892,7 +1032,7 @@ Service ID 0xFFFF, Method ID 0x0000/0x8000, Length 8, Client ID
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-ab168a30">
+<div class="need_container docutils container" id="SNCB-07f3b6f5">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_026">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -922,7 +1062,9 @@ error response.</p>
 as an application message.</p>
 <p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/transport/message_rejection.h</span></code>,
 <code class="docutils literal notranslate"><span class="pre">include/transport/transport.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code>,
-<code class="docutils literal notranslate"><span class="pre">src/transport/tcp_transport.cpp</span></code>, <code class="docutils literal notranslate"><span class="pre">src/rpc/rpc_server.cpp</span></code>,
+<code class="docutils literal notranslate"><span class="pre">src/transport/tcp_transport.cpp</span></code>,
+<code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_tcp_transport.cpp</span></code>,
+<code class="docutils literal notranslate"><span class="pre">src/rpc/rpc_server.cpp</span></code>,
 <code class="docutils literal notranslate"><span class="pre">src/rpc/rpc_client.cpp</span></code>, <code class="docutils literal notranslate"><span class="pre">src/events/event_subscriber.cpp</span></code>,
 <code class="docutils literal notranslate"><span class="pre">src/events/event_publisher.cpp</span></code></p>
 </td>
@@ -930,7 +1072,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b9f83277">
+<div class="need_container docutils container" id="SNCB-19605d0b">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_001_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -955,7 +1097,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e45a494a">
+<div class="need_container docutils container" id="SNCB-b103f103">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_001_E02">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -980,7 +1122,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-bfba1c2f">
+<div class="need_container docutils container" id="SNCB-05317937">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_002_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1005,7 +1147,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-8e9b4e38">
+<div class="need_container docutils container" id="SNCB-fbababdb">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_002_E02">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1030,7 +1172,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-54395b03">
+<div class="need_container docutils container" id="SNCB-47dd6f46">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_011_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1055,7 +1197,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-4a824d0b">
+<div class="need_container docutils container" id="SNCB-b51e1710">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_014_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1080,7 +1222,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-9db91f8e">
+<div class="need_container docutils container" id="SNCB-01d56654">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_016_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1105,7 +1247,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-3333c6ce">
+<div class="need_container docutils container" id="SNCB-266fbd5b">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_002_E03">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1130,7 +1272,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b50a4874">
+<div class="need_container docutils container" id="SNCB-6fee3e09">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_001_E03">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1155,7 +1297,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-6bfdca4e">
+<div class="need_container docutils container" id="SNCB-c0b39863">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_006_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1180,7 +1322,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-babb6c85">
+<div class="need_container docutils container" id="SNCB-fead50c2">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_003_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1205,7 +1347,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-ae4efb69">
+<div class="need_container docutils container" id="SNCB-53cdeb06">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_002_E04">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1230,7 +1372,7 @@ as an application message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-ebfd5107">
+<div class="need_container docutils container" id="SNCB-99af8eb1">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TRANSPORT_011_E02">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1261,13 +1403,20 @@ as an application message.</p>
 <section id="implementation-files">
 <h3>Implementation Files<a class="headerlink" href="#implementation-files" title="Link to this heading">¶</a></h3>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">include/transport/transport.h</span></code> - Transport interface</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include/transport/transport.h</span></code> - Transport interface (REQ_TRANSPORT_005)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">include/transport/message_rejection.h</span></code> - Incoming PDU rejection diagnostics</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">include/transport/udp_transport.h</span></code> - UDP transport interface</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">include/transport/tcp_transport.h</span></code> - TCP transport interface</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include/transport/event_driven_udp_transport.h</span></code> - Event-driven UDP transport (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_005, REQ_TRANSPORT_011)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include/transport/event_driven_tcp_transport.h</span></code> - Event-driven TCP transport (REQ_TRANSPORT_024, REQ_TRANSPORT_027, REQ_TRANSPORT_028, REQ_TRANSPORT_029)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include/transport/udp_socket_adapter.h</span></code> - UDP socket adapter for event-driven path (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_011)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include/transport/tcp_socket_adapter.h</span></code> - TCP socket adapter for event-driven path (REQ_TRANSPORT_024, REQ_TRANSPORT_027)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include/transport/multicast_transport.h</span></code> - Multicast join/leave interface (REQ_TRANSPORT_001b, REQ_TRANSPORT_011)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">include/transport/endpoint.h</span></code> - Endpoint structure</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">src/transport/udp_transport.cpp</span></code> - UDP implementation</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">src/transport/tcp_transport.cpp</span></code> - TCP implementation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_udp_transport.cpp</span></code> - Event-driven UDP implementation (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_005, REQ_TRANSPORT_011)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/transport/event_driven_tcp_transport.cpp</span></code> - Event-driven TCP implementation</p></li>
 </ul>
 </section>
 <section id="test-files">
@@ -1275,6 +1424,8 @@ as an application message.</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">tests/test_udp_transport.cpp</span></code> - UDP transport tests</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">tests/test_tcp_transport.cpp</span></code> - TCP transport tests</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/test_event_driven_udp_transport.cpp</span></code> - Event-driven UDP transport tests (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_011)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/test_event_driven_tcp_transport.cpp</span></code> - Event-driven TCP transport tests</p></li>
 </ul>
 </section>
 <section id="examples">

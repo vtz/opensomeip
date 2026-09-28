@@ -1681,6 +1681,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#event-driven-transports-callback-netconn-stacks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event-Driven Transports (callback / netconn stacks)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#integrator-example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2882,6 +2893,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#event-driven-transports-callback-netconn-stacks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event-Driven Transports (callback / netconn stacks)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#integrator-example" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3197,6 +3219,39 @@ static buffer:</p>
 <li><strong>Release</strong>: Calls the Message destructor, then
   <code>tx_block_release()</code>.</li>
 </ul>
+<h2 id="event-driven-transports-callback-netconn-stacks">Event-Driven Transports (callback / netconn stacks)<a class="headerlink" href="#event-driven-transports-callback-netconn-stacks" title="Permanent link">&para;</a></h2>
+<p>Polling <code>UdpTransport</code> / <code>TcpTransport</code> use the platform socket API and
+worker threads. ThreadX + lwIP deployments that expose <strong>callback or
+netconn</strong> receive paths should integrate via the event-driven adapters
+instead:</p>
+<table>
+<thead>
+<tr>
+<th>Piece</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IUdpSocketAdapter</code> / <code>ITcpSocketAdapter</code></td>
+<td>Integrator-owned socket façade; invoke receive/connected/disconnected callbacks from the stack's event context</td>
+</tr>
+<tr>
+<td><code>EventDrivenUdpTransport</code> / <code>EventDrivenTcpTransport</code></td>
+<td><code>ITransport</code> implementations that parse and deliver SOME/IP on those callbacks</td>
+</tr>
+<tr>
+<td>Quiescence</td>
+<td>Clearing a callback (<code>set_*_callback(nullptr)</code>) from outside an active callback must wait until no in-flight invocation remains; clear from <em>inside</em> the active callback must not wait for itself (avoids deadlock on single-threaded adapters)</td>
+</tr>
+<tr>
+<td>Static allocation</td>
+<td>These transports use <code>platform::</code> containers and deliver one frame at a time — no unbounded staging <code>vector</code> of complete messages</td>
+</tr>
+</tbody>
+</table>
+<p>SD multicast join/leave goes through <code>IMulticastTransport</code> (implemented by
+both <code>UdpTransport</code> and <code>EventDrivenUdpTransport</code>).</p>
 <h2 id="integrator-example">Integrator Example<a class="headerlink" href="#integrator-example" title="Permanent link">&para;</a></h2>
 <div class="language-cmake highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span><span class="w"> </span><span class="s">3.20</span><span class="p">)</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">project</span><span class="p">(</span><span class="s">my_embedded_app</span><span class="w"> </span><span class="s">LANGUAGES</span><span class="w"> </span><span class="s">CXX</span><span class="p">)</span>

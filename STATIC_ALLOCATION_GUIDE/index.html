@@ -2614,6 +2614,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="4. Known Heap Allocations Under Static-Alloc">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event-driven-transports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event-driven transports
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -2865,6 +2882,13 @@ heap intentionally:</p>
 </table>
 <p>These are not called on the hot path and do not violate the zero-heap
 guarantee for message allocation, serialization, and transport operations.</p>
+<h3 id="event-driven-transports">Event-driven transports<a class="headerlink" href="#event-driven-transports" title="Permanent link">&para;</a></h3>
+<p><code>EventDrivenUdpTransport</code> and <code>EventDrivenTcpTransport</code> are static-alloc
+compatible: they use <code>platform::</code> containers (<code>ByteBuffer</code>, <code>Queue</code>,
+<code>Function</code>, …) and deliver or enqueue one complete frame at a time. They do
+not stage unbounded <code>std::vector&lt;MessagePtr&gt;</code> bursts on the receive path.
+Pool exhaustion on TCP consumes the current complete frame and reports
+<code>OUT_OF_MEMORY</code> via <code>on_error</code> so the stream is not stalled.</p>
 <h2 id="5-thread-safety">5. Thread Safety<a class="headerlink" href="#5-thread-safety" title="Permanent link">&para;</a></h2>
 <ul>
 <li>All pool operations (<code>allocate_message</code>, <code>acquire_buffer</code>,

@@ -2856,6 +2856,11 @@
 <ul>
 <li><strong><code>udp_transport.h</code></strong> -- <code>UdpTransport</code> for sending and receiving SOME/IP messages over UDP</li>
 <li><strong><code>tcp_transport.h</code></strong> -- <code>TcpTransport</code> for stream-oriented SOME/IP</li>
+<li><strong><code>event_driven_udp_transport.h</code> / <code>event_driven_tcp_transport.h</code></strong> -- adapter-driven
+  <code>ITransport</code> backends. Event-driven TCP parses and delivers one complete
+  SOME/IP frame per step (listener XOR queue). Pool exhaustion consumes that
+  frame and reports <code>Result::OUT_OF_MEMORY</code> via <code>on_error</code>; incomplete trailing
+  bytes remain in the reassembly buffer.</li>
 <li><strong><code>endpoint.h</code></strong> -- <code>Endpoint</code> representing a network address and port pair</li>
 <li><strong><code>message_rejection.h</code></strong> -- <code>MessageRejectionInfo</code> for local receive diagnostics.
   <code>ITransportListener::on_message_rejected</code> is a defaulted hook; <code>RpcClient</code>,

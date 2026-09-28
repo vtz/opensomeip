@@ -2514,6 +2514,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#intentionally-unmapped-spec-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intentionally Unmapped Spec Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unexpected-unmapped-spec-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unexpected Unmapped Spec Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-requirements-missing-spec-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Requirements Missing Spec Links
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Requirements Missing Spec Links">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#msg-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MSG (1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transport-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TRANSPORT (1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#spec-requirements-coverage-by-category" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2706,6 +2767,67 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#intentionally-unmapped-spec-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Intentionally Unmapped Spec Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unexpected-unmapped-spec-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unexpected Unmapped Spec Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-requirements-missing-spec-links" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Requirements Missing Spec Links
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Requirements Missing Spec Links">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#msg-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MSG (1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transport-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TRANSPORT (1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#spec-requirements-coverage-by-category" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2812,16 +2934,47 @@
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>Spec Requirements (open-someip-spec)</strong>: 748</li>
-<li><strong>Implementation Requirements (OpenSOMEIP)</strong>: 690</li>
-<li>Spec-derived: 445</li>
+<li><strong>Implementation Requirements (OpenSOMEIP)</strong>: 697</li>
+<li>Spec-derived: 452</li>
 <li>Implementation-derived: 245</li>
-<li><strong>Mapped Spec Requirements</strong>: 748</li>
-<li><strong>Unmapped Spec Requirements</strong>: 0</li>
-<li><strong>Implementation Reqs Missing Spec Links</strong>: 0</li>
+<li><strong>Mapped Spec Requirements</strong>: 745</li>
+<li><strong>Unmapped Spec Requirements</strong>: 3</li>
+<li><strong>Implementation Reqs Missing Spec Links</strong>: 2</li>
 <li><strong>Auto-Corrected Links</strong>: 0</li>
 <li><strong>Unresolvable Links</strong>: 0</li>
 </ul>
-<p><strong>Spec Coverage</strong>: 100.0%</p>
+<p><strong>Spec Coverage</strong>: 99.6%</p>
+<h2 id="intentionally-unmapped-spec-requirements">Intentionally Unmapped Spec Requirements<a class="headerlink" href="#intentionally-unmapped-spec-requirements" title="Permanent link">&para;</a></h2>
+<p>These spec entries remain unmapped on purpose. They still count toward the unmapped total so coverage stays honest.</p>
+<table>
+<thead>
+<tr>
+<th>Spec Requirement</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>feat_req_someip_668</td>
+<td>Informational cross-reference only: Request ID handling in SOME/IP-SD is deferred to the SD chapter. Not about unaligned PDU reception; previously mis-linked to REQ_TRANSPORT_024 and removed intentionally.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="unexpected-unmapped-spec-requirements">Unexpected Unmapped Spec Requirements<a class="headerlink" href="#unexpected-unmapped-spec-requirements" title="Permanent link">&para;</a></h2>
+<ul>
+<li>feat_req_someipsd_203</li>
+<li>feat_req_someipsd_204</li>
+</ul>
+<h2 id="implementation-requirements-missing-spec-links">Implementation Requirements Missing Spec Links<a class="headerlink" href="#implementation-requirements-missing-spec-links" title="Permanent link">&para;</a></h2>
+<p>These spec-derived requirements should have <code>:satisfies:</code> links:</p>
+<h3 id="msg-1">MSG (1)<a class="headerlink" href="#msg-1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>REQ_MSG_150</strong>: Structured Deserialize Outcome</li>
+</ul>
+<h3 id="transport-1">TRANSPORT (1)<a class="headerlink" href="#transport-1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>REQ_TRANSPORT_026</strong>: Incoming Message Rejection Diagnostics</li>
+</ul>
 <h2 id="spec-requirements-coverage-by-category">Spec Requirements Coverage by Category<a class="headerlink" href="#spec-requirements-coverage-by-category" title="Permanent link">&para;</a></h2>
 <h3 id="someip-compatrst">someip-compat.rst<a class="headerlink" href="#someip-compatrst" title="Permanent link">&para;</a></h3>
 <ul>
@@ -2833,11 +2986,13 @@
 </ul>
 <h3 id="someip-rpcrst">someip-rpc.rst<a class="headerlink" href="#someip-rpcrst" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Total: 304, Mapped: 304, Coverage: 100%</li>
+<li>Total: 304, Mapped: 303, Coverage: 100%</li>
+<li>Unmapped: feat_req_someip_668</li>
 </ul>
 <h3 id="someip-sdrst">someip-sd.rst<a class="headerlink" href="#someip-sdrst" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Total: 374, Mapped: 374, Coverage: 100%</li>
+<li>Total: 374, Mapped: 372, Coverage: 99%</li>
+<li>Unmapped: feat_req_someipsd_203, feat_req_someipsd_204</li>
 </ul>
 <h3 id="someip-tprst">someip-tp.rst<a class="headerlink" href="#someip-tprst" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3346,7 +3501,7 @@
 </tr>
 <tr>
 <td>feat_req_someip_435</td>
-<td>REQ_TRANSPORT_004A</td>
+<td>REQ_TRANSPORT_004A, REQ_TRANSPORT_028, REQ_TRANSPORT_029</td>
 </tr>
 <tr>
 <td>feat_req_someip_436</td>
@@ -3546,7 +3701,7 @@
 </tr>
 <tr>
 <td>feat_req_someip_585</td>
-<td>REQ_TRANSPORT_002B</td>
+<td>REQ_TRANSPORT_002B, REQ_TRANSPORT_027</td>
 </tr>
 <tr>
 <td>feat_req_someip_586</td>
@@ -3754,7 +3909,7 @@
 </tr>
 <tr>
 <td>feat_req_someip_664</td>
-<td>REQ_TRANSPORT_001C, REQ_TRANSPORT_024</td>
+<td>REQ_TRANSPORT_001C, REQ_TRANSPORT_024, REQ_TRANSPORT_027</td>
 </tr>
 <tr>
 <td>feat_req_someip_665</td>
@@ -3767,10 +3922,6 @@
 <tr>
 <td>feat_req_someip_667</td>
 <td>REQ_MSG_119</td>
-</tr>
-<tr>
-<td>feat_req_someip_668</td>
-<td>REQ_TRANSPORT_024</td>
 </tr>
 <tr>
 <td>feat_req_someip_669</td>
@@ -3890,7 +4041,7 @@
 </tr>
 <tr>
 <td>feat_req_someip_702</td>
-<td>REQ_TRANSPORT_010</td>
+<td>REQ_TRANSPORT_010, REQ_TRANSPORT_027, REQ_TRANSPORT_028</td>
 </tr>
 <tr>
 <td>feat_req_someip_703</td>
@@ -3954,7 +4105,7 @@
 </tr>
 <tr>
 <td>feat_req_someip_77</td>
-<td>REQ_MSG_010, REQ_MSG_011, REQ_MSG_012, REQ_MSG_014</td>
+<td>REQ_MSG_010, REQ_MSG_011, REQ_MSG_012, REQ_MSG_014, REQ_TRANSPORT_027</td>
 </tr>
 <tr>
 <td>feat_req_someip_78</td>
@@ -4230,11 +4381,11 @@
 </tr>
 <tr>
 <td>feat_req_someipsd_1084</td>
-<td>REQ_SD_236</td>
+<td>REQ_SD_1084</td>
 </tr>
 <tr>
 <td>feat_req_someipsd_1085</td>
-<td>REQ_SD_126</td>
+<td>REQ_SD_126, REQ_SD_236</td>
 </tr>
 <tr>
 <td>feat_req_someipsd_1086</td>
@@ -4290,7 +4441,7 @@
 </tr>
 <tr>
 <td>feat_req_someipsd_1112</td>
-<td>REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065... (+7)</td>
+<td>REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065... (+2)</td>
 </tr>
 <tr>
 <td>feat_req_someipsd_1113</td>
@@ -4570,7 +4721,7 @@
 </tr>
 <tr>
 <td>feat_req_someipsd_140</td>
-<td>REQ_SD_221</td>
+<td>REQ_SD_067, REQ_SD_221, REQ_SD_233</td>
 </tr>
 <tr>
 <td>feat_req_someipsd_141</td>
@@ -4646,11 +4797,11 @@
 </tr>
 <tr>
 <td>feat_req_someipsd_163</td>
-<td>REQ_SD_223</td>
+<td>REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_223, REQ_SD_233</td>
 </tr>
 <tr>
 <td>feat_req_someipsd_164</td>
-<td>REQ_SD_223</td>
+<td>REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_223, REQ_SD_233</td>
 </tr>
 <tr>
 <td>feat_req_someipsd_17</td>
@@ -4699,14 +4850,6 @@
 <tr>
 <td>feat_req_someipsd_201</td>
 <td>REQ_SD_232</td>
-</tr>
-<tr>
-<td>feat_req_someipsd_203</td>
-<td>REQ_SD_233</td>
-</tr>
-<tr>
-<td>feat_req_someipsd_204</td>
-<td>REQ_SD_233</td>
 </tr>
 <tr>
 <td>feat_req_someipsd_205</td>
@@ -5182,7 +5325,7 @@
 </tr>
 <tr>
 <td>feat_req_someipsd_737</td>
-<td>REQ_SD_235</td>
+<td>REQ_SD_074, REQ_SD_235</td>
 </tr>
 <tr>
 <td>feat_req_someipsd_738</td>
@@ -5542,7 +5685,7 @@
 </tr>
 <tr>
 <td>feat_req_someipsd_848</td>
-<td>REQ_SD_349</td>
+<td>REQ_SD_848</td>
 </tr>
 <tr>
 <td>feat_req_someipsd_849</td>

@@ -3050,6 +3050,17 @@
 </ul>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>Transport</strong>: Event-driven <code>IUdpSocketAdapter</code> / <code>ITcpSocketAdapter</code> plus
+  <code>EventDrivenUdpTransport</code> and <code>EventDrivenTcpTransport</code> so integrators can
+  drive <code>ITransport</code> from an existing reactor without BSD sockets
+  (<a href="https://github.com/vtz/opensomeip/issues/172">#172</a>). TCP receive parses
+  and delivers one SOME/IP frame at a time (no bounded staging list); only an
+  incomplete trailing fragment is retained. Reassembly-buffer exhaustion
+  discards the stream buffer and reports <code>BUFFER_OVERFLOW</code> via
+  <code>on_message_rejected</code>. Message-pool exhaustion consumes the current complete
+  frame and reports <code>OUT_OF_MEMORY</code> via <code>on_error</code> so the stream is not stalled
+  with complete unparsed PDUs
+  (<a href="https://github.com/vtz/opensomeip/pull/178">#178</a>).</li>
 <li><strong>Message</strong>: <code>try_deserialize()</code> returns a structured <code>someip::Result</code> for
   each semantic rejection class. Existing <code>deserialize()</code> overloads remain
   source-compatible bool wrappers
