@@ -58,6 +58,7 @@ and can be overridden via CMake `-D` flags or CMakePresets cache variables.
 | `SOMEIP_BYTE_POOL_LARGE_COUNT` | 4 | Large buffer slots (64 KB each) |
 | `SOMEIP_BYTE_POOL_LARGE_SIZE` | 65536 | Large buffer tier size |
 | `SOMEIP_MAX_TP_SEGMENTS` | 64 | Max TP segments per transfer |
+| `SOMEIP_MAX_TCP_CONNECTIONS` | 10 | TCP connection table size (static builds). Each served peer may hold a large-tier receive buffer, so raising this usually means raising `SOMEIP_BYTE_POOL_LARGE_COUNT` too (default large-tier count is 4). |
 | `SOMEIP_MAX_TP_REASSEMBLY_SIZE` | 2048 | Max TP reassembly byte tracking |
 | `SOMEIP_DEFAULT_MAP_CAPACITY` | 32 | Default `UnorderedMap` capacity |
 | `SOMEIP_DEFAULT_VECTOR_CAPACITY` | 32 | Default `Vector` capacity |
