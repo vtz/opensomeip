@@ -13,59 +13,20 @@
 
 # Changelog
 
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 ## Unreleased
 
-### CI / Infrastructure
+## [0.2.0] - 2026-09-29
 
-- **Coverity Scan**: Re-enable the weekly Monday 04:00 UTC schedule and
-  `push` to `main` now that scan.coverity.com is serving the project again
-  ([#265](https://github.com/vtz/opensomeip/issues/265)). `workflow_dispatch`
-  remains for a manual verification run.
-- Fork PRs no longer fail the RPM workflow template on empty Docker Hub
-  secrets; Fedora images are pulled anonymously
-  ([#330](https://github.com/vtz/opensomeip/issues/330)). The Python
-  detailed check-run step already skips forks (landed in #325).
-
-### Documentation
-
-- **CMake**: `find_package(opensomeip)` / `opensomeip::opensomeip` documented
-  as the installed package; the old `SomeIP::someip-common` snippet was wrong
-  ([#271](https://github.com/vtz/opensomeip/issues/271)). Host CI installs the
-  package and builds `tests/cmake_package` against it. The exported target now
-  includes the selected PAL backend include dirs and
-  `opensomeipConfig.cmake` calls `find_dependency(Threads)`.
-
-### Documentation
-
-- **Traceability**: Regenerated `docs/specification/spec-mapping-report.md` so
-  `feat_req_someipsd_818` maps to `REQ_SD_818` (unicast Subscribe family) instead
-  of shutdown `REQ_SD_310`. CAPI, PAL, and `REQ_TP_081_ATOM` are classified as
-  implementation-derived and no longer listed as missing Open SOME/IP links
-  ([#309](https://github.com/vtz/opensomeip/issues/309)).
-
-### Added
-
-- **Transport**: Event-driven `IUdpSocketAdapter` / `ITcpSocketAdapter` plus
-  `EventDrivenUdpTransport` and `EventDrivenTcpTransport` so integrators can
-  drive `ITransport` from an existing reactor without BSD sockets
-  ([#172](https://github.com/vtz/opensomeip/issues/172)). TCP receive parses
-  and delivers one SOME/IP frame at a time (no bounded staging list); only an
-  incomplete trailing fragment is retained. Reassembly-buffer exhaustion
-  discards the stream buffer and reports `BUFFER_OVERFLOW` via
-  `on_message_rejected`. Message-pool exhaustion consumes the current complete
-  frame and reports `OUT_OF_MEMORY` via `on_error` so the stream is not stalled
-  with complete unparsed PDUs
-  ([#178](https://github.com/vtz/opensomeip/pull/178)).
-- **Message**: `try_deserialize()` returns a structured `someip::Result` for
-  each semantic rejection class. Existing `deserialize()` overloads remain
-  source-compatible bool wrappers
-  ([#316](https://github.com/vtz/opensomeip/issues/316)).
-- **Transport**: Defaulted `ITransportListener::on_message_rejected` plus
-  `set_message_rejection_handler` on RPC and event APIs so complete malformed
-  UDP/TCP frames are visible to applications instead of being dropped silently
-  ([#315](https://github.com/vtz/opensomeip/issues/315)). Structured
-  `Message::try_deserialize` reasons (#316) are not required; failures currently
-  report `Result::MALFORMED_MESSAGE`.
+This minor release packages new public APIs (C ABI, static-allocation PAL,
+fire-and-forget RPC, event-driven transports) and **breaking** wire-format /
+behavioral changes that landed on `main` since v0.1.0. Per this repo's 0.x
+policy, incompatible API and wire changes bump the minor version; 1.0.0 remains
+reserved until the public API is declared stable.
 
 ### Breaking Changes
 
@@ -81,8 +42,138 @@
   The C ABI is unchanged (Offset is not a C field)
   ([#318](https://github.com/vtz/opensomeip/issues/318),
   leftover [#339](https://github.com/vtz/opensomeip/issues/339)).
+- **Transport receive model: listener and polling are now mutually
+  exclusive.**  When `set_listener()` is installed, incoming messages are
+  dispatched only via `ITransportListener::on_message_received()` and are
+  **no longer enqueued** into the internal receive queue.
+  `receive_message()` returns `nullptr` in listener mode.  Previously,
+  messages were both enqueued and dispatched, causing unbounded queue
+  growth — memory leaks on POSIX or fixed-pool exhaustion on FreeRTOS
+  ([#269](https://github.com/vtz/opensomeip/issues/269),
+  [#270](https://github.com/vtz/opensomeip/issues/270)).
+  Code that relied on draining `receive_message()` while a listener was
+  set must be updated to consume messages exclusively through one path.
+- **RPC defaults and Interface Version**: Interface Version is the service
+  major (not a hardcoded `0x01`); `RpcServer` returns
+  `E_WRONG_INTERFACE_VERSION` (0x08) on mismatch
+  ([#297](https://github.com/vtz/opensomeip/issues/297),
+  [#312](https://github.com/vtz/opensomeip/pull/312)).
+  `RpcClient` no longer defaults traffic to `127.0.0.1:30490`;
+  `RpcServer` binds `127.0.0.1:30501` by default
+  ([#301](https://github.com/vtz/opensomeip/issues/301),
+  [#312](https://github.com/vtz/opensomeip/pull/312)).
+- **Static allocation backend types**: When `SOMEIP_USE_STATIC_ALLOC=ON`,
+  public types change underlying representation
+  ([#268](https://github.com/vtz/opensomeip/issues/268)):
 
-### Bug Fixes
+  | Type | Dynamic (default) | Static (`SOMEIP_USE_STATIC_ALLOC=ON`) |
+  |---|---|---|
+  | `platform::ByteBuffer` | `std::vector<uint8_t>` | Slab-backed buffer (pool-allocated, fixed capacity per tier) |
+  | `platform::String<N>` | `std::string` | `etl::string<N>` (fixed capacity `N`, default 64) |
+  | `platform::Vector<T, N>` | `std::vector<T>` | `etl::vector<T, N>` (fixed capacity `N`) |
+  | `platform::UnorderedMap<K, V, N>` | `std::unordered_map<K, V>` | `etl::unordered_map<K, V, N>` (fixed capacity `N`) |
+  | `MessagePtr` | `std::shared_ptr<Message>` | `IntrusivePtr<Message>` (pool-allocated, refcounted) |
+
+  Under the default dynamic backend these remain aliases of the STL types.
+  With static-alloc, RPC payload types and `MethodHandler`
+  (`platform::Function<…>`) are distinct; code that relies on unlimited
+  `ByteBuffer` growth, `shared_ptr`-specific APIs, or unbounded
+  `platform::String` capacity must migrate.
+
+### Breaking Changes (Wire Format)
+
+Peers running v0.1.0 will not interoperate with this release on these paths:
+
+- **String serialization now includes UTF-8 BOM and NUL terminator.**
+  Dynamic UTF-8 strings are now serialized as
+  `[length u32][BOM EF BB BF][utf8 data][0x00]` per the Open SOME/IP
+  Specification (`feat_req_someip_662`, `800`, `687`).  Length =
+  BOM(3) + data + NUL(1).  The unconditional 4-byte alignment after
+  strings has been removed; alignment is now caller-controlled.
+  ([#274](https://github.com/vtz/opensomeip/issues/274),
+  [#278](https://github.com/vtz/opensomeip/pull/278))
+- **TP segments now carry a full 16-byte SOME/IP header.**  Every
+  SOME/IP-TP segment (not just the first) includes a full SOME/IP
+  header with TP-Flag set, followed by a 4-byte TP header, then
+  payload.  Non-last segment payloads are now always a multiple of
+  16 bytes, and all More-Segments=1 segments have uniform size
+  (`feat_req_someiptp_765`, `772`, `778`).
+  ([#275](https://github.com/vtz/opensomeip/issues/275),
+  [#278](https://github.com/vtz/opensomeip/pull/278))
+- **TP segment payload maximized at `max_segment_size` (default 1392).**
+  `max_segment_size` now means segment *payload* bytes, not total
+  wire size.  Non-last segments produce payloads of exactly
+  `(max_segment_size / 16) * 16` bytes (1392 with default config).
+  Previously 20 bytes were reserved for headers, capping payload at
+  1360 ([#278](https://github.com/vtz/opensomeip/pull/278)).
+- **Folklore 1000-byte TP-Flag path removed.**  Messages that fit in
+  a single non-TP SOME/IP message are sent without TP-Flag and without
+  a TP header.  The vsomeip-style `> 1000` threshold that set TP-Flag
+  without appending a TP header has been deleted
+  ([#278](https://github.com/vtz/opensomeip/pull/278)).
+- **TP reassembly buffer keyed by spec-mandated composite key.**
+  Reassembly buffers are now keyed by Message ID + Protocol Version +
+  Interface Version + Message Type (wire byte 14, TP-flag masked off) +
+  Request ID (Client ID + Session ID), per `feat_req_someiptp_781`.
+  Session ID change detection discards stale buffers
+  (`feat_req_someiptp_795`).
+  ([#276](https://github.com/vtz/opensomeip/issues/276),
+  [#278](https://github.com/vtz/opensomeip/pull/278))
+- **Undersized / zero-payload TP segments are rejected.**  Segments
+  shorter than the required header overhead (20 bytes for TP) are
+  rejected.  Zero-payload segments no longer vacuously complete a
+  reassembly buffer ([#278](https://github.com/vtz/opensomeip/pull/278)).
+- **TCP Magic Cookie field layout corrected.**  Session ID is now
+  `0xBEEF` (was misplaced as `0x0001`), MessageType is `0x01`/`0x02`
+  (was `0xBE`), and ReturnCode is `0x00` (was `0xEF`), matching
+  `feat_req_someip_609`.
+  ([#277](https://github.com/vtz/opensomeip/issues/277),
+  [#278](https://github.com/vtz/opensomeip/pull/278))
+- **SOME/IP-SD**: Subscribe family is unicast-only; Offer TTL 0 only for
+  StopOffer; default multicast `239.255.255.251:30490`; Unicast/Reboot
+  flags; Ack counter/reserved copy
+  ([#294](https://github.com/vtz/opensomeip/issues/294)–[#307](https://github.com/vtz/opensomeip/issues/307),
+  [#311](https://github.com/vtz/opensomeip/pull/311)).
+
+### Added
+
+- **C ABI / FFI qualification boundary**: `include/capi/opensomeip.h`,
+  exception firewall on every entry point, `BUILD_CAPI` / `find_package`
+  export, RPM packaging, unit + integration tests, and FFI FMEA /
+  C API user docs
+  ([#313](https://github.com/vtz/opensomeip/pull/313)).
+- **No-heap static allocation PAL**: ETL + slab pools, intrusive
+  `MessagePtr`, FreeRTOS/ThreadX Renode CI, malloc-trap verification
+  ([#268](https://github.com/vtz/opensomeip/issues/268)).
+- **Transport**: Event-driven `IUdpSocketAdapter` / `ITcpSocketAdapter` plus
+  `EventDrivenUdpTransport` and `EventDrivenTcpTransport` so integrators can
+  drive `ITransport` from an existing reactor without BSD sockets
+  ([#172](https://github.com/vtz/opensomeip/issues/172),
+  [#178](https://github.com/vtz/opensomeip/pull/178)).
+- **Message**: `try_deserialize()` returns a structured `someip::Result` for
+  each semantic rejection class. Existing `deserialize()` overloads remain
+  source-compatible bool wrappers
+  ([#316](https://github.com/vtz/opensomeip/issues/316)).
+- **Transport**: Defaulted `ITransportListener::on_message_rejected` plus
+  `set_message_rejection_handler` on RPC and event APIs so complete malformed
+  UDP/TCP frames are visible to applications instead of being dropped silently
+  ([#315](https://github.com/vtz/opensomeip/issues/315)).
+- `UdpTransport::receive_message_with_sender(Endpoint& sender)` — polling
+  mode variant that also returns the sender's endpoint for reply
+  addressing without requiring a listener.
+- `RpcClient::send_request_no_return()` — fire-and-forget `REQUEST_NO_RETURN`
+  (message type 0x01) with no pending-call wait
+  ([#308](https://github.com/vtz/opensomeip/issues/308)).
+- `RpcServer::register_method(..., MethodSemantics)` — request/response vs
+  fire-and-forget method semantics
+  ([#308](https://github.com/vtz/opensomeip/issues/308)).
+- `SdClient::get_eventgroup_subscription_state()`
+  ([#295](https://github.com/vtz/opensomeip/issues/295)).
+- **`PayloadView`** — non-owning, span-like view over contiguous payload
+  bytes across dynamic and static backends
+  ([#268](https://github.com/vtz/opensomeip/issues/268)).
+
+### Fixed
 
 - **E2E**: profile resolution stays sequential (ID, then name, then default).
   A non-zero unregistered `profile_id` no longer skips `profile_name` and
@@ -102,15 +193,13 @@
   ([#322](https://github.com/vtz/opensomeip/issues/322)).
 - **SOME/IP-SD**: IPv6 Endpoint (Type 0x06) and IPv6 Multicast (Type 0x16)
   options are parsed instead of being skipped as unknown. IPv6 SD Endpoint
-  (0x26) and ``AF_INET6`` transport remain out of scope
+  (0x26) and `AF_INET6` transport remain out of scope
   ([#320](https://github.com/vtz/opensomeip/issues/320)).
-
 - **SOME/IP-SD**: SubscribeEventgroup family is unicast-only. Clients send
   Subscribe/StopSubscribe to the Offer datagram source (not the SD multicast
   group); servers ignore Subscribe received on a multicast destination
   ([#294](https://github.com/vtz/opensomeip/issues/294)).
-- **SOME/IP-SD**: Clients process SubscribeEventgroupAck/Nack and expose
-  `SdClient::get_eventgroup_subscription_state()`
+- **SOME/IP-SD**: Clients process SubscribeEventgroupAck/Nack
   ([#295](https://github.com/vtz/opensomeip/issues/295)).
 - **SOME/IP-SD**: SubscribeEventgroupAck IPv4MulticastOption uses the offered
   eventgroup endpoint; unicast eventgroups omit the option
@@ -119,7 +208,7 @@
   rejected); StopOfferService still uses TTL 0
   ([#299](https://github.com/vtz/opensomeip/issues/299)).
 - **SOME/IP-SD**: Default SD multicast endpoint unified to
-  `239.255.255.251:30490` (port is specified; group is a deployment default)
+  `239.255.255.251:30490`
   ([#300](https://github.com/vtz/opensomeip/issues/300)).
 - **SOME/IP-SD**: Unknown 16-byte entry types are skipped instead of dropping
   the whole SD message
@@ -136,112 +225,36 @@
 - **Events**: New subscribers receive current field values after Subscribe Ack;
   TTL refresh of an existing client does not repeat the initial burst
   ([#307](https://github.com/vtz/opensomeip/issues/307)).
-
-### Breaking Changes (Wire Format)
-
-- **String serialization now includes UTF-8 BOM and NUL terminator.**
-  Dynamic UTF-8 strings are now serialized as
-  `[length u32][BOM EF BB BF][utf8 data][0x00]` per the Open SOME/IP
-  Specification (`feat_req_someip_662`, `800`, `687`).  Length =
-  BOM(3) + data + NUL(1).  The unconditional 4-byte alignment after
-  strings has been removed; alignment is now caller-controlled.
-  ([#274](https://github.com/vtz/opensomeip/issues/274))
-
-- **TP segments now carry a full 16-byte SOME/IP header.**  Every
-  SOME/IP-TP segment (not just the first) includes a full SOME/IP
-  header with TP-Flag set, followed by a 4-byte TP header, then
-  payload.  Non-last segment payloads are now always a multiple of
-  16 bytes, and all More-Segments=1 segments have uniform size
-  (`feat_req_someiptp_765`, `772`, `778`).
-  ([#275](https://github.com/vtz/opensomeip/issues/275))
-
-- **TP segment payload maximized at `max_segment_size` (default 1392).**
-  `max_segment_size` now means segment *payload* bytes, not total
-  wire size.  Non-last segments produce payloads of exactly
-  `(max_segment_size / 16) * 16` bytes (1392 with default config).
-  Previously 20 bytes were reserved for headers, capping payload at
-  1360.
-
-- **Folklore 1000-byte TP-Flag path removed.**  Messages that fit in
-  a single non-TP SOME/IP message are sent without TP-Flag and without
-  a TP header.  The vsomeip-style `> 1000` threshold that set TP-Flag
-  without appending a TP header has been deleted.
-
-- **TP reassembly buffer keyed by spec-mandated composite key.**
-  Reassembly buffers are now keyed by Message ID + Protocol Version +
-  Interface Version + Message Type (wire byte 14, TP-flag masked off) +
-  Request ID (Client ID + Session ID), per `feat_req_someiptp_781`.
-  Session ID change detection discards stale buffers
-  (`feat_req_someiptp_795`).
-  ([#276](https://github.com/vtz/opensomeip/issues/276))
-
-- **Undersized / zero-payload TP segments are rejected.**  Segments
-  shorter than the required header overhead (20 bytes for TP) are
-  rejected.  Zero-payload segments no longer vacuously complete a
-  reassembly buffer.
-
-- **TCP Magic Cookie field layout corrected.**  Session ID is now
-  `0xBEEF` (was misplaced as `0x0001`), MessageType is `0x01`/`0x02`
-  (was `0xBE`), and ReturnCode is `0x00` (was `0xEF`), matching
-  `feat_req_someip_609`.
-  ([#277](https://github.com/vtz/opensomeip/issues/277))
-
-### Other Breaking Changes
-
-- **Transport receive model: listener and polling are now mutually
-  exclusive.**  When `set_listener()` is installed, incoming messages are
-  dispatched only via `ITransportListener::on_message_received()` and are
-  **no longer enqueued** into the internal receive queue.
-  `receive_message()` returns `nullptr` in listener mode.  Previously,
-  messages were both enqueued and dispatched, causing unbounded queue
-  growth — memory leaks on POSIX or fixed-pool exhaustion on FreeRTOS
-  ([#269](https://github.com/vtz/opensomeip/issues/269)).
-  Code that relied on draining `receive_message()` while a listener was
-  set must be updated to consume messages exclusively through one path.
-
-### New Features
-
-- `UdpTransport::receive_message_with_sender(Endpoint& sender)` — polling
-  mode variant that also returns the sender's endpoint for reply
-  addressing without requiring a listener.
-- `RpcClient::send_request_no_return()` — fire-and-forget `REQUEST_NO_RETURN`
-  (message type 0x01) with no pending-call wait (#308).
-- `RpcServer::register_method(..., MethodSemantics)` — request/response vs
-  fire-and-forget method semantics (#308).
-
-### Bug Fixes
-
+- Event subscription TTL expiry
+  ([#267](https://github.com/vtz/opensomeip/issues/267)).
 - **SOME/IP-TP**: Message Type bit 5 (`0x20`) is the TP flag for all
   types, including Response (`0xA0`) and Error (`0xA1`). Unknown types
-  are decided after masking bit 5 (`#296`).
+  are decided after masking bit 5
+  ([#296](https://github.com/vtz/opensomeip/issues/296)).
 - **UDP**: `UdpTransport` segments and reassembles large messages via
-  `TpManager` when `enable_tp` is true (`#305`).
-- **Serialization**: string wire format now matches Open SOME/IP spec
-  with UTF-8 BOM, NUL terminator, and correct length semantics (#274).
-- **SOME/IP-TP**: every segment now carries a full SOME/IP header;
-  non-last segment payloads are 16-byte aligned and uniformly sized (#275).
-- **SOME/IP-TP**: reassembly buffer uses spec-mandated composite key
-  (incl. wire Message Type and full Request ID) for interoperability;
-  stale sessions are discarded on Session ID change (#276).
-- **SOME/IP-TP**: undersized and zero-payload segments are now rejected
-  instead of vacuously completing a reassembly buffer.
-- **SOME/IP-TP**: `max_segment_size` now correctly represents payload
-  capacity; non-last segments produce maximum-size payloads (1392 default).
-- **SOME/IP-TP**: removed folklore 1000-byte threshold that set TP-Flag
-  without appending a TP header.
-- **TCP**: Magic Cookie byte layout corrected — Session ID, MessageType,
-  and ReturnCode now match `feat_req_someip_609` (#277).
-- UDP/TCP: listener-only mode no longer retains `MessagePtr` in the
-  internal queue, preventing memory leaks and pool exhaustion (#269).
+  `TpManager` when `enable_tp` is true
+  ([#305](https://github.com/vtz/opensomeip/issues/305)).
 - TCP: `on_message_received()` is now invoked outside `connection_mutex_`,
-  eliminating a potential deadlock when the callback calls
-  `disconnect()`.
-- RPC: Interface Version is the service major. The message header no longer
-  rejects values other than 0x01; `RpcServer` returns
-  `E_WRONG_INTERFACE_VERSION` (0x08) on mismatch (#297).
-- RPC: `RpcClient` sends to a configured offered-service endpoint instead of
-  defaulting to `127.0.0.1:30490` (the SD port). `RpcServer` binds
-  `127.0.0.1:30501` by default (#301).
+  eliminating a potential deadlock when the callback calls `disconnect()`.
+- Static-alloc capacity-aware SD/event/serializer bounds checks and
+  no-heap cleanup (reserve-before-send, peer-table abort, filter capacity,
+  `snprintf` instead of `std::to_string`, etc.)
+  ([#268](https://github.com/vtz/opensomeip/issues/268)).
+
+### Changed
+
+- **Coverity Scan**: Re-enable the weekly Monday 04:00 UTC schedule and
+  `push` to `main` now that scan.coverity.com is serving the project again
+  ([#265](https://github.com/vtz/opensomeip/issues/265)).
+- Fork PRs no longer fail the RPM workflow template on empty Docker Hub
+  secrets; Fedora images are pulled anonymously
+  ([#330](https://github.com/vtz/opensomeip/issues/330)).
+- **CMake docs**: `find_package(opensomeip)` / `opensomeip::opensomeip`
+  documented as the installed package
+  ([#271](https://github.com/vtz/opensomeip/issues/271)).
+- **Traceability**: Regenerated `docs/specification/spec-mapping-report.md`
+  so `feat_req_someipsd_818` maps to `REQ_SD_818`
+  ([#309](https://github.com/vtz/opensomeip/issues/309)).
 
 ### Interop Notes
 
@@ -263,94 +276,220 @@ The following intentional extensions remain vs. the Open SOME/IP spec:
   truncating the E2E suffix via `serialize()`+`resize(16)`.  A
   combined TP+E2E path is tracked for a future release.
 
-## Unreleased — Static Allocation Backend (`feature/no-heap-static-alloc`)
+### Known Limitations (Static Allocation)
+
+- **E2E `make_unique` heap allocation** — `std::make_unique<BasicE2EProfile>()`
+  in `e2e_profiles/standard_profile.cpp` still allocates on the heap.
+  E2E profile registration is a one-time startup cost performed before the
+  malloc trap is armed.
+- **Debug `to_string()` heap allocation** — diagnostic-only functions not
+  called on the data path still use `std::string` / `std::stringstream`.
+- **Examples disabled under static-alloc** — `BUILD_EXAMPLES=OFF` in all
+  static-alloc CMake presets.
+- **FreeRTOS zero-heap test uses size delta** — balanced
+  `pvPortMalloc`/`vPortFree` within the window would go undetected.
+
+## [0.1.0] - 2026-05-20
+
+This is the first minor release and includes **breaking changes** to wire formats,
+public API types, and default behaviors to bring the stack into compliance with the
+SOME/IP and SOME/IP-SD specifications.
 
 ### Breaking Changes
 
-This release introduces a compile-time static allocation backend.  When
-`SOMEIP_USE_STATIC_ALLOC=ON`, the following public types change their
-underlying representation:
+- **SD minor version widened to 32-bit**: `ServiceEntry::minor_version_` and `ServiceInstance::minor_version` changed from `uint8_t` to `uint32_t`; `get_minor_version()` / `set_minor_version()` signatures updated accordingly (#245, #251)
+- **SD ConfigurationOption length field corrected**: Wire-format length now includes the Reserved byte per spec; messages serialized by v0.0.x are **not** wire-compatible with v0.1.0 (#246, #251)
+- **SD unknown-option skip corrected**: Skip logic uses `3 + len` instead of `4 + len`, fixing option-array parsing for messages containing unknown options (#247, #251)
+- **Serialization `serialize_array` writes byte count**: Length prefix now encodes total byte length instead of element count per SOME/IP spec; existing serialized payloads are **not** backward-compatible (#249, #251)
+- **Serialization `uint64` endianness made portable**: 64-bit ser/des uses explicit MSB-first byte layout instead of unconditional byte-swap; changes wire bytes on big-endian targets (#250, #251)
+- **E2E default profile name**: `E2EConfig::profile_name` default changed from `"standard"` to `"basic"` to match the registered profile name; code relying on the old default will silently fail to find a profile (#248, #251)
+- **`E2ECRC::calculate_crc` return type**: Changed from `uint32_t` to `std::optional<uint32_t>` to signal invalid `crc_type` instead of returning 0 (#251)
+- **TP segment offset widened to 32-bit**: `TpSegmentHeader::segment_offset` changed from `uint16_t` to `uint32_t`; `TpReassemblyBuffer` segment methods updated to match (#251)
+- **Constructors made `explicit`**: `ServiceEntry`, `EventGroupEntry`, `SdEntry`, `SdOption`, `ServiceInstance`, `EventSubscription`, `EventNotification`, `EventGroupSubscription`, and `EventGroup` constructors are now `explicit` — implicit conversions from integers will no longer compile (#251)
+- **Copy/move deleted on core types**: `SdEntry`, `SdOption`, `E2EProfile`, `E2EProtection`, `E2EProfileRegistry`, `ITransport`, `ITransportListener`, `UdpTransport`, and `SessionManager` are now non-copyable and non-movable (#251)
 
-| Type | Dynamic (default) | Static (`SOMEIP_USE_STATIC_ALLOC=ON`) |
-|---|---|---|
-| `platform::ByteBuffer` | `std::vector<uint8_t>` | Slab-backed buffer (pool-allocated, fixed capacity per tier) |
-| `platform::String<N>` | `std::string` | `etl::string<N>` (fixed capacity `N`, default 64) |
-| `platform::Vector<T, N>` | `std::vector<T>` | `etl::vector<T, N>` (fixed capacity `N`) |
-| `platform::UnorderedMap<K, V, N>` | `std::unordered_map<K, V>` | `etl::unordered_map<K, V, N>` (fixed capacity `N`) |
-| `MessagePtr` | `std::shared_ptr<Message>` | `IntrusivePtr<Message>` (pool-allocated, refcounted) |
+### Added
 
-**Consumer impact:**
+- **Shared Library Packaging**: Build shared `libopensomeip.so` and split RPM into base, devel, and static sub-packages (#216)
+- **Version Single Source of Truth**: Make the `VERSION` file the authoritative version reference for all build and packaging artifacts (#213)
+- **Path-Based CI Filtering**: Implement path-based workflow filtering to skip irrelevant CI jobs on documentation-only or scoped changes (#202)
+- **MISRA-Aligned Quality Gate**: Add MISRA-aligned clang-tidy quality gate to CI for automotive-grade static analysis (#223)
+- **RTOS Test Coverage**: Increase RTOS test coverage with shared E2E and TP suites across FreeRTOS, ThreadX, and Zephyr (#218)
+- **CI Caching**: Cache CMake FetchContent, Zephyr SDK/workspace, ARM toolchain, pip packages, Renode binary, and ccache across CI jobs (#200, #201, #203, #204, #205, #206)
+- **SD Session ID Counter**: `SdSessionIdCounter` class and `SdMessage::get/set_session_id()` for per-message session tracking per SOME/IP-SD spec (#251)
+- **SD IPv4 Endpoint protocol field**: `IPv4EndpointOption::get/set_protocol()` to specify L4 protocol (default UDP) (#251)
+- **SD Server event-group selection**: `SdServer::offer_service()` accepts explicit `eventgroup_ids` parameter (#251)
+- **Event publisher/subscriber endpoint APIs**: `EventPublisher::set_default_client_endpoint()`, `EventSubscriber::set_default_endpoint()`, and `EventSubscriber::set_endpoint_resolver()` (#251)
+- **TCP Magic Cookie support**: Periodic magic-cookie keep-alives with `TcpTransportConfig::magic_cookie_enabled/interval`; `TcpTransport::is_magic_cookie()`, `make_magic_cookie_client()`, `make_magic_cookie_server()` (#251)
+- **TCP stream parsing made public**: `TcpTransport::parse_message_from_buffer()` exposed for external use (#251)
+- **15 new regression tests**: Dedicated tests for each spec-compliance fix across SD, serialization, and E2E (#251)
 
-- Code that stores `ByteBuffer` by value and relies on unlimited growth
-  must account for pool-tier capacity limits.  `push_back()`, `resize()`,
-  and `insert()` now return early / leave the buffer unchanged when the
-  pool cannot satisfy the request.
-- `platform::String<N>` is capacity-bounded.  Assigning a string longer
-  than `N` truncates under ETL's default error policy.  Override `N` via
-  template parameter or the `SOMEIP_DEFAULT_STRING_CAPACITY` CMake
-  variable.
-- `MessagePtr` is no longer `shared_ptr` under static-alloc.  Code that
-  calls `shared_ptr`-specific APIs (e.g. `use_count()`, `weak_ptr`)
-  will not compile.  Use `MessagePtr` opaquely.
+### Fixed
 
-### New Features
+- **Spec Compliance** (6 bugs): SD minor version truncation, ConfigurationOption length off-by-one, unknown option skip off-by-one, E2E profile name mismatch, `serialize_array` element-vs-byte count, `uint64` endianness — all with regression tests (#245, #246, #247, #248, #249, #250, #251)
+- **Coverity CI**: Repair Coverity Scan CI download URL and upgrade to Node.js 24 actions (#240, #241)
+- **SD Interop**: Correct IPv4 option wire format for SOME/IP-SD interoperability (#239)
+- **Stale Code Removal**: Remove stale vsomeip interop stubs and inflated conformance claims (#237)
+- **Transport Safety**: Eliminate TOCTOU race on transport `listener_` pointer; use `std::atomic<ITransportListener*>` (#214)
+- **Code Quality**: Resolve all remaining clang-tidy violations — threshold reduced to 0 across 9 remediation batches (#222, #225, #227, #228, #229, #230, #231, #232, #234, #236)
+- **CI Compatibility**: Support Fedora container jobs on fork PRs (#183)
 
-- **`PayloadView`** — non-owning, span-like view over contiguous payload
-  bytes.  Works identically across dynamic and static backends.
-  `operator[]` includes a debug-mode assertion; production builds match
-  `std::span` semantics (no bounds check).
-- **Static slab allocators** for `Message` and `ByteBuffer` with
-  configurable pool sizes via `static_config.h` or CMake `-D` overrides.
-- **`MallocTrapGuard`** (RAII) and `malloc_trap` link-time interposition
-  for verifying zero-heap behavior in tests.
-- **FreeRTOS and ThreadX Renode CI** — cross-compiled static-alloc tests
-  run on Cortex-M4 under Renode simulation.
-- **SD capacity-aware contracts** — `add_entry()` / `add_option()` return
-  `bool`; `deserialize()` rejects messages that exceed container capacity.
+### Changed
 
-### Bug Fixes
+- **CI Architecture**: Trim CI matrix — Fedora, Renode skip, reporting cleanup (#212); extract Python 3.12 installation to a reusable composite action (#215)
+- **Documentation**: Convert PlantUML diagrams to Mermaid and add PAL architecture diagram (#220); rewrite TEST_REPORTING.md to reflect current CI reporting architecture (#217)
 
-- SD client: reserve local tracking map slot **before** sending network
-  traffic in `find_service()` and `subscribe_eventgroup()`.  Previously,
-  a successful send with a full map would discard the callback.
-- SD server: callers of `next_unicast_session_id()` now abort the
-  response when the peer table is full (returns session ID 0), instead
-  of sending an invalid SOME/IP message.
-- Event publisher: `handle_subscription_locked()` now rejects filter
-  lists that exceed the bounded container's capacity instead of silently
-  truncating them and returning success.
-- `PayloadView::operator[]` now asserts `i < size_` in debug builds.
-- Overflow-safe bounds check in `e2e_header.cpp` (`offset + header_size`
-  wraparound).
-- `e2e_crc.cpp` returns `nullopt` when temporary slice allocation fails
-  under static pool pressure.
-- `sd_message.cpp` rejects oversized configuration strings before
-  `assign()` to prevent ETL assertion / truncation.
-- `sd_server.cpp` / `event_subscriber.cpp` replaced `std::to_string()`
-  with stack-local `snprintf()` to eliminate heap allocation.
-- `event_subscriber.cpp` field-response correlation key normalized to
-  `instance_id=0` on both store and lookup paths.
-- `serializer.h` `deserialize_array` rejects wire-controlled lengths
-  exceeding static vector capacity (`MALFORMED_MESSAGE`).
+## [0.0.5] - 2026-03-31
 
-### Known Limitations (Intentional)
+This release supersedes v0.0.4 as the first published Fedora Copr package.
 
-- **E2E `make_unique` heap allocation** — `std::make_unique<BasicE2EProfile>()`
-  in `e2e_profiles/standard_profile.cpp` (line 324) still allocates on the
-  heap.  E2E profile registration is a one-time startup cost and is
-  performed before the malloc trap is armed.  Tracked for static-pool
-  migration if E2E is used on bare-metal targets.
-- **Debug `to_string()` heap allocation** — `Message::to_string()`,
-  `Endpoint::to_string()`, `to_string(Result)`, `to_string(MessageType)`,
-  and `to_string(ReturnCode)` use `std::string` / `std::stringstream`.
-  These are diagnostic-only functions not called on the data path.
-- **Examples disabled under static-alloc** — `BUILD_EXAMPLES=OFF` in all
-  static-alloc CMake presets.  Examples use `std::vector`, `std::string`,
-  and `std::make_shared` pervasively.  Migrating them is possible but
-  not prioritized; they serve as dynamic-backend usage documentation.
-- **FreeRTOS zero-heap test uses size delta** — `test_freertos_static_zero_heap()`
-  compares `xPortGetFreeHeapSize()` before and after.  A balanced
-  `pvPortMalloc`/`vPortFree` pair within the window would go undetected.
-  An allocation-counter approach (wrapping `pvPortMalloc`) would catch
-  transient allocations.  Acceptable as-is; stronger instrumentation
-  tracked as a follow-up.
+### Added
+
+- **RPM Packaging**: Automated RPM builds via Packit for Fedora Copr on PRs and releases (#135)
+- **Gateway Documentation**: Comprehensive gateway docs with platform/architecture coverage (#179)
+- **Pre-PR Test Runner**: Cross-platform test runner scripts for local validation before submitting PRs (#148)
+- **Allure Reporting**: Integrated Allure for rich test reports with historical trends (#141, #155)
+- **Renode Hardware Simulation**: Enabled Renode testing for Zephyr, FreeRTOS, and ThreadX targets (#107)
+- **MkDocs Project Site**: Documentation site with SEO configuration for GitHub Pages discoverability (#62, #103, #108)
+- **Lightweight Integration**: `SOMEIP_DEV_TOOLS` CMake option to skip dev-tool discovery (#113)
+- **MC/DC Test Coverage**: Increased code coverage with meaningful tests and MC/DC analysis (#117)
+
+### Fixed
+
+- **RPM Packaging**: Correct Copr project owner in Packit configuration (#186)
+- **Transport Robustness**: Retry `EINTR` in UDP and TCP `send_data()`/`receive_data()` (#83, #86); check `someip_getsockopt()` return before trusting `SO_ERROR` (#85); correct TCP keepalive socket option setup (#84)
+- **Windows/MSVC Portability**: Portable `someip_socket_t` handles (#88), `NOGDI` compile definition (#67), `in_addr_t` typedef (#80), MSVC socket macros (#70), E2E false-positive deserialization (#65)
+- **Test Reliability**: Resolve use-after-destroy race in `UdpTransportTest` (#167); replace fixed sleeps with readiness synchronization (#89); add null guards (#124); fix events example API (#150)
+- **RPM Packaging**: Use `git archive` instead of `tar` to prevent build failures; remove unnecessary `srpm_build_deps` (#157)
+- **CI Stability**: Pin Zephyr to v4.3.0 for SDK 0.17.0 compatibility (#98); resolve Python e2e/system test failures (#143); fix JUnit XML discovery (#140)
+
+### Changed
+
+- **Build Consolidation**: Merged per-layer libraries into single `libopensomeip` static target (#126)
+- **CI Architecture**: Consolidated workflows into single parent workflow for unified artifacts (#125); added ASan/UBSan to host workflow (#128); added Windows (MSVC) and Fedora 42 to build matrix (#64, #90)
+- **CI Reporting**: Moved reports from PR comments to Job Summaries and Checks tab (#111); adopted `ctrf-io/github-test-reporter` (#133)
+- **Performance**: Avoid per-packet `memset` in `UdpTransport::receive_loop` (#149)
+- **Cross-Compilation**: Refactored cross-compilation build presets and toolchain support (#100)
+
+## [0.0.4] - 2026-03-30
+
+_Superseded by v0.0.5 — Copr packages were not published for this release._
+
+## [0.0.3] - 2026-03-09
+
+### Added
+
+- **Multi-Platform PAL Backends**: Refactored Platform Abstraction Layer and added FreeRTOS, ThreadX, and lwIP backends (#25)
+- **Zephyr RTOS Port**: Ported SOME/IP stack to Zephyr with stabilized native_sim CI support
+- **Requirements Traceability**: Complete requirements tracking, test coverage mapping, and PAL conformance verification (#49)
+- **Coverity Static Analysis**: Integrated Coverity Scan for continuous static code analysis (#56)
+- **CI Test & Coverage Reports**: Publish test and coverage reports on pull requests (#54)
+- **ConditionVariable Wrapper**: Added platform-agnostic ConditionVariable for host platforms (#34)
+
+### Fixed
+
+- **Build System**: Derive backend flags before `add_subdirectory(src)` (#39); use `CMAKE_CURRENT_SOURCE_DIR` for VERSION file (#16)
+- **Cross-Platform Compatibility**: Guard lwIP byte-order helpers for big-endian hosts (#41)
+- **Docker Environment**: Pin pip package versions for reproducible dev image builds (#36); add `network_mode: host` for Zephyr native_sim networking (#35)
+- **Test Reliability**: Check `tx_thread_create` return value and fail fast on error (#42)
+- **CI Fixes**: Correct Coverity project name, download endpoint, and form encoding (#57, #59)
+
+### Changed
+
+- **CI Architecture**: Split monolithic workflow into per-platform files (host, FreeRTOS, ThreadX, Zephyr) (#31)
+- **CI Security**: Scope write permissions to PR-comment job only (#43)
+- **CI Reliability**: Add `--no-tests=error` to ctest for FreeRTOS and ThreadX to prevent false-green builds (#38, #44); skip build and tests on documentation-only changes (#18)
+- **Documentation**: Add Zephyr, FreeRTOS, and ThreadX references to README (#37); add `SOMEIP_FREERTOS_LINUX_TESTS` to build options table (#40); improve README SEO with OpenSOME/IP branding (#15)
+
+## [0.0.2] - 2026-01-25
+
+### Added
+
+- **End-to-End (E2E) Protection**: Complete implementation of E2E protection for SOME/IP messages (#9)
+  - CRC calculation and verification
+  - E2E header handling
+  - Profile registry for managing protection profiles
+  - Standard profile implementation
+
+- **Sphinx-Needs Requirements Management**: Integrated requirements management system (#10, #11)
+  - Requirements traceability documentation
+  - Implementation tracking for architecture, transport, serialization, and more
+  - Specification references linking implementation to open-someip-spec
+
+- **Pre-commit Hooks**: Added automated code quality checks (#8)
+  - Clang-format enforcement
+  - Clang-tidy static analysis
+  - Automated linting before commits
+
+- **Docker Testing Environment**: Added containerized testing support
+  - Dockerfile.test for consistent test environments
+  - Cross-platform testing capabilities
+
+- **Cross-Platform Demo**: Added example demonstrating macOS client ↔ Linux Docker server communication
+
+- **SD (Service Discovery) Enhancements**:
+  - Multicast support for service discovery
+  - IPv4 options handling
+  - Protocol testing tools (multicast_listener.py, multicast_sender.py)
+  - Comprehensive SD tests for serialization and client/server integration
+
+- **Configurable UDP Transport**: Added blocking/non-blocking modes with configurable socket buffer sizes
+
+- **PlantUML Diagram Generation**: CI job for validating and rendering architecture diagrams
+
+- **Semantic Versioning System**: Version management scripts (bump_version.sh, bump_submodule.sh)
+
+### Fixed
+
+- **Documentation Fixes**:
+  - Resolved sphinx-needs link type and extra option conflict (#13)
+  - Removed 'status' from needs_extra_options (#12)
+  - Fixed PlantUML note syntax (#2)
+  - Fixed README code fence rendering
+  - Fixed example build documentation and removed CMake target conflicts
+
+- **Cross-Platform Compatibility**:
+  - Made socket buffer size settings non-critical for CI compatibility
+  - Made message socket includes portable
+  - Added missing headers in example programs (mutex, cstring, string, functional)
+  - Added socket headers for cross-platform htons/htonl support
+
+- **Thread Safety**:
+  - Guarded TP reassembler config with mutex
+  - Added mutex headers for TP reassembler locks
+
+- **CI/CD Improvements**:
+  - Fixed CI hang issues
+  - Dropped Windows job (out of scope)
+
+### Changed
+
+- Removed vsomeip-specific references from infra_test README
+- Updated documentation for better clarity and accuracy
+
+## [0.0.1] - Initial Release
+
+### Added
+
+- Initial SOME/IP stack implementation based on open-someip-spec
+- Core message handling and types
+- RPC client and server implementation
+- Event publisher and subscriber
+- Transport layer (TCP and UDP)
+- TP (Transport Protocol) segmentation and reassembly
+- Serialization framework
+- Service Discovery (SD) client and server
+- Session management
+- Comprehensive test suite
+- Example applications (basic and advanced)
+- Architecture documentation and diagrams
+
+---
+
+[0.2.0]: https://github.com/vtz/opensomeip/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/vtz/opensomeip/compare/v0.0.5...v0.1.0
+[0.0.5]: https://github.com/vtz/opensomeip/compare/v0.0.4...v0.0.5
+[0.0.4]: https://github.com/vtz/opensomeip/compare/v0.0.3...v0.0.4
+[0.0.3]: https://github.com/vtz/opensomeip/compare/v0.0.2...v0.0.3
+[0.0.2]: https://github.com/vtz/opensomeip/compare/v0.0.1...v0.0.2
+[0.0.1]: https://github.com/vtz/opensomeip/releases/tag/v0.0.1
