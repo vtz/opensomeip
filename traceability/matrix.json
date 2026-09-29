@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-28T20:24:47.495411",
+  "generated": "2026-09-29T11:25:48.632709",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -96,10 +96,11 @@
         "feat_req_someip_324"
       ],
       "implemented_by": [
-        "CODE_tcp_transport_transport_68"
+        "CODE_tcp_transport_transport_90"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
+        "TC_TCP_MULTI_CLIENT_ROUTING",
         "TC_test_full_stack_integration_1"
       ]
     },
@@ -114,7 +115,7 @@
         "feat_req_someip_661"
       ],
       "implemented_by": [
-        "CODE_tcp_transport_transport_68"
+        "CODE_tcp_transport_transport_90"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
@@ -131,10 +132,14 @@
         "feat_req_someip_646"
       ],
       "implemented_by": [
-        "CODE_tcp_transport_transport_68"
+        "CODE_tcp_transport_transport_90",
+        "CODE_tcp_transport_transport_516",
+        "CODE_tcp_transport_transport_808",
+        "CODE_tcp_transport_transport_974"
       ],
       "tested_by": [
-        "TC_test_tcp_transport_SetUp"
+        "TC_test_tcp_transport_SetUp",
+        "TC_TCP_CONNECT_REPORTS_CONNECTING"
       ]
     },
     "REQ_TRANSPORT_003B": {
@@ -148,10 +153,21 @@
         "feat_req_someip_680"
       ],
       "implemented_by": [
-        "CODE_tcp_transport_transport_68"
+        "CODE_tcp_transport_transport_90",
+        "CODE_tcp_transport_transport_254",
+        "CODE_tcp_transport_transport_808",
+        "CODE_tcp_transport_transport_974"
       ],
       "tested_by": [
-        "TC_test_tcp_transport_SetUp"
+        "TC_test_tcp_transport_SetUp",
+        "TC_TCP_SERVER_MODE_CONNECT",
+        "TC_TCP_MULTI_CLIENT",
+        "TC_TCP_MULTI_CLIENT_ROUTING",
+        "TC_TCP_STALLED_PEER_ISOLATION",
+        "TC_TCP_PEER_ISOLATION",
+        "TC_TCP_DISCONNECT_PEER",
+        "TC_TCP_CLOSE_STALLED_PEER",
+        "TC_TCP_STALE_PEER_RECONNECT"
       ]
     },
     "REQ_TRANSPORT_004A": {
@@ -244,7 +260,7 @@
         "CODE_event_driven_udp_transport_transport_51",
         "CODE_event_driven_udp_transport_transport_124",
         "CODE_event_driven_udp_transport_transport_195",
-        "CODE_tcp_transport_transport_68",
+        "CODE_tcp_transport_transport_90",
         "CODE_udp_transport_transport_42"
       ],
       "tested_by": [
@@ -372,7 +388,7 @@
         "feat_req_someip_647"
       ],
       "implemented_by": [
-        "CODE_tcp_transport_transport_346"
+        "CODE_tcp_transport_transport_673"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp"
@@ -387,7 +403,7 @@
         "feat_req_someip_645"
       ],
       "implemented_by": [
-        "CODE_tcp_transport_transport_307"
+        "CODE_tcp_transport_transport_634"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp"
@@ -403,10 +419,12 @@
         "feat_req_someip_680"
       ],
       "implemented_by": [
-        "CODE_tcp_transport_transport_346"
+        "CODE_tcp_transport_transport_254",
+        "CODE_tcp_transport_transport_673"
       ],
       "tested_by": [
-        "TC_test_tcp_transport_SetUp"
+        "TC_test_tcp_transport_SetUp",
+        "TC_TCP_DISCONNECT_PEER"
       ]
     },
     "REQ_TRANSPORT_019": {
@@ -418,10 +436,11 @@
         "feat_req_someip_681"
       ],
       "implemented_by": [
-        "CODE_tcp_transport_transport_186"
+        "CODE_tcp_transport_transport_468"
       ],
       "tested_by": [
-        "TC_test_tcp_transport_SetUp"
+        "TC_test_tcp_transport_SetUp",
+        "TC_TCP_CLOSE_STALLED_PEER"
       ]
     },
     "REQ_TRANSPORT_020": {
@@ -437,9 +456,9 @@
       ],
       "implemented_by": [
         "CODE_event_driven_tcp_transport_transport_441",
-        "CODE_tcp_transport_transport_748",
+        "CODE_tcp_transport_transport_1303",
         "CODE_udp_transport_transport_189",
-        "CODE_tcp_transport_transport_237"
+        "CODE_tcp_transport_transport_343"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
@@ -458,7 +477,7 @@
         "feat_req_someip_594"
       ],
       "implemented_by": [
-        "CODE_tcp_transport_transport_575",
+        "CODE_tcp_transport_transport_1081",
         "CODE_udp_transport_transport_189"
       ],
       "tested_by": [
@@ -510,7 +529,7 @@
       "implemented_by": [
         "CODE_event_driven_tcp_transport_transport_221",
         "CODE_event_driven_tcp_transport_transport_243",
-        "CODE_tcp_transport_transport_435"
+        "CODE_tcp_transport_transport_790"
       ],
       "tested_by": [
         "TC_ED_TCP_NPDU_001",
@@ -584,9 +603,9 @@
       ],
       "implemented_by": [
         "CODE_event_driven_tcp_transport_transport_441",
-        "CODE_tcp_transport_transport_748",
+        "CODE_tcp_transport_transport_1303",
         "CODE_udp_transport_transport_217",
-        "CODE_tcp_transport_transport_237"
+        "CODE_tcp_transport_transport_343"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
@@ -606,8 +625,8 @@
         "CODE_rpc_server_rpc_243",
         "CODE_event_driven_tcp_transport_transport_234",
         "CODE_event_driven_tcp_transport_transport_243",
-        "CODE_tcp_transport_transport_446",
-        "CODE_tcp_transport_transport_656",
+        "CODE_tcp_transport_transport_801",
+        "CODE_tcp_transport_transport_1210",
         "CODE_udp_transport_transport_434",
         "CODE_udp_transport_transport_527",
         "CODE_event_publisher_events_193",
@@ -615,7 +634,7 @@
         "CODE_rpc_client_rpc_159",
         "CODE_rpc_server_rpc_136",
         "CODE_message_rejection_transport_38",
-        "CODE_tcp_transport_transport_219",
+        "CODE_tcp_transport_transport_324",
         "CODE_transport_transport_78"
       ],
       "tested_by": [
@@ -667,9 +686,9 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tcp_transport_transport_346",
-        "CODE_tcp_transport_transport_600",
-        "CODE_tcp_transport_transport_625"
+        "CODE_tcp_transport_transport_673",
+        "CODE_tcp_transport_transport_1131",
+        "CODE_tcp_transport_transport_1176"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
@@ -682,13 +701,14 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tcp_transport_transport_346",
-        "CODE_tcp_transport_transport_600",
-        "CODE_tcp_transport_transport_625"
+        "CODE_tcp_transport_transport_673",
+        "CODE_tcp_transport_transport_1131",
+        "CODE_tcp_transport_transport_1176"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
-        "TC_TCP_E02"
+        "TC_TCP_E02",
+        "TC_TCP_CLIENT_SEND_NO_SPIN"
       ]
     },
     "REQ_TRANSPORT_011_E01": {
@@ -724,7 +744,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tcp_transport_transport_346"
+        "CODE_tcp_transport_transport_673"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
@@ -737,9 +757,9 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tcp_transport_transport_346",
-        "CODE_tcp_transport_transport_600",
-        "CODE_tcp_transport_transport_625"
+        "CODE_tcp_transport_transport_673",
+        "CODE_tcp_transport_transport_1131",
+        "CODE_tcp_transport_transport_1176"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
@@ -779,11 +799,14 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tcp_transport_transport_238"
+        "CODE_tcp_transport_transport_808"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
-        "TC_TCP_E04"
+        "TC_TCP_E04",
+        "TC_TCP_E01_LIMIT",
+        "TC_TCP_PEER_ISOLATION",
+        "TC_TCP_CAPACITY_CLAMP"
       ]
     },
     "REQ_TRANSPORT_002_E04": {
@@ -792,13 +815,14 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_tcp_transport_transport_346",
-        "CODE_tcp_transport_transport_600",
-        "CODE_tcp_transport_transport_625"
+        "CODE_tcp_transport_transport_673",
+        "CODE_tcp_transport_transport_1131",
+        "CODE_tcp_transport_transport_1176"
       ],
       "tested_by": [
         "TC_test_tcp_transport_SetUp",
-        "TC_TCP_E04"
+        "TC_TCP_E04",
+        "TC_TCP_ROUTE_UNKNOWN_PEER"
       ]
     },
     "REQ_TRANSPORT_011_E02": {
@@ -13573,9 +13597,9 @@
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_68": {
-      "id": "CODE_tcp_transport_transport_68",
-      "location": "src/transport/tcp_transport.cpp:68",
+    "CODE_tcp_transport_transport_90": {
+      "id": "CODE_tcp_transport_transport_90",
+      "location": "src/transport/tcp_transport.cpp:90",
       "implements": [
         "REQ_TRANSPORT_002A",
         "REQ_TRANSPORT_002B",
@@ -13588,33 +13612,42 @@
         "feat_req_someip_851"
       ]
     },
-    "CODE_tcp_transport_transport_186": {
-      "id": "CODE_tcp_transport_transport_186",
-      "location": "src/transport/tcp_transport.cpp:186",
+    "CODE_tcp_transport_transport_254": {
+      "id": "CODE_tcp_transport_transport_254",
+      "location": "src/transport/tcp_transport.cpp:254",
+      "implements": [
+        "REQ_TRANSPORT_003B",
+        "REQ_TRANSPORT_018"
+      ],
+      "satisfies": []
+    },
+    "CODE_tcp_transport_transport_468": {
+      "id": "CODE_tcp_transport_transport_468",
+      "location": "src/transport/tcp_transport.cpp:468",
       "implements": [
         "REQ_TRANSPORT_019"
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_238": {
-      "id": "CODE_tcp_transport_transport_238",
-      "location": "src/transport/tcp_transport.cpp:238",
+    "CODE_tcp_transport_transport_516": {
+      "id": "CODE_tcp_transport_transport_516",
+      "location": "src/transport/tcp_transport.cpp:516",
       "implements": [
-        "REQ_TRANSPORT_003_E01"
+        "REQ_TRANSPORT_003A"
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_307": {
-      "id": "CODE_tcp_transport_transport_307",
-      "location": "src/transport/tcp_transport.cpp:307",
+    "CODE_tcp_transport_transport_634": {
+      "id": "CODE_tcp_transport_transport_634",
+      "location": "src/transport/tcp_transport.cpp:634",
       "implements": [
         "REQ_TRANSPORT_017"
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_346": {
-      "id": "CODE_tcp_transport_transport_346",
-      "location": "src/transport/tcp_transport.cpp:346",
+    "CODE_tcp_transport_transport_673": {
+      "id": "CODE_tcp_transport_transport_673",
+      "location": "src/transport/tcp_transport.cpp:673",
       "implements": [
         "REQ_TRANSPORT_002_E01",
         "REQ_TRANSPORT_002_E02",
@@ -13626,33 +13659,52 @@
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_435": {
-      "id": "CODE_tcp_transport_transport_435",
-      "location": "src/transport/tcp_transport.cpp:435",
+    "CODE_tcp_transport_transport_790": {
+      "id": "CODE_tcp_transport_transport_790",
+      "location": "src/transport/tcp_transport.cpp:790",
       "implements": [
         "REQ_TRANSPORT_024"
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_446": {
-      "id": "CODE_tcp_transport_transport_446",
-      "location": "src/transport/tcp_transport.cpp:446",
+    "CODE_tcp_transport_transport_801": {
+      "id": "CODE_tcp_transport_transport_801",
+      "location": "src/transport/tcp_transport.cpp:801",
       "implements": [
         "REQ_TRANSPORT_026"
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_575": {
-      "id": "CODE_tcp_transport_transport_575",
-      "location": "src/transport/tcp_transport.cpp:575",
+    "CODE_tcp_transport_transport_808": {
+      "id": "CODE_tcp_transport_transport_808",
+      "location": "src/transport/tcp_transport.cpp:808",
+      "implements": [
+        "REQ_TRANSPORT_003A",
+        "REQ_TRANSPORT_003B",
+        "REQ_TRANSPORT_003_E01"
+      ],
+      "satisfies": []
+    },
+    "CODE_tcp_transport_transport_974": {
+      "id": "CODE_tcp_transport_transport_974",
+      "location": "src/transport/tcp_transport.cpp:974",
+      "implements": [
+        "REQ_TRANSPORT_003A",
+        "REQ_TRANSPORT_003B"
+      ],
+      "satisfies": []
+    },
+    "CODE_tcp_transport_transport_1081": {
+      "id": "CODE_tcp_transport_transport_1081",
+      "location": "src/transport/tcp_transport.cpp:1081",
       "implements": [
         "REQ_TRANSPORT_021"
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_600": {
-      "id": "CODE_tcp_transport_transport_600",
-      "location": "src/transport/tcp_transport.cpp:600",
+    "CODE_tcp_transport_transport_1131": {
+      "id": "CODE_tcp_transport_transport_1131",
+      "location": "src/transport/tcp_transport.cpp:1131",
       "implements": [
         "REQ_TRANSPORT_002_E01",
         "REQ_TRANSPORT_002_E02",
@@ -13661,9 +13713,9 @@
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_625": {
-      "id": "CODE_tcp_transport_transport_625",
-      "location": "src/transport/tcp_transport.cpp:625",
+    "CODE_tcp_transport_transport_1176": {
+      "id": "CODE_tcp_transport_transport_1176",
+      "location": "src/transport/tcp_transport.cpp:1176",
       "implements": [
         "REQ_TRANSPORT_002_E01",
         "REQ_TRANSPORT_002_E02",
@@ -13672,17 +13724,17 @@
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_656": {
-      "id": "CODE_tcp_transport_transport_656",
-      "location": "src/transport/tcp_transport.cpp:656",
+    "CODE_tcp_transport_transport_1210": {
+      "id": "CODE_tcp_transport_transport_1210",
+      "location": "src/transport/tcp_transport.cpp:1210",
       "implements": [
         "REQ_TRANSPORT_026"
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_748": {
-      "id": "CODE_tcp_transport_transport_748",
-      "location": "src/transport/tcp_transport.cpp:748",
+    "CODE_tcp_transport_transport_1303": {
+      "id": "CODE_tcp_transport_transport_1303",
+      "location": "src/transport/tcp_transport.cpp:1303",
       "implements": [
         "REQ_TRANSPORT_020",
         "REQ_TRANSPORT_025"
@@ -15273,17 +15325,17 @@
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_219": {
-      "id": "CODE_tcp_transport_transport_219",
-      "location": "include/transport/tcp_transport.h:219",
+    "CODE_tcp_transport_transport_324": {
+      "id": "CODE_tcp_transport_transport_324",
+      "location": "include/transport/tcp_transport.h:324",
       "implements": [
         "REQ_TRANSPORT_026"
       ],
       "satisfies": []
     },
-    "CODE_tcp_transport_transport_237": {
-      "id": "CODE_tcp_transport_transport_237",
-      "location": "include/transport/tcp_transport.h:237",
+    "CODE_tcp_transport_transport_343": {
+      "id": "CODE_tcp_transport_transport_343",
+      "location": "include/transport/tcp_transport.h:343",
       "implements": [
         "REQ_TRANSPORT_020",
         "REQ_TRANSPORT_025"
@@ -19056,8 +19108,8 @@
     },
     "TC_test_tcp_transport_SetUp": {
       "id": "TC_test_tcp_transport_SetUp",
-      "name": "SetUp (tests/test_tcp_transport.cpp:29)",
-      "location": "tests/test_tcp_transport.cpp:29",
+      "name": "SetUp (tests/test_tcp_transport.cpp:36)",
+      "location": "tests/test_tcp_transport.cpp:36",
       "tests": [
         "REQ_TRANSPORT_002a",
         "REQ_TRANSPORT_002b",
@@ -19086,34 +19138,42 @@
         "REQ_TRANSPORT_016_E01"
       ]
     },
+    "TC_TCP_CONNECT_REPORTS_CONNECTING": {
+      "id": "TC_TCP_CONNECT_REPORTS_CONNECTING",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:348)",
+      "location": "tests/test_tcp_transport.cpp:348",
+      "tests": [
+        "REQ_TRANSPORT_003a"
+      ]
+    },
     "TC_TCP_E01": {
       "id": "TC_TCP_E01",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:463)",
-      "location": "tests/test_tcp_transport.cpp:463",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:518)",
+      "location": "tests/test_tcp_transport.cpp:518",
       "tests": [
         "REQ_TRANSPORT_002_E01"
       ]
     },
     "TC_TCP_E02": {
       "id": "TC_TCP_E02",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:488)",
-      "location": "tests/test_tcp_transport.cpp:488",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:543)",
+      "location": "tests/test_tcp_transport.cpp:543",
       "tests": [
         "REQ_TRANSPORT_002_E02"
       ]
     },
     "TC_TCP_E03": {
       "id": "TC_TCP_E03",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:508)",
-      "location": "tests/test_tcp_transport.cpp:508",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:563)",
+      "location": "tests/test_tcp_transport.cpp:563",
       "tests": [
         "REQ_TRANSPORT_002_E03"
       ]
     },
     "TC_TCP_E04": {
       "id": "TC_TCP_E04",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:533)",
-      "location": "tests/test_tcp_transport.cpp:533",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:588)",
+      "location": "tests/test_tcp_transport.cpp:588",
       "tests": [
         "REQ_TRANSPORT_002_E04",
         "REQ_TRANSPORT_003_E01"
@@ -19121,104 +19181,104 @@
     },
     "TC_TCP_E05": {
       "id": "TC_TCP_E05",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:567)",
-      "location": "tests/test_tcp_transport.cpp:567",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:622)",
+      "location": "tests/test_tcp_transport.cpp:622",
       "tests": [
         "REQ_TRANSPORT_016_E01"
       ]
     },
     "TC_TCP_PARSE_001": {
       "id": "TC_TCP_PARSE_001",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:586)",
-      "location": "tests/test_tcp_transport.cpp:586",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:641)",
+      "location": "tests/test_tcp_transport.cpp:641",
       "tests": [
         "REQ_TRANSPORT_024"
       ]
     },
     "TC_TCP_PARSE_002": {
       "id": "TC_TCP_PARSE_002",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:608)",
-      "location": "tests/test_tcp_transport.cpp:608",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:663)",
+      "location": "tests/test_tcp_transport.cpp:663",
       "tests": [
         "REQ_TRANSPORT_024"
       ]
     },
     "TC_TCP_REJECT_001": {
       "id": "TC_TCP_REJECT_001",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:628)",
-      "location": "tests/test_tcp_transport.cpp:628",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:683)",
+      "location": "tests/test_tcp_transport.cpp:683",
       "tests": [
         "REQ_TRANSPORT_026"
       ]
     },
     "TC_TCP_REJECT_003": {
       "id": "TC_TCP_REJECT_003",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:670)",
-      "location": "tests/test_tcp_transport.cpp:670",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:726)",
+      "location": "tests/test_tcp_transport.cpp:726",
       "tests": [
         "REQ_TRANSPORT_026"
       ]
     },
     "TC_TCP_REJECT_004": {
       "id": "TC_TCP_REJECT_004",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:705)",
-      "location": "tests/test_tcp_transport.cpp:705",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:762)",
+      "location": "tests/test_tcp_transport.cpp:762",
       "tests": [
         "REQ_TRANSPORT_026"
       ]
     },
     "TC_TCP_REJECT_005": {
       "id": "TC_TCP_REJECT_005",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:732)",
-      "location": "tests/test_tcp_transport.cpp:732",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:790)",
+      "location": "tests/test_tcp_transport.cpp:790",
       "tests": [
         "REQ_TRANSPORT_026"
       ]
     },
     "TC_TCP_REJECT_002": {
       "id": "TC_TCP_REJECT_002",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:767)",
-      "location": "tests/test_tcp_transport.cpp:767",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:826)",
+      "location": "tests/test_tcp_transport.cpp:826",
       "tests": [
         "REQ_TRANSPORT_026"
       ]
     },
     "TC_TCP_REJECT_002b": {
       "id": "TC_TCP_REJECT_002b",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:807)",
-      "location": "tests/test_tcp_transport.cpp:807",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:866)",
+      "location": "tests/test_tcp_transport.cpp:866",
       "tests": [
         "REQ_TRANSPORT_026"
       ]
     },
     "TC_TCP_PARSE_003": {
       "id": "TC_TCP_PARSE_003",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:846)",
-      "location": "tests/test_tcp_transport.cpp:846",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:905)",
+      "location": "tests/test_tcp_transport.cpp:905",
       "tests": [
         "REQ_TRANSPORT_024"
       ]
     },
     "TC_TCP_PARSE_004": {
       "id": "TC_TCP_PARSE_004",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:882)",
-      "location": "tests/test_tcp_transport.cpp:882",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:941)",
+      "location": "tests/test_tcp_transport.cpp:941",
       "tests": [
         "REQ_TRANSPORT_024"
       ]
     },
     "TC_TCP_PARSE_005": {
       "id": "TC_TCP_PARSE_005",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:916)",
-      "location": "tests/test_tcp_transport.cpp:916",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:975)",
+      "location": "tests/test_tcp_transport.cpp:975",
       "tests": [
         "REQ_TRANSPORT_024"
       ]
     },
     "TC_TCP_MAGIC_001": {
       "id": "TC_TCP_MAGIC_001",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:954)",
-      "location": "tests/test_tcp_transport.cpp:954",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1013)",
+      "location": "tests/test_tcp_transport.cpp:1013",
       "tests": [
         "REQ_TRANSPORT_020",
         "REQ_TRANSPORT_025"
@@ -19226,8 +19286,8 @@
     },
     "TC_TCP_MAGIC_002": {
       "id": "TC_TCP_MAGIC_002",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:986)",
-      "location": "tests/test_tcp_transport.cpp:986",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1045)",
+      "location": "tests/test_tcp_transport.cpp:1045",
       "tests": [
         "REQ_TRANSPORT_020",
         "REQ_TRANSPORT_025"
@@ -19235,61 +19295,161 @@
     },
     "TC_TCP_MAGIC_003": {
       "id": "TC_TCP_MAGIC_003",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:1006)",
-      "location": "tests/test_tcp_transport.cpp:1006",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1065)",
+      "location": "tests/test_tcp_transport.cpp:1065",
       "tests": [
         "REQ_TRANSPORT_020"
       ]
     },
     "TC_TCP_MAGIC_CORRELATION": {
       "id": "TC_TCP_MAGIC_CORRELATION",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:1021)",
-      "location": "tests/test_tcp_transport.cpp:1021",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1080)",
+      "location": "tests/test_tcp_transport.cpp:1080",
       "tests": [
         "feat_req_someip_609"
       ]
     },
     "TC_TCP_MAGIC_004": {
       "id": "TC_TCP_MAGIC_004",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:1045)",
-      "location": "tests/test_tcp_transport.cpp:1045",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1104)",
+      "location": "tests/test_tcp_transport.cpp:1104",
       "tests": [
         "REQ_TRANSPORT_020"
       ]
     },
     "TC_TCP_MAGIC_005": {
       "id": "TC_TCP_MAGIC_005",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:1073)",
-      "location": "tests/test_tcp_transport.cpp:1073",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1132)",
+      "location": "tests/test_tcp_transport.cpp:1132",
       "tests": [
         "REQ_TRANSPORT_021"
       ]
     },
     "TC_TCP_MAGIC_006": {
       "id": "TC_TCP_MAGIC_006",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:1089)",
-      "location": "tests/test_tcp_transport.cpp:1089",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1148)",
+      "location": "tests/test_tcp_transport.cpp:1148",
       "tests": [
         "REQ_TRANSPORT_021"
       ]
     },
     "TC_TCP_LISTENER_QUEUE_RETENTION": {
       "id": "TC_TCP_LISTENER_QUEUE_RETENTION",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:1122)",
-      "location": "tests/test_tcp_transport.cpp:1122",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1181)",
+      "location": "tests/test_tcp_transport.cpp:1181",
       "tests": []
     },
     "TC_TCP_MODE_SWITCH": {
       "id": "TC_TCP_MODE_SWITCH",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:1179)",
-      "location": "tests/test_tcp_transport.cpp:1179",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1238)",
+      "location": "tests/test_tcp_transport.cpp:1238",
       "tests": []
     },
     "TC_TCP_LISTENER_DISCONNECT_NO_DEADLOCK": {
       "id": "TC_TCP_LISTENER_DISCONNECT_NO_DEADLOCK",
-      "name": "TEST_F (tests/test_tcp_transport.cpp:1291)",
-      "location": "tests/test_tcp_transport.cpp:1291",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1352)",
+      "location": "tests/test_tcp_transport.cpp:1352",
       "tests": []
+    },
+    "TC_TCP_SERVER_MODE_CONNECT": {
+      "id": "TC_TCP_SERVER_MODE_CONNECT",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1473)",
+      "location": "tests/test_tcp_transport.cpp:1473",
+      "tests": [
+        "REQ_TRANSPORT_003b"
+      ]
+    },
+    "TC_TCP_MULTI_CLIENT": {
+      "id": "TC_TCP_MULTI_CLIENT",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1520)",
+      "location": "tests/test_tcp_transport.cpp:1520",
+      "tests": [
+        "REQ_TRANSPORT_003b"
+      ]
+    },
+    "TC_TCP_MULTI_CLIENT_ROUTING": {
+      "id": "TC_TCP_MULTI_CLIENT_ROUTING",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1599)",
+      "location": "tests/test_tcp_transport.cpp:1599",
+      "tests": [
+        "REQ_TRANSPORT_003b",
+        "REQ_TRANSPORT_002a"
+      ]
+    },
+    "TC_TCP_E01_LIMIT": {
+      "id": "TC_TCP_E01_LIMIT",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1667)",
+      "location": "tests/test_tcp_transport.cpp:1667",
+      "tests": [
+        "REQ_TRANSPORT_003_E01"
+      ]
+    },
+    "TC_TCP_STALLED_PEER_ISOLATION": {
+      "id": "TC_TCP_STALLED_PEER_ISOLATION",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1749)",
+      "location": "tests/test_tcp_transport.cpp:1749",
+      "tests": [
+        "REQ_TRANSPORT_003b"
+      ]
+    },
+    "TC_TCP_PEER_ISOLATION": {
+      "id": "TC_TCP_PEER_ISOLATION",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1872)",
+      "location": "tests/test_tcp_transport.cpp:1872",
+      "tests": [
+        "REQ_TRANSPORT_003b",
+        "REQ_TRANSPORT_003_E01"
+      ]
+    },
+    "TC_TCP_ROUTE_UNKNOWN_PEER": {
+      "id": "TC_TCP_ROUTE_UNKNOWN_PEER",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1939)",
+      "location": "tests/test_tcp_transport.cpp:1939",
+      "tests": [
+        "REQ_TRANSPORT_002_E04"
+      ]
+    },
+    "TC_TCP_DISCONNECT_PEER": {
+      "id": "TC_TCP_DISCONNECT_PEER",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:1977)",
+      "location": "tests/test_tcp_transport.cpp:1977",
+      "tests": [
+        "REQ_TRANSPORT_003b",
+        "REQ_TRANSPORT_018"
+      ]
+    },
+    "TC_TCP_CAPACITY_CLAMP": {
+      "id": "TC_TCP_CAPACITY_CLAMP",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:2059)",
+      "location": "tests/test_tcp_transport.cpp:2059",
+      "tests": [
+        "REQ_TRANSPORT_003_E01"
+      ]
+    },
+    "TC_TCP_CLOSE_STALLED_PEER": {
+      "id": "TC_TCP_CLOSE_STALLED_PEER",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:2089)",
+      "location": "tests/test_tcp_transport.cpp:2089",
+      "tests": [
+        "REQ_TRANSPORT_003b",
+        "REQ_TRANSPORT_019"
+      ]
+    },
+    "TC_TCP_STALE_PEER_RECONNECT": {
+      "id": "TC_TCP_STALE_PEER_RECONNECT",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:2266)",
+      "location": "tests/test_tcp_transport.cpp:2266",
+      "tests": [
+        "REQ_TRANSPORT_003b"
+      ]
+    },
+    "TC_TCP_CLIENT_SEND_NO_SPIN": {
+      "id": "TC_TCP_CLIENT_SEND_NO_SPIN",
+      "name": "TEST_F (tests/test_tcp_transport.cpp:2418)",
+      "location": "tests/test_tcp_transport.cpp:2418",
+      "tests": [
+        "REQ_TRANSPORT_002_E02"
+      ]
     },
     "TC_test_tp_SetUp": {
       "id": "TC_test_tp_SetUp",

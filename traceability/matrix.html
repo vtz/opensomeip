@@ -21,14 +21,14 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-09-28 20:24:47</p>
+    <p>Generated: 2026-09-29 11:25:48</p>
 
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
             <li>Total Requirements: 697</li>
-            <li>Code References: 370</li>
-            <li>Test Cases: 491</li>
+            <li>Code References: 373</li>
+            <li>Test Cases: 504</li>
         </ul>
     </div>
 
@@ -5302,15 +5302,15 @@
             <td>REQ_TRANSPORT_002A</td>
             <td>TCP Client/Server Modes</td>
             <td>feat_req_someip_32, feat_req_someip_325, feat_req_someip_323, feat_req_someip_324</td>
-            <td class="code-ref">CODE_tcp_transport_transport_68</td>
-            <td>TC_test_tcp_transport_SetUp, TC_test_full_stack_integration_1</td>
+            <td class="code-ref">CODE_tcp_transport_transport_90</td>
+            <td>TC_test_tcp_transport_SetUp, TC_TCP_MULTI_CLIENT_ROUTING, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TRANSPORT_002B</td>
             <td>TCP Framing and State Management</td>
             <td>feat_req_someip_585, feat_req_someip_644, feat_req_someip_645, feat_req_someip_661</td>
-            <td class="code-ref">CODE_tcp_transport_transport_68</td>
+            <td class="code-ref">CODE_tcp_transport_transport_90</td>
             <td>TC_test_tcp_transport_SetUp, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5318,7 +5318,7 @@
             <td>REQ_TRANSPORT_002_E01</td>
             <td>Error - TCP Connection Refused</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_346, CODE_tcp_transport_transport_600, CODE_tcp_transport_transport_625</td>
+            <td class="code-ref">CODE_tcp_transport_transport_673, CODE_tcp_transport_transport_1131, CODE_tcp_transport_transport_1176</td>
             <td>TC_test_tcp_transport_SetUp, TC_TCP_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5326,15 +5326,15 @@
             <td>REQ_TRANSPORT_002_E02</td>
             <td>Error - TCP Connection Reset</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_346, CODE_tcp_transport_transport_600, CODE_tcp_transport_transport_625</td>
-            <td>TC_test_tcp_transport_SetUp, TC_TCP_E02</td>
+            <td class="code-ref">CODE_tcp_transport_transport_673, CODE_tcp_transport_transport_1131, CODE_tcp_transport_transport_1176</td>
+            <td>TC_test_tcp_transport_SetUp, TC_TCP_E02, TC_TCP_CLIENT_SEND_NO_SPIN</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TRANSPORT_002_E03</td>
             <td>Error - TCP Message Framing Error</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_346, CODE_tcp_transport_transport_600, CODE_tcp_transport_transport_625</td>
+            <td class="code-ref">CODE_tcp_transport_transport_673, CODE_tcp_transport_transport_1131, CODE_tcp_transport_transport_1176</td>
             <td>TC_test_tcp_transport_SetUp, TC_TCP_E03</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5342,32 +5342,32 @@
             <td>REQ_TRANSPORT_002_E04</td>
             <td>Error - TCP Send on Disconnected Socket</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_346, CODE_tcp_transport_transport_600, CODE_tcp_transport_transport_625</td>
-            <td>TC_test_tcp_transport_SetUp, TC_TCP_E04</td>
+            <td class="code-ref">CODE_tcp_transport_transport_673, CODE_tcp_transport_transport_1131, CODE_tcp_transport_transport_1176</td>
+            <td>TC_test_tcp_transport_SetUp, TC_TCP_E04, TC_TCP_ROUTE_UNKNOWN_PEER</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TRANSPORT_003A</td>
             <td>Connection State Tracking and Notification</td>
             <td>feat_req_someip_326, feat_req_someip_644, feat_req_someip_646</td>
-            <td class="code-ref">CODE_tcp_transport_transport_68</td>
-            <td>TC_test_tcp_transport_SetUp</td>
+            <td class="code-ref">CODE_tcp_transport_transport_90, CODE_tcp_transport_transport_516, CODE_tcp_transport_transport_808, CODE_tcp_transport_transport_974</td>
+            <td>TC_test_tcp_transport_SetUp, TC_TCP_CONNECT_REPORTS_CONNECTING</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TRANSPORT_003B</td>
             <td>Graceful Shutdown and Error Handling</td>
             <td>feat_req_someip_647, feat_req_someip_678, feat_req_someip_679, feat_req_someip_680</td>
-            <td class="code-ref">CODE_tcp_transport_transport_68</td>
-            <td>TC_test_tcp_transport_SetUp</td>
+            <td class="code-ref">CODE_tcp_transport_transport_90, CODE_tcp_transport_transport_254, CODE_tcp_transport_transport_808, CODE_tcp_transport_transport_974</td>
+            <td>TC_test_tcp_transport_SetUp, TC_TCP_SERVER_MODE_CONNECT, TC_TCP_MULTI_CLIENT, TC_TCP_MULTI_CLIENT_ROUTING, TC_TCP_STALLED_PEER_ISOLATION, TC_TCP_PEER_ISOLATION, TC_TCP_DISCONNECT_PEER, TC_TCP_CLOSE_STALLED_PEER, TC_TCP_STALE_PEER_RECONNECT</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TRANSPORT_003_E01</td>
             <td>Error - TCP Server Socket Exhaustion</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_238</td>
-            <td>TC_test_tcp_transport_SetUp, TC_TCP_E04</td>
+            <td class="code-ref">CODE_tcp_transport_transport_808</td>
+            <td>TC_test_tcp_transport_SetUp, TC_TCP_E04, TC_TCP_E01_LIMIT, TC_TCP_PEER_ISOLATION, TC_TCP_CAPACITY_CLAMP</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -5406,7 +5406,7 @@
             <td>REQ_TRANSPORT_005</td>
             <td>Abstract Transport Interface</td>
             <td>feat_req_someip_32, feat_req_someip_56, feat_req_someip_31</td>
-            <td class="code-ref">CODE_event_driven_udp_transport_transport_32, CODE_event_driven_udp_transport_transport_51, CODE_event_driven_udp_transport_transport_124, CODE_event_driven_udp_transport_transport_195, CODE_tcp_transport_transport_68, CODE_udp_transport_transport_42</td>
+            <td class="code-ref">CODE_event_driven_udp_transport_transport_32, CODE_event_driven_udp_transport_transport_51, CODE_event_driven_udp_transport_transport_124, CODE_event_driven_udp_transport_transport_195, CODE_tcp_transport_transport_90, CODE_udp_transport_transport_42</td>
             <td>TC_test_tcp_transport_SetUp, TC_test_udp_transport_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5502,7 +5502,7 @@
             <td>REQ_TRANSPORT_016</td>
             <td>Client-Initiated TCP Connection</td>
             <td>feat_req_someip_646, feat_req_someip_647</td>
-            <td class="code-ref">CODE_tcp_transport_transport_346</td>
+            <td class="code-ref">CODE_tcp_transport_transport_673</td>
             <td>TC_test_tcp_transport_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5510,7 +5510,7 @@
             <td>REQ_TRANSPORT_016_E01</td>
             <td>Error - TCP Reconnection Exhaustion</td>
             <td>-</td>
-            <td class="code-ref">CODE_tcp_transport_transport_346</td>
+            <td class="code-ref">CODE_tcp_transport_transport_673</td>
             <td>TC_test_tcp_transport_SetUp, TC_TCP_E05</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5518,7 +5518,7 @@
             <td>REQ_TRANSPORT_017</td>
             <td>TCP Connection Sharing</td>
             <td>feat_req_someip_644, feat_req_someip_645</td>
-            <td class="code-ref">CODE_tcp_transport_transport_307</td>
+            <td class="code-ref">CODE_tcp_transport_transport_634</td>
             <td>TC_test_tcp_transport_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5526,23 +5526,23 @@
             <td>REQ_TRANSPORT_018</td>
             <td>TCP Connection Closure</td>
             <td>feat_req_someip_678, feat_req_someip_679, feat_req_someip_680</td>
-            <td class="code-ref">CODE_tcp_transport_transport_346</td>
-            <td>TC_test_tcp_transport_SetUp</td>
+            <td class="code-ref">CODE_tcp_transport_transport_254, CODE_tcp_transport_transport_673</td>
+            <td>TC_test_tcp_transport_SetUp, TC_TCP_DISCONNECT_PEER</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TRANSPORT_019</td>
             <td>TCP Timeout on Connection Loss</td>
             <td>feat_req_someip_326, feat_req_someip_681</td>
-            <td class="code-ref">CODE_tcp_transport_transport_186</td>
-            <td>TC_test_tcp_transport_SetUp</td>
+            <td class="code-ref">CODE_tcp_transport_transport_468</td>
+            <td>TC_test_tcp_transport_SetUp, TC_TCP_CLOSE_STALLED_PEER</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TRANSPORT_020</td>
             <td>TCP Magic Cookie Messages</td>
             <td>feat_req_someip_586, feat_req_someip_591, feat_req_someip_592, feat_req_someip_609, feat_req_someip_619</td>
-            <td class="code-ref">CODE_event_driven_tcp_transport_transport_441, CODE_tcp_transport_transport_748, CODE_udp_transport_transport_189, CODE_tcp_transport_transport_237</td>
+            <td class="code-ref">CODE_event_driven_tcp_transport_transport_441, CODE_tcp_transport_transport_1303, CODE_udp_transport_transport_189, CODE_tcp_transport_transport_343</td>
             <td>TC_test_tcp_transport_SetUp, TC_TCP_MAGIC_001, TC_TCP_MAGIC_002, TC_TCP_MAGIC_003, TC_TCP_MAGIC_004</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5550,7 +5550,7 @@
             <td>REQ_TRANSPORT_021</td>
             <td>Magic Cookie Fallback Heuristic</td>
             <td>feat_req_someip_593, feat_req_someip_594</td>
-            <td class="code-ref">CODE_tcp_transport_transport_575, CODE_udp_transport_transport_189</td>
+            <td class="code-ref">CODE_tcp_transport_transport_1081, CODE_udp_transport_transport_189</td>
             <td>TC_test_tcp_transport_SetUp, TC_TCP_MAGIC_005, TC_TCP_MAGIC_006</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5574,7 +5574,7 @@
             <td>REQ_TRANSPORT_024</td>
             <td>Unaligned Message Reception</td>
             <td>feat_req_someip_664</td>
-            <td class="code-ref">CODE_event_driven_tcp_transport_transport_221, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_435</td>
+            <td class="code-ref">CODE_event_driven_tcp_transport_transport_221, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_790</td>
             <td>TC_ED_TCP_NPDU_001, TC_TCP_PARSE_001, TC_TCP_PARSE_002, TC_TCP_PARSE_003, TC_TCP_PARSE_004, TC_TCP_PARSE_005, TC_test_udp_transport_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5582,7 +5582,7 @@
             <td>REQ_TRANSPORT_025</td>
             <td>Magic Cookie Message Format</td>
             <td>feat_req_someip_589, feat_req_someip_607</td>
-            <td class="code-ref">CODE_event_driven_tcp_transport_transport_441, CODE_tcp_transport_transport_748, CODE_udp_transport_transport_217, CODE_tcp_transport_transport_237</td>
+            <td class="code-ref">CODE_event_driven_tcp_transport_transport_441, CODE_tcp_transport_transport_1303, CODE_udp_transport_transport_217, CODE_tcp_transport_transport_343</td>
             <td>TC_test_tcp_transport_SetUp, TC_TCP_MAGIC_001, TC_TCP_MAGIC_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5590,7 +5590,7 @@
             <td>REQ_TRANSPORT_026</td>
             <td>Incoming Message Rejection Diagnostics</td>
             <td>-</td>
-            <td class="code-ref">CODE_event_publisher_events_572, CODE_event_subscriber_events_422, CODE_rpc_client_rpc_366, CODE_rpc_server_rpc_243, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_446, CODE_tcp_transport_transport_656, CODE_udp_transport_transport_434, CODE_udp_transport_transport_527, CODE_event_publisher_events_193, CODE_event_subscriber_events_161, CODE_rpc_client_rpc_159, CODE_rpc_server_rpc_136, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_219, CODE_transport_transport_78</td>
+            <td class="code-ref">CODE_event_publisher_events_572, CODE_event_subscriber_events_422, CODE_rpc_client_rpc_366, CODE_rpc_server_rpc_243, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_801, CODE_tcp_transport_transport_1210, CODE_udp_transport_transport_434, CODE_udp_transport_transport_527, CODE_event_publisher_events_193, CODE_event_subscriber_events_161, CODE_rpc_client_rpc_159, CODE_rpc_server_rpc_136, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_324, CODE_transport_transport_78</td>
             <td>TC_ED_TCP_REJECT_001, TC_test_rpc_SetUp, TC_test_rpc_TEST_F, TC_test_tcp_transport_SetUp, TC_TCP_REJECT_001, TC_TCP_REJECT_003, TC_TCP_REJECT_004, TC_TCP_REJECT_005, TC_TCP_REJECT_002, TC_TCP_REJECT_002b, TC_test_udp_transport_SetUp, TC_UDP_REJECT_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -7099,87 +7099,105 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_186</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:186</td>
-            <td>REQ_TRANSPORT_019</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_tcp_transport_transport_219</td>
-            <td class="code-ref">include/transport/tcp_transport.h:219</td>
-            <td>REQ_TRANSPORT_026</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_tcp_transport_transport_237</td>
-            <td class="code-ref">include/transport/tcp_transport.h:237</td>
-            <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_tcp_transport_transport_238</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:238</td>
-            <td>REQ_TRANSPORT_003_E01</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_tcp_transport_transport_307</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:307</td>
-            <td>REQ_TRANSPORT_017</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_tcp_transport_transport_346</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:346</td>
-            <td>REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04, REQ_TRANSPORT_016, REQ_TRANSPORT_016_E01, REQ_TRANSPORT_018</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_tcp_transport_transport_435</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:435</td>
-            <td>REQ_TRANSPORT_024</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_tcp_transport_transport_446</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:446</td>
-            <td>REQ_TRANSPORT_026</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>CODE_tcp_transport_transport_575</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:575</td>
+            <td>CODE_tcp_transport_transport_1081</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:1081</td>
             <td>REQ_TRANSPORT_021</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_600</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:600</td>
+            <td>CODE_tcp_transport_transport_1131</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:1131</td>
             <td>REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_625</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:625</td>
+            <td>CODE_tcp_transport_transport_1176</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:1176</td>
             <td>REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_656</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:656</td>
+            <td>CODE_tcp_transport_transport_1210</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:1210</td>
             <td>REQ_TRANSPORT_026</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_68</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:68</td>
+            <td>CODE_tcp_transport_transport_1303</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:1303</td>
+            <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_254</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:254</td>
+            <td>REQ_TRANSPORT_003B, REQ_TRANSPORT_018</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_324</td>
+            <td class="code-ref">include/transport/tcp_transport.h:324</td>
+            <td>REQ_TRANSPORT_026</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_343</td>
+            <td class="code-ref">include/transport/tcp_transport.h:343</td>
+            <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_468</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:468</td>
+            <td>REQ_TRANSPORT_019</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_516</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:516</td>
+            <td>REQ_TRANSPORT_003A</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_634</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:634</td>
+            <td>REQ_TRANSPORT_017</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_673</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:673</td>
+            <td>REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04, REQ_TRANSPORT_016, REQ_TRANSPORT_016_E01, REQ_TRANSPORT_018</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_790</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:790</td>
+            <td>REQ_TRANSPORT_024</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_801</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:801</td>
+            <td>REQ_TRANSPORT_026</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_808</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:808</td>
+            <td>REQ_TRANSPORT_003A, REQ_TRANSPORT_003B, REQ_TRANSPORT_003_E01</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tcp_transport_transport_90</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:90</td>
             <td>REQ_TRANSPORT_002A, REQ_TRANSPORT_002B, REQ_TRANSPORT_003A, REQ_TRANSPORT_003B, REQ_TRANSPORT_005</td>
             <td>feat_req_someip_850, feat_req_someip_851</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_748</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:748</td>
-            <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
+            <td>CODE_tcp_transport_transport_974</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:974</td>
+            <td>REQ_TRANSPORT_003A, REQ_TRANSPORT_003B</td>
             <td>-</td>
         </tr>
         <tr>
@@ -10031,160 +10049,238 @@
             <td>-</td>
         </tr>
         <tr>
+            <td>TC_TCP_CAPACITY_CLAMP</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2059)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2059</td>
+            <td>REQ_TRANSPORT_003_E01</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_CLIENT_SEND_NO_SPIN</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2418)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2418</td>
+            <td>REQ_TRANSPORT_002_E02</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_CLOSE_STALLED_PEER</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2089)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2089</td>
+            <td>REQ_TRANSPORT_003b, REQ_TRANSPORT_019</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_CONNECT_REPORTS_CONNECTING</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:348)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:348</td>
+            <td>REQ_TRANSPORT_003a</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_DISCONNECT_PEER</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1977)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1977</td>
+            <td>REQ_TRANSPORT_003b, REQ_TRANSPORT_018</td>
+        </tr>
+        <tr>
             <td>TC_TCP_E01</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:463)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:463</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:518)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:518</td>
             <td>REQ_TRANSPORT_002_E01</td>
         </tr>
         <tr>
+            <td>TC_TCP_E01_LIMIT</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1667)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1667</td>
+            <td>REQ_TRANSPORT_003_E01</td>
+        </tr>
+        <tr>
             <td>TC_TCP_E02</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:488)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:488</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:543)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:543</td>
             <td>REQ_TRANSPORT_002_E02</td>
         </tr>
         <tr>
             <td>TC_TCP_E03</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:508)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:508</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:563)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:563</td>
             <td>REQ_TRANSPORT_002_E03</td>
         </tr>
         <tr>
             <td>TC_TCP_E04</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:533)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:533</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:588)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:588</td>
             <td>REQ_TRANSPORT_002_E04, REQ_TRANSPORT_003_E01</td>
         </tr>
         <tr>
             <td>TC_TCP_E05</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:567)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:567</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:622)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:622</td>
             <td>REQ_TRANSPORT_016_E01</td>
         </tr>
         <tr>
             <td>TC_TCP_LISTENER_DISCONNECT_NO_DEADLOCK</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1291)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1291</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1352)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1352</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_TCP_LISTENER_QUEUE_RETENTION</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1122)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1122</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1181)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1181</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_001</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:954)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:954</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1013)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1013</td>
             <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_002</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:986)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:986</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1045)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1045</td>
             <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_003</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1006)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1006</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1065)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1065</td>
             <td>REQ_TRANSPORT_020</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_004</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1045)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1045</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1104)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1104</td>
             <td>REQ_TRANSPORT_020</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_005</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1073)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1073</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1132)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1132</td>
             <td>REQ_TRANSPORT_021</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_006</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1089)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1089</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1148)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1148</td>
             <td>REQ_TRANSPORT_021</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_CORRELATION</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1021)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1021</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1080)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1080</td>
             <td>feat_req_someip_609</td>
         </tr>
         <tr>
             <td>TC_TCP_MODE_SWITCH</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1179)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1179</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1238)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1238</td>
             <td>-</td>
         </tr>
         <tr>
+            <td>TC_TCP_MULTI_CLIENT</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1520)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1520</td>
+            <td>REQ_TRANSPORT_003b</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_MULTI_CLIENT_ROUTING</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1599)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1599</td>
+            <td>REQ_TRANSPORT_003b, REQ_TRANSPORT_002a</td>
+        </tr>
+        <tr>
             <td>TC_TCP_PARSE_001</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:586)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:586</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:641)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:641</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_TCP_PARSE_002</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:608)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:608</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:663)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:663</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_TCP_PARSE_003</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:846)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:846</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:905)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:905</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_TCP_PARSE_004</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:882)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:882</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:941)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:941</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_TCP_PARSE_005</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:916)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:916</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:975)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:975</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
+            <td>TC_TCP_PEER_ISOLATION</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1872)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1872</td>
+            <td>REQ_TRANSPORT_003b, REQ_TRANSPORT_003_E01</td>
+        </tr>
+        <tr>
             <td>TC_TCP_REJECT_001</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:628)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:628</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:683)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:683</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_002</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:767)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:767</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:826)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:826</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_002b</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:807)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:807</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:866)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:866</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_003</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:670)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:670</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:726)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:726</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_004</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:705)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:705</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:762)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:762</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_005</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:732)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:732</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:790)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:790</td>
             <td>REQ_TRANSPORT_026</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_ROUTE_UNKNOWN_PEER</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1939)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1939</td>
+            <td>REQ_TRANSPORT_002_E04</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_SERVER_MODE_CONNECT</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1473)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1473</td>
+            <td>REQ_TRANSPORT_003b</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_STALE_PEER_RECONNECT</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2266)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2266</td>
+            <td>REQ_TRANSPORT_003b</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_STALLED_PEER_ISOLATION</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1749)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1749</td>
+            <td>REQ_TRANSPORT_003b</td>
         </tr>
         <tr>
             <td>TC_THREADX_STATIC_ROUNDTRIP</td>
@@ -10758,8 +10854,8 @@
         </tr>
         <tr>
             <td>TC_test_tcp_transport_SetUp</td>
-            <td>SetUp (tests/test_tcp_transport.cpp:29)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:29</td>
+            <td>SetUp (tests/test_tcp_transport.cpp:36)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:36</td>
             <td>REQ_TRANSPORT_002a, REQ_TRANSPORT_002b, REQ_TRANSPORT_003a, REQ_TRANSPORT_003b, REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d, REQ_TRANSPORT_005, feat_req_someip_850, feat_req_someip_851, REQ_TRANSPORT_016, REQ_TRANSPORT_017, REQ_TRANSPORT_018, REQ_TRANSPORT_019, REQ_TRANSPORT_020, REQ_TRANSPORT_021, REQ_TRANSPORT_025, REQ_TRANSPORT_026, REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04, REQ_TRANSPORT_003_E01, REQ_TRANSPORT_016_E01</td>
         </tr>
         <tr>

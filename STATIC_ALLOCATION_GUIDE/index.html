@@ -2755,6 +2755,11 @@ and can be overridden via CMake <code>-D</code> flags or CMakePresets cache vari
 <td>Max TP segments per transfer</td>
 </tr>
 <tr>
+<td><code>SOMEIP_MAX_TCP_CONNECTIONS</code></td>
+<td>10</td>
+<td>TCP connection table size (static builds). Each served peer may hold a large-tier receive buffer, so raising this usually means raising <code>SOMEIP_BYTE_POOL_LARGE_COUNT</code> too (default large-tier count is 4).</td>
+</tr>
+<tr>
 <td><code>SOMEIP_MAX_TP_REASSEMBLY_SIZE</code></td>
 <td>2048</td>
 <td>Max TP reassembly byte tracking</td>

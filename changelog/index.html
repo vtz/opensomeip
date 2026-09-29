@@ -3220,10 +3220,34 @@
 <li><code>UdpTransport::receive_message_with_sender(Endpoint&amp; sender)</code> — polling
   mode variant that also returns the sender's endpoint for reply
   addressing without requiring a listener.</li>
+<li><code>TcpTransport::receive_message_with_sender(Endpoint&amp; sender)</code> — the same
+  polling helper on TCP, so a multi-peer server can reply without a
+  listener (#319).</li>
 <li><code>RpcClient::send_request_no_return()</code> — fire-and-forget <code>REQUEST_NO_RETURN</code>
   (message type 0x01) with no pending-call wait (#308).</li>
-<li><code>RpcServer::register_method(..., MethodSemantics)</code> — request/response vs
-  fire-and-forget method semantics (#308).</li>
+<li>
+<p><code>RpcServer::register_method(..., MethodSemantics)</code> — request/response vs
+  fire-and-forget method semantics (#308).</p>
+</li>
+<li>
+<p><code>TcpTransport::connection_count()</code>, <code>max_connections()</code>,
+  <code>is_peer_connected(const Endpoint&amp;)</code> and
+  <code>disconnect_peer(const Endpoint&amp;)</code> — inspect and manage individual
+  peers now that a server serves several at once. <code>disconnect_peer()</code>
+  closes one connection and reports <code>on_connection_lost()</code> for it, while
+  <code>disconnect()</code> continues to close every connection the transport holds.</p>
+</li>
+<li>
+<p><code>SOMEIP_MAX_TCP_CONNECTIONS</code> (default 10, matching the long-standing
+  <code>TcpTransportConfig::max_connections</code> default) sizes the TCP connection
+  table at compile time. It is defined in <code>static_config.h</code> and forwarded
+  from CMake like the other static-alloc knobs, so
+  <code>-DSOMEIP_MAX_TCP_CONNECTIONS</code> reaches the compiler. The configured
+  limit is clamped to it and reported by <code>max_connections()</code>. Raising it
+  on a static-allocation build usually means raising the
+  <code>SOMEIP_BYTE_POOL_*</code> counts too, since each served connection may hold
+  a pooled receive buffer.</p>
+</li>
 </ul>
 <h3 id="bug-fixes_1">Bug Fixes<a class="headerlink" href="#bug-fixes_1" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3258,6 +3282,53 @@
 <li>RPC: <code>RpcClient</code> sends to a configured offered-service endpoint instead of
   defaulting to <code>127.0.0.1:30490</code> (the SD port). <code>RpcServer</code> binds
   <code>127.0.0.1:30501</code> by default (#301).</li>
+<li><strong>TCP</strong>: a server now serves several clients concurrently. It previously
+  kept a single connection and closed every surplus accepted socket, so
+  only the first client was ever served (#319). Socket I/O is serialised
+  per connection instead of across the whole transport, so one peer that
+  is slow to drain no longer stalls traffic to the others, and
+  <code>send_message()</code> routes by its endpoint argument rather than to the one
+  stored socket.</li>
+<li><strong>TCP</strong>: connections beyond the limit are now accepted and closed
+  immediately, so the client observes a refusal, instead of completing a
+  handshake into the backlog and waiting on a server that will never
+  serve it (<code>REQ_TRANSPORT_003_E01</code>).</li>
+<li><strong>TCP</strong>: <code>send_data()</code> no longer retries <code>EAGAIN</code> forever. It now gives
+  up after <code>TcpTransportConfig::send_timeout</code>, returning <code>TIMEOUT</code> when
+  nothing was written and <code>CONNECTION_LOST</code> when a partial write left the
+  peer's stream unframeable, in which case that peer is closed. The
+  unbounded retry could hold a connection's I/O lock indefinitely against
+  a peer that stopped reading, which in turn made <code>disconnect_peer()</code>,
+  <code>stop()</code> and the destructor block forever.</li>
+<li><strong>TCP</strong>: <code>get_connection_state()</code> reports <code>CONNECTING</code> while an outbound
+  <code>connect()</code> handshake is in progress, then <code>CONNECTED</code> or
+  <code>DISCONNECTED</code> (<code>REQ_TRANSPORT_003a</code>). <code>DISCONNECTING</code> is still
+  reported while a peer is being torn down.</li>
+<li><strong>TCP</strong>: a peer that reconnects from the same source port now replaces
+  its own stale connection. The accept path retires a still-ACTIVE entry
+  for that endpoint before allocating, so the table no longer holds two
+  entries for one peer — which made <code>find_active_peer_locked()</code> hand out
+  the dead descriptor — and no longer refuses the replacement outright
+  when the stale entry occupied the last free slot.</li>
+<li><strong>TCP</strong>: <code>connect()</code> restores blocking mode on the socket it hands to
+  the connection table. It was left non-blocking from the bounded
+  handshake, so <code>SO_SNDTIMEO</code> did not apply and <code>send_data()</code> spun on
+  <code>EAGAIN</code> for a full <code>send_timeout</code>, burning a core while holding that
+  connection's I/O lock.</li>
+<li><strong>TCP</strong>: <code>SOMEIP_MAX_TCP_CONNECTIONS</code> of 0 is now rejected at compile
+  time instead of building a server that refuses every connection.</li>
+<li><strong>TCP</strong>: <code>connect()</code> on a server-mode transport always returns
+  <code>INVALID_STATE</code>. The mode guard now runs before the already-connected
+  short-circuit, which any ACTIVE slot — including an accepted peer — had
+  been satisfying, so a serving server incorrectly returned <code>SUCCESS</code>.</li>
+<li><strong>TCP</strong>: client <code>connect()</code> short-circuits only when already connected to
+  that peer. <code>is_connected()</code> is true for any ACTIVE slot, so a second
+  <code>connect(B)</code> after <code>connect(A)</code> used to return <code>SUCCESS</code> without opening
+  B, and the later <code>send_message(..., B)</code> failed with <code>NOT_CONNECTED</code>.</li>
+<li><strong>TCP</strong>: default <code>max_receive_buffer</code> is 65543 (8 + <code>MAX_MESSAGE_SIZE</code>) so
+  a legal max-length frame can be received complete. The previous 65536
+  default filled the buffer one byte short of the parser's limit and then
+  closed the peer with <code>BUFFER_OVERFLOW</code>.</li>
 </ul>
 <h3 id="interop-notes">Interop Notes<a class="headerlink" href="#interop-notes" title="Permanent link">&para;</a></h3>
 <p>The following intentional extensions remain vs. the Open SOME/IP spec:</p>
