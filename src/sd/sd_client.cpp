@@ -93,6 +93,9 @@ public:
             return false;
         }
 
+        // Deliberately fail closed here, unlike SdServer. A client that cannot
+        // receive SD multicast cannot discover anything, and initialize()
+        // returning false is already an explicit, caller-visible failure.
         if (!join_multicast_group()) {
             transport_.stop();
             return false;
@@ -103,6 +106,25 @@ public:
                               std::chrono::milliseconds(pick_initial_wait_ms(config_));
         start_maintenance_loop();
         return true;
+    }
+
+    /**
+     * @brief Aggregate local eventgroup multicast state
+     * @implements REQ_TRANSPORT_011_E01
+     */
+    MulticastState eventgroup_multicast_state() const {
+        platform::ScopedLock const lock(multicast_memberships_mutex_);
+        bool any_exhausted = membership_capacity_exhausted_;
+        for (const auto& entry : multicast_memberships_) {
+            const MulticastState s = entry.membership.state();
+            if (s == MulticastState::RETRYING) {
+                return MulticastState::RETRYING;
+            }
+            if (s == MulticastState::EXHAUSTED) {
+                any_exhausted = true;
+            }
+        }
+        return any_exhausted ? MulticastState::EXHAUSTED : MulticastState::JOINED;
     }
 
     /** @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094 */
@@ -119,6 +141,12 @@ public:
             platform::ScopedLock const lock(subscriptions_mutex_);
             service_subscriptions_.clear();
         }
+
+        {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            eventgroup_subscriptions_.clear();
+        }
+        clear_all_multicast_memberships();
 
         leave_multicast_group();
 
@@ -339,11 +367,21 @@ public:
         const bool sent = transport_.send_message(someip_message, sd_unicast) == Result::SUCCESS;
 
         if (sent) {
-            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
-            const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
-                                 (static_cast<uint64_t>(instance_id) << 16U) |
-                                 eventgroup_id;
-            eventgroup_subscriptions_.erase(key);
+            platform::String<> group;
+            {
+                platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+                const uint64_t key = (static_cast<uint64_t>(service_id) << 32U) |
+                                     (static_cast<uint64_t>(instance_id) << 16U) |
+                                     eventgroup_id;
+                const auto it = eventgroup_subscriptions_.find(key);
+                if (it != eventgroup_subscriptions_.end()) {
+                    group = it->second.multicast_group;
+                    eventgroup_subscriptions_.erase(it);
+                }
+            }
+            if (!group.empty()) {
+                release_multicast_membership(group);
+            }
         }
         return sent;
     }
@@ -414,6 +452,7 @@ private:
                 flush_pending_finds();
                 process_find_timeouts();
                 process_ttl_expiry();
+                retry_pending_multicast_joins();
             }
         });
     }
@@ -491,12 +530,125 @@ private:
         return (static_cast<uint64_t>(service_id) << 16U) | instance_id;
     }
 
+    MulticastRejoinConfig rejoin_config() const {
+        MulticastRejoinConfig cfg;
+        cfg.max_attempts = config_.multicast_rejoin_max_attempts;
+        cfg.interval = config_.multicast_rejoin_interval;
+        return cfg;
+    }
+
     bool join_multicast_group() {
         return transport_.join_multicast_group(config_.multicast_address) == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
         (void)transport_.leave_multicast_group(config_.multicast_address);
+    }
+
+    struct OwnedMulticastMembership {
+        platform::String<> group;
+        MulticastMembership membership;
+        uint8_t owner_count{0};
+    };
+
+    // Bound equals max eventgroup subscriptions so a peer cannot grow membership
+    // tracking beyond what subscribe_eventgroup already admits.
+    static constexpr size_t MAX_MULTICAST_MEMBERSHIPS = 32;
+
+    OwnedMulticastMembership* find_membership_unlocked(const platform::String<>& group) {
+        for (auto& entry : multicast_memberships_) {
+            if (entry.group == group) {
+                return &entry;
+            }
+        }
+        return nullptr;
+    }
+
+    /**
+     * @brief Acquire ownership of a group and attempt join; bounded capacity.
+     * @implements REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E03
+     */
+    void acquire_multicast_membership(const platform::String<>& group) {
+        platform::ScopedLock const lock(multicast_memberships_mutex_);
+        OwnedMulticastMembership* entry = find_membership_unlocked(group);
+        if (entry == nullptr) {
+            if (multicast_memberships_.size() >= MAX_MULTICAST_MEMBERSHIPS) {
+                // Bound equals max eventgroup subscriptions; never grow unbounded.
+                membership_capacity_exhausted_ = true;
+                return;
+            }
+            OwnedMulticastMembership created;
+            created.group = group;
+            created.owner_count = 1;
+            multicast_memberships_.push_back(created);
+            entry = &multicast_memberships_.back();
+        } else {
+            ++entry->owner_count;
+            if (entry->membership.state() == MulticastState::JOINED) {
+                return;
+            }
+            if (entry->membership.is_retrying() ||
+                entry->membership.state() == MulticastState::EXHAUSTED) {
+                // Already tracked; do not reset attempt budget on duplicate owners.
+                return;
+            }
+        }
+
+        if (transport_.join_multicast_group(group) == Result::SUCCESS) {
+            entry->membership.note_join_success();
+        } else {
+            entry->membership.note_join_failure(rejoin_config(),
+                                                MulticastMembership::clock::now());
+        }
+    }
+
+    /**
+     * @brief Release one owner; leave and cancel when the last owner unsubscribes.
+     * @implements REQ_TRANSPORT_011_E03
+     */
+    void release_multicast_membership(const platform::String<>& group) {
+        platform::ScopedLock const lock(multicast_memberships_mutex_);
+        for (auto it = multicast_memberships_.begin(); it != multicast_memberships_.end(); ++it) {
+            if (it->group != group) {
+                continue;
+            }
+            if (it->owner_count > 0) {
+                --it->owner_count;
+            }
+            if (it->owner_count == 0) {
+                (void)transport_.leave_multicast_group(group);
+                it->membership.cancel();
+                multicast_memberships_.erase(it);
+                if (multicast_memberships_.size() < MAX_MULTICAST_MEMBERSHIPS) {
+                    membership_capacity_exhausted_ = false;
+                }
+            }
+            return;
+        }
+    }
+
+    void clear_all_multicast_memberships() {
+        platform::ScopedLock const lock(multicast_memberships_mutex_);
+        for (auto& entry : multicast_memberships_) {
+            (void)transport_.leave_multicast_group(entry.group);
+            entry.membership.cancel();
+        }
+        multicast_memberships_.clear();
+        membership_capacity_exhausted_ = false;
+    }
+
+    /** @implements REQ_TRANSPORT_011_E03 */
+    void retry_pending_multicast_joins() {
+        platform::ScopedLock const lock(multicast_memberships_mutex_);
+        const auto now = MulticastMembership::clock::now();
+        const auto cfg = rejoin_config();
+        for (auto& entry : multicast_memberships_) {
+            if (!entry.membership.due(now)) {
+                continue;
+            }
+            const bool ok = transport_.join_multicast_group(entry.group) == Result::SUCCESS;
+            entry.membership.note_rejoin_result(ok, cfg, now);
+        }
     }
 
     /** @implements REQ_SD_116_E01, REQ_SD_119, REQ_SD_120, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_311, REQ_SD_331 */
@@ -723,6 +875,10 @@ private:
     platform::UnorderedMap<uint64_t, EventGroupSubscription, 32> eventgroup_subscriptions_;
     mutable platform::Mutex eventgroup_subscriptions_mutex_;
 
+    platform::Vector<OwnedMulticastMembership, MAX_MULTICAST_MEMBERSHIPS> multicast_memberships_;
+    mutable platform::Mutex multicast_memberships_mutex_;
+    bool membership_capacity_exhausted_{false};
+
     SdSessionIdCounter multicast_session_id_;
     platform::UnorderedMap<platform::String<>, SdSessionIdCounter, 16> unicast_session_ids_;
     mutable platform::Mutex session_id_mutex_;
@@ -801,12 +957,32 @@ private:
             return;
         }
 
+        // Peer acceptance is recorded above and is independent of local membership.
+        // A failed join must not look like delivery-ready success; ownership is
+        // tied to the subscription so pending state cannot outlive unsubscribe.
         const uint8_t index1 = entry.get_index1();
         const uint8_t run1 = entry.get_num_opts1();
         const auto& options = message.get_options();
         for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
             if (const auto* mc = std::get_if<IPv4MulticastOption>(&options[index1 + i])) {
-                static_cast<void>(transport_.join_multicast_group(mc->get_ipv4_address_string()));
+                const auto group = mc->get_ipv4_address_string();
+                platform::String<> previous_group;
+                {
+                    platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+                    auto it = eventgroup_subscriptions_.find(key);
+                    if (it == eventgroup_subscriptions_.end()) {
+                        return;
+                    }
+                    previous_group = it->second.multicast_group;
+                    it->second.multicast_group = group;
+                }
+                if (!previous_group.empty() && previous_group != group) {
+                    release_multicast_membership(previous_group);
+                }
+                if (previous_group != group) {
+                    acquire_multicast_membership(group);
+                }
+                return;
             }
         }
     }
@@ -873,6 +1049,10 @@ SdClient::~SdClient() {
 
 bool SdClient::initialize() {
     return impl()->initialize();
+}
+
+MulticastState SdClient::eventgroup_multicast_state() const {
+    return impl()->eventgroup_multicast_state();
 }
 
 void SdClient::shutdown() {

@@ -375,6 +375,24 @@ if (msg) {
 }
 ```
 
+### Multicast membership failures
+
+`UdpTransport::join_multicast_group` returns `Result::MULTICAST_ERROR` when
+`IP_ADD_MEMBERSHIP` fails (it must not be treated as success). Call
+`last_multicast_error()` for the group, interface, and platform errno.
+Service discovery surfaces the same fact without conflating it with peer
+acceptance:
+
+- **SdServer**: still starts (unicast SD works) but `multicast_state()` reports
+  `RETRYING` or `EXHAUSTED` while bounded re-attempts run on the offer timer.
+- **SdClient**: `initialize()` remains fail-closed if the SD group join fails.
+  After a `SubscribeEventgroupAck`, `eventgroup_multicast_state()` reports local
+  membership independently of `get_eventgroup_subscription_state()`.
+
+Tune `SdConfig::multicast_rejoin_max_attempts` (0 disables) and
+`multicast_rejoin_interval`. Leaving a group or unsubscribing cancels pending
+re-attempts for that ownership.
+
 ### Event-Driven Transports (adapter / callback stacks)
 
 `UdpTransport` and `TcpTransport` poll sockets on worker threads. For stacks

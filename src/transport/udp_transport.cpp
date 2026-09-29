@@ -264,9 +264,11 @@ Result UdpTransport::join_multicast_group(const platform::String<>& multicast_ad
     }
 
     if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
-        // In containerized/CI environments, multicast may not be available
-        // Continue without multicast support rather than failing
+        record_multicast_error(multicast_address, config_.multicast_interface);
+        return Result::MULTICAST_ERROR;
     }
+
+    clear_multicast_error();
 
     // Enable multicast loopback for local testing
     int loop = 1;
@@ -313,9 +315,11 @@ Result UdpTransport::leave_multicast_group(const platform::String<>& multicast_a
     }
 
     if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
-        return Result::NETWORK_ERROR;
+        record_multicast_error(multicast_address, config_.multicast_interface);
+        return Result::MULTICAST_ERROR;
     }
 
+    clear_multicast_error();
     return Result::SUCCESS;
 }
 
@@ -414,6 +418,8 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
         return Result::INVALID_ENDPOINT;
     }
 
+    platform::ScopedLock const lock(socket_mutex_);
+
     struct ip_mreq mreq = {};
     mreq.imr_multiaddr.s_addr = someip_inet_addr(endpoint.get_address().c_str());
 
@@ -425,10 +431,30 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
     }
 
     if (someip_setsockopt(socket_fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
-        return Result::NETWORK_ERROR;
+        record_multicast_error(endpoint.get_address(), config_.multicast_interface);
+        return Result::MULTICAST_ERROR;
     }
 
+    clear_multicast_error();
     return Result::SUCCESS;
+}
+
+void UdpTransport::record_multicast_error(const platform::String<>& multicast_address,
+                                          const platform::String<>& interface_address) {
+    MulticastError error;
+    error.group_address = multicast_address;
+    error.interface_address = interface_address;
+    error.system_error = someip_socket_errno();
+    last_multicast_error_ = error;
+}
+
+void UdpTransport::clear_multicast_error() {
+    last_multicast_error_.reset();
+}
+
+std::optional<MulticastError> UdpTransport::last_multicast_error() const {
+    platform::ScopedLock const lock(socket_mutex_);
+    return last_multicast_error_;
 }
 
 /** @implements REQ_TRANSPORT_010, REQ_TP_091, REQ_TRANSPORT_026

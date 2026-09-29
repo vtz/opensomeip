@@ -168,7 +168,7 @@ bool EventDrivenUdpTransport::is_running() const
     return running_.load();
 }
 
-/** @implements REQ_TRANSPORT_001b, REQ_TRANSPORT_011 */
+/** @implements REQ_TRANSPORT_001b, REQ_TRANSPORT_011, REQ_TRANSPORT_011_E01 */
 Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& multicast_address)
 {
     if (!opened_.load()) {
@@ -180,7 +180,7 @@ Result EventDrivenUdpTransport::join_multicast_group(const platform::String<>& m
     return adapter_.join_multicast(multicast_address, config_.multicast_interface);
 }
 
-/** @implements REQ_TRANSPORT_001b, REQ_TRANSPORT_011 */
+/** @implements REQ_TRANSPORT_001b, REQ_TRANSPORT_011, REQ_TRANSPORT_011_E01 */
 Result EventDrivenUdpTransport::leave_multicast_group(const platform::String<>& multicast_address)
 {
     if (!opened_.load()) {

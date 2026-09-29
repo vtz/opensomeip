@@ -96,9 +96,13 @@ public:
             return false;
         }
 
-        // Join multicast group for SD messages
-        if (!join_multicast_group()) {
-            // Continue without multicast support in constrained environments
+        // Join multicast group for SD messages. Failure is not fatal — the server
+        // still answers unicast SD — but it must be visible and re-attempted by
+        // the offer timer rather than reported as a healthy start.
+        if (join_multicast_group()) {
+            sd_multicast_.note_join_success();
+        } else {
+            sd_multicast_.note_join_failure(rejoin_config(), MulticastMembership::clock::now());
         }
 
         running_ = true;
@@ -107,6 +111,14 @@ public:
         start_offer_timer();
 
         return true;
+    }
+
+    /**
+     * @brief Local SD multicast membership state
+     * @implements REQ_TRANSPORT_011_E01
+     */
+    MulticastState multicast_state() const {
+        return sd_multicast_.state();
     }
 
     /** @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094 */
@@ -127,7 +139,7 @@ public:
         platform::ScopedLock const lock(offered_services_mutex_);
         offered_services_.clear();
 
-        // Leave multicast group
+        // Leave multicast group (cancels any pending re-attempt)
         leave_multicast_group();
 
         transport_.stop();
@@ -352,12 +364,33 @@ private:
         return true;
     }
 
+    MulticastRejoinConfig rejoin_config() const {
+        MulticastRejoinConfig cfg;
+        cfg.max_attempts = config_.multicast_rejoin_max_attempts;
+        cfg.interval = config_.multicast_rejoin_interval;
+        return cfg;
+    }
+
     bool join_multicast_group() {
         return transport_.join_multicast_group(config_.multicast_address) == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
         (void)transport_.leave_multicast_group(config_.multicast_address);
+        sd_multicast_.cancel();
+    }
+
+    /** @implements REQ_TRANSPORT_011_E03 */
+    void retry_multicast_join_if_pending() {
+        if (!sd_multicast_.is_retrying()) {
+            return;
+        }
+        const auto now = MulticastMembership::clock::now();
+        if (!sd_multicast_.due(now)) {
+            return;
+        }
+        const bool ok = join_multicast_group();
+        sd_multicast_.note_rejoin_result(ok, rejoin_config(), now);
     }
 
     /** @implements REQ_SD_250, REQ_SD_251, REQ_SD_260 */
@@ -368,6 +401,8 @@ private:
 
         offer_timer_thread_.emplace([this]() {
             while (running_) {
+                retry_multicast_join_if_pending();
+
                 const auto sleep_time = send_due_offers();
 
                 if (!running_) {
@@ -907,6 +942,7 @@ private:
     mutable platform::Mutex offered_services_mutex_;
 
     std::optional<platform::Thread> offer_timer_thread_;
+    MulticastMembership sd_multicast_;
     std::atomic<bool> running_;
 
     SdSessionIdCounter multicast_session_id_;
@@ -972,6 +1008,10 @@ SdServer::~SdServer() {
 
 bool SdServer::initialize() {
     return impl()->initialize();
+}
+
+MulticastState SdServer::multicast_state() const {
+    return impl()->multicast_state();
 }
 
 void SdServer::shutdown() {

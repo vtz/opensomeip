@@ -16,6 +16,7 @@
 
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
+#include "sd/multicast_membership.h"
 
 #include <chrono>
 #include <cstdint>
@@ -103,6 +104,13 @@ struct SdConfig {
     /// When true, pick_initial_wait_ms() returns initial_delay_override_ms exactly.
     bool has_initial_delay_override{false};
     uint32_t initial_delay_override_ms{0};
+    /// Bounded re-attempts after a failed multicast join (0 disables re-attempt).
+    /// Counts re-attempts only; the initial join is not included.
+    /// REQ_TRANSPORT_016_E01 establishes the same bounded shape for TCP reconnect.
+    uint8_t multicast_rejoin_max_attempts{5};
+    /// Minimum wall-clock spacing between re-attempts. SD periodic loops tick
+    /// faster than a link typically comes up, so attempts are spaced by time.
+    std::chrono::milliseconds multicast_rejoin_interval{1000};
 };
 
 /**
@@ -191,6 +199,8 @@ struct EventGroupSubscription {
     uint8_t major_version{0};
     SubscriptionState state{SubscriptionState::REQUESTED};
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
+    /// Eventgroup multicast group from SubscribeEventgroupAck; empty when unicast.
+    platform::String<> multicast_group;
 
     explicit EventGroupSubscription(uint16_t svc_id = 0, uint16_t inst_id = 0, uint16_t eg_id = 0)
         : service_id(svc_id), instance_id(inst_id), eventgroup_id(eg_id) {
