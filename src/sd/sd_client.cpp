@@ -1012,25 +1012,29 @@ private:
                         return;
                     }
                     previous_group = it->second.multicast_group;
-                    it->second.multicast_group = group;
-                }
-                if (!previous_group.empty() && previous_group != group) {
-                    release_multicast_membership(previous_group);
                 }
                 if (previous_group != group) {
                     // Join may block; keep eventgroup_subscriptions_mutex_ released.
-                    // If unsubscribe raced after we stored the group but before
-                    // ownership was acquired, release the slot we just created.
+                    // Acquire the new group before publishing it on the subscription so
+                    // a concurrent unsubscribe cannot release a slot that was never
+                    // acquired, and cannot drop the prior group until ownership of the
+                    // new group is confirmed. Re-check after the join: only publish
+                    // when the record still holds previous_group; otherwise release.
                     acquire_multicast_membership(group);
-                    bool still_owns = false;
+                    bool published = false;
                     {
                         platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
                         const auto it = eventgroup_subscriptions_.find(key);
-                        still_owns = it != eventgroup_subscriptions_.end() &&
-                                     it->second.multicast_group == group;
+                        if (it != eventgroup_subscriptions_.end() &&
+                            it->second.multicast_group == previous_group) {
+                            it->second.multicast_group = group;
+                            published = true;
+                        }
                     }
-                    if (!still_owns) {
+                    if (!published) {
                         release_multicast_membership(group);
+                    } else if (!previous_group.empty()) {
+                        release_multicast_membership(previous_group);
                     }
                 }
                 return;
