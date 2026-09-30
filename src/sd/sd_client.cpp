@@ -1018,7 +1018,20 @@ private:
                     release_multicast_membership(previous_group);
                 }
                 if (previous_group != group) {
+                    // Join may block; keep eventgroup_subscriptions_mutex_ released.
+                    // If unsubscribe raced after we stored the group but before
+                    // ownership was acquired, release the slot we just created.
                     acquire_multicast_membership(group);
+                    bool still_owns = false;
+                    {
+                        platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+                        const auto it = eventgroup_subscriptions_.find(key);
+                        still_owns = it != eventgroup_subscriptions_.end() &&
+                                     it->second.multicast_group == group;
+                    }
+                    if (!still_owns) {
+                        release_multicast_membership(group);
+                    }
                 }
                 return;
             }
