@@ -995,6 +995,9 @@ private:
         // Peer acceptance is recorded above and is independent of local membership.
         // A failed join must not look like delivery-ready success; ownership is
         // tied to the subscription so pending state cannot outlive unsubscribe.
+        // Reconcile any group preserved across replay with the ACK: a multicast
+        // option replaces ownership, while a unicast ACK (no multicast option)
+        // must release the prior group so retries cannot outlive the delivery mode.
         const uint8_t index1 = entry.get_index1();
         const uint8_t run1 = entry.get_num_opts1();
         const auto& options = message.get_options();
@@ -1019,6 +1022,20 @@ private:
                 }
                 return;
             }
+        }
+
+        platform::String<> stale_group;
+        {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            auto it = eventgroup_subscriptions_.find(key);
+            if (it == eventgroup_subscriptions_.end()) {
+                return;
+            }
+            stale_group = it->second.multicast_group;
+            it->second.multicast_group.clear();
+        }
+        if (!stale_group.empty()) {
+            release_multicast_membership(stale_group);
         }
     }
 

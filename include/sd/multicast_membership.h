@@ -146,7 +146,7 @@ public:
 private:
     MulticastState state_{MulticastState::JOINED};
     uint8_t attempts_{0};
-    clock::time_point next_attempt_{};
+    clock::time_point next_attempt_;
 };
 
 /**
