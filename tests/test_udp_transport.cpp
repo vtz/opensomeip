@@ -481,6 +481,11 @@ TEST_F(UdpTransportTest, MulticastJoinSuccessClearsDiagnostics) {
     transport.set_listener(&listener);
 
     EXPECT_EQ(transport.start(), Result::SUCCESS);
+
+    // Seed diagnostics with a leave of a group that was never joined.
+    EXPECT_EQ(transport.leave_multicast_group("224.0.0.1"), Result::MULTICAST_ERROR);
+    ASSERT_TRUE(transport.last_multicast_error().has_value());
+
     EXPECT_EQ(transport.join_multicast_group("224.0.0.1"), Result::SUCCESS);
     EXPECT_FALSE(transport.last_multicast_error().has_value());
     EXPECT_EQ(transport.leave_multicast_group("224.0.0.1"), Result::SUCCESS);

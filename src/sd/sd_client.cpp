@@ -89,6 +89,9 @@ public:
             return true;
         }
 
+        // stop() clears the listener; reinstall before any retry of initialize().
+        transport_.set_listener(this);
+
         if (transport_.start() != Result::SUCCESS) {
             return false;
         }
@@ -262,7 +265,9 @@ public:
 
         {
             platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
-            if (eventgroup_subscriptions_.size() >= eventgroup_subscriptions_.max_size() &&
+            // Cap at membership bound in both static and dynamic builds so an
+            // admitted subscription cannot outgrow multicast_memberships_.
+            if (eventgroup_subscriptions_.size() >= MAX_MULTICAST_MEMBERSHIPS &&
                 eventgroup_subscriptions_.find(key) == eventgroup_subscriptions_.end()) {
                 return false;
             }
@@ -272,6 +277,12 @@ public:
             sub.eventgroup_id = eventgroup_id;
             sub.major_version = 0x01;
             sub.state = SubscriptionState::PENDING_ACK;
+            // Preserve prior multicast ownership across replay / resubscribe so
+            // a later ACK does not double-acquire the same group.
+            const auto existing = eventgroup_subscriptions_.find(key);
+            if (existing != eventgroup_subscriptions_.end()) {
+                sub.multicast_group = existing->second.multicast_group;
+            }
             eventgroup_subscriptions_[key] = sub;
         }
 
@@ -296,15 +307,13 @@ public:
 
         const uint16_t session_id = stamp_unicast_tx(sd_message, sd_unicast.get_address());
         if (session_id == 0) {
-            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
-            eventgroup_subscriptions_.erase(key);
+            erase_eventgroup_subscription(key);
             return false;
         }
 
         auto serialized = sd_message.serialize();
         if (serialized.empty()) {
-            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
-            eventgroup_subscriptions_.erase(key);
+            erase_eventgroup_subscription(key);
             return false;
         }
 
@@ -316,8 +325,7 @@ public:
         someip_message.set_payload(std::move(serialized));
 
         if (transport_.send_message(someip_message, sd_unicast) != Result::SUCCESS) {
-            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
-            eventgroup_subscriptions_.erase(key);
+            erase_eventgroup_subscription(key);
             return false;
         }
 
@@ -554,6 +562,25 @@ private:
     // Bound equals max eventgroup subscriptions so a peer cannot grow membership
     // tracking beyond what subscribe_eventgroup already admits.
     static constexpr size_t MAX_MULTICAST_MEMBERSHIPS = 32;
+
+    /**
+     * @brief Erase a subscription record and release any multicast ownership it held.
+     */
+    void erase_eventgroup_subscription(uint64_t key) {
+        platform::String<> group;
+        {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            const auto it = eventgroup_subscriptions_.find(key);
+            if (it == eventgroup_subscriptions_.end()) {
+                return;
+            }
+            group = it->second.multicast_group;
+            eventgroup_subscriptions_.erase(it);
+        }
+        if (!group.empty()) {
+            release_multicast_membership(group);
+        }
+    }
 
     OwnedMulticastMembership* find_membership_unlocked(const platform::String<>& group) {
         for (auto& entry : multicast_memberships_) {
@@ -943,6 +970,7 @@ private:
                              entry.get_eventgroup_id();
 
         const bool accepted = entry.get_ttl() > 0;
+        platform::String<> rejected_group;
         {
             platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
             auto it = eventgroup_subscriptions_.find(key);
@@ -951,9 +979,16 @@ private:
             }
             it->second.state = accepted ? SubscriptionState::SUBSCRIBED
                                         : SubscriptionState::REJECTED;
+            if (!accepted) {
+                rejected_group = it->second.multicast_group;
+                it->second.multicast_group.clear();
+            }
         }
 
         if (!accepted) {
+            if (!rejected_group.empty()) {
+                release_multicast_membership(rejected_group);
+            }
             return;
         }
 

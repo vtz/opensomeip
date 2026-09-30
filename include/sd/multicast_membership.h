@@ -18,6 +18,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <optional>
 
 namespace someip::sd {
 
@@ -102,6 +103,23 @@ public:
      */
     [[nodiscard]] bool due(clock::time_point now) const noexcept {
         return state_ == MulticastState::RETRYING && now >= next_attempt_;
+    }
+
+    /**
+     * @brief Wall-clock delay until the next scheduled re-attempt
+     *
+     * Returns 0 when a re-attempt is already due. When not retrying, returns
+     * an empty optional so callers can ignore the membership in sleep math.
+     */
+    [[nodiscard]] std::optional<std::chrono::milliseconds>
+    time_until_retry(clock::time_point now) const noexcept {
+        if (state_ != MulticastState::RETRYING) {
+            return std::nullopt;
+        }
+        if (now >= next_attempt_) {
+            return std::chrono::milliseconds{0};
+        }
+        return std::chrono::duration_cast<std::chrono::milliseconds>(next_attempt_ - now);
     }
 
     /**

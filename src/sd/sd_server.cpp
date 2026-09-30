@@ -92,6 +92,9 @@ public:
             return true;
         }
 
+        // stop() clears the listener; reinstall before any retry of initialize().
+        transport_.set_listener(this);
+
         if (transport_.start() != Result::SUCCESS) {
             return false;
         }
@@ -99,10 +102,13 @@ public:
         // Join multicast group for SD messages. Failure is not fatal — the server
         // still answers unicast SD — but it must be visible and re-attempted by
         // the offer timer rather than reported as a healthy start.
-        if (join_multicast_group()) {
-            sd_multicast_.note_join_success();
-        } else {
-            sd_multicast_.note_join_failure(rejoin_config(), MulticastMembership::clock::now());
+        {
+            platform::ScopedLock const lock(sd_multicast_mutex_);
+            if (join_multicast_group()) {
+                sd_multicast_.note_join_success();
+            } else {
+                sd_multicast_.note_join_failure(rejoin_config(), MulticastMembership::clock::now());
+            }
         }
 
         running_ = true;
@@ -118,6 +124,7 @@ public:
      * @implements REQ_TRANSPORT_011_E01
      */
     MulticastState multicast_state() const {
+        platform::ScopedLock const lock(sd_multicast_mutex_);
         return sd_multicast_.state();
     }
 
@@ -377,11 +384,13 @@ private:
 
     void leave_multicast_group() {
         (void)transport_.leave_multicast_group(config_.multicast_address);
+        platform::ScopedLock const lock(sd_multicast_mutex_);
         sd_multicast_.cancel();
     }
 
     /** @implements REQ_TRANSPORT_011_E03 */
     void retry_multicast_join_if_pending() {
+        platform::ScopedLock const lock(sd_multicast_mutex_);
         if (!sd_multicast_.is_retrying()) {
             return;
         }
@@ -403,7 +412,16 @@ private:
             while (running_) {
                 retry_multicast_join_if_pending();
 
-                const auto sleep_time = send_due_offers();
+                auto sleep_time = send_due_offers();
+                {
+                    platform::ScopedLock const lock(sd_multicast_mutex_);
+                    const auto now = MulticastMembership::clock::now();
+                    if (const auto until = sd_multicast_.time_until_retry(now)) {
+                        if (*until < sleep_time) {
+                            sleep_time = *until;
+                        }
+                    }
+                }
 
                 if (!running_) {
                     break;
@@ -943,6 +961,7 @@ private:
 
     std::optional<platform::Thread> offer_timer_thread_;
     MulticastMembership sd_multicast_;
+    mutable platform::Mutex sd_multicast_mutex_;
     std::atomic<bool> running_;
 
     SdSessionIdCounter multicast_session_id_;

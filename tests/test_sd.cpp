@@ -1238,8 +1238,9 @@ TEST_F(SdTest, ServerReportsJoinedOnSuccessfulMulticastJoin) {
 TEST_F(SdTest, ServerReportsDegradedStateWhenMulticastJoinFails) {
     SdConfig config;
     // make_sd_transport_config() maps unicast_address to the multicast interface.
-    // 192.0.2.1 is TEST-NET-1 (RFC 5737) and is never locally assigned.
-    config.unicast_address = "192.0.2.1";
+    // A multicast address can never be a host unicast interface, so IP_ADD_MEMBERSHIP
+    // fails deterministically (unlike TEST-NET addresses that a host may assign).
+    config.unicast_address = "224.0.0.1";
     auto server = std::make_shared<SdServer>(config);
 
     ASSERT_TRUE(server->initialize());
@@ -1255,7 +1256,7 @@ TEST_F(SdTest, ServerReportsDegradedStateWhenMulticastJoinFails) {
  */
 TEST_F(SdTest, ServerMulticastRejoinIsBoundedAndReportsExhaustion) {
     SdConfig config;
-    config.unicast_address = "192.0.2.1";
+    config.unicast_address = "224.0.0.1";
     config.multicast_rejoin_max_attempts = 1;
     config.multicast_rejoin_interval = std::chrono::milliseconds(10);
     auto server = std::make_shared<SdServer>(config);
@@ -1277,7 +1278,7 @@ TEST_F(SdTest, ServerMulticastRejoinIsBoundedAndReportsExhaustion) {
  */
 TEST_F(SdTest, ServerMulticastRejoinCanBeDisabled) {
     SdConfig config;
-    config.unicast_address = "192.0.2.1";
+    config.unicast_address = "224.0.0.1";
     config.multicast_rejoin_max_attempts = 0;
     auto server = std::make_shared<SdServer>(config);
 
@@ -1294,7 +1295,7 @@ TEST_F(SdTest, ServerMulticastRejoinCanBeDisabled) {
  */
 TEST_F(SdTest, ClientInitializeFailsClosedOnMulticastJoinFailure) {
     SdConfig config;
-    config.unicast_address = "192.0.2.1";
+    config.unicast_address = "224.0.0.1";
     auto client = std::make_shared<SdClient>(config);
 
     EXPECT_FALSE(client->initialize());

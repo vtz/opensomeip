@@ -133,3 +133,25 @@ TEST(MulticastMembershipTest, LeaveCancelsPendingReattempt) {
     EXPECT_EQ(m.state(), MulticastState::JOINED);
     EXPECT_FALSE(m.due(t0() + std::chrono::seconds(10)));
 }
+
+/**
+ * @test_case TC_MC_MEMBERSHIP_007
+ * @tests REQ_TRANSPORT_011_E03
+ */
+TEST(MulticastMembershipTest, TimeUntilRetryTracksDeadline) {
+    MulticastMembership m;
+    MulticastRejoinConfig cfg;
+    cfg.max_attempts = 3;
+    cfg.interval = std::chrono::milliseconds(100);
+
+    EXPECT_FALSE(m.time_until_retry(t0()).has_value());
+
+    m.note_join_failure(cfg, t0());
+    auto until = m.time_until_retry(t0());
+    ASSERT_TRUE(until.has_value());
+    EXPECT_EQ(*until, std::chrono::milliseconds(100));
+
+    until = m.time_until_retry(t0() + std::chrono::milliseconds(100));
+    ASSERT_TRUE(until.has_value());
+    EXPECT_EQ(*until, std::chrono::milliseconds(0));
+}

@@ -420,6 +420,10 @@ Result UdpTransport::configure_multicast(const Endpoint& endpoint) {
 
     platform::ScopedLock const lock(socket_mutex_);
 
+    if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
+        return Result::NOT_CONNECTED;
+    }
+
     struct ip_mreq mreq = {};
     mreq.imr_multiaddr.s_addr = someip_inet_addr(endpoint.get_address().c_str());
 
