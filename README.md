@@ -41,7 +41,7 @@ OpenSOME/IP provides a complete, standards-compliant C++ implementation of the S
 
 - **Truly Open Source**: Apache 2.0 licensed - use freely in commercial and personal projects
 - **Modern C++17**: Clean, maintainable codebase with no legacy dependencies
-- **Production Ready**: 443 C++ unit tests across 15 test suites + 80+ Python tests with coverage reporting, CI/CD integration, and [Renode](https://renode.io/) hardware simulation testing on ARM Cortex-M targets
+- **Production Ready**: 702 C++ tests across 27 suites on the default host build, plus Python integration tests, coverage reporting, CI/CD, and [Renode](https://renode.io/) hardware simulation testing on ARM Cortex-M targets
 - **Well Documented**: Complete API documentation, examples, and traceability matrices
 - **Active Development**: Regular updates and community-driven improvements
 - **Easy Integration**: CMake-based build system works with any C++ project
