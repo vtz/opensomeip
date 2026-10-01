@@ -15,6 +15,18 @@
 
 ## Unreleased
 
+### Fixed
+
+- **Transport / SD**: Multicast join failures no longer report success.
+  `UdpTransport::join_multicast_group` / `leave_multicast_group` return
+  `Result::MULTICAST_ERROR` with group/interface diagnostics via
+  `last_multicast_error()`. `SdServer` starts in an explicit degraded
+  multicast state and re-attempts membership on the offer timer within
+  `SdConfig::multicast_rejoin_max_attempts`; `SdClient` keeps fail-closed
+  SD init, tracks eventgroup membership per owned subscription (bounded),
+  and retries from the maintenance loop
+  ([#340](https://github.com/vtz/opensomeip/issues/340)).
+
 ### CI / Infrastructure
 
 - **Coverity Scan**: Re-enable the weekly Monday 04:00 UTC schedule and

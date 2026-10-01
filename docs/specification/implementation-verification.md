@@ -37,6 +37,7 @@ These requirements have no detected implementation.
 - **REQ_TRANSPORT_006_E01**: Error - Endpoint Address Format Invalid → `include/transport/endpoint.h`
 - **REQ_TRANSPORT_011_E01**: Error - Multicast Join Failure → `src/transport/udp_transport.cpp`
 - **REQ_TRANSPORT_011_E02**: Error - UDP Multicast TTL Configuration → `src/transport/udp_transport.cpp`
+- **REQ_TRANSPORT_011_E03**: Error - Multicast Join Recovery → `include/sd/multicast_membership.h`, `src/sd/sd_server.cpp`, `src/sd/sd_client.cpp`
 - **REQ_TRANSPORT_014_E01**: Error - Port Already In Use → `src/transport/udp_transport.cpp`
 - **REQ_TRANSPORT_016_E01**: Error - TCP Reconnection Exhaustion → `src/transport/tcp_transport.cpp`
 

@@ -1212,6 +1212,134 @@ TEST_F(SdTest, ServerDuplicateOffer) {
 }
 
 // ============================================================================
+// Multicast Membership Reporting and Recovery Tests
+// ============================================================================
+
+/**
+ * @test_case TC_SD_SERVER_MC_001
+ * @tests REQ_TRANSPORT_011_E01
+ * @brief A successful SD multicast join reports Joined
+ */
+TEST_F(SdTest, ServerReportsJoinedOnSuccessfulMulticastJoin) {
+    SdConfig config;
+    auto server = std::make_shared<SdServer>(config);
+
+    ASSERT_TRUE(server->initialize());
+    EXPECT_EQ(server->multicast_state(), MulticastState::JOINED);
+
+    server->shutdown();
+}
+
+/**
+ * @test_case TC_SD_SERVER_MC_002
+ * @tests REQ_TRANSPORT_011_E01
+ * @brief A failed SD multicast join leaves the server explicitly degraded
+ */
+TEST_F(SdTest, ServerReportsDegradedStateWhenMulticastJoinFails) {
+    SdConfig config;
+    // make_sd_transport_config() maps unicast_address to the multicast interface.
+    // 192.0.2.1 is TEST-NET-1 (RFC 5737): never a local interface, so
+    // IP_ADD_MEMBERSHIP fails on both POSIX and Windows (unlike a multicast
+    // address used as the interface, which Winsock may accept).
+    config.unicast_address = "192.0.2.1";
+    auto server = std::make_shared<SdServer>(config);
+
+    ASSERT_TRUE(server->initialize());
+    EXPECT_EQ(server->multicast_state(), MulticastState::RETRYING);
+
+    server->shutdown();
+}
+
+/**
+ * @test_case TC_SD_SERVER_MC_005
+ * @tests REQ_TRANSPORT_011_E03
+ * @brief Shutdown/leave cancels a pending SD multicast re-attempt
+ *
+ * Complements the MulticastMembership unit test LeaveCancelsPendingReattempt
+ * by driving SdServer through a real failed join (TEST-NET-1 interface) into
+ * RETRYING, then asserting leave on shutdown clears that retrying state.
+ */
+TEST_F(SdTest, ServerShutdownCancelsPendingMulticastReattempt) {
+    SdConfig config;
+    config.unicast_address = "192.0.2.1";
+    auto server = std::make_shared<SdServer>(config);
+
+    ASSERT_TRUE(server->initialize());
+    ASSERT_EQ(server->multicast_state(), MulticastState::RETRYING);
+
+    server->shutdown();
+    EXPECT_NE(server->multicast_state(), MulticastState::RETRYING);
+    EXPECT_EQ(server->multicast_state(), MulticastState::JOINED);
+}
+
+/**
+ * @test_case TC_SD_SERVER_MC_003
+ * @tests REQ_TRANSPORT_011_E03
+ * @brief Re-attempts are bounded and exhaustion is reported
+ */
+TEST_F(SdTest, ServerMulticastRejoinIsBoundedAndReportsExhaustion) {
+    SdConfig config;
+    config.unicast_address = "192.0.2.1";
+    config.multicast_rejoin_max_attempts = 1;
+    config.multicast_rejoin_interval = std::chrono::milliseconds(10);
+    auto server = std::make_shared<SdServer>(config);
+
+    ASSERT_TRUE(server->initialize());
+
+    for (int i = 0; i < 40 && server->multicast_state() != MulticastState::EXHAUSTED; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    EXPECT_EQ(server->multicast_state(), MulticastState::EXHAUSTED);
+
+    server->shutdown();
+}
+
+/**
+ * @test_case TC_SD_SERVER_MC_004
+ * @tests REQ_TRANSPORT_011_E03
+ * @brief A zero bound disables re-attempt and reports exhaustion immediately
+ */
+TEST_F(SdTest, ServerMulticastRejoinCanBeDisabled) {
+    SdConfig config;
+    config.unicast_address = "192.0.2.1";
+    config.multicast_rejoin_max_attempts = 0;
+    auto server = std::make_shared<SdServer>(config);
+
+    ASSERT_TRUE(server->initialize());
+    EXPECT_EQ(server->multicast_state(), MulticastState::EXHAUSTED);
+
+    server->shutdown();
+}
+
+/**
+ * @test_case TC_SD_CLIENT_MC_001
+ * @tests REQ_TRANSPORT_011_E01
+ * @brief Client initialize remains fail-closed when SD multicast join fails
+ */
+TEST_F(SdTest, ClientInitializeFailsClosedOnMulticastJoinFailure) {
+    SdConfig config;
+    config.unicast_address = "192.0.2.1";
+    auto client = std::make_shared<SdClient>(config);
+
+    EXPECT_FALSE(client->initialize());
+}
+
+/**
+ * @test_case TC_SD_CLIENT_MC_002
+ * @tests REQ_TRANSPORT_011_E01
+ * @brief A client with no failed eventgroup membership reports Joined
+ */
+TEST_F(SdTest, ClientReportsJoinedWithNoFailedEventgroupMembership) {
+    SdConfig config;
+    auto client = std::make_shared<SdClient>(config);
+
+    ASSERT_TRUE(client->initialize());
+    EXPECT_EQ(client->eventgroup_multicast_state(), MulticastState::JOINED);
+
+    client->shutdown();
+}
+
+// ============================================================================
 // SD Client Error Handling Tests
 // ============================================================================
 
@@ -1945,7 +2073,9 @@ static Message build_offer_service_message(uint16_t service_id, uint16_t instanc
 }
 
 static Message build_subscribe_ack_nack_message(uint16_t service_id, uint16_t instance_id,
-                                                uint16_t eventgroup_id, uint32_t ttl) {
+                                                uint16_t eventgroup_id, uint32_t ttl,
+                                                const char* multicast_ip = nullptr,
+                                                uint16_t multicast_port = 0) {
     EventGroupEntry entry(EntryType::SUBSCRIBE_EVENTGROUP_ACK);
     entry.set_service_id(service_id);
     entry.set_instance_id(instance_id);
@@ -1956,7 +2086,17 @@ static Message build_subscribe_ack_nack_message(uint16_t service_id, uint16_t in
     SdMessage sd_msg;
     sd_msg.set_reboot(true);
     sd_msg.set_unicast(true);
-    sd_msg.add_entry(std::move(entry));
+    if (multicast_ip != nullptr && ttl > 0) {
+        entry.set_index1(0);
+        entry.set_num_opts1(1);
+        IPv4MulticastOption mc;
+        mc.set_ipv4_address_from_string(multicast_ip);
+        mc.set_port(multicast_port);
+        sd_msg.add_entry(std::move(entry));
+        sd_msg.add_option(std::move(mc));
+    } else {
+        sd_msg.add_entry(std::move(entry));
+    }
 
     Message someip_msg(
         MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
@@ -2486,6 +2626,84 @@ TEST_F(SdIntegrationTest, ClientProcessesSubscribeAck) {
     offerer.stop();
     client.shutdown();
     EXPECT_TRUE(subscribed);
+}
+
+/**
+ * @test_case TC_SD_CLIENT_MC_INT_001
+ * @tests REQ_TRANSPORT_011_E01, REQ_SD_119
+ * @brief Accepted SubscribeEventgroupAck with failed local join keeps both facts visible
+ *
+ * Issue #340: a successful remote ACK that requires multicast membership must not
+ * look like delivery-ready success when the local join fails. JOINED is also the
+ * empty-aggregate default, so this test forces the eventgroup join to fail by
+ * putting a non-multicast TEST-NET-1 address in the ACK option (SD join still
+ * succeeds on 127.0.0.1) and asserting EXHAUSTED while peer acceptance stays
+ * SUBSCRIBED. No injectable join seam is required: the ACK group is independent
+ * of the SD multicast group the client already joined at initialize().
+ */
+TEST_F(SdIntegrationTest, ClientAckMulticastJoinKeepsAcceptanceAndLocalState) {
+    const uint16_t client_port = get_unique_port();
+    const uint16_t offerer_sd_port = get_unique_port();
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    // Zero re-attempts: first failed eventgroup join reports EXHAUSTED immediately.
+    client_config.multicast_rejoin_max_attempts = 0;
+
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+    // Empty aggregate defaults to JOINED; the post-ACK assertion must differ.
+    EXPECT_EQ(client.eventgroup_multicast_state(), MulticastState::JOINED);
+
+    transport::UdpTransportConfig offerer_cfg;
+    offerer_cfg.blocking = false;
+    transport::UdpTransport offerer(transport::Endpoint("0.0.0.0", offerer_sd_port), offerer_cfg);
+    ASSERT_EQ(offerer.start(), Result::SUCCESS);
+
+    auto offer_msg = build_offer_service_message(0x1234, 0x0001, 30, "127.0.0.1", 30509);
+    ASSERT_EQ(offerer.send_message(offer_msg, transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+
+    bool offer_seen = false;
+    for (int i = 0; i < 50 && !offer_seen; ++i) {
+        offer_seen = !client.get_available_services(0x1234).empty();
+        if (!offer_seen) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+    if (!offer_seen) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Offer not received (loopback may be unavailable)";
+    }
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+
+    // Non-multicast group in the ACK option: is_multicast_address rejects it
+    // (INVALID_ENDPOINT) on both Linux and Windows without relying on the
+    // shared SD multicast_interface. Do not use 224.0.0.1 as an interface —
+    // Winsock may accept that.
+    auto ack_msg = build_subscribe_ack_nack_message(0x1234, 0x0001, 0x0001, 1800,
+                                                    "192.0.2.1", 30500);
+    ASSERT_EQ(offerer.send_message(ack_msg, transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+
+    bool subscribed = false;
+    bool membership_exhausted = false;
+    for (int i = 0; i < 50 && !(subscribed && membership_exhausted); ++i) {
+        subscribed = client.get_eventgroup_subscription_state(0x1234, 0x0001, 0x0001) ==
+                     SubscriptionState::SUBSCRIBED;
+        membership_exhausted =
+            client.eventgroup_multicast_state() == MulticastState::EXHAUSTED;
+        if (!(subscribed && membership_exhausted)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+
+    EXPECT_TRUE(subscribed);
+    EXPECT_TRUE(membership_exhausted);
+    EXPECT_EQ(client.eventgroup_multicast_state(), MulticastState::EXHAUSTED);
+
+    offerer.stop();
+    client.shutdown();
 }
 
 /**
