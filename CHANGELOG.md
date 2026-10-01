@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [0.2.0] - 2026-09-30
+## [0.2.0] - 2026-10-01
 
 This minor release packages new public APIs (C ABI, static-allocation PAL,
 fire-and-forget RPC, event-driven transports, multi-client TCP) and
