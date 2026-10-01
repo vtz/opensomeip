@@ -89,7 +89,10 @@ private:
 // Coverage builds sample get_connection_state() slowly enough to miss a
 // handshake the network rejects in a few milliseconds. Tests stretch the
 // CONNECTING window with this; production leaves it at zero.
-std::atomic<std::uint32_t> g_test_outbound_connect_hold_ms{0};
+std::atomic<std::uint32_t>& test_outbound_connect_hold_ms() {
+    static std::atomic<std::uint32_t> hold{0};
+    return hold;
+}
 
 }  // namespace
 
@@ -99,7 +102,7 @@ std::atomic<std::uint32_t> g_test_outbound_connect_hold_ms{0};
 __attribute__((visibility("default")))
 #endif
 void set_test_outbound_connect_hold_ms(std::uint32_t ms) {
-    g_test_outbound_connect_hold_ms.store(ms, std::memory_order_relaxed);
+    test_outbound_connect_hold_ms().store(ms, std::memory_order_relaxed);
 }
 
 /**
@@ -700,7 +703,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
     const OutboundConnectingGuard connecting(outbound_connecting_);
 
     const std::uint32_t hold_ms =
-        g_test_outbound_connect_hold_ms.load(std::memory_order_relaxed);
+        test_outbound_connect_hold_ms().load(std::memory_order_relaxed);
     if (hold_ms > 0U) {
         std::this_thread::sleep_for(std::chrono::milliseconds(hold_ms));
     }
