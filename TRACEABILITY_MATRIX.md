@@ -22,7 +22,7 @@ This document provides a comprehensive traceability matrix mapping requirements 
 - **Source**: Open SOME/IP Specification (open-someip-spec repository)
 - **Scope**: Core SOME/IP protocol features (RPC, SD, TP, E2E)
 - **Focus**: Functional requirements with implementation impact
-- **Total Requirements Analyzed**: 697 requirements across implementation modules
+- **Total Requirements Analyzed**: 698 requirements across implementation modules
 
 ## Matrix Structure
 
@@ -287,12 +287,12 @@ This document provides a comprehensive traceability matrix mapping requirements 
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| Total requirements (RST) | 697 | - |
-| Fully traced (code + tests) | 616 (88.4%) | Good |
-| Requirements with code refs | 619 (88.8%) | Good |
-| Requirements with test coverage | 685 (98.3%) | Good |
+| Total requirements (RST) | 698 | - |
+| Fully traced (code + tests) | 617 (88.4%) | Good |
+| Requirements with code refs | 620 (88.8%) | Good |
+| Requirements with test coverage | 686 (98.3%) | Good |
 | Orphaned (no code annotation) | 78 (11.2%) | Needs improvement |
-| Spec-linked implementation reqs | 695/697 | REQ_MSG_150, REQ_TRANSPORT_026 open |
+| Spec-linked implementation reqs | 696/698 | REQ_MSG_150, REQ_TRANSPORT_026 open |
 
 ### Test Suite Mapping
 

@@ -115,13 +115,13 @@ public:
     Result join_multicast(const platform::String<>& multicast_address,
                           const platform::String<>& /*interface_address*/) override {
         joins_.push_back(multicast_address);
-        return Result::SUCCESS;
+        return join_result_;
     }
 
     Result leave_multicast(const platform::String<>& multicast_address,
                            const platform::String<>& /*interface_address*/) override {
         leaves_.push_back(multicast_address);
-        return Result::SUCCESS;
+        return leave_result_;
     }
 
     void set_receive_callback(UdpReceiveCallback callback) override { cb_ = std::move(callback); }
@@ -140,6 +140,8 @@ public:
     Endpoint last_send_dest_{"0.0.0.0", 0};
     std::vector<platform::String<>> joins_;
     std::vector<platform::String<>> leaves_;
+    Result join_result_{Result::SUCCESS};
+    Result leave_result_{Result::SUCCESS};
 
 private:
     bool open_{false};
@@ -265,6 +267,22 @@ TEST(EventDrivenUdpTransport, MulticastJoinLeave) {
     ASSERT_EQ(adapter.leaves_.size(), 1u);
     EXPECT_EQ(adapter.joins_[0], "224.0.0.251");
     EXPECT_EQ(adapter.leaves_[0], "224.0.0.251");
+
+    transport.stop();
+}
+
+/**
+ * @tests REQ_TRANSPORT_011_E01
+ * @brief Adapter MULTICAST_ERROR is propagated, not rewritten as success
+ */
+TEST(EventDrivenUdpTransport, MulticastJoinFailurePropagates) {
+    MockUdpAdapter adapter;
+    adapter.join_result_ = Result::MULTICAST_ERROR;
+    EventDrivenUdpTransport transport(adapter, Endpoint{"127.0.0.1", 0});
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+
+    EXPECT_EQ(transport.join_multicast_group("224.0.0.251"), Result::MULTICAST_ERROR);
+    ASSERT_EQ(adapter.joins_.size(), 1u);
 
     transport.stop();
 }

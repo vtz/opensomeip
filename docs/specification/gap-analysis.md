@@ -1,14 +1,14 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-10-01 02:27:57
+Generated: 2026-10-01 07:56:57
 
 ## Summary
 
-- **Total Requirements**: 697
-- **Fully Traced (impl + tests)**: 616 (88.4%)
+- **Total Requirements**: 698
+- **Fully Traced (impl + tests)**: 617 (88.4%)
 - **Missing Implementation**: 78
 - **Missing Tests**: 12
-- **Missing Spec Links (all)**: 158
+- **Missing Spec Links (all)**: 159
 - **Missing Spec Links (required only)**: 6
 
 ### Requirement Categories
@@ -16,7 +16,7 @@ Generated: 2026-10-01 02:27:57
 | Category | Total | Implemented | Tested | Spec Linked |
 |----------|-------|-------------|--------|-------------|
 | Architectural (derived) | 8 | 7 (88%) | 7 (88%) | 3 (38%) |
-| Error Handling (derived) | 155 | 130 (84%) | 151 (97%) | 10 (6%) |
+| Error Handling (derived) | 156 | 131 (84%) | 152 (97%) | 10 (6%) |
 | Message Header | 93 | 88 (95%) | 93 (100%) | 92 (99%) |
 | Other | 90 | 75 (83%) | 85 (94%) | 87 (97%) |
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
@@ -30,7 +30,7 @@ Generated: 2026-10-01 02:27:57
 may not require direct spec links.
 
 - **Spec-Derived Requirements**: 529
-- **Implementation-Derived Requirements**: 168
+- **Implementation-Derived Requirements**: 169
 
 ### Priority Breakdown
 
@@ -39,13 +39,13 @@ may not require direct spec links.
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 55 | 55 | 98% |
 | Medium | 426 | 376 | 420 | 88% |
-| Low | 183 | 156 | 178 | 85% |
+| Low | 184 | 157 | 179 | 85% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 476 |
+| Unit Tests | 495 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -264,6 +264,7 @@ These are derived requirements (error handling, architectural, plugin) that don'
 - REQ_TRANSPORT_002_E01
 - REQ_TRANSPORT_002_E02
 - REQ_TRANSPORT_011_E01
+- REQ_TRANSPORT_011_E03
 - REQ_TRANSPORT_014_E01
 - REQ_TRANSPORT_016_E01
 - REQ_TRANSPORT_002_E03
@@ -316,7 +317,7 @@ These are derived requirements (error handling, architectural, plugin) that don'
 ### SWE.1 (Software Requirements Analysis)
 - **Status**: ⚠️ PARTIAL - Some spec-derived requirements missing links
 - **Details**: Spec-derived requirements must satisfy at least one specification requirement
-- **Derived Requirements**: 168 implementation-derived requirements do not require spec links
+- **Derived Requirements**: 169 implementation-derived requirements do not require spec links
 
 ### SWE.3 (Software Architectural Design)
 - **Status**: ❌ FAIL - Missing implementations

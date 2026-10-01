@@ -46,6 +46,8 @@ The Service Discovery layer implements the SOME/IP-SD protocol, enabling dynamic
   - Event group definitions
   - SD configuration parameters
   - Result codes and subscription states
+  - `MulticastState` / rejoin bounds (`multicast_rejoin_max_attempts`,
+    `multicast_rejoin_interval`) for local membership observability
 
 ## Usage Examples
 

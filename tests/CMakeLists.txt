@@ -34,6 +34,10 @@ target_link_libraries(test_tcp_transport someip-transport gtest_main)
 add_executable(test_udp_transport test_udp_transport.cpp)
 target_link_libraries(test_udp_transport someip-transport gtest_main)
 
+# Multicast membership retry state machine (header-only helper)
+add_executable(test_multicast_membership test_multicast_membership.cpp)
+target_link_libraries(test_multicast_membership someip-sd gtest_main)
+
 # Event-driven UDP transport tests (mock adapter, no real sockets)
 add_executable(test_event_driven_udp_transport test_event_driven_udp_transport.cpp)
 target_link_libraries(test_event_driven_udp_transport someip-transport gtest_main)
@@ -250,6 +254,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     add_test(NAME EventsTest COMMAND test_events)
     add_test(NAME TcpTransportTest COMMAND test_tcp_transport)
     add_test(NAME UdpTransportTest COMMAND test_udp_transport)
+    add_test(NAME MulticastMembershipTest COMMAND test_multicast_membership)
     add_test(NAME EventDrivenUdpTransportTest COMMAND test_event_driven_udp_transport)
     add_test(NAME EventDrivenTcpTransportTest COMMAND test_event_driven_tcp_transport)
     add_test(NAME TpTest COMMAND test_tp)
@@ -259,8 +264,8 @@ target_link_libraries(test_e2e someip-core gtest_main)
     set(_ALL_TESTS
         PlatformThreadingTest SerializationTest MessageTest
         SessionManagerTest EndpointTest RpcTest SdTest EventsTest
-        TcpTransportTest UdpTransportTest EventDrivenUdpTransportTest
-        EventDrivenTcpTransportTest TpTest E2ETest
+        TcpTransportTest UdpTransportTest MulticastMembershipTest
+        EventDrivenUdpTransportTest EventDrivenTcpTransportTest TpTest E2ETest
     )
     if(NOT WIN32)
         list(APPEND _ALL_TESTS

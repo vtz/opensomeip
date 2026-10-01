@@ -220,6 +220,16 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
 
 ### Fixed
 
+- **Transport / SD**: Multicast join failures no longer report success.
+  `UdpTransport::join_multicast_group` / `leave_multicast_group` return
+  `Result::MULTICAST_ERROR` with group/interface diagnostics via
+  `last_multicast_error()`. `SdServer` starts in an explicit degraded
+  multicast state and re-attempts membership on the offer timer within
+  `SdConfig::multicast_rejoin_max_attempts`; `SdClient` keeps fail-closed
+  SD init, tracks eventgroup membership per owned subscription (bounded),
+  and retries from the maintenance loop
+  ([#340](https://github.com/vtz/opensomeip/issues/340),
+  [#348](https://github.com/vtz/opensomeip/pull/348)).
 - **E2E**: profile resolution stays sequential (ID, then name, then default).
   A non-zero unregistered `profile_id` no longer skips `profile_name` and
   silently protect/validate with the default 12-byte profile
