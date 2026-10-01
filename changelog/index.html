@@ -2314,6 +2314,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ci-infrastructure" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2812,6 +2823,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#ci-infrastructure" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3020,6 +3042,18 @@
 
 <h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Transport / SD</strong>: Multicast join failures no longer report success.
+  <code>UdpTransport::join_multicast_group</code> / <code>leave_multicast_group</code> return
+  <code>Result::MULTICAST_ERROR</code> with group/interface diagnostics via
+  <code>last_multicast_error()</code>. <code>SdServer</code> starts in an explicit degraded
+  multicast state and re-attempts membership on the offer timer within
+  <code>SdConfig::multicast_rejoin_max_attempts</code>; <code>SdClient</code> keeps fail-closed
+  SD init, tracks eventgroup membership per owned subscription (bounded),
+  and retries from the maintenance loop
+  (<a href="https://github.com/vtz/opensomeip/issues/340">#340</a>).</li>
+</ul>
 <h3 id="ci-infrastructure">CI / Infrastructure<a class="headerlink" href="#ci-infrastructure" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Coverity Scan</strong>: Re-enable the weekly Monday 04:00 UTC schedule and

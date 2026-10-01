@@ -742,15 +742,43 @@ Magic Cookie Details
    :status: implemented
    :priority: medium
    :category: error_path
-   :verification: Unit test: Join multicast group on interface with no multicast support, verify error is returned.
+   :verification: Unit test: Join a multicast group with the interface set to a TEST-NET-1 address (RFC 5737) so IP_ADD_MEMBERSHIP fails independently of host multicast support; verify MULTICAST_ERROR is returned and the group and interface are retrievable via ``UdpTransport::last_multicast_error()``. Covered by MulticastJoinFailureIsReportedWithDiagnostics.
 
    The software shall return an error when multicast group join fails.
 
    **Rationale**: Failed multicast joins prevent SD and event reception.
 
-   **Error Handling**: Return MULTICAST_ERROR and log group address and interface.
+   **Error Handling**: Return ``Result::MULTICAST_ERROR`` and record group address
+   and interface. The project has no logging facility, so the context is exposed
+   through ``UdpTransport::last_multicast_error()`` rather than written to a log.
+   ``leave_multicast_group`` returns the same result class on membership failure.
 
    **Code Location**: ``src/transport/udp_transport.cpp``
+
+.. requirement:: Error - Multicast Join Recovery
+   :id: REQ_TRANSPORT_011_E03
+   :status: implemented
+   :priority: medium
+   :category: error_path
+   :verification: Unit test: Exercise ``MulticastMembership`` fail-once-then-succeed, exhaustion, zero-bound disable, and leave-cancels-pending. SD server: configure TEST-NET-1 multicast interface, ``multicast_rejoin_max_attempts=1``, verify re-attempt on the offer timer then Exhausted. Covered by MulticastMembership unit tests and ServerMulticastRejoinIsBoundedAndReportsExhaustion.
+
+   The software shall re-attempt a failed multicast group join a bounded number
+   of times and report exhaustion. Pending re-attempts shall be cancelled when
+   the group is left or ownership (subscription) is released. Client eventgroup
+   membership tracking shall be bounded and keyed by owned subscriptions so a
+   peer cannot grow pending state without a local subscription.
+
+   **Rationale**: Reporting a join failure without recovery leaves the caller
+   holding an error it cannot act on. REQ_TRANSPORT_002_E01 already pairs error
+   reporting with scheduled recovery for the analogous TCP failure, and
+   REQ_TRANSPORT_016_E01 bounds that recovery.
+
+   **Error Handling**: Re-attempt from existing SD periodic work up to
+   ``SdConfig::multicast_rejoin_max_attempts``, then report ``Exhausted``.
+   Zero disables re-attempt.
+
+   **Code Location**: ``include/sd/multicast_membership.h``,
+   ``src/sd/sd_server.cpp``, ``src/sd/sd_client.cpp``
 
 .. requirement:: Error - Port Already In Use
    :id: REQ_TRANSPORT_014_E01
@@ -887,6 +915,7 @@ Implementation Files
 * ``include/transport/udp_socket_adapter.h`` - UDP socket adapter for event-driven path (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_011)
 * ``include/transport/tcp_socket_adapter.h`` - TCP socket adapter for event-driven path (REQ_TRANSPORT_024, REQ_TRANSPORT_027)
 * ``include/transport/multicast_transport.h`` - Multicast join/leave interface (REQ_TRANSPORT_001b, REQ_TRANSPORT_011)
+* ``include/sd/multicast_membership.h`` - Bounded multicast join retry state (REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E03)
 * ``include/transport/endpoint.h`` - Endpoint structure
 * ``src/transport/udp_transport.cpp`` - UDP implementation
 * ``src/transport/tcp_transport.cpp`` - TCP implementation
@@ -897,6 +926,7 @@ Test Files
 ----------
 
 * ``tests/test_udp_transport.cpp`` - UDP transport tests
+* ``tests/test_multicast_membership.cpp`` - Multicast membership retry state machine tests
 * ``tests/test_tcp_transport.cpp`` - TCP transport tests
 * ``tests/test_event_driven_udp_transport.cpp`` - Event-driven UDP transport tests (REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_011)
 * ``tests/test_event_driven_tcp_transport.cpp`` - Event-driven TCP transport tests
