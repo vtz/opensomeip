@@ -20,13 +20,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [0.2.0] - 2026-09-29
+## [0.2.0] - 2026-09-30
 
 This minor release packages new public APIs (C ABI, static-allocation PAL,
-fire-and-forget RPC, event-driven transports) and **breaking** wire-format /
-behavioral changes that landed on `main` since v0.1.0. Per this repo's 0.x
-policy, incompatible API and wire changes bump the minor version; 1.0.0 remains
-reserved until the public API is declared stable.
+fire-and-forget RPC, event-driven transports, multi-client TCP) and
+**breaking** wire-format / behavioral changes that landed on `main` since
+v0.1.0. Per this repo's 0.x policy, incompatible API and wire changes bump
+the minor version; 1.0.0 remains reserved until the public API is declared
+stable.
 
 ### Breaking Changes
 
@@ -79,6 +80,18 @@ reserved until the public API is declared stable.
   (`platform::Function<…>`) are distinct; code that relies on unlimited
   `ByteBuffer` growth, `shared_ptr`-specific APIs, or unbounded
   `platform::String` capacity must migrate.
+- **TCP server model**: a listening transport serves multiple clients
+  concurrently. It previously kept a single connection and closed every
+  surplus accepted socket. `send_message()` routes by its endpoint
+  argument, and socket I/O is serialised per connection
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **TP statistics API**: `TpManager::get_statistics()` is removed. Call
+  `get_sender_statistics()` or `get_receiver_statistics()` for a
+  point-in-time snapshot. Sender and receiver counters are separate
+  ([#326](https://github.com/vtz/opensomeip/issues/326),
+  [#327](https://github.com/vtz/opensomeip/issues/327),
+  [#328](https://github.com/vtz/opensomeip/pull/328)).
 
 ### Breaking Changes (Wire Format)
 
@@ -148,8 +161,14 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
 - **Transport**: Event-driven `IUdpSocketAdapter` / `ITcpSocketAdapter` plus
   `EventDrivenUdpTransport` and `EventDrivenTcpTransport` so integrators can
   drive `ITransport` from an existing reactor without BSD sockets
-  ([#172](https://github.com/vtz/opensomeip/issues/172),
-  [#178](https://github.com/vtz/opensomeip/pull/178)).
+  ([#172](https://github.com/vtz/opensomeip/issues/172)). TCP receive parses
+  and delivers one SOME/IP frame at a time (no bounded staging list); only an
+  incomplete trailing fragment is retained. Reassembly-buffer exhaustion
+  discards the stream buffer and reports `BUFFER_OVERFLOW` via
+  `on_message_rejected`. Message-pool exhaustion consumes the current complete
+  frame and reports `OUT_OF_MEMORY` via `on_error` so the stream is not stalled
+  with complete unparsed PDUs
+  ([#178](https://github.com/vtz/opensomeip/pull/178)).
 - **Message**: `try_deserialize()` returns a structured `someip::Result` for
   each semantic rejection class. Existing `deserialize()` overloads remain
   source-compatible bool wrappers
@@ -157,10 +176,36 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
 - **Transport**: Defaulted `ITransportListener::on_message_rejected` plus
   `set_message_rejection_handler` on RPC and event APIs so complete malformed
   UDP/TCP frames are visible to applications instead of being dropped silently
-  ([#315](https://github.com/vtz/opensomeip/issues/315)).
+  ([#315](https://github.com/vtz/opensomeip/issues/315)). Structured
+  `Message::try_deserialize` reasons (#316) are not required; failures currently
+  report `Result::MALFORMED_MESSAGE`.
 - `UdpTransport::receive_message_with_sender(Endpoint& sender)` — polling
   mode variant that also returns the sender's endpoint for reply
   addressing without requiring a listener.
+- `TcpTransport::receive_message_with_sender(Endpoint& sender)` — the same
+  polling helper on TCP, so a multi-peer server can reply without a
+  listener
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- `TcpTransport::connection_count()`, `max_connections()`,
+  `is_peer_connected(const Endpoint&)` and
+  `disconnect_peer(const Endpoint&)` — inspect and manage individual
+  peers. `disconnect_peer()` closes one connection and reports
+  `on_connection_lost()` for it; `disconnect()` still closes every
+  connection the transport holds
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- `SOMEIP_MAX_TCP_CONNECTIONS` (default 10, matching the long-standing
+  `TcpTransportConfig::max_connections` default) sizes the TCP connection
+  table at compile time. It is defined in `static_config.h` and forwarded
+  from CMake like the other static-alloc knobs, so
+  `-DSOMEIP_MAX_TCP_CONNECTIONS` reaches the compiler. The configured
+  limit is clamped to it and reported by `max_connections()`. Raising it
+  on a static-allocation build usually means raising the
+  `SOMEIP_BYTE_POOL_*` counts too, since each served connection may hold
+  a pooled receive buffer
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
 - `RpcClient::send_request_no_return()` — fire-and-forget `REQUEST_NO_RETURN`
   (message type 0x01) with no pending-call wait
   ([#308](https://github.com/vtz/opensomeip/issues/308)).
@@ -240,21 +285,102 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   no-heap cleanup (reserve-before-send, peer-table abort, filter capacity,
   `snprintf` instead of `std::to_string`, etc.)
   ([#268](https://github.com/vtz/opensomeip/issues/268)).
+- **TCP**: connections beyond the limit are accepted and closed
+  immediately, so the client observes a refusal, instead of completing a
+  handshake into the backlog and waiting on a server that will never
+  serve it (`REQ_TRANSPORT_003_E01`)
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **TCP**: `send_data()` no longer retries `EAGAIN` forever. It gives up
+  after `TcpTransportConfig::send_timeout`, returning `TIMEOUT` when
+  nothing was written and `CONNECTION_LOST` when a partial write left the
+  peer's stream unframeable, in which case that peer is closed. The
+  unbounded retry could hold a connection's I/O lock indefinitely against
+  a peer that stopped reading, which in turn made `disconnect_peer()`,
+  `stop()` and the destructor block forever
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **TCP**: `get_connection_state()` reports `CONNECTING` while an outbound
+  `connect()` handshake is in progress, then `CONNECTED` or
+  `DISCONNECTED` (`REQ_TRANSPORT_003a`). `DISCONNECTING` is still
+  reported while a peer is being torn down
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **TCP**: a peer that reconnects from the same source port replaces its
+  own stale connection. The accept path retires a still-ACTIVE entry for
+  that endpoint before allocating, so the table no longer holds two
+  entries for one peer and no longer refuses the replacement when the
+  stale entry occupied the last free slot
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **TCP**: `connect()` restores blocking mode on the socket it hands to
+  the connection table. It was left non-blocking from the bounded
+  handshake, so `SO_SNDTIMEO` did not apply and `send_data()` spun on
+  `EAGAIN` for a full `send_timeout`
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **TCP**: `SOMEIP_MAX_TCP_CONNECTIONS` of 0 is rejected at compile time
+  instead of building a server that refuses every connection
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **TCP**: `connect()` on a server-mode transport always returns
+  `INVALID_STATE`. The mode guard now runs before the already-connected
+  short-circuit, which any ACTIVE slot — including an accepted peer — had
+  been satisfying
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **TCP**: client `connect()` short-circuits only when already connected to
+  that peer. A second `connect(B)` after `connect(A)` used to return
+  `SUCCESS` without opening B
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **TCP**: default `max_receive_buffer` is 65543 (8 + `MAX_MESSAGE_SIZE`) so
+  a legal max-length frame can be received complete. The previous 65536
+  default filled the buffer one byte short of the parser's limit and then
+  closed the peer with `BUFFER_OVERFLOW`
+  ([#319](https://github.com/vtz/opensomeip/issues/319),
+  [#324](https://github.com/vtz/opensomeip/pull/324)).
+- **SOME/IP-TP**: overlapping segments use first-wins semantics
+  (`feat_req_someiptp_797`): only bytes not already received are written,
+  so a retransmission with different data cannot mix payloads. A completed
+  reassembly publishes the SOME/IP header and payload together
+  ([#326](https://github.com/vtz/opensomeip/issues/326),
+  [#327](https://github.com/vtz/opensomeip/issues/327),
+  [#328](https://github.com/vtz/opensomeip/pull/328)).
 
 ### Changed
 
 - **Coverity Scan**: Re-enable the weekly Monday 04:00 UTC schedule and
   `push` to `main` now that scan.coverity.com is serving the project again
-  ([#265](https://github.com/vtz/opensomeip/issues/265)).
+  ([#265](https://github.com/vtz/opensomeip/issues/265),
+  [#336](https://github.com/vtz/opensomeip/pull/336)). The workflow had been
+  limited to `workflow_dispatch` while the service was offline
+  ([#264](https://github.com/vtz/opensomeip/pull/264)); `workflow_dispatch`
+  remains for a manual verification run.
 - Fork PRs no longer fail the RPM workflow template on empty Docker Hub
   secrets; Fedora images are pulled anonymously
-  ([#330](https://github.com/vtz/opensomeip/issues/330)).
+  ([#330](https://github.com/vtz/opensomeip/issues/330),
+  [#331](https://github.com/vtz/opensomeip/pull/331)). The Python
+  detailed check-run step already skips forks (landed in #325).
+- Dev containers install `pre-commit` from `requirements-dev.txt` so
+  `scripts/run_pre_pr_tests.sh` does not fall back to a floating pip
+  install
+  ([#325](https://github.com/vtz/opensomeip/pull/325)).
 - **CMake docs**: `find_package(opensomeip)` / `opensomeip::opensomeip`
-  documented as the installed package
-  ([#271](https://github.com/vtz/opensomeip/issues/271)).
+  documented as the installed package; the old `SomeIP::someip-common`
+  snippet was wrong
+  ([#271](https://github.com/vtz/opensomeip/issues/271),
+  [#335](https://github.com/vtz/opensomeip/pull/335)). Host CI installs the
+  package and builds `tests/cmake_package` against it. The exported target
+  includes the selected PAL backend include dirs and
+  `opensomeipConfig.cmake` calls `find_dependency(Threads)`.
 - **Traceability**: Regenerated `docs/specification/spec-mapping-report.md`
-  so `feat_req_someipsd_818` maps to `REQ_SD_818`
-  ([#309](https://github.com/vtz/opensomeip/issues/309)).
+  so `feat_req_someipsd_818` maps to `REQ_SD_818` (unicast Subscribe family)
+  instead of shutdown `REQ_SD_310`. CAPI, PAL, and `REQ_TP_081_ATOM` are
+  classified as implementation-derived and no longer listed as missing
+  Open SOME/IP links
+  ([#309](https://github.com/vtz/opensomeip/issues/309),
+  [#338](https://github.com/vtz/opensomeip/pull/338)).
 
 ### Interop Notes
 
