@@ -3,11 +3,11 @@
 ## Summary
 
 - **Total Requirements**: 698
-- **Annotated (in code)**: 625
+- **Annotated (in code)**: 620
 - **Missing Annotations (code exists)**: 0
 - **Truly Missing (no code found)**: 78
 
-- **Effective Implementation Rate**: 625/698 (89.5%)
+- **Effective Implementation Rate**: 620/698 (88.8%)
 
 ## Requirements Truly Missing Implementation
 

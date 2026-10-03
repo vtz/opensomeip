@@ -34,7 +34,6 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
-#include <thread>
 #include <utility>
 
 namespace someip::transport {
@@ -705,7 +704,7 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
     const std::uint32_t hold_ms =
         test_outbound_connect_hold_ms().load(std::memory_order_relaxed);
     if (hold_ms > 0U) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(hold_ms));
+        platform::this_thread::sleep_for(std::chrono::milliseconds(hold_ms));
     }
 
     sockaddr_in addr = {};
