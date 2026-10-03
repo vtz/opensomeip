@@ -202,6 +202,15 @@ def load_code_references(json_path: Path) -> set[str]:
     return implemented
 
 
+def defined_annotated_requirements(requirements: dict[str, dict], annotated: set[str]) -> set[str]:
+    """Requirement IDs that are both defined and referenced from code.
+
+    Extracted annotations can name IDs that are not in the RST set. Coverage
+    counts defined requirements that have code, not every extracted reference.
+    """
+    return {req_id for req_id in annotated if req_id in requirements}
+
+
 def search_file_for_patterns(
     file_path: Path, patterns: list[str], values: list[str]
 ) -> list[ImplementationMatch]:
@@ -378,6 +387,8 @@ def generate_report(
 ) -> str:
     """Generate verification report."""
 
+    annotated = defined_annotated_requirements(requirements, annotated)
+
     lines = []
     lines.append("# Implementation Verification Report\n")
     lines.append("## Summary\n")
@@ -465,6 +476,8 @@ def generate_report(
             lines.append(f"   - {cat}: {len(reqs)} requirements")
 
     report = "\n".join(lines)
+    if not report.endswith("\n"):
+        report += "\n"
 
     if output_path:
         output_path.write_text(report)
@@ -517,10 +530,10 @@ def main():
     requirements = extract_requirements_from_rst(args.requirements_dir)
     print(f"  Found {len(requirements)} requirements")
 
-    # Load annotated requirements
+    # Load annotated requirements and keep only IDs defined in RST.
     print(f"Loading code references from: {args.code_refs}")
-    annotated = load_code_references(args.code_refs)
-    print(f"  Found {len(annotated)} annotated requirements")
+    annotated = defined_annotated_requirements(requirements, load_code_references(args.code_refs))
+    print(f"  Found {len(annotated)} defined requirements with code")
 
     # Analyze requirements
     print("\nAnalyzing requirements...")

@@ -46,6 +46,26 @@ def extract_validation_metrics(output: str) -> dict[str, str]:
     return metrics
 
 
+def first_int(value: str | None) -> str | None:
+    """Return the first integer in a metric cell, or None when it is absent."""
+    if not value:
+        return None
+    match = re.search(r"\d+", value)
+    return match.group(0) if match else None
+
+
+def metric_counts_differ(committed: str | None, actual: str | None) -> bool:
+    """True when the committed count and the validator count are not the same.
+
+    A missing value is not a match. ``None != None`` is false, so a raw
+    inequality would treat two absent metrics as equal.
+    """
+    committed_count = first_int(committed)
+    if committed_count is None or actual is None:
+        return True
+    return committed_count != actual
+
+
 def main() -> int:
     project_root = Path(__file__).resolve().parent.parent
     summary_path = project_root / "TRACEABILITY_SUMMARY.md"
@@ -109,25 +129,23 @@ def main() -> int:
     committed_traced = extract_metric(summary_text, "Fully traced (code + tests)")
     committed_orphaned = extract_metric(summary_text, "Orphaned (no code annotation)")
 
-    def first_int(value: str | None) -> str | None:
-        if not value:
-            return None
-        match = re.search(r"\d+", value)
-        return match.group(0) if match else None
-
     errors: list[str] = []
 
-    if first_int(committed_total) != actual.get("total"):
-        errors.append(f"Total requirements: committed={committed_total}, actual={actual['total']}")
+    if metric_counts_differ(committed_total, actual.get("total")):
+        errors.append(
+            f"Total requirements: committed={committed_total}, actual={actual.get('total', '?')}"
+        )
 
-    if first_int(committed_traced) != actual.get("traced_count"):
+    if metric_counts_differ(committed_traced, actual.get("traced_count")):
         errors.append(
             f"Fully traced: committed={committed_traced}, "
             f"actual={actual.get('traced_count', '?')} ({actual.get('traced_pct', '?')}%)"
         )
 
-    if first_int(committed_orphaned) != actual.get("orphaned"):
-        errors.append(f"Orphaned: committed={committed_orphaned}, actual={actual['orphaned']}")
+    if metric_counts_differ(committed_orphaned, actual.get("orphaned")):
+        errors.append(
+            f"Orphaned: committed={committed_orphaned}, actual={actual.get('orphaned', '?')}"
+        )
 
     if errors:
         print("TRACEABILITY_SUMMARY.md is stale — committed metrics don't match validation:\n")
