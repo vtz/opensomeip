@@ -350,13 +350,133 @@ TEST_F(UdpTransportTest, MalformedDatagramNotifiesRejectionNotMessage) {
     ASSERT_EQ(receiver_listener.rejections_.size(), 1u);
     EXPECT_EQ(receiver_listener.received_messages_.size(), 0u);
     const MessageRejectionInfo& info = receiver_listener.rejections_[0];
-    EXPECT_EQ(info.result, Result::MALFORMED_MESSAGE);
+    EXPECT_EQ(info.result, Result::INVALID_PROTOCOL_VERSION);
     EXPECT_EQ(info.stage, MessageRejectionStage::DESERIALIZE);
     EXPECT_TRUE(info.has_message_id);
     EXPECT_EQ(info.message_id.service_id, 0x1234);
     EXPECT_EQ(info.message_id.method_id, 0x5678);
     EXPECT_TRUE(info.has_request_id);
     EXPECT_EQ(info.request_id.client_id, 0x9ABC);
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @tests REQ_MSG_032, REQ_MSG_033, REQ_MSG_127, REQ_MSG_128, REQ_MSG_129
+ * @brief A REQUEST with the wrong protocol version is answered; fire-and-forget is not
+ */
+TEST_F(UdpTransportTest, WrongProtocolVersionRequestIsAnswered) {
+    config.blocking = true;
+    config.enable_tp = false;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+
+    TestUdpListener sender_listener;
+    TestUdpListener receiver_listener;
+    sender.set_listener(&sender_listener);
+    receiver.set_listener(&receiver_listener);
+
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    Message bad;
+    bad.set_service_id(0x1234);
+    bad.set_method_id(0x0007);
+    bad.set_client_id(0x9ABC);
+    bad.set_session_id(0x0003);
+    bad.set_protocol_version(0x99);
+    bad.set_interface_version(0x05);
+    bad.set_message_type(MessageType::REQUEST);
+    bad.set_return_code(ReturnCode::E_OK);
+    bad.set_payload({0xAA});
+
+    EXPECT_EQ(sender.send_message(bad, receiver.get_local_endpoint()), Result::SUCCESS);
+
+    EXPECT_TRUE(receiver_listener.wait_for_rejection());
+    EXPECT_FALSE(receiver_listener.wait_for_message(std::chrono::milliseconds(150)));
+    ASSERT_TRUE(sender_listener.wait_for_message());
+    ASSERT_EQ(sender_listener.received_messages_.size(), 1u);
+    const Message& reply = *sender_listener.received_messages_[0].first;
+    EXPECT_EQ(reply.get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(reply.get_return_code(), ReturnCode::E_WRONG_PROTOCOL_VERSION);
+    EXPECT_EQ(reply.get_protocol_version(), SOMEIP_PROTOCOL_VERSION);
+    EXPECT_EQ(reply.get_interface_version(), 0x05);
+    EXPECT_EQ(reply.get_service_id(), 0x1234);
+    EXPECT_EQ(reply.get_method_id(), 0x0007);
+    EXPECT_EQ(reply.get_client_id(), 0x9ABC);
+    EXPECT_EQ(reply.get_session_id(), 0x0003);
+    EXPECT_TRUE(reply.get_payload().empty());
+
+    sender_listener.reset();
+    receiver_listener.reset();
+
+    Message fire_and_forget = bad;
+    fire_and_forget.set_message_type(MessageType::REQUEST_NO_RETURN);
+    fire_and_forget.set_session_id(0x0004);
+    EXPECT_EQ(sender.send_message(fire_and_forget, receiver.get_local_endpoint()), Result::SUCCESS);
+    EXPECT_TRUE(receiver_listener.wait_for_rejection());
+    EXPECT_FALSE(sender_listener.wait_for_message(std::chrono::milliseconds(150)));
+
+    sender_listener.reset();
+    receiver_listener.reset();
+
+    Message notification = bad;
+    notification.set_method_id(0x8001);
+    notification.set_message_type(MessageType::NOTIFICATION);
+    notification.set_session_id(0x0005);
+    EXPECT_EQ(sender.send_message(notification, receiver.get_local_endpoint()), Result::SUCCESS);
+    EXPECT_TRUE(receiver_listener.wait_for_rejection());
+    EXPECT_FALSE(sender_listener.wait_for_message(std::chrono::milliseconds(150)));
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @tests REQ_MSG_031, REQ_MSG_032
+ * @brief A configured protocol version accepts that version and rejects 0x01
+ */
+TEST_F(UdpTransportTest, ConfiguredProtocolVersionFiltersRequests) {
+    struct Guard {
+        uint8_t previous{expected_protocol_version()};
+        explicit Guard(uint8_t version) { set_expected_protocol_version(version); }
+        ~Guard() { set_expected_protocol_version(previous); }
+    } guard(0x02);
+
+    config.blocking = true;
+    config.enable_tp = false;
+    UdpTransport sender(local_endpoint, config);
+    UdpTransport receiver(local_endpoint, config);
+    TestUdpListener sender_listener;
+    TestUdpListener receiver_listener;
+    sender.set_listener(&sender_listener);
+    receiver.set_listener(&receiver_listener);
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    Message accepted(MessageId(0x1234, 0x0001), RequestId(0x0001, 0x0001), MessageType::REQUEST,
+                     ReturnCode::E_OK);
+    EXPECT_EQ(accepted.get_protocol_version(), 0x02);
+    EXPECT_EQ(sender.send_message(accepted, receiver.get_local_endpoint()), Result::SUCCESS);
+    ASSERT_TRUE(receiver_listener.wait_for_message());
+    EXPECT_EQ(receiver_listener.received_messages_[0].first->get_protocol_version(), 0x02);
+
+    receiver_listener.reset();
+    Message rejected = accepted;
+    rejected.set_protocol_version(SOMEIP_PROTOCOL_VERSION);
+    rejected.set_session_id(0x0002);
+    rejected.set_interface_version(0x03);
+    EXPECT_EQ(sender.send_message(rejected, receiver.get_local_endpoint()), Result::SUCCESS);
+    EXPECT_TRUE(receiver_listener.wait_for_rejection());
+    EXPECT_FALSE(receiver_listener.wait_for_message(std::chrono::milliseconds(150)));
+    ASSERT_EQ(receiver_listener.rejections_.size(), 1u);
+    EXPECT_EQ(receiver_listener.rejections_[0].result, Result::INVALID_PROTOCOL_VERSION);
+    ASSERT_TRUE(sender_listener.wait_for_message());
+    const Message& reply = *sender_listener.received_messages_[0].first;
+    EXPECT_EQ(reply.get_return_code(), ReturnCode::E_WRONG_PROTOCOL_VERSION);
+    EXPECT_EQ(reply.get_protocol_version(), 0x02);
+    EXPECT_EQ(reply.get_interface_version(), 0x03);
 
     sender.stop();
     receiver.stop();

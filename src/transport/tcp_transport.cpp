@@ -955,6 +955,12 @@ void TcpTransport::service_peer(someip_socket_t socket_fd) {
             continue;
         }
         if (outcome == TcpParseOutcome::REJECTED) {
+            if (rejection == Result::INVALID_PROTOCOL_VERSION && message) {
+                Message error_response;
+                if (someip::make_wrong_protocol_version_response(*message, error_response)) {
+                    (void)send_message(error_response, sender_ep);
+                }
+            }
             MessageRejectionInfo info;
             info.sender = sender_ep;
             info.result = rejection;
@@ -1292,8 +1298,11 @@ TcpParseOutcome TcpTransport::parse_next_message(platform::ByteBuffer& buffer, M
         rejection = Result::OUT_OF_MEMORY;
         return TcpParseOutcome::REJECTED;
     }
-    if (!message->deserialize(message_data)) {
-        rejection = Result::MALFORMED_MESSAGE;
+    const Result parsed = message->try_deserialize(message_data);
+    if (!someip::is_success(parsed)) {
+        rejection = (parsed == Result::INVALID_PROTOCOL_VERSION)
+                        ? Result::INVALID_PROTOCOL_VERSION
+                        : Result::MALFORMED_MESSAGE;
         stage = MessageRejectionStage::DESERIALIZE;
         return TcpParseOutcome::REJECTED;
     }

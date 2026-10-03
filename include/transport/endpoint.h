@@ -114,8 +114,12 @@ private:
     bool is_multicast_ipv4(const platform::String<>& address) const;
 };
 
-// Predefined endpoints for common SOME/IP usage
+// Predefined endpoints for common SOME/IP usage.
+// SOMEIP_SD_MULTICAST_ENDPOINT is this library's deployment default.
+// VSOMEIP_SD_MULTICAST_ENDPOINT is the COVESA vsomeip default and is not
+// selected unless the application asks for it.
 extern const Endpoint SOMEIP_SD_MULTICAST_ENDPOINT;
+extern const Endpoint VSOMEIP_SD_MULTICAST_ENDPOINT;
 extern const Endpoint SOMEIP_DEFAULT_UDP_ENDPOINT;
 extern const Endpoint SOMEIP_DEFAULT_TCP_ENDPOINT;
 

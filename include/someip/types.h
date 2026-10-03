@@ -24,9 +24,20 @@ namespace someip {
  */
 
 /**
- * @brief SOME/IP protocol version
+ * @brief SOME/IP protocol version (specification default)
  */
 static constexpr uint8_t SOMEIP_PROTOCOL_VERSION = 0x01;
+
+/**
+ * @brief Protocol version this process accepts and stamps on new messages.
+ *
+ * The default is SOMEIP_PROTOCOL_VERSION (0x01). Message::has_valid_header()
+ * compares the header field with this value. Message constructors copy it
+ * into the header so replies use the version this stack speaks.
+ * Thread-safe. Message::set_protocol_version() still overrides one message.
+ */
+uint8_t expected_protocol_version();
+void set_expected_protocol_version(uint8_t version);
 
 /**
  * @brief SOME/IP interface version

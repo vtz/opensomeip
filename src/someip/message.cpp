@@ -59,7 +59,7 @@ namespace someip {
  */
 Message::Message()
     : length_(8),  // Length from client_id to end (no payload)
-      protocol_version_(SOMEIP_PROTOCOL_VERSION),
+      protocol_version_(expected_protocol_version()),
       interface_version_(SOMEIP_INTERFACE_VERSION),
       message_type_(MessageType::REQUEST),
       return_code_(ReturnCode::E_OK),
@@ -71,7 +71,7 @@ Message::Message(MessageId message_id, RequestId request_id,
     : message_id_(message_id),
       length_(8),  // Will be updated by update_length()
       request_id_(request_id),
-      protocol_version_(SOMEIP_PROTOCOL_VERSION),
+      protocol_version_(expected_protocol_version()),
       interface_version_(SOMEIP_INTERFACE_VERSION),
       message_type_(message_type),
       return_code_(return_code),
@@ -106,7 +106,8 @@ Message::Message(Message&& other) noexcept
       e2e_header_(other.e2e_header_),
       timestamp_(other.timestamp_) {
     // Invalidate the moved-from object (safety-critical design: moved-from messages are invalid).
-    // Protocol Version must be 0x01 at the header layer; 0xFF makes is_valid() false.
+    // 0xFF is not the default protocol version, so a moved-from message fails
+    // has_valid_header() unless the process is configured to speak 0xFF.
     // Interface Version is the service major (any uint8_t), so it cannot be used to invalidate.
     other.protocol_version_ = 0xFF;
     other.length_ = 8;  // Reset length for empty payload
@@ -474,6 +475,12 @@ Result Message::validation_result() const {
 }
 
 Result Message::header_validation_result() const {
+    // Protocol version is the first error check (REQ_MSG_133a / feat_req_someip_719).
+    // The accepted value is the configured version; default builds expect 0x01.
+    if (protocol_version_ != expected_protocol_version()) {
+        return Result::INVALID_PROTOCOL_VERSION;
+    }
+
     // Check Message ID components (REQ_MSG_002-008)
     if (!has_valid_service_id()) {
         return Result::INVALID_SERVICE_ID;
@@ -498,14 +505,10 @@ Result Message::header_validation_result() const {
         return Result::INVALID_MESSAGE_TYPE;
     }
 
-    // Protocol Version must be 0x01 (REQ_MSG_031). Interface Version is the
-    // service major (feat_req_someip_92 / REQ_MSG_041): any uint8_t is valid
-    // at the header layer. RPC/application code validates per service.
-    if (protocol_version_ != SOMEIP_PROTOCOL_VERSION) {
-        return Result::INVALID_PROTOCOL_VERSION;
-    }
-
-    // SD SOME/IP wrappers (service 0xFFFF, method 0x8100) keep Interface Version 0x01.
+    // Interface Version is the service major (feat_req_someip_92 / REQ_MSG_041):
+    // any uint8_t is valid at the header layer. RPC/application code validates
+    // per service. SD SOME/IP wrappers (service 0xFFFF, method 0x8100) keep
+    // Interface Version 0x01.
     if (get_service_id() == SOMEIP_SD_SERVICE_ID &&
         get_method_id() == SOMEIP_SD_METHOD_ID &&
         interface_version_ != SOMEIP_SD_INTERFACE_VERSION) {
@@ -560,6 +563,22 @@ Result Message::header_validation_result() const {
 bool Message::has_valid_payload() const {
     // Check payload size limits
     return payload_.size() <= MAX_TCP_PAYLOAD_SIZE;
+}
+
+/** @implements REQ_MSG_032, REQ_MSG_033, REQ_MSG_127, REQ_MSG_128, REQ_MSG_129, REQ_MSG_130, REQ_MSG_133a */
+bool make_wrong_protocol_version_response(const Message& request, Message& response) {
+    const MessageType type = request.get_message_type();
+    const bool request_response =
+        type == MessageType::REQUEST || type == MessageType::TP_REQUEST;
+    if (!request_response || request.get_return_code() != ReturnCode::E_OK) {
+        return false;
+    }
+
+    response = Message(request.get_message_id(), request.get_request_id(), MessageType::ERROR,
+                       ReturnCode::E_WRONG_PROTOCOL_VERSION);
+    response.set_protocol_version(expected_protocol_version());
+    response.set_interface_version(request.get_interface_version());
+    return true;
 }
 
 /**

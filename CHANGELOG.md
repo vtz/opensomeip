@@ -15,6 +15,19 @@
 
 ## Unreleased
 
+### Added
+
+- **vsomeip interop**: The protocol version this process accepts and writes is
+  configurable (`set_expected_protocol_version`, default `0x01`). A `REQUEST`
+  or `TP_REQUEST` with a different version is answered with
+  `E_WRONG_PROTOCOL_VERSION` using the configured version. Fire-and-forget,
+  notifications, and short headers stay on the receive-path rejection path.
+  `apply_vsomeip_sd_preset()` / `VSOMEIP_SD_MULTICAST_ENDPOINT` select
+  vsomeip's SD group `224.244.224.245:30490` without changing the library
+  default `239.255.255.251:30490`. See `docs/api/sd.md`. An optional peer
+  test is gated by `OPENSOMEIP_VSOMEIP_INTEROP` (default OFF)
+  ([#273](https://github.com/vtz/opensomeip/issues/273)).
+
 ### Fixed
 
 - **Transport / SD**: Multicast join failures no longer report success.

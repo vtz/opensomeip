@@ -13,11 +13,29 @@
 
 #include "someip/types.h"
 
+#include <atomic>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
 
 namespace someip {
+
+namespace {
+
+std::atomic<uint8_t>& expected_protocol_version_slot() {
+    static std::atomic<uint8_t> version{SOMEIP_PROTOCOL_VERSION};
+    return version;
+}
+
+}  // namespace
+
+uint8_t expected_protocol_version() {
+    return expected_protocol_version_slot().load(std::memory_order_acquire);
+}
+
+void set_expected_protocol_version(uint8_t version) {
+    expected_protocol_version_slot().store(version, std::memory_order_release);
+}
 
 /**
  * @brief SOME/IP type conversions

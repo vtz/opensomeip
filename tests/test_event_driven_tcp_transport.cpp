@@ -824,6 +824,14 @@ TEST(EventDrivenTcpTransport, CompleteMalformedFrameNotifiesRejection) {
     ASSERT_EQ(listener.message_count(), 1u);
     EXPECT_EQ(listener.message_session_id(0), 2);
     ASSERT_EQ(listener.rejection_count(), 1u);
+    EXPECT_EQ(listener.last_rejection_result(), Result::INVALID_PROTOCOL_VERSION);
+
+    Message decoded;
+    ASSERT_FALSE(adapter.last_send_data_.empty());
+    ASSERT_TRUE(decoded.deserialize(adapter.last_send_data_));
+    EXPECT_EQ(decoded.get_return_code(), ReturnCode::E_WRONG_PROTOCOL_VERSION);
+    EXPECT_EQ(decoded.get_protocol_version(), SOMEIP_PROTOCOL_VERSION);
+    EXPECT_EQ(decoded.get_session_id(), 1);
 
     transport.stop();
 }

@@ -494,7 +494,11 @@ void UdpTransport::receive_loop() {
             }
 
             bool delivered = false;
-            const bool tp_datagram = config_.enable_tp && tp_manager_ &&
+            // Protocol version is checked before TP (feat_req_someip_719). A
+            // mismatch must not enter reassembly; the datagram is rejected below.
+            const bool protocol_mismatch = bytes_received >= 16 &&
+                buffer.data()[12] != someip::expected_protocol_version();
+            const bool tp_datagram = !protocol_mismatch && config_.enable_tp && tp_manager_ &&
                 bytes_received >= 15 &&
                 (buffer.data()[14] & 0x20U) != 0U;
 
@@ -514,15 +518,27 @@ void UdpTransport::receive_loop() {
                     notify_rejection(info);
                 }
                 // Incomplete reassembly is not a rejection; wait for more segments.
-            } else if (message->deserialize(buffer.data(), bytes_received)) {
-                delivered = true;
             } else {
-                MessageRejectionInfo info;
-                info.sender = sender;
-                info.result = Result::MALFORMED_MESSAGE;
-                info.stage = MessageRejectionStage::DESERIALIZE;
-                fill_rejection_ids(info, buffer.data(), bytes_received);
-                notify_rejection(info);
+                const Result parsed = message->try_deserialize(buffer.data(), bytes_received);
+                if (someip::is_success(parsed)) {
+                    delivered = true;
+                } else {
+                    if (parsed == Result::INVALID_PROTOCOL_VERSION) {
+                        Message error_response;
+                        if (someip::make_wrong_protocol_version_response(*message,
+                                                                         error_response)) {
+                            (void)send_message(error_response, sender);
+                        }
+                    }
+                    MessageRejectionInfo info;
+                    info.sender = sender;
+                    info.result = (parsed == Result::INVALID_PROTOCOL_VERSION)
+                                      ? Result::INVALID_PROTOCOL_VERSION
+                                      : Result::MALFORMED_MESSAGE;
+                    info.stage = MessageRejectionStage::DESERIALIZE;
+                    fill_rejection_ids(info, buffer.data(), bytes_received);
+                    notify_rejection(info);
+                }
             }
 
             if (delivered) {

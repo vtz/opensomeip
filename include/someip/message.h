@@ -215,6 +215,23 @@ private:
 void intrusive_ptr_add_ref(const Message* p);
 void intrusive_ptr_release(const Message* p);
 
+/**
+ * @brief Build an ERROR for a request whose protocol version is unsupported.
+ *
+ * SOME/IP answers only request/response requests (REQUEST and TP_REQUEST)
+ * that still carry ReturnCode::E_OK. Fire-and-forget, notifications,
+ * responses, and messages that already carry an error are not answered
+ * (REQ_MSG_127, REQ_MSG_128, REQ_MSG_130, feat_req_someip_654,
+ * feat_req_someip_818). The response protocol version is
+ * expected_protocol_version(), the version this stack speaks, not the
+ * rejected value (feat_req_someip_703). Message ID, Request ID, and
+ * Interface Version are copied (REQ_MSG_129). The payload is empty.
+ *
+ * @return false when no response should be sent. `response` is unchanged.
+ * @implements REQ_MSG_032, REQ_MSG_033, REQ_MSG_129, REQ_MSG_133a
+ */
+bool make_wrong_protocol_version_response(const Message& request, Message& response);
+
 }  // namespace someip
 
 // MessagePtr typedef is backend-specific; resolved by include-path shadowing.

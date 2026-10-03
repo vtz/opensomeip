@@ -22,6 +22,7 @@
 #include "platform/thread.h"
 #include "someip/message.h"
 #include "transport/endpoint.h"
+#include "transport/message_rejection.h"
 #include "transport/transport.h"
 #include "transport/udp_socket_adapter.h"
 
@@ -208,8 +209,24 @@ void EventDrivenUdpTransport::on_adapter_receive(const platform::ByteBuffer& dat
         }
         return;
     }
-    if (!message->deserialize(data)) {
+    const Result parsed = message->try_deserialize(data);
+    if (!someip::is_success(parsed)) {
         ITransportListener* const cb = listener_.load(std::memory_order_acquire);
+        if (parsed == Result::INVALID_PROTOCOL_VERSION) {
+            Message error_response;
+            if (someip::make_wrong_protocol_version_response(*message, error_response)) {
+                (void)send_message(error_response, sender);
+            }
+            if (cb != nullptr) {
+                MessageRejectionInfo info;
+                info.sender = sender;
+                info.result = Result::INVALID_PROTOCOL_VERSION;
+                info.stage = MessageRejectionStage::DESERIALIZE;
+                fill_rejection_ids(info, *message, data.size());
+                cb->on_message_rejected(info);
+            }
+            return;
+        }
         if (cb != nullptr) {
             cb->on_error(Result::INVALID_MESSAGE);
         }

@@ -114,6 +114,21 @@ struct SdConfig {
 };
 
 /**
+ * @brief COVESA vsomeip default SD multicast group.
+ *
+ * This library's SdConfig default stays 239.255.255.251:30490. Apply
+ * apply_vsomeip_sd_preset() to join a peer that uses the vsomeip default.
+ * Must match transport::VSOMEIP_SD_MULTICAST_ENDPOINT.
+ */
+inline constexpr char VSOMEIP_SD_MULTICAST_ADDRESS[] = "224.244.224.245";
+inline constexpr uint16_t VSOMEIP_SD_MULTICAST_PORT = 30490;
+
+inline void apply_vsomeip_sd_preset(SdConfig& config) {
+    config.multicast_address = VSOMEIP_SD_MULTICAST_ADDRESS;
+    config.multicast_port = VSOMEIP_SD_MULTICAST_PORT;
+}
+
+/**
  * @brief Pick the Initial Wait delay in milliseconds.
  *
  * Uses [initial_delay_min, initial_delay_max]. If the legacy `initial_delay`

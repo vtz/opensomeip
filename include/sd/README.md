@@ -190,6 +190,32 @@ config.ttl = std::chrono::milliseconds(3600000); // 1 hour
 
 The multicast **port** 30490 is specified. The multicast **group** `239.255.255.251` is a deployment default and must be the same on every peer; it is not a protocol-mandated address.
 
+### Talking to a default vsomeip peer
+
+A stock COVESA vsomeip routing manager joins **`224.244.224.245:30490`**, not this library's group. The library default is unchanged. Opt in with the named preset (the same address as `transport::VSOMEIP_SD_MULTICAST_ENDPOINT`):
+
+```cpp
+someip::sd::SdConfig config;
+someip::sd::apply_vsomeip_sd_preset(config);
+// config.multicast_address == "224.244.224.245"
+// config.multicast_port    == 30490
+```
+
+Other knobs that have to agree with that peer:
+
+| Knob | OpenSOME/IP | Default vsomeip |
+| --- | --- | --- |
+| Protocol version | `expected_protocol_version()` / `set_expected_protocol_version()`. Default `0x01` (`SOMEIP_PROTOCOL_VERSION`). New messages are stamped with it; `Message::has_valid_header()` accepts only that value. | JSON `"protocol-version": "0x01"` |
+| SD multicast | `apply_vsomeip_sd_preset(config)` or `VSOMEIP_SD_MULTICAST_ENDPOINT` | `"service-discovery"."multicast"` `224.244.224.245`, `"port"` `30490`, `"protocol"` `udp` |
+| Unicast | `SdConfig::unicast_address` (default `127.0.0.1`) | Top-level `"unicast"`. Use the same address the peer can reply to. `127.0.0.1` is enough when both processes stay on localhost. |
+| SD enable | SD client/server must be started | `"service-discovery"."enable": "true"` |
+
+`set_expected_protocol_version()` is process-wide. Call it before constructing messages. `Message::set_protocol_version()` still overrides a single header. Error responses for an unsupported version use the configured version (the version this stack speaks), copy Message ID, Request ID, and Interface Version, and leave the payload empty. Only `REQUEST` and `TP_REQUEST` with return code `E_OK` are answered (`E_WRONG_PROTOCOL_VERSION`, `0x07`). Fire-and-forget, notifications, and datagrams shorter than a SOME/IP header are rejected locally and are not answered.
+
+TCP magic cookies stay the fixed SOME/IP pattern (protocol version `0x01`). Offer/find timers do not have to match; both sides only have to share the multicast group and port.
+
+A live check against a vsomeip service is built with `-DOPENSOMEIP_VSOMEIP_INTEROP=ON` and runs only when `OPENSOMEIP_VSOMEIP_SERVICE_PORT` names a peer that answers SOME/IP requests. The default test suite does not require vsomeip.
+
 ### Timing Behavior
 
 1. **Initial Wait**: First Offer/Find is delayed by a random duration in `[initial_delay_min, initial_delay_max]` (override available for tests)

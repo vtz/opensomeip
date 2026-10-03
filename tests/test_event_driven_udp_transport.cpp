@@ -46,6 +46,12 @@ public:
         cv_.notify_one();
     }
 
+    void on_message_rejected(const MessageRejectionInfo& info) override {
+        std::scoped_lock lock(mutex_);
+        rejections_.push_back(info);
+        cv_.notify_one();
+    }
+
     bool wait_for_message(std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this]() { return !received_messages_.empty(); });
@@ -54,6 +60,11 @@ public:
     bool wait_for_error(std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
         std::unique_lock lock(mutex_);
         return cv_.wait_for(lock, timeout, [this]() { return error_count_ > 0; });
+    }
+
+    bool wait_for_rejection(std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
+        std::unique_lock lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this]() { return !rejections_.empty(); });
     }
 
     size_t message_count() const {
@@ -78,6 +89,7 @@ public:
 
     std::atomic<Result> last_error_{Result::SUCCESS};
     std::atomic<int> error_count_{0};
+    std::vector<MessageRejectionInfo> rejections_;
 
 private:
     mutable std::mutex mutex_;
@@ -252,6 +264,48 @@ TEST(EventDrivenUdpTransport, MalformedDatagramInvokesOnError) {
 
     ASSERT_TRUE(listener.wait_for_error());
     EXPECT_EQ(listener.last_error_.load(), Result::INVALID_MESSAGE);
+
+    transport.stop();
+}
+
+TEST(EventDrivenUdpTransport, WrongProtocolVersionRequestSendsError) {
+    MockUdpAdapter adapter;
+    EventDrivenUdpTransport transport(adapter, Endpoint{"127.0.0.1", 0});
+    TestEventUdpListener listener;
+    transport.set_listener(&listener);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+
+    Message bad = make_sample_message();
+    bad.set_protocol_version(0x99);
+    bad.set_interface_version(0x04);
+    const Endpoint sender{"10.1.2.3", 4000, TransportProtocol::UDP};
+    adapter.inject_receive(bad.serialize(), sender);
+
+    ASSERT_TRUE(listener.wait_for_rejection());
+    EXPECT_EQ(listener.message_count(), 0u);
+    EXPECT_EQ(listener.error_count_.load(), 0);
+    ASSERT_EQ(listener.rejections_.size(), 1u);
+    EXPECT_EQ(listener.rejections_[0].result, Result::INVALID_PROTOCOL_VERSION);
+
+    Message decoded;
+    ASSERT_TRUE(decoded.deserialize(adapter.last_send_data_));
+    EXPECT_EQ(decoded.get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(decoded.get_return_code(), ReturnCode::E_WRONG_PROTOCOL_VERSION);
+    EXPECT_EQ(decoded.get_protocol_version(), SOMEIP_PROTOCOL_VERSION);
+    EXPECT_EQ(decoded.get_interface_version(), 0x04);
+    EXPECT_EQ(decoded.get_service_id(), bad.get_service_id());
+    EXPECT_EQ(decoded.get_client_id(), bad.get_client_id());
+    EXPECT_TRUE(decoded.get_payload().empty());
+    EXPECT_EQ(adapter.last_send_dest_.get_address(), "10.1.2.3");
+    EXPECT_EQ(adapter.last_send_dest_.get_port(), 4000);
+
+    adapter.last_send_data_.clear();
+    Message notification = bad;
+    notification.set_method_id(0x8001);
+    notification.set_message_type(MessageType::NOTIFICATION);
+    adapter.inject_receive(notification.serialize(), sender);
+    ASSERT_EQ(listener.rejections_.size(), 2u);
+    EXPECT_TRUE(adapter.last_send_data_.empty());
 
     transport.stop();
 }

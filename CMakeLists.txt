@@ -78,6 +78,11 @@ option(SOMEIP_THREADX_LINUX_TESTS "Build and run ThreadX runtime tests using Ecl
 option(SOMEIP_FREERTOS_RENODE_TESTS "Build FreeRTOS tests for Cortex-M4F STM32F407 (Renode)" OFF)
 option(SOMEIP_THREADX_RENODE_TESTS "Build ThreadX tests for Cortex-M4 STM32F407 (Renode)" OFF)
 
+# Optional live peer. Off so a default ctest run does not need vsomeip installed.
+option(OPENSOMEIP_VSOMEIP_INTEROP
+       "Build the vsomeip peer interop test (skipped unless a service port is configured)"
+       OFF)
+
 # Enable C language for C API wrappers
 if(BUILD_CAPI)
     enable_language(C)

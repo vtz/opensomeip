@@ -279,6 +279,12 @@ void EventDrivenTcpTransport::on_adapter_receive(const platform::ByteBuffer& dat
             continue;
         }
         if (outcome == ParseOutcome::REJECTED) {
+            if (rejection == Result::INVALID_PROTOCOL_VERSION && message) {
+                Message error_response;
+                if (someip::make_wrong_protocol_version_response(*message, error_response)) {
+                    (void)send_message(error_response, sender_ep);
+                }
+            }
             if (rejection == Result::OUT_OF_MEMORY) {
                 ITransportListener* const cb = listener_.load(std::memory_order_acquire);
                 if (cb != nullptr) {
@@ -429,8 +435,11 @@ EventDrivenTcpTransport::ParseOutcome EventDrivenTcpTransport::parse_next_messag
             rejection = Result::OUT_OF_MEMORY;
             return ParseOutcome::REJECTED;
         }
-        if (!message->deserialize(message_data)) {
-            rejection = Result::MALFORMED_MESSAGE;
+        const Result parsed = message->try_deserialize(message_data);
+        if (!someip::is_success(parsed)) {
+            rejection = (parsed == Result::INVALID_PROTOCOL_VERSION)
+                            ? Result::INVALID_PROTOCOL_VERSION
+                            : Result::MALFORMED_MESSAGE;
             stage = MessageRejectionStage::DESERIALIZE;
             return ParseOutcome::REJECTED;
         }

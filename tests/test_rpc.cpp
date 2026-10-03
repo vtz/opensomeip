@@ -448,10 +448,73 @@ TEST_F(RpcTest, ServerRejectionHandlerSeesMalformedRequest) {
     {
         std::lock_guard<std::mutex> lock(mu);
         ASSERT_EQ(rejections.size(), 1u);
-        EXPECT_EQ(rejections[0].result, Result::MALFORMED_MESSAGE);
+        EXPECT_EQ(rejections[0].result, Result::INVALID_PROTOCOL_VERSION);
         EXPECT_TRUE(rejections[0].has_message_id);
         EXPECT_EQ(rejections[0].message_id.service_id, test_service_id_);
     }
+
+    MessagePtr reply = wait_for_udp_message(probe);
+    ASSERT_NE(reply, nullptr);
+    EXPECT_EQ(reply->get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(reply->get_return_code(), ReturnCode::E_WRONG_PROTOCOL_VERSION);
+    EXPECT_EQ(reply->get_protocol_version(), SOMEIP_PROTOCOL_VERSION);
+    EXPECT_EQ(reply->get_service_id(), test_service_id_);
+    EXPECT_EQ(reply->get_method_id(), test_method_id_);
+    EXPECT_EQ(reply->get_client_id(), client_id_);
+    EXPECT_TRUE(reply->get_payload().empty());
+    EXPECT_EQ(method_calls.load(), 0);
+
+    probe.stop();
+    server.shutdown();
+}
+
+/**
+ * @tests REQ_MSG_031, REQ_MSG_032, REQ_MSG_033
+ * @brief RpcServer accepts a configured protocol version and rejects 0x01
+ */
+TEST_F(RpcTest, ConfiguredProtocolVersionRequest) {
+    struct Guard {
+        uint8_t previous{expected_protocol_version()};
+        explicit Guard(uint8_t version) { set_expected_protocol_version(version); }
+        ~Guard() { set_expected_protocol_version(previous); }
+    } guard(0x02);
+
+    RpcServer server(test_service_id_, 0x01, transport::Endpoint("127.0.0.1", 0));
+    std::atomic<int> method_calls{0};
+    ASSERT_TRUE(server.register_method(test_method_id_,
+        [&](uint16_t, uint16_t, const platform::ByteBuffer&, platform::ByteBuffer& out) {
+            method_calls.fetch_add(1);
+            out = {0x42};
+            return RpcResult::SUCCESS;
+        }));
+    ASSERT_TRUE(server.initialize());
+
+    transport::UdpTransport probe(transport::Endpoint("127.0.0.1", 0));
+    ASSERT_EQ(probe.start(), Result::SUCCESS);
+
+    Message accepted(MessageId(test_service_id_, test_method_id_),
+                     RequestId(client_id_, 0x0001),
+                     MessageType::REQUEST, ReturnCode::E_OK);
+    EXPECT_EQ(accepted.get_protocol_version(), 0x02);
+    ASSERT_EQ(probe.send_message(accepted, server.get_local_endpoint()), Result::SUCCESS);
+
+    MessagePtr ok = wait_for_udp_message(probe);
+    ASSERT_NE(ok, nullptr);
+    EXPECT_EQ(ok->get_return_code(), ReturnCode::E_OK);
+    EXPECT_EQ(ok->get_protocol_version(), 0x02);
+    EXPECT_EQ(method_calls.load(), 1);
+
+    Message rejected = accepted;
+    rejected.set_protocol_version(SOMEIP_PROTOCOL_VERSION);
+    rejected.set_session_id(0x0002);
+    ASSERT_EQ(probe.send_message(rejected, server.get_local_endpoint()), Result::SUCCESS);
+
+    MessagePtr err = wait_for_udp_message(probe);
+    ASSERT_NE(err, nullptr);
+    EXPECT_EQ(err->get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(err->get_return_code(), ReturnCode::E_WRONG_PROTOCOL_VERSION);
+    EXPECT_EQ(err->get_protocol_version(), 0x02);
+    EXPECT_EQ(method_calls.load(), 1);
 
     probe.stop();
     server.shutdown();

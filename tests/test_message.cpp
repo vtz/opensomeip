@@ -205,10 +205,13 @@ TEST_F(MessageTest, Validation) {
     EXPECT_TRUE(msg.is_valid());
     EXPECT_TRUE(msg.has_valid_header());
 
-    // Invalid protocol version (must remain 0x01)
+    // Invalid protocol version (default expected version remains 0x01)
+    EXPECT_EQ(expected_protocol_version(), SOMEIP_PROTOCOL_VERSION);
     msg.set_protocol_version(0xFF);
     EXPECT_FALSE(msg.is_valid());
+    EXPECT_FALSE(msg.has_valid_header());
     msg.set_protocol_version(SOMEIP_PROTOCOL_VERSION);
+    EXPECT_TRUE(msg.has_valid_header());
 
     // Interface Version is the service major: any uint8_t is valid at the header layer
     msg.set_interface_version(0xFF);
@@ -222,6 +225,97 @@ TEST_F(MessageTest, Validation) {
     // Invalid message type
     msg.set_message_type(static_cast<MessageType>(0xFF));
     EXPECT_FALSE(msg.has_valid_header());
+}
+
+namespace {
+
+class ExpectedProtocolVersionGuard {
+public:
+    explicit ExpectedProtocolVersionGuard(uint8_t version)
+        : previous_(expected_protocol_version()) {
+        set_expected_protocol_version(version);
+    }
+    ~ExpectedProtocolVersionGuard() { set_expected_protocol_version(previous_); }
+
+    ExpectedProtocolVersionGuard(const ExpectedProtocolVersionGuard&) = delete;
+    ExpectedProtocolVersionGuard& operator=(const ExpectedProtocolVersionGuard&) = delete;
+
+private:
+    uint8_t previous_;
+};
+
+}  // namespace
+
+/**
+ * @tests REQ_MSG_031, REQ_MSG_032
+ * @brief A non-default expected version accepts that version and rejects 0x01
+ */
+TEST_F(MessageTest, ConfiguredProtocolVersionAcceptsNonDefault) {
+    ExpectedProtocolVersionGuard const guard(0x02);
+
+    Message spoken;
+    spoken.set_service_id(0x0001);
+    EXPECT_EQ(spoken.get_protocol_version(), 0x02);
+    EXPECT_TRUE(spoken.has_valid_header());
+    EXPECT_EQ(spoken.serialize()[12], 0x02);
+
+    spoken.set_protocol_version(SOMEIP_PROTOCOL_VERSION);
+    EXPECT_FALSE(spoken.has_valid_header());
+    EXPECT_FALSE(spoken.is_valid());
+
+    Message wire(MessageId(0x1234, 0x0001), RequestId(0x00AA, 0x0001), MessageType::REQUEST,
+                 ReturnCode::E_OK);
+    EXPECT_EQ(wire.get_protocol_version(), 0x02);
+    Message decoded;
+    EXPECT_EQ(decoded.try_deserialize(wire.serialize()), Result::SUCCESS);
+
+    platform::ByteBuffer rejected = wire.serialize();
+    rejected[12] = SOMEIP_PROTOCOL_VERSION;
+    EXPECT_EQ(decoded.try_deserialize(rejected), Result::INVALID_PROTOCOL_VERSION);
+    EXPECT_FALSE(decoded.has_valid_header());
+}
+
+/**
+ * @tests REQ_MSG_032, REQ_MSG_033, REQ_MSG_127, REQ_MSG_128, REQ_MSG_129, REQ_MSG_133a
+ * @brief REQUEST gets E_WRONG_PROTOCOL_VERSION in the version this stack speaks
+ */
+TEST_F(MessageTest, WrongProtocolVersionResponseUsesConfiguredVersion) {
+    Message request(MessageId(0x1234, 0x0007), RequestId(0x1111, 0x2222), MessageType::REQUEST,
+                    ReturnCode::E_OK);
+    request.set_protocol_version(0x99);
+    request.set_interface_version(0x05);
+    request.set_payload({0x01, 0x02, 0x03});
+
+    Message response;
+    ASSERT_TRUE(make_wrong_protocol_version_response(request, response));
+    EXPECT_EQ(response.get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(response.get_return_code(), ReturnCode::E_WRONG_PROTOCOL_VERSION);
+    EXPECT_EQ(response.get_protocol_version(), SOMEIP_PROTOCOL_VERSION);
+    EXPECT_NE(response.get_protocol_version(), request.get_protocol_version());
+    EXPECT_EQ(response.get_interface_version(), 0x05);
+    EXPECT_EQ(response.get_service_id(), 0x1234);
+    EXPECT_EQ(response.get_method_id(), 0x0007);
+    EXPECT_EQ(response.get_client_id(), 0x1111);
+    EXPECT_EQ(response.get_session_id(), 0x2222);
+    EXPECT_TRUE(response.get_payload().empty());
+    EXPECT_TRUE(response.has_valid_header());
+
+    Message no_return(MessageId(0x1234, 0x0007), RequestId(0x1111, 0x2222),
+                      MessageType::REQUEST_NO_RETURN, ReturnCode::E_OK);
+    EXPECT_FALSE(make_wrong_protocol_version_response(no_return, response));
+
+    Message notification(MessageId(0x1234, 0x8001), RequestId(0x1111, 0x2222),
+                         MessageType::NOTIFICATION, ReturnCode::E_OK);
+    EXPECT_FALSE(make_wrong_protocol_version_response(notification, response));
+
+    Message already_error(MessageId(0x1234, 0x0007), RequestId(0x1111, 0x2222),
+                          MessageType::REQUEST, ReturnCode::E_NOT_OK);
+    EXPECT_FALSE(make_wrong_protocol_version_response(already_error, response));
+
+    ExpectedProtocolVersionGuard const guard(0x02);
+    Message configured;
+    ASSERT_TRUE(make_wrong_protocol_version_response(request, configured));
+    EXPECT_EQ(configured.get_protocol_version(), 0x02);
 }
 
 /**

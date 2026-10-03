@@ -370,6 +370,17 @@ TEST_F(SdTest, Config) {
     EXPECT_EQ(config.initial_delay_max, std::chrono::milliseconds(100));
     EXPECT_EQ(config.repetition_base, std::chrono::milliseconds(2000));
     EXPECT_EQ(config.cyclic_offer, std::chrono::milliseconds(30000));
+
+    apply_vsomeip_sd_preset(config);
+    EXPECT_EQ(config.multicast_address, VSOMEIP_SD_MULTICAST_ADDRESS);
+    EXPECT_EQ(config.multicast_port, VSOMEIP_SD_MULTICAST_PORT);
+    EXPECT_EQ(config.multicast_address, "224.244.224.245");
+    EXPECT_EQ(config.multicast_port, 30490u);
+    EXPECT_EQ(config.unicast_address, "127.0.0.1");
+
+    SdConfig untouched;
+    EXPECT_EQ(untouched.multicast_address, "239.255.255.251");
+    EXPECT_EQ(untouched.multicast_port, 30490u);
 }
 
 /**

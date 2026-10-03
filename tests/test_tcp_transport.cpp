@@ -711,7 +711,7 @@ TEST_F(TcpTransportTest, ParseNextMessageDistinguishesOutcomes) {
     platform::ByteBuffer bad_buf = bad.serialize();
     EXPECT_EQ(transport.parse_next_message(bad_buf, parsed, rejection, stage, skip),
               TcpParseOutcome::REJECTED);
-    EXPECT_EQ(rejection, Result::MALFORMED_MESSAGE);
+    EXPECT_EQ(rejection, Result::INVALID_PROTOCOL_VERSION);
     EXPECT_EQ(stage, MessageRejectionStage::DESERIALIZE);
     ASSERT_NE(parsed, nullptr);
     EXPECT_EQ(parsed->get_service_id(), 0x1234);
@@ -841,6 +841,8 @@ TEST_F(TcpTransportTest, CompleteMalformedFrameNotifiesRejection) {
 
     TcpTransport client(config);
     ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    TestTcpListener client_listener;
+    client.set_listener(&client_listener);
     ASSERT_EQ(client.start(), Result::SUCCESS);
     ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
     ASSERT_TRUE(server_listener.wait_for_connection_established());
@@ -848,15 +850,26 @@ TEST_F(TcpTransportTest, CompleteMalformedFrameNotifiesRejection) {
     Message bad(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                 MessageType::REQUEST, ReturnCode::E_OK);
     bad.set_protocol_version(0x99);
+    bad.set_interface_version(0x05);
     EXPECT_EQ(client.send_message(bad, server_ep), Result::SUCCESS);
 
     EXPECT_TRUE(server_listener.wait_for_rejection());
     EXPECT_FALSE(server_listener.wait_for_message(std::chrono::milliseconds(150)));
     auto rejections = server_listener.get_rejections();
     ASSERT_EQ(rejections.size(), 1u);
-    EXPECT_EQ(rejections[0].result, Result::MALFORMED_MESSAGE);
+    EXPECT_EQ(rejections[0].result, Result::INVALID_PROTOCOL_VERSION);
     EXPECT_TRUE(rejections[0].has_message_id);
     EXPECT_EQ(rejections[0].message_id.service_id, 0x1234);
+
+    ASSERT_TRUE(client_listener.wait_for_message());
+    auto replies = client_listener.get_received_messages();
+    ASSERT_EQ(replies.size(), 1u);
+    EXPECT_EQ(replies[0].first->get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(replies[0].first->get_return_code(), ReturnCode::E_WRONG_PROTOCOL_VERSION);
+    EXPECT_EQ(replies[0].first->get_protocol_version(), SOMEIP_PROTOCOL_VERSION);
+    EXPECT_EQ(replies[0].first->get_interface_version(), 0x05);
+    EXPECT_EQ(replies[0].first->get_client_id(), 0xABCD);
+    EXPECT_TRUE(replies[0].first->get_payload().empty());
 
     client.disconnect();
     client.stop();
