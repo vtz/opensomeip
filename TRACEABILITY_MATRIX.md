@@ -22,7 +22,7 @@ This document provides a comprehensive traceability matrix mapping requirements 
 - **Source**: Open SOME/IP Specification (open-someip-spec repository)
 - **Scope**: Core SOME/IP protocol features (RPC, SD, TP, E2E)
 - **Focus**: Functional requirements with implementation impact
-- **Total Requirements Analyzed**: 669 requirements across 9 implementation modules
+- **Total Requirements Analyzed**: 698 requirements across implementation modules
 
 ## Matrix Structure
 
@@ -287,12 +287,12 @@ This document provides a comprehensive traceability matrix mapping requirements 
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| Total requirements (RST) | 669 | - |
-| Fully traced (code + tests) | 594 (88.8%) | Good |
-| Requirements with code refs | 596 (89.1%) | Good |
-| Requirements with test coverage | 662 (98.9%) | Good |
-| Orphaned (no code annotation) | 73 (10.9%) | Needs improvement |
-| Spec-linked implementation reqs | 669/669 (100%) | Good |
+| Total requirements (RST) | 698 | - |
+| Fully traced (code + tests) | 617 (88.4%) | Good |
+| Requirements with code refs | 620 (88.8%) | Good |
+| Requirements with test coverage | 686 (98.3%) | Good |
+| Orphaned (no code annotation) | 78 (11.2%) | Needs improvement |
+| Spec-linked implementation reqs | 696/698 | REQ_MSG_150, REQ_TRANSPORT_026 open |
 
 ### Test Suite Mapping
 
@@ -309,10 +309,10 @@ This document provides a comprehensive traceability matrix mapping requirements 
 
 ### Key Observations
 
-- 73 requirements have no `@implements` annotation in code (some may be implemented but unannotated)
-- 7 requirements have no `@tests` annotation
+- 78 requirements have no `@implements` annotation in code (some may be implemented but unannotated)
+- 12 requirements have no `@tests` annotation
 - Serialization module has the most unimplemented requirements (23 missing)
-- All critical and most high-priority requirements are fully traced
+- Critical requirements are fully traced; high-priority coverage is 98%
 
 ---
 
@@ -320,9 +320,9 @@ This document provides a comprehensive traceability matrix mapping requirements 
 
 ### Immediate Actions
 
-1. Add `@implements` / `@satisfies` annotations to 73 unannotated requirements
-2. Add `@tests` annotations for the 7 remaining requirements without test coverage
-3. Add `:satisfies:` field to REQ_PLATFORM_ARCH_001 (only spec-link gap)
+1. Add `@implements` / `@satisfies` annotations to 78 unannotated requirements
+2. Add `@tests` annotations for the 12 remaining requirements without test coverage
+3. Add `:satisfies:` fields to REQ_MSG_150 and REQ_TRANSPORT_026
 
 ### Short-term
 
@@ -332,7 +332,7 @@ This document provides a comprehensive traceability matrix mapping requirements 
 
 ### Long-term
 
-1. Achieve >95% full traceability (currently 88.8%)
+1. Achieve >95% full traceability (currently 88.4%)
 2. Add advanced SD features (load balancing, IPv6)
 3. Performance, stress, and fault-injection testing
 

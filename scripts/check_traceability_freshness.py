@@ -33,7 +33,8 @@ def extract_validation_metrics(output: str) -> dict[str, str]:
     if total_m:
         metrics["total"] = total_m.group(1)
 
-    traced_m = re.search(r"Fully traced.*?:\s*(\d+)\s*\((\d+\.\d+)%\)", output)
+    # validate_requirements.py prints "616/697 (88.4%)", not "616 (88.4%)".
+    traced_m = re.search(r"Fully traced.*?:\s*(\d+)(?:/\d+)?\s*\((\d+\.\d+)%\)", output)
     if traced_m:
         metrics["traced_count"] = traced_m.group(1)
         metrics["traced_pct"] = traced_m.group(2)
@@ -43,6 +44,26 @@ def extract_validation_metrics(output: str) -> dict[str, str]:
         metrics["orphaned"] = orphan_m.group(1)
 
     return metrics
+
+
+def first_int(value: str | None) -> str | None:
+    """Return the first integer in a metric cell, or None when it is absent."""
+    if not value:
+        return None
+    match = re.search(r"\d+", value)
+    return match.group(0) if match else None
+
+
+def metric_counts_differ(committed: str | None, actual: str | None) -> bool:
+    """True when the committed count and the validator count are not the same.
+
+    A missing value is not a match. ``None != None`` is false, so a raw
+    inequality would treat two absent metrics as equal.
+    """
+    committed_count = first_int(committed)
+    if committed_count is None or actual is None:
+        return True
+    return committed_count != actual
 
 
 def main() -> int:
@@ -102,31 +123,29 @@ def main() -> int:
 
     summary_text = summary_path.read_text(encoding="utf-8")
 
-    committed_total = extract_metric(summary_text, "Total requirements \\(RST\\)")
-    committed_traced = extract_metric(summary_text, "Fully traced \\(code \\+ tests\\)")
-    committed_orphaned = extract_metric(summary_text, "Orphaned \\(no code annotation\\)")
+    # Labels are literal table text. extract_metric() escapes them; passing
+    # a pre-escaped regex made every lookup miss and the check always pass.
+    committed_total = extract_metric(summary_text, "Total requirements (RST)")
+    committed_traced = extract_metric(summary_text, "Fully traced (code + tests)")
+    committed_orphaned = extract_metric(summary_text, "Orphaned (no code annotation)")
 
     errors: list[str] = []
 
-    if committed_total and actual.get("total") and actual["total"] not in committed_total:
-        errors.append(f"Total requirements: committed={committed_total}, actual={actual['total']}")
-
-    if (
-        committed_traced
-        and actual.get("traced_count")
-        and actual["traced_count"] not in committed_traced
-    ):
+    if metric_counts_differ(committed_total, actual.get("total")):
         errors.append(
-            f"Fully traced: committed={committed_traced}, "
-            f"actual={actual['traced_count']} ({actual.get('traced_pct', '?')}%)"
+            f"Total requirements: committed={committed_total}, actual={actual.get('total', '?')}"
         )
 
-    if (
-        committed_orphaned
-        and actual.get("orphaned")
-        and actual["orphaned"] not in committed_orphaned
-    ):
-        errors.append(f"Orphaned: committed={committed_orphaned}, actual={actual['orphaned']}")
+    if metric_counts_differ(committed_traced, actual.get("traced_count")):
+        errors.append(
+            f"Fully traced: committed={committed_traced}, "
+            f"actual={actual.get('traced_count', '?')} ({actual.get('traced_pct', '?')}%)"
+        )
+
+    if metric_counts_differ(committed_orphaned, actual.get("orphaned")):
+        errors.append(
+            f"Orphaned: committed={committed_orphaned}, actual={actual.get('orphaned', '?')}"
+        )
 
     if errors:
         print("TRACEABILITY_SUMMARY.md is stale — committed metrics don't match validation:\n")

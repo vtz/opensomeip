@@ -85,7 +85,24 @@ private:
     std::atomic<bool>& flag_;
 };
 
+// Coverage builds sample get_connection_state() slowly enough to miss a
+// handshake the network rejects in a few milliseconds. Tests stretch the
+// CONNECTING window with this; production leaves it at zero.
+std::atomic<std::uint32_t>& test_outbound_connect_hold_ms() {
+    static std::atomic<std::uint32_t> hold{0};
+    return hold;
+}
+
 }  // namespace
+
+// Not part of the installed API. The handshake test calls this so
+// get_connection_state() can observe CONNECTING when the peer rejects quickly.
+#if defined(__GNUC__)
+__attribute__((visibility("default")))
+#endif
+void set_test_outbound_connect_hold_ms(std::uint32_t ms) {
+    test_outbound_connect_hold_ms().store(ms, std::memory_order_relaxed);
+}
 
 /**
  * @brief TCP Transport constructor
@@ -683,6 +700,12 @@ Result TcpTransport::connect_internal(const Endpoint& endpoint) {
     }
 
     const OutboundConnectingGuard connecting(outbound_connecting_);
+
+    const std::uint32_t hold_ms =
+        test_outbound_connect_hold_ms().load(std::memory_order_relaxed);
+    if (hold_ms > 0U) {
+        platform::this_thread::sleep_for(std::chrono::milliseconds(hold_ms));
+    }
 
     sockaddr_in addr = {};
     addr.sin_family = AF_INET;

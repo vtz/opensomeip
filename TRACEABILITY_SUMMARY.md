@@ -28,19 +28,19 @@ to implementation and test coverage. No safety certification is claimed.
 
 | Metric | Value | Assessment |
 |--------|-------|------------|
-| Total requirements (RST) | 669 | - |
-| Fully traced (code + tests) | 594 (88.8%) | Good |
-| Requirements with code refs | 596 | Good |
-| Requirements with test coverage | 662 | Good |
-| Orphaned (no code annotation) | 73 | Needs improvement |
-| Missing spec links | 0 | Resolved |
-| Code references extracted | 598 | - |
-| Test cases extracted | 695 | - |
+| Total requirements (RST) | 698 | - |
+| Fully traced (code + tests) | 617 (88.4%) | Good |
+| Requirements with code refs | 620 | Good |
+| Requirements with test coverage | 686 | Good |
+| Orphaned (no code annotation) | 78 | Needs improvement |
+| Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 |
+| Code references extracted | 625 | - |
+| Test references extracted | 751 | - |
 
 ### Status
 
-594 of 669 requirements are fully traced with both code implementation references
-and test coverage annotations. 73 requirements remain without code annotations.
+617 of 698 requirements are fully traced with both code implementation references
+and test coverage annotations. 78 requirements remain without code annotations.
 The extraction script properly parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations.
 
@@ -53,15 +53,17 @@ The extraction script properly parses comma-separated requirement IDs from
 
 | Module | Total Reqs |
 |--------|-----------|
-| Service Discovery (REQ_SD_*) | 208 |
-| Message Header (REQ_MSG_*) | 128 |
+| Service Discovery (REQ_SD_*) | 206 |
+| Message Header (REQ_MSG_*) | 130 |
 | Serialization (REQ_SER_*) | 115 |
-| Transport Protocol (REQ_TP_*) | 77 |
+| Transport Protocol (REQ_TP_*) | 83 |
 | Platform (REQ_PLATFORM_*, REQ_PAL_*) | 73 |
-| Transport (REQ_TRANSPORT_*) | 42 |
+| Transport (REQ_TRANSPORT_*) | 47 |
 | Compatibility (REQ_COMPAT_*) | 17 |
+| C ABI (REQ_CAPI_*) | 13 |
 | Architecture (REQ_ARCH_*) | 8 |
-| E2E Plugin (REQ_E2E_PLUGIN_*) | 5 |
+| E2E (REQ_E2E_*) | 5 |
+| Other (REQ_MY_*) | 1 |
 
 > **Note**: Requirement counts reflect the full RST definitions.
 > Per-module code ref and test coverage details are available in the
@@ -69,28 +71,37 @@ The extraction script properly parses comma-separated requirement IDs from
 
 ### Test Execution Summary
 
+Default host build (`SOMEIP_USE_STATIC_ALLOC=OFF`, C API on), 2026-10-01:
+28 CTest binaries, 720 GTest cases, 719 passed, 0 failed. One case is
+disabled (`TcpTransportTest.DISABLED_MessageRoundTrip`).
+
+The static-allocation build (`SOMEIP_USE_STATIC_ALLOC=ON`) passed the same
+day: 34 CTest binaries, 813 GTest cases, 0 failures, with that same TCP
+case disabled. Suites that exist only in that build: buffer pool 14,
+static message pool 16, platform containers 21, ETL error handler 4,
+static-alloc integration 13, PAL static-alloc mock 24.
+
 | Test Suite | Tests | Status |
 |------------|-------|--------|
-| SD Tests | 57 | All passing |
-| Serialization Tests | 37 | All passing |
-| E2E Tests | 31 | All passing |
-| Message Tests | 27 | All passing |
-| TP Tests | 25 | All passing |
-| Platform Containers | 21 | All passing |
-| Session Manager Tests | 19 | All passing |
-| TCP Transport Tests | 17 | All passing |
-| Static Message Pool | 16 | All passing |
-| Platform Threading Tests | 15 | All passing |
-| Buffer Pool Tests | 14 | All passing |
-| Static Alloc Integration | 14 | All passing |
-| Events Tests | 10 | All passing |
-| UDP Transport Tests | 6 | All passing |
-| ETL Error Handler Tests | 4 | All passing |
-| PAL FreeRTOS Mock | 1 | All passing |
-| PAL ThreadX Mock | 1 | All passing |
-| PAL Zephyr Mock | 1 | All passing |
-| PAL Static Alloc Mock | 1 | All passing |
-| RPC Tests | 1 | All passing |
+| SD Tests | 104 | All passing |
+| Endpoint Tests | 75 | All passing |
+| TP Tests | 62 | All passing |
+| Serialization Tests | 60 | All passing |
+| TCP Transport Tests | 51 | 50 passing, 1 disabled |
+| E2E Tests | 43 | All passing |
+| UDP Transport Tests | 38 | All passing |
+| Message Tests | 36 | All passing |
+| Events Tests | 26 | All passing |
+| Event-driven TCP Tests | 25 | All passing |
+| PAL FreeRTOS Mock | 25 | All passing |
+| PAL ThreadX Mock | 25 | All passing |
+| PAL Zephyr Mock | 25 | All passing |
+| Session Manager Tests | 23 | All passing |
+| Platform Threading Tests | 21 | All passing |
+| RPC Tests | 16 | All passing |
+| Event-driven UDP Tests | 12 | All passing |
+| Multicast Membership Tests | 7 | All passing |
+| C API Tests | 46 | All passing |
 
 ## Validation Status
 
@@ -109,13 +120,13 @@ Current validated traceability metrics should be read from the most recent
 ### Short-term
 
 - Implement remaining serialization requirements (REQ_SER_090 through REQ_SER_107)
-- Add `@implements` annotations for the 73 orphaned requirements
-- Add test coverage for 7 requirements without `@tests` annotations
+- Add `@implements` annotations for the 78 orphaned requirements
+- Add test coverage for 12 requirements without `@tests` annotations
 - Add performance, stress, and fault-injection tests
 
 ### Long-term
 
-- Achieve >95% full traceability (currently 88.8%)
+- Achieve >95% full traceability (currently 88.4%)
 - Implement advanced SD features (load balancing, IPv6)
 - Add cross-platform test coverage (FreeRTOS, ThreadX hardware)
 - Implement Win32 and LwIP platform backends

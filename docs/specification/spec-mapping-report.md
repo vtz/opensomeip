@@ -3,9 +3,9 @@
 ## Summary
 
 - **Spec Requirements (open-someip-spec)**: 748
-- **Implementation Requirements (OpenSOMEIP)**: 697
+- **Implementation Requirements (OpenSOMEIP)**: 698
   - Spec-derived: 452
-  - Implementation-derived: 245
+  - Implementation-derived: 246
 - **Mapped Spec Requirements**: 745
 - **Unmapped Spec Requirements**: 3
 - **Implementation Reqs Missing Spec Links**: 2
