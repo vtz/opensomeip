@@ -7,6 +7,7 @@ set(OPENSOMEIP_SOURCES
     someip/message.cpp
     core/session_manager.cpp
     serialization/serializer.cpp
+    transport/dispatch_pool.cpp
     transport/endpoint.cpp
     transport/udp_transport.cpp
     transport/tcp_transport.cpp

@@ -190,6 +190,41 @@ client.set_remote_endpoint(someip::transport::Endpoint("127.0.0.1", SOMEIP_DEFAU
 RpcServer server(service_id);  // binds 127.0.0.1:30501 by default
 ```
 
+### Dispatch worker pool
+
+By default, `RpcServer` runs method handlers on the UDP receive thread. One
+slow handler then delays every later message on that socket. To move handlers
+onto a pool, start a `transport::DispatchWorkerPool` and install it before
+`initialize()`:
+
+```cpp
+#include "rpc/rpc_server.h"
+#include "transport/dispatch_pool.h"
+
+someip::transport::DispatchWorkerPool pool(4);
+pool.start();
+
+RpcServer server(service_id);
+server.set_message_dispatcher(&pool);
+server.initialize();
+
+// ... register methods and serve ...
+
+server.shutdown();  // waits for handlers already running
+pool.stop();
+```
+
+- `nullptr` or a pool of size 0 keeps today's inline behavior and does not
+  add threads. RTOS ports that never install a pool are unchanged.
+- Size 1 is a single FIFO (global order, one extra thread).
+- Size N hashes the sender endpoint, client id, and session id onto one
+  worker. That triple stays ordered. Different sessions from the same client
+  may run at the same time; use size 1 when that is not acceptable.
+- The receive thread only enqueues. A full per-worker queue drops the request
+  instead of running the handler inline.
+- `shutdown()` from a method handler does not deadlock. Do not destroy the
+  server or the pool from inside a handler.
+
 ## Error Handling
 
 ### Client Errors

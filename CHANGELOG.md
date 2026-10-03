@@ -15,6 +15,17 @@
 
 ## Unreleased
 
+### Added
+
+- **RPC / transport**: Optional dispatch worker pool so a slow method
+  handler does not head-of-line block the transport receive thread
+  ([#272](https://github.com/vtz/opensomeip/issues/272)). The default
+  remains inline on the receive thread (no extra threads). Install a
+  started `transport::DispatchWorkerPool` with
+  `RpcServer::set_message_dispatcher()`. Count 1 is one global FIFO;
+  count N keeps each (sender endpoint, client id, session id) ordered
+  on a single worker.
+
 ### Fixed
 
 - **Transport / SD**: Multicast join failures no longer report success.

@@ -23,6 +23,7 @@
 #include "rpc/rpc_types.h"
 #include "someip/message.h"
 #include "someip/types.h"
+#include "transport/dispatch_pool.h"
 #include "transport/endpoint.h"
 #include "transport/transport.h"
 #include "transport/udp_transport.h"
@@ -30,12 +31,17 @@
 #include <atomic>
 #include <cstdint>
 #include <memory>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 
 namespace someip::rpc {
 
 // NOLINTBEGIN(misc-include-cleaner) - platform::Mutex from platform/thread.h (IWYU false positives in impl).
+
+namespace {
+thread_local int tls_rpc_dispatch_depth = 0;
+}  // namespace
 
 /**
  * @brief RPC Server implementation
@@ -69,30 +75,37 @@ public:
     RpcServerImpl& operator=(RpcServerImpl&&) = delete;
 
     bool initialize() {
-        if (running_) {
+        if (running_.load(std::memory_order_acquire)) {
             return true;
         }
 
+        // Publish readiness before the receive thread starts so the first
+        // datagram is not dropped by the shutdown gate in on_message_received.
+        running_.store(true, std::memory_order_release);
         if (transport_.start() != Result::SUCCESS) {
+            running_.store(false, std::memory_order_release);
             return false;
         }
-
-        running_ = true;
         return true;
     }
 
     void shutdown() {
-        if (!running_) {
+        if (!running_.exchange(false, std::memory_order_acq_rel)) {
             return;
         }
 
-        running_ = false;
+        // Stop the receive thread before waiting so it cannot queue more work.
+        // Handlers already running are not on that thread when a pool is installed.
+        dispatcher_.store(nullptr, std::memory_order_release);
+        transport_.stop();
 
-        // Clear all method handlers
+        // A handler that calls shutdown() is still inside its task. Wait for
+        // every other in-flight task, then return without joining that worker.
+        const int target = tls_rpc_dispatch_depth > 0 ? 1 : 0;
+        wait_for_dispatch_idle(target);
+
         platform::ScopedLock const lock(methods_mutex_);
         method_handlers_.clear();
-
-        transport_.stop();
     }
 
     bool register_method(MethodId method_id, MethodHandler handler, MethodSemantics semantics) {
@@ -148,6 +161,10 @@ public:
         rejection_handler_ = std::move(handler);
     }
 
+    void set_message_dispatcher(transport::DispatchWorkerPool* pool) {
+        dispatcher_.store(pool, std::memory_order_release);
+    }
+
 private:
     struct RegisteredMethod {
         MethodHandler handler;
@@ -163,8 +180,138 @@ private:
                type == MessageType::TP_REQUEST_NO_RETURN;
     }
 
+    struct RpcDispatchCall {
+        RpcServerImpl* server{nullptr};
+        MessagePtr message;
+        transport::Endpoint sender;
+        bool ran{false};
+
+        RpcDispatchCall(RpcServerImpl* server_in, MessagePtr message_in,
+                        transport::Endpoint sender_in)
+            : server(server_in),
+              message(std::move(message_in)),
+              sender(std::move(sender_in)) {}
+
+        RpcDispatchCall(const RpcDispatchCall&) = delete;
+        RpcDispatchCall& operator=(const RpcDispatchCall&) = delete;
+
+        RpcDispatchCall(RpcDispatchCall&& other) noexcept
+            : server(other.server),
+              message(std::move(other.message)),
+              sender(std::move(other.sender)),
+              ran(other.ran) {
+            other.server = nullptr;
+            other.ran = true;
+        }
+
+        RpcDispatchCall& operator=(RpcDispatchCall&& other) noexcept {
+            if (this != &other) {
+                finish();
+                server = other.server;
+                message = std::move(other.message);
+                sender = std::move(other.sender);
+                ran = other.ran;
+                other.server = nullptr;
+                other.ran = true;
+            }
+            return *this;
+        }
+
+        ~RpcDispatchCall() { finish(); }
+
+        void operator()() {
+            ++tls_rpc_dispatch_depth;
+            struct DepthGuard {
+                ~DepthGuard() { --tls_rpc_dispatch_depth; }
+            } depth_guard;
+            struct FinishGuard {
+                RpcDispatchCall* self;
+                ~FinishGuard() { self->finish(); }
+            } finish_guard{this};
+            if (server != nullptr && server->running_.load(std::memory_order_acquire)) {
+                server->dispatch_message(message, sender);
+            }
+            (void)depth_guard;
+            (void)finish_guard;
+        }
+
+        void finish() {
+            if (server == nullptr || ran) {
+                return;
+            }
+            ran = true;
+            server->note_dispatch_finished();
+        }
+    };
+
+    static_assert(sizeof(RpcDispatchCall) <= transport::DispatchWorkerPool::kTaskStorage,
+                  "RPC dispatch task exceeds DispatchWorkerPool storage");
+    static_assert(alignof(RpcDispatchCall) <= alignof(std::max_align_t),
+                  "RPC dispatch task alignment exceeds DispatchWorkerPool storage");
+    static_assert(std::is_nothrow_move_constructible<RpcDispatchCall>::value,
+                  "RPC dispatch task must be nothrow move constructible");
+
+    struct InflightGuard {
+        explicit InflightGuard(RpcServerImpl* server_in) : server(server_in) {}
+
+        RpcServerImpl* server{nullptr};
+        bool dismiss{false};
+
+        ~InflightGuard() {
+            if (!dismiss && server != nullptr) {
+                server->note_dispatch_finished();
+            }
+        }
+
+        InflightGuard(const InflightGuard&) = delete;
+        InflightGuard& operator=(const InflightGuard&) = delete;
+    };
+
+    void begin_dispatch() {
+        platform::ScopedLock const lock(dispatch_wait_mutex_);
+        ++inflight_;
+    }
+
+    void note_dispatch_finished() {
+        platform::ScopedLock const lock(dispatch_wait_mutex_);
+        if (inflight_ > 0) {
+            --inflight_;
+        }
+        idle_cv_.notify_one();
+    }
+
+    void wait_for_dispatch_idle(int target) {
+        platform::ScopedLock const lock(dispatch_wait_mutex_);
+        idle_cv_.wait(dispatch_wait_mutex_, [this, target]() {
+            return inflight_ <= target;
+        });
+    }
+
     /** @implements REQ_MSG_042, REQ_MSG_052, REQ_MSG_111, REQ_MSG_116, REQ_MSG_127, REQ_MSG_128, REQ_MSG_130, REQ_MSG_132A, REQ_MSG_133C, REQ_MSG_134, REQ_COMPAT_003 */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
+        if (!running_.load(std::memory_order_acquire)) {
+            return;
+        }
+
+        transport::DispatchWorkerPool* const pool =
+            dispatcher_.load(std::memory_order_acquire);
+        if (pool == nullptr || pool->worker_count() == 0) {
+            dispatch_message(message, sender);
+            return;
+        }
+
+        const std::size_t key = transport::DispatchWorkerPool::key_for(
+            sender, message->get_client_id(), message->get_session_id());
+        begin_dispatch();
+        InflightGuard guard{this};
+        {
+            RpcDispatchCall call(this, std::move(message), sender);
+            guard.dismiss = true;
+            (void)pool->submit(key, std::move(call));
+        }
+    }
+
+    void dispatch_message(const MessagePtr& message, const transport::Endpoint& sender) {
         // Check if this is for our service and is a request
         if (message->get_service_id() != service_id_ || !message->is_request()) {
             return;
@@ -309,6 +456,10 @@ private:
     mutable platform::Mutex methods_mutex_;
 
     std::atomic<bool> running_;
+    std::atomic<transport::DispatchWorkerPool*> dispatcher_{nullptr};
+    platform::Mutex dispatch_wait_mutex_;
+    platform::ConditionVariable idle_cv_;
+    int inflight_{0};  ///< Guarded by dispatch_wait_mutex_.
 
     platform::Function<void(const transport::MessageRejectionInfo&)> rejection_handler_;
     mutable platform::Mutex rejection_mutex_;
@@ -372,6 +523,10 @@ bool RpcServer::is_ready() const {
 void RpcServer::set_message_rejection_handler(
     platform::Function<void(const transport::MessageRejectionInfo&)> handler) {
     impl()->set_message_rejection_handler(std::move(handler));
+}
+
+void RpcServer::set_message_dispatcher(transport::DispatchWorkerPool* pool) {
+    impl()->set_message_dispatcher(pool);
 }
 
 RpcServer::Statistics RpcServer::get_statistics() const {

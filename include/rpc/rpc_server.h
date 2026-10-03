@@ -26,6 +26,10 @@
 #include <memory>
 #endif
 
+namespace someip::transport {
+class DispatchWorkerPool;
+}
+
 namespace someip::rpc {
 
 /**
@@ -143,6 +147,29 @@ public:
      */
     void set_message_rejection_handler(
         platform::Function<void(const transport::MessageRejectionInfo&)> handler);
+
+    /**
+     * @brief Opt in to multi-threaded method dispatch.
+     *
+     * nullptr (the default) runs method handlers on the transport receive
+     * thread, which is the historical behavior and creates no extra threads.
+     *
+     * A pool with worker count 0 also stays on the caller. A pool of one
+     * worker is a single FIFO. A larger pool runs method handlers off the
+     * receive thread; ordering is documented on
+     * `transport::DispatchWorkerPool`. The receive thread only enqueues.
+     *
+     * Call before `initialize()`, with the pool already `start()`ed. The
+     * pool must outlive in-flight handlers. `shutdown()` waits for those
+     * handlers, then drops the pointer; call `set_message_dispatcher()`
+     * again if the server is initialized a second time. Do not destroy the
+     * server from inside a method handler. `shutdown()` from a handler is
+     * safe and does not join that worker.
+     *
+     * A full worker queue drops the request instead of running the handler
+     * on the receive thread.
+     */
+    void set_message_dispatcher(transport::DispatchWorkerPool* pool);
 
     /**
      * @brief Get server statistics

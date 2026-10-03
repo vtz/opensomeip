@@ -36,6 +36,10 @@ The transport layer in `include/transport/`:
   SOME/IP frame per step (listener XOR queue). Pool exhaustion consumes that
   frame and reports `Result::OUT_OF_MEMORY` via `on_error`; incomplete trailing
   bytes remain in the reassembly buffer.
+- **`dispatch_pool.h`** -- optional `DispatchWorkerPool`. Not used unless an
+  application (or `RpcServer::set_message_dispatcher()`) installs it. Count 0
+  stays on the caller; count 1 is one FIFO; larger pools keep per-endpoint /
+  client / session order and run different keys in parallel.
 - **`endpoint.h`** -- `Endpoint` representing a network address and port pair
 - **`message_rejection.h`** -- `MessageRejectionInfo` for local receive diagnostics.
   `ITransportListener::on_message_rejected` is a defaulted hook; `RpcClient`,

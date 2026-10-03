@@ -17,6 +17,7 @@
 #include <rpc/rpc_server.h>
 #include <someip/message.h>
 #include <someip/types.h>
+#include <transport/dispatch_pool.h>
 #include <transport/endpoint.h>
 #include <transport/message_rejection.h>
 #include <transport/udp_transport.h>
@@ -455,4 +456,105 @@ TEST_F(RpcTest, ServerRejectionHandlerSeesMalformedRequest) {
 
     probe.stop();
     server.shutdown();
+}
+
+/**
+ * @brief Installed worker pool runs the method handler on a pool worker.
+ */
+TEST_F(RpcTest, DispatchPoolRunsHandlerOnWorker) {
+    transport::DispatchWorkerPool pool(2);
+    ASSERT_TRUE(pool.start());
+
+    RpcServer server(test_service_id_, 0x01, transport::Endpoint("127.0.0.1", 0));
+    server.set_message_dispatcher(&pool);
+    std::atomic<bool> on_worker{false};
+    ASSERT_TRUE(server.register_method(test_method_id_,
+        [&](uint16_t, uint16_t, const platform::ByteBuffer& in, platform::ByteBuffer& out) {
+            on_worker.store(pool.running_on_worker());
+            out = in;
+            return RpcResult::SUCCESS;
+        }));
+    ASSERT_TRUE(server.initialize());
+
+    RpcClient client(client_id_);
+    ASSERT_TRUE(client.initialize());
+    client.set_remote_endpoint(server.get_local_endpoint());
+
+    platform::ByteBuffer params = {0x42};
+    RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::milliseconds(2000);
+    const auto result = client.call_method_sync(test_service_id_, test_method_id_, params, timeout);
+    EXPECT_EQ(result.result, RpcResult::SUCCESS);
+    EXPECT_EQ(result.return_values, params);
+    EXPECT_TRUE(on_worker.load());
+
+    client.shutdown();
+    server.shutdown();
+    pool.stop();
+}
+
+/**
+ * @brief shutdown waits for an in-flight pooled handler and does not deadlock.
+ */
+TEST_F(RpcTest, DispatchShutdownWaitsForHandler) {
+    std::atomic<bool> release{false};
+    transport::DispatchWorkerPool pool(1);
+    RpcServer server(test_service_id_, 0x01, transport::Endpoint("127.0.0.1", 0));
+    struct Release {
+        std::atomic<bool>& flag;
+        ~Release() { flag.store(true); }
+    } release_guard{release};
+
+    server.set_message_dispatcher(&pool);
+    std::atomic<bool> entered{false};
+    ASSERT_TRUE(server.register_method(test_method_id_,
+        [&](uint16_t, uint16_t, const platform::ByteBuffer&, platform::ByteBuffer&) {
+            entered.store(true);
+            while (!release.load()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+            return RpcResult::SUCCESS;
+        }, MethodSemantics::FIRE_AND_FORGET));
+    ASSERT_TRUE(pool.start());
+    ASSERT_TRUE(server.initialize());
+
+    transport::UdpTransport probe(transport::Endpoint("127.0.0.1", 0));
+    ASSERT_EQ(probe.start(), Result::SUCCESS);
+
+    Message no_return(MessageId(test_service_id_, test_method_id_),
+                      RequestId(client_id_, 0x0009),
+                      MessageType::REQUEST_NO_RETURN, ReturnCode::E_OK);
+    ASSERT_EQ(probe.send_message(no_return, server.get_local_endpoint()), Result::SUCCESS);
+
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (!entered.load() && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    ASSERT_TRUE(entered.load());
+
+    std::atomic<bool> stopped{false};
+    std::thread stopper([&] {
+        server.shutdown();
+        stopped.store(true);
+    });
+    struct JoinStopper {
+        std::thread& thread;
+        std::atomic<bool>& flag;
+        ~JoinStopper() {
+            flag.store(true);
+            if (thread.joinable()) {
+                thread.join();
+            }
+        }
+    } join_stopper{stopper, release};
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    EXPECT_FALSE(stopped.load());
+    release.store(true);
+    const auto stop_deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(2000);
+    while (!stopped.load() && std::chrono::steady_clock::now() < stop_deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    EXPECT_TRUE(stopped.load());
+    probe.stop();
 }
