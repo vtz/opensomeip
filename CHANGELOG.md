@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [0.2.0] - 2026-10-01
+## [0.2.0] - 2026-10-04
 
 This minor release packages new public APIs (C ABI, static-allocation PAL,
 fire-and-forget RPC, event-driven transports, multi-client TCP) and
@@ -56,7 +56,12 @@ stable.
   set must be updated to consume messages exclusively through one path.
 - **RPC defaults and Interface Version**: Interface Version is the service
   major (not a hardcoded `0x01`); `RpcServer` returns
-  `E_WRONG_INTERFACE_VERSION` (0x08) on mismatch
+  `E_WRONG_INTERFACE_VERSION` (0x08) on mismatch. `E_WRONG_MESSAGE_TYPE`
+  (0x0a) is returned before that Interface Version error. A response whose
+  Interface Version does not match the client is
+  `RpcResult::WRONG_INTERFACE_VERSION`, not `INTERNAL_ERROR`. SD messages
+  (`0xFFFF` / `0x8100`) are still checked at the header against interface
+  version `0x01`; other messages pass that field through
   ([#297](https://github.com/vtz/opensomeip/issues/297),
   [#312](https://github.com/vtz/opensomeip/pull/312)).
   `RpcClient` no longer defaults traffic to `127.0.0.1:30490`;
@@ -127,11 +132,13 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
 - **TP reassembly buffer keyed by spec-mandated composite key.**
   Reassembly buffers are now keyed by Message ID + Protocol Version +
   Interface Version + Message Type (wire byte 14, TP-flag masked off) +
-  Request ID (Client ID + Session ID), per `feat_req_someiptp_781`.
-  Session ID change detection discards stale buffers
+  Request ID (Client ID + Session ID) + UDP sender IPv4 and port, per
+  `feat_req_someiptp_781`. Two peers that reuse the same request id do
+  not share a buffer. Session ID change detection discards stale buffers
   (`feat_req_someiptp_795`).
   ([#276](https://github.com/vtz/opensomeip/issues/276),
-  [#278](https://github.com/vtz/opensomeip/pull/278))
+  [#278](https://github.com/vtz/opensomeip/pull/278),
+  [#310](https://github.com/vtz/opensomeip/pull/310))
 - **Undersized / zero-payload TP segments are rejected.**  Segments
   shorter than the required header overhead (20 bytes for TP) are
   rejected.  Zero-payload segments no longer vacuously complete a
@@ -139,9 +146,12 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
 - **TCP Magic Cookie field layout corrected.**  Session ID is now
   `0xBEEF` (was misplaced as `0x0001`), MessageType is `0x01`/`0x02`
   (was `0xBE`), and ReturnCode is `0x00` (was `0xEF`), matching
-  `feat_req_someip_609`.
+  `feat_req_someip_609`. Detection also requires method and type to
+  match: client method `0x0000` with type `0x01`, or server method
+  `0x8000` with type `0x02`. The crossed pairs are not cookies
   ([#277](https://github.com/vtz/opensomeip/issues/277),
-  [#278](https://github.com/vtz/opensomeip/pull/278))
+  [#278](https://github.com/vtz/opensomeip/pull/278),
+  [#279](https://github.com/vtz/opensomeip/pull/279)).
 - **SOME/IP-SD**: Subscribe family is unicast-only; Offer TTL 0 only for
   StopOffer; default multicast `239.255.255.251:30490`; Unicast/Reboot
   flags; Ack counter/reserved copy
@@ -161,7 +171,11 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
 - **Transport**: Event-driven `IUdpSocketAdapter` / `ITcpSocketAdapter` plus
   `EventDrivenUdpTransport` and `EventDrivenTcpTransport` so integrators can
   drive `ITransport` from an existing reactor without BSD sockets
-  ([#172](https://github.com/vtz/opensomeip/issues/172)). TCP receive parses
+  ([#172](https://github.com/vtz/opensomeip/issues/172)).
+  `IMulticastTransport` is the shared join/leave surface for
+  `UdpTransport` and `EventDrivenUdpTransport`. Event-driven UDP rejects a
+  send larger than `max_message_size`. Event-driven TCP consumes Magic
+  Cookies instead of delivering them as messages, and its receive path parses
   and delivers one SOME/IP frame at a time (no bounded staging list); only an
   incomplete trailing fragment is retained. Reassembly-buffer exhaustion
   discards the stream buffer and reports `BUFFER_OVERFLOW` via
@@ -173,6 +187,11 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   each semantic rejection class. Existing `deserialize()` overloads remain
   source-compatible bool wrappers
   ([#316](https://github.com/vtz/opensomeip/issues/316)).
+- **SOME/IP-TP**: `TpReassembler::is_reassembling`,
+  `get_reassembly_progress`, and `cancel_reassembly` accept a
+  `TpReassemblyKey`. The `message_id` overloads still match every transfer
+  with that id
+  ([#279](https://github.com/vtz/opensomeip/pull/279)).
 - **Transport**: Defaulted `ITransportListener::on_message_rejected` plus
   `set_message_rejection_handler` on RPC and event APIs so complete malformed
   UDP/TCP frames are visible to applications instead of being dropped silently
@@ -297,6 +316,29 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
 - **UDP**: `UdpTransport` segments and reassembles large messages via
   `TpManager` when `enable_tp` is true
   ([#305](https://github.com/vtz/opensomeip/issues/305)).
+  A datagram whose SOME/IP Length field does not match the datagram size
+  is rejected. Segmentation also runs when the serialized message exceeds
+  `max_message_size` even if the payload alone fits `max_segment_size`
+  ([#310](https://github.com/vtz/opensomeip/pull/310)).
+- **SOME/IP-TP**: A follow-up segment whose total length differs from the
+  open buffer is rejected and the buffer is kept. An offset past that
+  total no longer erases the buffer. A non-final segment whose payload is
+  not a multiple of 16 bytes is rejected
+  ([#279](https://github.com/vtz/opensomeip/pull/279),
+  [#310](https://github.com/vtz/opensomeip/pull/310)).
+- **Serialization**: `deserialize_string` rejects a length that does not
+  fit in the bytes still remaining, including a `uint32_t` wrap of
+  `position + length` on 32-bit targets
+  ([#279](https://github.com/vtz/opensomeip/pull/279)).
+- **SOME/IP-SD**: Offers use an exponential repetition phase
+  (`repetition_base * multiplier^index`, capped, then cyclic). The offer
+  thread sleeps until the next due offer instead of polling every 10 ms,
+  and idles for 500 ms when nothing is offered. A lowered legacy
+  `initial_delay` is honored. A subscription renewed after TTL expiry is
+  a new subscriber and receives the current field values;
+  `EventPublisher::shutdown()` drops cached field values
+  ([#311](https://github.com/vtz/opensomeip/pull/311),
+  [#323](https://github.com/vtz/opensomeip/issues/323)).
 - TCP: `on_message_received()` is now invoked outside `connection_mutex_`,
   eliminating a potential deadlock when the callback calls `disconnect()`.
 - Static-alloc capacity-aware SD/event/serializer bounds checks and
@@ -391,7 +433,9 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   [#335](https://github.com/vtz/opensomeip/pull/335)). Host CI installs the
   package and builds `tests/cmake_package` against it. The exported target
   includes the selected PAL backend include dirs and
-  `opensomeipConfig.cmake` calls `find_dependency(Threads)`.
+  `opensomeipConfig.cmake` calls `find_dependency(Threads)`. When an etl,
+  FreeRTOS, or ThreadX target blocks the export set, headers and libraries
+  still install and `find_package(opensomeip)` is not generated.
 - **Traceability**: Regenerated `docs/specification/spec-mapping-report.md`
   so `feat_req_someipsd_818` maps to `REQ_SD_818` (unicast Subscribe family)
   instead of shutdown `REQ_SD_310`. CAPI, PAL, and `REQ_TP_081_ATOM` are
