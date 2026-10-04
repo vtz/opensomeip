@@ -348,7 +348,7 @@ Transport Protocol Binding
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Load config with port=30491, verify transport binds to 30491. Verify port 30490 is reserved for SD only.
+   :verification: Unit test: Initialize EventSubscriber with no resolver and no default endpoint. subscribe_eventgroup and request_field fail before send and deliver no datagram to port 30490. With an explicit non-SD destination, the same calls send the application message to that destination. SOMEIP_SD_MULTICAST_ENDPOINT stays on 30490. Generic application defaults are unresolved (empty address, port 0), not a fixed application port. Ephemeral local bind with an explicit address and port 0 still succeeds.
 
    The software shall read port numbers from configuration files.
    Port 30490 shall only be used for SOME/IP-SD, not application
@@ -356,7 +356,7 @@ Transport Protocol Binding
 
    **Rationale**: Configuration-driven ports ensure deterministic network resource allocation.
 
-   **Code Location**: ``include/transport/udp_transport.h`` (UdpTransportConfig), ``include/sd/sd_types.h`` (SdConfig)
+   **Code Location**: ``src/events/event_subscriber.cpp`` (unresolved remote destination fails before send), ``src/transport/endpoint.cpp`` (application defaults are unresolved; SD multicast stays on 30490), ``include/transport/udp_transport.h`` (UdpTransportConfig), ``include/sd/sd_types.h`` (SdConfig)
 
 .. requirement:: Ephemeral Port Range
    :id: REQ_TRANSPORT_015

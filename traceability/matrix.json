@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-01T10:41:46.008154",
+  "generated": "2026-10-04T14:33:17.029455",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -280,7 +280,7 @@
         "feat_req_someip_733"
       ],
       "implemented_by": [
-        "CODE_endpoint_transport_37"
+        "CODE_endpoint_transport_40"
       ],
       "tested_by": [
         "TC_test_endpoint_SetUp",
@@ -361,9 +361,16 @@
         "feat_req_someip_733"
       ],
       "implemented_by": [
+        "CODE_event_subscriber_events_42",
+        "CODE_event_subscriber_events_127",
+        "CODE_event_subscriber_events_219",
+        "CODE_endpoint_transport_40",
         "CODE_udp_transport_transport_397"
       ],
       "tested_by": [
+        "TC_test_endpoint_SetUp",
+        "TC_TRANSPORT_014_UNRESOLVED",
+        "TC_TRANSPORT_014_EXPLICIT",
         "TC_test_udp_transport_SetUp"
       ]
     },
@@ -620,7 +627,7 @@
       "satisfies": [],
       "implemented_by": [
         "CODE_event_publisher_events_572",
-        "CODE_event_subscriber_events_422",
+        "CODE_event_subscriber_events_438",
         "CODE_rpc_client_rpc_366",
         "CODE_rpc_server_rpc_243",
         "CODE_event_driven_tcp_transport_transport_234",
@@ -630,7 +637,7 @@
         "CODE_udp_transport_transport_464",
         "CODE_udp_transport_transport_557",
         "CODE_event_publisher_events_193",
-        "CODE_event_subscriber_events_161",
+        "CODE_event_subscriber_events_167",
         "CODE_rpc_client_rpc_159",
         "CODE_rpc_server_rpc_136",
         "CODE_message_rejection_transport_38",
@@ -2359,7 +2366,7 @@
         "feat_req_someip_806"
       ],
       "implemented_by": [
-        "CODE_event_subscriber_events_115"
+        "CODE_event_subscriber_events_127"
       ],
       "tested_by": [
         "TC_test_message_SetUp"
@@ -2376,7 +2383,7 @@
         "feat_req_someip_637"
       ],
       "implemented_by": [
-        "CODE_event_subscriber_events_257"
+        "CODE_event_subscriber_events_271"
       ],
       "tested_by": [
         "TC_test_message_SetUp"
@@ -2763,7 +2770,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_event_subscriber_events_257"
+        "CODE_event_subscriber_events_271"
       ],
       "tested_by": [
         "TC_test_message_SetUp"
@@ -7263,7 +7270,7 @@
       ],
       "implemented_by": [
         "CODE_event_publisher_events_43",
-        "CODE_event_subscriber_events_61",
+        "CODE_event_subscriber_events_73",
         "CODE_rpc_client_rpc_44",
         "CODE_rpc_server_rpc_40",
         "CODE_sd_client_sd_55",
@@ -7292,7 +7299,7 @@
       "implemented_by": [
         "CODE_session_manager_core_33",
         "CODE_event_publisher_events_43",
-        "CODE_event_subscriber_events_61",
+        "CODE_event_subscriber_events_73",
         "CODE_rpc_client_rpc_44",
         "CODE_rpc_server_rpc_40",
         "CODE_sd_client_sd_55",
@@ -11709,9 +11716,17 @@
       ],
       "satisfies": []
     },
-    "CODE_event_subscriber_events_61": {
-      "id": "CODE_event_subscriber_events_61",
-      "location": "src/events/event_subscriber.cpp:61",
+    "CODE_event_subscriber_events_42": {
+      "id": "CODE_event_subscriber_events_42",
+      "location": "src/events/event_subscriber.cpp:42",
+      "implements": [
+        "REQ_TRANSPORT_014"
+      ],
+      "satisfies": []
+    },
+    "CODE_event_subscriber_events_73": {
+      "id": "CODE_event_subscriber_events_73",
+      "location": "src/events/event_subscriber.cpp:73",
       "implements": [
         "REQ_ARCH_001",
         "REQ_ARCH_002"
@@ -11721,26 +11736,35 @@
         "feat_req_someip_731"
       ]
     },
-    "CODE_event_subscriber_events_115": {
-      "id": "CODE_event_subscriber_events_115",
-      "location": "src/events/event_subscriber.cpp:115",
+    "CODE_event_subscriber_events_127": {
+      "id": "CODE_event_subscriber_events_127",
+      "location": "src/events/event_subscriber.cpp:127",
       "implements": [
-        "REQ_MSG_122"
+        "REQ_MSG_122",
+        "REQ_TRANSPORT_014"
       ],
       "satisfies": []
     },
-    "CODE_event_subscriber_events_257": {
-      "id": "CODE_event_subscriber_events_257",
-      "location": "src/events/event_subscriber.cpp:257",
+    "CODE_event_subscriber_events_219": {
+      "id": "CODE_event_subscriber_events_219",
+      "location": "src/events/event_subscriber.cpp:219",
+      "implements": [
+        "REQ_TRANSPORT_014"
+      ],
+      "satisfies": []
+    },
+    "CODE_event_subscriber_events_271": {
+      "id": "CODE_event_subscriber_events_271",
+      "location": "src/events/event_subscriber.cpp:271",
       "implements": [
         "REQ_MSG_123",
         "REQ_MSG_123_E01"
       ],
       "satisfies": []
     },
-    "CODE_event_subscriber_events_422": {
-      "id": "CODE_event_subscriber_events_422",
-      "location": "src/events/event_subscriber.cpp:422",
+    "CODE_event_subscriber_events_438": {
+      "id": "CODE_event_subscriber_events_438",
+      "location": "src/events/event_subscriber.cpp:438",
       "implements": [
         "REQ_TRANSPORT_026"
       ],
@@ -13577,11 +13601,12 @@
       ],
       "satisfies": []
     },
-    "CODE_endpoint_transport_37": {
-      "id": "CODE_endpoint_transport_37",
-      "location": "src/transport/endpoint.cpp:37",
+    "CODE_endpoint_transport_40": {
+      "id": "CODE_endpoint_transport_40",
+      "location": "include/transport/endpoint.h:40",
       "implements": [
-        "REQ_TRANSPORT_006"
+        "REQ_TRANSPORT_006",
+        "REQ_TRANSPORT_014"
       ],
       "satisfies": []
     },
@@ -14310,9 +14335,9 @@
       ],
       "satisfies": []
     },
-    "CODE_event_subscriber_events_161": {
-      "id": "CODE_event_subscriber_events_161",
-      "location": "include/events/event_subscriber.h:161",
+    "CODE_event_subscriber_events_167": {
+      "id": "CODE_event_subscriber_events_167",
+      "location": "include/events/event_subscriber.h:167",
       "implements": [
         "REQ_TRANSPORT_026"
       ],
@@ -16323,7 +16348,8 @@
       "name": "SetUp (tests/test_endpoint.cpp:21)",
       "location": "tests/test_endpoint.cpp:21",
       "tests": [
-        "REQ_TRANSPORT_006"
+        "REQ_TRANSPORT_006",
+        "REQ_TRANSPORT_014"
       ]
     },
     "TC_ETL_HANDLER_REGISTERED": {
@@ -16420,8 +16446,8 @@
     },
     "TC_test_events_SetUp": {
       "id": "TC_test_events_SetUp",
-      "name": "SetUp (tests/test_events.cpp:30)",
-      "location": "tests/test_events.cpp:30",
+      "name": "SetUp (tests/test_events.cpp:32)",
+      "location": "tests/test_events.cpp:32",
       "tests": [
         "REQ_ARCH_001",
         "feat_req_someip_720",
@@ -16430,80 +16456,96 @@
     },
     "TC_EVT_TTL_001": {
       "id": "TC_EVT_TTL_001",
-      "name": "TEST_F (tests/test_events.cpp:261)",
-      "location": "tests/test_events.cpp:261",
+      "name": "TEST_F (tests/test_events.cpp:263)",
+      "location": "tests/test_events.cpp:263",
       "tests": []
     },
     "TC_EVT_TTL_002": {
       "id": "TC_EVT_TTL_002",
-      "name": "TEST_F (tests/test_events.cpp:273)",
-      "location": "tests/test_events.cpp:273",
+      "name": "TEST_F (tests/test_events.cpp:275)",
+      "location": "tests/test_events.cpp:275",
       "tests": []
     },
     "TC_EVT_TTL_003": {
       "id": "TC_EVT_TTL_003",
-      "name": "TEST_F (tests/test_events.cpp:292)",
-      "location": "tests/test_events.cpp:292",
+      "name": "TEST_F (tests/test_events.cpp:294)",
+      "location": "tests/test_events.cpp:294",
       "tests": []
     },
     "TC_EVT_TTL_004": {
       "id": "TC_EVT_TTL_004",
-      "name": "TEST_F (tests/test_events.cpp:308)",
-      "location": "tests/test_events.cpp:308",
+      "name": "TEST_F (tests/test_events.cpp:310)",
+      "location": "tests/test_events.cpp:310",
       "tests": []
     },
     "TC_EVT_TTL_005": {
       "id": "TC_EVT_TTL_005",
-      "name": "TEST_F (tests/test_events.cpp:325)",
-      "location": "tests/test_events.cpp:325",
+      "name": "TEST_F (tests/test_events.cpp:327)",
+      "location": "tests/test_events.cpp:327",
       "tests": []
     },
     "TC_EVT_TTL_006": {
       "id": "TC_EVT_TTL_006",
-      "name": "TEST_F (tests/test_events.cpp:343)",
-      "location": "tests/test_events.cpp:343",
+      "name": "TEST_F (tests/test_events.cpp:345)",
+      "location": "tests/test_events.cpp:345",
       "tests": []
     },
     "TC_EVT_TTL_007": {
       "id": "TC_EVT_TTL_007",
-      "name": "TEST_F (tests/test_events.cpp:355)",
-      "location": "tests/test_events.cpp:355",
+      "name": "TEST_F (tests/test_events.cpp:357)",
+      "location": "tests/test_events.cpp:357",
       "tests": []
     },
     "TC_EVT_TTL_008": {
       "id": "TC_EVT_TTL_008",
-      "name": "TEST_F (tests/test_events.cpp:367)",
-      "location": "tests/test_events.cpp:367",
+      "name": "TEST_F (tests/test_events.cpp:369)",
+      "location": "tests/test_events.cpp:369",
       "tests": []
     },
     "TC_EVT_TTL_009": {
       "id": "TC_EVT_TTL_009",
-      "name": "TEST_F (tests/test_events.cpp:385)",
-      "location": "tests/test_events.cpp:385",
+      "name": "TEST_F (tests/test_events.cpp:387)",
+      "location": "tests/test_events.cpp:387",
       "tests": []
     },
     "TC_EVT_FIELD_001": {
       "id": "TC_EVT_FIELD_001",
-      "name": "TEST_F (tests/test_events.cpp:394)",
-      "location": "tests/test_events.cpp:394",
+      "name": "TEST_F (tests/test_events.cpp:396)",
+      "location": "tests/test_events.cpp:396",
       "tests": [
         "REQ_MSG_125"
       ]
     },
     "TC_EVT_FIELD_003": {
       "id": "TC_EVT_FIELD_003",
-      "name": "TEST_F (tests/test_events.cpp:449)",
-      "location": "tests/test_events.cpp:449",
+      "name": "TEST_F (tests/test_events.cpp:451)",
+      "location": "tests/test_events.cpp:451",
       "tests": [
         "REQ_MSG_125"
       ]
     },
     "TC_EVT_FIELD_002": {
       "id": "TC_EVT_FIELD_002",
-      "name": "TEST_F (tests/test_events.cpp:510)",
-      "location": "tests/test_events.cpp:510",
+      "name": "TEST_F (tests/test_events.cpp:512)",
+      "location": "tests/test_events.cpp:512",
       "tests": [
         "REQ_MSG_125"
+      ]
+    },
+    "TC_TRANSPORT_014_UNRESOLVED": {
+      "id": "TC_TRANSPORT_014_UNRESOLVED",
+      "name": "TEST_F (tests/test_events.cpp:605)",
+      "location": "tests/test_events.cpp:605",
+      "tests": [
+        "REQ_TRANSPORT_014"
+      ]
+    },
+    "TC_TRANSPORT_014_EXPLICIT": {
+      "id": "TC_TRANSPORT_014_EXPLICIT",
+      "name": "TEST_F (tests/test_events.cpp:644)",
+      "location": "tests/test_events.cpp:644",
+      "tests": [
+        "REQ_TRANSPORT_014"
       ]
     },
     "TC_test_message_SetUp": {

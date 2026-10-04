@@ -21,14 +21,14 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-10-01 10:41:46</p>
+    <p>Generated: 2026-10-04 14:33:17</p>
 
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
             <li>Total Requirements: 698</li>
-            <li>Code References: 382</li>
-            <li>Test Cases: 523</li>
+            <li>Code References: 384</li>
+            <li>Test Cases: 525</li>
         </ul>
     </div>
 
@@ -46,7 +46,7 @@
             <td>REQ_ARCH_001</td>
             <td>Modular Architecture</td>
             <td>feat_req_someip_2, feat_req_someip_3, feat_req_someip_4, feat_req_someip_14, feat_req_someip_15, feat_req_someip_697</td>
-            <td class="code-ref">CODE_event_publisher_events_43, CODE_event_subscriber_events_61, CODE_rpc_client_rpc_44, CODE_rpc_server_rpc_40, CODE_sd_client_sd_55, CODE_sd_message_sd_44, CODE_sd_server_sd_60, CODE_types_someip_28</td>
+            <td class="code-ref">CODE_event_publisher_events_43, CODE_event_subscriber_events_73, CODE_rpc_client_rpc_44, CODE_rpc_server_rpc_40, CODE_sd_client_sd_55, CODE_sd_message_sd_44, CODE_sd_server_sd_60, CODE_types_someip_28</td>
             <td>TC_test_someip_system_SetUp, TC_test_events_SetUp, TC_test_message_SetUp, TC_test_rpc_SetUp, TC_test_sd_SetUp, TC_test_serialization_EXPECT_DESERIALIZE_SUCCESS, TC_test_tp_SetUp, TC_test_echo_integration_74, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -54,7 +54,7 @@
             <td>REQ_ARCH_002</td>
             <td>Thread Safety</td>
             <td>-</td>
-            <td class="code-ref">CODE_session_manager_core_33, CODE_event_publisher_events_43, CODE_event_subscriber_events_61, CODE_rpc_client_rpc_44, CODE_rpc_server_rpc_40, CODE_sd_client_sd_55, CODE_sd_server_sd_60</td>
+            <td class="code-ref">CODE_session_manager_core_33, CODE_event_publisher_events_43, CODE_event_subscriber_events_73, CODE_rpc_client_rpc_44, CODE_rpc_server_rpc_40, CODE_sd_client_sd_55, CODE_sd_server_sd_60</td>
             <td>TC_test_platform_threading_wait, TC_test_rpc_SetUp, TC_test_sd_SetUp, TC_test_session_manager_SetUp, TC_SM_REMOVE_001, TC_SM_REMOVE_002, TC_SM_GET_001, TC_SM_MULTI_001, TC_SM_STATE_001, TC_SM_STATE_002, TC_SM_ACTIVITY_001, TC_SM_ACTIVITY_002, TC_SM_EXPIRY_001, TC_SM_EXPIRY_002, TC_SM_COUNT_001, TC_SM_STRUCT_001, TC_SM_STRUCT_002, TC_SM_STRUCT_003, TC_SM_STRUCT_004, TC_SM_CAPACITY_001, TC_test_tp_SetUp, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1246,7 +1246,7 @@
             <td>REQ_MSG_122</td>
             <td>Selective Event Sending</td>
             <td>feat_req_someip_804, feat_req_someip_806</td>
-            <td class="code-ref">CODE_event_subscriber_events_115</td>
+            <td class="code-ref">CODE_event_subscriber_events_127</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1254,7 +1254,7 @@
             <td>REQ_MSG_123</td>
             <td>Field Getter Support</td>
             <td>feat_req_someip_631, feat_req_someip_633, feat_req_someip_630, feat_req_someip_637</td>
-            <td class="code-ref">CODE_event_subscriber_events_257</td>
+            <td class="code-ref">CODE_event_subscriber_events_271</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1262,7 +1262,7 @@
             <td>REQ_MSG_123_E01</td>
             <td>Error - Field Getter Not Available</td>
             <td>-</td>
-            <td class="code-ref">CODE_event_subscriber_events_257</td>
+            <td class="code-ref">CODE_event_subscriber_events_271</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5414,7 +5414,7 @@
             <td>REQ_TRANSPORT_006</td>
             <td>Endpoint Configuration</td>
             <td>feat_req_someip_32, feat_req_someip_659, feat_req_someip_660, feat_req_someip_661, feat_req_someip_733</td>
-            <td class="code-ref">CODE_endpoint_transport_37</td>
+            <td class="code-ref">CODE_endpoint_transport_40</td>
             <td>TC_test_endpoint_SetUp, TC_test_udp_transport_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5486,8 +5486,8 @@
             <td>REQ_TRANSPORT_014</td>
             <td>Port Configuration</td>
             <td>feat_req_someip_658, feat_req_someip_676, feat_req_someip_733</td>
-            <td class="code-ref">CODE_udp_transport_transport_397</td>
-            <td>TC_test_udp_transport_SetUp</td>
+            <td class="code-ref">CODE_event_subscriber_events_42, CODE_event_subscriber_events_127, CODE_event_subscriber_events_219, CODE_endpoint_transport_40, CODE_udp_transport_transport_397</td>
+            <td>TC_test_endpoint_SetUp, TC_TRANSPORT_014_UNRESOLVED, TC_TRANSPORT_014_EXPLICIT, TC_test_udp_transport_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -5598,7 +5598,7 @@
             <td>REQ_TRANSPORT_026</td>
             <td>Incoming Message Rejection Diagnostics</td>
             <td>-</td>
-            <td class="code-ref">CODE_event_publisher_events_572, CODE_event_subscriber_events_422, CODE_rpc_client_rpc_366, CODE_rpc_server_rpc_243, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_801, CODE_tcp_transport_transport_1210, CODE_udp_transport_transport_464, CODE_udp_transport_transport_557, CODE_event_publisher_events_193, CODE_event_subscriber_events_161, CODE_rpc_client_rpc_159, CODE_rpc_server_rpc_136, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_324, CODE_transport_transport_78</td>
+            <td class="code-ref">CODE_event_publisher_events_572, CODE_event_subscriber_events_438, CODE_rpc_client_rpc_366, CODE_rpc_server_rpc_243, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_801, CODE_tcp_transport_transport_1210, CODE_udp_transport_transport_464, CODE_udp_transport_transport_557, CODE_event_publisher_events_193, CODE_event_subscriber_events_167, CODE_rpc_client_rpc_159, CODE_rpc_server_rpc_136, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_324, CODE_transport_transport_78</td>
             <td>TC_ED_TCP_REJECT_001, TC_test_rpc_SetUp, TC_test_rpc_TEST_F, TC_test_tcp_transport_SetUp, TC_TCP_REJECT_001, TC_TCP_REJECT_003, TC_TCP_REJECT_004, TC_TCP_REJECT_005, TC_TCP_REJECT_002, TC_TCP_REJECT_002b, TC_test_udp_transport_SetUp, TC_UDP_REJECT_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5739,9 +5739,9 @@
             <td>feat_req_someip_102, feat_req_someip_103</td>
         </tr>
         <tr>
-            <td>CODE_endpoint_transport_37</td>
-            <td class="code-ref">src/transport/endpoint.cpp:37</td>
-            <td>REQ_TRANSPORT_006</td>
+            <td>CODE_endpoint_transport_40</td>
+            <td class="code-ref">include/transport/endpoint.h:40</td>
+            <td>REQ_TRANSPORT_006, REQ_TRANSPORT_014</td>
             <td>-</td>
         </tr>
         <tr>
@@ -5853,32 +5853,44 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_event_subscriber_events_115</td>
-            <td class="code-ref">src/events/event_subscriber.cpp:115</td>
-            <td>REQ_MSG_122</td>
+            <td>CODE_event_subscriber_events_127</td>
+            <td class="code-ref">src/events/event_subscriber.cpp:127</td>
+            <td>REQ_MSG_122, REQ_TRANSPORT_014</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_event_subscriber_events_161</td>
-            <td class="code-ref">include/events/event_subscriber.h:161</td>
+            <td>CODE_event_subscriber_events_167</td>
+            <td class="code-ref">include/events/event_subscriber.h:167</td>
             <td>REQ_TRANSPORT_026</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_event_subscriber_events_257</td>
-            <td class="code-ref">src/events/event_subscriber.cpp:257</td>
+            <td>CODE_event_subscriber_events_219</td>
+            <td class="code-ref">src/events/event_subscriber.cpp:219</td>
+            <td>REQ_TRANSPORT_014</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_event_subscriber_events_271</td>
+            <td class="code-ref">src/events/event_subscriber.cpp:271</td>
             <td>REQ_MSG_123, REQ_MSG_123_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_event_subscriber_events_422</td>
-            <td class="code-ref">src/events/event_subscriber.cpp:422</td>
+            <td>CODE_event_subscriber_events_42</td>
+            <td class="code-ref">src/events/event_subscriber.cpp:42</td>
+            <td>REQ_TRANSPORT_014</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_event_subscriber_events_438</td>
+            <td class="code-ref">src/events/event_subscriber.cpp:438</td>
             <td>REQ_TRANSPORT_026</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_event_subscriber_events_61</td>
-            <td class="code-ref">src/events/event_subscriber.cpp:61</td>
+            <td>CODE_event_subscriber_events_73</td>
+            <td class="code-ref">src/events/event_subscriber.cpp:73</td>
             <td>REQ_ARCH_001, REQ_ARCH_002</td>
             <td>feat_req_someip_730, feat_req_someip_731</td>
         </tr>
@@ -8732,74 +8744,74 @@
         </tr>
         <tr>
             <td>TC_EVT_FIELD_001</td>
-            <td>TEST_F (tests/test_events.cpp:394)</td>
-            <td class="code-ref">tests/test_events.cpp:394</td>
+            <td>TEST_F (tests/test_events.cpp:396)</td>
+            <td class="code-ref">tests/test_events.cpp:396</td>
             <td>REQ_MSG_125</td>
         </tr>
         <tr>
             <td>TC_EVT_FIELD_002</td>
-            <td>TEST_F (tests/test_events.cpp:510)</td>
-            <td class="code-ref">tests/test_events.cpp:510</td>
+            <td>TEST_F (tests/test_events.cpp:512)</td>
+            <td class="code-ref">tests/test_events.cpp:512</td>
             <td>REQ_MSG_125</td>
         </tr>
         <tr>
             <td>TC_EVT_FIELD_003</td>
-            <td>TEST_F (tests/test_events.cpp:449)</td>
-            <td class="code-ref">tests/test_events.cpp:449</td>
+            <td>TEST_F (tests/test_events.cpp:451)</td>
+            <td class="code-ref">tests/test_events.cpp:451</td>
             <td>REQ_MSG_125</td>
         </tr>
         <tr>
             <td>TC_EVT_TTL_001</td>
-            <td>TEST_F (tests/test_events.cpp:261)</td>
-            <td class="code-ref">tests/test_events.cpp:261</td>
+            <td>TEST_F (tests/test_events.cpp:263)</td>
+            <td class="code-ref">tests/test_events.cpp:263</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_EVT_TTL_002</td>
-            <td>TEST_F (tests/test_events.cpp:273)</td>
-            <td class="code-ref">tests/test_events.cpp:273</td>
+            <td>TEST_F (tests/test_events.cpp:275)</td>
+            <td class="code-ref">tests/test_events.cpp:275</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_EVT_TTL_003</td>
-            <td>TEST_F (tests/test_events.cpp:292)</td>
-            <td class="code-ref">tests/test_events.cpp:292</td>
+            <td>TEST_F (tests/test_events.cpp:294)</td>
+            <td class="code-ref">tests/test_events.cpp:294</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_EVT_TTL_004</td>
-            <td>TEST_F (tests/test_events.cpp:308)</td>
-            <td class="code-ref">tests/test_events.cpp:308</td>
+            <td>TEST_F (tests/test_events.cpp:310)</td>
+            <td class="code-ref">tests/test_events.cpp:310</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_EVT_TTL_005</td>
-            <td>TEST_F (tests/test_events.cpp:325)</td>
-            <td class="code-ref">tests/test_events.cpp:325</td>
+            <td>TEST_F (tests/test_events.cpp:327)</td>
+            <td class="code-ref">tests/test_events.cpp:327</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_EVT_TTL_006</td>
-            <td>TEST_F (tests/test_events.cpp:343)</td>
-            <td class="code-ref">tests/test_events.cpp:343</td>
+            <td>TEST_F (tests/test_events.cpp:345)</td>
+            <td class="code-ref">tests/test_events.cpp:345</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_EVT_TTL_007</td>
-            <td>TEST_F (tests/test_events.cpp:355)</td>
-            <td class="code-ref">tests/test_events.cpp:355</td>
+            <td>TEST_F (tests/test_events.cpp:357)</td>
+            <td class="code-ref">tests/test_events.cpp:357</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_EVT_TTL_008</td>
-            <td>TEST_F (tests/test_events.cpp:367)</td>
-            <td class="code-ref">tests/test_events.cpp:367</td>
+            <td>TEST_F (tests/test_events.cpp:369)</td>
+            <td class="code-ref">tests/test_events.cpp:369</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_EVT_TTL_009</td>
-            <td>TEST_F (tests/test_events.cpp:385)</td>
-            <td class="code-ref">tests/test_events.cpp:385</td>
+            <td>TEST_F (tests/test_events.cpp:387)</td>
+            <td class="code-ref">tests/test_events.cpp:387</td>
             <td>-</td>
         </tr>
         <tr>
@@ -10777,6 +10789,18 @@
             <td>REQ_TP_033</td>
         </tr>
         <tr>
+            <td>TC_TRANSPORT_014_EXPLICIT</td>
+            <td>TEST_F (tests/test_events.cpp:644)</td>
+            <td class="code-ref">tests/test_events.cpp:644</td>
+            <td>REQ_TRANSPORT_014</td>
+        </tr>
+        <tr>
+            <td>TC_TRANSPORT_014_UNRESOLVED</td>
+            <td>TEST_F (tests/test_events.cpp:605)</td>
+            <td class="code-ref">tests/test_events.cpp:605</td>
+            <td>REQ_TRANSPORT_014</td>
+        </tr>
+        <tr>
             <td>TC_UDP_E01</td>
             <td>TEST_F (tests/test_udp_transport.cpp:806)</td>
             <td class="code-ref">tests/test_udp_transport.cpp:806</td>
@@ -10894,7 +10918,7 @@
             <td>TC_test_endpoint_SetUp</td>
             <td>SetUp (tests/test_endpoint.cpp:21)</td>
             <td class="code-ref">tests/test_endpoint.cpp:21</td>
-            <td>REQ_TRANSPORT_006</td>
+            <td>REQ_TRANSPORT_006, REQ_TRANSPORT_014</td>
         </tr>
         <tr>
             <td>TC_test_event_driven_udp_transport_TEST</td>
@@ -10904,8 +10928,8 @@
         </tr>
         <tr>
             <td>TC_test_events_SetUp</td>
-            <td>SetUp (tests/test_events.cpp:30)</td>
-            <td class="code-ref">tests/test_events.cpp:30</td>
+            <td>SetUp (tests/test_events.cpp:32)</td>
+            <td class="code-ref">tests/test_events.cpp:32</td>
             <td>REQ_ARCH_001, feat_req_someip_720, feat_req_someip_730</td>
         </tr>
         <tr>
