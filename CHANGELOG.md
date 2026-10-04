@@ -126,7 +126,7 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
   1360 ([#278](https://github.com/vtz/opensomeip/pull/278)).
 - **Folklore 1000-byte TP-Flag path removed.**  Messages that fit in
   a single non-TP SOME/IP message are sent without TP-Flag and without
-  a TP header.  The vsomeip-style `> 1000` threshold that set TP-Flag
+  a TP header.  The previous `> 1000` threshold that set TP-Flag
   without appending a TP header has been deleted
   ([#278](https://github.com/vtz/opensomeip/pull/278)).
 - **TP reassembly buffer keyed by spec-mandated composite key.**
@@ -316,9 +316,10 @@ Peers running v0.1.0 will not interoperate with this release on these paths:
 - **UDP**: `UdpTransport` segments and reassembles large messages via
   `TpManager` when `enable_tp` is true
   ([#305](https://github.com/vtz/opensomeip/issues/305)).
-  A datagram whose SOME/IP Length field does not match the datagram size
-  is rejected. Segmentation also runs when the serialized message exceeds
-  `max_message_size` even if the payload alone fits `max_segment_size`
+- **UDP**: A datagram whose SOME/IP Length field does not match the datagram
+  size is rejected. Segmentation also runs when the serialized message
+  exceeds `max_message_size` even if the payload alone fits
+  `max_segment_size`
   ([#310](https://github.com/vtz/opensomeip/pull/310)).
 - **SOME/IP-TP**: A follow-up segment whose total length differs from the
   open buffer is rejected and the buffer is kept. An offset past that
