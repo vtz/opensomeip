@@ -379,6 +379,18 @@ TEST_F(TcpTransportTest, ConnectReportsConnectingDuringHandshake) {
             samples.fetch_add(1, std::memory_order_release);
         }
     });
+    // If the connector thread fails to start, this still runs. Destroying a
+    // joinable std::thread calls std::terminate.
+    struct ObserverGuard {
+        std::atomic<bool>& stop;
+        std::thread& thread;
+        ~ObserverGuard() {
+            stop.store(true, std::memory_order_release);
+            if (thread.joinable()) {
+                thread.join();
+            }
+        }
+    } observer_guard{stop, observer};
     while (samples.load(std::memory_order_acquire) < 1) {
         std::this_thread::yield();
     }
