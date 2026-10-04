@@ -14,6 +14,8 @@
 #include <gtest/gtest.h>
 #include <events/event_types.h>
 #include <events/event_publisher.h>
+#include <events/event_subscriber.h>
+#include <transport/endpoint.h>
 #include <transport/udp_transport.h>
 #include <someip/message.h>
 #include <common/result.h>
@@ -561,4 +563,129 @@ TEST_F(EventsTest, EventPublisherNoDuplicateInitialOnRefresh) {
     publisher.shutdown();
     rx.stop();
     EXPECT_EQ(extra, 0) << "TTL refresh must not duplicate the initial field notification";
+}
+
+namespace {
+
+MessagePtr wait_for_method(transport::UdpTransport& rx, uint16_t method_id,
+                           std::chrono::milliseconds timeout) {
+    const auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (std::chrono::steady_clock::now() < deadline) {
+        MessagePtr msg = rx.receive_message();
+        if (msg && msg->get_method_id() == method_id) {
+            return msg;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    return nullptr;
+}
+
+int count_messages(transport::UdpTransport& rx, std::chrono::milliseconds timeout) {
+    int count = 0;
+    const auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (std::chrono::steady_clock::now() < deadline) {
+        if (rx.receive_message()) {
+            ++count;
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+    }
+    return count;
+}
+
+transport::UdpTransportConfig nonblocking_udp_config() {
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    cfg.reuse_address = true;
+    return cfg;
+}
+
+}  // namespace
+
+/**
+ * @test_case TC_TRANSPORT_014_UNRESOLVED
+ * @tests REQ_TRANSPORT_014
+ * @brief An unconfigured subscriber fails before send and emits nothing to the SD port.
+ */
+TEST_F(EventsTest, UnresolvedDestinationFailsBeforeSend) {
+    const uint16_t sd_port = transport::SOMEIP_SD_MULTICAST_ENDPOINT.get_port();
+    transport::UdpTransport sd_listener(transport::Endpoint("127.0.0.1", sd_port),
+                                        nonblocking_udp_config());
+    ASSERT_EQ(sd_listener.start(), Result::SUCCESS);
+
+    EventSubscriber subscriber(0x0001);
+    ASSERT_TRUE(subscriber.initialize());
+
+    EXPECT_FALSE(subscriber.subscribe_eventgroup(
+        0x1234, 0x0001, 0x0001, [](const EventNotification&) {}));
+    EXPECT_FALSE(subscriber.request_field(
+        0x1234, 0x0001, 0x8001, [](const EventNotification&) {}));
+    EXPECT_TRUE(subscriber.get_active_subscriptions().empty());
+
+    // Port 0 is not a remote application port.
+    subscriber.set_default_endpoint("127.0.0.1", 0);
+    EXPECT_FALSE(subscriber.subscribe_eventgroup(
+        0x1234, 0x0001, 0x0001, [](const EventNotification&) {}));
+    EXPECT_FALSE(subscriber.request_field(
+        0x1234, 0x0001, 0x8001, [](const EventNotification&) {}));
+
+    subscriber.set_endpoint_resolver([](uint16_t, uint16_t) { return transport::Endpoint(); });
+    EXPECT_FALSE(subscriber.subscribe_eventgroup(
+        0x1234, 0x0001, 0x0001, [](const EventNotification&) {}));
+    EXPECT_FALSE(subscriber.request_field(
+        0x1234, 0x0001, 0x8001, [](const EventNotification&) {}));
+
+    EXPECT_EQ(count_messages(sd_listener, std::chrono::milliseconds(200)), 0);
+
+    subscriber.shutdown();
+    sd_listener.stop();
+}
+
+/**
+ * @test_case TC_TRANSPORT_014_EXPLICIT
+ * @tests REQ_TRANSPORT_014
+ * @brief An explicit non-SD destination receives subscription and field-request sends.
+ */
+TEST_F(EventsTest, ExplicitDestinationReceivesApplicationSend) {
+    const uint16_t sd_port = transport::SOMEIP_SD_MULTICAST_ENDPOINT.get_port();
+    auto cfg = nonblocking_udp_config();
+    transport::UdpTransport app_listener(transport::Endpoint("127.0.0.1", 0), cfg);
+    transport::UdpTransport sd_listener(transport::Endpoint("127.0.0.1", sd_port), cfg);
+    ASSERT_EQ(app_listener.start(), Result::SUCCESS);
+    ASSERT_EQ(sd_listener.start(), Result::SUCCESS);
+
+    const uint16_t app_port = app_listener.get_local_endpoint().get_port();
+    ASSERT_NE(app_port, 0);
+    ASSERT_NE(app_port, sd_port);
+
+    EventSubscriber subscriber(0x00AB);
+    subscriber.set_default_endpoint("127.0.0.1", app_port);
+    ASSERT_TRUE(subscriber.initialize());
+
+    EXPECT_TRUE(subscriber.subscribe_eventgroup(
+        0x1234, 0x0001, 0x0010, [](const EventNotification&) {}));
+    MessagePtr subscribe_msg =
+        wait_for_method(app_listener, 0x0001, std::chrono::milliseconds(1000));
+    ASSERT_NE(subscribe_msg, nullptr);
+    EXPECT_EQ(subscribe_msg->get_service_id(), 0x1234);
+    EXPECT_EQ(subscribe_msg->get_client_id(), 0x00AB);
+
+    EventSubscriber resolved(0x00CD);
+    resolved.set_endpoint_resolver([app_port](uint16_t, uint16_t) {
+        return transport::Endpoint("127.0.0.1", app_port);
+    });
+    ASSERT_TRUE(resolved.initialize());
+    EXPECT_TRUE(resolved.request_field(
+        0x1234, 0x0001, 0x8001, [](const EventNotification&) {}));
+    MessagePtr field_msg = wait_for_method(app_listener, 0x0003, std::chrono::milliseconds(1000));
+    ASSERT_NE(field_msg, nullptr);
+    EXPECT_EQ(field_msg->get_service_id(), 0x1234);
+    EXPECT_EQ(field_msg->get_client_id(), 0x00CD);
+
+    EXPECT_EQ(count_messages(sd_listener, std::chrono::milliseconds(200)), 0);
+
+    subscriber.shutdown();
+    resolved.shutdown();
+    app_listener.stop();
+    sd_listener.stop();
 }

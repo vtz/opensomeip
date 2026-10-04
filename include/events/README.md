@@ -96,6 +96,9 @@ using namespace someip::events;
 EventSubscriber subscriber(0xABCD);  // Client ID
 subscriber.initialize();
 
+// Remote destination must be explicit. An unresolved endpoint fails before send.
+subscriber.set_default_endpoint("192.168.1.10", 40000);
+
 // Subscribe to event group
 subscriber.subscribe_eventgroup(0x1001, 0x0001, 0x0001,
     [](const EventNotification& notification) {

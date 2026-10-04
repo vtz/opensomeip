@@ -38,7 +38,14 @@ enum class TransportProtocol : uint8_t {
 class Endpoint {
 public:
     /**
-     * @brief Default constructor
+     * @brief Unresolved endpoint
+     *
+     * Default construction is not a remote application destination and not a
+     * local bind. The address is empty and the port is 0, so is_valid() is
+     * false. Ephemeral local binds use an explicit address with port 0, for
+     * example Endpoint("0.0.0.0", 0) or Endpoint("127.0.0.1", 0).
+     *
+     * @implements REQ_TRANSPORT_006, REQ_TRANSPORT_014
      */
     Endpoint();
 
@@ -114,7 +121,12 @@ private:
     bool is_multicast_ipv4(const platform::String<>& address) const;
 };
 
-// Predefined endpoints for common SOME/IP usage
+// Predefined endpoints.
+// SOMEIP_SD_MULTICAST_ENDPOINT is the SOME/IP-SD multicast destination (port 30490).
+// SOMEIP_DEFAULT_UDP_ENDPOINT and SOMEIP_DEFAULT_TCP_ENDPOINT are unresolved
+// application endpoints: empty address, port 0, not a remote destination, and
+// not the SD port. They are not a substitute application port. An ephemeral
+// local bind is an explicit address with port 0.
 extern const Endpoint SOMEIP_SD_MULTICAST_ENDPOINT;
 extern const Endpoint SOMEIP_DEFAULT_UDP_ENDPOINT;
 extern const Endpoint SOMEIP_DEFAULT_TCP_ENDPOINT;

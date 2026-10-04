@@ -17,6 +17,13 @@
 
 ### Fixed
 
+- **Transport**: An unresolved remote application destination fails before
+  send. `EventSubscriber` subscription and field requests no longer fall
+  back to `127.0.0.1:30490`. Generic application defaults are unresolved
+  (empty address, port 0). Port 0 with an explicit address remains an
+  ephemeral local bind, and `SOMEIP_SD_MULTICAST_ENDPOINT` stays on the
+  SD port
+  ([#343](https://github.com/vtz/opensomeip/issues/343)).
 - **Transport / SD**: Multicast join failures no longer report success.
   `UdpTransport::join_multicast_group` / `leave_multicast_group` return
   `Result::MULTICAST_ERROR` with group/interface diagnostics via

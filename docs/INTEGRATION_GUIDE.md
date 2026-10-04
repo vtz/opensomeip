@@ -318,13 +318,15 @@ Transports support two **mutually exclusive** receive modes:
 class MyApplication : public ITransportListener {
 public:
     bool initialize() {
-        transport_ = std::make_unique<UdpTransport>(SOMEIP_DEFAULT_UDP_ENDPOINT);
+        // Ephemeral local bind. Application destinations are explicit.
+        // Port 0 with an explicit address is a local bind, not a remote port.
+        transport_ = std::make_unique<UdpTransport>(Endpoint("0.0.0.0", 0));
         transport_->set_listener(this);
         return transport_->start() == Result::SUCCESS;
     }
 
     void send_message(const Message& msg) {
-        Endpoint server("192.168.1.100", 30490);
+        Endpoint server("192.168.1.100", 40000);  // offered service port, not SD 30490
         transport_->send_message(msg, server);
     }
 

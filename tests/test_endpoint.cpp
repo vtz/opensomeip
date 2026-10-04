@@ -26,7 +26,7 @@ using namespace someip::transport;
  * Tests below are structured so that each condition in multi-condition
  * predicates is toggled while holding others constant.
  *
- * @tests REQ_TRANSPORT_006
+ * @tests REQ_TRANSPORT_006, REQ_TRANSPORT_014
  */
 
 // ============================================================================
@@ -41,9 +41,21 @@ protected:
 
 TEST_F(EndpointTest, DefaultConstructor) {
     Endpoint ep;
-    EXPECT_EQ(ep.get_address(), "127.0.0.1");
-    EXPECT_EQ(ep.get_port(), 30490);
+    EXPECT_TRUE(ep.get_address().empty());
+    EXPECT_EQ(ep.get_port(), 0);
+    EXPECT_NE(ep.get_port(), 30490);
     EXPECT_EQ(ep.get_protocol(), TransportProtocol::UDP);
+    EXPECT_FALSE(ep.is_valid());
+}
+
+TEST_F(EndpointTest, PortZeroWithExplicitAddressRemainsValid) {
+    Endpoint any("0.0.0.0", 0, TransportProtocol::UDP);
+    EXPECT_TRUE(any.is_valid());
+    EXPECT_EQ(any.get_port(), 0);
+
+    Endpoint loopback("127.0.0.1", 0, TransportProtocol::TCP);
+    EXPECT_TRUE(loopback.is_valid());
+    EXPECT_EQ(loopback.get_port(), 0);
 }
 
 TEST_F(EndpointTest, ParameterizedConstructor) {
@@ -499,13 +511,17 @@ TEST_F(EndpointTest, PredefinedEndpoints) {
     EXPECT_TRUE(SOMEIP_SD_MULTICAST_ENDPOINT.is_multicast());
     EXPECT_TRUE(SOMEIP_SD_MULTICAST_ENDPOINT.is_valid());
 
-    EXPECT_EQ(SOMEIP_DEFAULT_UDP_ENDPOINT.get_address(), "127.0.0.1");
-    EXPECT_EQ(SOMEIP_DEFAULT_UDP_ENDPOINT.get_port(), 30490);
+    EXPECT_TRUE(SOMEIP_DEFAULT_UDP_ENDPOINT.get_address().empty());
+    EXPECT_EQ(SOMEIP_DEFAULT_UDP_ENDPOINT.get_port(), 0);
+    EXPECT_NE(SOMEIP_DEFAULT_UDP_ENDPOINT.get_port(), SOMEIP_SD_MULTICAST_ENDPOINT.get_port());
     EXPECT_EQ(SOMEIP_DEFAULT_UDP_ENDPOINT.get_protocol(), TransportProtocol::UDP);
+    EXPECT_FALSE(SOMEIP_DEFAULT_UDP_ENDPOINT.is_valid());
 
-    EXPECT_EQ(SOMEIP_DEFAULT_TCP_ENDPOINT.get_address(), "127.0.0.1");
-    EXPECT_EQ(SOMEIP_DEFAULT_TCP_ENDPOINT.get_port(), 30490);
+    EXPECT_TRUE(SOMEIP_DEFAULT_TCP_ENDPOINT.get_address().empty());
+    EXPECT_EQ(SOMEIP_DEFAULT_TCP_ENDPOINT.get_port(), 0);
+    EXPECT_NE(SOMEIP_DEFAULT_TCP_ENDPOINT.get_port(), SOMEIP_SD_MULTICAST_ENDPOINT.get_port());
     EXPECT_EQ(SOMEIP_DEFAULT_TCP_ENDPOINT.get_protocol(), TransportProtocol::TCP);
+    EXPECT_FALSE(SOMEIP_DEFAULT_TCP_ENDPOINT.is_valid());
 }
 
 // ============================================================================
