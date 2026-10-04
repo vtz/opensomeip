@@ -28,18 +28,18 @@ to implementation and test coverage. No safety certification is claimed.
 
 | Metric | Value | Assessment |
 |--------|-------|------------|
-| Total requirements (RST) | 697 | - |
-| Fully traced (code + tests) | 616 (88.4%) | Good |
-| Requirements with code refs | 619 | Good |
-| Requirements with test coverage | 685 | Good |
+| Total requirements (RST) | 698 | - |
+| Fully traced (code + tests) | 617 (88.4%) | Good |
+| Requirements with code refs | 620 | Good |
+| Requirements with test coverage | 686 | Good |
 | Orphaned (no code annotation) | 78 | Needs improvement |
 | Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 |
-| Code references extracted | 624 | - |
-| Test references extracted | 750 | - |
+| Code references extracted | 625 | - |
+| Test references extracted | 751 | - |
 
 ### Status
 
-616 of 697 requirements are fully traced with both code implementation references
+617 of 698 requirements are fully traced with both code implementation references
 and test coverage annotations. 78 requirements remain without code annotations.
 The extraction script properly parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations.
@@ -58,7 +58,7 @@ The extraction script properly parses comma-separated requirement IDs from
 | Serialization (REQ_SER_*) | 115 |
 | Transport Protocol (REQ_TP_*) | 83 |
 | Platform (REQ_PLATFORM_*, REQ_PAL_*) | 73 |
-| Transport (REQ_TRANSPORT_*) | 46 |
+| Transport (REQ_TRANSPORT_*) | 47 |
 | Compatibility (REQ_COMPAT_*) | 17 |
 | C ABI (REQ_CAPI_*) | 13 |
 | Architecture (REQ_ARCH_*) | 8 |
@@ -71,27 +71,27 @@ The extraction script properly parses comma-separated requirement IDs from
 
 ### Test Execution Summary
 
-Default host build (`SOMEIP_USE_STATIC_ALLOC=OFF`, C API on), 2026-10-01:
-27 CTest binaries, 702 GTest cases, 701 passed, 0 failed. One case is
+Default host build (`SOMEIP_USE_STATIC_ALLOC=OFF`, C API on), 2026-10-04:
+28 CTest binaries, 723 GTest cases, 722 passed, 0 failed. One case is
 disabled (`TcpTransportTest.DISABLED_MessageRoundTrip`).
 
-The static-allocation build (`SOMEIP_USE_STATIC_ALLOC=ON`) passed the same
-day: 33 CTest binaries, 795 GTest cases, 0 failures, with that same TCP
+The static-allocation build (`SOMEIP_USE_STATIC_ALLOC=ON`) passed on
+2026-10-01: 34 CTest binaries, 813 GTest cases, 0 failures, with that same TCP
 case disabled. Suites that exist only in that build: buffer pool 14,
 static message pool 16, platform containers 21, ETL error handler 4,
 static-alloc integration 13, PAL static-alloc mock 24.
 
 | Test Suite | Tests | Status |
 |------------|-------|--------|
-| SD Tests | 96 | All passing |
-| Endpoint Tests | 75 | All passing |
+| SD Tests | 104 | All passing |
+| Endpoint Tests | 76 | All passing |
 | TP Tests | 62 | All passing |
 | Serialization Tests | 60 | All passing |
 | TCP Transport Tests | 51 | 50 passing, 1 disabled |
 | E2E Tests | 43 | All passing |
-| UDP Transport Tests | 36 | All passing |
+| UDP Transport Tests | 38 | All passing |
 | Message Tests | 36 | All passing |
-| Events Tests | 26 | All passing |
+| Events Tests | 28 | All passing |
 | Event-driven TCP Tests | 25 | All passing |
 | PAL FreeRTOS Mock | 25 | All passing |
 | PAL ThreadX Mock | 25 | All passing |
@@ -99,7 +99,8 @@ static-alloc integration 13, PAL static-alloc mock 24.
 | Session Manager Tests | 23 | All passing |
 | Platform Threading Tests | 21 | All passing |
 | RPC Tests | 16 | All passing |
-| Event-driven UDP Tests | 11 | All passing |
+| Event-driven UDP Tests | 12 | All passing |
+| Multicast Membership Tests | 7 | All passing |
 | C API Tests | 46 | All passing |
 
 ## Validation Status

@@ -19,19 +19,19 @@ This matrix maps individual test cases to specific requirements from the Open SO
 
 ## Test File Structure
 
-GTest case counts below are from the default host build on 2026-10-01
-(702 cases, 701 passed, `TcpTransportTest.DISABLED_MessageRoundTrip` disabled).
+GTest case counts below are from the default host build on 2026-10-04
+(723 cases, 722 passed, `TcpTransportTest.DISABLED_MessageRoundTrip` disabled).
 Static-allocation sources are compiled only when `SOMEIP_USE_STATIC_ALLOC=ON`.
 
-- **test_sd.cpp**: Service Discovery protocol tests (96 tests)
-- **test_endpoint.cpp**: IPv4/IPv6 address validation (75 tests)
+- **test_sd.cpp**: Service Discovery protocol tests (104 tests)
+- **test_endpoint.cpp**: IPv4/IPv6 address validation (76 tests)
 - **test_tp.cpp**: Transport Protocol segmentation tests (62 tests)
 - **test_serialization.cpp**: Data serialization/deserialization tests (60 tests)
 - **test_tcp_transport.cpp**: TCP transport binding tests (51 tests, 1 disabled)
 - **test_e2e.cpp**: End-to-End protection tests (43 tests)
-- **test_udp_transport.cpp**: UDP transport binding tests (36 tests)
+- **test_udp_transport.cpp**: UDP transport binding tests (38 tests)
 - **test_message.cpp**: Message format and validation tests (36 tests)
-- **test_events.cpp**: Event subscription, notification, and event groups (26 tests)
+- **test_events.cpp**: Event subscription, notification, and event groups (28 tests)
 - **test_event_driven_tcp_transport.cpp**: Event-driven TCP adapter tests (25 tests)
 - **test_pal_freertos_mock.cpp**: FreeRTOS PAL conformance (25 tests)
 - **test_pal_threadx_mock.cpp**: ThreadX PAL conformance (25 tests)
@@ -39,9 +39,10 @@ Static-allocation sources are compiled only when `SOMEIP_USE_STATIC_ALLOC=ON`.
 - **test_session_manager.cpp**: Session lifecycle tests (23 tests)
 - **test_platform_threading.cpp**: Threading, mutex, and condition variable tests (21 tests)
 - **test_rpc.cpp**: RPC request/response handling (16 tests)
-- **test_event_driven_udp_transport.cpp**: Event-driven UDP adapter tests (11 tests)
+- **test_event_driven_udp_transport.cpp**: Event-driven UDP adapter tests (12 tests)
+- **test_multicast_membership.cpp**: Multicast join retry state (7 tests)
 - **tests/capi/**: C API unit and integration tests (46 tests)
-Static-allocation build the same day: 33 CTest binaries, 795 GTest cases, 0 failures, same TCP case disabled. Suites that exist only in that build:
+Static-allocation build on 2026-10-01: 34 CTest binaries, 813 GTest cases, 0 failures, same TCP case disabled. Suites that exist only in that build:
 
 - **test_buffer_pool.cpp**: 14 tests, all passing
 - **test_static_message_pool.cpp**: 16 tests, all passing
@@ -217,34 +218,34 @@ Static-allocation build the same day: 33 CTest binaries, 795 GTest cases, 0 fail
 >
 > **Methodology**: "Fully traced" = requirement has both `@implements` code annotation
 > and `@tests` test annotation.  "Orphaned" = requirement defined in RST but has no
-> code annotation.  Counts reflect the full RST requirement set (697 requirements).
+> code annotation.  Counts reflect the full RST requirement set (698 requirements).
 
 ### Validated Traceability Summary
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| Total requirements (RST) | 697 | - |
-| Fully traced (code + tests) | 616 (88.4%) | Good |
-| Requirements with code refs | 619 | Good |
-| Requirements with test coverage | 685 | Good |
+| Total requirements (RST) | 698 | - |
+| Fully traced (code + tests) | 617 (88.4%) | Good |
+| Requirements with code refs | 620 | Good |
+| Requirements with test coverage | 686 | Good |
 | Orphaned (no code annotation) | 78 | Needs improvement |
 | Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 |
 
 ### Test Execution Results (Current Environment)
 
-Default host build, 2026-10-01. Static-allocation-only suites passed in a separate build (795 GTest cases, 0 failures) and are listed under Test File Structure.
+Default host build, 2026-10-04. Static-allocation-only suites passed in a separate build (813 GTest cases, 0 failures) and are listed under Test File Structure.
 
 | Test Suite | Tests | Passing | Notes |
 |------------|-------|---------|-------|
-| SD Tests | 96 | 96 | |
-| Endpoint Tests | 75 | 75 | |
+| SD Tests | 104 | 104 | |
+| Endpoint Tests | 76 | 76 | |
 | TP Tests | 62 | 62 | |
 | Serialization Tests | 60 | 60 | |
 | TCP Transport Tests | 51 | 50 | `DISABLED_MessageRoundTrip` not run |
 | E2E Tests | 43 | 43 | |
-| UDP Transport Tests | 36 | 36 | |
+| UDP Transport Tests | 38 | 38 | |
 | Message Tests | 36 | 36 | |
-| Events Tests | 26 | 26 | |
+| Events Tests | 28 | 28 | |
 | Event-driven TCP Tests | 25 | 25 | |
 | PAL FreeRTOS Mock | 25 | 25 | |
 | PAL ThreadX Mock | 25 | 25 | |
@@ -252,7 +253,8 @@ Default host build, 2026-10-01. Static-allocation-only suites passed in a separa
 | Session Manager Tests | 23 | 23 | |
 | Platform Threading | 21 | 21 | |
 | RPC Tests | 16 | 16 | |
-| Event-driven UDP Tests | 11 | 11 | |
+| Event-driven UDP Tests | 12 | 12 | |
+| Multicast Membership Tests | 7 | 7 | |
 | C API Tests | 46 | 46 | 10 CTest binaries |
 
 ---
@@ -285,10 +287,10 @@ Default host build, 2026-10-01. Static-allocation-only suites passed in a separa
 
 | Traceability Level | Validated | Method |
 |-------------------|-----------|--------|
-| Requirements with code refs | 619/697 | `extract_code_requirements.py` |
-| Requirements with test refs | 685/697 | `extract_code_requirements.py` |
-| Fully traced (code + tests) | 88.4% (616/697) | `validate_requirements.py` |
-| Spec-linked implementation reqs | 695/697 | `validate_requirements.py` |
+| Requirements with code refs | 620/698 | `extract_code_requirements.py` |
+| Requirements with test refs | 686/698 | `extract_code_requirements.py` |
+| Fully traced (code + tests) | 88.4% (617/698) | `validate_requirements.py` |
+| Spec-linked implementation reqs | 696/698 | `validate_requirements.py` |
 
 ---
 
