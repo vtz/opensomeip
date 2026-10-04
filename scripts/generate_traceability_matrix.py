@@ -345,6 +345,16 @@ def generate_json(
         json.dump(data, f, indent=2)
 
 
+def spec_link_optional(req_id: str, category: str) -> bool:
+    """Return whether a missing spec link is expected for this requirement.
+
+    Matches validate_requirements.py and check_spec_requirements.py: error
+    handling, architectural, and plugin requirements, plus ``_ATOM`` ids such
+    as REQ_TP_081_ATOM, are implementation-derived.
+    """
+    return category in ("error_handling", "architectural", "plugin") or req_id.endswith("_ATOM")
+
+
 def classify_requirement(req_id: str) -> str:
     """Classify a requirement by its category."""
     if "_E0" in req_id or "_E1" in req_id:
@@ -523,7 +533,7 @@ def generate_gap_analysis(
         # Error handling, architectural, and plugin requirements may not need spec links
         if req_id.startswith("REQ_") and not has_spec_links:
             gaps["missing_spec_links"].append(req_id)
-            if category not in ("error_handling", "architectural", "plugin"):
+            if not spec_link_optional(req_id, category):
                 gaps["missing_spec_links_required"].append(req_id)
 
     # Generate category summary table
@@ -574,7 +584,7 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 {category_table}
 
-**Note**: Error handling, architectural, and plugin requirements are implementation-derived and
+**Note**: Error handling, architectural, plugin, and `_ATOM` requirements are implementation-derived and
 may not require direct spec links.
 
 - **Spec-Derived Requirements**: {spec_derived_count}
@@ -611,9 +621,9 @@ These requirements should have spec links but don't:
 {chr(10).join(f"- {req_id}" for req_id in gaps["missing_spec_links_required"]) or "None - All spec-derived requirements have spec links"}
 
 ### Implementation-Derived Requirements Without Spec Links (Expected)
-These are derived requirements (error handling, architectural, plugin) that don't need spec links:
+These are derived requirements (error handling, architectural, plugin, and `_ATOM` ids) that don't need spec links:
 
-{chr(10).join(f"- {req_id}" for req_id in gaps["missing_spec_links"] if classify_requirement(req_id) in derived_categories) or "None"}
+{chr(10).join(f"- {req_id}" for req_id in gaps["missing_spec_links"] if spec_link_optional(req_id, classify_requirement(req_id))) or "None"}
 
 ## ASPICE Compliance Assessment
 

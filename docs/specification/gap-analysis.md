@@ -1,6 +1,6 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-10-04 10:43:43
+Generated: 2026-10-04 16:57:42
 
 ## Summary
 
@@ -9,7 +9,7 @@ Generated: 2026-10-04 10:43:43
 - **Missing Implementation**: 78
 - **Missing Tests**: 12
 - **Missing Spec Links (all)**: 159
-- **Missing Spec Links (required only)**: 6
+- **Missing Spec Links (required only)**: 5
 
 ### Requirement Categories
 
@@ -26,7 +26,7 @@ Generated: 2026-10-04 10:43:43
 | Transport Protocol | 65 | 62 (95%) | 63 (97%) | 64 (98%) |
 
 
-**Note**: Error handling, architectural, and plugin requirements are implementation-derived and
+**Note**: Error handling, architectural, plugin, and `_ATOM` requirements are implementation-derived and
 may not require direct spec links.
 
 - **Spec-Derived Requirements**: 529
@@ -148,7 +148,6 @@ may not require direct spec links.
 ### Implementation Requirements Without Spec Links (Required)
 These requirements should have spec links but don't:
 
-- REQ_TP_081_ATOM
 - REQ_PLATFORM_ARCH_001
 - REQ_CAPI_004
 - REQ_CAPI_005
@@ -156,7 +155,7 @@ These requirements should have spec links but don't:
 - REQ_TRANSPORT_026
 
 ### Implementation-Derived Requirements Without Spec Links (Expected)
-These are derived requirements (error handling, architectural, plugin) that don't need spec links:
+These are derived requirements (error handling, architectural, plugin, and `_ATOM` ids) that don't need spec links:
 
 - REQ_TP_001_E01
 - REQ_TP_001_E02
@@ -168,6 +167,7 @@ These are derived requirements (error handling, architectural, plugin) that don'
 - REQ_TP_030_E02
 - REQ_TP_050_E01
 - REQ_TP_050_E02
+- REQ_TP_081_ATOM
 - REQ_TP_072_E01
 - REQ_TP_076_E01
 - REQ_TP_082_E01
