@@ -29,14 +29,17 @@ namespace someip::transport {
  * @brief Transport endpoint implementation
  */
 
-// Predefined endpoints
+// SD multicast stays on the reserved SD port. Generic application defaults are
+// unresolved (empty address, port 0): not a remote destination and not another
+// fixed application port. Ephemeral local bind remains an explicit address
+// with port 0.
 const Endpoint SOMEIP_SD_MULTICAST_ENDPOINT("239.255.255.251", 30490, TransportProtocol::MULTICAST_UDP);
-const Endpoint SOMEIP_DEFAULT_UDP_ENDPOINT("127.0.0.1", 30490, TransportProtocol::UDP);
-const Endpoint SOMEIP_DEFAULT_TCP_ENDPOINT("127.0.0.1", 30490, TransportProtocol::TCP);
+const Endpoint SOMEIP_DEFAULT_UDP_ENDPOINT("", 0, TransportProtocol::UDP);
+const Endpoint SOMEIP_DEFAULT_TCP_ENDPOINT("", 0, TransportProtocol::TCP);
 
-/** @implements REQ_TRANSPORT_006 */
+/** @implements REQ_TRANSPORT_006, REQ_TRANSPORT_014 */
 Endpoint::Endpoint()
-    : address_("127.0.0.1"), port_(30490), protocol_(TransportProtocol::UDP) {
+    : address_(""), port_(0), protocol_(TransportProtocol::UDP) {
 }
 
 Endpoint::Endpoint(const platform::String<>& address, uint16_t port, TransportProtocol protocol)

@@ -70,9 +70,13 @@ public:
     void shutdown();
 
     /**
-     * @brief Set the default service endpoint used when no resolver is configured.
+     * @brief Set the service endpoint used when no resolver is configured.
+     *
+     * Without a resolver and without this call, subscribe_eventgroup and
+     * request_field fail before send. Port 0 is not a remote application port.
+     *
      * @param address Service IP address
-     * @param port    Service port
+     * @param port    Service port (non-zero). Port 0 does not configure a destination.
      */
     void set_default_endpoint(const platform::String<>& address, uint16_t port);
 
@@ -92,7 +96,8 @@ public:
      * @param notification_callback Callback for event notifications
      * @param status_callback Callback for subscription status changes
      * @param filters Optional filters for selective notifications
-     * @return true if subscription request sent, false on error
+     * @return true if subscription request sent, false if the remote destination
+     *         is unresolved or the send fails
      */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                             EventNotificationCallback notification_callback,
@@ -116,7 +121,8 @@ public:
      * @param instance_id Service instance identifier
      * @param event_id Field identifier
      * @param callback Callback for field value response
-     * @return true if request sent, false on error
+     * @return true if request sent, false if the remote destination is unresolved
+     *         or the send fails
      */
     bool request_field(uint16_t service_id, uint16_t instance_id, uint16_t event_id,
                       EventNotificationCallback callback);

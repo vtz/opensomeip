@@ -39,6 +39,18 @@
 namespace someip::events {
 
 namespace {
+/**
+ * @brief A remote application destination has a valid address and a non-zero port.
+ *
+ * A default-constructed endpoint is unresolved (invalid) and must not be sent.
+ * Port 0 is an ephemeral local bind, not a remote application port.
+ *
+ * @implements REQ_TRANSPORT_014
+ */
+bool is_resolved_remote_destination(const transport::Endpoint& endpoint) {
+    return endpoint.is_valid() && endpoint.get_port() != 0;
+}
+
 void uint16_to_str(uint16_t val, platform::String<>& out) {
     if (val == 0) {
         out.append("0");
@@ -112,7 +124,7 @@ public:
         transport_.stop();
     }
 
-    /** @implements REQ_MSG_122 */
+    /** @implements REQ_MSG_122, REQ_TRANSPORT_014 */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
                             EventNotificationCallback notification_callback,
                             SubscriptionStatusCallback status_callback,
@@ -142,7 +154,8 @@ public:
         subscriptions_[key] = std::move(sub_info);
 
         const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
-        if (service_endpoint.get_port() == 0) {
+        // Unresolved destinations fail before send. Do not target the SD port.
+        if (!is_resolved_remote_destination(service_endpoint)) {
             subscriptions_.erase(key);
             return false;
         }
@@ -179,7 +192,7 @@ public:
         }
 
         const transport::Endpoint service_endpoint = resolve_service_endpoint(service_id, instance_id);
-        if (service_endpoint.get_port() == 0) {
+        if (!is_resolved_remote_destination(service_endpoint)) {
             return false;
         }
 
@@ -203,6 +216,7 @@ public:
         return true;
     }
 
+    /** @implements REQ_TRANSPORT_014 */
     bool request_field(uint16_t service_id, uint16_t instance_id, uint16_t event_id,
                       EventNotificationCallback callback) {
 
@@ -215,7 +229,7 @@ public:
             platform::ScopedLock const subs_lock(subscriptions_mutex_);
             service_endpoint = resolve_service_endpoint(service_id, instance_id);
         }
-        if (service_endpoint.get_port() == 0) {
+        if (!is_resolved_remote_destination(service_endpoint)) {
             return false;
         }
 
@@ -320,6 +334,8 @@ private:
         if (endpoint_resolver_) {
             return endpoint_resolver_(service_id, instance_id);
         }
+        // No resolver and no set_default_endpoint(): unresolved. Do not substitute
+        // a fixed application port or the SD port.
         if (default_service_address_ == "0.0.0.0" && default_service_port_ == 0) {
             return transport::Endpoint();
         }
