@@ -1,6 +1,6 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-10-04 14:33:17
+Generated: 2026-10-05 06:46:27
 
 ## Summary
 
@@ -9,7 +9,7 @@ Generated: 2026-10-04 14:33:17
 - **Missing Implementation**: 78
 - **Missing Tests**: 12
 - **Missing Spec Links (all)**: 159
-- **Missing Spec Links (required only)**: 6
+- **Missing Spec Links (required only)**: 2
 
 ### Requirement Categories
 
@@ -26,11 +26,12 @@ Generated: 2026-10-04 14:33:17
 | Transport Protocol | 65 | 62 (95%) | 63 (97%) | 64 (98%) |
 
 
-**Note**: Error handling, architectural, and plugin requirements are implementation-derived and
-may not require direct spec links.
+**Note**: Implementation-derived requirements may omit direct spec links. The exemption
+matches `validate_requirements.py`: an ID containing `_E0`, `_ARCH_`, `PLUGIN`, or `MY_`;
+an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 
-- **Spec-Derived Requirements**: 529
-- **Implementation-Derived Requirements**: 169
+- **Spec-Derived Requirements**: 474
+- **Implementation-Derived Requirements**: 224
 
 ### Priority Breakdown
 
@@ -150,13 +151,9 @@ These requirements should have spec links but don't:
 
 - REQ_TRANSPORT_026
 - REQ_MSG_150
-- REQ_TP_081_ATOM
-- REQ_PLATFORM_ARCH_001
-- REQ_CAPI_004
-- REQ_CAPI_005
 
 ### Implementation-Derived Requirements Without Spec Links (Expected)
-These are derived requirements (error handling, architectural, plugin) that don't need spec links:
+These requirements match the implementation-derived exemption and do not need spec links:
 
 - REQ_TRANSPORT_001_E01
 - REQ_TRANSPORT_001_E02
@@ -257,6 +254,7 @@ These are derived requirements (error handling, architectural, plugin) that don'
 - REQ_TP_030_E02
 - REQ_TP_050_E01
 - REQ_TP_050_E02
+- REQ_TP_081_ATOM
 - REQ_TP_072_E01
 - REQ_TP_076_E01
 - REQ_TP_082_E01
@@ -264,6 +262,7 @@ These are derived requirements (error handling, architectural, plugin) that don'
 - REQ_TP_082_E03
 - REQ_TP_082_E04
 - REQ_TP_076_E02
+- REQ_PLATFORM_ARCH_001
 - REQ_PAL_MUTEX_UNLOCK_E01
 - REQ_PAL_CV_EXCEPT_E01
 - REQ_PAL_THREAD_CREATE_E01
@@ -311,13 +310,15 @@ These are derived requirements (error handling, architectural, plugin) that don'
 - REQ_SD_123_E01
 - REQ_E2E_PLUGIN_002
 - REQ_E2E_PLUGIN_003
+- REQ_CAPI_004
+- REQ_CAPI_005
 
 ## ASPICE Compliance Assessment
 
 ### SWE.1 (Software Requirements Analysis)
 - **Status**: ⚠️ PARTIAL - Some spec-derived requirements missing links
 - **Details**: Spec-derived requirements must satisfy at least one specification requirement
-- **Derived Requirements**: 169 implementation-derived requirements do not require spec links
+- **Derived Requirements**: 224 implementation-derived requirements do not require spec links
 
 ### SWE.3 (Software Architectural Design)
 - **Status**: ❌ FAIL - Missing implementations
