@@ -256,3 +256,11 @@ if(BUILD_SHARED_LIBS)
         VISIBILITY_INLINES_HIDDEN ON
     )
 endif()
+
+# Host unit tests delay outbound connect so get_connection_state() can
+# observe CONNECTING. Production (BUILD_TESTS=OFF, including the shared
+# package) and RTOS backends do not compile the setter or the sleep.
+if(BUILD_TESTS AND NOT SOMEIP_USE_FREERTOS AND NOT SOMEIP_USE_THREADX)
+    set_property(SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/transport/tcp_transport.cpp
+        APPEND PROPERTY COMPILE_DEFINITIONS SOMEIP_TCP_TEST_CONNECT_HOLD)
+endif()

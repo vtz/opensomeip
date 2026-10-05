@@ -41,7 +41,7 @@ OpenSOME/IP provides a complete, standards-compliant C++ implementation of the S
 
 - **Truly Open Source**: Apache 2.0 licensed - use freely in commercial and personal projects
 - **Modern C++17**: Clean, maintainable codebase with no legacy dependencies
-- **Production Ready**: 443 C++ unit tests across 15 test suites + 80+ Python tests with coverage reporting, CI/CD integration, and [Renode](https://renode.io/) hardware simulation testing on ARM Cortex-M targets
+- **Production Ready**: 723 registered C++ tests across 28 suites on the default host build (722 executed, 1 disabled), plus Python integration tests, coverage reporting, CI/CD, and [Renode](https://renode.io/) hardware simulation testing on ARM Cortex-M targets
 - **Well Documented**: Complete API documentation, examples, and traceability matrices
 - **Active Development**: Regular updates and community-driven improvements
 - **Easy Integration**: CMake-based build system works with any C++ project
@@ -54,7 +54,7 @@ OpenSOME/IP provides a complete, standards-compliant C++ implementation of the S
 
 ## Version
 
-**Current Version**: 0.1.0
+**Current Version**: 0.2.0
 
 This project uses [Semantic Versioning](https://semver.org/). See [VERSION.md](VERSION.md) for details on version management.
 
@@ -392,7 +392,7 @@ OpenSOME/IP follows a modular, layered architecture with clear separation of con
 ├──
 ├── tests/                        # Test suite
 │   ├── CMakeLists.txt            # Test build configuration
-│   ├── test_*.cpp                # C++ unit tests (15 suites, 443 tests)
+│   ├── test_*.cpp                # C++ tests (28 suites, 723 registered on the default host build)
 │   ├── integration/              # Python integration tests
 │   ├── system/                   # System-level tests
 │   └── python/                   # Python test framework
@@ -560,23 +560,29 @@ Platform backends (FreeRTOS, ThreadX, lwIP) are **never** fetched unless you exp
 
 ## Testing
 
-### Current Test Coverage (443 C++ unit tests + 80+ Python tests)
+### Current Test Coverage (723 registered C++ tests on the default host build: 722 executed, 1 disabled; plus 80+ Python tests)
 
-| Suite | Tests | Description |
-|-------|-------|-------------|
-| test_endpoint | 75 | IPv4/IPv6 validation with MC/DC, multicast, comparison, hash |
-| test_sd | 52 | Service Discovery protocol, offers, finds, options |
-| test_serialization | 49 | Data type serialization/deserialization, boundary values |
-| test_e2e | 36 | E2E CRC algorithms, header, protection/validation with MC/DC |
-| test_udp_transport | 27 | UDP transport binding, send/receive, multicast |
-| test_pal_*_mock (×3) | 25 each | PAL conformance for FreeRTOS, ThreadX, Zephyr |
-| test_message | 23 | Message creation, serialization, validation |
+Counts are registered GTest cases from the default host build (28 binaries, `SOMEIP_USE_STATIC_ALLOC=OFF`). 722 of those cases ran and passed. `TcpTransportTest.DISABLED_MessageRoundTrip` is registered and not executed.
+
+| Suite | Registered | Description |
+|-------|------------|-------------|
+| test_sd | 104 | Service Discovery protocol, offers, finds, options |
+| test_endpoint | 76 | IPv4/IPv6 validation with MC/DC, multicast, comparison, hash |
+| test_pal_*_mock (×3) | 75 | PAL conformance for FreeRTOS, ThreadX, and Zephyr (25 each) |
+| test_tp | 62 | SOME/IP-TP segmentation and reassembly |
+| test_serialization | 60 | Data type serialization/deserialization, boundary values |
+| test_tcp_transport | 51 | TCP transport binding and connection management (50 executed, 1 disabled) |
+| tests/capi (10 binaries) | 46 | C API unit and integration tests |
+| test_e2e | 43 | E2E CRC algorithms, header, protection/validation with MC/DC |
+| test_udp_transport | 38 | UDP transport binding, send/receive, multicast |
+| test_message | 36 | Message creation, serialization, validation |
+| test_events | 28 | Event subscription, notification, groups |
+| test_event_driven_tcp_transport | 25 | Event-driven TCP adapter |
 | test_session_manager | 23 | Session lifecycle, expiry, state transitions with MC/DC |
-| test_tp | 23 | SOME/IP-TP segmentation and reassembly |
 | test_platform_threading | 21 | Threading, mutex, condition variable, sleep |
-| test_tcp_transport | 17 | TCP transport binding, connection management |
-| test_events | 14 | Event subscription, notification, groups |
-| test_rpc | 8 | RPC request/response, method calls |
+| test_rpc | 16 | RPC request/response, method calls |
+| test_event_driven_udp_transport | 12 | Event-driven UDP adapter |
+| test_multicast_membership | 7 | Multicast join retry state |
 
 Additional test coverage:
 - Integration testing (Python)

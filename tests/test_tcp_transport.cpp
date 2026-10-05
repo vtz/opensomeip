@@ -24,11 +24,16 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <ctime>
 #include <memory>
 #include <set>
 #include <vector>
 #include "static_pool_init.h"
+
+namespace someip::transport {
+void set_test_outbound_connect_hold_ms(std::uint32_t ms);
+}  // namespace someip::transport
 
 using namespace someip;
 using namespace someip::transport;
@@ -360,22 +365,47 @@ TEST_F(TcpTransportTest, ConnectReportsConnectingDuringHandshake) {
     TcpTransport client(slow);
     ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
 
+    // Sample before connect(). A peer that rejects immediately used to clear
+    // CONNECTING before this thread reached the poll loop (coverage CI).
     std::atomic<bool> saw_connecting{false};
+    std::atomic<bool> stop{false};
+    std::atomic<int> samples{0};
+    std::thread observer([&]() {
+        while (!stop.load(std::memory_order_acquire)) {
+            if (client.get_connection_state() == TcpConnectionState::CONNECTING) {
+                saw_connecting.store(true, std::memory_order_release);
+                break;
+            }
+            samples.fetch_add(1, std::memory_order_release);
+        }
+    });
+    // If the connector thread fails to start, this still runs. Destroying a
+    // joinable std::thread calls std::terminate.
+    struct ObserverGuard {
+        std::atomic<bool>& stop;
+        std::thread& thread;
+        ~ObserverGuard() {
+            stop.store(true, std::memory_order_release);
+            if (thread.joinable()) {
+                thread.join();
+            }
+        }
+    } observer_guard{stop, observer};
+    while (samples.load(std::memory_order_acquire) < 1) {
+        std::this_thread::yield();
+    }
+
+    set_test_outbound_connect_hold_ms(100);
     std::atomic<Result> connect_result{Result::SUCCESS};
     std::thread connector([&]() {
         connect_result.store(
             client.connect(Endpoint("192.0.2.1", 9, TransportProtocol::TCP)),
             std::memory_order_release);
     });
-
-    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(400);
-    while (std::chrono::steady_clock::now() < deadline) {
-        if (client.get_connection_state() == TcpConnectionState::CONNECTING) {
-            saw_connecting.store(true, std::memory_order_release);
-            break;
-        }
-    }
     connector.join();
+    set_test_outbound_connect_hold_ms(0);
+    stop.store(true, std::memory_order_release);
+    observer.join();
 
     EXPECT_NE(connect_result.load(std::memory_order_acquire), Result::SUCCESS);
     EXPECT_TRUE(saw_connecting.load(std::memory_order_acquire))
