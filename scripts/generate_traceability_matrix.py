@@ -345,14 +345,34 @@ def generate_json(
         json.dump(data, f, indent=2)
 
 
+def is_implementation_derived(req_id: str) -> bool:
+    """Return whether ``req_id`` is exempt from a required spec link.
+
+    Same predicates as the implementation-derived check in
+    ``scripts/validate_requirements.py``. ``spec_link_optional`` and the
+    derived-requirement total both call this so they cannot drift.
+    """
+    if not req_id.startswith("REQ_"):
+        return False
+    return (
+        "_E0" in req_id  # Error handling (_E01, _E02, _E03)
+        or "_ARCH_" in req_id  # Architectural
+        or "PLUGIN" in req_id  # Plugin requirements
+        or "MY_" in req_id  # Custom requirements
+        or req_id.startswith("REQ_CAPI_")
+        or req_id.startswith("REQ_PAL_")
+        or req_id.endswith("_ATOM")
+    )
+
+
 def spec_link_optional(req_id: str, category: str) -> bool:
     """Return whether a missing spec link is expected for this requirement.
 
-    Matches validate_requirements.py and check_spec_requirements.py: error
-    handling, architectural, and plugin requirements, plus ``_ATOM`` ids such
-    as REQ_TP_081_ATOM, are implementation-derived.
+    ``category`` is retained for callers. The decision uses
+    ``is_implementation_derived`` only.
     """
-    return category in ("error_handling", "architectural", "plugin") or req_id.endswith("_ATOM")
+    del category
+    return is_implementation_derived(req_id)
 
 
 def classify_requirement(req_id: str) -> str:
@@ -559,11 +579,9 @@ def generate_gap_analysis(
         spec_pct = stats["spec_linked"] / stats["total"] * 100 if stats["total"] > 0 else 0
         category_table += f"| {name} | {stats['total']} | {stats['implemented']} ({impl_pct:.0f}%) | {stats['tested']} ({test_pct:.0f}%) | {stats['spec_linked']} ({spec_pct:.0f}%) |\n"
 
-    # Calculate derived vs spec-linked requirements
-    derived_categories = {"error_handling", "architectural", "plugin"}
-    derived_count = sum(
-        by_category[cat]["total"] for cat in derived_categories if cat in by_category
-    )
+    # Same exemption as spec_link_optional / validate_requirements.py, counted
+    # per ID so _ATOM, C ABI, PAL, and custom IDs are not left in the spec total.
+    derived_count = sum(1 for req_id in requirements if is_implementation_derived(req_id))
     spec_derived_count = len(requirements) - derived_count
 
     # Generate report
@@ -584,8 +602,9 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 {category_table}
 
-**Note**: Error handling, architectural, plugin, and `_ATOM` requirements are implementation-derived and
-may not require direct spec links.
+**Note**: Implementation-derived requirements may omit direct spec links. The exemption
+matches `validate_requirements.py`: an ID containing `_E0`, `_ARCH_`, `PLUGIN`, or `MY_`;
+an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 
 - **Spec-Derived Requirements**: {spec_derived_count}
 - **Implementation-Derived Requirements**: {derived_count}
@@ -621,7 +640,7 @@ These requirements should have spec links but don't:
 {chr(10).join(f"- {req_id}" for req_id in gaps["missing_spec_links_required"]) or "None - All spec-derived requirements have spec links"}
 
 ### Implementation-Derived Requirements Without Spec Links (Expected)
-These are derived requirements (error handling, architectural, plugin, and `_ATOM` ids) that don't need spec links:
+These requirements match the implementation-derived exemption and do not need spec links:
 
 {chr(10).join(f"- {req_id}" for req_id in gaps["missing_spec_links"] if spec_link_optional(req_id, classify_requirement(req_id))) or "None"}
 

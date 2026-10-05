@@ -9,8 +9,8 @@ using Sphinx-Needs annotations embedded directly in the source code.
 | Metric | Value |
 |--------|-------|
 | Total requirements | 698 |
-| Spec-derived | 529 |
-| Implementation-derived | 169 |
+| Spec-derived | 474 |
+| Implementation-derived | 224 |
 | Critical / High priority coverage | Critical 100%; High 98% |
 | C++ unit tests | 723 (host default build) |
 | Python tests | 80+ |

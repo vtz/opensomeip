@@ -1,6 +1,6 @@
 # OpenSOMEIP Implementation Status Report
 
-Generated: 2026-10-04 16:57:42
+Generated: 2026-10-04 23:35:56
 
 ## Executive Summary
 
@@ -38,7 +38,7 @@ Generated: 2026-10-04 16:57:42
 
 - Requirements without implementation: **78**
 - Requirements without test coverage: **12**
-- Requirements without spec links: **5**
+- Requirements without spec links: **2**
 
 ## Recommendations
 
