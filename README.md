@@ -20,6 +20,8 @@
 
 **OpenSOME/IP** (`opensomeip`) is a modern, open-source C++17 implementation of the Scalable service-Oriented MiddlewarE over IP (SOME/IP) protocol for automotive and embedded systems.
 
+**Rust bindings:** the [`opensomeip` crate](https://github.com/vtz/opensomeip-rs-bind) (`opensomeip-sys` plus a safe wrapper) is documented in the [Rust binding guide](https://github.com/vtz/opensomeip-rs-bind/blob/main/README.md).
+
 > **Keywords**: SOME/IP, AUTOSAR, automotive middleware, service-oriented architecture, SOA, embedded systems, vehicle communication, ECU, CAN replacement, Ethernet automotive, in-vehicle networking, IVN
 
 ## Overview

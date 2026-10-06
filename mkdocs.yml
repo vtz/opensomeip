@@ -84,6 +84,7 @@ plugins:
 
 nav:
   - Home: index.md
+  - Rust bindings: https://github.com/vtz/opensomeip-rs-bind/blob/main/README.md
   - Getting Started:
     - Quick Start: getting-started.md
     - Build Instructions: BUILD.md

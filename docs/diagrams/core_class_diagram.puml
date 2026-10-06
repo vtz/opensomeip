@@ -1,4 +1,4 @@
-@startuml Core Class Diagram
+@startuml core_class_diagram
 
 title SOME/IP Core Classes
 

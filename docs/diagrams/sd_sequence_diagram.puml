@@ -1,4 +1,4 @@
-@startuml Service Discovery Sequence
+@startuml sd_sequence_diagram
 
 title SOME/IP Service Discovery Sequence
 

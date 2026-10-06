@@ -1,4 +1,4 @@
-@startuml Layered Architecture
+@startuml layered_architecture
 
 title OpenSOME/IP Layered Architecture
 
