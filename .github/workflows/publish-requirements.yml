@@ -98,10 +98,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y default-jre graphviz
           mkdir -p tools
+          # releases/latest is mutable. This job executes the JAR and can
+          # write to the repository, so pin the asset and check it first.
+          PLANTUML_VERSION="1.2026.8"
+          PLANTUML_SHA256="5e1ecfa8ecd32c90b03bbf3b1eb6f020943f98ab0fcf4032be31a0002ee2c462"
           if [ ! -f tools/plantuml.jar ]; then
             curl -fsSL -o tools/plantuml.jar \
-              https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar
+              "https://github.com/plantuml/plantuml/releases/download/v${PLANTUML_VERSION}/plantuml-${PLANTUML_VERSION}.jar"
           fi
+          echo "${PLANTUML_SHA256}  tools/plantuml.jar" | sha256sum -c -
           chmod +x ./tools/plantuml/generate_diagrams.sh
           ./tools/plantuml/generate_diagrams.sh
           test -s docs/diagrams/svg/core_class_diagram.svg
