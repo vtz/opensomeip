@@ -112,10 +112,10 @@ public:
         // The unprotected prefix and the E2E header are not covered. Length
         // still counts the prefix and the header (feat_req_someip_77).
         uint32_t crc = 0;
-        const uint32_t wire_length = static_cast<uint32_t>(
+        const auto wire_length = static_cast<uint32_t>(
             8U + expected_prefix + get_header_size() + msg.get_payload().size());
         if (config.enable_crc) {
-            platform::ByteBuffer crc_data = build_basic_crc_input(msg, wire_length);
+            const platform::ByteBuffer crc_data = build_basic_crc_input(msg, wire_length);
 
             auto crc_result = e2ecrc::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
             if (!crc_result.has_value()) {
@@ -196,7 +196,7 @@ public:
 
         // Validate CRC
         if (config.enable_crc) {
-            platform::ByteBuffer crc_data = build_basic_crc_input(msg, msg.get_length());
+            const platform::ByteBuffer crc_data = build_basic_crc_input(msg, msg.get_length());
 
             auto crc_result = e2ecrc::calculate_crc(crc_data, 0, crc_data.size(), config.crc_type);
             if (!crc_result.has_value()) {

@@ -24,13 +24,13 @@
 
 namespace someip::e2e {
 
-inline constexpr size_t kMaxE2EHeaderSize = SOMEIP_MAX_E2E_HEADER_SIZE;
-inline constexpr size_t kMaxE2EPrefixSize = SOMEIP_MAX_E2E_PREFIX_SIZE;
+inline constexpr size_t MAX_E2E_HEADER_SIZE = SOMEIP_MAX_E2E_HEADER_SIZE;
+inline constexpr size_t MAX_E2E_PREFIX_SIZE = SOMEIP_MAX_E2E_PREFIX_SIZE;
 
-static_assert(kMaxE2EHeaderSize >= E2EHeader::get_header_size(),
+static_assert(MAX_E2E_HEADER_SIZE >= E2EHeader::get_header_size(),
               "SOMEIP_MAX_E2E_HEADER_SIZE must fit the 12-byte basic profile");
-static_assert(kMaxE2EHeaderSize <= 256, "SOMEIP_MAX_E2E_HEADER_SIZE is bounded");
-static_assert(kMaxE2EPrefixSize <= 256, "SOMEIP_MAX_E2E_PREFIX_SIZE is bounded");
+static_assert(MAX_E2E_HEADER_SIZE <= 256, "SOMEIP_MAX_E2E_HEADER_SIZE is bounded");
+static_assert(MAX_E2E_PREFIX_SIZE <= 256, "SOMEIP_MAX_E2E_PREFIX_SIZE is bounded");
 
 /**
  * @brief How a receiver locates an E2E header.
@@ -52,7 +52,7 @@ struct E2EParseOptions {
  * Default 64 bits → index 16 (immediately after Return Code).
  */
 inline size_t e2e_header_wire_index(uint32_t offset_bits) {
-    return static_cast<size_t>(8U + (offset_bits / 8U));
+    return static_cast<size_t>(8U) + (static_cast<size_t>(offset_bits) / 8U);
 }
 
 /**
@@ -74,14 +74,15 @@ inline Result check_e2e_layout(uint32_t offset_bits, size_t header_size, size_t&
     if (offset_bits < E2EConfig::DEFAULT_OFFSET_BITS || (offset_bits % 8U) != 0U) {
         return Result::INVALID_ARGUMENT;
     }
-    const size_t prefix = static_cast<size_t>((offset_bits - E2EConfig::DEFAULT_OFFSET_BITS) / 8U);
-    if (prefix > kMaxE2EPrefixSize) {
+    const auto prefix =
+        static_cast<size_t>(offset_bits - E2EConfig::DEFAULT_OFFSET_BITS) / 8U;
+    if (prefix > MAX_E2E_PREFIX_SIZE) {
         return Result::NOT_IMPLEMENTED;
     }
     if (header_size == 0U) {
         return Result::INVALID_ARGUMENT;
     }
-    if (header_size > kMaxE2EHeaderSize) {
+    if (header_size > MAX_E2E_HEADER_SIZE) {
         return Result::NOT_IMPLEMENTED;
     }
     prefix_bytes = prefix;
