@@ -16,8 +16,7 @@
 
 #include "e2e/e2e_profile.h"
 
-namespace someip {
-namespace e2e {
+namespace someip::e2e {
 
 /**
  * @brief Initialize and register the basic E2E profile
@@ -36,7 +35,6 @@ namespace e2e {
  */
 void initialize_basic_profile();
 
-} // namespace e2e
-} // namespace someip
+}  // namespace someip::e2e
 
 #endif // E2E_BASIC_PROFILE_H
