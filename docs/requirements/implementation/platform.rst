@@ -430,6 +430,27 @@ ScopedLock Interface
 
    **Code Location**: ``include/platform/thread.h``
 
+Thread Identity
+---------------
+
+.. requirement:: PAL Current Thread Identity
+   :id: REQ_PAL_THREAD_ID
+   :satisfies: REQ_ARCH_002
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit test: Repeated get_id calls in one thread compare equal; a simultaneously live worker has a different identity.
+
+   ``someip::platform::this_thread::get_id()`` shall return an equality-comparable
+   ``ThreadId`` identifying the calling thread or task. The identity shall remain
+   stable during that thread's lifetime and differ from another simultaneously
+   live thread. Identity reuse after termination is permitted.
+
+   **Rationale**: Callback reentrancy checks require native task identity on RTOS
+   targets where language-level thread-local storage is not task-local.
+
+   **Code Location**: ``include/platform/*/thread_impl.h``
+
 sleep_for Interface
 -------------------
 

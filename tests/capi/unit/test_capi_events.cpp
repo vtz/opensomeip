@@ -66,6 +66,25 @@ TEST(CapiEventSubscriber, NullHandleReturnsError) {
  * @test_case TC_CAPI_EVT_SUB_CB_001
  * @tests REQ_CAPI_004
  */
+static void ignore_event(uint16_t, uint16_t, uint16_t, const uint8_t*, size_t, void*) {}
+
+/**
+ * @test_case TC_CAPI_EVT_SUB_RESULT
+ * @tests REQ_TRANSPORT_030, REQ_CAPI_004
+ * @brief Unresolved subscribe is not reported as an internal error.
+ */
+TEST(CapiEventSubscriber, SubscribeReportsUnresolvedEndpoint) {
+    opensomeip_event_subscriber_t* s = nullptr;
+    ASSERT_EQ(opensomeip_event_subscriber_create(&s, 0x0001), OPENSOMEIP_RESULT_SUCCESS);
+    ASSERT_EQ(opensomeip_event_subscriber_initialize(s), OPENSOMEIP_RESULT_SUCCESS);
+
+    EXPECT_EQ(opensomeip_event_subscriber_subscribe(s, 0x1234, 0x0001, 0x0001, ignore_event, nullptr),
+              OPENSOMEIP_RESULT_INVALID_ENDPOINT);
+
+    opensomeip_event_subscriber_shutdown(s);
+    opensomeip_event_subscriber_destroy(s);
+}
+
 TEST(CapiEventSubscriber, SubscribeRejectsNullCallback) {
     opensomeip_event_subscriber_t* s = nullptr;
     ASSERT_EQ(opensomeip_event_subscriber_create(&s, 0x0001), OPENSOMEIP_RESULT_SUCCESS);

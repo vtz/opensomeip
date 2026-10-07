@@ -139,7 +139,15 @@ extern "C" opensomeip_result_t opensomeip_event_subscriber_subscribe(opensomeip_
     try {
         auto cb = callback;
         auto ud = user_data;
-        bool ok = s->subscriber.subscribe_eventgroup(
+        // opensomeip_result_t mirrors someip::Result. Do not collapse distinct
+        // subscribe failures onto INTERNAL_ERROR.
+        static_assert(static_cast<unsigned>(OPENSOMEIP_RESULT_INVALID_ENDPOINT) ==
+                      static_cast<unsigned>(someip::Result::INVALID_ENDPOINT));
+        static_assert(static_cast<unsigned>(OPENSOMEIP_RESULT_SUBSCRIPTION_FAILED) ==
+                      static_cast<unsigned>(someip::Result::SUBSCRIPTION_FAILED));
+        static_assert(static_cast<unsigned>(OPENSOMEIP_RESULT_NETWORK_ERROR) ==
+                      static_cast<unsigned>(someip::Result::NETWORK_ERROR));
+        const someip::Result code = s->subscriber.subscribe_eventgroup(
             service_id, instance_id, eventgroup_id,
             [cb, ud](const someip::events::EventNotification& notif) {
                 try {
@@ -148,7 +156,7 @@ extern "C" opensomeip_result_t opensomeip_event_subscriber_subscribe(opensomeip_
                 } catch (...) {} // NOLINT(bugprone-empty-catch) — FFI exception firewall
             }
         );
-        return ok ? OPENSOMEIP_RESULT_SUCCESS : OPENSOMEIP_RESULT_INTERNAL_ERROR;
+        return static_cast<opensomeip_result_t>(static_cast<uint8_t>(code));
     } catch (...) { return OPENSOMEIP_RESULT_INTERNAL_ERROR; }
 }
 
