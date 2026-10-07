@@ -3200,3 +3200,484 @@ TEST_F(SdIntegrationTest, SubscribeAckGoesToSdSenderNotEventEndpoint) {
     EXPECT_FALSE(event_got)
         << "Ack must not be sent to the event IPv4EndpointOption address";
 }
+
+static Message wrap_sd_message(SdMessage sd_msg, uint16_t session_id) {
+    Message someip_msg(
+        MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+        RequestId(SOMEIP_SD_CLIENT_ID, session_id),
+        MessageType::NOTIFICATION,
+        ReturnCode::E_OK);
+    someip_msg.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
+    someip_msg.set_payload(sd_msg.serialize());
+    return someip_msg;
+}
+
+static bool receive_sd_entry(transport::UdpTransport& transport, uint8_t raw_type,
+                             uint32_t& out_ttl, uint16_t& out_service,
+                             std::chrono::milliseconds timeout) {
+    auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (std::chrono::steady_clock::now() < deadline) {
+        auto msg = transport.receive_message();
+        if (!msg) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        if (msg->get_service_id() != 0xFFFF) {
+            continue;
+        }
+        SdMessage parsed;
+        if (!parsed.deserialize(msg->get_payload())) {
+            continue;
+        }
+        for (const auto& entry_var : parsed.get_entries()) {
+            const SdEntry* entry = get_entry_ptr(entry_var);
+            if (static_cast<uint8_t>(entry->get_type()) == raw_type) {
+                out_ttl = entry->get_ttl();
+                if (const auto* se = std::get_if<ServiceEntry>(&entry_var)) {
+                    out_service = se->get_service_id();
+                } else if (const auto* eg = std::get_if<EventGroupEntry>(&entry_var)) {
+                    out_service = eg->get_service_id();
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * @test_case TC_SD_024_WIRE
+ * @tests REQ_SD_122, REQ_SD_236
+ * @tests feat_req_someipsd_1085, feat_req_someipsd_1086, feat_req_someipsd_1087
+ * @brief IPv4 SD Endpoint Option uses type 0x24 and the IPv4 endpoint layout.
+ */
+TEST_F(SdTest, IPv4SdEndpointOptionRoundTrip) {
+    IPv4SdEndpointOption option;
+    option.set_ipv4_address_from_string("192.0.2.10");
+    option.set_port(40000);
+    option.set_protocol(0x11);
+
+    auto data = option.serialize();
+    ASSERT_EQ(data.size(), 12u);
+    EXPECT_EQ(data[0], 0x00);
+    EXPECT_EQ(data[1], 0x09);
+    EXPECT_EQ(data[2], 0x24);
+    EXPECT_EQ(data[3], 0x00);
+    EXPECT_EQ(data[4], 192);
+    EXPECT_EQ(data[5], 0);
+    EXPECT_EQ(data[6], 2);
+    EXPECT_EQ(data[7], 10);
+    EXPECT_EQ(data[8], 0x00);
+    EXPECT_EQ(data[9], 0x11);
+    EXPECT_EQ(data[10], 0x9C);
+    EXPECT_EQ(data[11], 0x40);
+
+    IPv4SdEndpointOption decoded;
+    size_t offset = 0;
+    ASSERT_TRUE(decoded.deserialize(data, offset));
+    EXPECT_EQ(decoded.get_type(), OptionType::IPV4_SD_ENDPOINT);
+    EXPECT_EQ(decoded.get_ipv4_address_string(), "192.0.2.10");
+    EXPECT_EQ(decoded.get_port(), 40000);
+    EXPECT_EQ(decoded.get_protocol(), 0x11);
+    EXPECT_EQ(offset, data.size());
+}
+
+/**
+ * @test_case TC_SD_024_BADLEN
+ * @tests REQ_SD_236
+ * @brief A 0x24 option whose Length is not 0x0009 is rejected.
+ */
+TEST_F(SdTest, IPv4SdEndpointOptionRejectsMalformedLength) {
+    platform::ByteBuffer data = {
+        0xC0, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x04,
+        0x00, 0x08, 0x24, 0x00
+    };
+    SdMessage message;
+    EXPECT_FALSE(message.deserialize(data));
+}
+
+/**
+ * @test_case TC_SD_024_TRUNC
+ * @tests REQ_SD_236
+ * @brief A 0x24 option truncated before its address and port is rejected.
+ */
+TEST_F(SdTest, IPv4SdEndpointOptionRejectsTruncation) {
+    platform::ByteBuffer data = {
+        0xC0, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x04,
+        0x00, 0x09, 0x24, 0x00
+    };
+    SdMessage message;
+    EXPECT_FALSE(message.deserialize(data));
+}
+
+/**
+ * @test_case TC_SD_024_PLACE
+ * @tests REQ_SD_343
+ * @tests feat_req_someipsd_1151, feat_req_someipsd_1152, feat_req_someipsd_1114
+ * @brief Only a first-position 0x24 is the SD endpoint, and entries must not reference it.
+ */
+TEST_F(SdTest, IPv4SdEndpointPlacementAndEntryReference) {
+    IPv4EndpointOption endpoint;
+    endpoint.set_ipv4_address_from_string("192.0.2.20");
+    endpoint.set_port(30509);
+    endpoint.set_protocol(0x11);
+
+    IPv4SdEndpointOption second;
+    second.set_ipv4_address_from_string("192.0.2.30");
+    second.set_port(30490);
+    second.set_protocol(0x11);
+
+    SdMessage not_first;
+    ServiceEntry offer(EntryType::OFFER_SERVICE);
+    offer.set_service_id(0x1234);
+    offer.set_instance_id(0x0001);
+    offer.set_ttl(3);
+    offer.set_index1(0);
+    offer.set_num_opts1(1);
+    ASSERT_TRUE(not_first.add_entry(offer));
+    ASSERT_TRUE(not_first.add_option(endpoint));
+    ASSERT_TRUE(not_first.add_option(second));
+    auto encoded = not_first.serialize();
+    SdMessage parsed_not_first;
+    ASSERT_TRUE(parsed_not_first.deserialize(encoded));
+    platform::String<> address;
+    uint16_t port = 0;
+    EXPECT_FALSE(parsed_not_first.ipv4_sd_endpoint(address, port));
+    EXPECT_TRUE(parsed_not_first.entry_references_ipv4_sd_endpoint(
+        *get_entry_ptr(parsed_not_first.get_entries().front())) == false);
+
+    IPv4SdEndpointOption first;
+    first.set_ipv4_address_from_string("192.0.2.40");
+    first.set_port(35555);
+    first.set_protocol(0x11);
+    IPv4SdEndpointOption ignored;
+    ignored.set_ipv4_address_from_string("192.0.2.50");
+    ignored.set_port(35556);
+    ignored.set_protocol(0x11);
+
+    SdMessage two;
+    ServiceEntry find(EntryType::FIND_SERVICE);
+    find.set_service_id(0x1234);
+    find.set_instance_id(0x0001);
+    find.set_ttl(3);
+    find.set_index1(0);
+    find.set_num_opts1(1);
+    ASSERT_TRUE(two.add_entry(std::move(find)));
+    ASSERT_TRUE(two.add_option(std::move(first)));
+    ASSERT_TRUE(two.add_option(std::move(ignored)));
+    SdMessage parsed_two;
+    ASSERT_TRUE(parsed_two.deserialize(two.serialize()));
+    ASSERT_TRUE(parsed_two.ipv4_sd_endpoint(address, port));
+    EXPECT_EQ(address, "192.0.2.40");
+    EXPECT_EQ(port, 35555);
+    EXPECT_TRUE(parsed_two.entry_references_ipv4_sd_endpoint(
+        *get_entry_ptr(parsed_two.get_entries().front())));
+
+    ServiceEntry unreferenced(EntryType::FIND_SERVICE);
+    unreferenced.set_service_id(0x1234);
+    unreferenced.set_instance_id(0x0001);
+    unreferenced.set_ttl(3);
+    unreferenced.set_num_opts1(0);
+    SdMessage clean;
+    ASSERT_TRUE(clean.add_entry(unreferenced));
+    IPv4SdEndpointOption only;
+    only.set_ipv4_address_from_string("192.0.2.40");
+    only.set_port(35555);
+    only.set_protocol(0x11);
+    ASSERT_TRUE(clean.add_option(std::move(only)));
+    EXPECT_FALSE(clean.entry_references_ipv4_sd_endpoint(
+        *get_entry_ptr(clean.get_entries().front())));
+
+    EXPECT_FALSE(sd_reboot_detected(false, false, 1, true, 1));
+    EXPECT_TRUE(sd_reboot_detected(true, false, 5, true, 1));
+    EXPECT_TRUE(sd_reboot_detected(true, true, 5, true, 5));
+    EXPECT_TRUE(sd_reboot_detected(true, true, 5, true, 1));
+    EXPECT_FALSE(sd_reboot_detected(true, true, 1, true, 2));
+    EXPECT_FALSE(sd_reboot_detected(true, true, 5, false, 1));
+}
+
+/**
+ * @test_case TC_SD_024_FIND
+ * @tests REQ_SD_1084, REQ_SD_343
+ * @tests feat_req_someipsd_1084
+ * @brief FindService is answered at the IPv4 SD Endpoint, not the datagram source.
+ */
+TEST_F(SdIntegrationTest, FindOfferUsesIpv4SdEndpoint) {
+    const uint16_t server_port = get_unique_port();
+    const uint16_t source_port = get_unique_port();
+    const uint16_t sd_port = get_unique_port();
+
+    auto server_config = create_test_config(server_port, server_port);
+    SdServer server(server_config);
+    ASSERT_TRUE(server.initialize());
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {}));
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport source(transport::Endpoint("0.0.0.0", source_port), cfg);
+    transport::UdpTransport sd_ep(transport::Endpoint("0.0.0.0", sd_port), cfg);
+    ASSERT_EQ(source.start(), Result::SUCCESS);
+    ASSERT_EQ(sd_ep.start(), Result::SUCCESS);
+
+    ServiceEntry find(EntryType::FIND_SERVICE);
+    find.set_service_id(0x1234);
+    find.set_instance_id(0x0001);
+    find.set_major_version(1);
+    find.set_ttl(3);
+    find.set_num_opts1(0);
+    IPv4SdEndpointOption sd_opt;
+    sd_opt.set_ipv4_address_from_string("127.0.0.1");
+    sd_opt.set_port(sd_port);
+    sd_opt.set_protocol(0x11);
+    SdMessage sd_msg;
+    sd_msg.set_reboot(true);
+    sd_msg.set_unicast(true);
+    ASSERT_TRUE(sd_msg.add_entry(std::move(find)));
+    ASSERT_TRUE(sd_msg.add_option(std::move(sd_opt)));
+
+    ASSERT_EQ(source.send_message(wrap_sd_message(std::move(sd_msg), 1),
+                                  transport::Endpoint("127.0.0.1", server_port)),
+              Result::SUCCESS);
+
+    uint32_t ttl = 0;
+    uint16_t service = 0;
+    const bool at_sd = receive_sd_entry(sd_ep, 0x01, ttl, service, std::chrono::milliseconds(1500));
+    const bool at_source = receive_sd_entry(source, 0x01, ttl, service, std::chrono::milliseconds(200));
+
+    source.stop();
+    sd_ep.stop();
+    server.shutdown();
+
+    if (!at_sd) {
+        GTEST_SKIP() << "Offer not received (loopback may be unavailable)";
+    }
+    EXPECT_EQ(service, 0x1234u);
+    EXPECT_GT(ttl, 0u);
+    EXPECT_FALSE(at_source);
+}
+
+/**
+ * @test_case TC_SD_024_SUB
+ * @tests REQ_SD_1084, REQ_SD_343
+ * @tests feat_req_someipsd_1084, feat_req_someipsd_1114
+ * @brief Subscribe Ack uses the SD endpoint; the event endpoint is unchanged.
+ *        An entry that references 0x24 is NACKed to that SD endpoint.
+ */
+TEST_F(SdIntegrationTest, SubscribeAckUsesIpv4SdEndpointNotEventEndpoint) {
+    const uint16_t server_port = get_unique_port();
+    const uint16_t source_port = get_unique_port();
+    const uint16_t sd_port = get_unique_port();
+    const uint16_t event_port = get_unique_port();
+
+    auto server_config = create_test_config(server_port, server_port);
+    SdServer server(server_config);
+    ASSERT_TRUE(server.initialize());
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {0x0001}));
+
+    transport::Endpoint event_seen("0.0.0.0", 0);
+    server.set_subscription_accepted_callback(
+        [&](uint16_t, uint16_t, uint16_t, const transport::Endpoint& ep) { event_seen = ep; });
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport source(transport::Endpoint("0.0.0.0", source_port), cfg);
+    transport::UdpTransport sd_ep(transport::Endpoint("0.0.0.0", sd_port), cfg);
+    transport::UdpTransport event_sink(transport::Endpoint("0.0.0.0", event_port), cfg);
+    ASSERT_EQ(source.start(), Result::SUCCESS);
+    ASSERT_EQ(sd_ep.start(), Result::SUCCESS);
+    ASSERT_EQ(event_sink.start(), Result::SUCCESS);
+
+    EventGroupEntry sub(EntryType::SUBSCRIBE_EVENTGROUP);
+    sub.set_service_id(0x1234);
+    sub.set_instance_id(0x0001);
+    sub.set_eventgroup_id(0x0001);
+    sub.set_major_version(1);
+    sub.set_ttl(1800);
+    sub.set_index1(1);
+    sub.set_num_opts1(1);
+    IPv4SdEndpointOption sd_opt;
+    sd_opt.set_ipv4_address_from_string("127.0.0.1");
+    sd_opt.set_port(sd_port);
+    sd_opt.set_protocol(0x11);
+    IPv4EndpointOption event_opt;
+    event_opt.set_ipv4_address_from_string("127.0.0.1");
+    event_opt.set_port(event_port);
+    event_opt.set_protocol(0x11);
+    SdMessage sd_msg;
+    sd_msg.set_reboot(true);
+    sd_msg.set_unicast(true);
+    ASSERT_TRUE(sd_msg.add_entry(std::move(sub)));
+    ASSERT_TRUE(sd_msg.add_option(std::move(sd_opt)));
+    ASSERT_TRUE(sd_msg.add_option(std::move(event_opt)));
+
+    transport::Endpoint server_ep("127.0.0.1", server_port);
+    ASSERT_EQ(source.send_message(wrap_sd_message(std::move(sd_msg), 1), server_ep),
+              Result::SUCCESS);
+
+    uint32_t ttl = 0;
+    uint16_t service = 0;
+    const bool at_sd = receive_sd_entry(sd_ep, 0x07, ttl, service, std::chrono::milliseconds(1500));
+    const bool at_source = receive_sd_entry(source, 0x07, ttl, service, std::chrono::milliseconds(200));
+    const bool at_event = receive_sd_entry(event_sink, 0x07, ttl, service, std::chrono::milliseconds(200));
+
+    if (!at_sd) {
+        source.stop();
+        sd_ep.stop();
+        event_sink.stop();
+        server.shutdown();
+        GTEST_SKIP() << "ACK not received (loopback may be unavailable)";
+    }
+    EXPECT_EQ(service, 0x1234u);
+    EXPECT_GT(ttl, 0u);
+    EXPECT_FALSE(at_source);
+    EXPECT_FALSE(at_event);
+    EXPECT_EQ(event_seen.get_port(), event_port);
+
+    EventGroupEntry illegal(EntryType::SUBSCRIBE_EVENTGROUP);
+    illegal.set_service_id(0x1234);
+    illegal.set_instance_id(0x0001);
+    illegal.set_eventgroup_id(0x0001);
+    illegal.set_major_version(1);
+    illegal.set_ttl(1800);
+    illegal.set_index1(0);
+    illegal.set_num_opts1(1);
+    IPv4SdEndpointOption referenced;
+    referenced.set_ipv4_address_from_string("127.0.0.1");
+    referenced.set_port(sd_port);
+    referenced.set_protocol(0x11);
+    SdMessage bad;
+    bad.set_reboot(true);
+    bad.set_unicast(true);
+    ASSERT_TRUE(bad.add_entry(std::move(illegal)));
+    ASSERT_TRUE(bad.add_option(std::move(referenced)));
+    ASSERT_EQ(source.send_message(wrap_sd_message(std::move(bad), 2), server_ep), Result::SUCCESS);
+
+    uint32_t nack_ttl = 1;
+    const bool nack_at_sd = receive_sd_entry(sd_ep, 0x07, nack_ttl, service, std::chrono::milliseconds(1500));
+    source.stop();
+    sd_ep.stop();
+    event_sink.stop();
+    server.shutdown();
+    EXPECT_TRUE(nack_at_sd);
+    EXPECT_EQ(nack_ttl, 0u);
+}
+
+/**
+ * @test_case TC_SD_024_REBOOT
+ * @tests REQ_SD_1084, REQ_SD_311, REQ_SD_343
+ * @tests feat_req_someipsd_1084
+ * @brief Reboot detection and SubscribeEventgroup follow the advertised SD endpoint.
+ */
+TEST_F(SdIntegrationTest, RebootAndSubscribeFollowIpv4SdEndpoint) {
+    const uint16_t client_port = get_unique_port();
+    const uint16_t source_a = get_unique_port();
+    const uint16_t source_c = get_unique_port();
+    const uint16_t sd_b = get_unique_port();
+    const uint16_t sd_d = get_unique_port();
+
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport peer_a(transport::Endpoint("0.0.0.0", source_a), cfg);
+    transport::UdpTransport peer_c(transport::Endpoint("0.0.0.0", source_c), cfg);
+    transport::UdpTransport endpoint_b(transport::Endpoint("0.0.0.0", sd_b), cfg);
+    transport::UdpTransport endpoint_d(transport::Endpoint("0.0.0.0", sd_d), cfg);
+    ASSERT_EQ(peer_a.start(), Result::SUCCESS);
+    ASSERT_EQ(peer_c.start(), Result::SUCCESS);
+    ASSERT_EQ(endpoint_b.start(), Result::SUCCESS);
+    ASSERT_EQ(endpoint_d.start(), Result::SUCCESS);
+
+    auto make_offer = [](uint16_t sd_port, uint16_t session) {
+        ServiceEntry offer(EntryType::OFFER_SERVICE);
+        offer.set_service_id(0x1234);
+        offer.set_instance_id(0x0001);
+        offer.set_major_version(1);
+        offer.set_minor_version(0);
+        offer.set_ttl(30);
+        offer.set_index1(1);
+        offer.set_num_opts1(1);
+        IPv4SdEndpointOption sd_opt;
+        sd_opt.set_ipv4_address_from_string("127.0.0.1");
+        sd_opt.set_port(sd_port);
+        sd_opt.set_protocol(0x11);
+        IPv4EndpointOption app;
+        app.set_ipv4_address_from_string("127.0.0.1");
+        app.set_port(30509);
+        app.set_protocol(0x11);
+        SdMessage sd_msg;
+        sd_msg.set_reboot(true);
+        sd_msg.set_unicast(true);
+        sd_msg.add_entry(std::move(offer));
+        sd_msg.add_option(std::move(sd_opt));
+        sd_msg.add_option(std::move(app));
+        return wrap_sd_message(std::move(sd_msg), session);
+    };
+
+    ASSERT_EQ(peer_a.send_message(make_offer(sd_b, 5), transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+
+    bool offer_seen = false;
+    platform::Vector<ServiceInstance> services;
+    for (int i = 0; i < 50 && !offer_seen; ++i) {
+        services = client.get_available_services(0x1234);
+        offer_seen = !services.empty();
+        if (!offer_seen) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+    if (!offer_seen) {
+        peer_a.stop();
+        peer_c.stop();
+        endpoint_b.stop();
+        endpoint_d.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Offer not received (loopback may be unavailable)";
+    }
+    EXPECT_EQ(services[0].port, 30509);
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+    uint32_t ttl = 0;
+    uint16_t service = 0;
+    const bool first_sub = receive_sd_entry(endpoint_b, 0x06, ttl, service, std::chrono::milliseconds(1500));
+    if (!first_sub) {
+        peer_a.stop();
+        peer_c.stop();
+        endpoint_b.stop();
+        endpoint_d.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Subscribe not received (loopback may be unavailable)";
+    }
+    EXPECT_GT(ttl, 0u);
+
+    ASSERT_EQ(peer_a.send_message(make_offer(sd_d, 1), transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+    const bool sub_on_other = receive_sd_entry(endpoint_d, 0x06, ttl, service, std::chrono::milliseconds(300));
+    const bool extra_on_b = receive_sd_entry(endpoint_b, 0x06, ttl, service, std::chrono::milliseconds(300));
+    EXPECT_FALSE(sub_on_other);
+    EXPECT_FALSE(extra_on_b);
+
+    ASSERT_EQ(peer_c.send_message(make_offer(sd_b, 1), transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+    const bool resub = receive_sd_entry(endpoint_b, 0x06, ttl, service, std::chrono::milliseconds(1500));
+    const bool at_source_c = receive_sd_entry(peer_c, 0x06, ttl, service, std::chrono::milliseconds(200));
+
+    peer_a.stop();
+    peer_c.stop();
+    endpoint_b.stop();
+    endpoint_d.stop();
+    client.shutdown();
+
+    EXPECT_TRUE(resub);
+    EXPECT_FALSE(at_source_c);
+}

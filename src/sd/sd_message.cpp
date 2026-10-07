@@ -246,7 +246,7 @@ bool SdOption::deserialize(const platform::ByteBuffer& data, size_t& offset) {
 }
 
 // IPv4EndpointOption implementation
-/** @implements REQ_SD_120, REQ_SD_122, REQ_SD_123 */
+/** @implements REQ_SD_120, REQ_SD_123 */
 platform::ByteBuffer IPv4EndpointOption::serialize() const {
     platform::ByteBuffer data = SdOption::serialize();
 
@@ -830,6 +830,15 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
                 return false;
             }
             options_.emplace_back(std::move(option));
+        } else if (option_type == OptionType::IPV4_SD_ENDPOINT) {
+            IPv4SdEndpointOption option;
+            if (!option.deserialize(data, offset)) {
+                return false;
+            }
+            if (options_.size() >= options_.max_size()) {
+                return false;
+            }
+            options_.emplace_back(std::move(option));
         } else if (option_type == OptionType::IPV4_MULTICAST) {
             IPv4MulticastOption option;
             if (!option.deserialize(data, offset)) {
@@ -871,6 +880,48 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
     }
 
     return true;
+}
+
+/** @implements REQ_SD_236, REQ_SD_343
+ *  @satisfies feat_req_someipsd_1151, feat_req_someipsd_1152 */
+bool SdMessage::ipv4_sd_endpoint(platform::String<>& address, uint16_t& port) const {
+    if (options_.empty()) {
+        return false;
+    }
+    const auto* option = std::get_if<IPv4SdEndpointOption>(&options_.front());
+    if (option == nullptr) {
+        return false;
+    }
+    // SD rides UDP. A non-UDP or empty endpoint does not replace the datagram source.
+    if (option->get_protocol() != 0x11U || option->get_port() == 0) {
+        return false;
+    }
+    const uint32_t raw = option->get_ipv4_address();
+    if (raw == 0U || raw == 0xFFFFFFFFU) {
+        return false;
+    }
+    address = option->get_ipv4_address_string();
+    port = option->get_port();
+    return !address.empty();
+}
+
+/** @implements REQ_SD_343
+ *  @satisfies feat_req_someipsd_1114 */
+bool SdMessage::entry_references_ipv4_sd_endpoint(const SdEntry& entry) const {
+    const auto run_hits = [this](uint8_t index, uint8_t count) {
+        for (uint8_t i = 0; i < count; ++i) {
+            const size_t pos = static_cast<size_t>(index) + static_cast<size_t>(i);
+            if (pos >= options_.size()) {
+                break;
+            }
+            if (std::holds_alternative<IPv4SdEndpointOption>(options_[pos])) {
+                return true;
+            }
+        }
+        return false;
+    };
+    return run_hits(entry.get_index1(), entry.get_num_opts1()) ||
+           run_hits(entry.get_index2(), entry.get_num_opts2());
 }
 
 // NOLINTEND(misc-include-cleaner)

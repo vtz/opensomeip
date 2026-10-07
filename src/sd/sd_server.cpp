@@ -648,15 +648,22 @@ private:
         // TODO: Handle transport errors
     }
 
-    /** @implements REQ_SD_300, REQ_SD_312, REQ_SD_818 */
+    /** @implements REQ_SD_300, REQ_SD_312, REQ_SD_818, REQ_SD_1084, REQ_SD_343
+     *  @satisfies feat_req_someipsd_1084, feat_req_someipsd_1151 */
     void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender,
                            bool via_multicast) {
+        platform::String<> sd_address;
+        uint16_t sd_port = 0;
+        const transport::Endpoint reply_to = message.ipv4_sd_endpoint(sd_address, sd_port)
+            ? transport::Endpoint(sd_address, sd_port)
+            : sender;
+
         for (const auto& entry_var : message.get_entries()) {
             const SdEntry* entry = get_entry_ptr(entry_var);
             switch (entry->get_type()) {
                 case EntryType::FIND_SERVICE:
                     if (const auto* se = std::get_if<ServiceEntry>(&entry_var)) {
-                        handle_find_service(*se, sender);
+                        handle_find_service(*se, reply_to);
                     }
                     break;
                 case EntryType::SUBSCRIBE_EVENTGROUP:
@@ -664,7 +671,7 @@ private:
                         break;
                     }
                     if (const auto* eg = std::get_if<EventGroupEntry>(&entry_var)) {
-                        handle_eventgroup_subscription_request(*eg, message, sender);
+                        handle_eventgroup_subscription_request(*eg, message, sender, reply_to);
                     }
                     break;
                 default:
@@ -695,14 +702,20 @@ private:
      *  @satisfies feat_req_someipsd_848, feat_req_someipsd_1084 */
     void handle_eventgroup_subscription_request(const EventGroupEntry& subscription_entry,
                                                const SdMessage& message,
-                                               const transport::Endpoint& sender) {
+                                               const transport::Endpoint& sender,
+                                               const transport::Endpoint& reply_to) {
         const uint16_t service_id = subscription_entry.get_service_id();
         const uint16_t instance_id = subscription_entry.get_instance_id();
         const uint16_t eventgroup_id = subscription_entry.get_eventgroup_id();
         const uint32_t ttl = subscription_entry.get_ttl();
 
+        if (message.entry_references_ipv4_sd_endpoint(subscription_entry)) {
+            send_subscribe_nack(subscription_entry, reply_to);
+            return;
+        }
+
         if (ttl == 0) {
-            handle_stop_subscribe(subscription_entry, sender);
+            handle_stop_subscribe(subscription_entry, reply_to);
             return;
         }
 
@@ -730,7 +743,7 @@ private:
             }
         }
         if (nack) {
-            send_subscribe_nack(subscription_entry, sender);
+            send_subscribe_nack(subscription_entry, reply_to);
             return;
         }
 
@@ -794,18 +807,18 @@ private:
         }
 
         if (has_conflicting_options) {
-            send_subscribe_nack(subscription_entry, sender);
+            send_subscribe_nack(subscription_entry, reply_to);
             return;
         }
 
         if (event_port == 0) {
-            send_subscribe_nack(subscription_entry, sender);
+            send_subscribe_nack(subscription_entry, reply_to);
             return;
         }
 
         (void)event_protocol;
         send_subscribe_response(
-            subscription_entry, sender, true, ttl,
+            subscription_entry, reply_to, true, ttl,
             transport::Endpoint(event_ip, event_port));
     }
 
