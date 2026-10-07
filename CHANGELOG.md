@@ -46,7 +46,8 @@
 - **RPC / Events / SD**: Add constructor overloads accepting a caller-owned,
   exclusive `ITransport`, with component-managed lifecycle and
   `get_transport_result()` diagnostics. SD requires multicast membership on
-  that transport. Existing default UDP construction and C API entry points are
+  that transport, reported by `ITransport::multicast_transport()` so the
+  seam does not need RTTI. Existing default UDP construction and C API entry points are
   unchanged. Sharing one running transport across facades, and C constructors
   that accept a transport, remain application-level or follow-up work.
   [#341](https://github.com/vtz/opensomeip/issues/341),

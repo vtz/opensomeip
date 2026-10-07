@@ -89,6 +89,8 @@ protected:
     ITransportListener() = default;
 };
 
+class IMulticastTransport;
+
 /**
  * @brief Transport interface
  *
@@ -96,7 +98,8 @@ protected:
  * (UDP, TCP, etc.) in the SOME/IP stack.
  *
  * RPC, event, and service-discovery facades may borrow an exclusive transport.
- * Service discovery also requires IMulticastTransport. The borrowed transport
+ * Service discovery also requires IMulticastTransport, reported by
+ * multicast_transport() without RTTI. The borrowed transport
  * must outlive the facade, be stopped and have no listener when initialize()
  * is called, and
  * must not be used by another facade or by the caller until shutdown returns.
@@ -227,6 +230,12 @@ public:
      * @return true if running, false otherwise
      */
     virtual bool is_running() const = 0;
+
+    /**
+     * @brief Multicast membership surface, when this transport has one.
+     * @return Null unless the concrete transport also implements IMulticastTransport.
+     */
+    virtual IMulticastTransport* multicast_transport() noexcept { return nullptr; }
 
 protected:
     ITransport() = default;
