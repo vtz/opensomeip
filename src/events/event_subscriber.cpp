@@ -422,7 +422,11 @@ public:
         }
 
         const platform::String<> key = make_field_key(service_id, event_id);
+        uint64_t ticket = 0;
         {
+            // Reserve before send so a transport that delivers on this thread
+            // finds the callback, and a second caller cannot pass admission.
+            // The mutex is not held across send_message.
             platform::ScopedLock const field_lock(field_requests_mutex_);
             if (!running_) {
                 return false;
@@ -431,6 +435,11 @@ public:
                 field_requests_.size() >= field_requests_.max_size()) {
                 return false;
             }
+            ticket = next_field_ticket_++;
+            FieldRequest request;
+            request.ticket = ticket;
+            request.callback = std::move(callback);
+            field_requests_[key] = std::move(request);
         }
 
         MessageId const msg_id(service_id, 0x0003);
@@ -443,22 +452,13 @@ public:
         payload.push_back(static_cast<uint8_t>(static_cast<uint32_t>(event_id) & 0xFFU));
         field_msg.set_payload(payload);
 
-        // Publish the callback only after send succeeds, and do not hold the
-        // field mutex across send_message.
         if (transport_.send_message(field_msg, service_endpoint) != Result::SUCCESS) {
-            return false;
-        }
-
-        {
             platform::ScopedLock const field_lock(field_requests_mutex_);
-            if (!running_) {
-                return false;
+            const auto it = field_requests_.find(key);
+            if (it != field_requests_.end() && it->second.ticket == ticket) {
+                field_requests_.erase(it);
             }
-            if (field_requests_.find(key) != field_requests_.end() ||
-                field_requests_.size() >= field_requests_.max_size()) {
-                return false;
-            }
-            field_requests_[key] = std::move(callback);
+            return false;
         }
         return true;
     }
@@ -630,7 +630,7 @@ private:
             platform::String<> const field_key = make_field_key(service_id, event_id);
             auto field_it = field_requests_.find(field_key);
             if (field_it != field_requests_.end()) {
-                field_callback = std::move(field_it->second);
+                field_callback = std::move(field_it->second.callback);
                 field_requests_.erase(field_it);
             }
         }
@@ -689,8 +689,14 @@ private:
     platform::UnorderedMap<platform::String<>, SubscriptionInfo> subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;
 
-    platform::UnorderedMap<platform::String<>, EventNotificationCallback> field_requests_;
+    struct FieldRequest {
+        uint64_t ticket{0};
+        EventNotificationCallback callback;
+    };
+
+    platform::UnorderedMap<platform::String<>, FieldRequest> field_requests_;
     mutable platform::Mutex field_requests_mutex_;
+    uint64_t next_field_ticket_{1};
     platform::Mutex unsubscribe_mutex_;
     mutable platform::Mutex dispatch_mutex_;
     platform::ConditionVariable dispatch_drained_;
