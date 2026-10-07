@@ -208,7 +208,7 @@ private:
  */
 class IPv4SdEndpointOption : public IPv4EndpointOption {
 public:
-    IPv4SdEndpointOption() : IPv4EndpointOption() {
+    IPv4SdEndpointOption() {
         type_ = OptionType::IPV4_SD_ENDPOINT;
     }
     ~IPv4SdEndpointOption() override = default;
@@ -430,8 +430,6 @@ public:
     bool entry_references_ipv4_sd_endpoint(const SdEntry& entry) const;
 
 private:
-    static constexpr uint8_t kMaxTrackedSdEndpoints = 16;
-
     uint8_t flags_{0};
     uint32_t reserved_{0};
     uint16_t session_id_{0};
@@ -439,8 +437,8 @@ private:
     bool option_wire_index_valid_{false};
     /// True when wire index 0 was an IPv4 SD Endpoint Option.
     bool ipv4_sd_endpoint_wire_first_{false};
-    uint8_t ipv4_sd_endpoint_wire_index_[kMaxTrackedSdEndpoints]{};
-    uint8_t ipv4_sd_endpoint_wire_count_{0};
+    /// Wire indexes of type 0x24 options. Capacity matches a small SD message.
+    platform::Vector<uint8_t, 16> ipv4_sd_endpoint_wire_index_{};
 
     platform::Vector<SdEntryStorage> entries_;
     platform::Vector<SdOptionStorage> options_;

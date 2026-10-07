@@ -730,7 +730,7 @@ platform::ByteBuffer SdMessage::serialize() const {
 bool SdMessage::deserialize(const platform::ByteBuffer& data) {
     option_wire_index_valid_ = false;
     ipv4_sd_endpoint_wire_first_ = false;
-    ipv4_sd_endpoint_wire_count_ = 0;
+    ipv4_sd_endpoint_wire_index_.clear();
     if (data.size() < 12) {
         return false;
     }
@@ -848,10 +848,8 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
             if (wire_index == 0) {
                 ipv4_sd_endpoint_wire_first_ = true;
             }
-            if (ipv4_sd_endpoint_wire_count_ < kMaxTrackedSdEndpoints && wire_index <= 0xFFU) {
-                ipv4_sd_endpoint_wire_index_[ipv4_sd_endpoint_wire_count_] =
-                    static_cast<uint8_t>(wire_index);
-                ++ipv4_sd_endpoint_wire_count_;
+            if (wire_index <= 0xFFU && ipv4_sd_endpoint_wire_index_.size() < 16U) {
+                ipv4_sd_endpoint_wire_index_.push_back(static_cast<uint8_t>(wire_index));
             }
         } else if (option_type == OptionType::IPV4_MULTICAST) {
             IPv4MulticastOption option;
@@ -922,7 +920,7 @@ bool SdMessage::ipv4_sd_endpoint(platform::String<>& address, uint16_t& port) co
     }
     const uint32_t raw = option->get_ipv4_address();
     const uint32_t host = someip_ntohl(raw);
-    const uint8_t first_octet = static_cast<uint8_t>((host >> 24U) & 0xFFU);
+    const auto first_octet = static_cast<uint8_t>((host >> 24U) & 0xFFU);
     if (raw == 0U || raw == 0xFFFFFFFFU || (first_octet >= 224U && first_octet <= 239U)) {
         return false;
     }
@@ -938,8 +936,11 @@ bool SdMessage::entry_references_ipv4_sd_endpoint(const SdEntry& entry) const {
         const auto wire_hits = [this](uint8_t index, uint8_t count) {
             for (uint8_t i = 0; i < count; ++i) {
                 const unsigned pos = static_cast<unsigned>(index) + static_cast<unsigned>(i);
-                for (uint8_t n = 0; n < ipv4_sd_endpoint_wire_count_; ++n) {
-                    if (ipv4_sd_endpoint_wire_index_[n] == pos) {
+                if (pos > 0xFFU) {
+                    continue;
+                }
+                for (const auto recorded : ipv4_sd_endpoint_wire_index_) {
+                    if (recorded == static_cast<uint8_t>(pos)) {
                         return true;
                     }
                 }

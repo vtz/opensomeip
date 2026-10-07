@@ -457,17 +457,16 @@ private:
     static platform::String<> sd_channel_key(const platform::String<>& address, uint16_t port) {
         platform::String<> key = address;
         key.push_back(':');
-        char digits[5];
-        int count = 0;
-        uint16_t value = port;
-        do {
-            digits[count] = static_cast<char>('0' + static_cast<int>(value % 10U));
-            ++count;
-            value = static_cast<uint16_t>(value / 10U);
-        } while (value != 0U && count < 5);
-        while (count > 0) {
-            --count;
-            key.push_back(digits[count]);
+        uint16_t place = 10000;
+        bool started = false;
+        while (place > 0U) {
+            const uint16_t digit = static_cast<uint16_t>(port / place);
+            if (digit != 0U || started || place == 1U) {
+                key.push_back(static_cast<char>('0' + static_cast<int>(digit)));
+                started = true;
+            }
+            port = static_cast<uint16_t>(port % place);
+            place = static_cast<uint16_t>(place / 10U);
         }
         return key;
     }
