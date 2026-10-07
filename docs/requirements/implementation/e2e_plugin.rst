@@ -172,6 +172,42 @@ E2E Header Format
 
    **Code Location**: ``include/e2e/e2e_header.h``, ``src/e2e/e2e_protection.cpp``
 
+Receive Policy
+--------------
+
+.. requirement:: E2E receive validation policy
+   :id: REQ_E2E_RECEIVE_001
+   :status: implemented
+   :priority: high
+   :verification: UDP and TCP tests for stack-managed rejection and application-managed metadata. The default layout is Offset 64 bits and a 12-byte header.
+
+   A transport config may bind a Service ID and Method/Event ID to an E2E
+   receive policy. Bindings are fixed-capacity. Adding past the cap returns
+   ``Result::RESOURCE_EXHAUSTED`` and is not an ``on_message_rejected`` event.
+   Configure the table before the transport starts; the receive loop only
+   reads it.
+
+   When a binding matches a complete frame (after TP reassembly, never on a
+   TP segment), the transport deserializes the default layout so the 12-byte
+   header is not application payload. Non-default Offset and non-12-byte
+   headers are outside this receive path.
+
+   * Stack-managed: ``E2EProtection::validate`` runs before the application
+     handler. Failure is reported with ``MessageRejectionStage::E2E_INTEGRITY``
+     and the handler is not called.
+   * Application-managed: the handler receives the clean payload and
+     ``Message::get_e2e_header()``. The application validates. CRC, Data ID,
+     and replay failures stay ``Result::INVALID_ARGUMENT``.
+
+   A profile id of 0 registers the basic profile if it is not already
+   registered. A missing custom profile fails stack-managed validation with
+   ``Result::NOT_INITIALIZED``.
+
+   **Rationale**: Receive paths cannot guess E2E presence from the datagram.
+   The application names the protected methods and who checks them.
+
+   **Code Location**: ``include/e2e/e2e_receive_policy.h``, ``src/e2e/e2e_receive.cpp``
+
 Traceability
 ============
 
@@ -185,7 +221,8 @@ Implementation Files
 * ``include/e2e/e2e_protection.h`` - Protection API
 * ``src/e2e/e2e_profile_registry.cpp`` - Registry implementation
 * ``src/e2e/e2e_protection.cpp`` - Protection implementation
-* ``src/e2e/e2e_profiles/standard_profile.cpp`` - Standard profile
+* ``include/e2e/e2e_receive_policy.h`` - Receive bindings and policy
+* ``src/e2e/e2e_receive.cpp`` - Default-layout receive check
 
 Test Files
 ----------

@@ -16,6 +16,8 @@
 #include <transport/tcp_socket_adapter.h>
 #include <transport/transport.h>
 #include <someip/message.h>
+#include <e2e/e2e_config.h>
+#include <e2e/e2e_protection.h>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -111,6 +113,21 @@ public:
     uint16_t message_session_id(size_t index) const {
         std::scoped_lock lock(mutex_);
         return received_messages_.at(index).first->get_session_id();
+    }
+
+    const platform::ByteBuffer& message_payload(size_t index) const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.at(index).first->get_payload();
+    }
+
+    bool message_has_e2e(size_t index) const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.at(index).first->has_e2e_header();
+    }
+
+    MessagePtr message_at(size_t index) const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.at(index).first;
     }
 
     size_t rejection_count() const {
@@ -938,4 +955,41 @@ TEST(EventDrivenTcpTransport, StopFromListenerDoesNotDeadlock) {
     EXPECT_TRUE(listener.stopped_);
     EXPECT_EQ(listener.stop_result_, Result::SUCCESS);
     EXPECT_FALSE(transport.is_running());
+}
+
+TEST(EventDrivenTcpTransport, ApplicationManagedE2EExposesMetadata) {
+    MockTcpAdapter adapter;
+    EventDrivenTcpTransportConfig cfg;
+    e2e::E2EReceiveBinding binding;
+    binding.service_id = 0x1234;
+    binding.method_id = 0x5678;
+    binding.data_id = 0x0100;
+    binding.policy = e2e::E2EReceivePolicy::APPLICATION_MANAGED;
+    binding.enable_freshness = false;
+    ASSERT_EQ(cfg.e2e_receive.add(binding), Result::SUCCESS);
+
+    EventDrivenTcpTransport transport(adapter, cfg);
+    TestEventTcpListener listener;
+    transport.set_listener(&listener);
+    ASSERT_EQ(transport.initialize(Endpoint{"127.0.0.1", 0}), Result::SUCCESS);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+    adapter.inject_connected(Endpoint{"10.0.0.1", 5000, TransportProtocol::TCP});
+
+    Message sent = make_tcp_sample_message();
+    e2e::E2EConfig e2e_config(0x0100);
+    e2e_config.enable_freshness = false;
+    e2e::E2EProtection protection;
+    ASSERT_EQ(protection.protect(sent, e2e_config), Result::SUCCESS);
+    platform::ByteBuffer flipped = sent.get_payload();
+    flipped[0] ^= 0xFFU;
+    sent.set_payload(flipped);
+    adapter.inject_receive(sent.serialize());
+
+    ASSERT_TRUE(listener.wait_for_message());
+    EXPECT_EQ(listener.rejection_count(), 0u);
+    EXPECT_EQ(listener.message_payload(0), flipped);
+    EXPECT_TRUE(listener.message_has_e2e(0));
+    EXPECT_EQ(protection.validate(*listener.message_at(0), e2e_config), Result::INVALID_ARGUMENT);
+
+    transport.stop();
 }
