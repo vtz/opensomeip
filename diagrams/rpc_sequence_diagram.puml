@@ -1,4 +1,4 @@
-@startuml RPC Sequence Diagram
+@startuml rpc_sequence_diagram
 
 title SOME/IP RPC Call Sequence
 
