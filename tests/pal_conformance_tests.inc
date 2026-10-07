@@ -476,6 +476,22 @@ TEST(ScopedLockConformance, NonCopyable) {
 /* ======================================================================== */
 
 /**
+ * @test_case TC_MOCK_THREAD_ID
+ * @tests REQ_PAL_THREAD_ID
+ */
+TEST(ThreadIdentityConformance, StableAndDistinctAcrossLiveThreads)
+{
+    const auto caller = someip::platform::this_thread::get_id();
+    EXPECT_EQ(caller, someip::platform::this_thread::get_id());
+    std::thread worker([&] {
+        const auto self = someip::platform::this_thread::get_id();
+        EXPECT_EQ(self, someip::platform::this_thread::get_id());
+        EXPECT_NE(self, caller);
+    });
+    worker.join();
+}
+
+/**
  * @test_case TC_MOCK_SLEEP_DURATION
  * @tests REQ_PAL_SLEEP_DURATION
  * @brief sleep_for blocks for at least the specified duration.

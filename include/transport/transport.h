@@ -94,6 +94,28 @@ protected:
  *
  * This interface defines the contract for all transport implementations
  * (UDP, TCP, etc.) in the SOME/IP stack.
+ *
+ * RPC/event facades may borrow an exclusive transport. It must outlive the
+ * facade, be stopped and have no listener when initialize() is called, and
+ * must not be used by another facade or by the caller until shutdown returns.
+ * Construction does not register a listener. The facade manages start/stop
+ * and detaches its listener after stop() on shutdown or failed initialization.
+ * The running-state precondition is checked; absence of an existing listener
+ * is the caller's responsibility because this interface has no listener query.
+ *
+ * Injected implementations must not throw from lifecycle operations. stop()
+ * must quiesce callbacks and receive producers before returning, even on an
+ * error or after a failed start(). After a successfully started session is
+ * stopped, the facade discards queued messages. A failed start preserves the
+ * lender's queue. Draining requires receive_message()
+ * to be non-blocking and eventually return nullptr;
+ * the facade consumes and discards queued data, including on a borrowed backend.
+ * Resource cleanup failure can be reported separately from callback quiescence;
+ * if is_running() remains true, shutdown() may be called again to retry cleanup
+ * before reinitialization.
+ * Lifecycle calls must be serialized externally and must not
+ * be made from a transport/application callback. Sharing a running transport
+ * requires a separate dispatcher and is not supported by these overloads.
  */
 class ITransport {
 public:
