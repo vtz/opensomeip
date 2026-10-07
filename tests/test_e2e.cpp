@@ -963,3 +963,49 @@ TEST_F(E2ETest, ReceiveTableRejectsCapacityAndStripsDefaultHeader) {
     EXPECT_TRUE(app_msg.has_e2e_header());
     EXPECT_EQ(protection.validate(app_msg, config), Result::INVALID_ARGUMENT);
 }
+
+/**
+ * @test_case TC_E2E_RX_002
+ * @tests REQ_E2E_RECEIVE_001
+ * @brief Stack-managed receive uses the binding counter limit, not the E2EConfig default
+ */
+TEST_F(E2ETest, ReceiveBindingUsesCounterLimit) {
+    constexpr uint16_t data_id = 0xBEEF;
+    E2EConfig sender(data_id);
+    sender.max_counter_value = 20;
+    sender.enable_freshness = false;
+    E2EProtection protection;
+    platform::ByteBuffer wire;
+    for (uint16_t i = 0; i < 15; ++i) {
+        Message msg(MessageId(0x1234, 0x0009), RequestId(0x0001, i), MessageType::REQUEST,
+                    ReturnCode::E_OK);
+        msg.set_payload(platform::ByteBuffer{0x01});
+        ASSERT_EQ(protection.protect(msg, sender), Result::SUCCESS);
+        wire = msg.serialize();
+    }
+    ASSERT_TRUE(E2EProfileRegistry::instance().unregister_profile(0));
+
+    E2EReceiveBinding tight;
+    tight.service_id = 0x1234;
+    tight.method_id = 0x0009;
+    tight.data_id = data_id;
+    tight.max_counter_value = 10;
+    tight.freshness_timeout_ms = 50;
+    tight.enable_freshness = false;
+    E2EReceiveTable tight_table;
+    ASSERT_EQ(tight_table.add(tight), Result::SUCCESS);
+    Message rejected;
+    E2EReceiveOutcome outcome =
+        receive_if_e2e_protected(tight_table, wire.data(), wire.size(), rejected);
+    EXPECT_EQ(outcome.status, E2EReceiveStatus::REJECTED);
+    EXPECT_TRUE(outcome.integrity_failure);
+    EXPECT_EQ(outcome.result, Result::INVALID_ARGUMENT);
+
+    E2EReceiveBinding wide = tight;
+    wide.max_counter_value = 20;
+    E2EReceiveTable wide_table;
+    ASSERT_EQ(wide_table.add(wide), Result::SUCCESS);
+    Message accepted;
+    outcome = receive_if_e2e_protected(wide_table, wire.data(), wire.size(), accepted);
+    EXPECT_EQ(outcome.status, E2EReceiveStatus::ACCEPTED);
+}

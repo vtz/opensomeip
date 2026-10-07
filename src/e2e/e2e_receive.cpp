@@ -117,6 +117,8 @@ E2EReceiveOutcome receive_if_e2e_protected(const E2EReceiveTable& table, const u
     config.enable_counter = binding->enable_counter;
     config.enable_freshness = binding->enable_freshness;
     config.crc_type = binding->crc_type;
+    config.max_counter_value = binding->max_counter_value;
+    config.freshness_timeout_ms = binding->freshness_timeout_ms;
 
     E2EProtection protection;
     const Result checked = protection.validate(message, config);
