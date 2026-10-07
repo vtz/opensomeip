@@ -206,6 +206,28 @@ private:
 };
 
 /**
+ * @brief IPv4 SD Endpoint Option (Type 0x24, Length 0x0009).
+ *
+ * Same wire layout as IPv4 Endpoint Option. The type marks the sender's SD
+ * endpoint, which is not an application/event endpoint and is not referenced
+ * by entries.
+ *
+ * @implements REQ_SD_122, REQ_SD_236
+ * @satisfies feat_req_someipsd_1085, feat_req_someipsd_1086, feat_req_someipsd_1087
+ */
+class IPv4SdEndpointOption : public IPv4EndpointOption {
+public:
+    IPv4SdEndpointOption() : IPv4EndpointOption() {
+        type_ = OptionType::IPV4_SD_ENDPOINT;
+    }
+    ~IPv4SdEndpointOption() override = default;
+    IPv4SdEndpointOption(const IPv4SdEndpointOption&) = default;
+    IPv4SdEndpointOption& operator=(const IPv4SdEndpointOption&) = default;
+    IPv4SdEndpointOption(IPv4SdEndpointOption&&) noexcept = default;
+    IPv4SdEndpointOption& operator=(IPv4SdEndpointOption&&) noexcept = default;
+};
+
+/**
  * @brief IPv4 Multicast Option
  */
 class IPv4MulticastOption : public SdOption {
@@ -331,6 +353,7 @@ private:
 using SdEntryStorage = std::variant<ServiceEntry, EventGroupEntry>;
 using SdOptionStorage = std::variant<ConfigurationOption,
                                      IPv4EndpointOption,
+                                     IPv4SdEndpointOption,
                                      IPv4MulticastOption,
                                      IPv6EndpointOption,
                                      IPv6MulticastOption>;
@@ -407,6 +430,25 @@ public:
         }
     }
 
+    /**
+     * @brief First-position IPv4 SD Endpoint Option, if it can be used.
+     *
+     * Only options_[0] is consulted. A later 0x24 is ignored. UDP, a non-zero
+     * port, and a unicast address are required; otherwise the caller keeps the
+     * datagram source.
+     *
+     * @implements REQ_SD_236, REQ_SD_343
+     * @satisfies feat_req_someipsd_1151, feat_req_someipsd_1152
+     */
+    bool ipv4_sd_endpoint(platform::String<>& address, uint16_t& port) const;
+
+    /**
+     * @brief True when an entry option run includes an IPv4 SD Endpoint Option.
+     * @implements REQ_SD_343
+     * @satisfies feat_req_someipsd_1114
+     */
+    bool entry_references_ipv4_sd_endpoint(const SdEntry& entry) const;
+
 private:
     uint8_t flags_{0};
     uint32_t reserved_{0};
@@ -428,6 +470,26 @@ inline void apply_sd_tx_flags(SdMessage& message, const SdSessionIdCounter& coun
     // Advertise explicit initial-data control only because client and server
     // both implement the feature. Reserved flag bits stay clear on serialize.
     message.set_explicit_initial_data_control(true);
+}
+
+/**
+ * @brief Reboot detection for one SD communication channel.
+ *
+ * A channel is the resolved SD endpoint (IPv4 SD Endpoint Option when it is
+ * usable, otherwise the datagram source), not the outer address alone.
+ *
+ * @implements REQ_SD_1084, REQ_SD_343
+ * @satisfies feat_req_someipsd_1084, feat_req_someipsd_764
+ */
+inline bool sd_reboot_detected(bool have_previous, bool previous_reboot, uint16_t previous_session,
+                               bool incoming_reboot, uint16_t incoming_session) {
+    if (!have_previous) {
+        return false;
+    }
+    if (!previous_reboot && incoming_reboot) {
+        return true;
+    }
+    return previous_reboot && incoming_reboot && previous_session >= incoming_session;
 }
 
 // Type aliases for convenience
