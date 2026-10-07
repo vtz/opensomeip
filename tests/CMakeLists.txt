@@ -85,7 +85,9 @@ target_link_libraries(test_e2e someip-core gtest_main)
     if(WIN32)
         set(_SOCKET_TESTS
             test_platform_threading test_udp_transport test_tcp_transport
-            test_rpc test_sd test_events)
+            test_rpc test_sd test_events
+            test_transport_injection test_sd_injection test_subscriber_dispatch
+            test_facade_teardown test_rpc_sync_lifetime)
         foreach(_t ${_SOCKET_TESTS})
             target_sources(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winsock_init.cpp)
         endforeach()
@@ -290,7 +292,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
             target_include_directories(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
         endforeach()
         if(WIN32)
-            foreach(_t test_capi_udp_hello test_capi_rpc_roundtrip)
+            foreach(_t test_capi_udp_hello test_capi_rpc_roundtrip test_capi_events)
                 target_sources(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winsock_init.cpp)
             endforeach()
         endif()
