@@ -223,7 +223,10 @@ Length Field Parsing
    total SOME/IP message size minus 8 bytes (Message ID + Length fields).
 
    **Rationale**: Length field covers Request ID, Protocol Version,
-   Interface Version, Message Type, Return Code, and payload.
+   Interface Version, Message Type, Return Code, and everything after
+   Return Code. When E2E is present that includes the unprotected prefix
+   (Offset greater than 64 bits), the profile header, and the application
+   payload.
 
    **Code Location**: ``src/someip/message.cpp``
 

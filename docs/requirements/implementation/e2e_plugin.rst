@@ -140,22 +140,44 @@ E2E Header Format
    :priority: high
    :verification: Code inspection of header structure and execution of message serialization tests with E2E headers.
 
-   The E2E header shall be inserted immediately after the Return Code field.
    ``E2EConfig::offset_bits`` is the spec Offset, measured in bits from the
-   start of the Length-covered region (Request ID). The default is 64 bits
-   (8 bytes), which places the header between Return Code and Payload
-   (feat_req_someip_102). Non-default Offset values are not representable
-   in ``Message`` and shall return ``Result::NOT_IMPLEMENTED`` from
-   ``E2EProtection::protect`` and ``validate``.
+   start of the Length-covered region (Request ID). The default is 64 bits,
+   which places the header immediately after Return Code (wire byte 16).
 
-   The shipped ``Message`` / ``E2EHeader`` contract is a fixed 12-byte
-   header. Plugins whose ``get_header_size()`` is not 12 shall return
-   ``Result::NOT_IMPLEMENTED`` from ``E2EProtection``.
-   ``Result::NOT_INITIALIZED`` is returned first when no profile is
-   registered. ``Result::INVALID_ARGUMENT`` is reserved for CRC, Data ID,
-   replay, and true caller errors.
+   A byte-aligned Offset greater than 64 is supported. The header starts at
+   wire byte ``8 + offset_bits/8``. Bytes between Return Code and that index
+   are an unprotected prefix: they are stored apart from ``Message::get_payload()``,
+   they are not covered by the basic-profile CRC, and they are included in
+   the Length field together with the E2E header and the application payload
+   (feat_req_someip_77). The caller supplies the prefix with
+   ``Message::set_e2e_unprotected_prefix`` before ``protect``. Deserialize
+   takes the Offset and header size from ``E2EParseOptions`` (configuration).
+   ``expect_e2e == true`` selects only the default layout. The receiver does
+   not discover Offset or header size from the datagram.
 
-   The standard E2E header format shall be:
+   ``Message`` stores profile bytes in a fixed buffer of
+   ``SOMEIP_MAX_E2E_HEADER_SIZE`` (default 64). The 12-byte ``E2EHeader``
+   view is available only when the stored size is 12. Plugins may return any
+   other size up to that cap. ``SOMEIP_MAX_E2E_PREFIX_SIZE`` (default 64)
+   caps the unprotected prefix. Both caps are part of
+   ``SOMEIP_MAX_MESSAGE_SIZE``.
+
+   Error codes, evaluated in this order:
+
+   * ``Result::NOT_INITIALIZED`` when no profile is registered
+   * ``Result::INVALID_ARGUMENT`` when ``offset_bits < 64`` (overlaps the
+     SOME/IP header) or ``offset_bits`` is not a multiple of 8, and for CRC,
+     Data ID, replay, and other caller errors
+   * ``Result::NOT_IMPLEMENTED`` when the prefix or the profile header
+     exceeds its compile-time cap
+
+   SOME/IP-TP and the default E2E layout both occupy wire byte 16. A message
+   that already has an E2E header is not segmented, at any supported Offset
+   or header size. Reassembly completes before E2E parse. The C ABI
+   (``opensomeip_e2e_protect`` / ``opensomeip_e2e_check``) stays on the
+   default layout and has no Offset field.
+
+   The basic profile header format shall be:
 
    * CRC: 32 bits
    * Counter: 32 bits
@@ -163,14 +185,13 @@ E2E Header Format
    * Freshness Value: 16 bits
    * Total: 12 bytes (96 bits)
 
-   **Rationale**: Implements the default header placement of
-   feat_req_someip_102. Deviates from feat_req_someip_102 (variable Offset)
-   and feat_req_someip_103 (variable header size): ``Message`` currently
-   stores only the 12-byte header immediately after Return Code, so
-   ``E2EProtection`` returns ``NOT_IMPLEMENTED`` for any other Offset or
-   plugin header size until issue 339 implements those layouts.
+   **Rationale**: feat_req_someip_102 places the header by Offset (default
+   64 bits). feat_req_someip_103 allows the header size to depend on the
+   profile. Bit packing and headers or prefixes above the static caps stay
+   unrepresentable.
 
-   **Code Location**: ``include/e2e/e2e_header.h``, ``src/e2e/e2e_protection.cpp``
+   **Code Location**: ``include/e2e/e2e_header.h``, ``include/e2e/e2e_layout.h``,
+   ``src/e2e/e2e_protection.cpp``, ``src/someip/message.cpp``
 
 Traceability
 ============

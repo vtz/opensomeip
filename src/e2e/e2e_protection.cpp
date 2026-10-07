@@ -17,9 +17,11 @@
 #include "e2e/e2e_profile.h"
 #include "e2e/e2e_profile_registry.h"
 #include "e2e/e2e_header.h"
+#include "e2e/e2e_layout.h"
 #include "someip/message.h"
 #include "common/result.h"
 
+#include <cstddef>
 #include <optional>
 
 namespace someip::e2e {
@@ -47,13 +49,8 @@ Result resolve_supported_profile(const E2EConfig& config, E2EProfile*& profile) 
     if (profile == nullptr) {
         return Result::NOT_INITIALIZED;
     }
-    if (config.offset_bits != E2EConfig::DEFAULT_OFFSET_BITS) {
-        return Result::NOT_IMPLEMENTED;
-    }
-    if (profile->get_header_size() != E2EHeader::get_header_size()) {
-        return Result::NOT_IMPLEMENTED;
-    }
-    return Result::SUCCESS;
+    size_t prefix_bytes = 0;
+    return check_e2e_layout(config.offset_bits, profile->get_header_size(), prefix_bytes);
 }
 
 }  // namespace
@@ -92,12 +89,8 @@ Result E2EProtection::validate(const Message& message, const E2EConfig& config) 
     return profile->validate(message, config);
 }
 
-std::optional<E2EHeader> E2EProtection::extract_header(const Message& message) {
-    return message.get_e2e_header();
-}
+std::optional<E2EHeader> E2EProtection::extract_header(const Message& message) { return message.get_e2e_header(); }
 
-bool E2EProtection::has_e2e_protection(const Message& message) const {
-    return message.has_e2e_header();
-}
+bool E2EProtection::has_e2e_protection(const Message& message) const { return message.has_e2e_header(); }
 
 }  // namespace someip::e2e

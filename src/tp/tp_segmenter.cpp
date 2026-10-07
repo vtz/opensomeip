@@ -76,8 +76,11 @@ TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& s
         return TpResult::SUCCESS;
     }
 
-    // TP segmentation is incompatible with E2E protection: create_multi_segments
-    // calls serialize()+resize(16) which silently drops the E2E suffix.
+    // Default E2E (Offset 64) and TP both start at wire byte 16. A message that
+    // already carries an E2E header — any Offset or header size — is not
+    // segmented. Reassembly must finish before E2E is parsed, and a non-default
+    // Offset does not lift this refusal. create_multi_segments calls
+    // serialize()+resize(16), which would drop the header and any prefix.
     if (message.has_e2e_header()) {
         return TpResult::SEGMENTATION_FAILED;
     }

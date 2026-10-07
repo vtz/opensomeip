@@ -107,6 +107,15 @@ if(SOMEIP_USE_THREADX AND NOT SOMEIP_USE_STATIC_ALLOC)
         ${CMAKE_CURRENT_SOURCE_DIR}/platform/threadx/memory.cpp)
 endif()
 
+# E2E caps size std::array members of the public Message type in every
+# build. Forward them whenever the cache variable is set; the static-pool
+# list below does not run for the default allocator.
+foreach(_e2e_cap SOMEIP_MAX_E2E_HEADER_SIZE SOMEIP_MAX_E2E_PREFIX_SIZE)
+    if(DEFINED ${_e2e_cap})
+        target_compile_definitions(opensomeip PUBLIC ${_e2e_cap}=${${_e2e_cap}})
+    endif()
+endforeach()
+
 # Static allocation platform sources
 if(SOMEIP_USE_STATIC_ALLOC)
     target_sources(opensomeip PRIVATE
