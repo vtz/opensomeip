@@ -25,12 +25,11 @@ namespace someip::e2e {
 /**
  * @brief E2E protection header structure
  *
- * Represents the E2E header inserted after the Return Code field
- * according to SOME/IP spec feat_req_someip_102 and feat_req_someip_103.
- *
- * Message serializes this as a fixed 12-byte header. Plugins that need a
- * different size cause E2EProtection to return Result::NOT_IMPLEMENTED until
- * Message can represent variable-size profile bytes.
+ * The shipped basic profile is this 12-byte layout (CRC, counter, Data ID,
+ * freshness). Message also stores arbitrary profile bytes up to
+ * SOMEIP_MAX_E2E_HEADER_SIZE; get_e2e_header() returns this struct only when
+ * the stored header is exactly 12 bytes. Placement is E2EConfig::offset_bits,
+ * not a field of this struct (feat_req_someip_102 / feat_req_someip_103).
  */
 struct E2EHeader {
     /**
@@ -72,6 +71,18 @@ struct E2EHeader {
      * @return Serialized header bytes
      */
     platform::ByteBuffer serialize() const;
+
+    /**
+     * @brief Write the 12-byte header to @p out (big-endian).
+     * @param out At least get_header_size() bytes. No-op if null.
+     */
+    void write_to(uint8_t* out) const;
+
+    /**
+     * @brief Read a 12-byte header from raw bytes (big-endian).
+     * @return false if @p data is null or shorter than get_header_size()
+     */
+    bool read_from(const uint8_t* data, size_t size);
 
     /**
      * @brief Deserialize header from byte vector (big-endian)

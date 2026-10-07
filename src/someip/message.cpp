@@ -66,8 +66,8 @@ Message::Message()
       timestamp_(std::chrono::steady_clock::now()) {
 }
 
-Message::Message(MessageId message_id, RequestId request_id,
-                 MessageType message_type, ReturnCode return_code)
+Message::Message(MessageId message_id, RequestId request_id, MessageType message_type,
+                 ReturnCode return_code)
     : message_id_(message_id),
       length_(8),  // Will be updated by update_length()
       request_id_(request_id),
@@ -90,27 +90,27 @@ Message::Message(const Message& other)
       message_type_(other.message_type_),
       return_code_(other.return_code_),
       payload_(other.payload_),
-      e2e_header_(other.e2e_header_),
       timestamp_(other.timestamp_) {
+    copy_e2e_from(other);
 }
 
 Message::Message(Message&& other) noexcept
     : message_id_(other.message_id_),
-      length_(8 + (other.e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0) + other.payload_.size()),
+      length_(other.length_),
       request_id_(other.request_id_),
       protocol_version_(other.protocol_version_),
       interface_version_(other.interface_version_),
       message_type_(other.message_type_),
       return_code_(other.return_code_),
       payload_(std::move(other.payload_)),  // Move the payload
-      e2e_header_(other.e2e_header_),
       timestamp_(other.timestamp_) {
+    copy_e2e_from(other);
     // Invalidate the moved-from object (safety-critical design: moved-from messages are invalid).
     // Protocol Version must be 0x01 at the header layer; 0xFF makes is_valid() false.
     // Interface Version is the service major (any uint8_t), so it cannot be used to invalidate.
     other.protocol_version_ = 0xFF;
+    other.reset_e2e();
     other.length_ = 8;  // Reset length for empty payload
-    other.e2e_header_.reset();
 }
 
 Message& Message::operator=(const Message& other) {
@@ -123,7 +123,7 @@ Message& Message::operator=(const Message& other) {
         message_type_ = other.message_type_;
         return_code_ = other.return_code_;
         payload_ = other.payload_;
-        e2e_header_ = other.e2e_header_;
+        copy_e2e_from(other);
         timestamp_ = other.timestamp_;
     }
     return *this;
@@ -132,20 +132,20 @@ Message& Message::operator=(const Message& other) {
 Message& Message::operator=(Message&& other) noexcept {
     if (this != &other) {
         message_id_ = other.message_id_;
-        length_ = 8 + (other.e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0) + other.payload_.size();
+        length_ = other.length_;
         request_id_ = other.request_id_;
         protocol_version_ = other.protocol_version_;
         interface_version_ = other.interface_version_;
         message_type_ = other.message_type_;
         return_code_ = other.return_code_;
         payload_ = std::move(other.payload_);  // Move the payload
-        e2e_header_ = other.e2e_header_;
+        copy_e2e_from(other);
         timestamp_ = other.timestamp_;
 
         // Invalidate the moved-from object
         other.protocol_version_ = 0xFF;
+        other.reset_e2e();
         other.length_ = 8;  // Reset length for empty payload
-        other.e2e_header_.reset();
     }
     return *this;
 }
@@ -156,7 +156,8 @@ Message& Message::operator=(Message&& other) noexcept {
  * @implements REQ_MSG_010, REQ_MSG_011
  * @implements REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
  * @implements REQ_MSG_030, REQ_MSG_040, REQ_MSG_050, REQ_MSG_070
- * @implements REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078, REQ_MSG_079, REQ_MSG_080
+ * @implements REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078,
+ * REQ_MSG_079, REQ_MSG_080
  * @implements REQ_MSG_090, REQ_MSG_091
  * @satisfies feat_req_someip_45
  */
@@ -182,10 +183,15 @@ platform::ByteBuffer Message::serialize() const {
     data.push_back(static_cast<uint8_t>(message_type_));
     data.push_back(static_cast<uint8_t>(return_code_));
 
-    // Insert E2E header after Return Code if present (feat_req_someip_102)
-    if (e2e_header_.has_value()) {
-        platform::ByteBuffer e2e_data = e2e_header_->serialize();
-        data.insert(data.end(), e2e_data.begin(), e2e_data.end());
+    // Unprotected prefix, then profile header. Default Offset 64 has an
+    // empty prefix, so the header still starts at wire byte 16.
+    if (e2e_header_size_ > 0) {
+        if (e2e_prefix_size_ > 0) {
+            data.insert(data.end(), e2e_prefix_bytes_.data(),
+                        e2e_prefix_bytes_.data() + e2e_prefix_size_);
+        }
+        data.insert(data.end(), e2e_header_bytes_.data(),
+                    e2e_header_bytes_.data() + e2e_header_size_);
     }
 
     // Append payload
@@ -201,7 +207,8 @@ platform::ByteBuffer Message::serialize() const {
  * @implements REQ_MSG_020, REQ_MSG_020_E01, REQ_MSG_021, REQ_MSG_022
  * @implements REQ_MSG_030, REQ_MSG_031, REQ_MSG_032
  * @implements REQ_MSG_040, REQ_MSG_040_E01, REQ_MSG_050, REQ_MSG_070
- * @implements REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078, REQ_MSG_079, REQ_MSG_080
+ * @implements REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078,
+ * REQ_MSG_079, REQ_MSG_080
  * @implements REQ_MSG_090, REQ_MSG_092, REQ_MSG_093
  * @implements REQ_MSG_100, REQ_MSG_100_E02, REQ_MSG_100_E03
  * @implements REQ_MSG_012_E01, REQ_MSG_014_E01, REQ_MSG_014_E02
@@ -217,15 +224,31 @@ bool Message::deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
 }
 
 Result Message::try_deserialize(const uint8_t* data_ptr, size_t data_size, bool expect_e2e) {
+    e2e::E2EParseOptions options;
+    options.present = expect_e2e;
+    return try_deserialize(data_ptr, data_size, options);
+}
+
+Result Message::try_deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
+    e2e::E2EParseOptions options;
+    options.present = expect_e2e;
+    return try_deserialize(data, options);
+}
+
+Result Message::try_deserialize(const uint8_t* data_ptr, size_t data_size,
+                                const e2e::E2EParseOptions& options) {
     if (data_size > 0 && data_ptr == nullptr) {
         return Result::INVALID_ARGUMENT;
     }
     platform::ByteBuffer tmp(data_size);
-    if (data_ptr != nullptr && data_size > 0) { std::memcpy(tmp.data(), data_ptr, data_size); }
-    return try_deserialize(tmp, expect_e2e);
+    if (data_ptr != nullptr && data_size > 0) {
+        std::memcpy(tmp.data(), data_ptr, data_size);
+    }
+    return try_deserialize(tmp, options);
 }
 
-Result Message::try_deserialize(const platform::ByteBuffer& data, bool expect_e2e) {
+Result Message::try_deserialize(const platform::ByteBuffer& data,
+                                const e2e::E2EParseOptions& options) {
     if (data.size() < MIN_MESSAGE_SIZE) {
         return Result::MALFORMED_MESSAGE;
     }
@@ -277,31 +300,37 @@ Result Message::try_deserialize(const platform::ByteBuffer& data, bool expect_e2
     return_code_ = static_cast<ReturnCode>(data[offset++]);
 
     // E2E headers are NOT auto-detected from wire bytes — heuristic detection
-    // is unreliable and produces platform-dependent results.  Per AUTOSAR
-    // SOME/IP, E2E protection is configuration-driven: the caller passes
-    // expect_e2e = true when the message is known to carry an E2E header.
-    e2e_header_.reset();
-    if (expect_e2e) {
-        constexpr size_t e2e_header_size = e2e::E2EHeader::get_header_size();
-        size_t const remaining = data.size() - offset;
-        if (remaining >= e2e_header_size && length_ >= 8 + e2e_header_size) {
-            e2e::E2EHeader header;
-            if (header.deserialize(data, offset)) {
-                e2e_header_ = header;
-                offset += e2e_header_size;
-            } else {
-                return Result::MALFORMED_MESSAGE;
-            }
-        } else {
+    // is unreliable and produces platform-dependent results. Offset and header
+    // size come from E2EParseOptions (configuration). expect_e2e == true is
+    // only the default layout: Offset 64 bits, 12-byte header at wire byte 16.
+    reset_e2e();
+    if (options.present) {
+        size_t prefix_bytes = 0;
+        Result const layout =
+            e2e::check_e2e_layout(options.offset_bits, options.header_size, prefix_bytes);
+        if (layout != Result::SUCCESS) {
+            return layout;
+        }
+        const size_t header_index = e2e::e2e_header_wire_index(options.offset_bits);
+        if (data.size() < header_index + options.header_size ||
+            length_ < 8U + prefix_bytes + options.header_size) {
             return Result::MALFORMED_MESSAGE;
         }
+        if (prefix_bytes > 0) {
+            std::memcpy(e2e_prefix_bytes_.data(), data.data() + 16, prefix_bytes);
+        }
+        std::memcpy(e2e_header_bytes_.data(), data.data() + header_index, options.header_size);
+        e2e_prefix_size_ = prefix_bytes;
+        e2e_header_size_ = options.header_size;
+        e2e_offset_bits_ = options.offset_bits;
+        offset = header_index + options.header_size;
     }
 
     // Calculate expected payload size based on whether we found an E2E header
     if (length_ < 8) {
         return Result::MALFORMED_MESSAGE;
     }
-    size_t const e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
+    size_t const e2e_size = e2e_on_wire_size();
     size_t const expected_payload_size = length_ - 8 - e2e_size;
     size_t const actual_payload_size = data.size() - offset;
 
@@ -326,18 +355,14 @@ Result Message::try_deserialize(const platform::ByteBuffer& data, bool expect_e2
  * @brief Check if message is valid
  * @implements REQ_MSG_100, REQ_MSG_100_E01
  */
-bool Message::is_valid() const {
-    return validation_result() == Result::SUCCESS;
-}
+bool Message::is_valid() const { return validation_result() == Result::SUCCESS; }
 
 /**
  * @brief Validate Service ID according to SOME/IP specification
  * @implements REQ_MSG_004, REQ_MSG_005
  * @implements REQ_MSG_004_E01, REQ_MSG_004_E02
  */
-bool Message::has_valid_service_id() const {
-    return get_service_id() != 0x0000;
-}
+bool Message::has_valid_service_id() const { return get_service_id() != 0x0000; }
 
 /**
  * @brief Validate Method ID according to SOME/IP specification
@@ -357,9 +382,7 @@ bool Message::has_valid_method_id() const {
  * @brief Validate Message ID components
  * @implements REQ_MSG_002, REQ_MSG_003
  */
-bool Message::has_valid_message_id() const {
-    return has_valid_service_id() && has_valid_method_id();
-}
+bool Message::has_valid_message_id() const { return has_valid_service_id() && has_valid_method_id(); }
 
 /**
  * @brief Validate length field
@@ -406,14 +429,13 @@ bool Message::has_valid_session_id() const {
  * @brief Validate Request ID components
  * @implements REQ_MSG_021, REQ_MSG_022, REQ_MSG_041
  */
-bool Message::has_valid_request_id() const {
-    return has_valid_client_id() && has_valid_session_id();
-}
+bool Message::has_valid_request_id() const { return has_valid_client_id() && has_valid_session_id(); }
 
 /**
  * @brief Validate message type according to SOME/IP specification
  * @implements REQ_MSG_042, REQ_MSG_042_E01
- * @implements REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_053_E01, REQ_MSG_054, REQ_MSG_054_E01, REQ_MSG_055
+ * @implements REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_053_E01, REQ_MSG_054, REQ_MSG_054_E01,
+ * REQ_MSG_055
  * @implements REQ_MSG_056, REQ_MSG_057, REQ_MSG_058, REQ_MSG_059
  * @implements REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP, REQ_MSG_060_TP_RESPONSE
  * @implements REQ_MSG_063
@@ -423,14 +445,14 @@ bool Message::has_valid_message_type() const {
     // Unknown means unknown after masking TP flag bit 5 (REQ_MSG_063).
     // 0xA0 (RESPONSE|TP) and 0xA1 (ERROR|TP) are valid, not unknown.
     switch (without_tp_flag(message_type_)) {
-        case MessageType::REQUEST:           // REQ_MSG_051, TP 0x20
-        case MessageType::REQUEST_NO_RETURN: // REQ_MSG_052, TP 0x21
-        case MessageType::NOTIFICATION:      // REQ_MSG_053, TP 0x22
-        case MessageType::REQUEST_ACK:       // REQ_MSG_057, TP 0x60
-        case MessageType::RESPONSE:          // REQ_MSG_054, TP 0xA0
-        case MessageType::ERROR:             // REQ_MSG_055, TP 0xA1
-        case MessageType::RESPONSE_ACK:      // REQ_MSG_058, TP 0xE0
-        case MessageType::ERROR_ACK:         // REQ_MSG_059, TP 0xE1
+        case MessageType::REQUEST:            // REQ_MSG_051, TP 0x20
+        case MessageType::REQUEST_NO_RETURN:  // REQ_MSG_052, TP 0x21
+        case MessageType::NOTIFICATION:       // REQ_MSG_053, TP 0x22
+        case MessageType::REQUEST_ACK:        // REQ_MSG_057, TP 0x60
+        case MessageType::RESPONSE:           // REQ_MSG_054, TP 0xA0
+        case MessageType::ERROR:              // REQ_MSG_055, TP 0xA1
+        case MessageType::RESPONSE_ACK:       // REQ_MSG_058, TP 0xE0
+        case MessageType::ERROR_ACK:          // REQ_MSG_059, TP 0xE1
             return true;
         default:
             return false;
@@ -441,9 +463,7 @@ bool Message::has_valid_message_type() const {
  * @brief Check if message has TP flag set
  * @implements REQ_MSG_056, REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP
  */
-bool Message::has_tp_flag() const {
-    return someip::uses_tp(message_type_);
-}
+bool Message::has_tp_flag() const { return someip::uses_tp(message_type_); }
 
 /**
  * @brief Validate message header fields
@@ -453,14 +473,14 @@ bool Message::has_tp_flag() const {
  * @implements REQ_MSG_072, REQ_MSG_072_E01
  * @implements REQ_MSG_041, REQ_MSG_090_E01, REQ_MSG_093
  * @implements REQ_MSG_150
- * @implements REQ_COMPAT_001, REQ_COMPAT_001_E01, REQ_COMPAT_002, REQ_COMPAT_003_E01, REQ_COMPAT_004
+ * @implements REQ_COMPAT_001, REQ_COMPAT_001_E01, REQ_COMPAT_002, REQ_COMPAT_003_E01,
+ * REQ_COMPAT_004
  * @implements REQ_COMPAT_005, REQ_COMPAT_010, REQ_COMPAT_010_E01, REQ_COMPAT_011
- * @implements REQ_COMPAT_020, REQ_COMPAT_020_E01, REQ_COMPAT_021, REQ_COMPAT_022, REQ_COMPAT_023, REQ_COMPAT_024
+ * @implements REQ_COMPAT_020, REQ_COMPAT_020_E01, REQ_COMPAT_021, REQ_COMPAT_022, REQ_COMPAT_023,
+ * REQ_COMPAT_024
  * @satisfies feat_req_someip_92, feat_req_someip_100, feat_req_someip_103, feat_req_someip_278
  */
-bool Message::has_valid_header() const {
-    return header_validation_result() == Result::SUCCESS;
-}
+bool Message::has_valid_header() const { return header_validation_result() == Result::SUCCESS; }
 
 Result Message::validation_result() const {
     Result const header = header_validation_result();
@@ -506,15 +526,14 @@ Result Message::header_validation_result() const {
     }
 
     // SD SOME/IP wrappers (service 0xFFFF, method 0x8100) keep Interface Version 0x01.
-    if (get_service_id() == SOMEIP_SD_SERVICE_ID &&
-        get_method_id() == SOMEIP_SD_METHOD_ID &&
+    if (get_service_id() == SOMEIP_SD_SERVICE_ID && get_method_id() == SOMEIP_SD_METHOD_ID &&
         interface_version_ != SOMEIP_SD_INTERFACE_VERSION) {
         return Result::INVALID_INTERFACE_VERSION;
     }
 
-    // Check length consistency
-    size_t const e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
-    uint32_t const expected_length = 8 + e2e_size + payload_.size();
+    // Check length consistency (Request ID through end, including E2E prefix and header)
+    size_t const e2e_size = e2e_on_wire_size();
+    uint32_t const expected_length = static_cast<uint32_t>(8 + e2e_size + payload_.size());
     if (length_ != expected_length) {
         return Result::MALFORMED_MESSAGE;
     }
@@ -570,19 +589,105 @@ bool Message::has_valid_payload() const {
 void Message::update_length() {
     // SOME/IP length field contains length from client_id to end of message
     // client_id(2) + session_id(2) + protocol_version(1) + interface_version(1) +
-    // message_type(1) + return_code(1) + e2e_header_size + payload_size
-    size_t const e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
-    length_ = 8 + e2e_size + payload_.size();
+    // message_type(1) + return_code(1) + unprotected prefix + e2e header + payload
+    length_ = static_cast<uint32_t>(8 + e2e_on_wire_size() + payload_.size());
+}
+
+void Message::copy_e2e_from(const Message& other) {
+    e2e_offset_bits_ = other.e2e_offset_bits_;
+    e2e_header_size_ = other.e2e_header_size_;
+    e2e_prefix_size_ = other.e2e_prefix_size_;
+    if (other.e2e_header_size_ > 0) {
+        std::memcpy(e2e_header_bytes_.data(), other.e2e_header_bytes_.data(),
+                    other.e2e_header_size_);
+    }
+    if (other.e2e_prefix_size_ > 0) {
+        std::memcpy(e2e_prefix_bytes_.data(), other.e2e_prefix_bytes_.data(),
+                    other.e2e_prefix_size_);
+    }
+}
+
+void Message::reset_e2e() {
+    e2e_offset_bits_ = e2e::E2EConfig::DEFAULT_OFFSET_BITS;
+    e2e_header_size_ = 0;
+    e2e_prefix_size_ = 0;
 }
 
 void Message::set_e2e_header(const e2e::E2EHeader& header) {
-    e2e_header_ = header;
+    header.write_to(e2e_header_bytes_.data());
+    e2e_header_size_ = e2e::E2EHeader::get_header_size();
+    e2e_prefix_size_ = 0;
+    e2e_offset_bits_ = e2e::E2EConfig::DEFAULT_OFFSET_BITS;
     update_length();
 }
 
+std::optional<e2e::E2EHeader> Message::get_e2e_header() const {
+    if (e2e_header_size_ != e2e::E2EHeader::get_header_size()) {
+        return std::nullopt;
+    }
+    e2e::E2EHeader header;
+    if (!header.read_from(e2e_header_bytes_.data(), e2e_header_size_)) {
+        return std::nullopt;
+    }
+    return header;
+}
+
 void Message::clear_e2e_header() {
-    e2e_header_.reset();
+    reset_e2e();
     update_length();
+}
+
+Result Message::set_e2e_unprotected_prefix(uint32_t offset_bits, const uint8_t* data, size_t size) {
+    if (offset_bits < e2e::E2EConfig::DEFAULT_OFFSET_BITS || (offset_bits % 8U) != 0U) {
+        return Result::INVALID_ARGUMENT;
+    }
+    const size_t expected =
+        static_cast<size_t>((offset_bits - e2e::E2EConfig::DEFAULT_OFFSET_BITS) / 8U);
+    if (expected > e2e::kMaxE2EPrefixSize) {
+        return Result::NOT_IMPLEMENTED;
+    }
+    if (size != expected || (size > 0 && data == nullptr)) {
+        return Result::INVALID_ARGUMENT;
+    }
+    if (size > 0) {
+        std::memcpy(e2e_prefix_bytes_.data(), data, size);
+    }
+    e2e_prefix_size_ = size;
+    e2e_offset_bits_ = offset_bits;
+    if (e2e_header_size_ > 0) {
+        update_length();
+    }
+    return Result::SUCCESS;
+}
+
+Result Message::set_e2e_profile_bytes(uint32_t offset_bits, const uint8_t* header,
+                                      size_t header_size, const uint8_t* prefix, size_t prefix_size) {
+    size_t expected_prefix = 0;
+    Result const layout = e2e::check_e2e_layout(offset_bits, header_size, expected_prefix);
+    if (layout != Result::SUCCESS) {
+        return layout;
+    }
+    if (prefix_size != expected_prefix || header == nullptr ||
+        (prefix_size > 0 && prefix == nullptr)) {
+        return Result::INVALID_ARGUMENT;
+    }
+
+    // Copy through locals so a caller may pass this message's own prefix storage.
+    std::array<uint8_t, e2e::kMaxE2EHeaderSize> header_tmp{};
+    std::array<uint8_t, e2e::kMaxE2EPrefixSize> prefix_tmp{};
+    std::memcpy(header_tmp.data(), header, header_size);
+    if (prefix_size > 0) {
+        std::memcpy(prefix_tmp.data(), prefix, prefix_size);
+    }
+    std::memcpy(e2e_header_bytes_.data(), header_tmp.data(), header_size);
+    if (prefix_size > 0) {
+        std::memcpy(e2e_prefix_bytes_.data(), prefix_tmp.data(), prefix_size);
+    }
+    e2e_header_size_ = header_size;
+    e2e_prefix_size_ = prefix_size;
+    e2e_offset_bits_ = offset_bits;
+    update_length();
+    return Result::SUCCESS;
 }
 
 std::string Message::to_string() const {
@@ -593,32 +698,31 @@ std::string Message::to_string() const {
        << ", client_id=0x" << std::hex << std::setw(4) << std::setfill('0') << get_client_id()
        << ", session_id=0x" << std::hex << std::setw(4) << std::setfill('0') << get_session_id()
        << ", type=" << someip::to_string(message_type_)
-       << ", return_code=" << someip::to_string(return_code_)
-       << ", length=" << std::dec << length_
-       << ", payload_size=" << payload_.size()
-       << "}";
+       << ", return_code=" << someip::to_string(return_code_) << ", length=" << std::dec << length_
+       << ", payload_size=" << payload_.size() << "}";
 
     return ss.str();
 }
 
 // NOLINTEND(misc-include-cleaner)
 
-// NOLINTBEGIN(misc-include-cleaner) - memory_order_* from <atomic>, release_message from memory_impl.h
+// NOLINTBEGIN(misc-include-cleaner) - memory_order_* from <atomic>, release_message from
+// memory_impl.h
 
 void intrusive_ptr_add_ref(const Message* p) {
     if (p != nullptr) {
-        [[maybe_unused]] auto prev =
-            p->ref_count_.fetch_add(1, std::memory_order_relaxed);
+        [[maybe_unused]] auto prev = p->ref_count_.fetch_add(1, std::memory_order_relaxed);
         assert(prev < UINT16_MAX && "ref_count_ saturated — likely a reference leak");
     }
 }
 
 void intrusive_ptr_release(const Message* p) {
     if (p != nullptr && p->ref_count_.fetch_sub(1, std::memory_order_acq_rel) == 1) {
-        platform::release_message(const_cast<Message*>(p));  // NOLINT(cppcoreguidelines-pro-type-const-cast)
+        platform::release_message(
+            const_cast<Message*>(p));  // NOLINT(cppcoreguidelines-pro-type-const-cast)
     }
 }
 
 // NOLINTEND(misc-include-cleaner)
 
-} // namespace someip
+}  // namespace someip

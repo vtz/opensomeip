@@ -22,12 +22,19 @@
  * @implements REQ_PAL_STATIC_CONFIG
  */
 
+#include "e2e/e2e_limits.h"
+
 #ifndef SOMEIP_MAX_PAYLOAD_SIZE
 #define SOMEIP_MAX_PAYLOAD_SIZE 1400
 #endif
 
+/* 16-byte SOME/IP header + unprotected E2E prefix + E2E header + payload.
+ * A message this large may exceed the medium byte-pool tier and use a large
+ * slab. Overriding SOMEIP_MAX_PAYLOAD_SIZE without also setting
+ * SOMEIP_MAX_MESSAGE_SIZE grows this default with the payload. */
 #ifndef SOMEIP_MAX_MESSAGE_SIZE
-#define SOMEIP_MAX_MESSAGE_SIZE 1416
+#define SOMEIP_MAX_MESSAGE_SIZE \
+    (16 + SOMEIP_MAX_E2E_PREFIX_SIZE + SOMEIP_MAX_E2E_HEADER_SIZE + SOMEIP_MAX_PAYLOAD_SIZE)
 #endif
 
 #ifndef SOMEIP_MAX_TCP_PAYLOAD_SIZE
@@ -78,8 +85,11 @@
 #define SOMEIP_BYTE_POOL_SMALL_SIZE 256
 #endif
 
+/* Default max message is 16 + 64 + 64 + 1400 = 1544, so the medium tier
+ * must be at least that large or a full E2E message falls through to the
+ * large slab. 1600 keeps the historical ~1500-byte tier in the same band. */
 #ifndef SOMEIP_BYTE_POOL_MEDIUM_SIZE
-#define SOMEIP_BYTE_POOL_MEDIUM_SIZE 1500
+#define SOMEIP_BYTE_POOL_MEDIUM_SIZE 1600
 #endif
 
 #ifndef SOMEIP_BYTE_POOL_LARGE_SIZE

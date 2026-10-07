@@ -48,6 +48,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   into stack-managed validation. Zephyr links that receive source whenever
   UDP or TCP is enabled.
 
+- **E2E**: Byte-aligned Offsets of at least 64 bits and profile headers up to
+  `SOMEIP_MAX_E2E_HEADER_SIZE` (64) serialize and deserialize. Bytes between
+  Return Code and the header are an unprotected prefix, stored separately
+  from the application payload. Length covers that prefix, the header, and
+  the payload. `offset_bits < 64` and Offsets that are not a multiple of 8
+  return `INVALID_ARGUMENT`. Prefixes or headers above the static caps return
+  `NOT_IMPLEMENTED`. CRC, Data ID, and replay failures stay
+  `INVALID_ARGUMENT`. `NOT_INITIALIZED` still wins when no profile is
+  registered. Receive layout comes from `E2EParseOptions`; `expect_e2e=true`
+  remains the default 12-byte Offset-64 layout. The C ABI is unchanged
+  (Offset is not a C field). A message that already has an E2E header is not
+  TP-segmented: default E2E and TP both start at wire byte 16, and a
+  non-default Offset does not lift that refusal
+  ([#339](https://github.com/vtz/opensomeip/issues/339)).
+
+### Changed
+
+- **Static allocation**: `SOMEIP_MAX_MESSAGE_SIZE` includes the maximum E2E
+  prefix and header (default 1544 = 16 + 64 + 64 + 1400). The default medium
+  byte-pool slot is 1600 bytes so that message fits the medium tier.
+
 ### Breaking Changes
 
 - **SD**: `SdServer::SubscriptionAcceptedCallback` now requires
