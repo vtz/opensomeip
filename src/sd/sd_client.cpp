@@ -263,7 +263,17 @@ public:
                              (static_cast<uint64_t>(instance_id) << 16U) |
                              eventgroup_id;
 
+        bool peer_explicit = false;
+        {
+            platform::ScopedLock const lock(available_services_mutex_);
+            const auto cached = cached_services_.find(make_service_key(service_id, instance_id));
+            if (cached != cached_services_.end()) {
+                peer_explicit = cached->second.explicit_initial_data;
+            }
+        }
+
         bool request_initial = true;
+        bool legacy_missed_ack = false;
         {
             platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
             // Cap at membership bound in both static and dynamic builds so an
@@ -293,6 +303,11 @@ public:
                 // expired subscriptions do request them.
                 if (prior.state == SubscriptionState::SUBSCRIBED && ttl_alive) {
                     request_initial = false;
+                } else if (prior.state == SubscriptionState::PENDING_ACK && !peer_explicit) {
+                    // A legacy server ignores the Initial Data Requested bit and
+                    // treats a repeated Subscribe as a renewal. Stop + Subscribe
+                    // in the same datagram makes the repetition a new subscription.
+                    legacy_missed_ack = true;
                 }
             }
             eventgroup_subscriptions_[key] = sub;
@@ -310,7 +325,24 @@ public:
         subscribe_entry.set_num_opts1(1);
 
         SdMessage sd_message;
-        sd_message.add_entry(std::move(subscribe_entry));
+        if (legacy_missed_ack) {
+            EventGroupEntry stop_entry(EntryType::STOP_SUBSCRIBE_EVENTGROUP);
+            stop_entry.set_service_id(service_id);
+            stop_entry.set_instance_id(instance_id);
+            stop_entry.set_eventgroup_id(eventgroup_id);
+            stop_entry.set_major_version(0x01);
+            stop_entry.set_ttl(0);
+            stop_entry.set_index1(0);
+            stop_entry.set_num_opts1(1);
+            if (!sd_message.add_entry(std::move(stop_entry))) {
+                erase_eventgroup_subscription(key);
+                return false;
+            }
+        }
+        if (!sd_message.add_entry(std::move(subscribe_entry))) {
+            erase_eventgroup_subscription(key);
+            return false;
+        }
 
         IPv4EndpointOption endpoint_option;
         endpoint_option.set_ipv4_address_from_string(config_.unicast_address);
@@ -460,6 +492,8 @@ private:
         std::chrono::steady_clock::time_point received_time;
         uint16_t last_session_id{0};
         bool reboot_flag{false};
+        /// Last SD message from this server advertised explicit initial-data control.
+        bool explicit_initial_data{false};
     };
 
     void start_maintenance_loop() {
@@ -820,7 +854,8 @@ private:
                     instance,
                     std::chrono::steady_clock::now(),
                     incoming_session,
-                    incoming_reboot_flag
+                    incoming_reboot_flag,
+                    message.explicit_initial_data_control()
                 };
             }
         }
@@ -978,6 +1013,14 @@ private:
 
     /** @implements REQ_SD_119, REQ_SD_120 */
     void handle_subscribe_ack_nack(const EventGroupEntry& entry, const SdMessage& message) {
+        {
+            platform::ScopedLock const lock(available_services_mutex_);
+            const auto cached = cached_services_.find(
+                make_service_key(entry.get_service_id(), entry.get_instance_id()));
+            if (cached != cached_services_.end()) {
+                cached->second.explicit_initial_data = message.explicit_initial_data_control();
+            }
+        }
         const uint64_t key = (static_cast<uint64_t>(entry.get_service_id()) << 32U) |
                              (static_cast<uint64_t>(entry.get_instance_id()) << 16U) |
                              entry.get_eventgroup_id();

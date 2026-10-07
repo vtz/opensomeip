@@ -2042,7 +2042,8 @@ static Message build_subscribe_eventgroup_with_endpoints(
 }
 
 static Message build_offer_service_message(uint16_t service_id, uint16_t instance_id,
-                                           uint32_t ttl, const char* rpc_ip, uint16_t rpc_port) {
+                                           uint32_t ttl, const char* rpc_ip, uint16_t rpc_port,
+                                           bool explicit_initial = false) {
     ServiceEntry entry(EntryType::OFFER_SERVICE);
     entry.set_service_id(service_id);
     entry.set_instance_id(instance_id);
@@ -2060,6 +2061,9 @@ static Message build_offer_service_message(uint16_t service_id, uint16_t instanc
     SdMessage sd_msg;
     sd_msg.set_reboot(true);
     sd_msg.set_unicast(true);
+    if (explicit_initial) {
+        sd_msg.set_explicit_initial_data_control(true);
+    }
     sd_msg.add_entry(std::move(entry));
     sd_msg.add_option(std::move(option));
 
@@ -3252,6 +3256,7 @@ struct SubscribeWire {
     bool got{false};
     bool initial{false};
     bool explicit_flag{false};
+    bool stop_with_subscribe{false};
 };
 
 static SubscribeWire receive_subscribe_wire(transport::UdpTransport& transport,
@@ -3268,15 +3273,26 @@ static SubscribeWire receive_subscribe_wire(transport::UdpTransport& transport,
         if (!sd_msg.deserialize(msg->get_payload())) {
             continue;
         }
+        bool saw_stop = false;
+        const EventGroupEntry* subscribe = nullptr;
         for (const auto& entry_var : sd_msg.get_entries()) {
             if (const auto* eg = std::get_if<EventGroupEntry>(&entry_var)) {
-                if (eg->get_type() == EntryType::SUBSCRIBE_EVENTGROUP && eg->get_ttl() > 0) {
-                    obs.got = true;
-                    obs.initial = eg->get_initial_data_requested();
-                    obs.explicit_flag = sd_msg.explicit_initial_data_control();
-                    return obs;
+                if (eg->get_type() != EntryType::SUBSCRIBE_EVENTGROUP) {
+                    continue;
+                }
+                if (eg->get_ttl() == 0) {
+                    saw_stop = true;
+                } else if (subscribe == nullptr) {
+                    subscribe = eg;
                 }
             }
+        }
+        if (subscribe != nullptr) {
+            obs.got = true;
+            obs.initial = subscribe->get_initial_data_requested();
+            obs.explicit_flag = sd_msg.explicit_initial_data_control();
+            obs.stop_with_subscribe = saw_stop;
+            return obs;
         }
     }
     return obs;
@@ -3327,11 +3343,13 @@ TEST_F(SdIntegrationTest, ClientRequestsInitialDataOnFirstSubscribeNotRenewal) {
     }
     EXPECT_TRUE(first.explicit_flag);
     EXPECT_TRUE(first.initial);
+    EXPECT_FALSE(first.stop_with_subscribe);
 
     ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
     const SubscribeWire pending = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
     EXPECT_TRUE(pending.got);
     EXPECT_TRUE(pending.initial);
+    EXPECT_TRUE(pending.stop_with_subscribe);
 
     auto ack = build_subscribe_ack_nack_message(0x1234, 0x0001, 0x0001, 1800);
     ASSERT_EQ(offerer.send_message(ack, transport::Endpoint("127.0.0.1", client_port)),
@@ -3350,6 +3368,7 @@ TEST_F(SdIntegrationTest, ClientRequestsInitialDataOnFirstSubscribeNotRenewal) {
     const SubscribeWire renewal = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
     EXPECT_TRUE(renewal.got);
     EXPECT_FALSE(renewal.initial);
+    EXPECT_FALSE(renewal.stop_with_subscribe);
 
     auto reboot = build_offer_service_message(0x1234, 0x0001, 30, "127.0.0.1", 30509);
     reboot.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 1));
@@ -3361,6 +3380,60 @@ TEST_F(SdIntegrationTest, ClientRequestsInitialDataOnFirstSubscribeNotRenewal) {
     client.shutdown();
     EXPECT_TRUE(after_reboot.got);
     EXPECT_TRUE(after_reboot.initial);
+    EXPECT_FALSE(after_reboot.stop_with_subscribe);
+}
+
+/**
+ * @test_case TC_SD_1194_CAPABLE
+ * @tests REQ_SD_331
+ * @tests feat_req_someipsd_1192, feat_req_someipsd_1193
+ * @brief A server that advertises explicit initial-data control is retried with the I flag only.
+ */
+TEST_F(SdIntegrationTest, CapableServerMissedAckDoesNotStopSubscribe) {
+    const uint16_t client_port = get_unique_port();
+    const uint16_t offerer_port = get_unique_port();
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport offerer(transport::Endpoint("0.0.0.0", offerer_port), cfg);
+    ASSERT_EQ(offerer.start(), Result::SUCCESS);
+
+    auto offer = build_offer_service_message(0x1234, 0x0001, 30, "127.0.0.1", 30509, true);
+    offer.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 5));
+    ASSERT_EQ(offerer.send_message(offer, transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+
+    bool offer_seen = false;
+    for (int i = 0; i < 50 && !offer_seen; ++i) {
+        offer_seen = !client.get_available_services(0x1234).empty();
+        if (!offer_seen) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+    if (!offer_seen) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Offer not received (loopback may be unavailable)";
+    }
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+    const SubscribeWire first = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
+    if (!first.got) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Subscribe not received (loopback may be unavailable)";
+    }
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+    const SubscribeWire pending = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
+    offerer.stop();
+    client.shutdown();
+    EXPECT_TRUE(pending.got);
+    EXPECT_TRUE(pending.initial);
+    EXPECT_FALSE(pending.stop_with_subscribe);
 }
 
 static Message build_flagged_subscribe(bool capable, bool request_initial, uint16_t event_port) {

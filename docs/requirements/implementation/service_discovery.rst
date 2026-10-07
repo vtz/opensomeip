@@ -2801,18 +2801,22 @@ SD Initial Event Handling
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit and integration tests. Header serialization keeps bit 0x20 and clears reserved flag bits. A client sets Initial Data Requested on the first Subscribe and after reboot, and clears it on renewal while the previous TTL is still valid. A server that sees the capability flag honors the entry bit (send or suppress field notifications after Ack); a legacy peer keeps the implicit new-subscription initial field. Covered by ExplicitInitialDataFlagRoundTrip, ClientRequestsInitialDataOnFirstSubscribeNotRenewal, and ExplicitInitialDataControlsFieldDelivery.
+   :verification: Unit and integration tests. Header serialization keeps bit 0x20 and clears reserved flag bits. A client sets Initial Data Requested on the first Subscribe and after reboot, and clears it on renewal while the previous TTL is still valid. A repeated Subscribe while an Ack is still outstanding sends StopSubscribe and Subscribe together when the server did not advertise the capability, and only the I flag when it did. A server that sees the capability flag honors the entry bit (send or suppress field notifications after Ack); a legacy peer keeps the implicit new-subscription initial field. Covered by ExplicitInitialDataFlagRoundTrip, ClientRequestsInitialDataOnFirstSubscribeNotRenewal, CapableServerMissedAckDoesNotStopSubscribe, and ExplicitInitialDataControlsFieldDelivery.
 
    The client and server shall implement explicit requesting of Initial
    Events. Outgoing SD messages advertise the Explicit Initial Data
    Control Flag. The client sets the Initial Data Requested flag on the
    first SubscribeEventgroup for an eventgroup, after reboot recovery,
    and while no subscription is active, and clears it on a further
-   Subscribe whose previous TTL is still valid. The server honors that
-   entry flag only when the sending peer advertises the capability;
-   otherwise it keeps the legacy rule of sending initial field values
-   only for a new subscription. The resolved decision is delivered to the
-   subscription-accepted callback and from there into event publication.
+   Subscribe whose previous TTL is still valid. When an Ack has not
+   arrived and the server's SD messages do not advertise the capability,
+   the client sends StopSubscribeEventgroup and SubscribeEventgroup in
+   the same datagram so a legacy server treats the retry as a new
+   subscription. The server honors the entry flag only when the sending
+   peer advertises the capability; otherwise it keeps the legacy rule of
+   sending initial field values only for a new subscription. The resolved
+   decision is delivered to the subscription-accepted callback and from
+   there into event publication.
 
    **Rationale**: Explicit initial-data control refreshes field values after loss or reboot without repeating them on ordinary renewal.
 

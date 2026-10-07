@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`0x20`) and still clear reserved flag bits. The client sets the
   per-entry Initial Data Requested flag for a first subscription and
   after reboot, and clears it while renewing an unexpired subscription.
+  A retry while an Ack is outstanding sends StopSubscribe and Subscribe
+  together when the server did not advertise the capability, and only the
+  Initial Data Requested flag when it did.
   A capable peer's flag selects or suppresses the initial field sent
   after SubscribeEventgroupAck; a legacy peer keeps the implicit
   new-subscription field. `SdServer::SubscriptionAcceptedCallback` now
