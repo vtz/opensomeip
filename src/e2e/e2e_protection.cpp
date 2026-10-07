@@ -21,6 +21,7 @@
 #include "someip/message.h"
 #include "common/result.h"
 
+#include <cstddef>
 #include <optional>
 
 namespace someip::e2e {

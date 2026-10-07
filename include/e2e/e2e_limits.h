@@ -30,11 +30,11 @@
  */
 
 #ifndef SOMEIP_MAX_E2E_HEADER_SIZE
-#define SOMEIP_MAX_E2E_HEADER_SIZE 64
+#define SOMEIP_MAX_E2E_HEADER_SIZE 64  // NOLINT(cppcoreguidelines-macro-usage)
 #endif
 
 #ifndef SOMEIP_MAX_E2E_PREFIX_SIZE
-#define SOMEIP_MAX_E2E_PREFIX_SIZE 64
+#define SOMEIP_MAX_E2E_PREFIX_SIZE 64  // NOLINT(cppcoreguidelines-macro-usage)
 #endif
 
 #endif // E2E_LIMITS_H

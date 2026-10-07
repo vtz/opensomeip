@@ -855,7 +855,7 @@ class OversizedHeaderProfile : public E2EProfile {
    public:
     Result protect(Message&, const E2EConfig&) override { return Result::SUCCESS; }
     Result validate(const Message&, const E2EConfig&) override { return Result::SUCCESS; }
-    size_t get_header_size() const override { return kMaxE2EHeaderSize + 1; }
+    size_t get_header_size() const override { return MAX_E2E_HEADER_SIZE + 1; }
     platform::String<> get_profile_name() const override { return "oversized"; }
     uint32_t get_profile_id() const override { return 0xE2E0FF01; }
 };
@@ -874,7 +874,7 @@ class FixedSizeProfile : public E2EProfile {
         if (msg.e2e_unprotected_prefix_size() != expected_prefix) {
             return Result::INVALID_ARGUMENT;
         }
-        std::array<uint8_t, kMaxE2EHeaderSize> raw{};
+        std::array<uint8_t, MAX_E2E_HEADER_SIZE> raw{};
         raw[0] = 0xA5;
         raw[1] = static_cast<uint8_t>(config.data_id & 0xFFU);
         for (size_t i = 2; i < header_size_; ++i) {
@@ -1030,10 +1030,10 @@ TEST_F(E2ETest, HugeByteAlignedOffsetIsNotImplemented) {
 
     E2EConfig config(0x1234);
     config.offset_bits =
-        E2EConfig::DEFAULT_OFFSET_BITS + static_cast<uint32_t>((kMaxE2EPrefixSize + 1) * 8U);
+        E2EConfig::DEFAULT_OFFSET_BITS + static_cast<uint32_t>((MAX_E2E_PREFIX_SIZE + 1) * 8U);
     EXPECT_EQ(protection.protect(msg, config), Result::NOT_IMPLEMENTED);
     EXPECT_EQ(protection.validate(msg, config), Result::NOT_IMPLEMENTED);
-    EXPECT_EQ(msg.set_e2e_unprotected_prefix(config.offset_bits, nullptr, kMaxE2EPrefixSize + 1),
+    EXPECT_EQ(msg.set_e2e_unprotected_prefix(config.offset_bits, nullptr, MAX_E2E_PREFIX_SIZE + 1),
               Result::NOT_IMPLEMENTED);
     EXPECT_FALSE(msg.has_e2e_header());
 }

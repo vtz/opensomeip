@@ -156,8 +156,7 @@ Message& Message::operator=(Message&& other) noexcept {
  * @implements REQ_MSG_010, REQ_MSG_011
  * @implements REQ_MSG_020, REQ_MSG_021, REQ_MSG_022
  * @implements REQ_MSG_030, REQ_MSG_040, REQ_MSG_050, REQ_MSG_070
- * @implements REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078,
- * REQ_MSG_079, REQ_MSG_080
+ * @implements REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078, REQ_MSG_079, REQ_MSG_080
  * @implements REQ_MSG_090, REQ_MSG_091
  * @satisfies feat_req_someip_45
  */
@@ -207,8 +206,7 @@ platform::ByteBuffer Message::serialize() const {
  * @implements REQ_MSG_020, REQ_MSG_020_E01, REQ_MSG_021, REQ_MSG_022
  * @implements REQ_MSG_030, REQ_MSG_031, REQ_MSG_032
  * @implements REQ_MSG_040, REQ_MSG_040_E01, REQ_MSG_050, REQ_MSG_070
- * @implements REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078,
- * REQ_MSG_079, REQ_MSG_080
+ * @implements REQ_MSG_073, REQ_MSG_074, REQ_MSG_075, REQ_MSG_076, REQ_MSG_077, REQ_MSG_078, REQ_MSG_079, REQ_MSG_080
  * @implements REQ_MSG_090, REQ_MSG_092, REQ_MSG_093
  * @implements REQ_MSG_100, REQ_MSG_100_E02, REQ_MSG_100_E03
  * @implements REQ_MSG_012_E01, REQ_MSG_014_E01, REQ_MSG_014_E02
@@ -434,8 +432,7 @@ bool Message::has_valid_request_id() const { return has_valid_client_id() && has
 /**
  * @brief Validate message type according to SOME/IP specification
  * @implements REQ_MSG_042, REQ_MSG_042_E01
- * @implements REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_053_E01, REQ_MSG_054, REQ_MSG_054_E01,
- * REQ_MSG_055
+ * @implements REQ_MSG_051, REQ_MSG_052, REQ_MSG_053, REQ_MSG_053_E01, REQ_MSG_054, REQ_MSG_054_E01, REQ_MSG_055
  * @implements REQ_MSG_056, REQ_MSG_057, REQ_MSG_058, REQ_MSG_059
  * @implements REQ_MSG_060_TP, REQ_MSG_061_TP, REQ_MSG_062_TP, REQ_MSG_060_TP_RESPONSE
  * @implements REQ_MSG_063
@@ -473,11 +470,9 @@ bool Message::has_tp_flag() const { return someip::uses_tp(message_type_); }
  * @implements REQ_MSG_072, REQ_MSG_072_E01
  * @implements REQ_MSG_041, REQ_MSG_090_E01, REQ_MSG_093
  * @implements REQ_MSG_150
- * @implements REQ_COMPAT_001, REQ_COMPAT_001_E01, REQ_COMPAT_002, REQ_COMPAT_003_E01,
- * REQ_COMPAT_004
+ * @implements REQ_COMPAT_001, REQ_COMPAT_001_E01, REQ_COMPAT_002, REQ_COMPAT_003_E01, REQ_COMPAT_004
  * @implements REQ_COMPAT_005, REQ_COMPAT_010, REQ_COMPAT_010_E01, REQ_COMPAT_011
- * @implements REQ_COMPAT_020, REQ_COMPAT_020_E01, REQ_COMPAT_021, REQ_COMPAT_022, REQ_COMPAT_023,
- * REQ_COMPAT_024
+ * @implements REQ_COMPAT_020, REQ_COMPAT_020_E01, REQ_COMPAT_021, REQ_COMPAT_022, REQ_COMPAT_023, REQ_COMPAT_024
  * @satisfies feat_req_someip_92, feat_req_someip_100, feat_req_someip_103, feat_req_someip_278
  */
 bool Message::has_valid_header() const { return header_validation_result() == Result::SUCCESS; }
@@ -533,7 +528,7 @@ Result Message::header_validation_result() const {
 
     // Check length consistency (Request ID through end, including E2E prefix and header)
     size_t const e2e_size = e2e_on_wire_size();
-    uint32_t const expected_length = static_cast<uint32_t>(8 + e2e_size + payload_.size());
+    const auto expected_length = static_cast<uint32_t>(8 + e2e_size + payload_.size());
     if (length_ != expected_length) {
         return Result::MALFORMED_MESSAGE;
     }
@@ -641,9 +636,9 @@ Result Message::set_e2e_unprotected_prefix(uint32_t offset_bits, const uint8_t* 
     if (offset_bits < e2e::E2EConfig::DEFAULT_OFFSET_BITS || (offset_bits % 8U) != 0U) {
         return Result::INVALID_ARGUMENT;
     }
-    const size_t expected =
-        static_cast<size_t>((offset_bits - e2e::E2EConfig::DEFAULT_OFFSET_BITS) / 8U);
-    if (expected > e2e::kMaxE2EPrefixSize) {
+    const auto expected =
+        static_cast<size_t>(offset_bits - e2e::E2EConfig::DEFAULT_OFFSET_BITS) / 8U;
+    if (expected > e2e::MAX_E2E_PREFIX_SIZE) {
         return Result::NOT_IMPLEMENTED;
     }
     if (size != expected || (size > 0 && data == nullptr)) {
@@ -673,8 +668,8 @@ Result Message::set_e2e_profile_bytes(uint32_t offset_bits, const uint8_t* heade
     }
 
     // Copy through locals so a caller may pass this message's own prefix storage.
-    std::array<uint8_t, e2e::kMaxE2EHeaderSize> header_tmp{};
-    std::array<uint8_t, e2e::kMaxE2EPrefixSize> prefix_tmp{};
+    std::array<uint8_t, e2e::MAX_E2E_HEADER_SIZE> header_tmp{};
+    std::array<uint8_t, e2e::MAX_E2E_PREFIX_SIZE> prefix_tmp{};
     std::memcpy(header_tmp.data(), header, header_size);
     if (prefix_size > 0) {
         std::memcpy(prefix_tmp.data(), prefix, prefix_size);

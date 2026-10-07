@@ -226,8 +226,8 @@ private:
     uint32_t e2e_offset_bits_{e2e::E2EConfig::DEFAULT_OFFSET_BITS};
     size_t e2e_header_size_{0};
     size_t e2e_prefix_size_{0};
-    std::array<uint8_t, e2e::kMaxE2EHeaderSize> e2e_header_bytes_{};
-    std::array<uint8_t, e2e::kMaxE2EPrefixSize> e2e_prefix_bytes_{};
+    std::array<uint8_t, e2e::MAX_E2E_HEADER_SIZE> e2e_header_bytes_{};
+    std::array<uint8_t, e2e::MAX_E2E_PREFIX_SIZE> e2e_prefix_bytes_{};
 
     // Metadata
     std::chrono::steady_clock::time_point timestamp_;
