@@ -730,7 +730,7 @@ platform::ByteBuffer SdMessage::serialize() const {
 bool SdMessage::deserialize(const platform::ByteBuffer& data) {
     option_wire_index_valid_ = false;
     ipv4_sd_endpoint_wire_first_ = false;
-    ipv4_sd_endpoint_wire_index_.clear();
+    ipv4_sd_endpoint_wire_bits_.reset();
     if (data.size() < 12) {
         return false;
     }
@@ -848,8 +848,8 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
             if (wire_index == 0) {
                 ipv4_sd_endpoint_wire_first_ = true;
             }
-            if (wire_index <= 0xFFU && ipv4_sd_endpoint_wire_index_.size() < 16U) {
-                ipv4_sd_endpoint_wire_index_.push_back(static_cast<uint8_t>(wire_index));
+            if (wire_index <= 0xFFU) {
+                ipv4_sd_endpoint_wire_bits_.set(static_cast<std::size_t>(wire_index));
             }
         } else if (option_type == OptionType::IPV4_MULTICAST) {
             IPv4MulticastOption option;
@@ -939,10 +939,8 @@ bool SdMessage::entry_references_ipv4_sd_endpoint(const SdEntry& entry) const {
                 if (pos > 0xFFU) {
                     continue;
                 }
-                for (const auto recorded : ipv4_sd_endpoint_wire_index_) {
-                    if (recorded == static_cast<uint8_t>(pos)) {
-                        return true;
-                    }
+                if (ipv4_sd_endpoint_wire_bits_.test(pos)) {
+                    return true;
                 }
             }
             return false;

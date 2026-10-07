@@ -471,12 +471,36 @@ private:
         return key;
     }
 
+    /** Drop reboot channels that no cached offer still names. Caller holds available_services_mutex_. */
+    void drop_unreferenced_reboot_channels() {
+        platform::Vector<platform::String<>, 32> drop;
+        for (const auto& channel : reboot_channels_) {
+            bool referenced = false;
+            for (const auto& endpoint : sd_unicast_endpoints_) {
+                if (sd_channel_key(endpoint.second.get_address(), endpoint.second.get_port()) ==
+                    channel.first) {
+                    referenced = true;
+                    break;
+                }
+            }
+            if (!referenced && drop.size() < drop.max_size()) {
+                drop.push_back(channel.first);
+            }
+        }
+        for (const auto& key : drop) {
+            reboot_channels_.erase(key);
+        }
+    }
+
     /** @implements REQ_SD_1084, REQ_SD_311
      *  @satisfies feat_req_someipsd_1084 */
     bool note_reboot_channel(const transport::Endpoint& peer, uint16_t session, bool reboot_flag) {
         const platform::String<> key = sd_channel_key(peer.get_address(), peer.get_port());
         const auto it = reboot_channels_.find(key);
         if (it == reboot_channels_.end()) {
+            if (reboot_channels_.size() >= reboot_channels_.max_size()) {
+                drop_unreferenced_reboot_channels();
+            }
             if (reboot_channels_.size() >= reboot_channels_.max_size()) {
                 return false;
             }

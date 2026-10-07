@@ -20,6 +20,7 @@
 #include "platform/containers.h"
 
 #include <array>
+#include <bitset>
 #include <variant>
 
 namespace someip::sd {
@@ -437,8 +438,8 @@ private:
     bool option_wire_index_valid_{false};
     /// True when wire index 0 was an IPv4 SD Endpoint Option.
     bool ipv4_sd_endpoint_wire_first_{false};
-    /// Wire indexes of type 0x24 options. Capacity matches a small SD message.
-    platform::Vector<uint8_t, 16> ipv4_sd_endpoint_wire_index_;
+    /// Wire indexes of type 0x24 options. An entry index is 8 bits, so every index fits.
+    std::bitset<256> ipv4_sd_endpoint_wire_bits_;
 
     platform::Vector<SdEntryStorage> entries_;
     platform::Vector<SdOptionStorage> options_;

@@ -3735,6 +3735,39 @@ TEST_F(SdTest, IPv4SdEndpointAfterSkippedOptionIsNotFirst) {
 }
 
 /**
+ * @test_case TC_SD_024_INDEX16
+ * @tests REQ_SD_343
+ * @satisfies feat_req_someipsd_1114
+ * @brief An entry that names a 0x24 past the first 16 options is still a forbidden reference.
+ */
+TEST_F(SdTest, IPv4SdEndpointReferencePastSixteenthOption) {
+    ServiceEntry offer(EntryType::OFFER_SERVICE);
+    offer.set_service_id(0x1234);
+    offer.set_instance_id(0x0001);
+    offer.set_major_version(1);
+    offer.set_ttl(3);
+    offer.set_index1(16);
+    offer.set_num_opts1(1);
+
+    SdMessage built;
+    built.set_reboot(true);
+    built.set_unicast(true);
+    ASSERT_TRUE(built.add_entry(std::move(offer)));
+    for (uint8_t i = 0; i < 17U; ++i) {
+        IPv4SdEndpointOption sd_opt;
+        sd_opt.set_ipv4_address_from_string("192.0.2.10");
+        sd_opt.set_port(40000);
+        sd_opt.set_protocol(0x11);
+        ASSERT_TRUE(built.add_option(std::move(sd_opt)));
+    }
+
+    SdMessage parsed;
+    ASSERT_TRUE(parsed.deserialize(built.serialize()));
+    ASSERT_FALSE(parsed.get_entries().empty());
+    EXPECT_TRUE(parsed.entry_references_ipv4_sd_endpoint(*get_entry_ptr(parsed.get_entries().front())));
+}
+
+/**
  * @test_case TC_SD_024_MCAST
  * @tests REQ_SD_343, REQ_SD_1084
  * @brief A multicast address in the first 0x24 does not replace the datagram source.
