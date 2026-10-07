@@ -1,4 +1,4 @@
-@startuml Safety Architecture
+@startuml safety_architecture
 
 title SOME/IP Safety Architecture (ASIL-B)
 

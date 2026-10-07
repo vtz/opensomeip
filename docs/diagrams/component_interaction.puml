@@ -1,4 +1,4 @@
-@startuml Component Interaction
+@startuml component_interaction
 
 title SOME/IP Stack Component Interaction Diagram
 

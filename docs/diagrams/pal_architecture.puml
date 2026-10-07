@@ -1,4 +1,4 @@
-@startuml PAL Architecture
+@startuml pal_architecture
 
 title Platform Abstraction Layer (PAL)
 

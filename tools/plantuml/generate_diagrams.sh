@@ -38,6 +38,22 @@ java -jar "$PLANTUML_JAR" \
     -tsvg \
     "$DIAGRAMS_DIR"/*.puml
 
+# PlantUML names each image from the @startuml identifier, not the .puml
+# filename. Docs link diagrams/svg/<basename>.svg, so the identifier must
+# match the source basename (no spaces).
+missing=0
+for src in "$DIAGRAMS_DIR"/*.puml; do
+    base="$(basename "$src" .puml)"
+    if [ ! -s "$DIAGRAMS_DIR/svg/${base}.svg" ]; then
+        echo "ERROR: missing $DIAGRAMS_DIR/svg/${base}.svg" >&2
+        echo "       Set @startuml ${base} in $src" >&2
+        missing=1
+    fi
+done
+if [ "$missing" -ne 0 ]; then
+    exit 1
+fi
+
 echo "Diagram generation complete!"
 echo "PNG diagrams: $DIAGRAMS_DIR/png/"
 echo "SVG diagrams: $DIAGRAMS_DIR/svg/"

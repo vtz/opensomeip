@@ -1,4 +1,4 @@
-@startuml System Architecture
+@startuml system_architecture
 
 title SOME/IP Stack System Architecture
 

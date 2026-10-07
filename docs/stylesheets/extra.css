@@ -36,9 +36,31 @@
   font-size: 1.3rem;
   opacity: 0.9;
   max-width: 700px;
-  margin: 0 auto 2rem;
+  margin: 0 auto 1.25rem;
   line-height: 1.6;
   font-weight: 300;
+}
+
+.os-hero__bindings {
+  max-width: 720px;
+  margin: 0 auto 2rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: #fff;
+}
+
+.os-hero__bindings a {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.os-hero__bindings code {
+  color: #e3f2fd;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
 }
 
 .os-hero__badges {

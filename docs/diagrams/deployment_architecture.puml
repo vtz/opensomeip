@@ -1,4 +1,4 @@
-@startuml Deployment Architecture
+@startuml deployment_architecture
 
 title SOME/IP Stack Deployment Architecture
 

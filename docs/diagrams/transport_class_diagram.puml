@@ -1,4 +1,4 @@
-@startuml Transport Layer Classes
+@startuml transport_class_diagram
 
 title Transport Layer Class Diagram
 
