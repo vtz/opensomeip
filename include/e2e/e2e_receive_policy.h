@@ -62,6 +62,10 @@ struct E2EReceiveBinding {
     bool enable_counter{true};
     bool enable_freshness{false};
     uint8_t crc_type{1};
+    /// Copied into the stack-managed E2EConfig. Same default as E2EConfig.
+    uint32_t max_counter_value{0xFFFFFFFF};
+    /// Copied into the stack-managed E2EConfig. Same default as E2EConfig.
+    uint32_t freshness_timeout_ms{1000};
 };
 
 inline constexpr size_t MAX_E2E_RECEIVE_BINDINGS = SOMEIP_MAX_E2E_RECEIVE_BINDINGS;

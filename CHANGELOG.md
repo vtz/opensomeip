@@ -30,7 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   removed and `get_e2e_header()` set, so the application can validate
   without a wire round trip. The binding table is fixed-capacity.
   Non-default Offset and non-12-byte headers are not part of this receive
-  path.
+  path. The binding carries `max_counter_value` and `freshness_timeout_ms`
+  into stack-managed validation. Zephyr links that receive source whenever
+  UDP or TCP is enabled.
 
 ## [0.2.0] - 2026-10-05
 

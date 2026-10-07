@@ -139,6 +139,8 @@ constructing the transport.
   Failure uses `MessageRejectionStage::E2E_INTEGRITY` and does not deliver.
 - `E2EReceivePolicy::APPLICATION_MANAGED` delivers a message whose payload
   excludes the header. Call `E2EProtection::validate` on that message.
+  Stack-managed checks use the binding's `max_counter_value` and
+  `freshness_timeout_ms` (same defaults as `E2EConfig`).
 
 TP reassembly finishes before this check. A full table returns
 `Result::RESOURCE_EXHAUSTED` from `add`, not a receive rejection.
