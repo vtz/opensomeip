@@ -129,7 +129,7 @@ public:
         return (static_cast<uint32_t>(reserved_12bit_) & 0x0008U) != 0U;
     }
     void set_initial_data_requested(bool requested) {
-        const uint16_t cleared = static_cast<uint16_t>(static_cast<uint32_t>(reserved_12bit_) & ~0x0008U);
+        const auto cleared = static_cast<uint16_t>(static_cast<uint32_t>(reserved_12bit_) & ~0x0008U);
         reserved_12bit_ = requested ? static_cast<uint16_t>(static_cast<uint32_t>(cleared) | 0x0008U) : cleared;
     }
 

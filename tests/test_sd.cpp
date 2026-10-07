@@ -3521,11 +3521,11 @@ TEST_F(SdIntegrationTest, ExplicitInitialDataControlsFieldDelivery) {
         [&](uint16_t, uint16_t, uint16_t eventgroup, const transport::Endpoint&,
             InitialDataDelivery delivery) {
             platform::Vector<someip::events::EventFilter> filters;
-            if (delivery == InitialDataDelivery::Default) {
+            if (delivery == InitialDataDelivery::DEFAULT) {
                 publisher.handle_subscription(eventgroup, client_id, 1800, filters);
             } else {
                 publisher.handle_subscription(eventgroup, client_id, 1800, filters,
-                                              delivery == InitialDataDelivery::Requested);
+                                              delivery == InitialDataDelivery::REQUESTED);
             }
         });
 

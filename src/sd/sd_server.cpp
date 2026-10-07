@@ -804,11 +804,11 @@ private:
         }
 
         (void)event_protocol;
-        InitialDataDelivery delivery = InitialDataDelivery::Default;
+        InitialDataDelivery delivery = InitialDataDelivery::DEFAULT;
         if (message.explicit_initial_data_control()) {
             delivery = subscription_entry.get_initial_data_requested()
-                ? InitialDataDelivery::Requested
-                : InitialDataDelivery::Suppressed;
+                ? InitialDataDelivery::REQUESTED
+                : InitialDataDelivery::SUPPRESSED;
         }
         send_subscribe_response(
             subscription_entry, sender, true, ttl,
@@ -830,7 +830,7 @@ private:
                                  const transport::Endpoint& reply_to,
                                  bool acknowledge, uint32_t ttl_seconds,
                                  const transport::Endpoint& event_endpoint,
-                                 InitialDataDelivery initial_data = InitialDataDelivery::Default) {
+                                 InitialDataDelivery initial_data = InitialDataDelivery::DEFAULT) {
         EventGroupEntry response_entry(
             acknowledge ? EntryType::SUBSCRIBE_EVENTGROUP_ACK : EntryType::SUBSCRIBE_EVENTGROUP_NACK);
         response_entry.set_service_id(request.get_service_id());

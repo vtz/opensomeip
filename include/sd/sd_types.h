@@ -160,9 +160,9 @@ enum class SubscriptionState : uint8_t {
  * per-entry Initial Data Requested flag.
  */
 enum class InitialDataDelivery : uint8_t {
-    Default,
-    Requested,
-    Suppressed
+    DEFAULT,
+    REQUESTED,
+    SUPPRESSED
 };
 
 /**
