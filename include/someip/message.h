@@ -17,9 +17,11 @@
 #include "someip/types.h"
 #include "someip/payload_view.h"
 #include "e2e/e2e_header.h"
+#include "e2e/e2e_layout.h"
 #include "common/result.h"
 #include "platform/buffer_pool.h"
 #include "platform/intrusive_ptr.h"
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstring>
@@ -130,9 +132,16 @@ public:
      * Parsed header fields that were read before a failure remain on this
      * object for receiver diagnostics. deserialize() is a bool wrapper around
      * this method.
+     *
+     * expect_e2e == true selects the default layout only: Offset 64 bits and
+     * a 12-byte header immediately after Return Code. Any other layout must
+     * be passed as E2EParseOptions. Offset and header size are not discovered
+     * from the datagram.
      */
     Result try_deserialize(const platform::ByteBuffer& data, bool expect_e2e = false);
     Result try_deserialize(const uint8_t* data, size_t size, bool expect_e2e = false);
+    Result try_deserialize(const platform::ByteBuffer& data, const e2e::E2EParseOptions& options);
+    Result try_deserialize(const uint8_t* data, size_t size, const e2e::E2EParseOptions& options);
 
     // Validation methods
     bool is_valid() const;
@@ -151,10 +160,7 @@ public:
     bool has_tp_flag() const;
 
     // Utility methods
-    size_t get_total_size() const {
-        const size_t e2e_size = e2e_header_.has_value() ? e2e::E2EHeader::get_header_size() : 0;
-        return HEADER_SIZE + e2e_size + payload_.size();
-    }
+    size_t get_total_size() const { return HEADER_SIZE + e2e_on_wire_size() + payload_.size(); }
     static size_t get_header_size() { return HEADER_SIZE; }
     bool is_request() const { return someip::is_request(message_type_); }
     bool is_response() const { return someip::is_response(message_type_); }
@@ -165,11 +171,39 @@ public:
     std::chrono::steady_clock::time_point get_timestamp() const { return timestamp_; }
     void update_timestamp() { timestamp_ = std::chrono::steady_clock::now(); }
 
-    // E2E protection support
-    bool has_e2e_header() const { return e2e_header_.has_value(); }
+    // E2E protection support.
+    // Profile bytes live in a fixed buffer. The 12-byte E2EHeader view is
+    // available only when the stored header is exactly that size.
+    // set_e2e_header() installs the default layout (Offset 64, no prefix).
+    bool has_e2e_header() const { return e2e_header_size_ > 0; }
     void set_e2e_header(const e2e::E2EHeader& header);
-    std::optional<e2e::E2EHeader> get_e2e_header() const { return e2e_header_; }
+    std::optional<e2e::E2EHeader> get_e2e_header() const;
     void clear_e2e_header();
+
+    /**
+     * @brief Store the unprotected bytes that sit between Return Code and the E2E header.
+     *
+     * size must equal (offset_bits / 8) - 8. Those bytes are not part of
+     * get_payload() and are not covered by the basic profile CRC. They are
+     * included in Length once a header is installed.
+     */
+    Result set_e2e_unprotected_prefix(uint32_t offset_bits, const uint8_t* data, size_t size);
+
+    /**
+     * @brief Install profile header bytes at a resolved Offset.
+     *
+     * prefix_size must equal the prefix implied by offset_bits. Sources must
+     * not be required to outlive the call; overlapping the message's own
+     * E2E storage is safe.
+     */
+    Result set_e2e_profile_bytes(uint32_t offset_bits, const uint8_t* header, size_t header_size,
+                                 const uint8_t* prefix, size_t prefix_size);
+
+    uint32_t e2e_offset_bits() const { return e2e_offset_bits_; }
+    size_t e2e_header_size() const { return e2e_header_size_; }
+    const uint8_t* e2e_header_bytes() const { return e2e_header_bytes_.data(); }
+    size_t e2e_unprotected_prefix_size() const { return e2e_prefix_size_; }
+    const uint8_t* e2e_unprotected_prefix() const { return e2e_prefix_bytes_.data(); }
 
     // String representation for debugging
     std::string to_string() const;
@@ -187,8 +221,13 @@ private:
     // Payload
     platform::ByteBuffer payload_;
 
-    // E2E protection header (optional)
-    std::optional<e2e::E2EHeader> e2e_header_;
+    // E2E region. Header size 0 means no header. Prefix bytes are the
+    // unprotected gap after Return Code and are emitted only with a header.
+    uint32_t e2e_offset_bits_{e2e::E2EConfig::DEFAULT_OFFSET_BITS};
+    size_t e2e_header_size_{0};
+    size_t e2e_prefix_size_{0};
+    std::array<uint8_t, e2e::kMaxE2EHeaderSize> e2e_header_bytes_{};
+    std::array<uint8_t, e2e::kMaxE2EPrefixSize> e2e_prefix_bytes_{};
 
     // Metadata
     std::chrono::steady_clock::time_point timestamp_;
@@ -210,6 +249,9 @@ private:
     bool validate_payload() const;
     Result header_validation_result() const;
     Result validation_result() const;
+    size_t e2e_on_wire_size() const { return e2e_header_size_ == 0 ? 0 : (e2e_prefix_size_ + e2e_header_size_); }
+    void copy_e2e_from(const Message& other);
+    void reset_e2e();
 };
 
 void intrusive_ptr_add_ref(const Message* p);

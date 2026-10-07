@@ -54,7 +54,10 @@ and can be overridden via CMake `-D` flags or CMakePresets cache variables.
 |---|---|---|
 | `SOMEIP_MESSAGE_POOL_SIZE` | 16 | Max concurrent `Message` objects |
 | `SOMEIP_BYTE_POOL_SMALL_COUNT` | 32 | Small buffer slots (256 B each) |
-| `SOMEIP_BYTE_POOL_MEDIUM_COUNT` | 16 | Medium buffer slots (1500 B each) |
+| `SOMEIP_BYTE_POOL_MEDIUM_COUNT` | 16 | Medium buffer slots (1600 B each) |
+| `SOMEIP_MAX_E2E_HEADER_SIZE` | 64 | Max E2E profile header stored in `Message` |
+| `SOMEIP_MAX_E2E_PREFIX_SIZE` | 64 | Max unprotected bytes between Return Code and the E2E header |
+| `SOMEIP_MAX_MESSAGE_SIZE` | 1544 | 16 + prefix cap + header cap + `SOMEIP_MAX_PAYLOAD_SIZE` |
 | `SOMEIP_BYTE_POOL_LARGE_COUNT` | 4 | Large buffer slots (64 KB each) |
 | `SOMEIP_BYTE_POOL_LARGE_SIZE` | 65536 | Large buffer tier size |
 | `SOMEIP_MAX_TP_SEGMENTS` | 64 | Max TP segments per transfer |
