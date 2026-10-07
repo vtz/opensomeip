@@ -700,6 +700,31 @@ TEST(TransportInjectionRouting, FailedFieldSendDoesNotRetainCallback)
 }
 
 /**
+ * @test_case TC_EVENT_FIELD_SEND_DELIVERS
+ * @tests REQ_TRANSPORT_030, REQ_ARCH_002
+ * @brief A field response delivered from send_message reaches the reserved callback.
+ */
+TEST(TransportInjectionRouting, FieldResponseDuringSendReachesTheCallback)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    unsigned calls = 0;
+    transport.on_send = [&](const Message&) {
+        const auto message = make_dispatch_message<events::EventSubscriber>();
+        ASSERT_NE(message, nullptr);
+        EXPECT_TRUE(transport.emit(message));
+    };
+    EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                         [&](const events::EventNotification&) { ++calls; }));
+    EXPECT_EQ(calls, 1u);
+    transport.on_send = nullptr;
+    EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                         [&](const events::EventNotification&) { ++calls; }));
+}
+
+/**
  * @test_case TC_RPC_HANDLER_RELEASE
  * @tests REQ_ARCH_002, REQ_ARCH_003
  */
