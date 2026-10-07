@@ -16,6 +16,8 @@
 #include <transport/udp_socket_adapter.h>
 #include <transport/transport.h>
 #include <someip/message.h>
+#include <e2e/e2e_config.h>
+#include <e2e/e2e_protection.h>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
@@ -43,6 +45,12 @@ public:
         std::scoped_lock lock(mutex_);
         last_error_ = error;
         error_count_++;
+        cv_.notify_one();
+    }
+
+    void on_message_rejected(const MessageRejectionInfo& info) override {
+        std::scoped_lock lock(mutex_);
+        rejections_.push_back(info);
         cv_.notify_one();
     }
 
@@ -76,6 +84,26 @@ public:
         return received_messages_.at(index).first->get_method_id();
     }
 
+    const platform::ByteBuffer& message_payload(size_t index) const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.at(index).first->get_payload();
+    }
+
+    bool message_has_e2e(size_t index) const {
+        std::scoped_lock lock(mutex_);
+        return received_messages_.at(index).first->has_e2e_header();
+    }
+
+    bool wait_for_rejection(std::chrono::milliseconds timeout = std::chrono::milliseconds(500)) {
+        std::unique_lock lock(mutex_);
+        return cv_.wait_for(lock, timeout, [this]() { return !rejections_.empty(); });
+    }
+
+    std::vector<MessageRejectionInfo> rejections() const {
+        std::scoped_lock lock(mutex_);
+        return rejections_;
+    }
+
     std::atomic<Result> last_error_{Result::SUCCESS};
     std::atomic<int> error_count_{0};
 
@@ -83,6 +111,7 @@ private:
     mutable std::mutex mutex_;
     std::condition_variable cv_;
     std::vector<std::pair<MessagePtr, Endpoint>> received_messages_;
+    std::vector<MessageRejectionInfo> rejections_;
 };
 
 class MockUdpAdapter : public IUdpSocketAdapter {
@@ -367,4 +396,44 @@ TEST(EventDrivenUdpTransport, StopFromListenerDoesNotDeadlock) {
     EXPECT_TRUE(listener.stopped_);
     EXPECT_EQ(listener.stop_result_, Result::SUCCESS);
     EXPECT_FALSE(transport.is_running());
+}
+
+TEST(EventDrivenUdpTransport, StackManagedE2ERejectsCorruption) {
+    MockUdpAdapter adapter;
+    EventDrivenUdpTransportConfig cfg;
+    e2e::E2EReceiveBinding binding;
+    binding.service_id = 0x1234;
+    binding.method_id = 0x5678;
+    binding.data_id = 0x0100;
+    binding.policy = e2e::E2EReceivePolicy::STACK_MANAGED;
+    binding.enable_freshness = false;
+    ASSERT_EQ(cfg.e2e_receive.add(binding), Result::SUCCESS);
+
+    EventDrivenUdpTransport transport(adapter, Endpoint{"127.0.0.1", 0}, cfg);
+    TestEventUdpListener listener;
+    transport.set_listener(&listener);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+
+    Message sent = make_sample_message();
+    e2e::E2EConfig e2e_config(0x0100);
+    e2e_config.enable_freshness = false;
+    e2e::E2EProtection protection;
+    ASSERT_EQ(protection.protect(sent, e2e_config), Result::SUCCESS);
+    const platform::ByteBuffer payload = sent.get_payload();
+    adapter.inject_receive(sent.serialize(), Endpoint{"10.0.0.5", 5000});
+    ASSERT_TRUE(listener.wait_for_message());
+    EXPECT_EQ(listener.message_payload(0), payload);
+    EXPECT_TRUE(listener.message_has_e2e(0));
+    EXPECT_EQ(listener.error_count_.load(), 0);
+
+    platform::ByteBuffer flipped = sent.get_payload();
+    flipped[0] ^= 0xFFU;
+    sent.set_payload(flipped);
+    adapter.inject_receive(sent.serialize(), Endpoint{"10.0.0.5", 5000});
+    ASSERT_TRUE(listener.wait_for_rejection());
+    ASSERT_EQ(listener.rejections().size(), 1u);
+    EXPECT_EQ(listener.rejections()[0].stage, MessageRejectionStage::E2E_INTEGRITY);
+    EXPECT_EQ(listener.message_count(), 1u);
+
+    transport.stop();
 }

@@ -504,7 +504,26 @@ void UdpTransport::receive_loop() {
                 if (tp_manager_->ingest_datagram(buffer.data(), bytes_received, *message,
                                                  sender_ipv4, sender.get_port(),
                                                  &ingest_error)) {
-                    delivered = true;
+                    // E2E is checked on the reassembled message, not on a segment.
+                    if (config_.e2e_receive.empty()) {
+                        delivered = true;
+                    } else {
+                        const platform::ByteBuffer wire = message->serialize();
+                        const e2e::E2EReceiveOutcome e2e_outcome = e2e::receive_if_e2e_protected(
+                            config_.e2e_receive, wire.data(), wire.size(), *message);
+                        if (e2e_outcome.status == e2e::E2EReceiveStatus::REJECTED) {
+                            MessageRejectionInfo info;
+                            info.sender = sender;
+                            info.result = e2e_outcome.result;
+                            info.stage = e2e_outcome.integrity_failure
+                                             ? MessageRejectionStage::E2E_INTEGRITY
+                                             : MessageRejectionStage::DESERIALIZE;
+                            fill_rejection_ids(info, *message, wire.size());
+                            notify_rejection(info);
+                        } else {
+                            delivered = true;
+                        }
+                    }
                 } else if (ingest_error != Result::SUCCESS) {
                     MessageRejectionInfo info;
                     info.sender = sender;
@@ -514,15 +533,29 @@ void UdpTransport::receive_loop() {
                     notify_rejection(info);
                 }
                 // Incomplete reassembly is not a rejection; wait for more segments.
-            } else if (message->deserialize(buffer.data(), bytes_received)) {
-                delivered = true;
             } else {
-                MessageRejectionInfo info;
-                info.sender = sender;
-                info.result = Result::MALFORMED_MESSAGE;
-                info.stage = MessageRejectionStage::DESERIALIZE;
-                fill_rejection_ids(info, buffer.data(), bytes_received);
-                notify_rejection(info);
+                const e2e::E2EReceiveOutcome e2e_outcome = e2e::receive_if_e2e_protected(
+                    config_.e2e_receive, buffer.data(), bytes_received, *message);
+                if (e2e_outcome.status == e2e::E2EReceiveStatus::REJECTED) {
+                    MessageRejectionInfo info;
+                    info.sender = sender;
+                    info.result = e2e_outcome.result;
+                    info.stage = e2e_outcome.integrity_failure
+                                     ? MessageRejectionStage::E2E_INTEGRITY
+                                     : MessageRejectionStage::DESERIALIZE;
+                    fill_rejection_ids(info, *message, bytes_received);
+                    notify_rejection(info);
+                } else if (e2e_outcome.status == e2e::E2EReceiveStatus::ACCEPTED ||
+                           message->deserialize(buffer.data(), bytes_received)) {
+                    delivered = true;
+                } else {
+                    MessageRejectionInfo info;
+                    info.sender = sender;
+                    info.result = Result::MALFORMED_MESSAGE;
+                    info.stage = MessageRejectionStage::DESERIALIZE;
+                    fill_rejection_ids(info, buffer.data(), bytes_received);
+                    notify_rejection(info);
+                }
             }
 
             if (delivered) {

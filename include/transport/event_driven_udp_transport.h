@@ -19,6 +19,7 @@
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
 #include "platform/thread.h"
+#include "e2e/e2e_receive_policy.h"
 #include "transport/multicast_transport.h"
 #include "transport/transport.h"
 #include "transport/udp_socket_adapter.h"
@@ -31,6 +32,9 @@ namespace someip::transport {
 struct EventDrivenUdpTransportConfig {
     platform::String<> multicast_interface;
     size_t max_message_size{1400};
+
+    // Filled before the transport is constructed. Default layout only.
+    e2e::E2EReceiveTable e2e_receive{};
 };
 
 /**

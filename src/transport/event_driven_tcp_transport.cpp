@@ -429,7 +429,16 @@ EventDrivenTcpTransport::ParseOutcome EventDrivenTcpTransport::parse_next_messag
             rejection = Result::OUT_OF_MEMORY;
             return ParseOutcome::REJECTED;
         }
-        if (!message->deserialize(message_data)) {
+        const e2e::E2EReceiveOutcome e2e_outcome = e2e::receive_if_e2e_protected(
+            config_.e2e_receive, message_data.data(), message_data.size(), *message);
+        if (e2e_outcome.status == e2e::E2EReceiveStatus::REJECTED) {
+            rejection = e2e_outcome.result;
+            stage = e2e_outcome.integrity_failure ? MessageRejectionStage::E2E_INTEGRITY
+                                                  : MessageRejectionStage::DESERIALIZE;
+            return ParseOutcome::REJECTED;
+        }
+        if (e2e_outcome.status == e2e::E2EReceiveStatus::NOT_CONFIGURED &&
+            !message->deserialize(message_data)) {
             rejection = Result::MALFORMED_MESSAGE;
             stage = MessageRejectionStage::DESERIALIZE;
             return ParseOutcome::REJECTED;

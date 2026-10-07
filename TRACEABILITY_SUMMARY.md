@@ -28,8 +28,8 @@ to implementation and test coverage. No safety certification is claimed.
 
 | Metric | Value | Assessment |
 |--------|-------|------------|
-| Total requirements (RST) | 698 | - |
-| Fully traced (code + tests) | 617 (88.4%) | Good |
+| Total requirements (RST) | 699 | - |
+| Fully traced (code + tests) | 618 (88.4%) | Good |
 | Requirements with code refs | 620 | Good |
 | Requirements with test coverage | 686 | Good |
 | Orphaned (no code annotation) | 78 | Needs improvement |
@@ -39,7 +39,7 @@ to implementation and test coverage. No safety certification is claimed.
 
 ### Status
 
-617 of 698 requirements are fully traced with both code implementation references
+618 of 699 requirements are fully traced with both code implementation references
 and test coverage annotations. 78 requirements remain without code annotations.
 The extraction script properly parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations.
@@ -62,7 +62,7 @@ The extraction script properly parses comma-separated requirement IDs from
 | Compatibility (REQ_COMPAT_*) | 17 |
 | C ABI (REQ_CAPI_*) | 13 |
 | Architecture (REQ_ARCH_*) | 8 |
-| E2E (REQ_E2E_*) | 5 |
+| E2E (REQ_E2E_*) | 6 |
 | Other (REQ_MY_*) | 1 |
 
 > **Note**: Requirement counts reflect the full RST definitions.

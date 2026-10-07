@@ -32,7 +32,7 @@ enum class MessageRejectionStage : uint8_t {
     DESERIALIZE = 0,    ///< Message::deserialize rejected the PDU
     TCP_FRAMING = 1,    ///< TCP length/resync rejected a complete frame
     TP_REASSEMBLY = 2,  ///< TP reassembly failed or timed out
-    E2E_INTEGRITY = 3   ///< Reserved for receive-path E2E validation (#317)
+    E2E_INTEGRITY = 3   ///< E2EProtection::validate failed on a configured receive
 };
 
 /**

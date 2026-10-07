@@ -15,6 +15,8 @@
 #include <transport/tcp_transport.h>
 #include <transport/transport.h>
 #include <someip/message.h>
+#include <e2e/e2e_config.h>
+#include <e2e/e2e_protection.h>
 #include <platform/buffer_pool.h>
 #include <platform/containers.h>
 #include <platform/byteorder.h>
@@ -2541,4 +2543,119 @@ TEST_F(TcpTransportTest, ClientSendToStalledPeerWaitsWithoutSpinning) {
     someip_close_socket(accepted_fd);
     someip_close_socket(listen_fd);
     client.disconnect();
+}
+
+/**
+ * @test_case TC_TCP_E2E_001
+ * @tests REQ_E2E_RECEIVE_001
+ * @brief TCP parse applies both receive policies to the default 12-byte layout
+ */
+TEST_F(TcpTransportTest, ParseAppliesE2EReceivePolicy) {
+    e2e::E2EReceiveBinding binding;
+    binding.service_id = 0x1234;
+    binding.method_id = 0x0007;
+    binding.data_id = 0x0100;
+    binding.enable_freshness = false;
+    binding.policy = e2e::E2EReceivePolicy::STACK_MANAGED;
+
+    TcpTransportConfig stack_cfg = config;
+    ASSERT_EQ(stack_cfg.e2e_receive.add(binding), Result::SUCCESS);
+
+    Message original(MessageId(0x1234, 0x0007), RequestId(0x0001, 0x0001), MessageType::REQUEST,
+                     ReturnCode::E_OK);
+    const platform::ByteBuffer payload{0x0A, 0x0B, 0x0C, 0x0D};
+    original.set_payload(payload);
+    e2e::E2EConfig e2e_config(0x0100);
+    e2e_config.enable_freshness = false;
+    e2e::E2EProtection protection;
+    ASSERT_EQ(protection.protect(original, e2e_config), Result::SUCCESS);
+
+    TcpTransport stack(stack_cfg);
+    platform::ByteBuffer good = original.serialize();
+    MessagePtr parsed;
+    Result rejection = Result::SUCCESS;
+    MessageRejectionStage stage = MessageRejectionStage::DESERIALIZE;
+    size_t skip = 0;
+    EXPECT_EQ(stack.parse_next_message(good, parsed, rejection, stage, skip),
+              TcpParseOutcome::MESSAGE);
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_payload(), payload);
+    EXPECT_TRUE(parsed->has_e2e_header());
+
+    Message corrupt = original;
+    platform::ByteBuffer flipped = corrupt.get_payload();
+    flipped[0] ^= 0xFFU;
+    corrupt.set_payload(flipped);
+    platform::ByteBuffer bad = corrupt.serialize();
+    EXPECT_EQ(stack.parse_next_message(bad, parsed, rejection, stage, skip),
+              TcpParseOutcome::REJECTED);
+    EXPECT_EQ(stage, MessageRejectionStage::E2E_INTEGRITY);
+    EXPECT_EQ(rejection, Result::INVALID_ARGUMENT);
+
+    binding.policy = e2e::E2EReceivePolicy::APPLICATION_MANAGED;
+    TcpTransportConfig app_cfg = config;
+    ASSERT_EQ(app_cfg.e2e_receive.add(binding), Result::SUCCESS);
+    TcpTransport app(app_cfg);
+    platform::ByteBuffer app_bad = corrupt.serialize();
+    EXPECT_EQ(app.parse_next_message(app_bad, parsed, rejection, stage, skip),
+              TcpParseOutcome::MESSAGE);
+    ASSERT_NE(parsed, nullptr);
+    EXPECT_EQ(parsed->get_payload(), flipped);
+    ASSERT_TRUE(parsed->get_e2e_header().has_value());
+    EXPECT_EQ(protection.validate(*parsed, e2e_config), Result::INVALID_ARGUMENT);
+}
+
+/**
+ * @test_case TC_TCP_E2E_002
+ * @tests REQ_E2E_RECEIVE_001
+ * @brief A live TCP server reports E2E integrity failure and does not deliver
+ */
+TEST_F(TcpTransportTest, StackManagedE2ENotifiesRejection) {
+    e2e::E2EReceiveBinding binding;
+    binding.service_id = 0x1234;
+    binding.method_id = 0x0007;
+    binding.data_id = 0x0100;
+    binding.policy = e2e::E2EReceivePolicy::STACK_MANAGED;
+    binding.enable_freshness = false;
+    TcpTransportConfig server_cfg = config;
+    ASSERT_EQ(server_cfg.e2e_receive.add(binding), Result::SUCCESS);
+
+    TcpTransport server(server_cfg);
+    Endpoint server_bind("127.0.0.1", 0);
+    ASSERT_EQ(server.initialize(server_bind), Result::SUCCESS);
+    ASSERT_EQ(server.enable_server_mode(), Result::SUCCESS);
+    TestTcpListener server_listener;
+    server.set_listener(&server_listener);
+    ASSERT_EQ(server.start(), Result::SUCCESS);
+    const Endpoint server_ep = server.get_local_endpoint();
+
+    TcpTransport client(config);
+    ASSERT_EQ(client.initialize(Endpoint("127.0.0.1", 0)), Result::SUCCESS);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+    ASSERT_EQ(client.connect(server_ep), Result::SUCCESS);
+    ASSERT_TRUE(server_listener.wait_for_connection_established());
+
+    Message bad(MessageId(0x1234, 0x0007), RequestId(0x0001, 0x0003), MessageType::REQUEST,
+                ReturnCode::E_OK);
+    bad.set_payload(platform::ByteBuffer{0x01, 0x02, 0x03, 0x04});
+    e2e::E2EConfig e2e_config(0x0100);
+    e2e_config.enable_freshness = false;
+    e2e::E2EProtection protection;
+    ASSERT_EQ(protection.protect(bad, e2e_config), Result::SUCCESS);
+    platform::ByteBuffer flipped = bad.get_payload();
+    flipped[0] ^= 0xFFU;
+    bad.set_payload(flipped);
+    EXPECT_EQ(client.send_message(bad, server_ep), Result::SUCCESS);
+
+    EXPECT_TRUE(server_listener.wait_for_rejection());
+    EXPECT_FALSE(server_listener.wait_for_message(std::chrono::milliseconds(150)));
+    auto rejections = server_listener.get_rejections();
+    ASSERT_EQ(rejections.size(), 1u);
+    EXPECT_EQ(rejections[0].stage, MessageRejectionStage::E2E_INTEGRITY);
+    EXPECT_EQ(rejections[0].result, Result::INVALID_ARGUMENT);
+    EXPECT_TRUE(server_listener.get_received_messages().empty());
+
+    client.disconnect();
+    client.stop();
+    server.stop();
 }

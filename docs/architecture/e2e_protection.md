@@ -136,6 +136,18 @@ E2E protection errors are propagated via `Result` codes:
 - `Result::TIMEOUT` - Freshness timeout
 - `Result::NOT_INITIALIZED` - Profile not registered
 
+## Receive path
+
+Transports do not infer E2E from the datagram. `E2EReceiveTable` on the
+transport config lists protected Service ID and Method/Event ID values.
+After a complete frame is available, and after TP reassembly, the default
+12-byte header at Offset 64 is removed from the payload.
+
+Stack-managed mode calls `E2EProtection::validate` and, on failure, reports
+`MessageRejectionStage::E2E_INTEGRITY` instead of the application handler.
+Application-managed mode delivers `get_e2e_header()` with the clean payload
+so the application can call `validate` without serializing again.
+
 ## Performance Considerations
 
 - CRC calculation: O(n) where n is message size
