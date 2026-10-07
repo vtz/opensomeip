@@ -20,6 +20,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- **SD**: A received IPv4 SD Endpoint Option (type `0x24`) is now decoded
+  and, when it is the first option and a usable UDP unicast endpoint,
+  replaces the datagram source for SD replies and reboot detection.
+  A multicast address, or a `0x24` that is not first on the wire, does not.
+  Reboot state for a channel is updated once per SD datagram.
+  OfferService responses, SubscribeEventgroup, and
+  SubscribeEventgroupAck/Nack follow that endpoint. The application/event
+  endpoint is unchanged, option-absent traffic still uses the datagram
+  source, and a Subscribe entry that references `0x24` is rejected.
+  IPv6 SD Endpoint `0x26` remains out of scope
+  ([#344](https://github.com/vtz/opensomeip/issues/344)).
+
 ## [0.2.0] - 2026-10-05
 
 This minor release packages new public APIs (C ABI, static-allocation PAL,

@@ -449,6 +449,71 @@ private:
         bool reboot_flag{false};
     };
 
+    struct RebootChannel {
+        uint16_t last_session_id{0};
+        bool reboot_flag{false};
+    };
+
+    static platform::String<> sd_channel_key(const platform::String<>& address, uint16_t port) {
+        platform::String<> key = address;
+        key.push_back(':');
+        uint16_t place = 10000;
+        bool started = false;
+        while (place > 0U) {
+            const auto digit = static_cast<uint16_t>(port / place);
+            if (digit != 0U || started || place == 1U) {
+                key.push_back(static_cast<char>('0' + static_cast<int>(digit)));
+                started = true;
+            }
+            port = static_cast<uint16_t>(port % place);
+            place = static_cast<uint16_t>(place / 10U);
+        }
+        return key;
+    }
+
+    /** Drop reboot channels that no cached offer still names. Caller holds available_services_mutex_. */
+    void drop_unreferenced_reboot_channels() {
+        platform::Vector<platform::String<>, 32> drop;
+        for (const auto& channel : reboot_channels_) {
+            bool referenced = false;
+            for (const auto& endpoint : sd_unicast_endpoints_) {
+                if (sd_channel_key(endpoint.second.get_address(), endpoint.second.get_port()) ==
+                    channel.first) {
+                    referenced = true;
+                    break;
+                }
+            }
+            if (!referenced && drop.size() < drop.max_size()) {
+                drop.push_back(channel.first);
+            }
+        }
+        for (const auto& key : drop) {
+            reboot_channels_.erase(key);
+        }
+    }
+
+    /** @implements REQ_SD_1084, REQ_SD_311
+     *  @satisfies feat_req_someipsd_1084 */
+    bool note_reboot_channel(const transport::Endpoint& peer, uint16_t session, bool reboot_flag) {
+        const platform::String<> key = sd_channel_key(peer.get_address(), peer.get_port());
+        const auto it = reboot_channels_.find(key);
+        if (it == reboot_channels_.end()) {
+            if (reboot_channels_.size() >= reboot_channels_.max_size()) {
+                drop_unreferenced_reboot_channels();
+            }
+            if (reboot_channels_.size() >= reboot_channels_.max_size()) {
+                return false;
+            }
+            reboot_channels_[key] = RebootChannel{session, reboot_flag};
+            return false;
+        }
+        const bool detected = sd_reboot_detected(
+            true, it->second.reboot_flag, it->second.last_session_id, reboot_flag, session);
+        it->second.last_session_id = session;
+        it->second.reboot_flag = reboot_flag;
+        return detected;
+    }
+
     void start_maintenance_loop() {
         if (maintenance_thread_ && maintenance_thread_->joinable()) {
             return;
@@ -706,8 +771,23 @@ private:
         // TODO: Handle transport errors
     }
 
-    /** @implements REQ_SD_119, REQ_SD_120, REQ_SD_311, REQ_SD_331 */
+    /** @implements REQ_SD_119, REQ_SD_120, REQ_SD_311, REQ_SD_331, REQ_SD_1084 */
     void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender) {
+        // Session and reboot flag are message-scoped. Recording them once avoids
+        // a second offer in the same datagram looking like a session reuse.
+        platform::String<> sd_address;
+        uint16_t sd_port = 0;
+        transport::Endpoint sd_peer = sender;
+        if (message.ipv4_sd_endpoint(sd_address, sd_port)) {
+            sd_peer = transport::Endpoint(sd_address, sd_port);
+        }
+        bool channel_rebooted = false;
+        {
+            platform::ScopedLock const lock(available_services_mutex_);
+            channel_rebooted = note_reboot_channel(
+                sd_peer, message.get_session_id(), message.get_reboot_flag());
+        }
+
         for (const auto& entry_var : message.get_entries()) {
             const SdEntry* entry = get_entry_ptr(entry_var);
             switch (entry->get_type()) {
@@ -716,7 +796,7 @@ private:
                         if (entry->get_ttl() == 0) {
                             handle_service_stop_offer(*se);
                         } else {
-                            handle_service_offer(*se, message, sender);
+                            handle_service_offer(*se, message, sd_peer, channel_rebooted);
                         }
                     }
                     break;
@@ -731,9 +811,10 @@ private:
         }
     }
 
-    /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_234, REQ_SD_240, REQ_SD_346, REQ_SD_348 */
+    /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_234, REQ_SD_240, REQ_SD_346, REQ_SD_348, REQ_SD_1084, REQ_SD_343
+     *  @satisfies feat_req_someipsd_1084, feat_req_someipsd_1114 */
     void handle_service_offer(const ServiceEntry& entry, const SdMessage& message,
-                             const transport::Endpoint& sender) {
+                             const transport::Endpoint& sd_peer, bool rebooted) {
         ServiceInstance instance;
         instance.service_id = entry.get_service_id();
         instance.instance_id = entry.get_instance_id();
@@ -741,41 +822,33 @@ private:
         instance.minor_version = entry.get_minor_version();
         instance.ttl_seconds = entry.get_ttl();
 
-        // Extract endpoint information from options
+        // Extract the application endpoint. An entry that references the IPv4
+        // SD Endpoint Option is ignored for this address; 0x24 is not a service port.
         const auto& options = message.get_options();
         uint8_t const index1 = entry.get_index1();
         uint8_t const run1 = entry.get_num_opts1();
 
-        for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
-            const auto& option_var = options[index1 + i];
-            if (const auto* ep = std::get_if<IPv4EndpointOption>(&option_var)) {
-                instance.ip_address = ep->get_ipv4_address_string();
-                instance.port = ep->get_port();
-                instance.protocol = ep->get_protocol();
-                break;  // Found the endpoint option
+        if (!message.entry_references_ipv4_sd_endpoint(entry)) {
+            for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
+                const auto& option_var = options[index1 + i];
+                if (const auto* ep = std::get_if<IPv4EndpointOption>(&option_var)) {
+                    instance.ip_address = ep->get_ipv4_address_string();
+                    instance.port = ep->get_port();
+                    instance.protocol = ep->get_protocol();
+                    break;  // Found the endpoint option
+                }
             }
         }
 
-        bool rebooted = false;
         {
             platform::ScopedLock const lock(available_services_mutex_);
             const uint64_t key = make_service_key(instance.service_id, instance.instance_id);
-            // Offering ECU SD unicast is the source of the Offer datagram.
             if (sd_unicast_endpoints_.size() < sd_unicast_endpoints_.max_size() ||
                 sd_unicast_endpoints_.find(key) != sd_unicast_endpoints_.end()) {
-                sd_unicast_endpoints_[key] = transport::Endpoint(sender.get_address(), sender.get_port());
+                sd_unicast_endpoints_[key] = sd_peer;
             }
             const uint16_t incoming_session = message.get_session_id();
             const bool incoming_reboot_flag = message.get_reboot_flag();
-
-            auto cache_it = cached_services_.find(key);
-            if (cache_it != cached_services_.end()) {
-                const auto& prev = cache_it->second;
-                if (incoming_reboot_flag != prev.reboot_flag ||
-                    (incoming_session < prev.last_session_id && incoming_reboot_flag)) {
-                    rebooted = true;
-                }
-            }
 
             if (rebooted) {
                 const auto rm_it = std::remove_if(
@@ -911,6 +984,7 @@ private:
     mutable platform::Mutex session_id_mutex_;
 
     platform::UnorderedMap<uint64_t, transport::Endpoint, 32> sd_unicast_endpoints_;
+    platform::UnorderedMap<platform::String<>, RebootChannel, 32> reboot_channels_;
     platform::Vector<Message> pending_find_messages_;
     std::chrono::steady_clock::time_point initial_wait_until_;
 
