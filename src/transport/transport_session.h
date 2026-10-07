@@ -42,7 +42,7 @@ class TransportSession {
     }
 
     explicit TransportSession(ITransport& transport)
-        : transport_(transport), multicast_(dynamic_cast<IMulticastTransport*>(&transport))
+        : transport_(transport), multicast_(transport.multicast_transport())
     {
     }
 

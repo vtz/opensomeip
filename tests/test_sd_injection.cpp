@@ -82,6 +82,7 @@ class MulticastFake final : public ITransport, public IMulticastTransport {
     }
 
     bool is_running() const override { return running_; }
+    IMulticastTransport* multicast_transport() noexcept override { return this; }
 
     Result join_multicast_group(const platform::String<>& group) override
     {

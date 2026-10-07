@@ -65,6 +65,7 @@ class EventDrivenUdpTransport : public ITransport, public IMulticastTransport {
     Result start() override;
     Result stop() override;
     bool is_running() const override;
+    IMulticastTransport* multicast_transport() noexcept override { return this; }
 
     Result join_multicast_group(const platform::String<>& multicast_address) override;
     Result leave_multicast_group(const platform::String<>& multicast_address) override;

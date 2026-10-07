@@ -385,7 +385,8 @@ TEST(TransportSessionDirectTest, ReArmsForRetryWhenBackendStaysRunning)
     ASSERT_EQ(session.start(listener), Result::SUCCESS);
 
     transport.remain_running_on_stop = true;
-    EXPECT_EQ(session.stop(), Result::SUCCESS);
+    EXPECT_EQ(session.stop(), Result::INVALID_STATE);
+    EXPECT_EQ(session.result(), Result::INVALID_STATE);
     // Backend still running -> session must have re-armed (retry path), so a
     // second stop() call must try again instead of being a silent no-op.
     EXPECT_EQ(transport.stop_calls, 1u);

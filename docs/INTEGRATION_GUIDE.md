@@ -490,7 +490,8 @@ Custom backends and deterministic test transports can implement `ITransport`
 without changing RPC/event implementations. No event-driven backend is required.
 The injected backend owns endpoint selection and any prior configuration; the
 facade does not impose the default RPC port or create a multicast membership.
-SD facades also require the borrowed transport to implement `IMulticastTransport`.
+SD facades also require the borrowed transport to implement `IMulticastTransport`
+and to return that interface from `ITransport::multicast_transport()`.
 A transport that cannot join a multicast group is rejected at `initialize()`.
 The caller joins nothing itself: the facade joins the SD group after start and
 leaves it before stop. RPC and event facades do not join multicast.
