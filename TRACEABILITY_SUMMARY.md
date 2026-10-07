@@ -28,18 +28,18 @@ to implementation and test coverage. No safety certification is claimed.
 
 | Metric | Value | Assessment |
 |--------|-------|------------|
-| Total requirements (RST) | 698 | - |
-| Fully traced (code + tests) | 617 (88.4%) | Good |
-| Requirements with code refs | 620 | Good |
-| Requirements with test coverage | 686 | Good |
+| Total requirements (RST) | 700 | - |
+| Fully traced (code + tests) | 618 (88.3%) | Good |
+| Requirements with code refs | 622 | Good |
+| Requirements with test coverage | 687 | Good |
 | Orphaned (no code annotation) | 78 | Needs improvement |
-| Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 |
-| Code references extracted | 625 | - |
-| Test references extracted | 751 | - |
+| Missing spec links | 3 | REQ_MSG_150, REQ_TRANSPORT_026, REQ_TRANSPORT_030 |
+| Code references extracted | 627 | - |
+| Test references extracted | 752 | - |
 
 ### Status
 
-617 of 698 requirements are fully traced with both code implementation references
+618 of 700 requirements are fully traced with both code implementation references
 and test coverage annotations. 78 requirements remain without code annotations.
 The extraction script properly parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations.
@@ -57,8 +57,8 @@ The extraction script properly parses comma-separated requirement IDs from
 | Message Header (REQ_MSG_*) | 130 |
 | Serialization (REQ_SER_*) | 115 |
 | Transport Protocol (REQ_TP_*) | 83 |
-| Platform (REQ_PLATFORM_*, REQ_PAL_*) | 73 |
-| Transport (REQ_TRANSPORT_*) | 47 |
+| Platform (REQ_PLATFORM_*, REQ_PAL_*) | 74 |
+| Transport (REQ_TRANSPORT_*) | 48 |
 | Compatibility (REQ_COMPAT_*) | 17 |
 | C ABI (REQ_CAPI_*) | 13 |
 | Architecture (REQ_ARCH_*) | 8 |

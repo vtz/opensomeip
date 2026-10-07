@@ -481,6 +481,13 @@ opensomeip_event_publisher_destroy(pub);
 
 ### Subscriber
 
+Each subscriber supports one `(instance_id, eventgroup_id)` per `service_id`.
+A distinct same-service key returns `OPENSOMEIP_RESULT_INTERNAL_ERROR` without
+sending or replacing the original subscription. Exact-key renewal and different
+services are supported; unsubscribe releases the service slot. This mirrors the
+C++ restriction: notifications do not carry instance/eventgroup identity, and no
+receive-endpoint binding is provided to distinguish those keys.
+
 ```c
 static void on_event(uint16_t service_id, uint16_t instance_id,
                       uint16_t event_id,

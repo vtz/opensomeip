@@ -25,8 +25,10 @@
 #include "someip/message.h"
 #include "someip/types.h"
 #include "transport/endpoint.h"
+#include "transport/multicast_transport.h"
 #include "transport/transport.h"
 #include "transport/udp_transport.h"
+#include "../transport/transport_session.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_hton*/someip_ntoh* macros from byteorder_impl.h
 #include "platform/byteorder.h"
 // NOLINTNEXTLINE(misc-include-cleaner) - someip_inet_*/AF_INET/in_addr via net_impl.h
@@ -69,11 +71,19 @@ class SdServerImpl : public transport::ITransportListener {
 public:
     explicit SdServerImpl(const SdConfig& config)
         : config_(config),
-          transport_(transport::Endpoint("0.0.0.0", config.multicast_port),
-                     make_sd_transport_config(config)),
+          transport_session_(transport::Endpoint("0.0.0.0", config.multicast_port),
+                             make_sd_transport_config(config)),
+          transport_(transport_session_.get()),
+          multicast_(transport_session_.multicast()),
           running_(false) {
+    }
 
-        transport_.set_listener(this);
+    SdServerImpl(const SdConfig& config, transport::ITransport& transport)
+        : config_(config),
+          transport_session_(transport),
+          transport_(transport_session_.get()),
+          multicast_(transport_session_.multicast()),
+          running_(false) {
     }
 
     ~SdServerImpl() override
@@ -92,10 +102,11 @@ public:
             return true;
         }
 
-        // stop() clears the listener; reinstall before any retry of initialize().
-        transport_.set_listener(this);
+        if (multicast_ == nullptr) {
+            return false;
+        }
 
-        if (transport_.start() != Result::SUCCESS) {
+        if (transport_session_.start(*this) != Result::SUCCESS) {
             return false;
         }
 
@@ -129,8 +140,13 @@ public:
     }
 
     /** @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094 */
+    Result get_transport_result() const {
+        return transport_session_.result();
+    }
+
     void shutdown() {
         if (!running_) {
+            transport_session_.stop();
             return;
         }
 
@@ -149,7 +165,7 @@ public:
         // Leave multicast group (cancels any pending re-attempt)
         leave_multicast_group();
 
-        transport_.stop();
+        transport_session_.stop();
     }
 
     /** @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152 */
@@ -379,11 +395,16 @@ private:
     }
 
     bool join_multicast_group() {
-        return transport_.join_multicast_group(config_.multicast_address) == Result::SUCCESS;
+        if (multicast_ == nullptr) {
+            return false;
+        }
+        return multicast_->join_multicast_group(config_.multicast_address) == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
-        (void)transport_.leave_multicast_group(config_.multicast_address);
+        if (multicast_ != nullptr) {
+            (void)multicast_->leave_multicast_group(config_.multicast_address);
+        }
         platform::ScopedLock const lock(sd_multicast_mutex_);
         sd_multicast_.cancel();
     }
@@ -954,7 +975,9 @@ private:
     }
 
     SdConfig config_;
-    transport::UdpTransport transport_;
+    transport::detail::TransportSession transport_session_;
+    transport::ITransport& transport_;
+    transport::IMulticastTransport* multicast_;
 
     platform::Vector<OfferedService> offered_services_;
     mutable platform::Mutex offered_services_mutex_;
@@ -1019,6 +1042,16 @@ SdServer::SdServer(const SdConfig& config)
 }
 #endif
 
+SdServer::SdServer(const SdConfig& config, transport::ITransport& transport)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) SdServerImpl(config, transport);
+}
+#else
+    : impl_(std::make_unique<SdServerImpl>(config, transport)) {
+}
+#endif
+
 SdServer::~SdServer() {
 #ifdef SOMEIP_STATIC_ALLOC
     impl()->~SdServerImpl();
@@ -1027,6 +1060,10 @@ SdServer::~SdServer() {
 
 bool SdServer::initialize() {
     return impl()->initialize();
+}
+
+Result SdServer::get_transport_result() const {
+    return impl()->get_transport_result();
 }
 
 MulticastState SdServer::multicast_state() const {

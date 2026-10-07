@@ -64,11 +64,11 @@ public:
 
         // Subscribe to the sensor event group with a single notification callback
         // that dispatches based on event_id.
-        if (!subscriber_.subscribe_eventgroup(
+        if (subscriber_.subscribe_eventgroup(
                 SENSOR_SERVICE_ID, 0x0001, SENSOR_EVENTGROUP_ID,
                 [this](const EventNotification& notification) {
                     on_event_received(notification);
-                })) {
+                }) != Result::SUCCESS) {
             std::cerr << "Failed to subscribe to sensor event group" << std::endl;
             return false;
         }
