@@ -152,6 +152,20 @@ enum class SubscriptionState : uint8_t {
 };
 
 /**
+ * @brief How a server should deliver field initial events for one Subscribe.
+ *
+ * Default: the peer did not advertise explicit initial-data control, so the
+ * subscriber uses the legacy rule (send on a new subscription only).
+ * Requested / Suppressed: the peer advertised support and set or cleared the
+ * per-entry Initial Data Requested flag.
+ */
+enum class InitialDataDelivery : uint8_t {
+    Default,
+    Requested,
+    Suppressed
+};
+
+/**
  * @brief SD Session ID counter per SOME/IP-SD spec.
  *
  * Session IDs start at 0x0001, increment per message, and wrap from
@@ -198,6 +212,7 @@ struct EventGroupSubscription {
     uint16_t eventgroup_id{0};
     uint8_t major_version{0};
     SubscriptionState state{SubscriptionState::REQUESTED};
+    uint32_t ttl_seconds{0};
     std::chrono::steady_clock::time_point timestamp{std::chrono::steady_clock::now()};
     /// Eventgroup multicast group from SubscribeEventgroupAck; empty when unicast.
     platform::String<> multicast_group;

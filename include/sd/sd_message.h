@@ -124,6 +124,15 @@ public:
     uint16_t get_reserved_12bit() const { return reserved_12bit_; }
     void set_reserved_12bit(uint16_t reserved) { reserved_12bit_ = static_cast<uint16_t>(reserved & 0x0FFFU); }
 
+    /// Initial Data Requested flag (bit 3 of the 12-bit reserved field, wire bit 7 of byte 13).
+    bool get_initial_data_requested() const {
+        return (static_cast<uint32_t>(reserved_12bit_) & 0x0008U) != 0U;
+    }
+    void set_initial_data_requested(bool requested) {
+        const uint16_t cleared = static_cast<uint16_t>(static_cast<uint32_t>(reserved_12bit_) & ~0x0008U);
+        reserved_12bit_ = requested ? static_cast<uint16_t>(static_cast<uint32_t>(cleared) | 0x0008U) : cleared;
+    }
+
     uint8_t get_counter() const { return counter_; }
     void set_counter(uint8_t counter) { counter_ = static_cast<uint8_t>(counter & 0x0FU); }
 
@@ -364,6 +373,10 @@ public:
     // Helper methods
     bool is_reboot() const { return (static_cast<uint32_t>(flags_) & 0x80U) != 0; }
     bool is_unicast() const { return (static_cast<uint32_t>(flags_) & 0x40U) != 0; }
+    /// Explicit Initial Data Control Flag (third-highest SD header bit, 0x20).
+    bool explicit_initial_data_control() const {
+        return (static_cast<uint32_t>(flags_) & 0x20U) != 0U;
+    }
 
     uint16_t get_session_id() const { return session_id_; }
     void set_session_id(uint16_t id) { session_id_ = id; }
@@ -386,6 +399,14 @@ public:
         }
     }
 
+    void set_explicit_initial_data_control(bool enabled) {
+        if (enabled) {
+            flags_ = static_cast<uint8_t>(static_cast<uint32_t>(flags_) | 0x20U);
+        } else {
+            flags_ = static_cast<uint8_t>(static_cast<uint32_t>(flags_) & ~0x20U);
+        }
+    }
+
 private:
     uint8_t flags_{0};
     uint32_t reserved_{0};
@@ -404,6 +425,9 @@ private:
 inline void apply_sd_tx_flags(SdMessage& message, const SdSessionIdCounter& counter) {
     message.set_unicast(true);
     message.set_reboot(counter.reboot_flag());
+    // Advertise explicit initial-data control only because client and server
+    // both implement the feature. Reserved flag bits stay clear on serialize.
+    message.set_explicit_initial_data_control(true);
 }
 
 // Type aliases for convenience

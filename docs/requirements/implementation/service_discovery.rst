@@ -2797,18 +2797,26 @@ SD Initial Event Handling
 
 .. requirement:: SD Initial Event Requesting
    :id: REQ_SD_331
-   :satisfies: feat_req_someipsd_1191, feat_req_someipsd_1192, feat_req_someipsd_1193, feat_req_someipsd_946
+   :satisfies: feat_req_someipsd_322, feat_req_someipsd_1187, feat_req_someipsd_1188, feat_req_someipsd_1191, feat_req_someipsd_1192, feat_req_someipsd_1193, feat_req_someipsd_1194, feat_req_someipsd_946
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Server ACKs subscription with initial event flag, verify initial field values are sent via unicast to subscriber.
+   :verification: Unit and integration tests. Header serialization keeps bit 0x20 and clears reserved flag bits. A client sets Initial Data Requested on the first Subscribe and after reboot, and clears it on renewal while the previous TTL is still valid. A server that sees the capability flag honors the entry bit (send or suppress field notifications after Ack); a legacy peer keeps the implicit new-subscription initial field. Covered by ExplicitInitialDataFlagRoundTrip, ClientRequestsInitialDataOnFirstSubscribeNotRenewal, and ExplicitInitialDataControlsFieldDelivery.
 
-   The software shall request initial events after reboot or when
-   no active subscription exists for the eventgroup.
+   The client and server shall implement explicit requesting of Initial
+   Events. Outgoing SD messages advertise the Explicit Initial Data
+   Control Flag. The client sets the Initial Data Requested flag on the
+   first SubscribeEventgroup for an eventgroup, after reboot recovery,
+   and while no subscription is active, and clears it on a further
+   Subscribe whose previous TTL is still valid. The server honors that
+   entry flag only when the sending peer advertises the capability;
+   otherwise it keeps the legacy rule of sending initial field values
+   only for a new subscription. The resolved decision is delivered to the
+   subscription-accepted callback and from there into event publication.
 
-   **Rationale**: Version-aware workflows ensure client-server compatibility.
+   **Rationale**: Explicit initial-data control refreshes field values after loss or reboot without repeating them on ordinary renewal.
 
-   **Code Location**: ``src/sd/sd_client.cpp`` (subscribe_eventgroup entry construction)
+   **Code Location**: ``src/sd/sd_message.cpp`` (flag mask), ``src/sd/sd_client.cpp`` (subscribe_eventgroup), ``src/sd/sd_server.cpp`` (send_subscribe_response), ``src/events/event_publisher.cpp``
 
 
 SD Advanced Features
@@ -3060,11 +3068,11 @@ SD Advanced Features
 
 .. requirement:: SD Service Registration
    :id: REQ_SD_356
-   :satisfies: feat_req_someipsd_1194, feat_req_someipsd_1195, feat_req_someipsd_1262, feat_req_someipsd_1297
+   :satisfies: feat_req_someipsd_1195, feat_req_someipsd_1262, feat_req_someipsd_1297
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Configure SD timing parameters, verify initial_delay, repetition_base, and cyclic_offer_delay are applied.
+   :verification: Unit test: Configure SD timing parameters, verify initial_delay, repetition_base, and cyclic_offer_delay are applied. Explicit initial events are REQ_SD_331, not this requirement.
 
    The software shall support service registration and deregistration
    with proper cleanup of associated subscriptions and endpoints.

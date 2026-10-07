@@ -246,8 +246,8 @@ public:
         return service_subscriptions_.erase(service_id) > 0;
     }
 
-    /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_211, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_234, REQ_SD_240, REQ_SD_241, REQ_SD_270, REQ_SD_818
-     *  @satisfies feat_req_someipsd_818
+    /** @implements REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_211, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_234, REQ_SD_240, REQ_SD_241, REQ_SD_270, REQ_SD_818, REQ_SD_331
+     *  @satisfies feat_req_someipsd_818, feat_req_someipsd_322, feat_req_someipsd_1191, feat_req_someipsd_1192
      */
     bool subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id) {
         if (!running_) {
@@ -263,6 +263,7 @@ public:
                              (static_cast<uint64_t>(instance_id) << 16U) |
                              eventgroup_id;
 
+        bool request_initial = true;
         {
             platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
             // Cap at membership bound in both static and dynamic builds so an
@@ -276,12 +277,23 @@ public:
             sub.instance_id = instance_id;
             sub.eventgroup_id = eventgroup_id;
             sub.major_version = 0x01;
+            sub.ttl_seconds = 3600;
             sub.state = SubscriptionState::PENDING_ACK;
             // Preserve prior multicast ownership across replay / resubscribe so
             // a later ACK does not double-acquire the same group.
             const auto existing = eventgroup_subscriptions_.find(key);
             if (existing != eventgroup_subscriptions_.end()) {
                 sub.multicast_group = existing->second.multicast_group;
+                const auto& prior = existing->second;
+                const bool ttl_alive = prior.ttl_seconds > 0 &&
+                    (std::chrono::steady_clock::now() - prior.timestamp) <
+                        std::chrono::seconds(prior.ttl_seconds);
+                // An active subscription is not asked for initial events again.
+                // Pending, rejected, requested (including post-reboot), and
+                // expired subscriptions do request them.
+                if (prior.state == SubscriptionState::SUBSCRIBED && ttl_alive) {
+                    request_initial = false;
+                }
             }
             eventgroup_subscriptions_[key] = sub;
         }
@@ -292,6 +304,7 @@ public:
         subscribe_entry.set_eventgroup_id(eventgroup_id);
         subscribe_entry.set_major_version(0x01);
         subscribe_entry.set_ttl(3600);
+        subscribe_entry.set_initial_data_requested(request_initial);
 
         subscribe_entry.set_index1(0);
         subscribe_entry.set_num_opts1(1);
@@ -1083,6 +1096,16 @@ private:
                 if (eg.second.service_id == service_id &&
                     eg.second.instance_id == instance_id) {
                     subs_to_renew.push_back(eg.second);
+                }
+            }
+        }
+
+        {
+            platform::ScopedLock const lock(eventgroup_subscriptions_mutex_);
+            for (auto& eg : eventgroup_subscriptions_) {
+                if (eg.second.service_id == service_id &&
+                    eg.second.instance_id == instance_id) {
+                    eg.second.state = SubscriptionState::REQUESTED;
                 }
             }
         }

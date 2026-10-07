@@ -662,12 +662,14 @@ bool sd_repetition_phase_done(const SdConfig& config, uint8_t next_index) {
     return sd_repetition_interval(config, next_index) >= config.cyclic_offer;
 }
 
-/** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320 */
+/** @implements REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320, REQ_SD_331
+ *  @satisfies feat_req_someipsd_1187, feat_req_someipsd_1188 */
 platform::ByteBuffer SdMessage::serialize() const {
     platform::ByteBuffer data;
 
-    // Flags (1 byte) - ensure reserved bits 5-0 are zero (REQ_SD_013)
-    auto const flags_to_send = static_cast<uint8_t>(static_cast<uint32_t>(flags_) & 0xC0U);
+    // Flags: keep Reboot, Unicast, and Explicit Initial Data Control.
+    // Reserved bits 4-0 stay clear (REQ_SD_013).
+    auto const flags_to_send = static_cast<uint8_t>(static_cast<uint32_t>(flags_) & 0xE0U);
     data.push_back(flags_to_send);
 
     // Reserved (3 bytes)

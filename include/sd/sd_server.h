@@ -152,10 +152,15 @@ public:
 
     using SubscriptionAcceptedCallback =
         platform::Function<void(uint16_t service, uint16_t instance, uint16_t eventgroup,
-                                const transport::Endpoint& subscriber)>;
+                                const transport::Endpoint& subscriber,
+                                InitialDataDelivery initial_data)>;
 
     /**
-     * @brief Invoked after a SubscribeEventgroupAck is sent for a new/accepted subscription.
+     * @brief Invoked after a SubscribeEventgroupAck is sent for an accepted subscription.
+     *
+     * `initial_data` is the resolved initial-event decision: legacy peers use
+     * `Default` (send only for a new subscription); a peer that advertises
+     * explicit initial-data control uses `Requested` or `Suppressed`.
      */
     void set_subscription_accepted_callback(SubscriptionAcceptedCallback callback);
 
