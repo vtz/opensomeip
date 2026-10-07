@@ -410,11 +410,12 @@ public:
     }
 
     /**
-     * @brief First-position IPv4 SD Endpoint Option, if it can be used.
+     * @brief First-on-the-wire IPv4 SD Endpoint Option, if it can be used.
      *
-     * Only options_[0] is consulted. A later 0x24 is ignored. UDP, a non-zero
-     * port, and a unicast address are required; otherwise the caller keeps the
-     * datagram source.
+     * Wire position is the option array index before unsupported options are
+     * skipped. A later 0x24 is ignored. UDP, a non-zero port, and a unicast
+     * address are required; multicast, broadcast, and the unspecified address
+     * do not replace the datagram source.
      *
      * @implements REQ_SD_236, REQ_SD_343
      * @satisfies feat_req_someipsd_1151, feat_req_someipsd_1152
@@ -429,9 +430,17 @@ public:
     bool entry_references_ipv4_sd_endpoint(const SdEntry& entry) const;
 
 private:
+    static constexpr uint8_t kMaxTrackedSdEndpoints = 16;
+
     uint8_t flags_{0};
     uint32_t reserved_{0};
     uint16_t session_id_{0};
+    /// True after deserialize has recorded option wire indexes.
+    bool option_wire_index_valid_{false};
+    /// True when wire index 0 was an IPv4 SD Endpoint Option.
+    bool ipv4_sd_endpoint_wire_first_{false};
+    uint8_t ipv4_sd_endpoint_wire_index_[kMaxTrackedSdEndpoints]{};
+    uint8_t ipv4_sd_endpoint_wire_count_{0};
 
     platform::Vector<SdEntryStorage> entries_;
     platform::Vector<SdOptionStorage> options_;

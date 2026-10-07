@@ -728,6 +728,9 @@ platform::ByteBuffer SdMessage::serialize() const {
 
 /** @implements REQ_SD_030_E01, REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320 */
 bool SdMessage::deserialize(const platform::ByteBuffer& data) {
+    option_wire_index_valid_ = false;
+    ipv4_sd_endpoint_wire_first_ = false;
+    ipv4_sd_endpoint_wire_count_ = 0;
     if (data.size() < 12) {
         return false;
     }
@@ -800,8 +803,11 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
         return false;
     }
 
-    // Parse options
+    // Parse options. Wire index counts every option, including ones that are
+    // skipped, so a later 0x24 is not treated as the first option.
+    option_wire_index_valid_ = true;
     size_t const options_end = offset + options_length;
+    uint16_t wire_index = 0;
     while (offset < options_end) {
         if (offset + 4 > data.size()) {
             return false;
@@ -839,6 +845,14 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
                 return false;
             }
             options_.emplace_back(std::move(option));
+            if (wire_index == 0) {
+                ipv4_sd_endpoint_wire_first_ = true;
+            }
+            if (ipv4_sd_endpoint_wire_count_ < kMaxTrackedSdEndpoints && wire_index <= 0xFFU) {
+                ipv4_sd_endpoint_wire_index_[ipv4_sd_endpoint_wire_count_] =
+                    static_cast<uint8_t>(wire_index);
+                ++ipv4_sd_endpoint_wire_count_;
+            }
         } else if (option_type == OptionType::IPV4_MULTICAST) {
             IPv4MulticastOption option;
             if (!option.deserialize(data, offset)) {
@@ -875,7 +889,9 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
                 return false;
             }
             offset += 3 + option_len;
-            continue;
+        }
+        if (wire_index < 0xFFFFU) {
+            ++wire_index;
         }
     }
 
@@ -885,19 +901,29 @@ bool SdMessage::deserialize(const platform::ByteBuffer& data) {
 /** @implements REQ_SD_236, REQ_SD_343
  *  @satisfies feat_req_someipsd_1151, feat_req_someipsd_1152 */
 bool SdMessage::ipv4_sd_endpoint(platform::String<>& address, uint16_t& port) const {
-    if (options_.empty()) {
+    // Only a type 0x24 at wire index 0 can replace the datagram source.
+    if (!ipv4_sd_endpoint_wire_first_) {
         return false;
     }
-    const auto* option = std::get_if<IPv4SdEndpointOption>(&options_.front());
+    const IPv4SdEndpointOption* option = nullptr;
+    for (const auto& stored : options_) {
+        if (const auto* sd_endpoint = std::get_if<IPv4SdEndpointOption>(&stored)) {
+            option = sd_endpoint;
+            break;
+        }
+    }
     if (option == nullptr) {
         return false;
     }
-    // SD rides UDP. A non-UDP or empty endpoint does not replace the datagram source.
+    // SD rides UDP. A non-UDP, empty, multicast, or broadcast endpoint does not
+    // replace the datagram source.
     if (option->get_protocol() != 0x11U || option->get_port() == 0) {
         return false;
     }
     const uint32_t raw = option->get_ipv4_address();
-    if (raw == 0U || raw == 0xFFFFFFFFU) {
+    const uint32_t host = someip_ntohl(raw);
+    const uint8_t first_octet = static_cast<uint8_t>((host >> 24U) & 0xFFU);
+    if (raw == 0U || raw == 0xFFFFFFFFU || (first_octet >= 224U && first_octet <= 239U)) {
         return false;
     }
     address = option->get_ipv4_address_string();
@@ -908,6 +934,21 @@ bool SdMessage::ipv4_sd_endpoint(platform::String<>& address, uint16_t& port) co
 /** @implements REQ_SD_343
  *  @satisfies feat_req_someipsd_1114 */
 bool SdMessage::entry_references_ipv4_sd_endpoint(const SdEntry& entry) const {
+    if (option_wire_index_valid_) {
+        const auto wire_hits = [this](uint8_t index, uint8_t count) {
+            for (uint8_t i = 0; i < count; ++i) {
+                const unsigned pos = static_cast<unsigned>(index) + static_cast<unsigned>(i);
+                for (uint8_t n = 0; n < ipv4_sd_endpoint_wire_count_; ++n) {
+                    if (ipv4_sd_endpoint_wire_index_[n] == pos) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
+        return wire_hits(entry.get_index1(), entry.get_num_opts1()) ||
+               wire_hits(entry.get_index2(), entry.get_num_opts2());
+    }
     const auto run_hits = [this](uint8_t index, uint8_t count) {
         for (uint8_t i = 0; i < count; ++i) {
             const size_t pos = static_cast<size_t>(index) + static_cast<size_t>(i);

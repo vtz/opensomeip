@@ -2715,7 +2715,7 @@ SD Shutdown and Recovery
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Integration test: with no IPv4 SD Endpoint Option, SubscribeEventgroupAck is received on the datagram source socket and not on the event endpoint. When a usable Type 0x24 option names a different endpoint, Find responses, SubscribeEventgroup, and SubscribeEventgroupAck/Nack use that endpoint, and reboot detection follows it. Covered by SubscribeAckGoesToSdSenderNotEventEndpoint, FindOfferUsesIpv4SdEndpoint, SubscribeAckUsesIpv4SdEndpointNotEventEndpoint, and RebootAndSubscribeFollowIpv4SdEndpoint.
+   :verification: Integration test: with no IPv4 SD Endpoint Option, SubscribeEventgroupAck is received on the datagram source socket and not on the event endpoint. When a usable Type 0x24 option names a different endpoint, Find responses, SubscribeEventgroup, and SubscribeEventgroupAck/Nack use that endpoint, and reboot detection follows it. A multicast 0x24 does not replace the source. Two offers in one datagram update the reboot channel once. Covered by SubscribeAckGoesToSdSenderNotEventEndpoint, FindOfferUsesIpv4SdEndpoint, SubscribeAckUsesIpv4SdEndpointNotEventEndpoint, RebootAndSubscribeFollowIpv4SdEndpoint, IPv4SdEndpointRejectsMulticastAddress, and BundledOffersDoNotFalseReboot.
 
    SubscribeEventgroupAck and SubscribeEventgroupNack shall be sent to the
    source IP address and source port of the received SD datagram, not to
@@ -2874,10 +2874,12 @@ SD Advanced Features
    :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: only the first option is the SD endpoint; a later 0x24 is ignored; a second 0x24 is not used; an entry run that includes 0x24 is detected. Integration: Subscribe that references 0x24 is NACKed to the SD endpoint, and the application endpoint port is kept. Covered by IPv4SdEndpointPlacementAndEntryReference and SubscribeAckUsesIpv4SdEndpointNotEventEndpoint.
+   :verification: Unit test: only the first option on the wire is the SD endpoint; a later 0x24 is ignored, including when an unsupported option ahead of it was skipped; a multicast address is not usable; a second 0x24 is not used; an entry run that includes 0x24 is detected at its wire index. Integration: Subscribe that references 0x24 is NACKed to the SD endpoint, and the application endpoint port is kept. Covered by IPv4SdEndpointPlacementAndEntryReference, IPv4SdEndpointAfterSkippedOptionIsNotFirst, IPv4SdEndpointRejectsMulticastAddress, and SubscribeAckUsesIpv4SdEndpointNotEventEndpoint.
 
    The software shall process at most the first IPv4 SD Endpoint Option,
-   and only when it is the first option in the options array. Further
+   and only when it is the first option in the options array on the wire.
+   An unsupported option that is skipped does not move a later 0x24 into
+   first place. A multicast address is not a usable SD endpoint. Further
    IPv4 SD Endpoint Options shall be ignored. Entries shall not reference
    this option; a SubscribeEventgroup entry that does is rejected. The
    option is not transmitted by default.

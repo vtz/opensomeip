@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SD**: A received IPv4 SD Endpoint Option (type `0x24`) is now decoded
   and, when it is the first option and a usable UDP unicast endpoint,
   replaces the datagram source for SD replies and reboot detection.
+  A multicast address, or a `0x24` that is not first on the wire, does not.
+  Reboot state for a channel is updated once per SD datagram.
   OfferService responses, SubscribeEventgroup, and
   SubscribeEventgroupAck/Nack follow that endpoint. The application/event
   endpoint is unchanged, option-absent traffic still uses the datagram

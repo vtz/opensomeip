@@ -3681,3 +3681,171 @@ TEST_F(SdIntegrationTest, RebootAndSubscribeFollowIpv4SdEndpoint) {
     EXPECT_TRUE(resub);
     EXPECT_FALSE(at_source_c);
 }
+
+/**
+ * @test_case TC_SD_024_SKIP
+ * @tests REQ_SD_343
+ * @tests feat_req_someipsd_1151, feat_req_someipsd_1114
+ * @brief An unsupported option ahead of 0x24 keeps 0x24 from being first.
+ */
+TEST_F(SdTest, IPv4SdEndpointAfterSkippedOptionIsNotFirst) {
+    IPv4SdEndpointOption sd_opt;
+    sd_opt.set_ipv4_address_from_string("192.0.2.10");
+    sd_opt.set_port(40000);
+    sd_opt.set_protocol(0x11);
+
+    ServiceEntry offer(EntryType::OFFER_SERVICE);
+    offer.set_service_id(0x1234);
+    offer.set_instance_id(0x0001);
+    offer.set_major_version(1);
+    offer.set_ttl(3);
+    offer.set_index1(1);
+    offer.set_num_opts1(1);
+
+    SdMessage built;
+    built.set_reboot(true);
+    built.set_unicast(true);
+    ASSERT_TRUE(built.add_entry(std::move(offer)));
+    ASSERT_TRUE(built.add_option(std::move(sd_opt)));
+    auto encoded = built.serialize();
+    constexpr size_t options_len_offset = 24;
+    constexpr size_t options_start = 28;
+    ASSERT_GT(encoded.size(), options_start);
+    const platform::ByteBuffer unknown = {0x00, 0x01, 0x99, 0x00};
+    encoded.insert(encoded.begin() + static_cast<std::ptrdiff_t>(options_start),
+                   unknown.begin(), unknown.end());
+    const uint32_t options_len =
+        (static_cast<uint32_t>(encoded[options_len_offset]) << 24U) |
+        (static_cast<uint32_t>(encoded[options_len_offset + 1]) << 16U) |
+        (static_cast<uint32_t>(encoded[options_len_offset + 2]) << 8U) |
+        static_cast<uint32_t>(encoded[options_len_offset + 3]);
+    const uint32_t grown = options_len + static_cast<uint32_t>(unknown.size());
+    encoded[options_len_offset] = static_cast<uint8_t>((grown >> 24U) & 0xFFU);
+    encoded[options_len_offset + 1] = static_cast<uint8_t>((grown >> 16U) & 0xFFU);
+    encoded[options_len_offset + 2] = static_cast<uint8_t>((grown >> 8U) & 0xFFU);
+    encoded[options_len_offset + 3] = static_cast<uint8_t>(grown & 0xFFU);
+
+    SdMessage parsed;
+    ASSERT_TRUE(parsed.deserialize(encoded));
+    platform::String<> address;
+    uint16_t port = 0;
+    EXPECT_FALSE(parsed.ipv4_sd_endpoint(address, port));
+    ASSERT_FALSE(parsed.get_entries().empty());
+    EXPECT_TRUE(parsed.entry_references_ipv4_sd_endpoint(*get_entry_ptr(parsed.get_entries().front())));
+}
+
+/**
+ * @test_case TC_SD_024_MCAST
+ * @tests REQ_SD_343, REQ_SD_1084
+ * @brief A multicast address in the first 0x24 does not replace the datagram source.
+ */
+TEST_F(SdTest, IPv4SdEndpointRejectsMulticastAddress) {
+    IPv4SdEndpointOption sd_opt;
+    sd_opt.set_ipv4_address_from_string("239.1.2.3");
+    sd_opt.set_port(30490);
+    sd_opt.set_protocol(0x11);
+
+    ServiceEntry offer(EntryType::OFFER_SERVICE);
+    offer.set_service_id(0x1234);
+    offer.set_instance_id(0x0001);
+    offer.set_major_version(1);
+    offer.set_ttl(3);
+
+    SdMessage built;
+    built.set_reboot(true);
+    built.set_unicast(true);
+    ASSERT_TRUE(built.add_entry(std::move(offer)));
+    ASSERT_TRUE(built.add_option(std::move(sd_opt)));
+
+    SdMessage parsed;
+    ASSERT_TRUE(parsed.deserialize(built.serialize()));
+    platform::String<> address;
+    uint16_t port = 0;
+    EXPECT_FALSE(parsed.ipv4_sd_endpoint(address, port));
+}
+
+/**
+ * @test_case TC_SD_024_BUNDLE
+ * @tests REQ_SD_1084, REQ_SD_311
+ * @tests feat_req_someipsd_764
+ * @brief Two offers in one datagram share one reboot-channel update.
+ */
+TEST_F(SdIntegrationTest, BundledOffersDoNotFalseReboot) {
+    const uint16_t client_port = get_unique_port();
+    const uint16_t offerer_port = get_unique_port();
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport offerer(transport::Endpoint("0.0.0.0", offerer_port), cfg);
+    ASSERT_EQ(offerer.start(), Result::SUCCESS);
+
+    auto first = build_offer_service_message(0x1234, 0x0001, 30, "127.0.0.1", 30509);
+    first.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 2));
+    ASSERT_EQ(offerer.send_message(first, transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+
+    bool offer_seen = false;
+    for (int i = 0; i < 50 && !offer_seen; ++i) {
+        offer_seen = !client.get_available_services(0x1234).empty();
+        if (!offer_seen) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+    if (!offer_seen) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Offer not received (loopback may be unavailable)";
+    }
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+    uint32_t ttl = 0;
+    uint16_t service = 0;
+    const bool subscribed = receive_sd_entry(offerer, 0x06, ttl, service, std::chrono::milliseconds(1500));
+    if (!subscribed) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Subscribe not received (loopback may be unavailable)";
+    }
+
+    ServiceEntry again(EntryType::OFFER_SERVICE);
+    again.set_service_id(0x1234);
+    again.set_instance_id(0x0001);
+    again.set_major_version(1);
+    again.set_ttl(30);
+    again.set_index1(0);
+    again.set_num_opts1(1);
+    ServiceEntry other(EntryType::OFFER_SERVICE);
+    other.set_service_id(0x1234);
+    other.set_instance_id(0x0002);
+    other.set_major_version(1);
+    other.set_ttl(30);
+    other.set_index1(0);
+    other.set_num_opts1(1);
+    IPv4EndpointOption option;
+    option.set_ipv4_address_from_string("127.0.0.1");
+    option.set_port(30509);
+    option.set_protocol(0x11);
+    SdMessage bundled;
+    bundled.set_reboot(true);
+    bundled.set_unicast(true);
+    ASSERT_TRUE(bundled.add_entry(std::move(again)));
+    ASSERT_TRUE(bundled.add_entry(std::move(other)));
+    ASSERT_TRUE(bundled.add_option(std::move(option)));
+    Message bundled_msg(
+        MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+        RequestId(SOMEIP_SD_CLIENT_ID, 3),
+        MessageType::NOTIFICATION,
+        ReturnCode::E_OK);
+    bundled_msg.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
+    bundled_msg.set_payload(bundled.serialize());
+    ASSERT_EQ(offerer.send_message(bundled_msg, transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+
+    const bool replayed = receive_sd_entry(offerer, 0x06, ttl, service, std::chrono::milliseconds(400));
+    offerer.stop();
+    client.shutdown();
+    EXPECT_FALSE(replayed);
+}

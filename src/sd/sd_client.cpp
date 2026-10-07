@@ -748,8 +748,23 @@ private:
         // TODO: Handle transport errors
     }
 
-    /** @implements REQ_SD_119, REQ_SD_120, REQ_SD_311, REQ_SD_331 */
+    /** @implements REQ_SD_119, REQ_SD_120, REQ_SD_311, REQ_SD_331, REQ_SD_1084 */
     void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender) {
+        // Session and reboot flag are message-scoped. Recording them once avoids
+        // a second offer in the same datagram looking like a session reuse.
+        platform::String<> sd_address;
+        uint16_t sd_port = 0;
+        transport::Endpoint sd_peer = sender;
+        if (message.ipv4_sd_endpoint(sd_address, sd_port)) {
+            sd_peer = transport::Endpoint(sd_address, sd_port);
+        }
+        bool channel_rebooted = false;
+        {
+            platform::ScopedLock const lock(available_services_mutex_);
+            channel_rebooted = note_reboot_channel(
+                sd_peer, message.get_session_id(), message.get_reboot_flag());
+        }
+
         for (const auto& entry_var : message.get_entries()) {
             const SdEntry* entry = get_entry_ptr(entry_var);
             switch (entry->get_type()) {
@@ -758,7 +773,7 @@ private:
                         if (entry->get_ttl() == 0) {
                             handle_service_stop_offer(*se);
                         } else {
-                            handle_service_offer(*se, message, sender);
+                            handle_service_offer(*se, message, sd_peer, channel_rebooted);
                         }
                     }
                     break;
@@ -776,7 +791,7 @@ private:
     /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_234, REQ_SD_240, REQ_SD_346, REQ_SD_348, REQ_SD_1084, REQ_SD_343
      *  @satisfies feat_req_someipsd_1084, feat_req_someipsd_1114 */
     void handle_service_offer(const ServiceEntry& entry, const SdMessage& message,
-                             const transport::Endpoint& sender) {
+                             const transport::Endpoint& sd_peer, bool rebooted) {
         ServiceInstance instance;
         instance.service_id = entry.get_service_id();
         instance.instance_id = entry.get_instance_id();
@@ -802,25 +817,15 @@ private:
             }
         }
 
-        bool rebooted = false;
         {
             platform::ScopedLock const lock(available_services_mutex_);
             const uint64_t key = make_service_key(instance.service_id, instance.instance_id);
-            // Replies and reboot detection follow the IPv4 SD Endpoint Option
-            // when it is present and usable; otherwise the datagram source.
-            platform::String<> sd_address;
-            uint16_t sd_port = 0;
-            transport::Endpoint sd_peer = sender;
-            if (message.ipv4_sd_endpoint(sd_address, sd_port)) {
-                sd_peer = transport::Endpoint(sd_address, sd_port);
-            }
             if (sd_unicast_endpoints_.size() < sd_unicast_endpoints_.max_size() ||
                 sd_unicast_endpoints_.find(key) != sd_unicast_endpoints_.end()) {
                 sd_unicast_endpoints_[key] = sd_peer;
             }
             const uint16_t incoming_session = message.get_session_id();
             const bool incoming_reboot_flag = message.get_reboot_flag();
-            rebooted = note_reboot_channel(sd_peer, incoming_session, incoming_reboot_flag);
 
             if (rebooted) {
                 const auto rm_it = std::remove_if(
