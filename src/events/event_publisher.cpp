@@ -13,28 +13,25 @@
 
 #include "events/event_publisher.h"
 
-// NOLINTNEXTLINE(misc-include-cleaner) - placement new used under SOMEIP_STATIC_ALLOC
-#include <new>
-
-#include "common/result.h"
-#include "events/event_types.h"
-// NOLINTNEXTLINE(misc-include-cleaner) - platform::UnorderedMap via containers dispatch header
-#include "platform/containers.h"
-#include "platform/thread.h"
-#include "someip/message.h"
-#include "someip/types.h"
-#include "transport/endpoint.h"
-#include "transport/transport.h"
-#include "transport/udp_transport.h"
-
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <new>  // NOLINT(misc-include-cleaner) - static allocation placement new
 #include <optional>
 #include <unordered_map>
 #include <utility>
+
+#include "../transport/transport_session.h"
+#include "common/result.h"
+#include "events/event_types.h"
+#include "platform/containers.h"  // NOLINT(misc-include-cleaner) - PAL dispatch
+#include "platform/thread.h"
+#include "someip/message.h"
+#include "someip/types.h"
+#include "transport/endpoint.h"
+#include "transport/transport.h"
 
 namespace someip::events {
 
@@ -49,17 +46,26 @@ namespace someip::events {
  */
 class EventPublisherImpl : public transport::ITransportListener {
 public:
-    EventPublisherImpl(uint16_t service_id, uint16_t instance_id)
-        : service_id_(service_id), instance_id_(instance_id),
-          transport_(transport::Endpoint("0.0.0.0", 0)),
-          next_session_id_(1), running_(false) {
-
-        transport_.set_listener(this);
+    template <typename Transport>
+    EventPublisherImpl(uint16_t service_id, uint16_t instance_id, Transport&& transport)
+        : service_id_(service_id),
+          instance_id_(instance_id),
+          transport_session_(std::forward<Transport>(transport)),
+          transport_(transport_session_.get()),
+          next_session_id_(1),
+          running_(false)
+    {
     }
 
     ~EventPublisherImpl() override
     {
+#ifdef __cpp_exceptions
+        try {
+            shutdown();
+        } catch (...) {}  // NOLINT(bugprone-empty-catch) destructor must not throw
+#else
         shutdown();
+#endif
     }
 
     EventPublisherImpl(const EventPublisherImpl&) = delete;
@@ -67,12 +73,17 @@ public:
     EventPublisherImpl(EventPublisherImpl&&) = delete;
     EventPublisherImpl& operator=(EventPublisherImpl&&) = delete;
 
+    Result get_transport_result() const
+    {
+        return transport_session_.result();
+    }
+
     bool initialize() {
         if (running_) {
             return true;
         }
 
-        if (transport_.start() != Result::SUCCESS) {
+        if (transport_session_.start(*this) != Result::SUCCESS) {
             return false;
         }
 
@@ -84,11 +95,13 @@ public:
 
     void shutdown() {
         if (!running_) {
+            transport_session_.stop();
             return;
         }
 
         running_ = false;
         stop_publish_timer();
+        transport_session_.stop();
 
         {
             platform::ScopedLock const events_lock(events_mutex_);
@@ -99,8 +112,6 @@ public:
             platform::ScopedLock const subs_lock(subscriptions_mutex_);
             subscriptions_.clear();
         }
-
-        transport_.stop();
     }
 
     bool register_event(const EventConfig& config) {
@@ -585,7 +596,8 @@ private:
     uint16_t instance_id_;
     platform::String<> default_client_address_{"0.0.0.0"};
     uint16_t default_client_port_{0};
-    transport::UdpTransport transport_;
+    transport::detail::TransportSession transport_session_;
+    transport::ITransport& transport_;
 
     platform::UnorderedMap<uint16_t, EventConfig, 16> registered_events_;
     platform::UnorderedMap<uint16_t, platform::ByteBuffer, 16> field_values_;
@@ -612,10 +624,25 @@ static_assert(sizeof(EventPublisherImpl) <= SOMEIP_PIMPL_EVENTPUB_SIZE,
 EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id)
 #ifdef SOMEIP_STATIC_ALLOC
 {
-    new (impl_storage_) EventPublisherImpl(service_id, instance_id);
+    new (impl_storage_)
+        EventPublisherImpl(service_id, instance_id, transport::Endpoint("0.0.0.0", 0));
 }
 #else
-    : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id)) {
+    : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id,
+                                                 transport::Endpoint("0.0.0.0", 0)))
+{
+}
+#endif
+
+EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id,
+                               transport::ITransport& transport)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) EventPublisherImpl(service_id, instance_id, transport);
+}
+#else
+    : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id, transport))
+{
 }
 #endif
 
@@ -631,6 +658,11 @@ bool EventPublisher::initialize() {
 
 void EventPublisher::shutdown() {
     impl()->shutdown();
+}
+
+Result EventPublisher::get_transport_result() const
+{
+    return impl()->get_transport_result();
 }
 
 bool EventPublisher::register_event(const EventConfig& config) {

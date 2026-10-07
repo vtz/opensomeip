@@ -900,13 +900,40 @@ Magic Cookie Details
 
    **Code Location**: ``src/transport/udp_transport.cpp``
 
+.. requirement:: Exclusive Transport Injection
+   :id: REQ_TRANSPORT_030
+   :status: implemented
+   :priority: high
+   :category: happy_path
+   :verification: Unit tests ConstructionDoesNotTouchBorrowedTransport, FailedStartStillRunningAgreesWithStop, RejectsActiveTransportWithoutStealingListenerOrStoppingIt, CanReplaceFacadeWithoutReplacingTransport, FailedRenewalKeepsTheLiveSubscription, SubscribeSendCanDeliverOnTheCallingThread, UnresolvedDestinationFailsBeforeSend, RejectsAmbiguousServiceSubscriptionsWithoutReplacingCallback, FailedSubscriptionDoesNotReserveTheService, SubscribeReportsUnresolvedEndpoint, SdFacadesUseExclusiveTransports, and RejectsTransportWithoutMulticast. Each facade borrows one stopped transport, starts and stops it, and does not share its listener. A failed exact-key renewal leaves the previous subscription in place. Subscribe does not hold its mutex across send. ``TransportSession::stop()`` and ``get_transport_result()`` report the same status when a backend stays running. C subscribe forwards unresolved, duplicate, and send failures as the existing result codes.
+
+   RPC, event, and service-discovery facades shall accept an application-owned
+   ``ITransport`` without replacing the default UDP constructors. The borrowed
+   transport is exclusive: the facade registers the only listener and is the
+   only component that starts and stops it. Service discovery shall use the
+   transport's multicast membership to join and leave the SD group. A facade
+   shutdown shall not stop a transport borrowed by another facade. An exact-key
+   event subscription renewal shall publish the new entry only after destination
+   resolution and send both succeed.
+
+   **Rationale**: Applications that already own a socket must be able to run
+   RPC, events, and service discovery on that socket's transport without a
+   second UDP stack and without one facade tearing down another.
+
+   **Code Location**: ``src/transport/transport_session.h``,
+   ``src/rpc/rpc_client.cpp``, ``src/rpc/rpc_server.cpp``,
+   ``src/events/event_subscriber.cpp``, ``src/events/event_publisher.cpp``,
+   ``src/sd/sd_client.cpp``, ``src/sd/sd_server.cpp``,
+   ``src/capi/opensomeip_events.cpp``
+
 Traceability
 ============
 
 Implementation Files
 --------------------
 
-* ``include/transport/transport.h`` - Transport interface (REQ_TRANSPORT_005)
+* ``include/transport/transport.h`` - Transport interface (REQ_TRANSPORT_005, REQ_TRANSPORT_030)
+* ``src/transport/transport_session.h`` - Exclusive borrowed-transport lifecycle (REQ_TRANSPORT_030)
 * ``include/transport/message_rejection.h`` - Incoming PDU rejection diagnostics
 * ``include/transport/udp_transport.h`` - UDP transport interface
 * ``include/transport/tcp_transport.h`` - TCP transport interface

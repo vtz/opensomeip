@@ -616,22 +616,25 @@ TEST_F(EventsTest, UnresolvedDestinationFailsBeforeSend) {
     EventSubscriber subscriber(0x0001);
     ASSERT_TRUE(subscriber.initialize());
 
-    EXPECT_FALSE(subscriber.subscribe_eventgroup(
-        0x1234, 0x0001, 0x0001, [](const EventNotification&) {}));
+    EXPECT_EQ(subscriber.subscribe_eventgroup(
+        0x1234, 0x0001, 0x0001, [](const EventNotification&) {}),
+        Result::INVALID_ENDPOINT);
     EXPECT_FALSE(subscriber.request_field(
         0x1234, 0x0001, 0x8001, [](const EventNotification&) {}));
     EXPECT_TRUE(subscriber.get_active_subscriptions().empty());
 
     // Port 0 is not a remote application port.
     subscriber.set_default_endpoint("127.0.0.1", 0);
-    EXPECT_FALSE(subscriber.subscribe_eventgroup(
-        0x1234, 0x0001, 0x0001, [](const EventNotification&) {}));
+    EXPECT_EQ(subscriber.subscribe_eventgroup(
+        0x1234, 0x0001, 0x0001, [](const EventNotification&) {}),
+        Result::INVALID_ENDPOINT);
     EXPECT_FALSE(subscriber.request_field(
         0x1234, 0x0001, 0x8001, [](const EventNotification&) {}));
 
     subscriber.set_endpoint_resolver([](uint16_t, uint16_t) { return transport::Endpoint(); });
-    EXPECT_FALSE(subscriber.subscribe_eventgroup(
-        0x1234, 0x0001, 0x0001, [](const EventNotification&) {}));
+    EXPECT_EQ(subscriber.subscribe_eventgroup(
+        0x1234, 0x0001, 0x0001, [](const EventNotification&) {}),
+        Result::INVALID_ENDPOINT);
     EXPECT_FALSE(subscriber.request_field(
         0x1234, 0x0001, 0x8001, [](const EventNotification&) {}));
 
@@ -662,7 +665,7 @@ TEST_F(EventsTest, ExplicitDestinationReceivesApplicationSend) {
     subscriber.set_default_endpoint("127.0.0.1", app_port);
     ASSERT_TRUE(subscriber.initialize());
 
-    EXPECT_TRUE(subscriber.subscribe_eventgroup(
+    EXPECT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
         0x1234, 0x0001, 0x0010, [](const EventNotification&) {}));
     MessagePtr subscribe_msg =
         wait_for_method(app_listener, 0x0001, std::chrono::milliseconds(1000));
