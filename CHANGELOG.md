@@ -36,6 +36,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   receives that `InitialDataDelivery` decision
   ([#342](https://github.com/vtz/opensomeip/issues/342)).
 
+- **E2E**: Transport configs can bind a service method or event to a receive
+  policy. Stack-managed validation runs `E2EProtection::validate` on the
+  default 12-byte Offset-64 layout and reports failure through
+  `on_message_rejected` with `MessageRejectionStage::E2E_INTEGRITY`.
+  Application-managed receive delivers the payload with the E2E header
+  removed and `get_e2e_header()` set, so the application can validate
+  without a wire round trip. The binding table is fixed-capacity.
+  Non-default Offset and non-12-byte headers are not part of this receive
+  path.
+
 ### Breaking Changes
 
 - **SD**: `SdServer::SubscriptionAcceptedCallback` now requires

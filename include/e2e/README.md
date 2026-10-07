@@ -69,6 +69,9 @@ Configuration for E2E protection.
 - `uint32_t freshness_timeout_ms` - Freshness timeout in milliseconds
 - `uint8_t crc_type` - CRC type (0 = SAE-J1850, 1 = ITU-T X.25, 2 = CRC32)
 
+Receive bindings live on the transport config (`E2EReceiveTable`), not on
+`E2EConfig`. They select the default 12-byte Offset-64 layout only.
+
 ### E2EHeader
 
 E2E protection header structure.

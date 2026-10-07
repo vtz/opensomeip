@@ -14,6 +14,7 @@
 #ifndef SOMEIP_TRANSPORT_UDP_TRANSPORT_H
 #define SOMEIP_TRANSPORT_UDP_TRANSPORT_H
 
+#include "e2e/e2e_receive_policy.h"
 #include "transport/transport.h"
 #include "transport/multicast_transport.h"
 #include "platform/buffer_pool.h"
@@ -59,6 +60,10 @@ struct UdpTransportConfig {
     bool enable_tp{true};
 #endif
     tp::TpConfig tp_config{};
+
+    // Filled before the transport is constructed. Receive only reads it.
+    // Default layout only (Offset 64, 12-byte header).
+    e2e::E2EReceiveTable e2e_receive{};
 };
 
 /**

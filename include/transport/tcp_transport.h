@@ -14,6 +14,7 @@
 #ifndef SOMEIP_TRANSPORT_TCP_TRANSPORT_H
 #define SOMEIP_TRANSPORT_TCP_TRANSPORT_H
 
+#include "e2e/e2e_receive_policy.h"
 #include "transport/transport.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
@@ -105,6 +106,10 @@ struct TcpTransportConfig {
     std::chrono::milliseconds keep_alive_interval{30000};   // Keep-alive interval
     bool magic_cookie_enabled{true};                        // Periodic Magic Cookie insertion
     std::chrono::milliseconds magic_cookie_interval{10000}; // 10s per SOME/IP spec
+
+    // Filled before the transport is constructed. Receive only reads it.
+    // Default layout only (Offset 64, 12-byte header).
+    e2e::E2EReceiveTable e2e_receive{};
 };
 
 /**

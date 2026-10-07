@@ -125,6 +125,24 @@ E2E protection returns `Result` codes:
 - `Result::NOT_INITIALIZED` - Basic profile not initialized
 - Other error codes as appropriate
 
+- `Result::NOT_INITIALIZED` - Basic profile not initialized
+- Other error codes as appropriate
+
+## Receive policy
+
+`E2EReceiveTable` on `UdpTransportConfig`, `TcpTransportConfig`, and the
+event-driven transport configs names which Service ID and Method/Event ID
+carry the default 12-byte E2E header (Offset 64). Fill the table before
+constructing the transport.
+
+- `E2EReceivePolicy::STACK_MANAGED` validates before the application handler.
+  Failure uses `MessageRejectionStage::E2E_INTEGRITY` and does not deliver.
+- `E2EReceivePolicy::APPLICATION_MANAGED` delivers a message whose payload
+  excludes the header. Call `E2EProtection::validate` on that message.
+
+TP reassembly finishes before this check. A full table returns
+`Result::RESOURCE_EXHAUSTED` from `add`, not a receive rejection.
+
 ## See Also
 
 - [E2E Protection Architecture](../architecture/e2e_protection.md) -- Design and data flow
