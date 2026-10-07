@@ -17,6 +17,7 @@
 #include "common/result.h"
 #include "someip/message.h"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 
@@ -79,7 +80,10 @@ public:
     size_t size() const { return count_; }
 
 private:
-    E2EReceiveBinding entries_[MAX_E2E_RECEIVE_BINDINGS]{};
+    E2EReceiveBinding& slot(size_t index);
+    const E2EReceiveBinding& slot(size_t index) const;
+
+    std::array<E2EReceiveBinding, MAX_E2E_RECEIVE_BINDINGS> entries_{};
     size_t count_{0};
 };
 

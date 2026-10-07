@@ -536,9 +536,7 @@ void UdpTransport::receive_loop() {
             } else {
                 const e2e::E2EReceiveOutcome e2e_outcome = e2e::receive_if_e2e_protected(
                     config_.e2e_receive, buffer.data(), bytes_received, *message);
-                if (e2e_outcome.status == e2e::E2EReceiveStatus::ACCEPTED) {
-                    delivered = true;
-                } else if (e2e_outcome.status == e2e::E2EReceiveStatus::REJECTED) {
+                if (e2e_outcome.status == e2e::E2EReceiveStatus::REJECTED) {
                     MessageRejectionInfo info;
                     info.sender = sender;
                     info.result = e2e_outcome.result;
@@ -547,7 +545,8 @@ void UdpTransport::receive_loop() {
                                      : MessageRejectionStage::DESERIALIZE;
                     fill_rejection_ids(info, *message, bytes_received);
                     notify_rejection(info);
-                } else if (message->deserialize(buffer.data(), bytes_received)) {
+                } else if (e2e_outcome.status == e2e::E2EReceiveStatus::ACCEPTED ||
+                           message->deserialize(buffer.data(), bytes_received)) {
                     delivered = true;
                 } else {
                     MessageRejectionInfo info;

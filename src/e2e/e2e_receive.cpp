@@ -13,14 +13,27 @@
 
 #include "e2e/e2e_receive_policy.h"
 
+#include "common/result.h"
 #include "e2e/e2e_config.h"
 #include "e2e/e2e_profile_registry.h"
 #include "e2e/e2e_profiles/standard_profile.h"
 #include "e2e/e2e_protection.h"
+#include "someip/message.h"
 
 #include <cstddef>
+#include <cstdint>
 
 namespace someip::e2e {
+
+E2EReceiveBinding& E2EReceiveTable::slot(size_t index) {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+    return entries_[index];
+}
+
+const E2EReceiveBinding& E2EReceiveTable::slot(size_t index) const {
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+    return entries_[index];
+}
 
 Result E2EReceiveTable::add(const E2EReceiveBinding& binding) {
     if (binding.service_id == 0) {
@@ -36,15 +49,16 @@ Result E2EReceiveTable::add(const E2EReceiveBinding& binding) {
         E2EProfileRegistry::instance().get_profile(0) == nullptr) {
         initialize_basic_profile();
     }
-    entries_[count_] = binding;
+    slot(count_) = binding;
     ++count_;
     return Result::SUCCESS;
 }
 
 const E2EReceiveBinding* E2EReceiveTable::find(uint16_t service_id, uint16_t method_id) const {
     for (size_t i = 0; i < count_; ++i) {
-        if (entries_[i].service_id == service_id && entries_[i].method_id == method_id) {
-            return &entries_[i];
+        const E2EReceiveBinding& entry = slot(i);
+        if (entry.service_id == service_id && entry.method_id == method_id) {
+            return &entry;
         }
     }
     return nullptr;
