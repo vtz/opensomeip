@@ -460,7 +460,7 @@ private:
         uint16_t place = 10000;
         bool started = false;
         while (place > 0U) {
-            const uint16_t digit = static_cast<uint16_t>(port / place);
+            const auto digit = static_cast<uint16_t>(port / place);
             if (digit != 0U || started || place == 1U) {
                 key.push_back(static_cast<char>('0' + static_cast<int>(digit)));
                 started = true;

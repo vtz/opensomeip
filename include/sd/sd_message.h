@@ -438,7 +438,7 @@ private:
     /// True when wire index 0 was an IPv4 SD Endpoint Option.
     bool ipv4_sd_endpoint_wire_first_{false};
     /// Wire indexes of type 0x24 options. Capacity matches a small SD message.
-    platform::Vector<uint8_t, 16> ipv4_sd_endpoint_wire_index_{};
+    platform::Vector<uint8_t, 16> ipv4_sd_endpoint_wire_index_;
 
     platform::Vector<SdEntryStorage> entries_;
     platform::Vector<SdOptionStorage> options_;
