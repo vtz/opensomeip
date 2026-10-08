@@ -36,6 +36,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   receives that `InitialDataDelivery` decision
   ([#342](https://github.com/vtz/opensomeip/issues/342)).
 
+### Breaking Changes
+
+- **SD**: `SdServer::SubscriptionAcceptedCallback` now requires
+  `InitialDataDelivery` as its fifth argument. Existing callbacks must
+  accept that argument
+  ([#342](https://github.com/vtz/opensomeip/issues/342)).
+
 ## [0.2.0] - 2026-10-05
 
 This minor release packages new public APIs (C ABI, static-allocation PAL,
