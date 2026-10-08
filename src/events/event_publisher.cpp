@@ -230,6 +230,29 @@ public:
         return ok;
     }
 
+    /** @implements REQ_SD_331, REQ_MSG_125
+     *  @satisfies feat_req_someipsd_1194 */
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                           uint32_t ttl_seconds,
+                           const platform::Vector<EventFilter>& filters,
+                           bool send_initial_events) {
+        bool ok = false;
+        transport::Endpoint dest;
+        {
+            platform::ScopedLock const lock(subscriptions_mutex_);
+            if (default_client_port_ == 0) {
+                return false;
+            }
+            dest = transport::Endpoint(default_client_address_, default_client_port_);
+            ok = handle_subscription_locked(eventgroup_id, client_id, dest,
+                                            ttl_seconds, filters);
+        }
+        if (ok && send_initial_events && ttl_seconds > 0) {
+            send_initial_fields(eventgroup_id, dest);
+        }
+        return ok;
+    }
+
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
                            const transport::Endpoint& client_endpoint,
                            const platform::Vector<EventFilter>& filters) {
@@ -666,6 +689,14 @@ bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client
                                        uint32_t ttl_seconds,
                                        const platform::Vector<EventFilter>& filters) {
     return impl()->handle_subscription(eventgroup_id, client_id, ttl_seconds, filters);
+}
+
+bool EventPublisher::handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                                       uint32_t ttl_seconds,
+                                       const platform::Vector<EventFilter>& filters,
+                                       bool send_initial_events) {
+    return impl()->handle_subscription(eventgroup_id, client_id, ttl_seconds, filters,
+                                      send_initial_events);
 }
 
 bool EventPublisher::handle_unsubscription(uint16_t eventgroup_id, uint16_t client_id) {

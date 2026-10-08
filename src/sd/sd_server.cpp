@@ -804,9 +804,15 @@ private:
         }
 
         (void)event_protocol;
+        InitialDataDelivery delivery = InitialDataDelivery::DEFAULT;
+        if (message.explicit_initial_data_control()) {
+            delivery = subscription_entry.get_initial_data_requested()
+                ? InitialDataDelivery::REQUESTED
+                : InitialDataDelivery::SUPPRESSED;
+        }
         send_subscribe_response(
             subscription_entry, sender, true, ttl,
-            transport::Endpoint(event_ip, event_port));
+            transport::Endpoint(event_ip, event_port), delivery);
     }
 
     void handle_stop_subscribe(const EventGroupEntry& subscription_entry,
@@ -818,12 +824,13 @@ private:
         send_subscribe_response(entry, client, false, 0, client);
     }
 
-    /** @implements REQ_SD_272, REQ_SD_1084
-     *  @satisfies feat_req_someipsd_1084 */
+    /** @implements REQ_SD_272, REQ_SD_1084, REQ_SD_331
+     *  @satisfies feat_req_someipsd_1084, feat_req_someipsd_1188, feat_req_someipsd_1194 */
     bool send_subscribe_response(const EventGroupEntry& request,
                                  const transport::Endpoint& reply_to,
                                  bool acknowledge, uint32_t ttl_seconds,
-                                 const transport::Endpoint& event_endpoint) {
+                                 const transport::Endpoint& event_endpoint,
+                                 InitialDataDelivery initial_data = InitialDataDelivery::DEFAULT) {
         EventGroupEntry response_entry(
             acknowledge ? EntryType::SUBSCRIBE_EVENTGROUP_ACK : EntryType::SUBSCRIBE_EVENTGROUP_NACK);
         response_entry.set_service_id(request.get_service_id());
@@ -892,7 +899,7 @@ private:
             }
             if (cb) {
                 cb(request.get_service_id(), request.get_instance_id(),
-                   request.get_eventgroup_id(), event_endpoint);
+                   request.get_eventgroup_id(), event_endpoint, initial_data);
             }
         }
         return result == Result::SUCCESS;
