@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-07T01:15:43.928683",
+  "generated": "2026-10-27T22:34:03.134424",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -626,7 +626,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_event_publisher_events_572",
+        "CODE_event_publisher_events_595",
         "CODE_event_subscriber_events_438",
         "CODE_rpc_client_rpc_366",
         "CODE_rpc_server_rpc_243",
@@ -636,7 +636,7 @@
         "CODE_tcp_transport_transport_1240",
         "CODE_udp_transport_transport_464",
         "CODE_udp_transport_transport_557",
-        "CODE_event_publisher_events_193",
+        "CODE_event_publisher_events_206",
         "CODE_event_subscriber_events_167",
         "CODE_rpc_client_rpc_159",
         "CODE_rpc_server_rpc_136",
@@ -725,7 +725,7 @@
       "satisfies": [],
       "implemented_by": [
         "CODE_sd_client_sd_114",
-        "CODE_sd_client_sd_594",
+        "CODE_sd_client_sd_641",
         "CODE_sd_server_sd_122",
         "CODE_event_driven_udp_transport_transport_171",
         "CODE_event_driven_udp_transport_transport_183",
@@ -757,9 +757,9 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_sd_client_sd_594",
-        "CODE_sd_client_sd_632",
-        "CODE_sd_client_sd_667",
+        "CODE_sd_client_sd_641",
+        "CODE_sd_client_sd_679",
+        "CODE_sd_client_sd_714",
         "CODE_sd_server_sd_391",
         "CODE_multicast_membership_sd_38",
         "CODE_multicast_membership_sd_50"
@@ -2187,7 +2187,7 @@
         "feat_req_someip_670"
       ],
       "implemented_by": [
-        "CODE_sd_message_sd_342",
+        "CODE_sd_message_sd_351",
         "CODE_sd_types_sd_78"
       ],
       "tested_by": [
@@ -2413,13 +2413,15 @@
         "feat_req_someip_635"
       ],
       "implemented_by": [
-        "CODE_event_publisher_events_205"
+        "CODE_event_publisher_events_205",
+        "CODE_event_publisher_events_233"
       ],
       "tested_by": [
         "TC_EVT_FIELD_001",
         "TC_EVT_FIELD_003",
         "TC_EVT_FIELD_002",
-        "TC_test_message_SetUp"
+        "TC_test_message_SetUp",
+        "TC_SD_1194_FIELD"
       ]
     },
     "REQ_MSG_126": {
@@ -8249,7 +8251,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_511",
-        "CODE_sd_message_sd_232"
+        "CODE_sd_message_sd_241"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -8267,7 +8269,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_511",
-        "CODE_sd_message_sd_232"
+        "CODE_sd_message_sd_241"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -8284,7 +8286,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_511",
-        "CODE_sd_message_sd_232"
+        "CODE_sd_message_sd_241"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -8301,7 +8303,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_511",
-        "CODE_sd_message_sd_232"
+        "CODE_sd_message_sd_241"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -8374,7 +8376,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_533",
-        "CODE_sd_message_sd_268"
+        "CODE_sd_message_sd_277"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -8879,9 +8881,9 @@
         "feat_req_someipsd_630"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_681",
-        "CODE_sd_client_sd_709",
-        "CODE_sd_client_sd_966",
+        "CODE_sd_client_sd_728",
+        "CODE_sd_client_sd_756",
+        "CODE_sd_client_sd_1014",
         "CODE_sd_server_sd_257"
       ],
       "tested_by": [
@@ -8900,9 +8902,9 @@
         "feat_req_someipsd_630"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_681",
-        "CODE_sd_client_sd_709",
-        "CODE_sd_client_sd_966",
+        "CODE_sd_client_sd_728",
+        "CODE_sd_client_sd_756",
+        "CODE_sd_client_sd_1014",
         "CODE_sd_message_sd_249"
       ],
       "tested_by": [
@@ -9168,7 +9170,7 @@
         "feat_req_someipsd_105"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_734",
+        "CODE_sd_client_sd_781",
         "CODE_sd_message_sd_347"
       ],
       "tested_by": [
@@ -9186,7 +9188,7 @@
         "feat_req_someipsd_826"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_734"
+        "CODE_sd_client_sd_781"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -9247,9 +9249,9 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729",
+        "CODE_sd_message_sd_731",
         "CODE_sd_message_sd_27",
-        "CODE_sd_message_sd_342"
+        "CODE_sd_message_sd_351"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -9267,7 +9269,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729",
+        "CODE_sd_message_sd_731",
         "CODE_sd_message_sd_27",
         "CODE_sd_message_sd_66"
       ],
@@ -9286,9 +9288,9 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729",
+        "CODE_sd_message_sd_731",
         "CODE_sd_message_sd_27",
-        "CODE_sd_message_sd_342"
+        "CODE_sd_message_sd_351"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9304,7 +9306,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9327,7 +9329,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9361,7 +9363,7 @@
       "implemented_by": [
         "CODE_sd_client_sd_159",
         "CODE_sd_client_sd_249",
-        "CODE_sd_client_sd_734"
+        "CODE_sd_client_sd_781"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9475,8 +9477,8 @@
       ],
       "implemented_by": [
         "CODE_sd_client_sd_249",
-        "CODE_sd_client_sd_335",
-        "CODE_sd_client_sd_734"
+        "CODE_sd_client_sd_380",
+        "CODE_sd_client_sd_781"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9492,7 +9494,7 @@
       ],
       "implemented_by": [
         "CODE_sd_client_sd_249",
-        "CODE_sd_client_sd_335"
+        "CODE_sd_client_sd_380"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9510,7 +9512,7 @@
       ],
       "implemented_by": [
         "CODE_sd_client_sd_249",
-        "CODE_sd_client_sd_335"
+        "CODE_sd_client_sd_380"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9527,7 +9529,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_511",
-        "CODE_sd_message_sd_232"
+        "CODE_sd_message_sd_241"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -9547,8 +9549,8 @@
       ],
       "implemented_by": [
         "CODE_sd_client_sd_249",
-        "CODE_sd_client_sd_335",
-        "CODE_sd_client_sd_734"
+        "CODE_sd_client_sd_380",
+        "CODE_sd_client_sd_781"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9566,7 +9568,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_533",
-        "CODE_sd_message_sd_268"
+        "CODE_sd_message_sd_277"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -9604,8 +9606,8 @@
       ],
       "implemented_by": [
         "CODE_sd_client_sd_249",
-        "CODE_sd_client_sd_335",
-        "CODE_sd_client_sd_734"
+        "CODE_sd_client_sd_380",
+        "CODE_sd_client_sd_781"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9733,7 +9735,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -9794,7 +9796,7 @@
       "implemented_by": [
         "CODE_sd_server_sd_239",
         "CODE_sd_server_sd_257",
-        "CODE_sd_server_sd_821"
+        "CODE_sd_server_sd_827"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -9829,7 +9831,7 @@
         "feat_req_someipsd_442"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_852"
+        "CODE_sd_client_sd_900"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9845,7 +9847,7 @@
         "feat_req_someipsd_72"
       ],
       "implemented_by": [
-        "CODE_sd_server_sd_901"
+        "CODE_sd_server_sd_908"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9881,7 +9883,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9897,7 +9899,7 @@
         "feat_req_someipsd_109"
       ],
       "implemented_by": [
-        "CODE_sd_server_sd_901"
+        "CODE_sd_server_sd_908"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -9933,7 +9935,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -10008,7 +10010,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -10027,7 +10029,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -10046,7 +10048,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -10078,7 +10080,7 @@
       ],
       "implemented_by": [
         "CODE_sd_client_sd_249",
-        "CODE_sd_client_sd_335",
+        "CODE_sd_client_sd_380",
         "CODE_sd_server_sd_608",
         "CODE_sd_server_sd_651"
       ],
@@ -10114,7 +10116,7 @@
       ],
       "implemented_by": [
         "CODE_sd_server_sd_693",
-        "CODE_sd_server_sd_821"
+        "CODE_sd_server_sd_827"
       ],
       "tested_by": [
         "TC_SD_1084"
@@ -10130,8 +10132,8 @@
         "feat_req_someipsd_794"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_681",
-        "CODE_sd_client_sd_709"
+        "CODE_sd_client_sd_728",
+        "CODE_sd_client_sd_756"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -10168,7 +10170,7 @@
       ],
       "implemented_by": [
         "CODE_sd_message_sd_665",
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -10196,17 +10198,29 @@
       "title": "SD Initial Event Requesting",
       "type": "requirement",
       "satisfies": [
+        "feat_req_someipsd_322",
+        "feat_req_someipsd_1187",
+        "feat_req_someipsd_1188",
         "feat_req_someipsd_1191",
         "feat_req_someipsd_1192",
         "feat_req_someipsd_1193",
+        "feat_req_someipsd_1194",
         "feat_req_someipsd_946"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_681",
-        "CODE_sd_client_sd_709"
+        "CODE_event_publisher_events_233",
+        "CODE_sd_client_sd_249",
+        "CODE_sd_client_sd_728",
+        "CODE_sd_client_sd_756",
+        "CODE_sd_message_sd_665",
+        "CODE_sd_server_sd_827"
       ],
       "tested_by": [
-        "TC_test_sd_SetUp"
+        "TC_test_sd_SetUp",
+        "TC_SD_1194_FLAG",
+        "TC_SD_1194_CLIENT",
+        "TC_SD_1194_CAPABLE",
+        "TC_SD_1194_FIELD"
       ]
     },
     "REQ_SD_340": {
@@ -10221,7 +10235,7 @@
         "feat_req_someipsd_1228"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_1060",
+        "CODE_sd_client_sd_1116",
         "CODE_sd_types_sd_51"
       ],
       "tested_by": [
@@ -10238,7 +10252,7 @@
         "feat_req_someipsd_1149"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_1060",
+        "CODE_sd_client_sd_1116",
         "CODE_sd_server_sd_676"
       ],
       "tested_by": [
@@ -10259,7 +10273,7 @@
         "feat_req_someipsd_1184"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_1060",
+        "CODE_sd_client_sd_1116",
         "CODE_sd_server_sd_676"
       ],
       "tested_by": [
@@ -10279,7 +10293,7 @@
         "feat_req_someipsd_1156"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_1060",
+        "CODE_sd_client_sd_1116",
         "CODE_sd_server_sd_676"
       ],
       "tested_by": [
@@ -10299,7 +10313,7 @@
         "feat_req_someipsd_1253"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_1060",
+        "CODE_sd_client_sd_1116",
         "CODE_sd_server_sd_676"
       ],
       "tested_by": [
@@ -10332,8 +10346,8 @@
         "feat_req_someipsd_691"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_734",
-        "CODE_sd_client_sd_1060"
+        "CODE_sd_client_sd_781",
+        "CODE_sd_client_sd_1116"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -10368,8 +10382,8 @@
         "feat_req_someipsd_1239"
       ],
       "implemented_by": [
-        "CODE_sd_client_sd_734",
-        "CODE_sd_client_sd_1060"
+        "CODE_sd_client_sd_781",
+        "CODE_sd_client_sd_1116"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -10496,7 +10510,6 @@
       "title": "SD Service Registration",
       "type": "requirement",
       "satisfies": [
-        "feat_req_someipsd_1194",
         "feat_req_someipsd_1195",
         "feat_req_someipsd_1262",
         "feat_req_someipsd_1297"
@@ -10528,8 +10541,8 @@
       "satisfies": [],
       "implemented_by": [
         "CODE_sd_client_sd_249",
-        "CODE_sd_client_sd_335",
-        "CODE_sd_client_sd_681"
+        "CODE_sd_client_sd_380",
+        "CODE_sd_client_sd_728"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -10566,7 +10579,7 @@
       "satisfies": [],
       "implemented_by": [
         "CODE_sd_client_sd_243",
-        "CODE_sd_client_sd_681"
+        "CODE_sd_client_sd_728"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -10613,7 +10626,7 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_sd_message_sd_729"
+        "CODE_sd_message_sd_731"
       ],
       "tested_by": [
         "TC_test_sd_SetUp",
@@ -10729,8 +10742,8 @@
       "satisfies": [],
       "implemented_by": [
         "CODE_sd_client_sd_249",
-        "CODE_sd_client_sd_335",
-        "CODE_sd_client_sd_681"
+        "CODE_sd_client_sd_380",
+        "CODE_sd_client_sd_728"
       ],
       "tested_by": [
         "TC_test_sd_SetUp"
@@ -11708,9 +11721,20 @@
       ],
       "satisfies": []
     },
-    "CODE_event_publisher_events_572": {
-      "id": "CODE_event_publisher_events_572",
-      "location": "src/events/event_publisher.cpp:572",
+    "CODE_event_publisher_events_233": {
+      "id": "CODE_event_publisher_events_233",
+      "location": "src/events/event_publisher.cpp:233",
+      "implements": [
+        "REQ_SD_331",
+        "REQ_MSG_125"
+      ],
+      "satisfies": [
+        "feat_req_someipsd_1194"
+      ]
+    },
+    "CODE_event_publisher_events_595": {
+      "id": "CODE_event_publisher_events_595",
+      "location": "src/events/event_publisher.cpp:595",
       "implements": [
         "REQ_TRANSPORT_026"
       ],
@@ -12030,15 +12054,19 @@
         "REQ_SD_240",
         "REQ_SD_241",
         "REQ_SD_270",
-        "REQ_SD_818"
+        "REQ_SD_818",
+        "REQ_SD_331"
       ],
       "satisfies": [
-        "feat_req_someipsd_818"
+        "feat_req_someipsd_818",
+        "feat_req_someipsd_322",
+        "feat_req_someipsd_1191",
+        "feat_req_someipsd_1192"
       ]
     },
-    "CODE_sd_client_sd_335": {
-      "id": "CODE_sd_client_sd_335",
-      "location": "src/sd/sd_client.cpp:335",
+    "CODE_sd_client_sd_380": {
+      "id": "CODE_sd_client_sd_380",
+      "location": "src/sd/sd_client.cpp:380",
       "implements": [
         "REQ_SD_120_E01",
         "REQ_SD_123_E01",
@@ -12053,34 +12081,34 @@
         "feat_req_someipsd_818"
       ]
     },
-    "CODE_sd_client_sd_594": {
-      "id": "CODE_sd_client_sd_594",
-      "location": "src/sd/sd_client.cpp:594",
+    "CODE_sd_client_sd_641": {
+      "id": "CODE_sd_client_sd_641",
+      "location": "src/sd/sd_client.cpp:641",
       "implements": [
         "REQ_TRANSPORT_011_E01",
         "REQ_TRANSPORT_011_E03"
       ],
       "satisfies": []
     },
-    "CODE_sd_client_sd_632": {
-      "id": "CODE_sd_client_sd_632",
-      "location": "src/sd/sd_client.cpp:632",
+    "CODE_sd_client_sd_679": {
+      "id": "CODE_sd_client_sd_679",
+      "location": "src/sd/sd_client.cpp:679",
       "implements": [
         "REQ_TRANSPORT_011_E03"
       ],
       "satisfies": []
     },
-    "CODE_sd_client_sd_667": {
-      "id": "CODE_sd_client_sd_667",
-      "location": "src/sd/sd_client.cpp:667",
+    "CODE_sd_client_sd_714": {
+      "id": "CODE_sd_client_sd_714",
+      "location": "src/sd/sd_client.cpp:714",
       "implements": [
         "REQ_TRANSPORT_011_E03"
       ],
       "satisfies": []
     },
-    "CODE_sd_client_sd_681": {
-      "id": "CODE_sd_client_sd_681",
-      "location": "src/sd/sd_client.cpp:681",
+    "CODE_sd_client_sd_728": {
+      "id": "CODE_sd_client_sd_728",
+      "location": "src/sd/sd_client.cpp:728",
       "implements": [
         "REQ_SD_116_E01",
         "REQ_SD_119",
@@ -12092,9 +12120,9 @@
       ],
       "satisfies": []
     },
-    "CODE_sd_client_sd_709": {
-      "id": "CODE_sd_client_sd_709",
-      "location": "src/sd/sd_client.cpp:709",
+    "CODE_sd_client_sd_756": {
+      "id": "CODE_sd_client_sd_756",
+      "location": "src/sd/sd_client.cpp:756",
       "implements": [
         "REQ_SD_119",
         "REQ_SD_120",
@@ -12103,9 +12131,9 @@
       ],
       "satisfies": []
     },
-    "CODE_sd_client_sd_734": {
-      "id": "CODE_sd_client_sd_734",
-      "location": "src/sd/sd_client.cpp:734",
+    "CODE_sd_client_sd_781": {
+      "id": "CODE_sd_client_sd_781",
+      "location": "src/sd/sd_client.cpp:781",
       "implements": [
         "REQ_SD_160",
         "REQ_SD_161",
@@ -12118,26 +12146,26 @@
       ],
       "satisfies": []
     },
-    "CODE_sd_client_sd_852": {
-      "id": "CODE_sd_client_sd_852",
-      "location": "src/sd/sd_client.cpp:852",
+    "CODE_sd_client_sd_900": {
+      "id": "CODE_sd_client_sd_900",
+      "location": "src/sd/sd_client.cpp:900",
       "implements": [
         "REQ_SD_274"
       ],
       "satisfies": []
     },
-    "CODE_sd_client_sd_966": {
-      "id": "CODE_sd_client_sd_966",
-      "location": "src/sd/sd_client.cpp:966",
+    "CODE_sd_client_sd_1014": {
+      "id": "CODE_sd_client_sd_1014",
+      "location": "src/sd/sd_client.cpp:1014",
       "implements": [
         "REQ_SD_119",
         "REQ_SD_120"
       ],
       "satisfies": []
     },
-    "CODE_sd_client_sd_1060": {
-      "id": "CODE_sd_client_sd_1060",
-      "location": "src/sd/sd_client.cpp:1060",
+    "CODE_sd_client_sd_1116": {
+      "id": "CODE_sd_client_sd_1116",
+      "location": "src/sd/sd_client.cpp:1116",
       "implements": [
         "REQ_SD_340",
         "REQ_SD_341",
@@ -12371,13 +12399,17 @@
         "REQ_SD_301",
         "REQ_SD_302",
         "REQ_SD_303",
-        "REQ_SD_320"
+        "REQ_SD_320",
+        "REQ_SD_331"
       ],
-      "satisfies": []
+      "satisfies": [
+        "feat_req_someipsd_1187",
+        "feat_req_someipsd_1188"
+      ]
     },
-    "CODE_sd_message_sd_729": {
-      "id": "CODE_sd_message_sd_729",
-      "location": "src/sd/sd_message.cpp:729",
+    "CODE_sd_message_sd_731": {
+      "id": "CODE_sd_message_sd_731",
+      "location": "src/sd/sd_message.cpp:731",
       "implements": [
         "REQ_SD_030_E01",
         "REQ_SD_200A",
@@ -12616,20 +12648,23 @@
         "feat_req_someipsd_1084"
       ]
     },
-    "CODE_sd_server_sd_821": {
-      "id": "CODE_sd_server_sd_821",
-      "location": "src/sd/sd_server.cpp:821",
+    "CODE_sd_server_sd_827": {
+      "id": "CODE_sd_server_sd_827",
+      "location": "src/sd/sd_server.cpp:827",
       "implements": [
         "REQ_SD_272",
-        "REQ_SD_1084"
+        "REQ_SD_1084",
+        "REQ_SD_331"
       ],
       "satisfies": [
-        "feat_req_someipsd_1084"
+        "feat_req_someipsd_1084",
+        "feat_req_someipsd_1188",
+        "feat_req_someipsd_1194"
       ]
     },
-    "CODE_sd_server_sd_901": {
-      "id": "CODE_sd_server_sd_901",
-      "location": "src/sd/sd_server.cpp:901",
+    "CODE_sd_server_sd_908": {
+      "id": "CODE_sd_server_sd_908",
+      "location": "src/sd/sd_server.cpp:908",
       "implements": [
         "REQ_SD_280",
         "REQ_SD_283"
@@ -14327,9 +14362,9 @@
       ],
       "satisfies": []
     },
-    "CODE_event_publisher_events_193": {
-      "id": "CODE_event_publisher_events_193",
-      "location": "include/events/event_publisher.h:193",
+    "CODE_event_publisher_events_206": {
+      "id": "CODE_event_publisher_events_206",
+      "location": "include/events/event_publisher.h:206",
       "implements": [
         "REQ_TRANSPORT_026"
       ],
@@ -15232,9 +15267,9 @@
       ],
       "satisfies": []
     },
-    "CODE_sd_message_sd_232": {
-      "id": "CODE_sd_message_sd_232",
-      "location": "include/sd/sd_message.h:232",
+    "CODE_sd_message_sd_241": {
+      "id": "CODE_sd_message_sd_241",
+      "location": "include/sd/sd_message.h:241",
       "implements": [
         "REQ_SD_067",
         "REQ_SD_068",
@@ -15248,9 +15283,9 @@
         "feat_req_someipsd_164"
       ]
     },
-    "CODE_sd_message_sd_268": {
-      "id": "CODE_sd_message_sd_268",
-      "location": "include/sd/sd_message.h:268",
+    "CODE_sd_message_sd_277": {
+      "id": "CODE_sd_message_sd_277",
+      "location": "include/sd/sd_message.h:277",
       "implements": [
         "REQ_SD_074",
         "REQ_SD_235"
@@ -15261,9 +15296,9 @@
         "feat_req_someipsd_739"
       ]
     },
-    "CODE_sd_message_sd_342": {
-      "id": "CODE_sd_message_sd_342",
-      "location": "include/sd/sd_message.h:342",
+    "CODE_sd_message_sd_351": {
+      "id": "CODE_sd_message_sd_351",
+      "location": "include/sd/sd_message.h:351",
       "implements": [
         "REQ_SD_200A",
         "REQ_SD_200C",
@@ -18324,50 +18359,50 @@
     },
     "TC_SD_TTL_001": {
       "id": "TC_SD_TTL_001",
-      "name": "TEST_F (tests/test_sd.cpp:2177)",
-      "location": "tests/test_sd.cpp:2177",
+      "name": "TEST_F (tests/test_sd.cpp:2181)",
+      "location": "tests/test_sd.cpp:2181",
       "tests": []
     },
     "TC_SD_TTL_002": {
       "id": "TC_SD_TTL_002",
-      "name": "TEST_F (tests/test_sd.cpp:2226)",
-      "location": "tests/test_sd.cpp:2226",
+      "name": "TEST_F (tests/test_sd.cpp:2230)",
+      "location": "tests/test_sd.cpp:2230",
       "tests": []
     },
     "TC_SD_TTL_003": {
       "id": "TC_SD_TTL_003",
-      "name": "TEST_F (tests/test_sd.cpp:2273)",
-      "location": "tests/test_sd.cpp:2273",
+      "name": "TEST_F (tests/test_sd.cpp:2277)",
+      "location": "tests/test_sd.cpp:2277",
       "tests": []
     },
     "TC_SD_ADD_ENTRY_RETURNS_BOOL": {
       "id": "TC_SD_ADD_ENTRY_RETURNS_BOOL",
-      "name": "TEST_F (tests/test_sd.cpp:2308)",
-      "location": "tests/test_sd.cpp:2308",
+      "name": "TEST_F (tests/test_sd.cpp:2312)",
+      "location": "tests/test_sd.cpp:2312",
       "tests": [
         "REQ_SD_030_E01"
       ]
     },
     "TC_SD_COUNTER_001": {
       "id": "TC_SD_COUNTER_001",
-      "name": "TEST_F (tests/test_sd.cpp:2326)",
-      "location": "tests/test_sd.cpp:2326",
+      "name": "TEST_F (tests/test_sd.cpp:2330)",
+      "location": "tests/test_sd.cpp:2330",
       "tests": [
         "REQ_SD_060"
       ]
     },
     "TC_SD_UNKNOWN_ENTRY_001": {
       "id": "TC_SD_UNKNOWN_ENTRY_001",
-      "name": "TEST_F (tests/test_sd.cpp:2354)",
-      "location": "tests/test_sd.cpp:2354",
+      "name": "TEST_F (tests/test_sd.cpp:2358)",
+      "location": "tests/test_sd.cpp:2358",
       "tests": [
         "REQ_SD_200A"
       ]
     },
     "TC_SD_SESSION_REBOOT_001": {
       "id": "TC_SD_SESSION_REBOOT_001",
-      "name": "TEST_F (tests/test_sd.cpp:2395)",
-      "location": "tests/test_sd.cpp:2395",
+      "name": "TEST_F (tests/test_sd.cpp:2399)",
+      "location": "tests/test_sd.cpp:2399",
       "tests": [
         "REQ_SD_070",
         "REQ_SD_071"
@@ -18375,32 +18410,32 @@
     },
     "TC_SD_FLAGS_001": {
       "id": "TC_SD_FLAGS_001",
-      "name": "TEST_F (tests/test_sd.cpp:2411)",
-      "location": "tests/test_sd.cpp:2411",
+      "name": "TEST_F (tests/test_sd.cpp:2415)",
+      "location": "tests/test_sd.cpp:2415",
       "tests": [
         "REQ_SD_013"
       ]
     },
     "TC_SD_TTL_OFFER_001": {
       "id": "TC_SD_TTL_OFFER_001",
-      "name": "TEST_F (tests/test_sd.cpp:2435)",
-      "location": "tests/test_sd.cpp:2435",
+      "name": "TEST_F (tests/test_sd.cpp:2439)",
+      "location": "tests/test_sd.cpp:2439",
       "tests": [
         "REQ_SD_110"
       ]
     },
     "TC_SD_INITIAL_WAIT_001": {
       "id": "TC_SD_INITIAL_WAIT_001",
-      "name": "TEST_F (tests/test_sd.cpp:2459)",
-      "location": "tests/test_sd.cpp:2459",
+      "name": "TEST_F (tests/test_sd.cpp:2463)",
+      "location": "tests/test_sd.cpp:2463",
       "tests": [
         "REQ_SD_180"
       ]
     },
     "TC_SD_REPETITION_INTERVAL_001": {
       "id": "TC_SD_REPETITION_INTERVAL_001",
-      "name": "TEST_F (tests/test_sd.cpp:2485)",
-      "location": "tests/test_sd.cpp:2485",
+      "name": "TEST_F (tests/test_sd.cpp:2489)",
+      "location": "tests/test_sd.cpp:2489",
       "tests": [
         "REQ_SD_111",
         "REQ_SD_112"
@@ -18408,8 +18443,8 @@
     },
     "TC_SD_SPEC_818": {
       "id": "TC_SD_SPEC_818",
-      "name": "TEST_F (tests/test_sd.cpp:2506)",
-      "location": "tests/test_sd.cpp:2506",
+      "name": "TEST_F (tests/test_sd.cpp:2510)",
+      "location": "tests/test_sd.cpp:2510",
       "tests": [
         "REQ_SD_818",
         "feat_req_someipsd_818"
@@ -18417,8 +18452,8 @@
     },
     "TC_SD_SPEC_613": {
       "id": "TC_SD_SPEC_613",
-      "name": "TEST_F (tests/test_sd.cpp:2574)",
-      "location": "tests/test_sd.cpp:2574",
+      "name": "TEST_F (tests/test_sd.cpp:2578)",
+      "location": "tests/test_sd.cpp:2578",
       "tests": [
         "REQ_SD_119",
         "feat_req_someipsd_613"
@@ -18426,8 +18461,8 @@
     },
     "TC_SD_CLIENT_MC_INT_001": {
       "id": "TC_SD_CLIENT_MC_INT_001",
-      "name": "TEST_F (tests/test_sd.cpp:2631)",
-      "location": "tests/test_sd.cpp:2631",
+      "name": "TEST_F (tests/test_sd.cpp:2635)",
+      "location": "tests/test_sd.cpp:2635",
       "tests": [
         "REQ_TRANSPORT_011_E01",
         "REQ_SD_119"
@@ -18435,56 +18470,56 @@
     },
     "TC_SD_SPEC_120": {
       "id": "TC_SD_SPEC_120",
-      "name": "TEST_F (tests/test_sd.cpp:2709)",
-      "location": "tests/test_sd.cpp:2709",
+      "name": "TEST_F (tests/test_sd.cpp:2713)",
+      "location": "tests/test_sd.cpp:2713",
       "tests": [
         "REQ_SD_120"
       ]
     },
     "TC_SD_SPEC_272": {
       "id": "TC_SD_SPEC_272",
-      "name": "TEST_F (tests/test_sd.cpp:2764)",
-      "location": "tests/test_sd.cpp:2764",
+      "name": "TEST_F (tests/test_sd.cpp:2768)",
+      "location": "tests/test_sd.cpp:2768",
       "tests": [
         "REQ_SD_272"
       ]
     },
     "TC_SD_SPEC_272_UNICAST": {
       "id": "TC_SD_SPEC_272_UNICAST",
-      "name": "TEST_F (tests/test_sd.cpp:2807)",
-      "location": "tests/test_sd.cpp:2807",
+      "name": "TEST_F (tests/test_sd.cpp:2811)",
+      "location": "tests/test_sd.cpp:2811",
       "tests": [
         "REQ_SD_272"
       ]
     },
     "TC_SD_SPEC_304": {
       "id": "TC_SD_SPEC_304",
-      "name": "TEST_F (tests/test_sd.cpp:2848)",
-      "location": "tests/test_sd.cpp:2848",
+      "name": "TEST_F (tests/test_sd.cpp:2852)",
+      "location": "tests/test_sd.cpp:2852",
       "tests": [
         "REQ_SD_060"
       ]
     },
     "TC_SD_SPEC_299_OFFER": {
       "id": "TC_SD_SPEC_299_OFFER",
-      "name": "TEST_F (tests/test_sd.cpp:2909)",
-      "location": "tests/test_sd.cpp:2909",
+      "name": "TEST_F (tests/test_sd.cpp:2913)",
+      "location": "tests/test_sd.cpp:2913",
       "tests": [
         "REQ_SD_110"
       ]
     },
     "TC_SD_SPEC_299_STOP": {
       "id": "TC_SD_SPEC_299_STOP",
-      "name": "TEST_F (tests/test_sd.cpp:2953)",
-      "location": "tests/test_sd.cpp:2953",
+      "name": "TEST_F (tests/test_sd.cpp:2957)",
+      "location": "tests/test_sd.cpp:2957",
       "tests": [
         "REQ_SD_261"
       ]
     },
     "TC_SD_SPEC_818_RX": {
       "id": "TC_SD_SPEC_818_RX",
-      "name": "TEST_F (tests/test_sd.cpp:3002)",
-      "location": "tests/test_sd.cpp:3002",
+      "name": "TEST_F (tests/test_sd.cpp:3006)",
+      "location": "tests/test_sd.cpp:3006",
       "tests": [
         "REQ_SD_818",
         "feat_req_someipsd_818"
@@ -18492,8 +18527,8 @@
     },
     "TC_SD_848": {
       "id": "TC_SD_848",
-      "name": "TEST_F (tests/test_sd.cpp:3058)",
-      "location": "tests/test_sd.cpp:3058",
+      "name": "TEST_F (tests/test_sd.cpp:3062)",
+      "location": "tests/test_sd.cpp:3062",
       "tests": [
         "REQ_SD_848",
         "feat_req_someipsd_848"
@@ -18501,19 +18536,62 @@
     },
     "TC_SD_848_DUP": {
       "id": "TC_SD_848_DUP",
-      "name": "TEST_F (tests/test_sd.cpp:3107)",
-      "location": "tests/test_sd.cpp:3107",
+      "name": "TEST_F (tests/test_sd.cpp:3111)",
+      "location": "tests/test_sd.cpp:3111",
       "tests": [
         "REQ_SD_848"
       ]
     },
     "TC_SD_1084": {
       "id": "TC_SD_1084",
-      "name": "TEST_F (tests/test_sd.cpp:3153)",
-      "location": "tests/test_sd.cpp:3153",
+      "name": "TEST_F (tests/test_sd.cpp:3157)",
+      "location": "tests/test_sd.cpp:3157",
       "tests": [
         "REQ_SD_1084",
         "feat_req_someipsd_1084"
+      ]
+    },
+    "TC_SD_1194_FLAG": {
+      "id": "TC_SD_1194_FLAG",
+      "name": "TEST_F (tests/test_sd.cpp:3208)",
+      "location": "tests/test_sd.cpp:3208",
+      "tests": [
+        "REQ_SD_331",
+        "feat_req_someipsd_1187",
+        "feat_req_someipsd_322"
+      ]
+    },
+    "TC_SD_1194_CLIENT": {
+      "id": "TC_SD_1194_CLIENT",
+      "name": "TEST_F (tests/test_sd.cpp:3301)",
+      "location": "tests/test_sd.cpp:3301",
+      "tests": [
+        "REQ_SD_331",
+        "feat_req_someipsd_1191",
+        "feat_req_someipsd_1192",
+        "feat_req_someipsd_1193",
+        "feat_req_someipsd_1194"
+      ]
+    },
+    "TC_SD_1194_CAPABLE": {
+      "id": "TC_SD_1194_CAPABLE",
+      "name": "TEST_F (tests/test_sd.cpp:3386)",
+      "location": "tests/test_sd.cpp:3386",
+      "tests": [
+        "REQ_SD_331",
+        "feat_req_someipsd_1192",
+        "feat_req_someipsd_1193"
+      ]
+    },
+    "TC_SD_1194_FIELD": {
+      "id": "TC_SD_1194_FIELD",
+      "name": "TEST_F (tests/test_sd.cpp:3489)",
+      "location": "tests/test_sd.cpp:3489",
+      "tests": [
+        "REQ_SD_331",
+        "REQ_MSG_125",
+        "feat_req_someipsd_1188",
+        "feat_req_someipsd_1194"
       ]
     },
     "TC_test_serialization_EXPECT_DESERIALIZE_SUCCESS": {

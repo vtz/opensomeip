@@ -1,6 +1,6 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-10-07 01:15:43
+Generated: 2026-10-27 22:34:03
 
 ## Summary
 
@@ -46,7 +46,7 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 497 |
+| Unit Tests | 501 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 

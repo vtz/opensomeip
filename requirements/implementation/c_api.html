@@ -11,13 +11,12 @@
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-data-viewer/jsonview.bundle.css?v=f6ef2277" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/libs/html/datatables.min.css?v=4b4fd840" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/needstable.css?v=5e1b6797" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_links.css?v=2150a916" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_core.css?v=f5b60a78" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_links.css?v=2150a916" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_style.css?v=92936fa5" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/need_toggle.css?v=5c6620df" />
-    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/modern.css?v=803738c0" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/common_css/needstable.css?v=7b67799e" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-needs/modern.css?v=c1bc121d" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=d5a60f39" />
     <script src="../_static/jquery.js?v=5d32c60e"></script>
     <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
@@ -26,8 +25,6 @@
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/sphinx-data-viewer/jsonview.bundle.js?v=18cd53c5"></script>
     <script src="../_static/sphinx-data-viewer/jsonview_loader.js?v=f7ff7e7d"></script>
-    <script src="../_static/sphinx-needs/libs/html/datatables.min.js?v=8a4aee21"></script>
-    <script src="../_static/sphinx-needs/libs/html/datatables_loader.js?v=a2cae175"></script>
     <script src="../_static/sphinx-needs/libs/html/sphinx_needs_collapse.js?v=dca66431"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
@@ -70,7 +67,7 @@ Python-future, etc.) and C-only consumers.</p>
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h2>
 <section id="abi-stability">
 <h3>ABI Stability<a class="headerlink" href="#abi-stability" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-c7488f89">
+<div class="need_container docutils container" id="SNCB-41843398">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -102,7 +99,7 @@ FFI from Rust, Python, and other languages without C++ ABI coupling.</p>
 </section>
 <section id="error-model">
 <h3>Error Model<a class="headerlink" href="#error-model" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-7c431cc0">
+<div class="need_container docutils container" id="SNCB-df912e06">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -133,7 +130,7 @@ Exceptions crossing FFI are undefined behaviour in mixed-language stacks.</p>
 </section>
 <section id="ownership-model">
 <h3>Ownership Model<a class="headerlink" href="#ownership-model" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-7b2e8d80">
+<div class="need_container docutils container" id="SNCB-cad417d9">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_003">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -166,7 +163,7 @@ double-free hazards across FFI.</p>
 </section>
 <section id="callback-contract">
 <h3>Callback Contract<a class="headerlink" href="#callback-contract" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-543a1ea2">
+<div class="need_container docutils container" id="SNCB-a1dc6301">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_004">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -197,7 +194,7 @@ idiom; it is FFI-safe and avoids closure captures.</p>
 </section>
 <section id="versioning">
 <h3>Versioning<a class="headerlink" href="#versioning" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-3712af22">
+<div class="need_container docutils container" id="SNCB-f7947d68">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_005">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -228,7 +225,7 @@ detect ABI mismatches.</p>
 </section>
 <section id="thread-safety-documentation">
 <h3>Thread Safety Documentation<a class="headerlink" href="#thread-safety-documentation" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-76d20d73">
+<div class="need_container docutils container" id="SNCB-6dc22210">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_006">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -259,7 +256,7 @@ from the header alone.</p>
 </section>
 <section id="exception-panic-firewall">
 <h3>Exception / Panic Firewall<a class="headerlink" href="#exception-panic-firewall" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-7f43cdfb">
+<div class="need_container docutils container" id="SNCB-d1c03731">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_007">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -291,7 +288,7 @@ C++ → Rust); the firewall guarantees defined behaviour.</p>
 </section>
 <section id="per-module-c-api-surface">
 <h3>Per-Module C API Surface<a class="headerlink" href="#per-module-c-api-surface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-474f0295">
+<div class="need_container docutils container" id="SNCB-753a5c35">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_008">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -317,7 +314,7 @@ functions operating on opaque handles.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-c94018b2">
+<div class="need_container docutils container" id="SNCB-a43ea680">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_009">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -343,7 +340,7 @@ exception shall be caught and returned as an error code (REQ_CAPI_007).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e106cccc">
+<div class="need_container docutils container" id="SNCB-b9adeefa">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_010">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -369,7 +366,7 @@ C callback + userdata and invoke it on completion.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e54a87aa">
+<div class="need_container docutils container" id="SNCB-b231598e">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_011">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -394,7 +391,7 @@ subscribe, and unsubscribe operations mapped to C callbacks.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-44e01fa5">
+<div class="need_container docutils container" id="SNCB-ef32e962">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_012">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -419,7 +416,7 @@ register, unregister, publish, and subscribe operations.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-61c970c0">
+<div class="need_container docutils container" id="SNCB-a646cd79">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_CAPI_013">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
