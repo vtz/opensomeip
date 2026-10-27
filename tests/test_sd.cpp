@@ -2042,7 +2042,8 @@ static Message build_subscribe_eventgroup_with_endpoints(
 }
 
 static Message build_offer_service_message(uint16_t service_id, uint16_t instance_id,
-                                           uint32_t ttl, const char* rpc_ip, uint16_t rpc_port) {
+                                           uint32_t ttl, const char* rpc_ip, uint16_t rpc_port,
+                                           bool explicit_initial = false) {
     ServiceEntry entry(EntryType::OFFER_SERVICE);
     entry.set_service_id(service_id);
     entry.set_instance_id(instance_id);
@@ -2060,6 +2061,9 @@ static Message build_offer_service_message(uint16_t service_id, uint16_t instanc
     SdMessage sd_msg;
     sd_msg.set_reboot(true);
     sd_msg.set_unicast(true);
+    if (explicit_initial) {
+        sd_msg.set_explicit_initial_data_control(true);
+    }
     sd_msg.add_entry(std::move(entry));
     sd_msg.add_option(std::move(option));
 
@@ -3199,4 +3203,373 @@ TEST_F(SdIntegrationTest, SubscribeAckGoesToSdSenderNotEventEndpoint) {
     EXPECT_GT(ack_on_sender.get_ttl(), 0u);
     EXPECT_FALSE(event_got)
         << "Ack must not be sent to the event IPv4EndpointOption address";
+}
+
+/**
+ * @test_case TC_SD_1194_FLAG
+ * @tests REQ_SD_331
+ * @tests feat_req_someipsd_1187, feat_req_someipsd_322
+ * @brief Serialization keeps 0x20 and the Initial Data Requested bit, and clears reserved flags.
+ */
+TEST_F(SdTest, ExplicitInitialDataFlagRoundTrip) {
+    SdMessage message;
+    message.set_flags(0xFF);
+    auto data = message.serialize();
+    ASSERT_FALSE(data.empty());
+    EXPECT_EQ(data[0], 0xE0);
+
+    message.set_explicit_initial_data_control(false);
+    message.set_reboot(true);
+    message.set_unicast(true);
+    data = message.serialize();
+    EXPECT_EQ(data[0], 0xC0);
+    EXPECT_FALSE(message.explicit_initial_data_control());
+
+    SdMessage parsed;
+    ASSERT_TRUE(parsed.deserialize(data));
+    EXPECT_FALSE(parsed.explicit_initial_data_control());
+    message.set_explicit_initial_data_control(true);
+    data = message.serialize();
+    ASSERT_TRUE(parsed.deserialize(data));
+    EXPECT_TRUE(parsed.explicit_initial_data_control());
+
+    EventGroupEntry entry(EntryType::SUBSCRIBE_EVENTGROUP);
+    entry.set_initial_data_requested(true);
+    entry.set_counter(0x03);
+    auto bytes = entry.serialize();
+    ASSERT_EQ(bytes.size(), 16u);
+    EXPECT_EQ(bytes[13] & 0x80, 0x80);
+    EXPECT_EQ(bytes[13] & 0x0F, 0x03);
+
+    EventGroupEntry decoded;
+    size_t offset = 0;
+    ASSERT_TRUE(decoded.deserialize(bytes, offset));
+    EXPECT_TRUE(decoded.get_initial_data_requested());
+    EXPECT_EQ(decoded.get_counter(), 0x03);
+    decoded.set_initial_data_requested(false);
+    EXPECT_FALSE(decoded.get_initial_data_requested());
+    EXPECT_EQ(decoded.get_counter(), 0x03);
+    EXPECT_EQ(decoded.get_reserved_12bit() & 0x0008U, 0u);
+}
+
+struct SubscribeWire {
+    bool got{false};
+    bool initial{false};
+    bool explicit_flag{false};
+    bool stop_with_subscribe{false};
+};
+
+static SubscribeWire receive_subscribe_wire(transport::UdpTransport& transport,
+                                           std::chrono::milliseconds timeout) {
+    SubscribeWire obs;
+    auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (std::chrono::steady_clock::now() < deadline) {
+        auto msg = transport.receive_message();
+        if (!msg) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        SdMessage sd_msg;
+        if (!sd_msg.deserialize(msg->get_payload())) {
+            continue;
+        }
+        bool saw_stop = false;
+        const EventGroupEntry* subscribe = nullptr;
+        for (const auto& entry_var : sd_msg.get_entries()) {
+            if (const auto* eg = std::get_if<EventGroupEntry>(&entry_var)) {
+                if (eg->get_type() != EntryType::SUBSCRIBE_EVENTGROUP) {
+                    continue;
+                }
+                if (eg->get_ttl() == 0) {
+                    saw_stop = true;
+                } else if (subscribe == nullptr) {
+                    subscribe = eg;
+                }
+            }
+        }
+        if (subscribe != nullptr) {
+            obs.got = true;
+            obs.initial = subscribe->get_initial_data_requested();
+            obs.explicit_flag = sd_msg.explicit_initial_data_control();
+            obs.stop_with_subscribe = saw_stop;
+            return obs;
+        }
+    }
+    return obs;
+}
+
+/**
+ * @test_case TC_SD_1194_CLIENT
+ * @tests REQ_SD_331
+ * @tests feat_req_someipsd_1191, feat_req_someipsd_1192, feat_req_someipsd_1193, feat_req_someipsd_1194
+ * @brief Initial data is requested on the first Subscribe and after reboot, not on TTL renewal.
+ */
+TEST_F(SdIntegrationTest, ClientRequestsInitialDataOnFirstSubscribeNotRenewal) {
+    const uint16_t client_port = get_unique_port();
+    const uint16_t offerer_port = get_unique_port();
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport offerer(transport::Endpoint("0.0.0.0", offerer_port), cfg);
+    ASSERT_EQ(offerer.start(), Result::SUCCESS);
+
+    auto offer = build_offer_service_message(0x1234, 0x0001, 30, "127.0.0.1", 30509);
+    offer.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 5));
+    ASSERT_EQ(offerer.send_message(offer, transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+
+    bool offer_seen = false;
+    for (int i = 0; i < 50 && !offer_seen; ++i) {
+        offer_seen = !client.get_available_services(0x1234).empty();
+        if (!offer_seen) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+    if (!offer_seen) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Offer not received (loopback may be unavailable)";
+    }
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+    const SubscribeWire first = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
+    if (!first.got) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Subscribe not received (loopback may be unavailable)";
+    }
+    EXPECT_TRUE(first.explicit_flag);
+    EXPECT_TRUE(first.initial);
+    EXPECT_FALSE(first.stop_with_subscribe);
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+    const SubscribeWire pending = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
+    EXPECT_TRUE(pending.got);
+    EXPECT_TRUE(pending.initial);
+    EXPECT_TRUE(pending.stop_with_subscribe);
+
+    auto ack = build_subscribe_ack_nack_message(0x1234, 0x0001, 0x0001, 1800);
+    ASSERT_EQ(offerer.send_message(ack, transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+    bool subscribed = false;
+    for (int i = 0; i < 50 && !subscribed; ++i) {
+        subscribed = client.get_eventgroup_subscription_state(0x1234, 0x0001, 0x0001) ==
+                     SubscriptionState::SUBSCRIBED;
+        if (!subscribed) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+    ASSERT_TRUE(subscribed);
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+    const SubscribeWire renewal = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
+    EXPECT_TRUE(renewal.got);
+    EXPECT_FALSE(renewal.initial);
+    EXPECT_FALSE(renewal.stop_with_subscribe);
+
+    auto reboot = build_offer_service_message(0x1234, 0x0001, 30, "127.0.0.1", 30509);
+    reboot.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 1));
+    ASSERT_EQ(offerer.send_message(reboot, transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+    const SubscribeWire after_reboot = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
+
+    offerer.stop();
+    client.shutdown();
+    EXPECT_TRUE(after_reboot.got);
+    EXPECT_TRUE(after_reboot.initial);
+    EXPECT_FALSE(after_reboot.stop_with_subscribe);
+}
+
+/**
+ * @test_case TC_SD_1194_CAPABLE
+ * @tests REQ_SD_331
+ * @tests feat_req_someipsd_1192, feat_req_someipsd_1193
+ * @brief A server that advertises explicit initial-data control is retried with the I flag only.
+ */
+TEST_F(SdIntegrationTest, CapableServerMissedAckDoesNotStopSubscribe) {
+    const uint16_t client_port = get_unique_port();
+    const uint16_t offerer_port = get_unique_port();
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport offerer(transport::Endpoint("0.0.0.0", offerer_port), cfg);
+    ASSERT_EQ(offerer.start(), Result::SUCCESS);
+
+    auto offer = build_offer_service_message(0x1234, 0x0001, 30, "127.0.0.1", 30509, true);
+    offer.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 5));
+    ASSERT_EQ(offerer.send_message(offer, transport::Endpoint("127.0.0.1", client_port)),
+              Result::SUCCESS);
+
+    bool offer_seen = false;
+    for (int i = 0; i < 50 && !offer_seen; ++i) {
+        offer_seen = !client.get_available_services(0x1234).empty();
+        if (!offer_seen) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+    if (!offer_seen) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Offer not received (loopback may be unavailable)";
+    }
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+    const SubscribeWire first = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
+    if (!first.got) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Subscribe not received (loopback may be unavailable)";
+    }
+
+    ASSERT_TRUE(client.subscribe_eventgroup(0x1234, 0x0001, 0x0001));
+    const SubscribeWire pending = receive_subscribe_wire(offerer, std::chrono::milliseconds(1500));
+    offerer.stop();
+    client.shutdown();
+    EXPECT_TRUE(pending.got);
+    EXPECT_TRUE(pending.initial);
+    EXPECT_FALSE(pending.stop_with_subscribe);
+}
+
+static Message build_flagged_subscribe(bool capable, bool request_initial, uint16_t event_port) {
+    EventGroupEntry entry(EntryType::SUBSCRIBE_EVENTGROUP);
+    entry.set_service_id(0x1234);
+    entry.set_instance_id(0x0001);
+    entry.set_eventgroup_id(0x0001);
+    entry.set_major_version(0x01);
+    entry.set_ttl(1800);
+    entry.set_index1(0);
+    entry.set_num_opts1(1);
+    entry.set_initial_data_requested(request_initial);
+
+    IPv4EndpointOption option;
+    option.set_ipv4_address_from_string("127.0.0.1");
+    option.set_port(event_port);
+    option.set_protocol(0x11);
+
+    SdMessage sd_msg;
+    sd_msg.set_reboot(true);
+    sd_msg.set_unicast(true);
+    sd_msg.set_explicit_initial_data_control(capable);
+    sd_msg.add_entry(std::move(entry));
+    sd_msg.add_option(std::move(option));
+
+    Message someip_msg(
+        MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+        RequestId(SOMEIP_SD_CLIENT_ID, 0x0001),
+        MessageType::NOTIFICATION,
+        ReturnCode::E_OK);
+    someip_msg.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
+    someip_msg.set_payload(sd_msg.serialize());
+    return someip_msg;
+}
+
+static int count_field_notifications(transport::UdpTransport& transport,
+                                    std::chrono::milliseconds timeout) {
+    int count = 0;
+    auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (std::chrono::steady_clock::now() < deadline) {
+        auto msg = transport.receive_message();
+        if (!msg) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        if (msg->get_method_id() == 0x8001) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+/**
+ * @test_case TC_SD_1194_FIELD
+ * @tests REQ_SD_331, REQ_MSG_125
+ * @tests feat_req_someipsd_1188, feat_req_someipsd_1194
+ * @brief Capable peers select or suppress the initial field; legacy peers keep the implicit burst.
+ */
+TEST_F(SdIntegrationTest, ExplicitInitialDataControlsFieldDelivery) {
+    const uint16_t server_port = get_unique_port();
+    const uint16_t source_port = get_unique_port();
+    const uint16_t field_port = get_unique_port();
+
+    auto server_config = create_test_config(server_port, server_port);
+    SdServer server(server_config);
+    ASSERT_TRUE(server.initialize());
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "127.0.0.1:30509", "", {0x0001}));
+
+    someip::events::EventPublisher publisher(0x1234, 0x0001);
+    publisher.set_default_client_endpoint("127.0.0.1", field_port);
+    ASSERT_TRUE(publisher.initialize());
+    someip::events::EventConfig event_cfg;
+    event_cfg.event_id = 0x8001;
+    event_cfg.eventgroup_id = 0x0001;
+    event_cfg.is_field = true;
+    ASSERT_TRUE(publisher.register_event(event_cfg));
+    platform::ByteBuffer payload;
+    payload.push_back(0x42);
+    ASSERT_TRUE(publisher.publish_field(0x8001, payload));
+
+    uint16_t client_id = 0x0100;
+    server.set_subscription_accepted_callback(
+        [&](uint16_t, uint16_t, uint16_t eventgroup, const transport::Endpoint&,
+            InitialDataDelivery delivery) {
+            platform::Vector<someip::events::EventFilter> filters;
+            if (delivery == InitialDataDelivery::DEFAULT) {
+                publisher.handle_subscription(eventgroup, client_id, 1800, filters);
+            } else {
+                publisher.handle_subscription(eventgroup, client_id, 1800, filters,
+                                              delivery == InitialDataDelivery::REQUESTED);
+            }
+        });
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport source(transport::Endpoint("0.0.0.0", source_port), cfg);
+    transport::UdpTransport field_rx(transport::Endpoint("0.0.0.0", field_port), cfg);
+    ASSERT_EQ(source.start(), Result::SUCCESS);
+    ASSERT_EQ(field_rx.start(), Result::SUCCESS);
+
+    transport::Endpoint server_ep("127.0.0.1", server_port);
+    ASSERT_EQ(source.send_message(build_flagged_subscribe(true, true, field_port), server_ep),
+              Result::SUCCESS);
+    EventGroupEntry ack;
+    const bool acked = receive_sd_ack(source, ack);
+    if (!acked) {
+        source.stop();
+        field_rx.stop();
+        publisher.shutdown();
+        server.shutdown();
+        GTEST_SKIP() << "ACK not received (loopback may be unavailable)";
+    }
+    EXPECT_EQ(count_field_notifications(field_rx, std::chrono::milliseconds(800)), 1);
+
+    client_id = 0x0101;
+    ASSERT_EQ(source.send_message(build_flagged_subscribe(true, false, field_port), server_ep),
+              Result::SUCCESS);
+    EXPECT_TRUE(receive_sd_ack(source, ack));
+    EXPECT_EQ(count_field_notifications(field_rx, std::chrono::milliseconds(400)), 0);
+
+    client_id = 0x0102;
+    ASSERT_EQ(source.send_message(build_flagged_subscribe(false, false, field_port), server_ep),
+              Result::SUCCESS);
+    EXPECT_TRUE(receive_sd_ack(source, ack));
+    EXPECT_EQ(count_field_notifications(field_rx, std::chrono::milliseconds(800)), 1);
+
+    client_id = 0x0103;
+    ASSERT_EQ(source.send_message(build_flagged_subscribe(false, true, field_port), server_ep),
+              Result::SUCCESS);
+    EXPECT_TRUE(receive_sd_ack(source, ack));
+    EXPECT_EQ(count_field_notifications(field_rx, std::chrono::milliseconds(800)), 1);
+
+    source.stop();
+    field_rx.stop();
+    server.shutdown();
+    publisher.shutdown();
 }

@@ -20,6 +20,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+- **SD**: Client and server implement explicit Initial Event requesting.
+  Outgoing SD headers advertise the Explicit Initial Data Control Flag
+  (`0x20`) and still clear reserved flag bits. The client sets the
+  per-entry Initial Data Requested flag for a first subscription and
+  after reboot, and clears it while renewing an unexpired subscription.
+  A retry while an Ack is outstanding sends StopSubscribe and Subscribe
+  together when the server did not advertise the capability, and only the
+  Initial Data Requested flag when it did.
+  A capable peer's flag selects or suppresses the initial field sent
+  after SubscribeEventgroupAck; a legacy peer keeps the implicit
+  new-subscription field. `SdServer::SubscriptionAcceptedCallback` now
+  receives that `InitialDataDelivery` decision
+  ([#342](https://github.com/vtz/opensomeip/issues/342)).
+
+### Breaking Changes
+
+- **SD**: `SdServer::SubscriptionAcceptedCallback` now requires
+  `InitialDataDelivery` as its fifth argument. Existing callbacks must
+  accept that argument
+  ([#342](https://github.com/vtz/opensomeip/issues/342)).
+
 ## [0.2.0] - 2026-10-05
 
 This minor release packages new public APIs (C ABI, static-allocation PAL,

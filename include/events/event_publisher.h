@@ -150,6 +150,19 @@ public:
                            const platform::Vector<EventFilter>& filters = {});
 
     /**
+     * @brief Record a subscription and optionally send cached field values.
+     *
+     * `send_initial_events == false` suppresses the initial field burst even
+     * when the client is new. `true` sends it even when the client is already
+     * subscribed. The overloads without this flag keep the legacy rule: send
+     * only for a new subscription.
+     */
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
+                           uint32_t ttl_seconds,
+                           const platform::Vector<EventFilter>& filters,
+                           bool send_initial_events);
+
+    /**
      * @brief Handle event unsubscription
      *
      * @param eventgroup_id Event group being unsubscribed from
