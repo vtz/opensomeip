@@ -2715,7 +2715,7 @@ SD Shutdown and Recovery
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Integration test: with no IPv4 SD Endpoint Option, SubscribeEventgroupAck is received on the datagram source socket and not on the event endpoint. When a usable Type 0x24 option names a different endpoint, Find responses, SubscribeEventgroup, and SubscribeEventgroupAck/Nack use that endpoint, and reboot detection follows it. A multicast 0x24 does not replace the source. Two offers in one datagram update the reboot channel once. Covered by SubscribeAckGoesToSdSenderNotEventEndpoint, FindOfferUsesIpv4SdEndpoint, SubscribeAckUsesIpv4SdEndpointNotEventEndpoint, RebootAndSubscribeFollowIpv4SdEndpoint, IPv4SdEndpointRejectsMulticastAddress, and BundledOffersDoNotFalseReboot.
+   :verification: Integration test: with no IPv4 SD Endpoint Option, SubscribeEventgroupAck is received on the datagram source socket and not on the event endpoint. When a usable Type 0x24 option names a different endpoint, Find responses, SubscribeEventgroup, and SubscribeEventgroupAck/Nack use that endpoint, and reboot detection follows it. A multicast 0x24 does not replace the source. Two offers in one datagram update the reboot channel once. Multicast and unicast reception keep separate session observations, and a reboot releases the endpoint index after replay. Covered by SubscribeAckGoesToSdSenderNotEventEndpoint, FindOfferUsesIpv4SdEndpoint, SubscribeAckUsesIpv4SdEndpointNotEventEndpoint, RebootAndSubscribeFollowIpv4SdEndpoint, IPv4SdEndpointRejectsMulticastAddress, BundledOffersDoNotFalseReboot, MulticastAndUnicastSessionsStayIndependent, and RebootReleasesEndpointIndexAfterReplay.
 
    SubscribeEventgroupAck and SubscribeEventgroupNack shall be sent to the
    source IP address and source port of the received SD datagram, not to
@@ -2728,6 +2728,14 @@ SD Shutdown and Recovery
    detection. The application/event endpoint is unchanged. When the option
    is absent, not first, or not a usable UDP unicast endpoint, the datagram
    source is used.
+
+   Reboot detection on that endpoint keeps a separate session observation
+   for datagrams received by multicast and for datagrams received by
+   unicast. A session transition on one stream is not a reboot of the
+   other. When the stack cannot report the datagram destination, both
+   streams share the unicast observation. After subscriptions are replayed,
+   the cached endpoint index for each cleared service is released so a
+   later offer can be addressed.
 
    **Rationale**: The endpoint option address is for event delivery; SD
    replies must reach the SD protocol peer, which may advertise a different

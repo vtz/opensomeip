@@ -485,6 +485,7 @@ inline void apply_sd_tx_flags(SdMessage& message, const SdSessionIdCounter& coun
  *
  * A channel is the resolved SD endpoint (IPv4 SD Endpoint Option when it is
  * usable, otherwise the datagram source), not the outer address alone.
+ * Multicast and unicast reception on that endpoint are separate streams.
  *
  * @implements REQ_SD_1084, REQ_SD_343
  * @satisfies feat_req_someipsd_1084, feat_req_someipsd_764

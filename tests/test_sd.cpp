@@ -4322,6 +4322,18 @@ bool wait_until_available(SdClient& client, uint16_t service_id)
     return false;
 }
 
+bool wait_for_ttl(SdClient& client, uint16_t service_id, uint32_t ttl)
+{
+    for (int i = 0; i < 50; ++i) {
+        const auto services = client.get_available_services(service_id);
+        if (!services.empty() && services[0].ttl_seconds == ttl) {
+            return true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    return false;
+}
+
 bool wait_until_subscribed(SdClient& client, uint16_t service_id)
 {
     for (int i = 0; i < 50; ++i) {
@@ -4573,4 +4585,149 @@ TEST_F(SdIntegrationTest, SubscribeAckRebootClearsPeerBeforeLaterOffer)
     EXPECT_TRUE(a_still_clear);
     EXPECT_TRUE(b_back);
     EXPECT_FALSE(extra);
+}
+
+/**
+ * @test_case TC_SD_171_INDEX
+ * @tests REQ_SD_171, REQ_SD_1084, REQ_SD_311
+ * @tests feat_req_someipsd_764, feat_req_someipsd_1084
+ * @brief Replay still reaches the peer, then the endpoint index is released.
+ */
+TEST_F(SdIntegrationTest, RebootReleasesEndpointIndexAfterReplay)
+{
+    const uint16_t client_port = get_unique_port();
+    const uint16_t offerer_port = get_unique_port();
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport offerer(transport::Endpoint("0.0.0.0", offerer_port), cfg);
+    ASSERT_EQ(offerer.start(), Result::SUCCESS);
+
+    const transport::Endpoint client_ep("127.0.0.1", client_port);
+    ASSERT_EQ(offerer.send_message(offer_at_session(kRebootServiceA, 30, 4), client_ep),
+              Result::SUCCESS);
+    if (!wait_until_available(client, kRebootServiceA)) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Offer not received (loopback may be unavailable)";
+    }
+
+    ASSERT_TRUE(client.subscribe_eventgroup(kRebootServiceA, kRebootInstance, kRebootEventgroup));
+    uint32_t ttl = 0;
+    uint16_t service = 0;
+    if (!receive_sd_entry(offerer, 0x06, ttl, service, std::chrono::milliseconds(1500))) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Subscribe not received (loopback may be unavailable)";
+    }
+
+    auto ack =
+        build_subscribe_ack_nack_message(kRebootServiceA, kRebootInstance, kRebootEventgroup, 1800);
+    ack.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 1));
+    ASSERT_EQ(offerer.send_message(ack, client_ep), Result::SUCCESS);
+
+    uint32_t replay_ttl = 0;
+    uint16_t replay_service = 0;
+    const bool replayed =
+        receive_sd_entry(offerer, 0x06, replay_ttl, replay_service, std::chrono::milliseconds(1500));
+    const bool index_released =
+        !client.subscribe_eventgroup(kRebootServiceA, kRebootInstance, kRebootEventgroup);
+    const bool cleared = client.get_available_services(kRebootServiceA).empty();
+
+    ASSERT_EQ(offerer.send_message(offer_at_session(kRebootServiceB, 15, 2), client_ep),
+              Result::SUCCESS);
+    const bool b_back = wait_for_ttl(client, kRebootServiceB, 15);
+    const bool b_subscribed =
+        b_back &&
+        client.subscribe_eventgroup(kRebootServiceB, kRebootInstance, kRebootEventgroup);
+    uint32_t b_ttl = 0;
+    uint16_t b_service = 0;
+    const bool b_wire =
+        b_subscribed &&
+        receive_sd_entry(offerer, 0x06, b_ttl, b_service, std::chrono::milliseconds(1500));
+
+    offerer.stop();
+    client.shutdown();
+
+    EXPECT_TRUE(replayed);
+    EXPECT_EQ(replay_service, kRebootServiceA);
+    EXPECT_TRUE(cleared);
+    EXPECT_TRUE(index_released);
+    EXPECT_TRUE(b_back);
+    EXPECT_TRUE(b_subscribed);
+    EXPECT_TRUE(b_wire);
+    EXPECT_EQ(b_service, kRebootServiceB);
+}
+
+/**
+ * @test_case TC_SD_1084_STREAM
+ * @tests REQ_SD_1084, REQ_SD_311
+ * @tests feat_req_someipsd_1084
+ * @brief Multicast and unicast session counters from one peer do not false-reboot.
+ */
+TEST_F(SdIntegrationTest, MulticastAndUnicastSessionsStayIndependent)
+{
+    const uint16_t client_port = get_unique_port();
+    const uint16_t offerer_port = get_unique_port();
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+
+    std::atomic<int> dropped{0};
+    ASSERT_TRUE(client.subscribe_service(
+        kRebootServiceA, [](const ServiceInstance&) {},
+        [&dropped](const ServiceInstance&) { dropped.fetch_add(1); }));
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    cfg.reuse_port = true;
+    cfg.multicast_interface = "127.0.0.1";
+    transport::UdpTransport offerer(transport::Endpoint("0.0.0.0", offerer_port), cfg);
+    ASSERT_EQ(offerer.start(), Result::SUCCESS);
+    ASSERT_EQ(offerer.join_multicast_group(client_config.multicast_address), Result::SUCCESS);
+
+    const transport::Endpoint client_unicast("127.0.0.1", client_port);
+    const transport::Endpoint client_mcast(client_config.multicast_address, client_port,
+                                           transport::TransportProtocol::MULTICAST_UDP);
+
+    ASSERT_EQ(offerer.send_message(offer_at_session(kRebootServiceA, 30, 1), client_mcast),
+              Result::SUCCESS);
+    if (!wait_for_ttl(client, kRebootServiceA, 30)) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Multicast offer not received (loopback may be unavailable)";
+    }
+
+    ASSERT_TRUE(client.subscribe_eventgroup(kRebootServiceA, kRebootInstance, kRebootEventgroup));
+    uint32_t ttl = 0;
+    uint16_t service = 0;
+    if (!receive_sd_entry(offerer, 0x06, ttl, service, std::chrono::milliseconds(1500))) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Subscribe not received (loopback may be unavailable)";
+    }
+
+    auto crosses_without_reboot = [&](const transport::Endpoint& dest, uint16_t session,
+                                      uint32_t offer_ttl) {
+        ASSERT_EQ(offerer.send_message(offer_at_session(kRebootServiceA, offer_ttl, session), dest),
+                  Result::SUCCESS);
+        ASSERT_TRUE(wait_for_ttl(client, kRebootServiceA, offer_ttl));
+        uint32_t extra_ttl = 0;
+        uint16_t extra_service = 0;
+        const bool replayed =
+            receive_sd_entry(offerer, 0x06, extra_ttl, extra_service, std::chrono::milliseconds(300));
+        EXPECT_FALSE(replayed);
+        EXPECT_EQ(dropped.load(), 0);
+    };
+
+    // Both streams start at session 1. A shared record treats that repeat as a reboot.
+    crosses_without_reboot(client_unicast, 1, 45);
+    crosses_without_reboot(client_mcast, 2, 12);
+    crosses_without_reboot(client_unicast, 2, 15);
+
+    offerer.stop();
+    client.shutdown();
 }

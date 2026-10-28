@@ -62,6 +62,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a later offer for another service on that peer finds an empty cache
   after the session counter has moved on
   ([#344](https://github.com/vtz/opensomeip/issues/344)).
+- **SD**: Multicast and unicast reception from the same SD endpoint keep
+  separate reboot session state, so a lower session on the other stream
+  does not clear cached services. After replay, the endpoint index for
+  each cleared service is released so a later offer can be addressed
+  ([#344](https://github.com/vtz/opensomeip/issues/344)).
 
 ## [0.2.0] - 2026-10-05
 

@@ -496,9 +496,18 @@ private:
         bool explicit_initial_data{false};
     };
 
-    struct RebootChannel {
+    /// One reception stream (multicast or unicast) on an SD endpoint.
+    struct SdSessionObservation {
+        bool seen{false};
         uint16_t last_session_id{0};
         bool reboot_flag{false};
+    };
+
+    /// Reboot state for one SD endpoint. The two streams have independent
+    /// session counters, so they must not share an observation.
+    struct RebootChannel {
+        SdSessionObservation unicast;
+        SdSessionObservation multicast;
     };
 
     static platform::String<> sd_channel_key(const platform::String<>& address, uint16_t port) {
@@ -543,7 +552,8 @@ private:
      * @brief Drop every cached offer that still names this SD endpoint.
      *
      * Caller holds available_services_mutex_. The stored unicast address stays
-     * so a replayed subscription can still reach the peer.
+     * until replay finishes; the caller then drops it so a later offer can
+     * reuse the slot.
      *
      * @implements REQ_SD_171
      * @satisfies feat_req_someipsd_764, feat_req_someipsd_765, feat_req_someipsd_872
@@ -584,9 +594,24 @@ private:
         }
     }
 
+    /**
+     * @brief True when this datagram arrived on the SD multicast group.
+     *
+     * An empty destination means the stack could not report it. Those
+     * datagrams share the unicast observation.
+     */
+    bool received_via_multicast(const transport::Endpoint& destination) const {
+        if (destination.get_address().empty()) {
+            return false;
+        }
+        return destination.is_multicast() ||
+               destination.get_address() == config_.multicast_address;
+    }
+
     /** @implements REQ_SD_1084, REQ_SD_311
      *  @satisfies feat_req_someipsd_1084 */
-    bool note_reboot_channel(const transport::Endpoint& peer, uint16_t session, bool reboot_flag) {
+    bool note_reboot_channel(const transport::Endpoint& peer, uint16_t session, bool reboot_flag,
+                             bool via_multicast) {
         const platform::String<> key = sd_channel_key(peer.get_address(), peer.get_port());
         const auto it = reboot_channels_.find(key);
         if (it == reboot_channels_.end()) {
@@ -596,13 +621,32 @@ private:
             if (reboot_channels_.size() >= reboot_channels_.max_size()) {
                 return false;
             }
-            reboot_channels_[key] = RebootChannel{session, reboot_flag};
+            RebootChannel created;
+            SdSessionObservation& slot = via_multicast ? created.multicast : created.unicast;
+            slot.seen = true;
+            slot.last_session_id = session;
+            slot.reboot_flag = reboot_flag;
+            reboot_channels_[key] = created;
+            return false;
+        }
+
+        SdSessionObservation& slot = via_multicast ? it->second.multicast : it->second.unicast;
+        SdSessionObservation& other = via_multicast ? it->second.unicast : it->second.multicast;
+        if (!slot.seen) {
+            slot.seen = true;
+            slot.last_session_id = session;
+            slot.reboot_flag = reboot_flag;
             return false;
         }
         const bool detected = sd_reboot_detected(
-            true, it->second.reboot_flag, it->second.last_session_id, reboot_flag, session);
-        it->second.last_session_id = session;
-        it->second.reboot_flag = reboot_flag;
+            true, slot.reboot_flag, slot.last_session_id, reboot_flag, session);
+        slot.last_session_id = session;
+        slot.reboot_flag = reboot_flag;
+        if (detected) {
+            // This reboot already clears the peer. The other stream's next
+            // datagram is the first observation after that, not a second clear.
+            other = SdSessionObservation{};
+        }
         return detected;
     }
 
@@ -837,6 +881,11 @@ private:
 
     /** @implements REQ_SD_116_E01, REQ_SD_119, REQ_SD_120, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_311, REQ_SD_331 */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
+        on_message_received(message, sender, transport::Endpoint("", 0));
+    }
+
+    void on_message_received(const MessagePtr& message, const transport::Endpoint& sender,
+                            const transport::Endpoint& destination) override {
         // Check if this is an SD message (service ID 0xFFFF)
         if (message->get_service_id() != 0xFFFF) {
             return;
@@ -848,7 +897,7 @@ private:
         }
         sd_message.set_session_id(message->get_session_id());
 
-        process_sd_entries(sd_message, sender);
+        process_sd_entries(sd_message, sender, destination);
     }
 
     void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {
@@ -864,7 +913,8 @@ private:
     }
 
     /** @implements REQ_SD_119, REQ_SD_120, REQ_SD_171, REQ_SD_311, REQ_SD_331, REQ_SD_1084 */
-    void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender) {
+    void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender,
+                           const transport::Endpoint& destination) {
         // Session and reboot flag are message-scoped. Recording them once avoids
         // a second offer in the same datagram looking like a session reuse.
         // The same record clears every cached service on that endpoint, so a
@@ -880,13 +930,21 @@ private:
         {
             platform::ScopedLock const lock(available_services_mutex_);
             channel_rebooted = note_reboot_channel(
-                sd_peer, message.get_session_id(), message.get_reboot_flag());
+                sd_peer, message.get_session_id(), message.get_reboot_flag(),
+                received_via_multicast(destination));
             if (channel_rebooted) {
                 take_cached_services_for_channel(sd_peer, rebooted_services);
             }
         }
         for (const auto& instance : rebooted_services) {
             handle_remote_reboot(instance);
+        }
+        if (channel_rebooted) {
+            platform::ScopedLock const lock(available_services_mutex_);
+            for (const auto& instance : rebooted_services) {
+                sd_unicast_endpoints_.erase(
+                    make_service_key(instance.service_id, instance.instance_id));
+            }
         }
 
         for (const auto& entry_var : message.get_entries()) {
