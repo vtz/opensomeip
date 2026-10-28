@@ -539,6 +539,51 @@ private:
         }
     }
 
+    /**
+     * @brief Drop every cached offer that still names this SD endpoint.
+     *
+     * Caller holds available_services_mutex_. The stored unicast address stays
+     * so a replayed subscription can still reach the peer.
+     *
+     * @implements REQ_SD_171
+     * @satisfies feat_req_someipsd_764, feat_req_someipsd_765, feat_req_someipsd_872
+     */
+    void take_cached_services_for_channel(const transport::Endpoint& peer,
+                                          platform::Vector<ServiceInstance>& removed) {
+        const platform::String<> channel = sd_channel_key(peer.get_address(), peer.get_port());
+        platform::Vector<uint64_t> keys;
+        for (const auto& endpoint : sd_unicast_endpoints_) {
+            if (sd_channel_key(endpoint.second.get_address(), endpoint.second.get_port()) !=
+                channel) {
+                continue;
+            }
+            if (keys.size() >= keys.max_size()) {
+                break;
+            }
+            keys.push_back(endpoint.first);
+        }
+
+        for (const uint64_t key : keys) {
+            ServiceInstance instance(static_cast<uint16_t>(key >> 16U),
+                                     static_cast<uint16_t>(key & 0xFFFFU));
+            const auto cached = cached_services_.find(key);
+            if (cached != cached_services_.end()) {
+                instance = cached->second.instance;
+                cached_services_.erase(key);
+            }
+            const auto rm_it =
+                std::remove_if(available_services_.begin(), available_services_.end(),
+                               [&](const ServiceInstance& svc) {
+                                   return svc.service_id == instance.service_id &&
+                                          svc.instance_id == instance.instance_id;
+                               });
+            available_services_.erase(rm_it, available_services_.end());
+            if (removed.size() < removed.max_size()) {
+                removed.push_back(instance);
+            }
+        }
+    }
+
     /** @implements REQ_SD_1084, REQ_SD_311
      *  @satisfies feat_req_someipsd_1084 */
     bool note_reboot_channel(const transport::Endpoint& peer, uint16_t session, bool reboot_flag) {
@@ -818,10 +863,12 @@ private:
         // TODO: Handle transport errors
     }
 
-    /** @implements REQ_SD_119, REQ_SD_120, REQ_SD_311, REQ_SD_331, REQ_SD_1084 */
+    /** @implements REQ_SD_119, REQ_SD_120, REQ_SD_171, REQ_SD_311, REQ_SD_331, REQ_SD_1084 */
     void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender) {
         // Session and reboot flag are message-scoped. Recording them once avoids
         // a second offer in the same datagram looking like a session reuse.
+        // The same record clears every cached service on that endpoint, so a
+        // SubscribeAck or a later offer does not have to rediscover the reboot.
         platform::String<> sd_address;
         uint16_t sd_port = 0;
         transport::Endpoint sd_peer = sender;
@@ -829,10 +876,17 @@ private:
             sd_peer = transport::Endpoint(sd_address, sd_port);
         }
         bool channel_rebooted = false;
+        platform::Vector<ServiceInstance> rebooted_services;
         {
             platform::ScopedLock const lock(available_services_mutex_);
             channel_rebooted = note_reboot_channel(
                 sd_peer, message.get_session_id(), message.get_reboot_flag());
+            if (channel_rebooted) {
+                take_cached_services_for_channel(sd_peer, rebooted_services);
+            }
+        }
+        for (const auto& instance : rebooted_services) {
+            handle_remote_reboot(instance);
         }
 
         for (const auto& entry_var : message.get_entries()) {
@@ -843,7 +897,21 @@ private:
                         if (entry->get_ttl() == 0) {
                             handle_service_stop_offer(*se);
                         } else {
-                            handle_service_offer(*se, message, sd_peer, channel_rebooted);
+                            // Services already cleared above must not reboot again.
+                            // An offer whose cache names a different endpoint still
+                            // follows this datagram's channel.
+                            bool already_rebooted = false;
+                            if (channel_rebooted) {
+                                for (const auto& inst : rebooted_services) {
+                                    if (inst.service_id == se->get_service_id() &&
+                                        inst.instance_id == se->get_instance_id()) {
+                                        already_rebooted = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            handle_service_offer(*se, message, sd_peer,
+                                                 channel_rebooted && !already_rebooted);
                         }
                     }
                     break;

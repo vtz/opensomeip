@@ -56,6 +56,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   source, and a Subscribe entry that references `0x24` is rejected.
   IPv6 SD Endpoint `0x26` remains out of scope
   ([#344](https://github.com/vtz/opensomeip/issues/344)).
+- **SD**: A reboot of a remote SD endpoint clears every cached service on
+  that endpoint and replays the subscriptions that were active for each
+  of them. The clear also runs when a SubscribeAck notices the reboot, so
+  a later offer for another service on that peer finds an empty cache
+  after the session counter has moved on
+  ([#344](https://github.com/vtz/opensomeip/issues/344)).
 
 ## [0.2.0] - 2026-10-05
 

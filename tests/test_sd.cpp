@@ -3352,6 +3352,8 @@ TEST_F(SdIntegrationTest, ClientRequestsInitialDataOnFirstSubscribeNotRenewal) {
     EXPECT_TRUE(pending.stop_with_subscribe);
 
     auto ack = build_subscribe_ack_nack_message(0x1234, 0x0001, 0x0001, 1800);
+    // Stay ahead of the offer session so this Ack is acceptance, not a reboot.
+    ack.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 6));
     ASSERT_EQ(offerer.send_message(ack, transport::Endpoint("127.0.0.1", client_port)),
               Result::SUCCESS);
     bool subscribed = false;
@@ -4255,4 +4257,320 @@ TEST_F(SdIntegrationTest, BundledOffersDoNotFalseReboot) {
     offerer.stop();
     client.shutdown();
     EXPECT_FALSE(replayed);
+}
+
+namespace {
+
+constexpr uint16_t kRebootServiceA = 0x1234;
+constexpr uint16_t kRebootServiceB = 0x2234;
+constexpr uint16_t kRebootInstance = 0x0001;
+constexpr uint16_t kRebootEventgroup = 0x0001;
+
+struct ReplayedSubscribes {
+    bool service_a{false};
+    bool service_b{false};
+    bool missing_initial{false};
+};
+
+void note_replayed_subscribe(const SdMessage& sd_msg, ReplayedSubscribes& seen)
+{
+    for (const auto& entry_var : sd_msg.get_entries()) {
+        const auto* eg = std::get_if<EventGroupEntry>(&entry_var);
+        if (eg == nullptr || eg->get_type() != EntryType::SUBSCRIBE_EVENTGROUP ||
+            eg->get_ttl() == 0) {
+            continue;
+        }
+        if (!eg->get_initial_data_requested()) {
+            seen.missing_initial = true;
+        }
+        if (eg->get_service_id() == kRebootServiceA) {
+            seen.service_a = true;
+        }
+        else if (eg->get_service_id() == kRebootServiceB) {
+            seen.service_b = true;
+        }
+    }
+}
+
+bool poll_replayed_subscribes(transport::UdpTransport& offerer, ReplayedSubscribes& seen,
+                              std::chrono::milliseconds timeout)
+{
+    const auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (std::chrono::steady_clock::now() < deadline && !(seen.service_a && seen.service_b)) {
+        auto msg = offerer.receive_message();
+        if (!msg || msg->get_service_id() != 0xFFFF) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        SdMessage parsed;
+        if (!parsed.deserialize(msg->get_payload())) {
+            continue;
+        }
+        note_replayed_subscribe(parsed, seen);
+    }
+    return seen.service_a && seen.service_b;
+}
+
+bool wait_until_available(SdClient& client, uint16_t service_id)
+{
+    for (int i = 0; i < 50; ++i) {
+        if (!client.get_available_services(service_id).empty()) {
+            return true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    return false;
+}
+
+bool wait_until_subscribed(SdClient& client, uint16_t service_id)
+{
+    for (int i = 0; i < 50; ++i) {
+        if (client.get_eventgroup_subscription_state(
+                service_id, kRebootInstance, kRebootEventgroup) == SubscriptionState::SUBSCRIBED) {
+            return true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    return false;
+}
+
+Message offer_at_session(uint16_t service_id, uint32_t ttl, uint16_t session)
+{
+    auto offer = build_offer_service_message(service_id, kRebootInstance, ttl, "127.0.0.1", 30509);
+    offer.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, session));
+    return offer;
+}
+
+/**
+ * @brief Two services from one peer, with subscriptions active, before a reboot.
+ * @return false when loopback did not deliver the offers or subscriptions.
+ */
+bool establish_two_peer_services(SdClient& client, transport::UdpTransport& offerer,
+                                 uint16_t client_port)
+{
+    const transport::Endpoint client_ep("127.0.0.1", client_port);
+    if (offerer.send_message(offer_at_session(kRebootServiceA, 30, 4), client_ep) !=
+        Result::SUCCESS) {
+        return false;
+    }
+    if (!wait_until_available(client, kRebootServiceA)) {
+        return false;
+    }
+    if (offerer.send_message(offer_at_session(kRebootServiceB, 30, 5), client_ep) !=
+        Result::SUCCESS) {
+        return false;
+    }
+    if (!wait_until_available(client, kRebootServiceB)) {
+        return false;
+    }
+
+    if (!client.subscribe_eventgroup(kRebootServiceA, kRebootInstance, kRebootEventgroup) ||
+        !client.subscribe_eventgroup(kRebootServiceB, kRebootInstance, kRebootEventgroup)) {
+        return false;
+    }
+    uint32_t ttl = 0;
+    uint16_t service = 0;
+    if (!receive_sd_entry(offerer, 0x06, ttl, service, std::chrono::milliseconds(1500)) ||
+        !receive_sd_entry(offerer, 0x06, ttl, service, std::chrono::milliseconds(1500))) {
+        return false;
+    }
+
+    auto ack_a =
+        build_subscribe_ack_nack_message(kRebootServiceA, kRebootInstance, kRebootEventgroup, 1800);
+    ack_a.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 6));
+    auto ack_b =
+        build_subscribe_ack_nack_message(kRebootServiceB, kRebootInstance, kRebootEventgroup, 1800);
+    ack_b.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 7));
+    if (offerer.send_message(ack_a, client_ep) != Result::SUCCESS ||
+        offerer.send_message(ack_b, client_ep) != Result::SUCCESS) {
+        return false;
+    }
+    return wait_until_subscribed(client, kRebootServiceA) &&
+           wait_until_subscribed(client, kRebootServiceB);
+}
+
+}  // namespace
+
+/**
+ * @test_case TC_SD_171_SPLIT
+ * @tests REQ_SD_171, REQ_SD_311
+ * @tests feat_req_someipsd_764, feat_req_someipsd_765, feat_req_someipsd_872
+ * @brief Offers in separate datagrams: only the first post-reboot datagram
+ *        looks like a reboot, and both services are cleared and replayed.
+ */
+TEST_F(SdIntegrationTest, RebootClearsEveryServiceAcrossSeparateOffers)
+{
+    const uint16_t client_port = get_unique_port();
+    const uint16_t offerer_port = get_unique_port();
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+
+    std::atomic<int> dropped_a{0};
+    std::atomic<int> dropped_b{0};
+    ASSERT_TRUE(client.subscribe_service(
+        kRebootServiceA, [](const ServiceInstance&) {},
+        [&dropped_a](const ServiceInstance&) { dropped_a.fetch_add(1); }));
+    ASSERT_TRUE(client.subscribe_service(
+        kRebootServiceB, [](const ServiceInstance&) {},
+        [&dropped_b](const ServiceInstance&) { dropped_b.fetch_add(1); }));
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport offerer(transport::Endpoint("0.0.0.0", offerer_port), cfg);
+    ASSERT_EQ(offerer.start(), Result::SUCCESS);
+
+    if (!establish_two_peer_services(client, offerer, client_port)) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Offers not received (loopback may be unavailable)";
+    }
+
+    // Session 1 after session 7 is a reboot. Service B is not in this datagram.
+    const transport::Endpoint client_ep("127.0.0.1", client_port);
+    ASSERT_EQ(offerer.send_message(offer_at_session(kRebootServiceA, 45, 1), client_ep),
+              Result::SUCCESS);
+
+    ReplayedSubscribes replayed;
+    const bool both_replayed =
+        poll_replayed_subscribes(offerer, replayed, std::chrono::milliseconds(1500));
+
+    bool a_refreshed = false;
+    bool b_cleared = false;
+    for (int i = 0; i < 50 && !(a_refreshed && b_cleared); ++i) {
+        const auto services_a = client.get_available_services(kRebootServiceA);
+        const auto services_b = client.get_available_services(kRebootServiceB);
+        a_refreshed = !services_a.empty() && services_a[0].ttl_seconds == 45;
+        b_cleared = services_b.empty();
+        if (!(a_refreshed && b_cleared)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+
+    // Session 2 is not another reboot: the counter already moved on the first datagram.
+    ASSERT_EQ(offerer.send_message(offer_at_session(kRebootServiceB, 15, 2), client_ep),
+              Result::SUCCESS);
+    bool b_back = false;
+    for (int i = 0; i < 50 && !b_back; ++i) {
+        const auto services_b = client.get_available_services(kRebootServiceB);
+        b_back = !services_b.empty() && services_b[0].ttl_seconds == 15;
+        if (!b_back) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+    uint32_t ttl = 0;
+    uint16_t service = 0;
+    const bool extra =
+        receive_sd_entry(offerer, 0x06, ttl, service, std::chrono::milliseconds(300));
+    const auto state_a = client.get_eventgroup_subscription_state(kRebootServiceA, kRebootInstance,
+                                                                  kRebootEventgroup);
+    const auto state_b = client.get_eventgroup_subscription_state(kRebootServiceB, kRebootInstance,
+                                                                  kRebootEventgroup);
+    const int drops_a = dropped_a.load();
+    const int drops_b = dropped_b.load();
+
+    offerer.stop();
+    client.shutdown();
+
+    EXPECT_TRUE(both_replayed);
+    EXPECT_TRUE(replayed.service_a);
+    EXPECT_TRUE(replayed.service_b);
+    EXPECT_FALSE(replayed.missing_initial);
+    EXPECT_TRUE(a_refreshed);
+    EXPECT_TRUE(b_cleared);
+    EXPECT_EQ(drops_a, 1);
+    EXPECT_EQ(drops_b, 1);
+    EXPECT_EQ(state_a, SubscriptionState::PENDING_ACK);
+    EXPECT_EQ(state_b, SubscriptionState::PENDING_ACK);
+    EXPECT_TRUE(b_back);
+    EXPECT_FALSE(extra);
+}
+
+/**
+ * @test_case TC_SD_171_ACK
+ * @tests REQ_SD_171, REQ_SD_311
+ * @tests feat_req_someipsd_764, feat_req_someipsd_765, feat_req_someipsd_872
+ * @brief A SubscribeAck with no positive-TTL offer notices the reboot, and a
+ *        later offer for the other service arrives after the session moves.
+ */
+TEST_F(SdIntegrationTest, SubscribeAckRebootClearsPeerBeforeLaterOffer)
+{
+    const uint16_t client_port = get_unique_port();
+    const uint16_t offerer_port = get_unique_port();
+    auto client_config = create_test_config(get_unique_port(), client_port);
+    SdClient client(client_config);
+    ASSERT_TRUE(client.initialize());
+
+    std::atomic<int> dropped_a{0};
+    std::atomic<int> dropped_b{0};
+    ASSERT_TRUE(client.subscribe_service(
+        kRebootServiceA, [](const ServiceInstance&) {},
+        [&dropped_a](const ServiceInstance&) { dropped_a.fetch_add(1); }));
+    ASSERT_TRUE(client.subscribe_service(
+        kRebootServiceB, [](const ServiceInstance&) {},
+        [&dropped_b](const ServiceInstance&) { dropped_b.fetch_add(1); }));
+
+    transport::UdpTransportConfig cfg;
+    cfg.blocking = false;
+    transport::UdpTransport offerer(transport::Endpoint("0.0.0.0", offerer_port), cfg);
+    ASSERT_EQ(offerer.start(), Result::SUCCESS);
+
+    if (!establish_two_peer_services(client, offerer, client_port)) {
+        offerer.stop();
+        client.shutdown();
+        GTEST_SKIP() << "Offers not received (loopback may be unavailable)";
+    }
+
+    // Session 1 after session 7 is a reboot, and this datagram has no Offer.
+    auto ack =
+        build_subscribe_ack_nack_message(kRebootServiceA, kRebootInstance, kRebootEventgroup, 1800);
+    ack.set_request_id(RequestId(SOMEIP_SD_CLIENT_ID, 1));
+    const transport::Endpoint client_ep("127.0.0.1", client_port);
+    ASSERT_EQ(offerer.send_message(ack, client_ep), Result::SUCCESS);
+
+    ReplayedSubscribes replayed;
+    const bool both_replayed =
+        poll_replayed_subscribes(offerer, replayed, std::chrono::milliseconds(1500));
+
+    bool both_cleared = false;
+    for (int i = 0; i < 50 && !both_cleared; ++i) {
+        both_cleared = client.get_available_services(kRebootServiceA).empty() &&
+                       client.get_available_services(kRebootServiceB).empty();
+        if (!both_cleared) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+
+    // Session 2 does not look like a reboot. Service B must already have been cleared.
+    ASSERT_EQ(offerer.send_message(offer_at_session(kRebootServiceB, 15, 2), client_ep),
+              Result::SUCCESS);
+    bool b_back = false;
+    for (int i = 0; i < 50 && !b_back; ++i) {
+        const auto services_b = client.get_available_services(kRebootServiceB);
+        b_back = !services_b.empty() && services_b[0].ttl_seconds == 15;
+        if (!b_back) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+    }
+    uint32_t ttl = 0;
+    uint16_t service = 0;
+    const bool extra =
+        receive_sd_entry(offerer, 0x06, ttl, service, std::chrono::milliseconds(300));
+    const bool a_still_clear = client.get_available_services(kRebootServiceA).empty();
+    const int drops_a = dropped_a.load();
+    const int drops_b = dropped_b.load();
+
+    offerer.stop();
+    client.shutdown();
+
+    EXPECT_TRUE(both_replayed);
+    EXPECT_TRUE(replayed.service_a);
+    EXPECT_TRUE(replayed.service_b);
+    EXPECT_FALSE(replayed.missing_initial);
+    EXPECT_TRUE(both_cleared);
+    EXPECT_EQ(drops_a, 1);
+    EXPECT_EQ(drops_b, 1);
+    EXPECT_TRUE(a_still_clear);
+    EXPECT_TRUE(b_back);
+    EXPECT_FALSE(extra);
 }
