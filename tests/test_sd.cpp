@@ -4633,15 +4633,20 @@ TEST_F(SdIntegrationTest, RebootReleasesEndpointIndexAfterReplay)
     uint16_t replay_service = 0;
     const bool replayed =
         receive_sd_entry(offerer, 0x06, replay_ttl, replay_service, std::chrono::milliseconds(1500));
-    const bool index_released =
-        !client.subscribe_eventgroup(kRebootServiceA, kRebootInstance, kRebootEventgroup);
-    const bool cleared = client.get_available_services(kRebootServiceA).empty();
 
+    // The replay is sent before the endpoint index is erased. Service B's
+    // offer is processed only after that datagram returns, so B becoming
+    // available means the index release has finished. subscribe_eventgroup
+    // on A then fails in lookup and does not send.
     ASSERT_EQ(offerer.send_message(offer_at_session(kRebootServiceB, 15, 2), client_ep),
               Result::SUCCESS);
     const bool b_back = wait_for_ttl(client, kRebootServiceB, 15);
-    const bool b_subscribed =
+    const bool index_released =
         b_back &&
+        !client.subscribe_eventgroup(kRebootServiceA, kRebootInstance, kRebootEventgroup);
+    const bool cleared = client.get_available_services(kRebootServiceA).empty();
+    const bool b_subscribed =
+        index_released &&
         client.subscribe_eventgroup(kRebootServiceB, kRebootInstance, kRebootEventgroup);
     uint32_t b_ttl = 0;
     uint16_t b_service = 0;
