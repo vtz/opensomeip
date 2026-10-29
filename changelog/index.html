@@ -2381,6 +2381,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -2432,7 +2443,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed" class="md-nav__link">
+  <a href="#fixed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -2515,7 +2526,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_1" class="md-nav__link">
+  <a href="#fixed_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -2565,7 +2576,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_2" class="md-nav__link">
+  <a href="#fixed_3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -2626,7 +2637,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_3" class="md-nav__link">
+  <a href="#fixed_4" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -2676,7 +2687,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_4" class="md-nav__link">
+  <a href="#fixed_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -3063,6 +3074,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3114,7 +3136,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed" class="md-nav__link">
+  <a href="#fixed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -3197,7 +3219,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_1" class="md-nav__link">
+  <a href="#fixed_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -3247,7 +3269,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_2" class="md-nav__link">
+  <a href="#fixed_3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -3308,7 +3330,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_3" class="md-nav__link">
+  <a href="#fixed_4" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -3358,7 +3380,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fixed_4" class="md-nav__link">
+  <a href="#fixed_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         Fixed
@@ -3459,6 +3481,31 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
   <code>InitialDataDelivery</code> as its fifth argument. Existing callbacks must
   accept that argument
   (<a href="https://github.com/vtz/opensomeip/issues/342">#342</a>).</li>
+</ul>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>SD</strong>: A received IPv4 SD Endpoint Option (type <code>0x24</code>) is now decoded
+  and, when it is the first option and a usable UDP unicast endpoint,
+  replaces the datagram source for SD replies and reboot detection.
+  A multicast address, or a <code>0x24</code> that is not first on the wire, does not.
+  Reboot state for a channel is updated once per SD datagram.
+  OfferService responses, SubscribeEventgroup, and
+  SubscribeEventgroupAck/Nack follow that endpoint. The application/event
+  endpoint is unchanged, option-absent traffic still uses the datagram
+  source, and a Subscribe entry that references <code>0x24</code> is rejected.
+  IPv6 SD Endpoint <code>0x26</code> remains out of scope
+  (<a href="https://github.com/vtz/opensomeip/issues/344">#344</a>).</li>
+<li><strong>SD</strong>: A reboot of a remote SD endpoint clears every cached service on
+  that endpoint and replays the subscriptions that were active for each
+  of them. The clear also runs when a SubscribeAck notices the reboot, so
+  a later offer for another service on that peer finds an empty cache
+  after the session counter has moved on
+  (<a href="https://github.com/vtz/opensomeip/issues/344">#344</a>).</li>
+<li><strong>SD</strong>: Multicast and unicast reception from the same SD endpoint keep
+  separate reboot session state, so a lower session on the other stream
+  does not clear cached services. After replay, the endpoint index for
+  each cleared service is released so a later offer can be addressed
+  (<a href="https://github.com/vtz/opensomeip/issues/344">#344</a>).</li>
 </ul>
 <h2 id="020-2026-10-05"><a href="https://github.com/vtz/opensomeip/compare/v0.1.0...v0.2.0">0.2.0</a> - 2026-10-05<a class="headerlink" href="#020-2026-10-05" title="Permanent link">&para;</a></h2>
 <p>This minor release packages new public APIs (C ABI, static-allocation PAL,
@@ -3701,7 +3748,7 @@ stable.</p>
   bytes across dynamic and static backends
   (<a href="https://github.com/vtz/opensomeip/issues/268">#268</a>).</li>
 </ul>
-<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Transport</strong>: An unresolved remote application destination fails before
   send. <code>EventSubscriber</code> subscription and field requests no longer fall
@@ -3974,7 +4021,7 @@ SOME/IP and SOME/IP-SD specifications.</p>
 <li><strong>TCP stream parsing made public</strong>: <code>TcpTransport::parse_message_from_buffer()</code> exposed for external use (#251)</li>
 <li><strong>15 new regression tests</strong>: Dedicated tests for each spec-compliance fix across SD, serialization, and E2E (#251)</li>
 </ul>
-<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
+<h3 id="fixed_2">Fixed<a class="headerlink" href="#fixed_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Spec Compliance</strong> (6 bugs): SD minor version truncation, ConfigurationOption length off-by-one, unknown option skip off-by-one, E2E profile name mismatch, <code>serialize_array</code> element-vs-byte count, <code>uint64</code> endianness — all with regression tests (#245, #246, #247, #248, #249, #250, #251)</li>
 <li><strong>Coverity CI</strong>: Repair Coverity Scan CI download URL and upgrade to Node.js 24 actions (#240, #241)</li>
@@ -4002,7 +4049,7 @@ SOME/IP and SOME/IP-SD specifications.</p>
 <li><strong>Lightweight Integration</strong>: <code>SOMEIP_DEV_TOOLS</code> CMake option to skip dev-tool discovery (#113)</li>
 <li><strong>MC/DC Test Coverage</strong>: Increased code coverage with meaningful tests and MC/DC analysis (#117)</li>
 </ul>
-<h3 id="fixed_2">Fixed<a class="headerlink" href="#fixed_2" title="Permanent link">&para;</a></h3>
+<h3 id="fixed_3">Fixed<a class="headerlink" href="#fixed_3" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>RPM Packaging</strong>: Correct Copr project owner in Packit configuration (#186)</li>
 <li><strong>Transport Robustness</strong>: Retry <code>EINTR</code> in UDP and TCP <code>send_data()</code>/<code>receive_data()</code> (#83, #86); check <code>someip_getsockopt()</code> return before trusting <code>SO_ERROR</code> (#85); correct TCP keepalive socket option setup (#84)</li>
@@ -4031,7 +4078,7 @@ SOME/IP and SOME/IP-SD specifications.</p>
 <li><strong>CI Test &amp; Coverage Reports</strong>: Publish test and coverage reports on pull requests (#54)</li>
 <li><strong>ConditionVariable Wrapper</strong>: Added platform-agnostic ConditionVariable for host platforms (#34)</li>
 </ul>
-<h3 id="fixed_3">Fixed<a class="headerlink" href="#fixed_3" title="Permanent link">&para;</a></h3>
+<h3 id="fixed_4">Fixed<a class="headerlink" href="#fixed_4" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Build System</strong>: Derive backend flags before <code>add_subdirectory(src)</code> (#39); use <code>CMAKE_CURRENT_SOURCE_DIR</code> for VERSION file (#16)</li>
 <li><strong>Cross-Platform Compatibility</strong>: Guard lwIP byte-order helpers for big-endian hosts (#41)</li>
@@ -4101,7 +4148,7 @@ SOME/IP and SOME/IP-SD specifications.</p>
 <p><strong>Semantic Versioning System</strong>: Version management scripts (bump_version.sh, bump_submodule.sh)</p>
 </li>
 </ul>
-<h3 id="fixed_4">Fixed<a class="headerlink" href="#fixed_4" title="Permanent link">&para;</a></h3>
+<h3 id="fixed_5">Fixed<a class="headerlink" href="#fixed_5" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Documentation Fixes</strong>:</li>
 <li>Resolved sphinx-needs link type and extra option conflict (#13)</li>
