@@ -39,12 +39,16 @@ zephyr_library_sources(
 zephyr_library_compile_options(-std=c++17)
 
 # ---- E2E ----
-if(CONFIG_SOMEIP_E2E)
+# UdpTransport and TcpTransport always call receive_if_e2e_protected, so the
+# receive helper and the profile it validates with are linked with either
+# transport, not only when CONFIG_SOMEIP_E2E=y.
+if(CONFIG_SOMEIP_E2E OR CONFIG_SOMEIP_TRANSPORT_UDP OR CONFIG_SOMEIP_TRANSPORT_TCP)
     zephyr_library_sources(
         ${SOMEIP_SRC}/e2e/e2e_protection.cpp
         ${SOMEIP_SRC}/e2e/e2e_crc.cpp
         ${SOMEIP_SRC}/e2e/e2e_profile_registry.cpp
         ${SOMEIP_SRC}/e2e/e2e_profiles/standard_profile.cpp
+        ${SOMEIP_SRC}/e2e/e2e_receive.cpp
     )
 endif()
 

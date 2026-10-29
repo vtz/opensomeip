@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <utility>
 
+#include "e2e/e2e_receive_policy.h"
 #include "common/result.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
@@ -34,6 +35,9 @@ namespace someip::transport {
  */
 struct EventDrivenTcpTransportConfig {
     size_t max_receive_buffer{65536};
+
+    // Filled before the transport is constructed. Default layout only.
+    e2e::E2EReceiveTable e2e_receive{};
 };
 
 /**

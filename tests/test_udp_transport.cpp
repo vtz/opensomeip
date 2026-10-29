@@ -16,6 +16,9 @@
 #include <transport/transport.h>
 #include <transport/message_rejection.h>
 #include <someip/message.h>
+#include <e2e/e2e_protection.h>
+#include <e2e/e2e_config.h>
+#include <e2e/e2e_receive_policy.h>
 #include <platform/buffer_pool.h>
 #include <platform/containers.h>
 #include <thread>
@@ -1325,5 +1328,167 @@ TEST_F(UdpTransportTest, SmallMessageNotTpFlagged) {
     EXPECT_EQ(receiver_listener.received_messages_[0].first->get_payload().size(), 3u);
 
     sender.stop();
+    receiver.stop();
+}
+
+namespace {
+
+Message protect_udp_message() {
+    Message message(MessageId(0x1234, 0x0007), RequestId(0x0001, 0x0002), MessageType::REQUEST,
+                    ReturnCode::E_OK);
+    message.set_payload(platform::ByteBuffer{0x0A, 0x0B, 0x0C, 0x0D});
+    e2e::E2EConfig e2e_config(0x0100);
+    e2e_config.enable_freshness = false;
+    e2e::E2EProtection protection;
+    EXPECT_EQ(protection.protect(message, e2e_config), Result::SUCCESS);
+    return message;
+}
+
+e2e::E2EReceiveBinding udp_e2e_binding(e2e::E2EReceivePolicy policy) {
+    e2e::E2EReceiveBinding binding;
+    binding.service_id = 0x1234;
+    binding.method_id = 0x0007;
+    binding.data_id = 0x0100;
+    binding.policy = policy;
+    binding.enable_freshness = false;
+    return binding;
+}
+
+}  // namespace
+
+/**
+ * @test_case TC_UDP_E2E_001
+ * @tests REQ_E2E_RECEIVE_001
+ * @brief Stack-managed UDP receive validates the default layout and rejects a bad CRC
+ */
+TEST_F(UdpTransportTest, StackManagedE2ERejectsCorruption) {
+    config.blocking = true;
+    config.enable_tp = false;
+    UdpTransport sender(local_endpoint, config);
+
+    UdpTransportConfig recv_config = config;
+    ASSERT_EQ(recv_config.e2e_receive.add(udp_e2e_binding(e2e::E2EReceivePolicy::STACK_MANAGED)),
+              Result::SUCCESS);
+    UdpTransport receiver(local_endpoint, recv_config);
+
+    TestUdpListener receiver_listener;
+    receiver.set_listener(&receiver_listener);
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    Message good = protect_udp_message();
+    const platform::ByteBuffer payload = good.get_payload();
+    ASSERT_EQ(sender.send_message(good, receiver.get_local_endpoint()), Result::SUCCESS);
+    ASSERT_TRUE(receiver_listener.wait_for_message());
+    ASSERT_EQ(receiver_listener.received_messages_.size(), 1u);
+    EXPECT_EQ(receiver_listener.received_messages_[0].first->get_payload(), payload);
+    EXPECT_TRUE(receiver_listener.received_messages_[0].first->has_e2e_header());
+    EXPECT_TRUE(receiver_listener.rejections_.empty());
+
+    Message bad = protect_udp_message();
+    platform::ByteBuffer flipped = bad.get_payload();
+    flipped[0] ^= 0xFFU;
+    bad.set_payload(flipped);
+    ASSERT_EQ(sender.send_message(bad, receiver.get_local_endpoint()), Result::SUCCESS);
+    ASSERT_TRUE(receiver_listener.wait_for_rejection());
+    ASSERT_EQ(receiver_listener.rejections_.size(), 1u);
+    EXPECT_EQ(receiver_listener.rejections_[0].stage, MessageRejectionStage::E2E_INTEGRITY);
+    EXPECT_EQ(receiver_listener.rejections_[0].result, Result::INVALID_ARGUMENT);
+    EXPECT_EQ(receiver_listener.rejections_[0].message_id.service_id, 0x1234);
+    EXPECT_EQ(receiver_listener.rejections_[0].message_id.method_id, 0x0007);
+    EXPECT_EQ(receiver_listener.received_messages_.size(), 1u);
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_E2E_002
+ * @tests REQ_E2E_RECEIVE_001
+ * @brief Application-managed UDP receive exposes a clean payload and E2E metadata
+ */
+TEST_F(UdpTransportTest, ApplicationManagedE2EExposesMetadata) {
+    config.blocking = true;
+    config.enable_tp = false;
+    UdpTransport sender(local_endpoint, config);
+
+    UdpTransportConfig recv_config = config;
+    ASSERT_EQ(
+        recv_config.e2e_receive.add(udp_e2e_binding(e2e::E2EReceivePolicy::APPLICATION_MANAGED)),
+        Result::SUCCESS);
+    UdpTransport receiver(local_endpoint, recv_config);
+
+    TestUdpListener receiver_listener;
+    receiver.set_listener(&receiver_listener);
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    Message sent = protect_udp_message();
+    platform::ByteBuffer flipped = sent.get_payload();
+    const platform::ByteBuffer original = flipped;
+    flipped[0] ^= 0xFFU;
+    sent.set_payload(flipped);
+    ASSERT_EQ(sender.send_message(sent, receiver.get_local_endpoint()), Result::SUCCESS);
+    ASSERT_TRUE(receiver_listener.wait_for_message());
+    ASSERT_TRUE(receiver_listener.rejections_.empty());
+    const MessagePtr& received = receiver_listener.received_messages_[0].first;
+    EXPECT_EQ(received->get_payload(), flipped);
+    EXPECT_EQ(received->get_payload().size(), original.size());
+    ASSERT_TRUE(received->get_e2e_header().has_value());
+
+    e2e::E2EConfig e2e_config(0x0100);
+    e2e_config.enable_freshness = false;
+    e2e::E2EProtection protection;
+    EXPECT_EQ(protection.validate(*received, e2e_config), Result::INVALID_ARGUMENT);
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_E2E_003
+ * @tests REQ_E2E_RECEIVE_001, REQ_TRANSPORT_026
+ * @brief A bound datagram shorter than the SOME/IP header reports wire IDs.
+ */
+TEST_F(UdpTransportTest, BoundShortDatagramReportsWireIds) {
+    config.blocking = true;
+    config.enable_tp = false;
+    UdpTransportConfig recv_config = config;
+    ASSERT_EQ(recv_config.e2e_receive.add(udp_e2e_binding(e2e::E2EReceivePolicy::STACK_MANAGED)),
+              Result::SUCCESS);
+    UdpTransport receiver(local_endpoint, recv_config);
+    TestUdpListener receiver_listener;
+    receiver.set_listener(&receiver_listener);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    const someip_socket_t fd = someip_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ASSERT_NE(fd, SOMEIP_INVALID_SOCKET);
+    const Endpoint dest = receiver.get_local_endpoint();
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(dest.get_port());
+    ASSERT_EQ(someip_inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr), 1);
+
+    // Twelve bytes stop try_deserialize before it writes Message IDs.
+    const platform::ByteBuffer wire{0x12, 0x34, 0x00, 0x07, 0x00, 0x00, 0x00, 0x04,
+                                     0x00, 0x11, 0x00, 0x22};
+    ASSERT_EQ(someip_sendto(fd, wire.data(), wire.size(), 0, reinterpret_cast<sockaddr*>(&addr),
+                            sizeof(addr)),
+              static_cast<ssize_t>(wire.size()));
+    someip_close_socket(fd);
+
+    ASSERT_TRUE(receiver_listener.wait_for_rejection());
+    ASSERT_EQ(receiver_listener.rejections_.size(), 1u);
+    const MessageRejectionInfo& info = receiver_listener.rejections_[0];
+    EXPECT_EQ(info.stage, MessageRejectionStage::DESERIALIZE);
+    EXPECT_EQ(info.result, Result::MALFORMED_MESSAGE);
+    EXPECT_TRUE(info.has_message_id);
+    EXPECT_EQ(info.message_id.service_id, 0x1234);
+    EXPECT_EQ(info.message_id.method_id, 0x0007);
+    EXPECT_TRUE(info.has_request_id);
+    EXPECT_EQ(info.request_id.client_id, 0x0011);
+    EXPECT_EQ(info.request_id.session_id, 0x0022);
+    EXPECT_TRUE(receiver_listener.received_messages_.empty());
+
     receiver.stop();
 }

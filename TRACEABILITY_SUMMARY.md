@@ -28,18 +28,18 @@ to implementation and test coverage. No safety certification is claimed.
 
 | Metric | Value | Assessment |
 |--------|-------|------------|
-| Total requirements (RST) | 698 | - |
-| Fully traced (code + tests) | 618 (88.5%) | Good |
-| Requirements with code refs | 621 | Good |
-| Requirements with test coverage | 686 | Good |
+| Total requirements (RST) | 699 | - |
+| Fully traced (code + tests) | 619 (88.6%) | Good |
+| Requirements with code refs | 622 | Good |
+| Requirements with test coverage | 687 | Good |
 | Orphaned (no code annotation) | 77 | Needs improvement |
-| Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 |
-| Code references extracted | 626 | - |
-| Test references extracted | 751 | - |
+| Missing spec links | 3 | REQ_MSG_150, REQ_TRANSPORT_026, REQ_E2E_RECEIVE_001 |
+| Code references extracted | 627 | - |
+| Test references extracted | 752 | - |
 
 ### Status
 
-618 of 698 requirements are fully traced with both code implementation references
+619 of 699 requirements are fully traced with both code implementation references
 and test coverage annotations. 77 requirements remain without code annotations.
 The extraction script properly parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations.
@@ -62,7 +62,7 @@ The extraction script properly parses comma-separated requirement IDs from
 | Compatibility (REQ_COMPAT_*) | 17 |
 | C ABI (REQ_CAPI_*) | 13 |
 | Architecture (REQ_ARCH_*) | 8 |
-| E2E (REQ_E2E_*) | 5 |
+| E2E (REQ_E2E_*) | 6 |
 | Other (REQ_MY_*) | 1 |
 
 > **Note**: Requirement counts reflect the full RST definitions.
@@ -126,7 +126,7 @@ Current validated traceability metrics should be read from the most recent
 
 ### Long-term
 
-- Achieve >95% full traceability (currently 88.5%)
+- Achieve >95% full traceability (currently 88.6%)
 - Implement advanced SD features (load balancing, IPv6)
 - Add cross-platform test coverage (FreeRTOS, ThreadX hardware)
 - Implement Win32 and LwIP platform backends

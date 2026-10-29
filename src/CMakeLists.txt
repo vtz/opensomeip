@@ -13,6 +13,7 @@ set(OPENSOMEIP_SOURCES
     transport/event_driven_udp_transport.cpp
     transport/event_driven_tcp_transport.cpp
     e2e/e2e_protection.cpp
+    e2e/e2e_receive.cpp
     e2e/e2e_header.cpp
     e2e/e2e_crc.cpp
     e2e/e2e_profile_registry.cpp
