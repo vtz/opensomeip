@@ -1394,6 +1394,8 @@ TEST_F(UdpTransportTest, StackManagedE2ERejectsCorruption) {
     ASSERT_EQ(receiver_listener.rejections_.size(), 1u);
     EXPECT_EQ(receiver_listener.rejections_[0].stage, MessageRejectionStage::E2E_INTEGRITY);
     EXPECT_EQ(receiver_listener.rejections_[0].result, Result::INVALID_ARGUMENT);
+    EXPECT_EQ(receiver_listener.rejections_[0].message_id.service_id, 0x1234);
+    EXPECT_EQ(receiver_listener.rejections_[0].message_id.method_id, 0x0007);
     EXPECT_EQ(receiver_listener.received_messages_.size(), 1u);
 
     sender.stop();
@@ -1440,5 +1442,53 @@ TEST_F(UdpTransportTest, ApplicationManagedE2EExposesMetadata) {
     EXPECT_EQ(protection.validate(*received, e2e_config), Result::INVALID_ARGUMENT);
 
     sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_E2E_003
+ * @tests REQ_E2E_RECEIVE_001, REQ_TRANSPORT_026
+ * @brief A bound datagram shorter than the SOME/IP header reports wire IDs.
+ */
+TEST_F(UdpTransportTest, BoundShortDatagramReportsWireIds) {
+    config.blocking = true;
+    config.enable_tp = false;
+    UdpTransportConfig recv_config = config;
+    ASSERT_EQ(recv_config.e2e_receive.add(udp_e2e_binding(e2e::E2EReceivePolicy::STACK_MANAGED)),
+              Result::SUCCESS);
+    UdpTransport receiver(local_endpoint, recv_config);
+    TestUdpListener receiver_listener;
+    receiver.set_listener(&receiver_listener);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    const someip_socket_t fd = someip_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ASSERT_NE(fd, SOMEIP_INVALID_SOCKET);
+    const Endpoint dest = receiver.get_local_endpoint();
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(dest.get_port());
+    ASSERT_EQ(someip_inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr), 1);
+
+    // Twelve bytes stop try_deserialize before it writes Message IDs.
+    const platform::ByteBuffer wire{0x12, 0x34, 0x00, 0x07, 0x00, 0x00, 0x00, 0x04,
+                                     0x00, 0x11, 0x00, 0x22};
+    ASSERT_EQ(someip_sendto(fd, wire.data(), wire.size(), 0, reinterpret_cast<sockaddr*>(&addr),
+                            sizeof(addr)),
+              static_cast<ssize_t>(wire.size()));
+    someip_close_socket(fd);
+
+    ASSERT_TRUE(receiver_listener.wait_for_rejection());
+    ASSERT_EQ(receiver_listener.rejections_.size(), 1u);
+    const MessageRejectionInfo& info = receiver_listener.rejections_[0];
+    EXPECT_EQ(info.stage, MessageRejectionStage::DESERIALIZE);
+    EXPECT_EQ(info.result, Result::MALFORMED_MESSAGE);
+    EXPECT_TRUE(info.has_message_id);
+    EXPECT_EQ(info.message_id.service_id, 0x1234);
+    EXPECT_EQ(info.message_id.method_id, 0x0007);
+    EXPECT_TRUE(info.has_request_id);
+    EXPECT_EQ(info.request_id.client_id, 0x0011);
+    EXPECT_EQ(info.request_id.session_id, 0x0022);
+    EXPECT_TRUE(receiver_listener.received_messages_.empty());
+
     receiver.stop();
 }

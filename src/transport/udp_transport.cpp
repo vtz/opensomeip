@@ -543,7 +543,12 @@ void UdpTransport::receive_loop() {
                     info.stage = e2e_outcome.integrity_failure
                                      ? MessageRejectionStage::E2E_INTEGRITY
                                      : MessageRejectionStage::DESERIALIZE;
-                    fill_rejection_ids(info, *message, bytes_received);
+                    // try_deserialize can fail before it writes Message IDs.
+                    if (e2e_outcome.integrity_failure) {
+                        fill_rejection_ids(info, *message, bytes_received);
+                    } else {
+                        fill_rejection_ids(info, buffer.data(), bytes_received);
+                    }
                     notify_rejection(info);
                 } else if (e2e_outcome.status == e2e::E2EReceiveStatus::ACCEPTED ||
                            message->deserialize(buffer.data(), bytes_received)) {

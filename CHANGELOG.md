@@ -57,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **E2E**: A receive binding that rejects a datagram before the SOME/IP header
+  is parsed reports Message ID and Request ID from the wire prefix. A failed
+  deserialize no longer publishes the default zero IDs.
 - **SD**: A received IPv4 SD Endpoint Option (type `0x24`) is now decoded
   and, when it is the first option and a usable UDP unicast endpoint,
   replaces the datagram source for SD replies and reboot detection.

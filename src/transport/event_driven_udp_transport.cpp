@@ -216,7 +216,12 @@ void EventDrivenUdpTransport::on_adapter_receive(const platform::ByteBuffer& dat
         info.result = e2e_outcome.result;
         info.stage = e2e_outcome.integrity_failure ? MessageRejectionStage::E2E_INTEGRITY
                                                    : MessageRejectionStage::DESERIALIZE;
-        fill_rejection_ids(info, *message, data.size());
+        // try_deserialize can fail before it writes Message IDs. The wire prefix still has them.
+        if (e2e_outcome.integrity_failure) {
+            fill_rejection_ids(info, *message, data.size());
+        } else {
+            fill_rejection_ids(info, data.data(), data.size());
+        }
         ITransportListener* const cb = listener_.load(std::memory_order_acquire);
         if (cb != nullptr) {
             cb->on_message_rejected(info);

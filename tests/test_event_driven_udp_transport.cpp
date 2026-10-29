@@ -433,7 +433,49 @@ TEST(EventDrivenUdpTransport, StackManagedE2ERejectsCorruption) {
     ASSERT_TRUE(listener.wait_for_rejection());
     ASSERT_EQ(listener.rejections().size(), 1u);
     EXPECT_EQ(listener.rejections()[0].stage, MessageRejectionStage::E2E_INTEGRITY);
+    EXPECT_EQ(listener.rejections()[0].message_id.service_id, 0x1234);
+    EXPECT_EQ(listener.rejections()[0].message_id.method_id, 0x5678);
     EXPECT_EQ(listener.message_count(), 1u);
+
+    transport.stop();
+}
+
+/**
+ * @test_case TC_ED_UDP_E2E_002
+ * @tests REQ_E2E_RECEIVE_001, REQ_TRANSPORT_026
+ * @brief A bound datagram shorter than the SOME/IP header reports wire IDs.
+ */
+TEST(EventDrivenUdpTransport, BoundShortDatagramReportsWireIds) {
+    MockUdpAdapter adapter;
+    EventDrivenUdpTransportConfig cfg;
+    e2e::E2EReceiveBinding binding;
+    binding.service_id = 0x1234;
+    binding.method_id = 0x5678;
+    binding.policy = e2e::E2EReceivePolicy::STACK_MANAGED;
+    ASSERT_EQ(cfg.e2e_receive.add(binding), Result::SUCCESS);
+
+    EventDrivenUdpTransport transport(adapter, Endpoint{"127.0.0.1", 0}, cfg);
+    TestEventUdpListener listener;
+    transport.set_listener(&listener);
+    ASSERT_EQ(transport.start(), Result::SUCCESS);
+
+    // Twelve bytes stop try_deserialize before it writes Message IDs.
+    adapter.inject_receive(platform::ByteBuffer{0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x04,
+                                                 0x00, 0x11, 0x00, 0x22},
+                            Endpoint{"10.0.0.5", 5000});
+    ASSERT_TRUE(listener.wait_for_rejection());
+    const std::vector<MessageRejectionInfo> rejections = listener.rejections();
+    ASSERT_EQ(rejections.size(), 1u);
+    const MessageRejectionInfo& info = rejections[0];
+    EXPECT_EQ(info.stage, MessageRejectionStage::DESERIALIZE);
+    EXPECT_EQ(info.result, Result::MALFORMED_MESSAGE);
+    EXPECT_TRUE(info.has_message_id);
+    EXPECT_EQ(info.message_id.service_id, 0x1234);
+    EXPECT_EQ(info.message_id.method_id, 0x5678);
+    EXPECT_TRUE(info.has_request_id);
+    EXPECT_EQ(info.request_id.client_id, 0x0011);
+    EXPECT_EQ(info.request_id.session_id, 0x0022);
+    EXPECT_EQ(listener.message_count(), 0u);
 
     transport.stop();
 }

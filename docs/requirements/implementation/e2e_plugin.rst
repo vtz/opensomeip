@@ -221,6 +221,7 @@ Implementation Files
 * ``include/e2e/e2e_protection.h`` - Protection API
 * ``src/e2e/e2e_profile_registry.cpp`` - Registry implementation
 * ``src/e2e/e2e_protection.cpp`` - Protection implementation
+* ``src/e2e/e2e_profiles/standard_profile.cpp`` - Standard profile
 * ``include/e2e/e2e_receive_policy.h`` - Receive bindings and policy
 * ``src/e2e/e2e_receive.cpp`` - Default-layout receive check
 
