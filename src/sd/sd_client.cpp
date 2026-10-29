@@ -559,9 +559,10 @@ private:
      * @satisfies feat_req_someipsd_764, feat_req_someipsd_765, feat_req_someipsd_872
      */
     void take_cached_services_for_channel(const transport::Endpoint& peer,
-                                          platform::Vector<ServiceInstance>& removed) {
+                                          platform::Vector<ServiceInstance, 32>& removed) {
         const platform::String<> channel = sd_channel_key(peer.get_address(), peer.get_port());
-        platform::Vector<uint64_t> keys;
+        // Match sd_unicast_endpoints_, not the overridable default vector capacity.
+        platform::Vector<uint64_t, 32> keys;
         for (const auto& endpoint : sd_unicast_endpoints_) {
             if (sd_channel_key(endpoint.second.get_address(), endpoint.second.get_port()) !=
                 channel) {
@@ -926,7 +927,7 @@ private:
             sd_peer = transport::Endpoint(sd_address, sd_port);
         }
         bool channel_rebooted = false;
-        platform::Vector<ServiceInstance> rebooted_services;
+        platform::Vector<ServiceInstance, 32> rebooted_services;
         {
             platform::ScopedLock const lock(available_services_mutex_);
             channel_rebooted = note_reboot_channel(
