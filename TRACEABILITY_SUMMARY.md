@@ -29,18 +29,18 @@ to implementation and test coverage. No safety certification is claimed.
 | Metric | Value | Assessment |
 |--------|-------|------------|
 | Total requirements (RST) | 698 | - |
-| Fully traced (code + tests) | 617 (88.4%) | Good |
-| Requirements with code refs | 620 | Good |
+| Fully traced (code + tests) | 618 (88.5%) | Good |
+| Requirements with code refs | 621 | Good |
 | Requirements with test coverage | 686 | Good |
-| Orphaned (no code annotation) | 78 | Needs improvement |
+| Orphaned (no code annotation) | 77 | Needs improvement |
 | Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 |
-| Code references extracted | 625 | - |
+| Code references extracted | 626 | - |
 | Test references extracted | 751 | - |
 
 ### Status
 
-617 of 698 requirements are fully traced with both code implementation references
-and test coverage annotations. 78 requirements remain without code annotations.
+618 of 698 requirements are fully traced with both code implementation references
+and test coverage annotations. 77 requirements remain without code annotations.
 The extraction script properly parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations.
 
@@ -120,13 +120,13 @@ Current validated traceability metrics should be read from the most recent
 ### Short-term
 
 - Implement remaining serialization requirements (REQ_SER_090 through REQ_SER_107)
-- Add `@implements` annotations for the 78 orphaned requirements
+- Add `@implements` annotations for the 77 orphaned requirements
 - Add test coverage for 12 requirements without `@tests` annotations
 - Add performance, stress, and fault-injection tests
 
 ### Long-term
 
-- Achieve >95% full traceability (currently 88.4%)
+- Achieve >95% full traceability (currently 88.5%)
 - Implement advanced SD features (load balancing, IPv6)
 - Add cross-platform test coverage (FreeRTOS, ThreadX hardware)
 - Implement Win32 and LwIP platform backends

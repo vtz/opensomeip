@@ -496,6 +496,161 @@ private:
         bool explicit_initial_data{false};
     };
 
+    /// One reception stream (multicast or unicast) on an SD endpoint.
+    struct SdSessionObservation {
+        bool seen{false};
+        uint16_t last_session_id{0};
+        bool reboot_flag{false};
+    };
+
+    /// Reboot state for one SD endpoint. The two streams have independent
+    /// session counters, so they must not share an observation.
+    struct RebootChannel {
+        SdSessionObservation unicast;
+        SdSessionObservation multicast;
+    };
+
+    static platform::String<> sd_channel_key(const platform::String<>& address, uint16_t port) {
+        platform::String<> key = address;
+        key.push_back(':');
+        uint16_t place = 10000;
+        bool started = false;
+        while (place > 0U) {
+            const auto digit = static_cast<uint16_t>(port / place);
+            if (digit != 0U || started || place == 1U) {
+                key.push_back(static_cast<char>('0' + static_cast<int>(digit)));
+                started = true;
+            }
+            port = static_cast<uint16_t>(port % place);
+            place = static_cast<uint16_t>(place / 10U);
+        }
+        return key;
+    }
+
+    /** Drop reboot channels that no cached offer still names. Caller holds available_services_mutex_. */
+    void drop_unreferenced_reboot_channels() {
+        platform::Vector<platform::String<>, 32> drop;
+        for (const auto& channel : reboot_channels_) {
+            bool referenced = false;
+            for (const auto& endpoint : sd_unicast_endpoints_) {
+                if (sd_channel_key(endpoint.second.get_address(), endpoint.second.get_port()) ==
+                    channel.first) {
+                    referenced = true;
+                    break;
+                }
+            }
+            if (!referenced && drop.size() < drop.max_size()) {
+                drop.push_back(channel.first);
+            }
+        }
+        for (const auto& key : drop) {
+            reboot_channels_.erase(key);
+        }
+    }
+
+    /**
+     * @brief Drop every cached offer that still names this SD endpoint.
+     *
+     * Caller holds available_services_mutex_. The stored unicast address stays
+     * until replay finishes; the caller then drops it so a later offer can
+     * reuse the slot.
+     *
+     * @implements REQ_SD_171
+     * @satisfies feat_req_someipsd_764, feat_req_someipsd_765, feat_req_someipsd_872
+     */
+    void take_cached_services_for_channel(const transport::Endpoint& peer,
+                                          platform::Vector<ServiceInstance, 32>& removed) {
+        const platform::String<> channel = sd_channel_key(peer.get_address(), peer.get_port());
+        // Match sd_unicast_endpoints_, not the overridable default vector capacity.
+        platform::Vector<uint64_t, 32> keys;
+        for (const auto& endpoint : sd_unicast_endpoints_) {
+            if (sd_channel_key(endpoint.second.get_address(), endpoint.second.get_port()) !=
+                channel) {
+                continue;
+            }
+            if (keys.size() >= keys.max_size()) {
+                break;
+            }
+            keys.push_back(endpoint.first);
+        }
+
+        for (const uint64_t key : keys) {
+            ServiceInstance instance(static_cast<uint16_t>(key >> 16U),
+                                     static_cast<uint16_t>(key & 0xFFFFU));
+            const auto cached = cached_services_.find(key);
+            if (cached != cached_services_.end()) {
+                instance = cached->second.instance;
+                cached_services_.erase(key);
+            }
+            const auto rm_it =
+                std::remove_if(available_services_.begin(), available_services_.end(),
+                               [&](const ServiceInstance& svc) {
+                                   return svc.service_id == instance.service_id &&
+                                          svc.instance_id == instance.instance_id;
+                               });
+            available_services_.erase(rm_it, available_services_.end());
+            if (removed.size() < removed.max_size()) {
+                removed.push_back(instance);
+            }
+        }
+    }
+
+    /**
+     * @brief True when this datagram arrived on the SD multicast group.
+     *
+     * An empty destination means the stack could not report it. Those
+     * datagrams share the unicast observation.
+     */
+    bool received_via_multicast(const transport::Endpoint& destination) const {
+        if (destination.get_address().empty()) {
+            return false;
+        }
+        return destination.is_multicast() ||
+               destination.get_address() == config_.multicast_address;
+    }
+
+    /** @implements REQ_SD_1084, REQ_SD_311
+     *  @satisfies feat_req_someipsd_1084 */
+    bool note_reboot_channel(const transport::Endpoint& peer, uint16_t session, bool reboot_flag,
+                             bool via_multicast) {
+        const platform::String<> key = sd_channel_key(peer.get_address(), peer.get_port());
+        const auto it = reboot_channels_.find(key);
+        if (it == reboot_channels_.end()) {
+            if (reboot_channels_.size() >= reboot_channels_.max_size()) {
+                drop_unreferenced_reboot_channels();
+            }
+            if (reboot_channels_.size() >= reboot_channels_.max_size()) {
+                return false;
+            }
+            RebootChannel created;
+            SdSessionObservation& slot = via_multicast ? created.multicast : created.unicast;
+            slot.seen = true;
+            slot.last_session_id = session;
+            slot.reboot_flag = reboot_flag;
+            reboot_channels_[key] = created;
+            return false;
+        }
+
+        SdSessionObservation& slot = via_multicast ? it->second.multicast : it->second.unicast;
+        SdSessionObservation& other = via_multicast ? it->second.unicast : it->second.multicast;
+        if (!slot.seen) {
+            slot.seen = true;
+            slot.last_session_id = session;
+            slot.reboot_flag = reboot_flag;
+            return false;
+        }
+        const bool detected = sd_reboot_detected(
+            true, slot.reboot_flag, slot.last_session_id, reboot_flag, session);
+        slot.last_session_id = session;
+        slot.reboot_flag = reboot_flag;
+        if (detected) {
+            // This reboot already clears the peer. The other stream's next
+            // datagram is the first observation after that, not a second clear.
+            other = SdSessionObservation{};
+        }
+        return detected;
+    }
+
     void start_maintenance_loop() {
         if (maintenance_thread_ && maintenance_thread_->joinable()) {
             return;
@@ -727,6 +882,11 @@ private:
 
     /** @implements REQ_SD_116_E01, REQ_SD_119, REQ_SD_120, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_311, REQ_SD_331 */
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override {
+        on_message_received(message, sender, transport::Endpoint("", 0));
+    }
+
+    void on_message_received(const MessagePtr& message, const transport::Endpoint& sender,
+                            const transport::Endpoint& destination) override {
         // Check if this is an SD message (service ID 0xFFFF)
         if (message->get_service_id() != 0xFFFF) {
             return;
@@ -738,7 +898,7 @@ private:
         }
         sd_message.set_session_id(message->get_session_id());
 
-        process_sd_entries(sd_message, sender);
+        process_sd_entries(sd_message, sender, destination);
     }
 
     void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {
@@ -753,8 +913,41 @@ private:
         // TODO: Handle transport errors
     }
 
-    /** @implements REQ_SD_119, REQ_SD_120, REQ_SD_311, REQ_SD_331 */
-    void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender) {
+    /** @implements REQ_SD_119, REQ_SD_120, REQ_SD_171, REQ_SD_311, REQ_SD_331, REQ_SD_1084 */
+    void process_sd_entries(const SdMessage& message, const transport::Endpoint& sender,
+                           const transport::Endpoint& destination) {
+        // Session and reboot flag are message-scoped. Recording them once avoids
+        // a second offer in the same datagram looking like a session reuse.
+        // The same record clears every cached service on that endpoint, so a
+        // SubscribeAck or a later offer does not have to rediscover the reboot.
+        platform::String<> sd_address;
+        uint16_t sd_port = 0;
+        transport::Endpoint sd_peer = sender;
+        if (message.ipv4_sd_endpoint(sd_address, sd_port)) {
+            sd_peer = transport::Endpoint(sd_address, sd_port);
+        }
+        bool channel_rebooted = false;
+        platform::Vector<ServiceInstance, 32> rebooted_services;
+        {
+            platform::ScopedLock const lock(available_services_mutex_);
+            channel_rebooted = note_reboot_channel(
+                sd_peer, message.get_session_id(), message.get_reboot_flag(),
+                received_via_multicast(destination));
+            if (channel_rebooted) {
+                take_cached_services_for_channel(sd_peer, rebooted_services);
+            }
+        }
+        for (const auto& instance : rebooted_services) {
+            handle_remote_reboot(instance);
+        }
+        if (channel_rebooted) {
+            platform::ScopedLock const lock(available_services_mutex_);
+            for (const auto& instance : rebooted_services) {
+                sd_unicast_endpoints_.erase(
+                    make_service_key(instance.service_id, instance.instance_id));
+            }
+        }
+
         for (const auto& entry_var : message.get_entries()) {
             const SdEntry* entry = get_entry_ptr(entry_var);
             switch (entry->get_type()) {
@@ -763,7 +956,21 @@ private:
                         if (entry->get_ttl() == 0) {
                             handle_service_stop_offer(*se);
                         } else {
-                            handle_service_offer(*se, message, sender);
+                            // Services already cleared above must not reboot again.
+                            // An offer whose cache names a different endpoint still
+                            // follows this datagram's channel.
+                            bool already_rebooted = false;
+                            if (channel_rebooted) {
+                                for (const auto& inst : rebooted_services) {
+                                    if (inst.service_id == se->get_service_id() &&
+                                        inst.instance_id == se->get_instance_id()) {
+                                        already_rebooted = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            handle_service_offer(*se, message, sd_peer,
+                                                 channel_rebooted && !already_rebooted);
                         }
                     }
                     break;
@@ -778,9 +985,10 @@ private:
         }
     }
 
-    /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_234, REQ_SD_240, REQ_SD_346, REQ_SD_348 */
+    /** @implements REQ_SD_160, REQ_SD_161, REQ_SD_211, REQ_SD_230, REQ_SD_234, REQ_SD_240, REQ_SD_346, REQ_SD_348, REQ_SD_1084, REQ_SD_343
+     *  @satisfies feat_req_someipsd_1084, feat_req_someipsd_1114 */
     void handle_service_offer(const ServiceEntry& entry, const SdMessage& message,
-                             const transport::Endpoint& sender) {
+                             const transport::Endpoint& sd_peer, bool rebooted) {
         ServiceInstance instance;
         instance.service_id = entry.get_service_id();
         instance.instance_id = entry.get_instance_id();
@@ -788,41 +996,33 @@ private:
         instance.minor_version = entry.get_minor_version();
         instance.ttl_seconds = entry.get_ttl();
 
-        // Extract endpoint information from options
+        // Extract the application endpoint. An entry that references the IPv4
+        // SD Endpoint Option is ignored for this address; 0x24 is not a service port.
         const auto& options = message.get_options();
         uint8_t const index1 = entry.get_index1();
         uint8_t const run1 = entry.get_num_opts1();
 
-        for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
-            const auto& option_var = options[index1 + i];
-            if (const auto* ep = std::get_if<IPv4EndpointOption>(&option_var)) {
-                instance.ip_address = ep->get_ipv4_address_string();
-                instance.port = ep->get_port();
-                instance.protocol = ep->get_protocol();
-                break;  // Found the endpoint option
+        if (!message.entry_references_ipv4_sd_endpoint(entry)) {
+            for (uint8_t i = 0; i < run1 && (index1 + i) < options.size(); ++i) {
+                const auto& option_var = options[index1 + i];
+                if (const auto* ep = std::get_if<IPv4EndpointOption>(&option_var)) {
+                    instance.ip_address = ep->get_ipv4_address_string();
+                    instance.port = ep->get_port();
+                    instance.protocol = ep->get_protocol();
+                    break;  // Found the endpoint option
+                }
             }
         }
 
-        bool rebooted = false;
         {
             platform::ScopedLock const lock(available_services_mutex_);
             const uint64_t key = make_service_key(instance.service_id, instance.instance_id);
-            // Offering ECU SD unicast is the source of the Offer datagram.
             if (sd_unicast_endpoints_.size() < sd_unicast_endpoints_.max_size() ||
                 sd_unicast_endpoints_.find(key) != sd_unicast_endpoints_.end()) {
-                sd_unicast_endpoints_[key] = transport::Endpoint(sender.get_address(), sender.get_port());
+                sd_unicast_endpoints_[key] = sd_peer;
             }
             const uint16_t incoming_session = message.get_session_id();
             const bool incoming_reboot_flag = message.get_reboot_flag();
-
-            auto cache_it = cached_services_.find(key);
-            if (cache_it != cached_services_.end()) {
-                const auto& prev = cache_it->second;
-                if (incoming_reboot_flag != prev.reboot_flag ||
-                    (incoming_session < prev.last_session_id && incoming_reboot_flag)) {
-                    rebooted = true;
-                }
-            }
 
             if (rebooted) {
                 const auto rm_it = std::remove_if(
@@ -959,6 +1159,7 @@ private:
     mutable platform::Mutex session_id_mutex_;
 
     platform::UnorderedMap<uint64_t, transport::Endpoint, 32> sd_unicast_endpoints_;
+    platform::UnorderedMap<platform::String<>, RebootChannel, 32> reboot_channels_;
     platform::Vector<Message> pending_find_messages_;
     std::chrono::steady_clock::time_point initial_wait_until_;
 

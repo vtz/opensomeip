@@ -43,6 +43,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   accept that argument
   ([#342](https://github.com/vtz/opensomeip/issues/342)).
 
+### Fixed
+
+- **SD**: A received IPv4 SD Endpoint Option (type `0x24`) is now decoded
+  and, when it is the first option and a usable UDP unicast endpoint,
+  replaces the datagram source for SD replies and reboot detection.
+  A multicast address, or a `0x24` that is not first on the wire, does not.
+  Reboot state for a channel is updated once per SD datagram.
+  OfferService responses, SubscribeEventgroup, and
+  SubscribeEventgroupAck/Nack follow that endpoint. The application/event
+  endpoint is unchanged, option-absent traffic still uses the datagram
+  source, and a Subscribe entry that references `0x24` is rejected.
+  IPv6 SD Endpoint `0x26` remains out of scope
+  ([#344](https://github.com/vtz/opensomeip/issues/344)).
+- **SD**: A reboot of a remote SD endpoint clears every cached service on
+  that endpoint and replays the subscriptions that were active for each
+  of them. The clear also runs when a SubscribeAck notices the reboot, so
+  a later offer for another service on that peer finds an empty cache
+  after the session counter has moved on
+  ([#344](https://github.com/vtz/opensomeip/issues/344)).
+- **SD**: Multicast and unicast reception from the same SD endpoint keep
+  separate reboot session state, so a lower session on the other stream
+  does not clear cached services. After replay, the endpoint index for
+  each cleared service is released so a later offer can be addressed
+  ([#344](https://github.com/vtz/opensomeip/issues/344)).
+
 ## [0.2.0] - 2026-10-05
 
 This minor release packages new public APIs (C ABI, static-allocation PAL,
