@@ -24,6 +24,7 @@
 #include <platform/byteorder.h>
 #include <platform/buffer_pool.h>
 #include <platform/containers.h>
+#include <platform/net.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
@@ -4667,6 +4668,22 @@ TEST_F(SdIntegrationTest, RebootReleasesEndpointIndexAfterReplay)
     EXPECT_EQ(b_service, kRebootServiceB);
 }
 
+namespace {
+
+/** True when someip_enable_recv_dest can report the UDP destination address. */
+bool udp_destination_reporting_available()
+{
+    const someip_socket_t fd = someip_socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd == SOMEIP_INVALID_SOCKET) {
+        return false;
+    }
+    const int enabled = someip_enable_recv_dest(fd);
+    static_cast<void>(someip_close_socket(fd));
+    return enabled == 0;
+}
+
+}  // namespace
+
 /**
  * @test_case TC_SD_1084_STREAM
  * @tests REQ_SD_1084, REQ_SD_311
@@ -4675,9 +4692,13 @@ TEST_F(SdIntegrationTest, RebootReleasesEndpointIndexAfterReplay)
  */
 TEST_F(SdIntegrationTest, MulticastAndUnicastSessionsStayIndependent)
 {
-    // Win32 has no destination ancillary data, so multicast reception is
-    // classified as unicast and the streams correctly share one observation.
-    // MulticastSubscribeDoesNotProduceAck skips for the same reason.
+    // Without destination reporting, multicast reception is classified as
+    // unicast and the two streams share one observation.
+    if (!udp_destination_reporting_available()) {
+        GTEST_SKIP() << "Destination reporting is unavailable; multicast and unicast "
+                        "share one reboot observation";
+    }
+
     {
         const uint16_t server_port = get_unique_port();
         const uint16_t probe_port = get_unique_port();
@@ -4700,14 +4721,12 @@ TEST_F(SdIntegrationTest, MulticastAndUnicastSessionsStayIndependent)
                                   transport::TransportProtocol::MULTICAST_UDP);
         ASSERT_EQ(probe.send_message(subscribe_msg, mcast), Result::SUCCESS);
         EventGroupEntry ack_entry;
-        const bool dest_unknown =
+        const bool mcast_acked =
             receive_sd_ack(probe, ack_entry, std::chrono::milliseconds(400));
         probe.stop();
         server.shutdown();
-        if (dest_unknown) {
-            GTEST_SKIP() << "Destination address not available; multicast and unicast "
-                            "share one reboot observation";
-        }
+        ASSERT_FALSE(mcast_acked)
+            << "Multicast Subscribe was acknowledged while destination reporting is available";
     }
 
     const uint16_t client_port = get_unique_port();
