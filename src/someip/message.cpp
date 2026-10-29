@@ -645,7 +645,8 @@ Result Message::set_e2e_unprotected_prefix(uint32_t offset_bits, const uint8_t* 
         return Result::INVALID_ARGUMENT;
     }
     if (size > 0) {
-        std::memcpy(e2e_prefix_bytes_.data(), data, size);
+        // memmove: the caller may pass this message's own prefix storage.
+        std::memmove(e2e_prefix_bytes_.data(), data, size);
     }
     e2e_prefix_size_ = size;
     e2e_offset_bits_ = offset_bits;

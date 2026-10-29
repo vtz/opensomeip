@@ -125,9 +125,6 @@ E2E protection returns `Result` codes:
 - `Result::TIMEOUT` - Freshness timeout detected
 - Other error codes as appropriate
 
-- `Result::NOT_INITIALIZED` - Basic profile not initialized
-- Other error codes as appropriate
-
 ## Receive policy
 
 `E2EReceiveTable` on `UdpTransportConfig`, `TcpTransportConfig`, and the

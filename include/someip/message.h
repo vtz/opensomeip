@@ -185,7 +185,8 @@ public:
      *
      * size must equal (offset_bits / 8) - 8. Those bytes are not part of
      * get_payload() and are not covered by the basic profile CRC. They are
-     * included in Length once a header is installed.
+     * included in Length once a header is installed. Overlapping this
+     * message's own prefix storage is safe.
      */
     Result set_e2e_unprotected_prefix(uint32_t offset_bits, const uint8_t* data, size_t size);
 

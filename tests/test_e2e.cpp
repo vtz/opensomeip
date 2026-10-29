@@ -1081,6 +1081,10 @@ TEST_F(E2ETest, NonDefaultByteAlignedOffsetRoundTrip) {
     Message msg(MessageId(0x1234, 0x5678), RequestId(0x0001, 0x0001));
     msg.set_payload(platform::ByteBuffer{0xAA, 0xBB});
     ASSERT_EQ(msg.set_e2e_unprotected_prefix(kOffsetBits, prefix, sizeof(prefix)), Result::SUCCESS);
+    ASSERT_EQ(msg.set_e2e_unprotected_prefix(kOffsetBits, msg.e2e_unprotected_prefix(),
+                                             msg.e2e_unprotected_prefix_size()),
+              Result::SUCCESS);
+    EXPECT_EQ(std::memcmp(msg.e2e_unprotected_prefix(), prefix, sizeof(prefix)), 0);
 
     E2EConfig config(0x1234);
     config.offset_bits = kOffsetBits;
