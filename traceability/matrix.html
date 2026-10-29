@@ -21,14 +21,14 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-10-29 03:05:04</p>
+    <p>Generated: 2026-10-29 19:06:39</p>
 
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
-            <li>Total Requirements: 698</li>
-            <li>Code References: 394</li>
-            <li>Test Cases: 544</li>
+            <li>Total Requirements: 699</li>
+            <li>Code References: 397</li>
+            <li>Test Cases: 552</li>
         </ul>
     </div>
 
@@ -384,6 +384,14 @@
             <td>feat_req_someip_102, feat_req_someip_103</td>
             <td class="code-ref">CODE_e2e_header_e2e_26, CODE_e2e_header_e2e_56, CODE_e2e_protection_e2e_29, CODE_e2e_protection_e2e_61, CODE_e2e_protection_e2e_78</td>
             <td>TC_E2E_001, TC_E2E_HDR_001, TC_E2E_HDR_002, TC_E2E_HDR_003, TC_E2E_HDR_004, TC_E2E_HDR_005, TC_E2E_HDR_006, TC_E2E_OFFSET_001, TC_E2E_OFFSET_001b, TC_E2E_OFFSET_002, TC_E2E_OFFSET_003</td>
+            <td><span class="status-ok">✓ Complete</span></td>
+        </tr>
+        <tr>
+            <td>REQ_E2E_RECEIVE_001</td>
+            <td>E2E receive validation policy</td>
+            <td>-</td>
+            <td class="code-ref">CODE_e2e_receive_e2e_67, CODE_e2e_receive_policy_e2e_73, CODE_e2e_receive_policy_e2e_108</td>
+            <td>TC_E2E_RX_001, TC_E2E_RX_002, TC_ED_UDP_E2E_002, TC_TCP_E2E_001, TC_TCP_E2E_002, TC_UDP_E2E_001, TC_UDP_E2E_002, TC_UDP_E2E_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -5278,7 +5286,7 @@
             <td>REQ_TRANSPORT_001_E01</td>
             <td>Error - UDP Send Failure</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_70, CODE_udp_transport_transport_564</td>
+            <td class="code-ref">CODE_udp_transport_transport_70, CODE_udp_transport_transport_602</td>
             <td>TC_test_udp_transport_SetUp, TC_UDP_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5286,7 +5294,7 @@
             <td>REQ_TRANSPORT_001_E02</td>
             <td>Error - UDP Bind Failure</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_70, CODE_udp_transport_transport_564</td>
+            <td class="code-ref">CODE_udp_transport_transport_70, CODE_udp_transport_transport_602</td>
             <td>TC_test_udp_transport_SetUp, TC_UDP_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5294,7 +5302,7 @@
             <td>REQ_TRANSPORT_001_E03</td>
             <td>Error - UDP Receive Buffer Too Small</td>
             <td>-</td>
-            <td class="code-ref">CODE_udp_transport_transport_70, CODE_udp_transport_transport_564</td>
+            <td class="code-ref">CODE_udp_transport_transport_70, CODE_udp_transport_transport_602</td>
             <td>TC_test_udp_transport_SetUp, TC_UDP_E03</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5430,7 +5438,7 @@
             <td>REQ_TRANSPORT_010</td>
             <td>nPDU Feature Support</td>
             <td>feat_req_someip_702, feat_req_someip_741, feat_req_someip_663</td>
-            <td class="code-ref">CODE_udp_transport_transport_464, CODE_udp_transport_transport_593</td>
+            <td class="code-ref">CODE_udp_transport_transport_464, CODE_udp_transport_transport_631</td>
             <td>TC_test_udp_transport_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5446,7 +5454,7 @@
             <td>REQ_TRANSPORT_011_E01</td>
             <td>Error - Multicast Join Failure</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_client_sd_114, CODE_sd_client_sd_796, CODE_sd_server_sd_122, CODE_event_driven_udp_transport_transport_171, CODE_event_driven_udp_transport_transport_183, CODE_udp_transport_transport_246, CODE_udp_transport_transport_297, CODE_udp_transport_transport_415, CODE_multicast_membership_sd_50, CODE_udp_transport_transport_129</td>
+            <td class="code-ref">CODE_sd_client_sd_114, CODE_sd_client_sd_796, CODE_sd_server_sd_122, CODE_event_driven_udp_transport_transport_171, CODE_event_driven_udp_transport_transport_183, CODE_udp_transport_transport_246, CODE_udp_transport_transport_297, CODE_udp_transport_transport_415, CODE_multicast_membership_sd_50, CODE_udp_transport_transport_134</td>
             <td>TC_test_event_driven_udp_transport_TEST, TC_test_multicast_membership_t0, TC_MC_MEMBERSHIP_001, TC_MC_MEMBERSHIP_002, TC_SD_SERVER_MC_001, TC_SD_SERVER_MC_002, TC_SD_CLIENT_MC_001, TC_SD_CLIENT_MC_002, TC_SD_CLIENT_MC_INT_001, TC_test_udp_transport_SetUp, TC_UDP_MC_E01, TC_UDP_MC_E02, TC_UDP_E05</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5550,7 +5558,7 @@
             <td>REQ_TRANSPORT_020</td>
             <td>TCP Magic Cookie Messages</td>
             <td>feat_req_someip_586, feat_req_someip_591, feat_req_someip_592, feat_req_someip_609, feat_req_someip_619</td>
-            <td class="code-ref">CODE_event_driven_tcp_transport_transport_441, CODE_tcp_transport_transport_1333, CODE_udp_transport_transport_189, CODE_tcp_transport_transport_343</td>
+            <td class="code-ref">CODE_event_driven_tcp_transport_transport_450, CODE_tcp_transport_transport_1342, CODE_udp_transport_transport_189, CODE_tcp_transport_transport_348</td>
             <td>TC_test_tcp_transport_SetUp, TC_TCP_MAGIC_001, TC_TCP_MAGIC_002, TC_TCP_MAGIC_003, TC_TCP_MAGIC_004</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5590,7 +5598,7 @@
             <td>REQ_TRANSPORT_025</td>
             <td>Magic Cookie Message Format</td>
             <td>feat_req_someip_589, feat_req_someip_607</td>
-            <td class="code-ref">CODE_event_driven_tcp_transport_transport_441, CODE_tcp_transport_transport_1333, CODE_udp_transport_transport_217, CODE_tcp_transport_transport_343</td>
+            <td class="code-ref">CODE_event_driven_tcp_transport_transport_450, CODE_tcp_transport_transport_1342, CODE_udp_transport_transport_217, CODE_tcp_transport_transport_348</td>
             <td>TC_test_tcp_transport_SetUp, TC_TCP_MAGIC_001, TC_TCP_MAGIC_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5598,8 +5606,8 @@
             <td>REQ_TRANSPORT_026</td>
             <td>Incoming Message Rejection Diagnostics</td>
             <td>-</td>
-            <td class="code-ref">CODE_event_publisher_events_595, CODE_event_subscriber_events_438, CODE_rpc_client_rpc_366, CODE_rpc_server_rpc_243, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_831, CODE_tcp_transport_transport_1240, CODE_udp_transport_transport_464, CODE_udp_transport_transport_557, CODE_event_publisher_events_206, CODE_event_subscriber_events_167, CODE_rpc_client_rpc_159, CODE_rpc_server_rpc_136, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_324, CODE_transport_transport_78</td>
-            <td>TC_ED_TCP_REJECT_001, TC_test_rpc_SetUp, TC_test_rpc_TEST_F, TC_test_tcp_transport_SetUp, TC_TCP_REJECT_001, TC_TCP_REJECT_003, TC_TCP_REJECT_004, TC_TCP_REJECT_005, TC_TCP_REJECT_002, TC_TCP_REJECT_002b, TC_test_udp_transport_SetUp, TC_UDP_REJECT_001</td>
+            <td class="code-ref">CODE_event_publisher_events_595, CODE_event_subscriber_events_438, CODE_rpc_client_rpc_366, CODE_rpc_server_rpc_243, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_831, CODE_tcp_transport_transport_1240, CODE_udp_transport_transport_464, CODE_udp_transport_transport_595, CODE_event_publisher_events_206, CODE_event_subscriber_events_167, CODE_rpc_client_rpc_159, CODE_rpc_server_rpc_136, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_329, CODE_transport_transport_78</td>
+            <td>TC_ED_TCP_REJECT_001, TC_ED_UDP_E2E_002, TC_test_rpc_SetUp, TC_test_rpc_TEST_F, TC_test_tcp_transport_SetUp, TC_TCP_REJECT_001, TC_TCP_REJECT_003, TC_TCP_REJECT_004, TC_TCP_REJECT_005, TC_TCP_REJECT_002, TC_TCP_REJECT_002b, TC_test_udp_transport_SetUp, TC_UDP_REJECT_001, TC_UDP_E2E_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -5739,6 +5747,24 @@
             <td>feat_req_someip_102, feat_req_someip_103</td>
         </tr>
         <tr>
+            <td>CODE_e2e_receive_e2e_67</td>
+            <td class="code-ref">src/e2e/e2e_receive.cpp:67</td>
+            <td>REQ_E2E_RECEIVE_001</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_e2e_receive_policy_e2e_108</td>
+            <td class="code-ref">include/e2e/e2e_receive_policy.h:108</td>
+            <td>REQ_E2E_RECEIVE_001</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_e2e_receive_policy_e2e_73</td>
+            <td class="code-ref">include/e2e/e2e_receive_policy.h:73</td>
+            <td>REQ_E2E_RECEIVE_001</td>
+            <td>-</td>
+        </tr>
+        <tr>
             <td>CODE_endpoint_transport_40</td>
             <td class="code-ref">include/transport/endpoint.h:40</td>
             <td>REQ_TRANSPORT_006, REQ_TRANSPORT_014</td>
@@ -5775,8 +5801,8 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_event_driven_tcp_transport_transport_441</td>
-            <td class="code-ref">src/transport/event_driven_tcp_transport.cpp:441</td>
+            <td>CODE_event_driven_tcp_transport_transport_450</td>
+            <td class="code-ref">src/transport/event_driven_tcp_transport.cpp:450</td>
             <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
             <td>-</td>
         </tr>
@@ -7257,8 +7283,8 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_1333</td>
-            <td class="code-ref">src/transport/tcp_transport.cpp:1333</td>
+            <td>CODE_tcp_transport_transport_1342</td>
+            <td class="code-ref">src/transport/tcp_transport.cpp:1342</td>
             <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
             <td>-</td>
         </tr>
@@ -7269,14 +7295,14 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_324</td>
-            <td class="code-ref">include/transport/tcp_transport.h:324</td>
+            <td>CODE_tcp_transport_transport_329</td>
+            <td class="code-ref">include/transport/tcp_transport.h:329</td>
             <td>REQ_TRANSPORT_026</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tcp_transport_transport_343</td>
-            <td class="code-ref">include/transport/tcp_transport.h:343</td>
+            <td>CODE_tcp_transport_transport_348</td>
+            <td class="code-ref">include/transport/tcp_transport.h:348</td>
             <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
             <td>-</td>
         </tr>
@@ -7917,8 +7943,8 @@
             <td>feat_req_someip_761</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_129</td>
-            <td class="code-ref">include/transport/udp_transport.h:129</td>
+            <td>CODE_udp_transport_transport_134</td>
+            <td class="code-ref">include/transport/udp_transport.h:134</td>
             <td>REQ_TRANSPORT_011_E01</td>
             <td>-</td>
         </tr>
@@ -7977,20 +8003,20 @@
             <td>feat_req_someiptp_785</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_557</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:557</td>
+            <td>CODE_udp_transport_transport_595</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:595</td>
             <td>REQ_TRANSPORT_026</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_564</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:564</td>
+            <td>CODE_udp_transport_transport_602</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:602</td>
             <td>REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_udp_transport_transport_593</td>
-            <td class="code-ref">src/transport/udp_transport.cpp:593</td>
+            <td>CODE_udp_transport_transport_631</td>
+            <td class="code-ref">src/transport/udp_transport.cpp:631</td>
             <td>REQ_TRANSPORT_010</td>
             <td>-</td>
         </tr>
@@ -8498,98 +8524,98 @@
         </tr>
         <tr>
             <td>TC_E2E_001</td>
-            <td>TEST_F (tests/test_e2e.cpp:44)</td>
-            <td class="code-ref">tests/test_e2e.cpp:44</td>
+            <td>TEST_F (tests/test_e2e.cpp:45)</td>
+            <td class="code-ref">tests/test_e2e.cpp:45</td>
             <td>REQ_E2E_PLUGIN_005, feat_req_someip_102, feat_req_someip_103</td>
         </tr>
         <tr>
             <td>TC_E2E_002</td>
-            <td>TEST_F (tests/test_e2e.cpp:66)</td>
-            <td class="code-ref">tests/test_e2e.cpp:66</td>
+            <td>TEST_F (tests/test_e2e.cpp:67)</td>
+            <td class="code-ref">tests/test_e2e.cpp:67</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_003</td>
-            <td>TEST_F (tests/test_e2e.cpp:84)</td>
-            <td class="code-ref">tests/test_e2e.cpp:84</td>
+            <td>TEST_F (tests/test_e2e.cpp:85)</td>
+            <td class="code-ref">tests/test_e2e.cpp:85</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_CRC_001</td>
-            <td>TEST_F (tests/test_e2e.cpp:263)</td>
-            <td class="code-ref">tests/test_e2e.cpp:263</td>
+            <td>TEST_F (tests/test_e2e.cpp:264)</td>
+            <td class="code-ref">tests/test_e2e.cpp:264</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_CRC_001b</td>
-            <td>TEST_F (tests/test_e2e.cpp:274)</td>
-            <td class="code-ref">tests/test_e2e.cpp:274</td>
+            <td>TEST_F (tests/test_e2e.cpp:275)</td>
+            <td class="code-ref">tests/test_e2e.cpp:275</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_CRC_002</td>
-            <td>TEST_F (tests/test_e2e.cpp:285)</td>
-            <td class="code-ref">tests/test_e2e.cpp:285</td>
+            <td>TEST_F (tests/test_e2e.cpp:286)</td>
+            <td class="code-ref">tests/test_e2e.cpp:286</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_CRC_003</td>
-            <td>TEST_F (tests/test_e2e.cpp:307)</td>
-            <td class="code-ref">tests/test_e2e.cpp:307</td>
+            <td>TEST_F (tests/test_e2e.cpp:308)</td>
+            <td class="code-ref">tests/test_e2e.cpp:308</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_CRC_004</td>
-            <td>TEST_F (tests/test_e2e.cpp:321)</td>
-            <td class="code-ref">tests/test_e2e.cpp:321</td>
+            <td>TEST_F (tests/test_e2e.cpp:322)</td>
+            <td class="code-ref">tests/test_e2e.cpp:322</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_CRC_005</td>
-            <td>TEST_F (tests/test_e2e.cpp:333)</td>
-            <td class="code-ref">tests/test_e2e.cpp:333</td>
+            <td>TEST_F (tests/test_e2e.cpp:334)</td>
+            <td class="code-ref">tests/test_e2e.cpp:334</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_CRC_006</td>
-            <td>TEST_F (tests/test_e2e.cpp:349)</td>
-            <td class="code-ref">tests/test_e2e.cpp:349</td>
+            <td>TEST_F (tests/test_e2e.cpp:350)</td>
+            <td class="code-ref">tests/test_e2e.cpp:350</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_HDR_001</td>
-            <td>TEST_F (tests/test_e2e.cpp:368)</td>
-            <td class="code-ref">tests/test_e2e.cpp:368</td>
+            <td>TEST_F (tests/test_e2e.cpp:369)</td>
+            <td class="code-ref">tests/test_e2e.cpp:369</td>
             <td>REQ_E2E_PLUGIN_005</td>
         </tr>
         <tr>
             <td>TC_E2E_HDR_002</td>
-            <td>TEST_F (tests/test_e2e.cpp:379)</td>
-            <td class="code-ref">tests/test_e2e.cpp:379</td>
+            <td>TEST_F (tests/test_e2e.cpp:380)</td>
+            <td class="code-ref">tests/test_e2e.cpp:380</td>
             <td>REQ_E2E_PLUGIN_005</td>
         </tr>
         <tr>
             <td>TC_E2E_HDR_003</td>
-            <td>TEST_F (tests/test_e2e.cpp:400)</td>
-            <td class="code-ref">tests/test_e2e.cpp:400</td>
+            <td>TEST_F (tests/test_e2e.cpp:401)</td>
+            <td class="code-ref">tests/test_e2e.cpp:401</td>
             <td>REQ_E2E_PLUGIN_005</td>
         </tr>
         <tr>
             <td>TC_E2E_HDR_004</td>
-            <td>TEST_F (tests/test_e2e.cpp:411)</td>
-            <td class="code-ref">tests/test_e2e.cpp:411</td>
+            <td>TEST_F (tests/test_e2e.cpp:412)</td>
+            <td class="code-ref">tests/test_e2e.cpp:412</td>
             <td>REQ_E2E_PLUGIN_005</td>
         </tr>
         <tr>
             <td>TC_E2E_HDR_005</td>
-            <td>TEST_F (tests/test_e2e.cpp:427)</td>
-            <td class="code-ref">tests/test_e2e.cpp:427</td>
+            <td>TEST_F (tests/test_e2e.cpp:428)</td>
+            <td class="code-ref">tests/test_e2e.cpp:428</td>
             <td>REQ_E2E_PLUGIN_005</td>
         </tr>
         <tr>
             <td>TC_E2E_HDR_006</td>
-            <td>TEST_F (tests/test_e2e.cpp:436)</td>
-            <td class="code-ref">tests/test_e2e.cpp:436</td>
+            <td>TEST_F (tests/test_e2e.cpp:437)</td>
+            <td class="code-ref">tests/test_e2e.cpp:437</td>
             <td>REQ_E2E_PLUGIN_005</td>
         </tr>
         <tr>
@@ -8630,153 +8656,171 @@
         </tr>
         <tr>
             <td>TC_E2E_MCDC_001</td>
-            <td>TEST_F (tests/test_e2e.cpp:482)</td>
-            <td class="code-ref">tests/test_e2e.cpp:482</td>
+            <td>TEST_F (tests/test_e2e.cpp:483)</td>
+            <td class="code-ref">tests/test_e2e.cpp:483</td>
             <td>REQ_E2E_PLUGIN_001, REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_002</td>
-            <td>TEST_F (tests/test_e2e.cpp:502)</td>
-            <td class="code-ref">tests/test_e2e.cpp:502</td>
+            <td>TEST_F (tests/test_e2e.cpp:503)</td>
+            <td class="code-ref">tests/test_e2e.cpp:503</td>
             <td>REQ_E2E_PLUGIN_001, REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_003</td>
-            <td>TEST_F (tests/test_e2e.cpp:522)</td>
-            <td class="code-ref">tests/test_e2e.cpp:522</td>
+            <td>TEST_F (tests/test_e2e.cpp:523)</td>
+            <td class="code-ref">tests/test_e2e.cpp:523</td>
             <td>REQ_E2E_PLUGIN_001</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_004</td>
-            <td>TEST_F (tests/test_e2e.cpp:545)</td>
-            <td class="code-ref">tests/test_e2e.cpp:545</td>
+            <td>TEST_F (tests/test_e2e.cpp:546)</td>
+            <td class="code-ref">tests/test_e2e.cpp:546</td>
             <td>REQ_E2E_PLUGIN_001</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_005</td>
-            <td>TEST_F (tests/test_e2e.cpp:569)</td>
-            <td class="code-ref">tests/test_e2e.cpp:569</td>
+            <td>TEST_F (tests/test_e2e.cpp:570)</td>
+            <td class="code-ref">tests/test_e2e.cpp:570</td>
             <td>REQ_E2E_PLUGIN_001</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_006</td>
-            <td>TEST_F (tests/test_e2e.cpp:589)</td>
-            <td class="code-ref">tests/test_e2e.cpp:589</td>
+            <td>TEST_F (tests/test_e2e.cpp:590)</td>
+            <td class="code-ref">tests/test_e2e.cpp:590</td>
             <td>REQ_E2E_PLUGIN_001</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_007</td>
-            <td>TEST_F (tests/test_e2e.cpp:608)</td>
-            <td class="code-ref">tests/test_e2e.cpp:608</td>
+            <td>TEST_F (tests/test_e2e.cpp:609)</td>
+            <td class="code-ref">tests/test_e2e.cpp:609</td>
             <td>REQ_E2E_PLUGIN_001</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_008</td>
-            <td>TEST_F (tests/test_e2e.cpp:635)</td>
-            <td class="code-ref">tests/test_e2e.cpp:635</td>
+            <td>TEST_F (tests/test_e2e.cpp:636)</td>
+            <td class="code-ref">tests/test_e2e.cpp:636</td>
             <td>REQ_E2E_PLUGIN_001</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_009</td>
-            <td>TEST_F (tests/test_e2e.cpp:658)</td>
-            <td class="code-ref">tests/test_e2e.cpp:658</td>
+            <td>TEST_F (tests/test_e2e.cpp:659)</td>
+            <td class="code-ref">tests/test_e2e.cpp:659</td>
             <td>REQ_E2E_PLUGIN_001</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_010</td>
-            <td>TEST_F (tests/test_e2e.cpp:672)</td>
-            <td class="code-ref">tests/test_e2e.cpp:672</td>
+            <td>TEST_F (tests/test_e2e.cpp:673)</td>
+            <td class="code-ref">tests/test_e2e.cpp:673</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_011</td>
-            <td>TEST_F (tests/test_e2e.cpp:687)</td>
-            <td class="code-ref">tests/test_e2e.cpp:687</td>
+            <td>TEST_F (tests/test_e2e.cpp:688)</td>
+            <td class="code-ref">tests/test_e2e.cpp:688</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_MCDC_012</td>
-            <td>TEST_F (tests/test_e2e.cpp:702)</td>
-            <td class="code-ref">tests/test_e2e.cpp:702</td>
+            <td>TEST_F (tests/test_e2e.cpp:703)</td>
+            <td class="code-ref">tests/test_e2e.cpp:703</td>
             <td>REQ_E2E_PLUGIN_004</td>
         </tr>
         <tr>
             <td>TC_E2E_OFFSET_001</td>
-            <td>TEST_F (tests/test_e2e.cpp:784)</td>
-            <td class="code-ref">tests/test_e2e.cpp:784</td>
+            <td>TEST_F (tests/test_e2e.cpp:785)</td>
+            <td class="code-ref">tests/test_e2e.cpp:785</td>
             <td>REQ_E2E_PLUGIN_005, feat_req_someip_102</td>
         </tr>
         <tr>
             <td>TC_E2E_OFFSET_001b</td>
-            <td>TEST_F (tests/test_e2e.cpp:796)</td>
-            <td class="code-ref">tests/test_e2e.cpp:796</td>
+            <td>TEST_F (tests/test_e2e.cpp:797)</td>
+            <td class="code-ref">tests/test_e2e.cpp:797</td>
             <td>REQ_E2E_PLUGIN_005, feat_req_someip_102</td>
         </tr>
         <tr>
             <td>TC_E2E_OFFSET_002</td>
-            <td>TEST_F (tests/test_e2e.cpp:822)</td>
-            <td class="code-ref">tests/test_e2e.cpp:822</td>
+            <td>TEST_F (tests/test_e2e.cpp:823)</td>
+            <td class="code-ref">tests/test_e2e.cpp:823</td>
             <td>REQ_E2E_PLUGIN_005, feat_req_someip_102</td>
         </tr>
         <tr>
             <td>TC_E2E_OFFSET_003</td>
-            <td>TEST_F (tests/test_e2e.cpp:857)</td>
-            <td class="code-ref">tests/test_e2e.cpp:857</td>
+            <td>TEST_F (tests/test_e2e.cpp:858)</td>
+            <td class="code-ref">tests/test_e2e.cpp:858</td>
             <td>REQ_E2E_PLUGIN_005, feat_req_someip_103</td>
         </tr>
         <tr>
             <td>TC_E2E_REG_001</td>
-            <td>TEST_F (tests/test_e2e.cpp:717)</td>
-            <td class="code-ref">tests/test_e2e.cpp:717</td>
+            <td>TEST_F (tests/test_e2e.cpp:718)</td>
+            <td class="code-ref">tests/test_e2e.cpp:718</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_E2E_REG_002</td>
-            <td>TEST_F (tests/test_e2e.cpp:736)</td>
-            <td class="code-ref">tests/test_e2e.cpp:736</td>
+            <td>TEST_F (tests/test_e2e.cpp:737)</td>
+            <td class="code-ref">tests/test_e2e.cpp:737</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_E2E_REG_003</td>
-            <td>TEST_F (tests/test_e2e.cpp:767)</td>
-            <td class="code-ref">tests/test_e2e.cpp:767</td>
+            <td>TEST_F (tests/test_e2e.cpp:768)</td>
+            <td class="code-ref">tests/test_e2e.cpp:768</td>
             <td>-</td>
         </tr>
         <tr>
+            <td>TC_E2E_RX_001</td>
+            <td>TEST_F (tests/test_e2e.cpp:898)</td>
+            <td class="code-ref">tests/test_e2e.cpp:898</td>
+            <td>REQ_E2E_RECEIVE_001</td>
+        </tr>
+        <tr>
+            <td>TC_E2E_RX_002</td>
+            <td>TEST_F (tests/test_e2e.cpp:967)</td>
+            <td class="code-ref">tests/test_e2e.cpp:967</td>
+            <td>REQ_E2E_RECEIVE_001</td>
+        </tr>
+        <tr>
             <td>TC_ED_TCP_BUF_001</td>
-            <td>TEST (tests/test_event_driven_tcp_transport.cpp:831)</td>
-            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:831</td>
+            <td>TEST (tests/test_event_driven_tcp_transport.cpp:848)</td>
+            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:848</td>
             <td>REQ_TRANSPORT_028, REQ_TRANSPORT_027</td>
         </tr>
         <tr>
             <td>TC_ED_TCP_FRAG_001</td>
-            <td>TEST (tests/test_event_driven_tcp_transport.cpp:717)</td>
-            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:717</td>
+            <td>TEST (tests/test_event_driven_tcp_transport.cpp:734)</td>
+            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:734</td>
             <td>REQ_TRANSPORT_027, REQ_TRANSPORT_028</td>
         </tr>
         <tr>
             <td>TC_ED_TCP_NPDU_001</td>
-            <td>TEST (tests/test_event_driven_tcp_transport.cpp:611)</td>
-            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:611</td>
+            <td>TEST (tests/test_event_driven_tcp_transport.cpp:628)</td>
+            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:628</td>
             <td>REQ_TRANSPORT_027, REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_ED_TCP_OOM_001</td>
-            <td>TEST (tests/test_event_driven_tcp_transport.cpp:762)</td>
-            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:762</td>
+            <td>TEST (tests/test_event_driven_tcp_transport.cpp:779)</td>
+            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:779</td>
             <td>REQ_TRANSPORT_029, REQ_PAL_MEM_EXHAUST_E01</td>
         </tr>
         <tr>
             <td>TC_ED_TCP_QUEUE_001</td>
-            <td>TEST (tests/test_event_driven_tcp_transport.cpp:686)</td>
-            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:686</td>
+            <td>TEST (tests/test_event_driven_tcp_transport.cpp:703)</td>
+            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:703</td>
             <td>REQ_TRANSPORT_027</td>
         </tr>
         <tr>
             <td>TC_ED_TCP_REJECT_001</td>
-            <td>TEST (tests/test_event_driven_tcp_transport.cpp:803)</td>
-            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:803</td>
+            <td>TEST (tests/test_event_driven_tcp_transport.cpp:820)</td>
+            <td class="code-ref">tests/test_event_driven_tcp_transport.cpp:820</td>
             <td>REQ_TRANSPORT_026</td>
+        </tr>
+        <tr>
+            <td>TC_ED_UDP_E2E_002</td>
+            <td>TEST (tests/test_event_driven_udp_transport.cpp:443)</td>
+            <td class="code-ref">tests/test_event_driven_udp_transport.cpp:443</td>
+            <td>REQ_E2E_RECEIVE_001, REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_ETL_HANDLER_NO_ABORT</td>
@@ -10388,236 +10432,248 @@
         </tr>
         <tr>
             <td>TC_TCP_CAPACITY_CLAMP</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:2089)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:2089</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2091)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2091</td>
             <td>REQ_TRANSPORT_003_E01</td>
         </tr>
         <tr>
             <td>TC_TCP_CLIENT_SEND_NO_SPIN</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:2448)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:2448</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2450)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2450</td>
             <td>REQ_TRANSPORT_002_E02</td>
         </tr>
         <tr>
             <td>TC_TCP_CLOSE_STALLED_PEER</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:2119)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:2119</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2121)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2121</td>
             <td>REQ_TRANSPORT_003b, REQ_TRANSPORT_019</td>
         </tr>
         <tr>
             <td>TC_TCP_CONNECT_REPORTS_CONNECTING</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:353)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:353</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:355)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:355</td>
             <td>REQ_TRANSPORT_003a</td>
         </tr>
         <tr>
             <td>TC_TCP_DISCONNECT_PEER</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:2007)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:2007</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2009)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2009</td>
             <td>REQ_TRANSPORT_003b, REQ_TRANSPORT_018</td>
         </tr>
         <tr>
             <td>TC_TCP_E01</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:548)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:548</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:550)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:550</td>
             <td>REQ_TRANSPORT_002_E01</td>
         </tr>
         <tr>
             <td>TC_TCP_E01_LIMIT</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1697)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1697</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1699)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1699</td>
             <td>REQ_TRANSPORT_003_E01</td>
         </tr>
         <tr>
             <td>TC_TCP_E02</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:573)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:573</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:575)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:575</td>
             <td>REQ_TRANSPORT_002_E02</td>
         </tr>
         <tr>
             <td>TC_TCP_E03</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:593)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:593</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:595)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:595</td>
             <td>REQ_TRANSPORT_002_E03</td>
         </tr>
         <tr>
             <td>TC_TCP_E04</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:618)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:618</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:620)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:620</td>
             <td>REQ_TRANSPORT_002_E04, REQ_TRANSPORT_003_E01</td>
         </tr>
         <tr>
             <td>TC_TCP_E05</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:652)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:652</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:654)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:654</td>
             <td>REQ_TRANSPORT_016_E01</td>
         </tr>
         <tr>
+            <td>TC_TCP_E2E_001</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2548)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2548</td>
+            <td>REQ_E2E_RECEIVE_001</td>
+        </tr>
+        <tr>
+            <td>TC_TCP_E2E_002</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2608)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2608</td>
+            <td>REQ_E2E_RECEIVE_001</td>
+        </tr>
+        <tr>
             <td>TC_TCP_LISTENER_DISCONNECT_NO_DEADLOCK</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1382)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1382</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1384)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1384</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_TCP_LISTENER_QUEUE_RETENTION</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1211)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1211</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1213)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1213</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_001</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1043)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1043</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1045)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1045</td>
             <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_002</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1075)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1075</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1077)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1077</td>
             <td>REQ_TRANSPORT_020, REQ_TRANSPORT_025</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_003</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1095)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1095</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1097)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1097</td>
             <td>REQ_TRANSPORT_020</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_004</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1134)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1134</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1136)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1136</td>
             <td>REQ_TRANSPORT_020</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_005</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1162)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1162</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1164)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1164</td>
             <td>REQ_TRANSPORT_021</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_006</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1178)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1178</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1180)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1180</td>
             <td>REQ_TRANSPORT_021</td>
         </tr>
         <tr>
             <td>TC_TCP_MAGIC_CORRELATION</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1110)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1110</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1112)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1112</td>
             <td>feat_req_someip_609</td>
         </tr>
         <tr>
             <td>TC_TCP_MODE_SWITCH</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1268)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1268</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1270)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1270</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_TCP_MULTI_CLIENT</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1550)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1550</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1552)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1552</td>
             <td>REQ_TRANSPORT_003b</td>
         </tr>
         <tr>
             <td>TC_TCP_MULTI_CLIENT_ROUTING</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1629)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1629</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1631)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1631</td>
             <td>REQ_TRANSPORT_003b, REQ_TRANSPORT_002a</td>
         </tr>
         <tr>
             <td>TC_TCP_PARSE_001</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:671)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:671</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:673)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:673</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_TCP_PARSE_002</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:693)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:693</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:695)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:695</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_TCP_PARSE_003</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:935)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:935</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:937)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:937</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_TCP_PARSE_004</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:971)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:971</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:973)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:973</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_TCP_PARSE_005</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1005)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1005</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1007)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1007</td>
             <td>REQ_TRANSPORT_024</td>
         </tr>
         <tr>
             <td>TC_TCP_PEER_ISOLATION</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1902)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1902</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1904)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1904</td>
             <td>REQ_TRANSPORT_003b, REQ_TRANSPORT_003_E01</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_001</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:713)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:713</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:715)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:715</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_002</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:856)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:856</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:858)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:858</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_002b</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:896)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:896</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:898)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:898</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_003</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:756)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:756</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:758)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:758</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_004</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:792)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:792</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:794)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:794</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_REJECT_005</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:820)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:820</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:822)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:822</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_TCP_ROUTE_UNKNOWN_PEER</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1969)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1969</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1971)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1971</td>
             <td>REQ_TRANSPORT_002_E04</td>
         </tr>
         <tr>
             <td>TC_TCP_SERVER_MODE_CONNECT</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1503)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1503</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1505)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1505</td>
             <td>REQ_TRANSPORT_003b</td>
         </tr>
         <tr>
             <td>TC_TCP_STALE_PEER_RECONNECT</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:2296)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:2296</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:2298)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:2298</td>
             <td>REQ_TRANSPORT_003b</td>
         </tr>
         <tr>
             <td>TC_TCP_STALLED_PEER_ISOLATION</td>
-            <td>TEST_F (tests/test_tcp_transport.cpp:1779)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:1779</td>
+            <td>TEST_F (tests/test_tcp_transport.cpp:1781)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:1781</td>
             <td>REQ_TRANSPORT_003b</td>
         </tr>
         <tr>
@@ -10976,92 +11032,110 @@
         </tr>
         <tr>
             <td>TC_UDP_E01</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:806)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:806</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:809)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:809</td>
             <td>REQ_TRANSPORT_001_E01</td>
         </tr>
         <tr>
             <td>TC_UDP_E02</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:834)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:834</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:837)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:837</td>
             <td>REQ_TRANSPORT_001_E02</td>
         </tr>
         <tr>
             <td>TC_UDP_E03</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:856)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:856</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:859)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:859</td>
             <td>REQ_TRANSPORT_001_E03</td>
         </tr>
         <tr>
             <td>TC_UDP_E04</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:870)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:870</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:873)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:873</td>
             <td>REQ_TRANSPORT_006_E01</td>
         </tr>
         <tr>
             <td>TC_UDP_E05</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:885)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:885</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:888)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:888</td>
             <td>REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02</td>
         </tr>
         <tr>
+            <td>TC_UDP_E2E_001</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:1359)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:1359</td>
+            <td>REQ_E2E_RECEIVE_001</td>
+        </tr>
+        <tr>
+            <td>TC_UDP_E2E_002</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:1405)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:1405</td>
+            <td>REQ_E2E_RECEIVE_001</td>
+        </tr>
+        <tr>
+            <td>TC_UDP_E2E_003</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:1448)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:1448</td>
+            <td>REQ_E2E_RECEIVE_001, REQ_TRANSPORT_026</td>
+        </tr>
+        <tr>
             <td>TC_UDP_LISTENER_QUEUE_RETENTION</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:916)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:916</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:919)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:919</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_UDP_MC_E01</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:446)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:446</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:449)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:449</td>
             <td>REQ_TRANSPORT_011_E01</td>
         </tr>
         <tr>
             <td>TC_UDP_MC_E02</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:473)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:473</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:476)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:476</td>
             <td>REQ_TRANSPORT_011_E01</td>
         </tr>
         <tr>
             <td>TC_UDP_MODE_SWITCH</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:1068)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:1068</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:1071)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:1071</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_UDP_POLLING_STILL_WORKS</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:970)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:970</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:973)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:973</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_UDP_QUEUED_BEFORE_LISTENER</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:1150)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:1150</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:1153)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:1153</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_UDP_RECEIVE_WITH_SENDER</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:1018)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:1018</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:1021)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:1021</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_UDP_REJECT_001</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:316)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:316</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:319)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:319</td>
             <td>REQ_TRANSPORT_026</td>
         </tr>
         <tr>
             <td>TC_UDP_TP_REASSEMBLY</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:1237)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:1237</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:1240)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:1240</td>
             <td>REQ_TP_090, REQ_TP_091, REQ_TP_078, feat_req_someiptp_785</td>
         </tr>
         <tr>
             <td>TC_UDP_TP_SMALL_NO_FLAG</td>
-            <td>TEST_F (tests/test_udp_transport.cpp:1293)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:1293</td>
+            <td>TEST_F (tests/test_udp_transport.cpp:1296)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:1296</td>
             <td>REQ_TP_090</td>
         </tr>
         <tr>
@@ -11096,8 +11170,8 @@
         </tr>
         <tr>
             <td>TC_test_event_driven_udp_transport_TEST</td>
-            <td>TEST (tests/test_event_driven_udp_transport.cpp:274)</td>
-            <td class="code-ref">tests/test_event_driven_udp_transport.cpp:274</td>
+            <td>TEST (tests/test_event_driven_udp_transport.cpp:303)</td>
+            <td class="code-ref">tests/test_event_driven_udp_transport.cpp:303</td>
             <td>REQ_TRANSPORT_011_E01</td>
         </tr>
         <tr>
@@ -11228,8 +11302,8 @@
         </tr>
         <tr>
             <td>TC_test_tcp_transport_SetUp</td>
-            <td>SetUp (tests/test_tcp_transport.cpp:41)</td>
-            <td class="code-ref">tests/test_tcp_transport.cpp:41</td>
+            <td>SetUp (tests/test_tcp_transport.cpp:43)</td>
+            <td class="code-ref">tests/test_tcp_transport.cpp:43</td>
             <td>REQ_TRANSPORT_002a, REQ_TRANSPORT_002b, REQ_TRANSPORT_003a, REQ_TRANSPORT_003b, REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d, REQ_TRANSPORT_005, feat_req_someip_850, feat_req_someip_851, REQ_TRANSPORT_016, REQ_TRANSPORT_017, REQ_TRANSPORT_018, REQ_TRANSPORT_019, REQ_TRANSPORT_020, REQ_TRANSPORT_021, REQ_TRANSPORT_025, REQ_TRANSPORT_026, REQ_TRANSPORT_002_E01, REQ_TRANSPORT_002_E02, REQ_TRANSPORT_002_E03, REQ_TRANSPORT_002_E04, REQ_TRANSPORT_003_E01, REQ_TRANSPORT_016_E01</td>
         </tr>
         <tr>
@@ -11270,8 +11344,8 @@
         </tr>
         <tr>
             <td>TC_test_udp_transport_SetUp</td>
-            <td>SetUp (tests/test_udp_transport.cpp:31)</td>
-            <td class="code-ref">tests/test_udp_transport.cpp:31</td>
+            <td>SetUp (tests/test_udp_transport.cpp:34)</td>
+            <td class="code-ref">tests/test_udp_transport.cpp:34</td>
             <td>REQ_TRANSPORT_001a, REQ_TRANSPORT_001b, REQ_TRANSPORT_001c, REQ_TRANSPORT_004a, REQ_TRANSPORT_004b, REQ_TRANSPORT_004c, REQ_TRANSPORT_004d, REQ_TRANSPORT_005, REQ_PLATFORM_LWIP_001, REQ_PLATFORM_LWIP_002, feat_req_someip_800, feat_req_someip_801, feat_req_someip_802, REQ_TRANSPORT_006, REQ_TRANSPORT_010, REQ_TRANSPORT_011, REQ_TRANSPORT_012, REQ_TRANSPORT_013, REQ_TRANSPORT_014, REQ_TRANSPORT_015, REQ_TRANSPORT_022, REQ_TRANSPORT_023, REQ_TRANSPORT_024, REQ_TRANSPORT_026, REQ_TRANSPORT_001_E01, REQ_TRANSPORT_001_E02, REQ_TRANSPORT_001_E03, REQ_TRANSPORT_006_E01, REQ_TRANSPORT_011_E01, REQ_TRANSPORT_011_E02, REQ_TRANSPORT_014_E01, REQ_TP_090, REQ_TP_091, feat_req_someiptp_785</td>
         </tr>
     </table>

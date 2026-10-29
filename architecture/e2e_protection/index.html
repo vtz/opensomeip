@@ -1133,6 +1133,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#receive-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Receive path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#performance-considerations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3146,6 +3157,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#receive-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Receive path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#performance-considerations" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3299,6 +3321,15 @@ safety-critical applications without proper validation.</p>
 - <code>Result::NOT_IMPLEMENTED</code> - non-default Offset (<code>offset_bits</code>) or non-12-byte profile header
 - <code>Result::TIMEOUT</code> - Freshness timeout
 - <code>Result::NOT_INITIALIZED</code> - Profile not registered</p>
+<h2 id="receive-path">Receive path<a class="headerlink" href="#receive-path" title="Permanent link">&para;</a></h2>
+<p>Transports do not infer E2E from the datagram. <code>E2EReceiveTable</code> on the
+transport config lists protected Service ID and Method/Event ID values.
+After a complete frame is available, and after TP reassembly, the default
+12-byte header at Offset 64 is removed from the payload.</p>
+<p>Stack-managed mode calls <code>E2EProtection::validate</code> and, on failure, reports
+<code>MessageRejectionStage::E2E_INTEGRITY</code> instead of the application handler.
+Application-managed mode delivers <code>get_e2e_header()</code> with the clean payload
+so the application can call <code>validate</code> without serializing again.</p>
 <h2 id="performance-considerations">Performance Considerations<a class="headerlink" href="#performance-considerations" title="Permanent link">&para;</a></h2>
 <ul>
 <li>CRC calculation: O(n) where n is message size</li>

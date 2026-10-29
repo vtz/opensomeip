@@ -66,7 +66,7 @@ the core implementation.</p>
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading">¶</a></h2>
 <section id="plugin-interface">
 <h3>Plugin Interface<a class="headerlink" href="#plugin-interface" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-a760a1db">
+<div class="need_container docutils container" id="SNCB-f4bcf8d9">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_E2E_PLUGIN_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -103,7 +103,7 @@ external libraries without modifying the core implementation.</p>
 </section>
 <section id="profile-registry">
 <h3>Profile Registry<a class="headerlink" href="#profile-registry" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-72649457">
+<div class="need_container docutils container" id="SNCB-ab551182">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_E2E_PLUGIN_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -140,7 +140,7 @@ runtime selection and configuration.</p>
 </section>
 <section id="plugin-registration-api">
 <h3>Plugin Registration API<a class="headerlink" href="#plugin-registration-api" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-f4059e0b">
+<div class="need_container docutils container" id="SNCB-06893998">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_E2E_PLUGIN_003">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -176,7 +176,7 @@ profile plugins.</p>
 </section>
 <section id="standard-profile">
 <h3>Standard Profile<a class="headerlink" href="#standard-profile" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-2a213e82">
+<div class="need_container docutils container" id="SNCB-1a6984f2">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_E2E_PLUGIN_004">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -214,7 +214,7 @@ AUTOSAR profiles.</p>
 </section>
 <section id="e2e-header-format">
 <h3>E2E Header Format<a class="headerlink" href="#e2e-header-format" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-0098744e">
+<div class="need_container docutils container" id="SNCB-3654f537">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_E2E_PLUGIN_005">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -265,6 +265,53 @@ plugin header size until issue 339 implements those layouts.</p>
 </table>
 </div>
 </section>
+<section id="receive-policy">
+<h3>Receive Policy<a class="headerlink" href="#receive-policy" title="Link to this heading">¶</a></h3>
+<div class="need_container docutils container" id="SNCB-99b689e9">
+<table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_E2E_RECEIVE_001">
+<tbody>
+<tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
+<div class="line"><span><span class="needs_type_name"><span class="needs_data">Requirement</span></span>: </span><strong><span><span class="needs_title"><span class="needs_data">E2E receive validation policy</span></span></span></strong><span> <span class="needs-id"><a class="reference internal" href="#REQ_E2E_RECEIVE_001" title="REQ_E2E_RECEIVE_001">REQ_E2E_RECEIVE_001</a></span>  <span class="needs needs_collapse" id="target__show__meta"><span class="needs collapsed"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-down-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg></span><span class="needs visible collapse_is_hidden"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right-circle"><circle cx="12" cy="12" r="10"></circle><polyline points="12 16 16 12 12 8"></polyline><line x1="8" y1="12" x2="16" y2="12"></line></svg></span></span> </span></div>
+</div>
+</td>
+</tr>
+<tr class="need meta row-even"><td class="need meta"><div class="needs_meta line-block">
+<div class="line"><span><span><div class="line"><span class="needs_status"><span class="needs_label">status: </span><span class="needs_data">implemented</span></span></div>
+<div class="line"><span class="needs_priority"><span class="needs_label">priority: </span><span class="needs_data">high</span></span></div>
+</span></span></div>
+<div class="line"><span></span></div>
+</div>
+</td>
+</tr>
+<tr class="need content row-odd"><td class="need content" colspan="1"><p>A transport config may bind a Service ID and Method/Event ID to an E2E
+receive policy. Bindings are fixed-capacity. Adding past the cap returns
+<code class="docutils literal notranslate"><span class="pre">Result::RESOURCE_EXHAUSTED</span></code> and is not an <code class="docutils literal notranslate"><span class="pre">on_message_rejected</span></code> event.
+Configure the table before the transport starts; the receive loop only
+reads it.</p>
+<p>When a binding matches a complete frame (after TP reassembly, never on a
+TP segment), the transport deserializes the default layout so the 12-byte
+header is not application payload. Non-default Offset and non-12-byte
+headers are outside this receive path.</p>
+<ul class="simple">
+<li><p>Stack-managed: <code class="docutils literal notranslate"><span class="pre">E2EProtection::validate</span></code> runs before the application
+handler. Failure is reported with <code class="docutils literal notranslate"><span class="pre">MessageRejectionStage::E2E_INTEGRITY</span></code>
+and the handler is not called.</p></li>
+<li><p>Application-managed: the handler receives the clean payload and
+<code class="docutils literal notranslate"><span class="pre">Message::get_e2e_header()</span></code>. The application validates. CRC, Data ID,
+and replay failures stay <code class="docutils literal notranslate"><span class="pre">Result::INVALID_ARGUMENT</span></code>.</p></li>
+</ul>
+<p>A profile id of 0 registers the basic profile if it is not already
+registered. A missing custom profile fails stack-managed validation with
+<code class="docutils literal notranslate"><span class="pre">Result::NOT_INITIALIZED</span></code>.</p>
+<p><strong>Rationale</strong>: Receive paths cannot guess E2E presence from the datagram.
+The application names the protected methods and who checks them.</p>
+<p><strong>Code Location</strong>: <code class="docutils literal notranslate"><span class="pre">include/e2e/e2e_receive_policy.h</span></code>, <code class="docutils literal notranslate"><span class="pre">src/e2e/e2e_receive.cpp</span></code></p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 </section>
 <section id="traceability">
 <h2>Traceability<a class="headerlink" href="#traceability" title="Link to this heading">¶</a></h2>
@@ -279,6 +326,8 @@ plugin header size until issue 339 implements those layouts.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">src/e2e/e2e_profile_registry.cpp</span></code> - Registry implementation</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">src/e2e/e2e_protection.cpp</span></code> - Protection implementation</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">src/e2e/e2e_profiles/standard_profile.cpp</span></code> - Standard profile</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">include/e2e/e2e_receive_policy.h</span></code> - Receive bindings and policy</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">src/e2e/e2e_receive.cpp</span></code> - Default-layout receive check</p></li>
 </ul>
 </section>
 <section id="test-files">

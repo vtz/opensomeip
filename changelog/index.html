@@ -3461,7 +3461,8 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>SD</strong>: Client and server implement explicit Initial Event requesting.
+<li>
+<p><strong>SD</strong>: Client and server implement explicit Initial Event requesting.
   Outgoing SD headers advertise the Explicit Initial Data Control Flag
   (<code>0x20</code>) and still clear reserved flag bits. The client sets the
   per-entry Initial Data Requested flag for a first subscription and
@@ -3473,7 +3474,21 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
   after SubscribeEventgroupAck; a legacy peer keeps the implicit
   new-subscription field. <code>SdServer::SubscriptionAcceptedCallback</code> now
   receives that <code>InitialDataDelivery</code> decision
-  (<a href="https://github.com/vtz/opensomeip/issues/342">#342</a>).</li>
+  (<a href="https://github.com/vtz/opensomeip/issues/342">#342</a>).</p>
+</li>
+<li>
+<p><strong>E2E</strong>: Transport configs can bind a service method or event to a receive
+  policy. Stack-managed validation runs <code>E2EProtection::validate</code> on the
+  default 12-byte Offset-64 layout and reports failure through
+  <code>on_message_rejected</code> with <code>MessageRejectionStage::E2E_INTEGRITY</code>.
+  Application-managed receive delivers the payload with the E2E header
+  removed and <code>get_e2e_header()</code> set, so the application can validate
+  without a wire round trip. The binding table is fixed-capacity.
+  Non-default Offset and non-12-byte headers are not part of this receive
+  path. The binding carries <code>max_counter_value</code> and <code>freshness_timeout_ms</code>
+  into stack-managed validation. Zephyr links that receive source whenever
+  UDP or TCP is enabled.</p>
+</li>
 </ul>
 <h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3484,6 +3499,9 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 </ul>
 <h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>E2E</strong>: A receive binding that rejects a datagram before the SOME/IP header
+  is parsed reports Message ID and Request ID from the wire prefix. A failed
+  deserialize no longer publishes the default zero IDs.</li>
 <li><strong>SD</strong>: A received IPv4 SD Endpoint Option (type <code>0x24</code>) is now decoded
   and, when it is the first option and a usable UDP unicast endpoint,
   replaces the datagram source for SD replies and reboot detection.

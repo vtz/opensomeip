@@ -1,15 +1,15 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-10-29 03:05:04
+Generated: 2026-10-29 19:06:39
 
 ## Summary
 
-- **Total Requirements**: 698
-- **Fully Traced (impl + tests)**: 618 (88.5%)
+- **Total Requirements**: 699
+- **Fully Traced (impl + tests)**: 619 (88.6%)
 - **Missing Implementation**: 77
 - **Missing Tests**: 12
-- **Missing Spec Links (all)**: 159
-- **Missing Spec Links (required only)**: 2
+- **Missing Spec Links (all)**: 160
+- **Missing Spec Links (required only)**: 3
 
 ### Requirement Categories
 
@@ -18,7 +18,7 @@ Generated: 2026-10-29 03:05:04
 | Architectural (derived) | 8 | 7 (88%) | 7 (88%) | 3 (38%) |
 | Error Handling (derived) | 156 | 131 (84%) | 152 (97%) | 10 (6%) |
 | Message Header | 93 | 88 (95%) | 93 (100%) | 92 (99%) |
-| Other | 90 | 75 (83%) | 85 (94%) | 87 (97%) |
+| Other | 91 | 76 (84%) | 86 (95%) | 87 (96%) |
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
 | Serialization | 75 | 52 (69%) | 75 (100%) | 75 (100%) |
 | Service Discovery | 173 | 170 (98%) | 173 (100%) | 173 (100%) |
@@ -30,7 +30,7 @@ Generated: 2026-10-29 03:05:04
 matches `validate_requirements.py`: an ID containing `_E0`, `_ARCH_`, `PLUGIN`, or `MY_`;
 an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 
-- **Spec-Derived Requirements**: 474
+- **Spec-Derived Requirements**: 475
 - **Implementation-Derived Requirements**: 224
 
 ### Priority Breakdown
@@ -39,14 +39,14 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 |----------|-------|-------------|--------|----------|
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 55 | 55 | 98% |
-| Medium | 426 | 377 | 420 | 88% |
+| Medium | 427 | 378 | 421 | 89% |
 | Low | 184 | 157 | 179 | 85% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 516 |
+| Unit Tests | 524 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -149,6 +149,7 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 These requirements should have spec links but don't:
 
 - REQ_TRANSPORT_026
+- REQ_E2E_RECEIVE_001
 - REQ_MSG_150
 
 ### Implementation-Derived Requirements Without Spec Links (Expected)

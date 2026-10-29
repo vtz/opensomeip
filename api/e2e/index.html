@@ -3000,6 +3000,8 @@
 - <code>uint32_t max_counter_value</code> - Maximum counter value before rollover
 - <code>uint32_t freshness_timeout_ms</code> - Freshness timeout in milliseconds
 - <code>uint8_t crc_type</code> - CRC type (0 = SAE-J1850, 1 = ITU-T X.25, 2 = CRC32)</p>
+<p>Receive bindings live on the transport config (<code>E2EReceiveTable</code>), not on
+<code>E2EConfig</code>. They select the default 12-byte Offset-64 layout only.</p>
 <h3 id="e2eheader">E2EHeader<a class="headerlink" href="#e2eheader" title="Permanent link">&para;</a></h3>
 <p>E2E protection header structure.</p>
 <p><strong>Fields:</strong>
