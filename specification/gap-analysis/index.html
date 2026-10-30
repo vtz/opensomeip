@@ -3033,15 +3033,15 @@
 
 
 <h1 id="aspice-traceability-gap-analysis-report">ASPICE Traceability Gap Analysis Report<a class="headerlink" href="#aspice-traceability-gap-analysis-report" title="Permanent link">&para;</a></h1>
-<p>Generated: 2026-10-30 01:36:59</p>
+<p>Generated: 2026-10-30 13:38:17</p>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Total Requirements</strong>: 699</li>
-<li><strong>Fully Traced (impl + tests)</strong>: 619 (88.6%)</li>
+<li><strong>Total Requirements</strong>: 701</li>
+<li><strong>Fully Traced (impl + tests)</strong>: 620 (88.4%)</li>
 <li><strong>Missing Implementation</strong>: 77</li>
-<li><strong>Missing Tests</strong>: 12</li>
-<li><strong>Missing Spec Links (all)</strong>: 160</li>
-<li><strong>Missing Spec Links (required only)</strong>: 3</li>
+<li><strong>Missing Tests</strong>: 13</li>
+<li><strong>Missing Spec Links (all)</strong>: 161</li>
+<li><strong>Missing Spec Links (required only)</strong>: 4</li>
 </ul>
 <h3 id="requirement-categories">Requirement Categories<a class="headerlink" href="#requirement-categories" title="Permanent link">&para;</a></h3>
 <table>
@@ -3078,10 +3078,10 @@
 </tr>
 <tr>
 <td>Other</td>
-<td>91</td>
-<td>76 (84%)</td>
-<td>86 (95%)</td>
-<td>87 (96%)</td>
+<td>92</td>
+<td>77 (84%)</td>
+<td>86 (93%)</td>
+<td>88 (96%)</td>
 </tr>
 <tr>
 <td>Plugin (derived)</td>
@@ -3106,10 +3106,10 @@
 </tr>
 <tr>
 <td>Transport Layer</td>
-<td>33</td>
-<td>31 (94%)</td>
-<td>33 (100%)</td>
-<td>32 (97%)</td>
+<td>34</td>
+<td>32 (94%)</td>
+<td>34 (100%)</td>
+<td>32 (94%)</td>
 </tr>
 <tr>
 <td>Transport Protocol</td>
@@ -3124,8 +3124,8 @@
 matches <code>validate_requirements.py</code>: an ID containing <code>_E0</code>, <code>_ARCH_</code>, <code>PLUGIN</code>, or <code>MY_</code>;
 an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; or an ID ending with <code>_ATOM</code>.</p>
 <ul>
-<li><strong>Spec-Derived Requirements</strong>: 475</li>
-<li><strong>Implementation-Derived Requirements</strong>: 224</li>
+<li><strong>Spec-Derived Requirements</strong>: 476</li>
+<li><strong>Implementation-Derived Requirements</strong>: 225</li>
 </ul>
 <h3 id="priority-breakdown">Priority Breakdown<a class="headerlink" href="#priority-breakdown" title="Permanent link">&para;</a></h3>
 <table>
@@ -3155,9 +3155,9 @@ an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; or an ID en
 </tr>
 <tr>
 <td>Medium</td>
-<td>427</td>
-<td>378</td>
-<td>421</td>
+<td>429</td>
+<td>380</td>
+<td>422</td>
 <td>89%</td>
 </tr>
 <tr>
@@ -3180,7 +3180,7 @@ an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; or an ID en
 <tbody>
 <tr>
 <td>Unit Tests</td>
-<td>528</td>
+<td>571</td>
 </tr>
 <tr>
 <td>Integration Tests</td>
@@ -3275,6 +3275,7 @@ an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; or an ID en
 </ul>
 <h3 id="requirements-without-test-coverage">Requirements Without Test Coverage<a class="headerlink" href="#requirements-without-test-coverage" title="Permanent link">&para;</a></h3>
 <ul>
+<li>REQ_PAL_THREAD_ID</li>
 <li>REQ_PAL_MEM_THREADSAFE_E01</li>
 <li>REQ_PAL_CONTAINER_CAPACITY_E01</li>
 <li>REQ_PAL_BUFPOOL_THREADSAFE_E01</li>
@@ -3292,6 +3293,7 @@ an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; or an ID en
 <p>These requirements should have spec links but don't:</p>
 <ul>
 <li>REQ_TRANSPORT_026</li>
+<li>REQ_TRANSPORT_030</li>
 <li>REQ_E2E_RECEIVE_001</li>
 <li>REQ_MSG_150</li>
 </ul>
@@ -3461,7 +3463,7 @@ an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; or an ID en
 <ul>
 <li><strong>Status</strong>: ⚠️ PARTIAL - Some spec-derived requirements missing links</li>
 <li><strong>Details</strong>: Spec-derived requirements must satisfy at least one specification requirement</li>
-<li><strong>Derived Requirements</strong>: 224 implementation-derived requirements do not require spec links</li>
+<li><strong>Derived Requirements</strong>: 225 implementation-derived requirements do not require spec links</li>
 </ul>
 <h3 id="swe3-software-architectural-design">SWE.3 (Software Architectural Design)<a class="headerlink" href="#swe3-software-architectural-design" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3477,7 +3479,7 @@ an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; or an ID en
 <ul>
 <li><strong>Current Level</strong>: CL1</li>
 <li><strong>Target for Production</strong>: CL2 (100% traceability)</li>
-<li><strong>Gap to Target</strong>: 80 requirements</li>
+<li><strong>Gap to Target</strong>: 81 requirements</li>
 </ul>
 <h2 id="recommendations">Recommendations<a class="headerlink" href="#recommendations" title="Permanent link">&para;</a></h2>
 <ol>

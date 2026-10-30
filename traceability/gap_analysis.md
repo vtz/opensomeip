@@ -1,15 +1,15 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-10-30 01:36:59
+Generated: 2026-10-30 13:38:17
 
 ## Summary
 
-- **Total Requirements**: 699
-- **Fully Traced (impl + tests)**: 619 (88.6%)
+- **Total Requirements**: 701
+- **Fully Traced (impl + tests)**: 620 (88.4%)
 - **Missing Implementation**: 77
-- **Missing Tests**: 12
-- **Missing Spec Links (all)**: 160
-- **Missing Spec Links (required only)**: 3
+- **Missing Tests**: 13
+- **Missing Spec Links (all)**: 161
+- **Missing Spec Links (required only)**: 4
 
 ### Requirement Categories
 
@@ -18,11 +18,11 @@ Generated: 2026-10-30 01:36:59
 | Architectural (derived) | 8 | 7 (88%) | 7 (88%) | 3 (38%) |
 | Error Handling (derived) | 156 | 131 (84%) | 152 (97%) | 10 (6%) |
 | Message Header | 93 | 88 (95%) | 93 (100%) | 92 (99%) |
-| Other | 91 | 76 (84%) | 86 (95%) | 87 (96%) |
+| Other | 92 | 77 (84%) | 86 (93%) | 88 (96%) |
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
 | Serialization | 75 | 52 (69%) | 75 (100%) | 75 (100%) |
 | Service Discovery | 173 | 170 (98%) | 173 (100%) | 173 (100%) |
-| Transport Layer | 33 | 31 (94%) | 33 (100%) | 32 (97%) |
+| Transport Layer | 34 | 32 (94%) | 34 (100%) | 32 (94%) |
 | Transport Protocol | 65 | 62 (95%) | 63 (97%) | 64 (98%) |
 
 
@@ -30,8 +30,8 @@ Generated: 2026-10-30 01:36:59
 matches `validate_requirements.py`: an ID containing `_E0`, `_ARCH_`, `PLUGIN`, or `MY_`;
 an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 
-- **Spec-Derived Requirements**: 475
-- **Implementation-Derived Requirements**: 224
+- **Spec-Derived Requirements**: 476
+- **Implementation-Derived Requirements**: 225
 
 ### Priority Breakdown
 
@@ -39,14 +39,14 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 |----------|-------|-------------|--------|----------|
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 55 | 55 | 98% |
-| Medium | 427 | 378 | 421 | 89% |
+| Medium | 429 | 380 | 422 | 89% |
 | Low | 184 | 157 | 179 | 85% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 528 |
+| Unit Tests | 571 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -132,6 +132,7 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 - REQ_MSG_113_E01
 
 ### Requirements Without Test Coverage
+- REQ_PAL_THREAD_ID
 - REQ_PAL_MEM_THREADSAFE_E01
 - REQ_PAL_CONTAINER_CAPACITY_E01
 - REQ_PAL_BUFPOOL_THREADSAFE_E01
@@ -149,6 +150,7 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 These requirements should have spec links but don't:
 
 - REQ_TRANSPORT_026
+- REQ_TRANSPORT_030
 - REQ_E2E_RECEIVE_001
 - REQ_MSG_150
 
@@ -318,7 +320,7 @@ These requirements match the implementation-derived exemption and do not need sp
 ### SWE.1 (Software Requirements Analysis)
 - **Status**: ⚠️ PARTIAL - Some spec-derived requirements missing links
 - **Details**: Spec-derived requirements must satisfy at least one specification requirement
-- **Derived Requirements**: 224 implementation-derived requirements do not require spec links
+- **Derived Requirements**: 225 implementation-derived requirements do not require spec links
 
 ### SWE.3 (Software Architectural Design)
 - **Status**: ❌ FAIL - Missing implementations
@@ -331,7 +333,7 @@ These requirements match the implementation-derived exemption and do not need sp
 ### Overall Compliance Level
 - **Current Level**: CL1
 - **Target for Production**: CL2 (100% traceability)
-- **Gap to Target**: 80 requirements
+- **Gap to Target**: 81 requirements
 
 ## Recommendations
 

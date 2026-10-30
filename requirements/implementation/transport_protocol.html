@@ -66,7 +66,7 @@ transport of large messages over UDP by segmentation and reassembly.</p>
 <h2>Segmentation Requirements<a class="headerlink" href="#segmentation-requirements" title="Link to this heading">¶</a></h2>
 <section id="segment-calculation">
 <h3>Segment Calculation<a class="headerlink" href="#segment-calculation" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-59873c0f">
+<div class="need_container docutils container" id="SNCB-34204c6e">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_001">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -92,7 +92,7 @@ the ceiling of (payload size / maximum segment size).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-3c30db33">
+<div class="need_container docutils container" id="SNCB-06b1e9b7">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_002">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -118,7 +118,7 @@ the ceiling of (payload size / maximum segment size).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-bfd4ddae">
+<div class="need_container docutils container" id="SNCB-48bb54ee">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_003">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -144,7 +144,7 @@ size that is a multiple of 16 bytes.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-18d62afc">
+<div class="need_container docutils container" id="SNCB-0361695f">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_004">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -170,7 +170,7 @@ to the maximum segment size.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-f7ad2fee">
+<div class="need_container docutils container" id="SNCB-4da66da9">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_005">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -196,7 +196,7 @@ Request ID in all segment headers.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b56489e2">
+<div class="need_container docutils container" id="SNCB-dec6d40f">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_006">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -222,7 +222,7 @@ original message.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-696b415a">
+<div class="need_container docutils container" id="SNCB-c703bc34">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_007">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -248,7 +248,7 @@ Type field for all segments.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-f92660e9">
+<div class="need_container docutils container" id="SNCB-5c2a650f">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_008">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -277,7 +277,7 @@ TP flag (e.g., REQUEST 0x00 becomes TP_REQUEST 0x20).</p>
 </section>
 <section id="segmentation-error-handling">
 <h3>Segmentation Error Handling<a class="headerlink" href="#segmentation-error-handling" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-0fd0a42c">
+<div class="need_container docutils container" id="SNCB-1c86c4c4">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_001_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -303,7 +303,7 @@ exceeds the configured maximum TP message size.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-c802d08a">
+<div class="need_container docutils container" id="SNCB-e3c63ff0">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_001_E02">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -329,7 +329,7 @@ segment fails.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-1423d1c7">
+<div class="need_container docutils container" id="SNCB-4e8ae0e7">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_001_E03">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -361,7 +361,7 @@ by returning a single segment with zero payload.</p>
 <h2>TP Header Requirements<a class="headerlink" href="#tp-header-requirements" title="Link to this heading">¶</a></h2>
 <section id="header-structure">
 <h3>Header Structure<a class="headerlink" href="#header-structure" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-6887d563">
+<div class="need_container docutils container" id="SNCB-cd72c55a">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_010">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -387,7 +387,7 @@ SOME/IP header (starting at byte 16 of the message).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-15d165f8">
+<div class="need_container docutils container" id="SNCB-bff560dd">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_011">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -415,7 +415,7 @@ SOME/IP header (starting at byte 16 of the message).</p>
 </section>
 <section id="offset-field">
 <h3>Offset Field<a class="headerlink" href="#offset-field" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-f2394f69">
+<div class="need_container docutils container" id="SNCB-3e8d35ab">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_012">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -441,7 +441,7 @@ SOME/IP header (starting at byte 16 of the message).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-5406bacb">
+<div class="need_container docutils container" id="SNCB-22d0662c">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_013">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -467,7 +467,7 @@ byte offset in the original payload divided by 16.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-0af95f34">
+<div class="need_container docutils container" id="SNCB-2d6652d7">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_014">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -492,7 +492,7 @@ byte offset in the original payload divided by 16.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e4e6d47f">
+<div class="need_container docutils container" id="SNCB-06899c03">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_015">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -521,7 +521,7 @@ offsets that are multiples of 16 bytes.</p>
 </section>
 <section id="reserved-flags">
 <h3>Reserved Flags<a class="headerlink" href="#reserved-flags" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-c9f68b64">
+<div class="need_container docutils container" id="SNCB-0a351b53">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_016">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -547,7 +547,7 @@ TP header (3 bits).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-36bdfe1a">
+<div class="need_container docutils container" id="SNCB-f1daadb5">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_017">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -573,7 +573,7 @@ TP segments.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e00f4619">
+<div class="need_container docutils container" id="SNCB-3ab0ddfb">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_018">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -602,7 +602,7 @@ received TP segments.</p>
 </section>
 <section id="more-segments-flag">
 <h3>More Segments Flag<a class="headerlink" href="#more-segments-flag" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-02c77d6a">
+<div class="need_container docutils container" id="SNCB-4d08f3f1">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_019">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -628,7 +628,7 @@ significant bit) of the TP header.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-8419f38e">
+<div class="need_container docutils container" id="SNCB-bf2544a9">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_020">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -654,7 +654,7 @@ except the last segment.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-c98f3d69">
+<div class="need_container docutils container" id="SNCB-2aeeba3a">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_021">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -683,7 +683,7 @@ segment of a message.</p>
 </section>
 <section id="length-field-in-segments">
 <h3>Length Field in Segments<a class="headerlink" href="#length-field-in-segments" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-0aed8afd">
+<div class="need_container docutils container" id="SNCB-ddb0b8ae">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_022">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -713,7 +713,7 @@ payload.</p>
 </section>
 <section id="tp-header-error-handling">
 <h3>TP Header Error Handling<a class="headerlink" href="#tp-header-error-handling" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-3ccd5565">
+<div class="need_container docutils container" id="SNCB-24cb30db">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_013_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -739,7 +739,7 @@ exceed the maximum value representable in 28 bits.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-47a17a78">
+<div class="need_container docutils container" id="SNCB-3681180c">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_015_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -771,7 +771,7 @@ aligned to the required 16-byte boundary.</p>
 <h2>Reassembly Requirements<a class="headerlink" href="#reassembly-requirements" title="Link to this heading">¶</a></h2>
 <section id="buffer-management">
 <h3>Buffer Management<a class="headerlink" href="#buffer-management" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-051ebbe1">
+<div class="need_container docutils container" id="SNCB-693e73ab">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_030">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -797,7 +797,7 @@ segment of a new message is received.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-8f1cb7e4">
+<div class="need_container docutils container" id="SNCB-00351970">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_031">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -823,7 +823,7 @@ of source endpoint, Message ID, and Session ID.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-6be179b8">
+<div class="need_container docutils container" id="SNCB-b9b5c7f0">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_032">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -849,7 +849,7 @@ first segment’s offset and whether it’s the last segment.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-5d8b196d">
+<div class="need_container docutils container" id="SNCB-e14020e8">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_033">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -878,7 +878,7 @@ is received and the total message size is determined.</p>
 </section>
 <section id="segment-storage">
 <h3>Segment Storage<a class="headerlink" href="#segment-storage" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-ba677bfe">
+<div class="need_container docutils container" id="SNCB-d79a43f8">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_034">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -904,7 +904,7 @@ indicated by the segment’s Offset field.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-86bc4e38">
+<div class="need_container docutils container" id="SNCB-aff8432e">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_035">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -930,7 +930,7 @@ detect missing segments.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-c15c9159">
+<div class="need_container docutils container" id="SNCB-f292c09d">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_036">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -956,7 +956,7 @@ received segments and handle appropriately (ignore or compare).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-18bebada">
+<div class="need_container docutils container" id="SNCB-1bb43df8">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_037">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -987,7 +987,7 @@ First-wins prevents mixed-payload corruption per
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b98c8b38">
+<div class="need_container docutils container" id="SNCB-ad05e9e1">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_038">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1016,7 +1016,7 @@ each segment at its correct offset position.</p>
 </section>
 <section id="completion-detection">
 <h3>Completion Detection<a class="headerlink" href="#completion-detection" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-c252e6ea">
+<div class="need_container docutils container" id="SNCB-798b7c5a">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_039">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1042,7 +1042,7 @@ each segment at its correct offset position.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-996ceec6">
+<div class="need_container docutils container" id="SNCB-81c8b2e7">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_040">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1068,7 +1068,7 @@ before all preceding segments, waiting until all gaps are filled.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-bfdda0a9">
+<div class="need_container docutils container" id="SNCB-596161af">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_041">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1094,7 +1094,7 @@ layer when reassembly is complete.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-417d2085">
+<div class="need_container docutils container" id="SNCB-b44f4b99">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_042">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1123,7 +1123,7 @@ message has been delivered to the application.</p>
 </section>
 <section id="reassembly-error-handling">
 <h3>Reassembly Error Handling<a class="headerlink" href="#reassembly-error-handling" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-dd1f524c">
+<div class="need_container docutils container" id="SNCB-00a75598">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_039_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1149,7 +1149,7 @@ within the timeout period after the last segment is received.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-b41c41c9">
+<div class="need_container docutils container" id="SNCB-942a7aa7">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_030_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1175,7 +1175,7 @@ message size exceeds the configured maximum.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-c70bf025">
+<div class="need_container docutils container" id="SNCB-6921ce87">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_044">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1206,7 +1206,7 @@ SHALL).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-dc9c740f">
+<div class="need_container docutils container" id="SNCB-1cc9d6fb">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_043">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1233,7 +1233,7 @@ total message length changes between segments.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-ed2caf9a">
+<div class="need_container docutils container" id="SNCB-08cc8875">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_030_E03">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1267,7 +1267,7 @@ is honoured, just reduced to fit).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-80de01a9">
+<div class="need_container docutils container" id="SNCB-c5172f9e">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_030_E02">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1299,7 +1299,7 @@ concurrent reassembly operations is exceeded.</p>
 <h2>Timeout Handling<a class="headerlink" href="#timeout-handling" title="Link to this heading">¶</a></h2>
 <section id="timer-management">
 <h3>Timer Management<a class="headerlink" href="#timer-management" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-b915eb00">
+<div class="need_container docutils container" id="SNCB-4cc0f394">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_050">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1325,7 +1325,7 @@ of a new message is received.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-a83a79be">
+<div class="need_container docutils container" id="SNCB-4c49fe9c">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_051">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1351,7 +1351,7 @@ with a default of 5000 milliseconds.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-abf2f264">
+<div class="need_container docutils container" id="SNCB-0aa21930">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_052">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1377,7 +1377,7 @@ segment is received, if configured.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-f2522c39">
+<div class="need_container docutils container" id="SNCB-565a6e17">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_053">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1406,7 +1406,7 @@ any active reassembly operation.</p>
 </section>
 <section id="timeout-actions">
 <h3>Timeout Actions<a class="headerlink" href="#timeout-actions" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-737f8510">
+<div class="need_container docutils container" id="SNCB-d927ccc7">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_054">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1433,7 +1433,7 @@ operation when the timeout expires.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-23db94c8">
+<div class="need_container docutils container" id="SNCB-3080b961">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_055">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1460,7 +1460,7 @@ buffer when the timeout expires.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-02262aee">
+<div class="need_container docutils container" id="SNCB-39309f4b">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_056">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1487,7 +1487,7 @@ when reassembly fails due to timeout.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-8ad7c697">
+<div class="need_container docutils container" id="SNCB-40a63ea9">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_057">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1517,7 +1517,7 @@ and number of segments received.</p>
 </section>
 <section id="timer-error-handling">
 <h3>Timer Error Handling<a class="headerlink" href="#timer-error-handling" title="Link to this heading">¶</a></h3>
-<div class="need_container docutils container" id="SNCB-0c77467f">
+<div class="need_container docutils container" id="SNCB-140ade9e">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_050_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1543,7 +1543,7 @@ polling mechanism or rejecting the segment.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-84052bf3">
+<div class="need_container docutils container" id="SNCB-3db1d375">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_050_E02">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1580,7 +1580,7 @@ receiver instances so that diagnostic reads via
 and race-free.  Reads (snapshots) use relaxed loads; writes use
 <code class="docutils literal notranslate"><span class="pre">fetch_add</span></code> with relaxed ordering — the generated instructions and cost
 depend on the compiler and target.</p>
-<div class="need_container docutils container" id="SNCB-e1b65fb2">
+<div class="need_container docutils container" id="SNCB-921cc57e">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_060">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1606,7 +1606,7 @@ including messages segmented and segments sent.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-15db4afc">
+<div class="need_container docutils container" id="SNCB-75aa5e50">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_061">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1632,7 +1632,7 @@ including messages reassembled and segments received.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-eadb28d4">
+<div class="need_container docutils container" id="SNCB-d3afb1cb">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_062">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1658,7 +1658,7 @@ retransmissions, and malformed segments.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-0dde399e">
+<div class="need_container docutils container" id="SNCB-7adb57fc">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_063">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1687,7 +1687,7 @@ reassembly operations.</p>
 </section>
 <section id="sender-behavior">
 <h2>Sender Behavior<a class="headerlink" href="#sender-behavior" title="Link to this heading">¶</a></h2>
-<div class="need_container docutils container" id="SNCB-1e4b8ff2">
+<div class="need_container docutils container" id="SNCB-7dc4a935">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_070">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1713,7 +1713,7 @@ SOME/IP-TP segmentation.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e9ca6923">
+<div class="need_container docutils container" id="SNCB-edae9e12">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_071">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1738,7 +1738,7 @@ SOME/IP-TP segmentation.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-1ce05631">
+<div class="need_container docutils container" id="SNCB-c8c4e5d0">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_072">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1764,7 +1764,7 @@ The sender shall maximize segment size within specification limits.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-591cea39">
+<div class="need_container docutils container" id="SNCB-a6d39a30">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_073">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1789,7 +1789,7 @@ The sender shall maximize segment size within specification limits.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-3227522e">
+<div class="need_container docutils container" id="SNCB-ff7662c5">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_074">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1815,7 +1815,7 @@ messages.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-29192e27">
+<div class="need_container docutils container" id="SNCB-85d99cb1">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_075">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1844,7 +1844,7 @@ rate of segments on the network.</p>
 </section>
 <section id="receiver-behavior-extensions">
 <h2>Receiver Behavior Extensions<a class="headerlink" href="#receiver-behavior-extensions" title="Link to this heading">¶</a></h2>
-<div class="need_container docutils container" id="SNCB-b16af11c">
+<div class="need_container docutils container" id="SNCB-5c0611f5">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_076">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1870,7 +1870,7 @@ A segment with a different Session ID shall start a new reassembly.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e583b670">
+<div class="need_container docutils container" id="SNCB-fefd9215">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_077">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1896,7 +1896,7 @@ last segment received.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-a8b3a031">
+<div class="need_container docutils container" id="SNCB-f778e6fa">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_078">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1922,7 +1922,7 @@ have the TP Flag set to 0.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-862cc5b4">
+<div class="need_container docutils container" id="SNCB-b948aff6">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_079">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1948,7 +1948,7 @@ consistent with REQ_TP_076_E01 (cancel the oldest incomplete reassembly).</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-a0c90153">
+<div class="need_container docutils container" id="SNCB-0acf9cab">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_080">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -1974,7 +1974,7 @@ same buffer shall not be allowed.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-53c239d2">
+<div class="need_container docutils container" id="SNCB-5c7c9ae6">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_081">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2002,7 +2002,7 @@ normative requirement since 810 uses MAY.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-92b11b17">
+<div class="need_container docutils container" id="SNCB-a6618aaf">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_081_FW">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2034,7 +2034,7 @@ segment carries slightly different data.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-71f0d7cc">
+<div class="need_container docutils container" id="SNCB-a03e9a32">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_081_ATOM">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2068,7 +2068,7 @@ eliminates the race condition.</p>
 </section>
 <section id="tp-informational-references">
 <h2>TP Informational References<a class="headerlink" href="#tp-informational-references" title="Link to this heading">¶</a></h2>
-<div class="need_container docutils container" id="SNCB-8dce3661">
+<div class="need_container docutils container" id="SNCB-f80afe66">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_082">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2094,7 +2094,7 @@ TP segments gracefully.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-9d4d475d">
+<div class="need_container docutils container" id="SNCB-cef99eb9">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_072_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2119,7 +2119,7 @@ TP segments gracefully.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-66f90be3">
+<div class="need_container docutils container" id="SNCB-d452b8d8">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_076_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2144,7 +2144,7 @@ TP segments gracefully.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-c62f23e3">
+<div class="need_container docutils container" id="SNCB-47cd9954">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_082_E01">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2169,7 +2169,7 @@ TP segments gracefully.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-7aafd193">
+<div class="need_container docutils container" id="SNCB-bcde2a4b">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_082_E02">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2194,7 +2194,7 @@ TP segments gracefully.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-407ba4a4">
+<div class="need_container docutils container" id="SNCB-42eaa8b1">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_082_E03">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2219,7 +2219,7 @@ TP segments gracefully.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-e97b6503">
+<div class="need_container docutils container" id="SNCB-e81513d7">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_082_E04">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2247,7 +2247,7 @@ be accepted.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-1e1aa718">
+<div class="need_container docutils container" id="SNCB-e9df63f5">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_076_E02">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2272,7 +2272,7 @@ be accepted.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-f93ca535">
+<div class="need_container docutils container" id="SNCB-785daf63">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_090">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
@@ -2301,7 +2301,7 @@ shall not be sent. Small messages shall be sent without the TP flag.</p>
 </tbody>
 </table>
 </div>
-<div class="need_container docutils container" id="SNCB-84dc76b3">
+<div class="need_container docutils container" id="SNCB-3cd802a2">
 <table class="need needs_grid_simple needs_layout_clean needs_style_none needs_type_requirement docutils align-default" id="REQ_TP_091">
 <tbody>
 <tr class="need head row-odd"><td class="need head"><div class="needs_head line-block">
