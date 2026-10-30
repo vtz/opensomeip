@@ -49,9 +49,12 @@ struct E2EConfig {
      * Default 64 bits (8 bytes) places the header immediately after Return
      * Code (wire byte 16).
      *
-     * Non-default Offset values are not representable in Message today.
-     * E2EProtection::protect/validate return Result::NOT_IMPLEMENTED for
-     * any value other than DEFAULT_OFFSET_BITS.
+     * Byte-aligned values of at least 64 are placed by Message: the header
+     * starts at wire byte 8 + offset_bits/8, and the bytes between Return
+     * Code and that index are an unprotected prefix (not application
+     * payload). offset_bits < 64 or a non-multiple of 8 is
+     * Result::INVALID_ARGUMENT. A prefix larger than
+     * SOMEIP_MAX_E2E_PREFIX_SIZE is Result::NOT_IMPLEMENTED.
      */
     static constexpr uint32_t DEFAULT_OFFSET_BITS = 64;
     uint32_t offset_bits{DEFAULT_OFFSET_BITS};

@@ -568,14 +568,15 @@ OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_e2e_create(opensomeip_e2e_t**
 OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_e2e_destroy(opensomeip_e2e_t* e);
 
 /** @implements REQ_CAPI_013
- *  Protect message (adds E2E header). */
+ *  Protect a message with the default E2E layout (12-byte header, Offset 64).
+ *  Offset and other header sizes are C++-only; this ABI has no Offset field. */
 OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_e2e_protect(opensomeip_e2e_t* e,
                                             opensomeip_message_t* msg,
                                             uint16_t data_id,
                                             uint32_t counter);
 
 /** @implements REQ_CAPI_013
- *  Check message E2E protection. */
+ *  Check E2E protection on the default layout (12-byte header, Offset 64). */
 OPENSOMEIP_CAPI_API opensomeip_result_t opensomeip_e2e_check(opensomeip_e2e_t* e,
                                           const opensomeip_message_t* msg,
                                           uint16_t data_id);

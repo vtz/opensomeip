@@ -58,9 +58,9 @@ public:
     /**
      * @brief Get the size of the E2E header for this profile
      *
-     * The shipped Message / E2EHeader contract is a fixed 12-byte header.
-     * Plugins that return a size other than E2EHeader::get_header_size()
-     * cause E2EProtection::protect/validate to return Result::NOT_IMPLEMENTED.
+     * Message stores up to SOMEIP_MAX_E2E_HEADER_SIZE profile bytes.
+     * A larger size makes E2EProtection::protect/validate return
+     * Result::NOT_IMPLEMENTED. The basic profile returns 12.
      *
      * @return Header size in bytes
      */
