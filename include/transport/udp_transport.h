@@ -129,6 +129,7 @@ public:
     Result start() override;
     Result stop() override;
     bool is_running() const override;
+    IMulticastTransport* multicast_transport() noexcept override { return this; }
 
     // Multicast support
     /**

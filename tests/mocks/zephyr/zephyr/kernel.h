@@ -133,6 +133,14 @@ inline void k_thread_abort(k_thread* thread) {
     thread->started = false;
 }
 
+inline k_tid_t k_current_get() {
+    // Distinct per host thread: each std::thread that calls this gets its own
+    // thread_local instance, giving a stable per-thread identity usable for
+    // reentrancy checks, the same way a real k_tid_t would.
+    thread_local k_thread self_sentinel;
+    return &self_sentinel;
+}
+
 /* ---- k_msleep ---- */
 
 inline int32_t k_msleep(int32_t ms) {

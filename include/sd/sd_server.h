@@ -16,6 +16,7 @@
 
 #include "sd_types.h"
 #include "transport/endpoint.h"
+#include "transport/transport.h"
 
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
@@ -45,6 +46,15 @@ public:
     explicit SdServer(const SdConfig& config = SdConfig());
 
     /**
+     * @brief Borrow an exclusive, stopped transport instead of creating UDP.
+     * @param config SD configuration. The supplied transport owns the local bind.
+     * @param transport Must outlive this server, implement multicast membership,
+     *        and be stopped with no listener. The server manages start/stop.
+     * @see transport::ITransport for the injected-transport lifecycle contract.
+     */
+    SdServer(const SdConfig& config, transport::ITransport& transport);
+
+    /**
      * @brief Destructor
      */
     ~SdServer();
@@ -60,6 +70,12 @@ public:
      * @return true on success, false on failure
      */
     bool initialize();
+
+    /**
+     * @brief Result of the last transport start/stop.
+     * @return SUCCESS initially, otherwise the last lifecycle outcome.
+     */
+    Result get_transport_result() const;
 
     /**
      * @brief Shutdown the SD server

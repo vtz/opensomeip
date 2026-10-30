@@ -18,6 +18,30 @@ if(BUILD_TESTS)
     add_executable(test_rpc test_rpc.cpp)
     target_link_libraries(test_rpc someip-rpc gtest_main)
 
+    add_executable(test_transport_injection test_transport_injection.cpp)
+    target_link_libraries(test_transport_injection opensomeip gtest_main)
+    add_test(NAME TransportInjectionTest COMMAND test_transport_injection)
+
+    add_executable(test_sd_injection test_sd_injection.cpp)
+    target_link_libraries(test_sd_injection opensomeip gtest_main)
+    add_test(NAME SdInjectionTest COMMAND test_sd_injection)
+    set_tests_properties(TransportInjectionTest PROPERTIES TIMEOUT 30)
+
+    add_executable(test_subscriber_dispatch test_subscriber_dispatch.cpp)
+    target_link_libraries(test_subscriber_dispatch opensomeip gtest_main)
+    add_test(NAME SubscriberDispatchTest COMMAND test_subscriber_dispatch)
+    set_tests_properties(SubscriberDispatchTest PROPERTIES TIMEOUT 60)
+
+    add_executable(test_rpc_sync_lifetime test_rpc_sync_lifetime.cpp)
+    target_link_libraries(test_rpc_sync_lifetime opensomeip gtest_main)
+    add_test(NAME RpcSyncLifetimeTest COMMAND test_rpc_sync_lifetime)
+    set_tests_properties(RpcSyncLifetimeTest PROPERTIES TIMEOUT 60)
+
+    add_executable(test_facade_teardown test_facade_teardown.cpp)
+    target_link_libraries(test_facade_teardown opensomeip gtest_main)
+    add_test(NAME FacadeTeardownTest COMMAND test_facade_teardown)
+    set_tests_properties(FacadeTeardownTest PROPERTIES TIMEOUT 60)
+
 # SD tests
 add_executable(test_sd test_sd.cpp)
 target_link_libraries(test_sd someip-sd gtest_main)
@@ -61,7 +85,9 @@ target_link_libraries(test_e2e someip-core gtest_main)
     if(WIN32)
         set(_SOCKET_TESTS
             test_platform_threading test_udp_transport test_tcp_transport
-            test_rpc test_sd test_events)
+            test_rpc test_sd test_events
+            test_transport_injection test_sd_injection test_subscriber_dispatch
+            test_facade_teardown test_rpc_sync_lifetime)
         foreach(_t ${_SOCKET_TESTS})
             target_sources(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winsock_init.cpp)
         endforeach()
@@ -104,6 +130,35 @@ target_link_libraries(test_e2e someip-core gtest_main)
             ${CMAKE_CURRENT_SOURCE_DIR}/mocks/freertos
             ${CMAKE_SOURCE_DIR}/include/platform/freertos
         )
+
+        add_executable(test_freertos_sleep test_freertos_sleep.cpp)
+        target_include_directories(test_freertos_sleep BEFORE PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/mocks/freertos
+            ${CMAKE_SOURCE_DIR}/include
+            ${CMAKE_SOURCE_DIR}/include/platform/dynamic
+            ${CMAKE_SOURCE_DIR}/include/platform/freertos)
+        target_compile_definitions(test_freertos_sleep PRIVATE configTICK_RATE_HZ=100)
+        target_link_libraries(test_freertos_sleep PRIVATE gtest_main Threads::Threads)
+        add_test(NAME FreeRtosSleepTest COMMAND test_freertos_sleep)
+
+        foreach(tick_bits 16 32)
+            foreach(tick_rate 100 128)
+                set(sleep_target test_freertos_sleep_${tick_bits}_${tick_rate})
+                add_executable(${sleep_target} test_freertos_sleep_chunks.cpp)
+                target_include_directories(${sleep_target} BEFORE PRIVATE
+                    ${CMAKE_CURRENT_SOURCE_DIR}/mocks/freertos
+                    ${CMAKE_SOURCE_DIR}/include
+                    ${CMAKE_SOURCE_DIR}/include/platform/dynamic
+                    ${CMAKE_SOURCE_DIR}/include/platform/freertos)
+                target_compile_definitions(${sleep_target} PRIVATE
+                    configTICK_RATE_HZ=${tick_rate}
+                    configUSE_16_BIT_TICKS=$<STREQUAL:${tick_bits},16>
+                    SOMEIP_FREERTOS_CAPTURE_DELAYS)
+                target_link_libraries(${sleep_target} PRIVATE gtest_main Threads::Threads)
+                add_test(NAME FreeRtosSleepChunks${tick_bits}_${tick_rate} COMMAND ${sleep_target})
+                set_tests_properties(FreeRtosSleepChunks${tick_bits}_${tick_rate} PROPERTIES TIMEOUT 10)
+            endforeach()
+        endforeach()
 
         # ThreadX PAL via mock
         add_pal_mock_test(test_pal_threadx_mock
@@ -237,7 +292,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
             target_include_directories(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
         endforeach()
         if(WIN32)
-            foreach(_t test_capi_udp_hello test_capi_rpc_roundtrip)
+            foreach(_t test_capi_udp_hello test_capi_rpc_roundtrip test_capi_events)
                 target_sources(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winsock_init.cpp)
             endforeach()
         endif()

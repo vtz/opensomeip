@@ -28,18 +28,18 @@ to implementation and test coverage. No safety certification is claimed.
 
 | Metric | Value | Assessment |
 |--------|-------|------------|
-| Total requirements (RST) | 699 | - |
-| Fully traced (code + tests) | 619 (88.6%) | Good |
-| Requirements with code refs | 622 | Good |
-| Requirements with test coverage | 687 | Good |
+| Total requirements (RST) | 701 | - |
+| Fully traced (code + tests) | 620 (88.4%) | Good |
+| Requirements with code refs | 624 | Good |
+| Requirements with test coverage | 688 | Good |
 | Orphaned (no code annotation) | 77 | Needs improvement |
-| Missing spec links | 3 | REQ_MSG_150, REQ_TRANSPORT_026, REQ_E2E_RECEIVE_001 |
-| Code references extracted | 627 | - |
-| Test references extracted | 752 | - |
+| Missing spec links | 4 | REQ_MSG_150, REQ_TRANSPORT_026, REQ_E2E_RECEIVE_001, REQ_TRANSPORT_030 |
+| Code references extracted | 629 | - |
+| Test references extracted | 753 | - |
 
 ### Status
 
-619 of 699 requirements are fully traced with both code implementation references
+620 of 701 requirements are fully traced with both code implementation references
 and test coverage annotations. 77 requirements remain without code annotations.
 The extraction script properly parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations.
@@ -57,8 +57,8 @@ The extraction script properly parses comma-separated requirement IDs from
 | Message Header (REQ_MSG_*) | 130 |
 | Serialization (REQ_SER_*) | 115 |
 | Transport Protocol (REQ_TP_*) | 83 |
-| Platform (REQ_PLATFORM_*, REQ_PAL_*) | 73 |
-| Transport (REQ_TRANSPORT_*) | 47 |
+| Platform (REQ_PLATFORM_*, REQ_PAL_*) | 74 |
+| Transport (REQ_TRANSPORT_*) | 48 |
 | Compatibility (REQ_COMPAT_*) | 17 |
 | C ABI (REQ_CAPI_*) | 13 |
 | Architecture (REQ_ARCH_*) | 8 |
@@ -121,12 +121,12 @@ Current validated traceability metrics should be read from the most recent
 
 - Implement remaining serialization requirements (REQ_SER_090 through REQ_SER_107)
 - Add `@implements` annotations for the 77 orphaned requirements
-- Add test coverage for 12 requirements without `@tests` annotations
+- Add test coverage for 13 requirements without `@tests` annotations
 - Add performance, stress, and fault-injection tests
 
 ### Long-term
 
-- Achieve >95% full traceability (currently 88.6%)
+- Achieve >95% full traceability (currently 88.4%)
 - Implement advanced SD features (load balancing, IPv6)
 - Add cross-platform test coverage (FreeRTOS, ThreadX hardware)
 - Implement Win32 and LwIP platform backends

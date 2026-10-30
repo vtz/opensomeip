@@ -25,8 +25,10 @@
 #include "someip/message.h"
 #include "someip/types.h"
 #include "transport/endpoint.h"
+#include "transport/multicast_transport.h"
 #include "transport/transport.h"
 #include "transport/udp_transport.h"
+#include "../transport/transport_session.h"
 
 #include <algorithm>
 #include <atomic>
@@ -64,18 +66,34 @@ class SdClientImpl : public transport::ITransportListener {
 public:
     explicit SdClientImpl(const SdConfig& config)
         : config_(config),
-          transport_(transport::Endpoint("0.0.0.0", config.multicast_port),
-                     make_sd_transport_config(config)),
+          transport_session_(transport::Endpoint("0.0.0.0", config.multicast_port),
+                             make_sd_transport_config(config)),
+          transport_(transport_session_.get()),
+          multicast_(transport_session_.multicast()),
           next_request_id_(1),
           running_(false),
           initial_wait_until_(std::chrono::steady_clock::now()) {
+    }
 
-        transport_.set_listener(this);
+    SdClientImpl(const SdConfig& config, transport::ITransport& transport)
+        : config_(config),
+          transport_session_(transport),
+          transport_(transport_session_.get()),
+          multicast_(transport_session_.multicast()),
+          next_request_id_(1),
+          running_(false),
+          initial_wait_until_(std::chrono::steady_clock::now()) {
     }
 
     ~SdClientImpl() override
     {
+#ifdef __cpp_exceptions
+        try {
+            shutdown();
+        } catch (...) {}  // NOLINT(bugprone-empty-catch) destructor must not throw
+#else
         shutdown();
+#endif
     }
 
     SdClientImpl(const SdClientImpl&) = delete;
@@ -89,10 +107,12 @@ public:
             return true;
         }
 
-        // stop() clears the listener; reinstall before any retry of initialize().
-        transport_.set_listener(this);
+        // A borrowed transport must be able to join the SD multicast group.
+        if (multicast_ == nullptr) {
+            return false;
+        }
 
-        if (transport_.start() != Result::SUCCESS) {
+        if (transport_session_.start(*this) != Result::SUCCESS) {
             return false;
         }
 
@@ -100,7 +120,7 @@ public:
         // receive SD multicast cannot discover anything, and initialize()
         // returning false is already an explicit, caller-visible failure.
         if (!join_multicast_group()) {
-            transport_.stop();
+            transport_session_.stop();
             return false;
         }
 
@@ -131,8 +151,13 @@ public:
     }
 
     /** @implements REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094 */
+    Result get_transport_result() const {
+        return transport_session_.result();
+    }
+
     void shutdown() {
         if (!running_) {
+            transport_session_.stop();
             return;
         }
 
@@ -153,7 +178,7 @@ public:
 
         leave_multicast_group();
 
-        transport_.stop();
+        transport_session_.stop();
     }
 
     /** @implements REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_127, REQ_SD_131, REQ_SD_210, REQ_SD_211, REQ_SD_212 */
@@ -748,11 +773,25 @@ private:
     }
 
     bool join_multicast_group() {
-        return transport_.join_multicast_group(config_.multicast_address) == Result::SUCCESS;
+        return join_group(config_.multicast_address) == Result::SUCCESS;
     }
 
     void leave_multicast_group() {
-        (void)transport_.leave_multicast_group(config_.multicast_address);
+        (void)leave_group(config_.multicast_address);
+    }
+
+    Result join_group(const platform::String<>& group) {
+        if (multicast_ == nullptr) {
+            return Result::NOT_IMPLEMENTED;
+        }
+        return multicast_->join_multicast_group(group);
+    }
+
+    Result leave_group(const platform::String<>& group) {
+        if (multicast_ == nullptr) {
+            return Result::NOT_IMPLEMENTED;
+        }
+        return multicast_->leave_multicast_group(group);
     }
 
     struct OwnedMulticastMembership {
@@ -823,7 +862,7 @@ private:
             }
         }
 
-        if (transport_.join_multicast_group(group) == Result::SUCCESS) {
+        if (join_group(group) == Result::SUCCESS) {
             entry->membership.note_join_success();
         } else {
             entry->membership.note_join_failure(rejoin_config(),
@@ -845,7 +884,7 @@ private:
                 --it->owner_count;
             }
             if (it->owner_count == 0) {
-                (void)transport_.leave_multicast_group(group);
+                (void)leave_group(group);
                 it->membership.cancel();
                 multicast_memberships_.erase(it);
                 if (multicast_memberships_.size() < MAX_MULTICAST_MEMBERSHIPS) {
@@ -859,7 +898,7 @@ private:
     void clear_all_multicast_memberships() {
         platform::ScopedLock const lock(multicast_memberships_mutex_);
         for (auto& entry : multicast_memberships_) {
-            (void)transport_.leave_multicast_group(entry.group);
+            (void)leave_group(entry.group);
             entry.membership.cancel();
         }
         multicast_memberships_.clear();
@@ -875,7 +914,7 @@ private:
             if (!entry.membership.due(now)) {
                 continue;
             }
-            const bool ok = transport_.join_multicast_group(entry.group) == Result::SUCCESS;
+            const bool ok = join_group(entry.group) == Result::SUCCESS;
             entry.membership.note_rejoin_result(ok, cfg, now);
         }
     }
@@ -1130,7 +1169,9 @@ private:
     }
 
     SdConfig config_;
-    transport::UdpTransport transport_;
+    transport::detail::TransportSession transport_session_;
+    transport::ITransport& transport_;
+    transport::IMulticastTransport* multicast_;
 
     platform::UnorderedMap<uint16_t, ServiceSubscription, 32> service_subscriptions_;
     mutable platform::Mutex subscriptions_mutex_;
@@ -1377,6 +1418,16 @@ SdClient::SdClient(const SdConfig& config)
 }
 #endif
 
+SdClient::SdClient(const SdConfig& config, transport::ITransport& transport)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) SdClientImpl(config, transport);
+}
+#else
+    : impl_(std::make_unique<SdClientImpl>(config, transport)) {
+}
+#endif
+
 SdClient::~SdClient() {
 #ifdef SOMEIP_STATIC_ALLOC
     impl()->~SdClientImpl();
@@ -1385,6 +1436,10 @@ SdClient::~SdClient() {
 
 bool SdClient::initialize() {
     return impl()->initialize();
+}
+
+Result SdClient::get_transport_result() const {
+    return impl()->get_transport_result();
 }
 
 MulticastState SdClient::eventgroup_multicast_state() const {
