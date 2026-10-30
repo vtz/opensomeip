@@ -49,7 +49,13 @@ class TransportSession {
     ~TransportSession()
     {
         // Facades must still stop before destroying their callback-owned state.
+#ifdef __cpp_exceptions
+        try {
+            stop();
+        } catch (...) {}  // NOLINT(bugprone-empty-catch) destructor must not throw
+#else
         stop();
+#endif
     }
 
     TransportSession(const TransportSession&) = delete;

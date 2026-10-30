@@ -351,6 +351,36 @@ TEST(FacadeTeardownTest, RpcServerDestructorSwallowsThrowOnRetryPath)
     }
     SUCCEED();
 }
+
+/**
+ * @brief ~TransportSession is the last stop if a facade did not stop the session.
+ *        A throwing backend must not escape that destructor.
+ */
+TEST(TransportSessionDirectTest, DestructorSwallowsThrowingStop)
+{
+    FakeTransport transport;
+    struct Listener : public ITransportListener {
+        void on_message_received(MessagePtr, const Endpoint&) override
+        {
+        }
+        void on_connection_lost(const Endpoint&) override
+        {
+        }
+        void on_connection_established(const Endpoint&) override
+        {
+        }
+        void on_error(Result) override
+        {
+        }
+    } listener;
+
+    {
+        transport::detail::TransportSession session(transport);
+        ASSERT_EQ(session.start(listener), Result::SUCCESS);
+        transport.throw_on_stop = true;
+    }
+    EXPECT_EQ(transport.stop_calls.load(), 1u);
+}
 #endif  // __cpp_exceptions
 
 /**

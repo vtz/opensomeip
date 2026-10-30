@@ -87,7 +87,13 @@ public:
 
     ~SdClientImpl() override
     {
+#ifdef __cpp_exceptions
+        try {
+            shutdown();
+        } catch (...) {}  // NOLINT(bugprone-empty-catch) destructor must not throw
+#else
         shutdown();
+#endif
     }
 
     SdClientImpl(const SdClientImpl&) = delete;

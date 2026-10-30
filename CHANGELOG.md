@@ -102,6 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   A backend that reports success while still running yields `INVALID_STATE`
   from both `stop()` and `get_transport_result()`, including failed-start
   cleanup.
+- **SD / Transport**: `SdClient`, `SdServer`, and `TransportSession` destructors
+  swallow a throwing `ITransport::stop()`, matching the RPC and event facades.
 - **Events**: Reject distinct instance/eventgroup subscriptions for the same service
   on one subscriber, rather than choosing an arbitrary callback for notifications
   lacking that identity. Exact-key renewal and different services remain supported.

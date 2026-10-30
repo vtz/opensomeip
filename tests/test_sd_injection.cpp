@@ -18,6 +18,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <stdexcept>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -78,6 +79,9 @@ class MulticastFake final : public ITransport, public IMulticastTransport {
     {
         ++stops;
         running_ = false;
+        if (throw_on_stop) {
+            throw std::runtime_error("MulticastFake::stop failed");
+        }
         return Result::SUCCESS;
     }
 
@@ -100,6 +104,7 @@ class MulticastFake final : public ITransport, public IMulticastTransport {
 
     Result send_result{Result::SUCCESS};
     Result join_result{Result::SUCCESS};
+    bool throw_on_stop{false};
     std::atomic<unsigned> starts{0};
     std::atomic<unsigned> stops{0};
     std::vector<Message> messages;
@@ -258,3 +263,27 @@ TEST(SdInjection, FailedClientJoinStopsTheBorrowedTransport)
     ASSERT_TRUE(replacement.initialize());
     replacement.shutdown();
 }
+
+#ifdef __cpp_exceptions
+/**
+ * @test_case TC_SD_DESTRUCTOR_EXCEPTION_FIREWALL
+ * @tests REQ_ARCH_002
+ * @brief SD destructors must not terminate when an injected stop() throws.
+ */
+TEST(SdInjection, DestructorSwallowsThrowingTransportStop)
+{
+    MulticastFake client_net;
+    MulticastFake server_net;
+    const auto config = immediate_config();
+    {
+        sd::SdClient client(config, client_net);
+        sd::SdServer server(config, server_net);
+        ASSERT_TRUE(client.initialize());
+        ASSERT_TRUE(server.initialize());
+        client_net.throw_on_stop = true;
+        server_net.throw_on_stop = true;
+    }
+    EXPECT_GE(client_net.stops.load(), 1u);
+    EXPECT_GE(server_net.stops.load(), 1u);
+}
+#endif
