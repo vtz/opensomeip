@@ -2993,7 +2993,7 @@
 - <code>uint32_t profile_id</code> - Profile identifier (0 = basic profile)
 - <code>std::string profile_name</code> - Profile name ("basic" by default)
 - <code>uint16_t data_id</code> - Data ID for identifying protected data
-- <code>uint32_t offset_bits</code> - Spec Offset of the E2E header, in bits from the start of the Length-covered region (Request ID). Default: <code>E2EConfig::DEFAULT_OFFSET_BITS</code> (64). Non-default values return <code>Result::NOT_IMPLEMENTED</code> from <code>E2EProtection</code>.
+- <code>uint32_t offset_bits</code> - Spec Offset of the E2E header, in bits from the start of the Length-covered region (Request ID). Default: <code>E2EConfig::DEFAULT_OFFSET_BITS</code> (64), which is wire byte 16. Byte-aligned values above 64 place the header after an unprotected prefix supplied with <code>Message::set_e2e_unprotected_prefix</code>. <code>offset_bits &lt; 64</code> or a non-multiple of 8 returns <code>Result::INVALID_ARGUMENT</code>. A prefix larger than <code>SOMEIP_MAX_E2E_PREFIX_SIZE</code> returns <code>Result::NOT_IMPLEMENTED</code>.
 - <code>bool enable_crc</code> - Enable CRC calculation
 - <code>bool enable_counter</code> - Enable counter mechanism
 - <code>bool enable_freshness</code> - Enable freshness value
@@ -3010,7 +3010,7 @@
 - <code>uint16_t data_id</code> - Data ID for message identification
 - <code>uint16_t freshness_value</code> - Freshness value for stale data detection</p>
 <h3 id="e2eprofile">E2EProfile<a class="headerlink" href="#e2eprofile" title="Permanent link">&para;</a></h3>
-<p>Abstract interface for E2E protection profiles. Allows external profiles (e.g., AUTOSAR) to be plugged in. Plugins must return <code>E2EHeader::get_header_size()</code> (12 bytes); other sizes return <code>Result::NOT_IMPLEMENTED</code> because <code>Message</code> stores a fixed <code>E2EHeader</code>.</p>
+<p>Abstract interface for E2E protection profiles. Allows external profiles (e.g., AUTOSAR) to be plugged in. <code>get_header_size()</code> may be any size up to <code>SOMEIP_MAX_E2E_HEADER_SIZE</code> (default 64). The basic profile returns 12. A larger size returns <code>Result::NOT_IMPLEMENTED</code>. <code>Message::get_e2e_header()</code> is populated only for a 12-byte header; other sizes are raw bytes via <code>e2e_header_bytes()</code>.</p>
 <h3 id="e2eprofileregistry">E2EProfileRegistry<a class="headerlink" href="#e2eprofileregistry" title="Permanent link">&para;</a></h3>
 <p>Registry for managing E2E protection profiles.</p>
 <p><strong>Methods:</strong>
@@ -3038,10 +3038,10 @@
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <p>E2E protection returns <code>Result</code> codes:
 - <code>Result::SUCCESS</code> - Operation successful
-- <code>Result::INVALID_ARGUMENT</code> - CRC mismatch, wrong data ID, replay, or true caller errors
-- <code>Result::NOT_IMPLEMENTED</code> - non-default Offset (<code>offset_bits</code>) or non-12-byte profile header
+- <code>Result::NOT_INITIALIZED</code> - no profile registered (checked first)
+- <code>Result::INVALID_ARGUMENT</code> - Offset overlaps the SOME/IP header, Offset is not a multiple of 8, CRC mismatch, wrong data ID, replay, or other caller errors
+- <code>Result::NOT_IMPLEMENTED</code> - prefix or profile header above the compile-time cap
 - <code>Result::TIMEOUT</code> - Freshness timeout detected
-- <code>Result::NOT_INITIALIZED</code> - Basic profile not initialized
 - Other error codes as appropriate</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>

@@ -2783,7 +2783,22 @@ and can be overridden via CMake <code>-D</code> flags or CMakePresets cache vari
 <tr>
 <td><code>SOMEIP_BYTE_POOL_MEDIUM_COUNT</code></td>
 <td>16</td>
-<td>Medium buffer slots (1500 B each)</td>
+<td>Medium buffer slots (1600 B each)</td>
+</tr>
+<tr>
+<td><code>SOMEIP_MAX_E2E_HEADER_SIZE</code></td>
+<td>64</td>
+<td>Max E2E profile header stored in <code>Message</code></td>
+</tr>
+<tr>
+<td><code>SOMEIP_MAX_E2E_PREFIX_SIZE</code></td>
+<td>64</td>
+<td>Max unprotected bytes between Return Code and the E2E header</td>
+</tr>
+<tr>
+<td><code>SOMEIP_MAX_MESSAGE_SIZE</code></td>
+<td>1544</td>
+<td>16 + prefix cap + header cap + <code>SOMEIP_MAX_PAYLOAD_SIZE</code></td>
 </tr>
 <tr>
 <td><code>SOMEIP_BYTE_POOL_LARGE_COUNT</code></td>

@@ -2371,6 +2371,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2454,7 +2465,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#changed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -2537,7 +2548,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#changed_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -2587,7 +2598,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
+  <a href="#changed_3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -2648,7 +2659,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_3" class="md-nav__link">
+  <a href="#changed_4" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -2698,7 +2709,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_4" class="md-nav__link">
+  <a href="#changed_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -3064,6 +3075,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3147,7 +3169,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#changed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -3230,7 +3252,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#changed_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -3280,7 +3302,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_2" class="md-nav__link">
+  <a href="#changed_3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -3341,7 +3363,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_3" class="md-nav__link">
+  <a href="#changed_4" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -3391,7 +3413,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_4" class="md-nav__link">
+  <a href="#changed_5" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -3489,6 +3511,28 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
   into stack-managed validation. Zephyr links that receive source whenever
   UDP or TCP is enabled.</p>
 </li>
+<li>
+<p><strong>E2E</strong>: Byte-aligned Offsets of at least 64 bits and profile headers up to
+  <code>SOMEIP_MAX_E2E_HEADER_SIZE</code> (64) serialize and deserialize. Bytes between
+  Return Code and the header are an unprotected prefix, stored separately
+  from the application payload. Length covers that prefix, the header, and
+  the payload. <code>offset_bits &lt; 64</code> and Offsets that are not a multiple of 8
+  return <code>INVALID_ARGUMENT</code>. Prefixes or headers above the static caps return
+  <code>NOT_IMPLEMENTED</code>. CRC, Data ID, and replay failures stay
+  <code>INVALID_ARGUMENT</code>. <code>NOT_INITIALIZED</code> still wins when no profile is
+  registered. Receive layout comes from <code>E2EParseOptions</code>; <code>expect_e2e=true</code>
+  remains the default 12-byte Offset-64 layout. The C ABI is unchanged
+  (Offset is not a C field). A message that already has an E2E header is not
+  TP-segmented: default E2E and TP both start at wire byte 16, and a
+  non-default Offset does not lift that refusal
+  (<a href="https://github.com/vtz/opensomeip/issues/339">#339</a>).</p>
+</li>
+</ul>
+<h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Static allocation</strong>: <code>SOMEIP_MAX_MESSAGE_SIZE</code> includes the maximum E2E
+  prefix and header (default 1544 = 16 + 64 + 64 + 1400). The default medium
+  byte-pool slot is 1600 bytes so that message fits the medium tier.</li>
 </ul>
 <h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
 <ul>
@@ -3938,7 +3982,7 @@ stable.</p>
   <a href="https://github.com/vtz/opensomeip/issues/327">#327</a>,
   <a href="https://github.com/vtz/opensomeip/pull/328">#328</a>).</li>
 </ul>
-<h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
+<h3 id="changed_1">Changed<a class="headerlink" href="#changed_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Coverity Scan</strong>: Re-enable the weekly Monday 04:00 UTC schedule and
   <code>push</code> to <code>main</code> now that scan.coverity.com is serving the project again
@@ -4049,7 +4093,7 @@ SOME/IP and SOME/IP-SD specifications.</p>
 <li><strong>Code Quality</strong>: Resolve all remaining clang-tidy violations — threshold reduced to 0 across 9 remediation batches (#222, #225, #227, #228, #229, #230, #231, #232, #234, #236)</li>
 <li><strong>CI Compatibility</strong>: Support Fedora container jobs on fork PRs (#183)</li>
 </ul>
-<h3 id="changed_1">Changed<a class="headerlink" href="#changed_1" title="Permanent link">&para;</a></h3>
+<h3 id="changed_2">Changed<a class="headerlink" href="#changed_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>CI Architecture</strong>: Trim CI matrix — Fedora, Renode skip, reporting cleanup (#212); extract Python 3.12 installation to a reusable composite action (#215)</li>
 <li><strong>Documentation</strong>: Convert PlantUML diagrams to Mermaid and add PAL architecture diagram (#220); rewrite TEST_REPORTING.md to reflect current CI reporting architecture (#217)</li>
@@ -4076,7 +4120,7 @@ SOME/IP and SOME/IP-SD specifications.</p>
 <li><strong>RPM Packaging</strong>: Use <code>git archive</code> instead of <code>tar</code> to prevent build failures; remove unnecessary <code>srpm_build_deps</code> (#157)</li>
 <li><strong>CI Stability</strong>: Pin Zephyr to v4.3.0 for SDK 0.17.0 compatibility (#98); resolve Python e2e/system test failures (#143); fix JUnit XML discovery (#140)</li>
 </ul>
-<h3 id="changed_2">Changed<a class="headerlink" href="#changed_2" title="Permanent link">&para;</a></h3>
+<h3 id="changed_3">Changed<a class="headerlink" href="#changed_3" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>Build Consolidation</strong>: Merged per-layer libraries into single <code>libopensomeip</code> static target (#126)</li>
 <li><strong>CI Architecture</strong>: Consolidated workflows into single parent workflow for unified artifacts (#125); added ASan/UBSan to host workflow (#128); added Windows (MSVC) and Fedora 42 to build matrix (#64, #90)</li>
@@ -4104,7 +4148,7 @@ SOME/IP and SOME/IP-SD specifications.</p>
 <li><strong>Test Reliability</strong>: Check <code>tx_thread_create</code> return value and fail fast on error (#42)</li>
 <li><strong>CI Fixes</strong>: Correct Coverity project name, download endpoint, and form encoding (#57, #59)</li>
 </ul>
-<h3 id="changed_3">Changed<a class="headerlink" href="#changed_3" title="Permanent link">&para;</a></h3>
+<h3 id="changed_4">Changed<a class="headerlink" href="#changed_4" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>CI Architecture</strong>: Split monolithic workflow into per-platform files (host, FreeRTOS, ThreadX, Zephyr) (#31)</li>
 <li><strong>CI Security</strong>: Scope write permissions to PR-comment job only (#43)</li>
@@ -4198,7 +4242,7 @@ SOME/IP and SOME/IP-SD specifications.</p>
 <li>Fixed CI hang issues</li>
 <li>Dropped Windows job (out of scope)</li>
 </ul>
-<h3 id="changed_4">Changed<a class="headerlink" href="#changed_4" title="Permanent link">&para;</a></h3>
+<h3 id="changed_5">Changed<a class="headerlink" href="#changed_5" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Removed vsomeip-specific references from infra_test README</li>
 <li>Updated documentation for better clarity and accuracy</li>

@@ -3261,13 +3261,16 @@
 </ol>
 <h2 id="implementation-details">Implementation Details<a class="headerlink" href="#implementation-details" title="Permanent link">&para;</a></h2>
 <h3 id="e2e-header-insertion">E2E Header Insertion<a class="headerlink" href="#e2e-header-insertion" title="Permanent link">&para;</a></h3>
-<p>According to <code>feat_req_someip_102</code>, the E2E header is inserted after the Return Code field. <code>E2EConfig::offset_bits</code> is the spec Offset in bits from the start of the Length-covered region (Request ID); the default of 64 bits places the header between Return Code and Payload. <code>Message</code> only represents this default layout. <code>E2EProtection</code> returns <code>Result::NOT_IMPLEMENTED</code> for any other Offset and for any plugin whose <code>get_header_size()</code> is not 12 bytes. <code>Result::NOT_INITIALIZED</code> is returned first when no profile is registered. Implementing those layouts is <a href="https://github.com/vtz/opensomeip/issues/339">#339</a>.</p>
+<p>According to <code>feat_req_someip_102</code>, the E2E header position is the configured Offset in bits from the start of the Length-covered region (Request ID). The default of 64 bits places the header immediately after Return Code (wire byte 16). A larger byte-aligned Offset places the header at wire byte <code>8 + offset_bits/8</code>. The bytes between Return Code and that index are an unprotected prefix: they are not application payload and the basic profile does not include them in the CRC. Length (<code>feat_req_someip_77</code>) still covers the prefix, the header, and the payload.</p>
+<p><code>Message</code> stores profile bytes up to <code>SOMEIP_MAX_E2E_HEADER_SIZE</code> (64) and a prefix up to <code>SOMEIP_MAX_E2E_PREFIX_SIZE</code> (64). The 12-byte <code>E2EHeader</code> view is only for a 12-byte header. Deserialize does not infer Offset or size from the datagram: <code>expect_e2e=true</code> is the default layout, and any other layout is <code>E2EParseOptions</code>.</p>
+<p><code>Result::NOT_INITIALIZED</code> is returned first when no profile is registered. <code>offset_bits &lt; 64</code> (overlap with the SOME/IP header) and a non-multiple of 8 return <code>Result::INVALID_ARGUMENT</code>. A prefix or header above the compile-time cap returns <code>Result::NOT_IMPLEMENTED</code>. CRC, Data ID, and replay failures stay <code>Result::INVALID_ARGUMENT</code>.</p>
+<p>SOME/IP-TP and the default E2E layout both start at wire byte 16. A message that already carries an E2E header is not segmented, including when Offset is not 64. Reassembly finishes before E2E parse. The C ABI remains the default layout and has no Offset field.</p>
 <h3 id="crc-calculation">CRC Calculation<a class="headerlink" href="#crc-calculation" title="Permanent link">&para;</a></h3>
 <p>CRC algorithms implemented:
 - <strong>SAE-J1850</strong>: 8-bit CRC (polynomial 0x1D)
 - <strong>ITU-T X.25</strong>: 16-bit CRC (polynomial 0x1021, CCITT)
 - <strong>CRC32</strong>: 32-bit CRC (polynomial 0x04C11DB7)</p>
-<p>CRC covers: Message ID, Length, Request ID, Protocol Version, Interface Version, Message Type, Return Code, and Payload. The E2E header itself is NOT included in CRC calculation.</p>
+<p>CRC covers: Message ID, Length, Request ID, Protocol Version, Interface Version, Message Type, Return Code, and application payload. The E2E header and the unprotected prefix are not included. The Length value inside the CRC does include the prefix and the header.</p>
 <h3 id="counter-management">Counter Management<a class="headerlink" href="#counter-management" title="Permanent link">&para;</a></h3>
 <p>Sequence counters provide replay detection:
 - Incremented for each protected message
@@ -3317,10 +3320,10 @@ safety-critical applications without proper validation.</p>
 </ul>
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <p>E2E protection errors are propagated via <code>Result</code> codes:
-- <code>Result::INVALID_ARGUMENT</code> - CRC mismatch, wrong data ID, or true caller errors
-- <code>Result::NOT_IMPLEMENTED</code> - non-default Offset (<code>offset_bits</code>) or non-12-byte profile header
-- <code>Result::TIMEOUT</code> - Freshness timeout
-- <code>Result::NOT_INITIALIZED</code> - Profile not registered</p>
+- <code>Result::NOT_INITIALIZED</code> - Profile not registered (checked first)
+- <code>Result::INVALID_ARGUMENT</code> - Offset overlaps the SOME/IP header, Offset is not a multiple of 8, CRC mismatch, wrong data ID, replay, or other caller errors
+- <code>Result::NOT_IMPLEMENTED</code> - byte-aligned Offset or profile header that exceeds <code>SOMEIP_MAX_E2E_PREFIX_SIZE</code> / <code>SOMEIP_MAX_E2E_HEADER_SIZE</code>
+- <code>Result::TIMEOUT</code> - Freshness timeout</p>
 <h2 id="receive-path">Receive path<a class="headerlink" href="#receive-path" title="Permanent link">&para;</a></h2>
 <p>Transports do not infer E2E from the datagram. <code>E2EReceiveTable</code> on the
 transport config lists protected Service ID and Method/Event ID values.
