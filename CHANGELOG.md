@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Transport**: `UdpTransportConfig::injected_multicast_join_errno`, when
+  non-zero, makes `join_multicast_group` return `MULTICAST_ERROR` and record
+  that errno without calling `IP_ADD_MEMBERSHIP`. Zero, the default, keeps
+  the socket membership call
+  ([#349](https://github.com/vtz/opensomeip/issues/349)).
+
 - **SD**: Client and server implement explicit Initial Event requesting.
   Outgoing SD headers advertise the Explicit Initial Data Control Flag
   (`0x20`) and still clear reserved flag bits. The client sets the
