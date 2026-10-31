@@ -33,6 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rejected
   ([#380](https://github.com/vtz/opensomeip/issues/380)).
 
+## [0.2.1] - 2026-10-31
+
 ### Added
 
 - **Build**: Bazel module for the default host library and its C++ tests.
@@ -903,6 +905,7 @@ _Superseded by v0.0.5 — Copr packages were not published for this release._
 
 ---
 
+[0.2.1]: https://github.com/vtz/opensomeip/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/vtz/opensomeip/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vtz/opensomeip/compare/v0.0.5...v0.1.0
 [0.0.5]: https://github.com/vtz/opensomeip/compare/v0.0.4...v0.0.5
