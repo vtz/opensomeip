@@ -17,13 +17,11 @@
  */
 
 #include <atomic>
-#include <mutex>
-#include <stdexcept>
-#include <vector>
 
 #include <gtest/gtest.h>
 
 #include "events/event_subscriber.h"
+#include "multicast_fake.h"
 #include "sd/sd_client.h"
 #include "sd/sd_server.h"
 #include "sd/sd_types.h"
@@ -36,86 +34,8 @@ namespace {
 
 using namespace someip;
 using transport::Endpoint;
-using transport::IMulticastTransport;
 using transport::ITransport;
 using transport::ITransportListener;
-
-class MulticastFake final : public ITransport, public IMulticastTransport {
-   public:
-    Result send_message(const Message& message, const Endpoint& endpoint) override
-    {
-        if (!running_) {
-            return Result::NOT_CONNECTED;
-        }
-        if (send_result != Result::SUCCESS) {
-            return send_result;
-        }
-        std::lock_guard<std::mutex> lock(mutex_);
-        messages.push_back(message);
-        destinations.push_back(endpoint);
-        return Result::SUCCESS;
-    }
-
-    MessagePtr receive_message() override { return nullptr; }
-    Result connect(const Endpoint&) override { return Result::NOT_IMPLEMENTED; }
-    Result disconnect() override { return Result::NOT_IMPLEMENTED; }
-    bool is_connected() const override { return running_; }
-    Endpoint get_local_endpoint() const override { return Endpoint("192.0.2.20", 30490); }
-
-    void set_listener(ITransportListener* listener) override
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        listener_ = listener;
-    }
-
-    Result start() override
-    {
-        ++starts;
-        running_ = true;
-        return Result::SUCCESS;
-    }
-
-    Result stop() override
-    {
-        ++stops;
-        running_ = false;
-        if (throw_on_stop) {
-            throw std::runtime_error("MulticastFake::stop failed");
-        }
-        return Result::SUCCESS;
-    }
-
-    bool is_running() const override { return running_; }
-    IMulticastTransport* multicast_transport() noexcept override { return this; }
-
-    Result join_multicast_group(const platform::String<>& group) override
-    {
-        joined.push_back(group);
-        return join_result;
-    }
-
-    Result leave_multicast_group(const platform::String<>&) override { return Result::SUCCESS; }
-
-    ITransportListener* listener()
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        return listener_;
-    }
-
-    Result send_result{Result::SUCCESS};
-    Result join_result{Result::SUCCESS};
-    bool throw_on_stop{false};
-    std::atomic<unsigned> starts{0};
-    std::atomic<unsigned> stops{0};
-    std::vector<Message> messages;
-    std::vector<Endpoint> destinations;
-    std::vector<platform::String<>> joined;
-
-   private:
-    bool running_{false};
-    std::mutex mutex_;
-    ITransportListener* listener_{nullptr};
-};
 
 class PlainFake final : public ITransport {
    public:
@@ -156,6 +76,8 @@ sd::SdConfig immediate_config()
 }
 
 }  // namespace
+
+using someip::test::MulticastFake;
 
 /**
  * @test_case TC_SD_INJECT_EXCLUSIVE
