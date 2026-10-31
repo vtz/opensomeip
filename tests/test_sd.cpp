@@ -1293,6 +1293,8 @@ TEST_F(SdTest, ServerMulticastRejoinIsBoundedAndReportsExhaustion) {
     EXPECT_EQ(server.multicast_state(), MulticastState::EXHAUSTED);
 
     server.shutdown();
+    // Initial join plus the one configured re-attempt.
+    EXPECT_EQ(net.join_count(), 2u);
 }
 
 /**

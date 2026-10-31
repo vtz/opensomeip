@@ -12,6 +12,7 @@
 #include "transport/transport.h"
 
 #include <atomic>
+#include <cstddef>
 #include <mutex>
 #include <stdexcept>
 #include <vector>
@@ -81,6 +82,13 @@ class MulticastFake final : public transport::ITransport,
         std::lock_guard<std::mutex> lock(mutex_);
         joined.push_back(group);
         return join_result;
+    }
+
+    /// Number of join attempts, including failures. Safe to read from the test thread.
+    std::size_t join_count()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return joined.size();
     }
 
     Result leave_multicast_group(const platform::String<>&) override { return Result::SUCCESS; }
