@@ -57,11 +57,13 @@ for pair in \
   fi
 done
 
-# Serialization may or may not have a README
-if [ -f "$PROJECT_ROOT/include/serialization/README.md" ]; then
-  strip_copyright "$PROJECT_ROOT/include/serialization/README.md" > "$DOCS/api/serialization.md"
-else
-  cat > "$DOCS/api/serialization.md" << 'MDEOF'
+# Serialization may or may not have a README. Keep a page already in the tree.
+serialization_dst="$DOCS/api/serialization.md"
+if [ ! -f "$serialization_dst" ]; then
+  if [ -f "$PROJECT_ROOT/include/serialization/README.md" ]; then
+    strip_copyright "$PROJECT_ROOT/include/serialization/README.md" > "$serialization_dst"
+  else
+    cat > "$serialization_dst" << 'MDEOF'
 # Serialization
 
 The serialization module provides SOME/IP data type serialization and deserialization
@@ -78,6 +80,7 @@ with big-endian byte order handling per the SOME/IP specification.
 - String serialization
 - Buffer management
 MDEOF
+  fi
 fi
 
 # ── Examples overview ──────────────────────────────────────────────
