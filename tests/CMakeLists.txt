@@ -328,4 +328,13 @@ target_link_libraries(test_e2e someip-core gtest_main)
         )
     endif()
     set_tests_properties(${_ALL_TESTS} PROPERTIES TIMEOUT 30)
+
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_FOUND)
+        add_test(
+            NAME ApiDocSources
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/python/test_published_api_pages.py
+        )
+        set_tests_properties(ApiDocSources PROPERTIES TIMEOUT 30 LABELS "docs")
+    endif()
 endif()

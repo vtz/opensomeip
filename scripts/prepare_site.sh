@@ -26,7 +26,13 @@ mkdir -p "$DOCS/api" "$DOCS/examples"
 strip_copyright "$PROJECT_ROOT/CONTRIBUTING.md" > "$DOCS/contributing.md"
 strip_copyright "$PROJECT_ROOT/CHANGELOG.md"    > "$DOCS/changelog.md"
 
-# ── API module docs (from include/ READMEs) ───────────────────────
+# ── API module docs ───────────────────────────────────────────────
+# docs/api/*.md is what MkDocs publishes. include/*/README.md is a
+# mirror for readers next to the headers. Replacing the site page from
+# that mirror drops front matter, diagrams, and sections that exist
+# only in docs/api, and has published a stale TP segment default.
+# Keep a page that is already in the tree. Generate one only when the
+# site file is missing.
 for pair in \
   "sd/README.md:api/sd.md" \
   "rpc/README.md:api/rpc.md" \
@@ -35,6 +41,9 @@ for pair in \
   "e2e/README.md:api/e2e.md"; do
   src="$PROJECT_ROOT/include/${pair%%:*}"
   dst="$DOCS/${pair##*:}"
+  if [ -f "$dst" ]; then
+    continue
+  fi
   if [ -f "$src" ]; then
     strip_copyright "$src" > "$dst"
     # Rewrite repo-relative links to MkDocs-relative links
