@@ -188,7 +188,7 @@ private:
 
         // The TP manager would handle segmentation here
         // For this example, we'll simulate the concept
-        std::cout << "Data would be segmented into ~" << (requested_size / 1400) + 1 << " TP segments" << std::endl;
+        std::cout << "Data would be segmented into ~" << (requested_size / 1392) + 1 << " TP segments" << std::endl;
 
         // Return the data (in practice, TP would handle transport)
         output = large_data;

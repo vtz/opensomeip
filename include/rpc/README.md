@@ -23,23 +23,25 @@ The RPC layer provides high-level interfaces for making method calls between SOM
 - **Purpose**: Client-side interface for making RPC method calls
 - **Features**:
   - Synchronous and asynchronous method calls
-  - Fire-and-forget `REQUEST_NO_RETURN`
-  - Explicit remote endpoint (not the SD port)
+  - Fire-and-forget `REQUEST_NO_RETURN` (`send_request_no_return`)
+  - Explicit remote endpoint (offered service address, not the SD port)
   - Service major / Interface Version on outgoing messages
   - Automatic timeout handling
   - Request/response correlation
   - Call cancellation support
   - Statistics tracking
+  - Incoming-message rejection callback (`set_message_rejection_handler`)
 
 #### RpcServer
 - **Purpose**: Server-side interface for handling RPC method calls
 - **Features**:
-  - Method handler registration (request/response or fire-and-forget)
-  - Default bind `127.0.0.1:30501`
-  - `E_WRONG_INTERFACE_VERSION` on major mismatch
+  - Method handler registration with request/response or fire-and-forget semantics
+  - Binds an application RPC endpoint (default `127.0.0.1:30501`, not port 30490)
+  - `E_WRONG_INTERFACE_VERSION` when the request major does not match
   - Automatic response generation
   - Error handling and return codes
   - Statistics tracking
+  - Incoming-message rejection callback (`set_message_rejection_handler`)
 
 #### RpcTypes
 - **Purpose**: Common types and constants for RPC operations

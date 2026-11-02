@@ -89,7 +89,7 @@ You should see demonstrations of:
 SOME/IP-TP Message:
 +-------------------+-------------------+-------------------+
 | SOME/IP Header    | TP Header         | Payload Segment   |
-| (16 bytes)        | (4-8 bytes)       | (varies)          |
+| (16 bytes)        | (4 bytes)         | (varies)          |
 +-------------------+-------------------+-------------------+
 ```
 
@@ -103,10 +103,10 @@ SOME/IP-TP Message:
 ```
 Original Message (5000 bytes)
          ↓
-Segment 1: 1400 bytes (seq=0, more=1)
-Segment 2: 1400 bytes (seq=1, more=1)
-Segment 3: 1400 bytes (seq=2, more=1)
-Segment 4:  800 bytes (seq=3, more=0)
+Segment 1: 1392 bytes (seq=0, more=1)
+Segment 2: 1392 bytes (seq=1, more=1)
+Segment 3: 1392 bytes (seq=2, more=1)
+Segment 4:  824 bytes (seq=3, more=0)
          ↓
 Reassembled Message (5000 bytes)
 ```
@@ -116,7 +116,7 @@ Reassembled Message (5000 bytes)
 ### Typical Throughput
 - **Small Messages** (< 1.5KB): Direct UDP transmission
 - **Large Messages** (> 1.5KB): TP segmentation/reassembly
-- **Overhead**: ~4-8 bytes per segment for TP headers
+- **Overhead**: 4 bytes per segment for the TP header
 - **Latency**: Additional round-trip for final acknowledgment
 
 ### Test Results (Example)
@@ -159,10 +159,9 @@ Reassembled Message (5000 bytes)
 ### TP Manager Settings
 ```cpp
 TpConfig config;
-config.max_segment_size = 1400;        // MTU minus headers
-config.max_reassembly_time = 5000;     // 5 second timeout
+config.max_segment_size = 1392;        // default payload; non-last segments are a multiple of 16
+config.reassembly_timeout = std::chrono::milliseconds(5000);
 config.max_concurrent_transfers = 10;  // Parallel transfers
-config.enable_compression = false;     // Optional compression
 ```
 
 ### Quality of Service

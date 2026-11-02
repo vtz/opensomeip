@@ -69,9 +69,10 @@ SOME/IP messages can be much larger than typical network MTU limits (e.g., 1500 
 using namespace someip;
 using namespace someip::tp;
 
-// Create TP manager with custom configuration
+// Default TP payload is 1392 bytes. Non-last segments are rounded down
+// to a multiple of 16, so a larger cap still sends 1392-byte segments.
 TpConfig config;
-config.max_segment_size = 1400;  // Ethernet MTU minus headers
+config.max_segment_size = 1392;
 config.reassembly_timeout = std::chrono::milliseconds(5000);
 
 TpManager tp_manager(config);
