@@ -3484,6 +3484,13 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
 <li>
+<p><strong>Transport</strong>: <code>UdpTransportConfig::injected_multicast_join_errno</code>, when
+  non-zero, makes <code>join_multicast_group</code> return <code>MULTICAST_ERROR</code> and record
+  that errno without calling <code>IP_ADD_MEMBERSHIP</code>. Zero, the default, keeps
+  the socket membership call
+  (<a href="https://github.com/vtz/opensomeip/issues/349">#349</a>).</p>
+</li>
+<li>
 <p><strong>SD</strong>: Client and server implement explicit Initial Event requesting.
   Outgoing SD headers advertise the Explicit Initial Data Control Flag
   (<code>0x20</code>) and still clear reserved flag bits. The client sets the

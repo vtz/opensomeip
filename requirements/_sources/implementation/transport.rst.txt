@@ -742,7 +742,7 @@ Magic Cookie Details
    :status: implemented
    :priority: medium
    :category: error_path
-   :verification: Unit test: Join a multicast group with the interface set to a TEST-NET-1 address (RFC 5737) so IP_ADD_MEMBERSHIP fails independently of host multicast support; verify MULTICAST_ERROR is returned and the group and interface are retrievable via ``UdpTransport::last_multicast_error()``. Covered by MulticastJoinFailureIsReportedWithDiagnostics.
+   :verification: Unit test: Force ``join_multicast_group`` to fail via ``UdpTransportConfig::injected_multicast_join_errno`` without ``IP_ADD_MEMBERSHIP``; verify ``MULTICAST_ERROR`` and that the group, interface, and errno are retrievable via ``UdpTransport::last_multicast_error()``. Covered by MulticastJoinFailureIsReportedWithDiagnostics.
 
    The software shall return an error when multicast group join fails.
 
@@ -760,7 +760,7 @@ Magic Cookie Details
    :status: implemented
    :priority: medium
    :category: error_path
-   :verification: Unit test: Exercise ``MulticastMembership`` fail-once-then-succeed, exhaustion, zero-bound disable, and leave-cancels-pending. SD server: configure TEST-NET-1 multicast interface, ``multicast_rejoin_max_attempts=1``, verify re-attempt on the offer timer then Exhausted. Covered by MulticastMembership unit tests and ServerMulticastRejoinIsBoundedAndReportsExhaustion.
+   :verification: Unit test: Exercise ``MulticastMembership`` fail-once-then-succeed, exhaustion, zero-bound disable, and leave-cancels-pending. SD server: injected transport ``join_result`` of ``MULTICAST_ERROR`` with ``multicast_rejoin_max_attempts=1``, verify re-attempt on the offer timer then Exhausted. Covered by MulticastMembership unit tests and ServerMulticastRejoinIsBoundedAndReportsExhaustion.
 
    The software shall re-attempt a failed multicast group join a bounded number
    of times and report exhaustion. Pending re-attempts shall be cancelled when
