@@ -31,6 +31,7 @@
 #include <array>
 #include <cstdio>
 #include <utility>
+#include "multicast_fake.h"
 #include "static_pool_init.h"
 
 using namespace someip;
@@ -1237,18 +1238,15 @@ TEST_F(SdTest, ServerReportsJoinedOnSuccessfulMulticastJoin) {
  * @brief A failed SD multicast join leaves the server explicitly degraded
  */
 TEST_F(SdTest, ServerReportsDegradedStateWhenMulticastJoinFails) {
-    SdConfig config;
-    // make_sd_transport_config() maps unicast_address to the multicast interface.
-    // 192.0.2.1 is TEST-NET-1 (RFC 5737): never a local interface, so
-    // IP_ADD_MEMBERSHIP fails on both POSIX and Windows (unlike a multicast
-    // address used as the interface, which Winsock may accept).
-    config.unicast_address = "192.0.2.1";
-    auto server = std::make_shared<SdServer>(config);
+    someip::test::MulticastFake net;
+    net.join_result = Result::MULTICAST_ERROR;
+    const SdConfig config;
+    SdServer server(config, net);
 
-    ASSERT_TRUE(server->initialize());
-    EXPECT_EQ(server->multicast_state(), MulticastState::RETRYING);
+    ASSERT_TRUE(server.initialize());
+    EXPECT_EQ(server.multicast_state(), MulticastState::RETRYING);
 
-    server->shutdown();
+    server.shutdown();
 }
 
 /**
@@ -1257,20 +1255,21 @@ TEST_F(SdTest, ServerReportsDegradedStateWhenMulticastJoinFails) {
  * @brief Shutdown/leave cancels a pending SD multicast re-attempt
  *
  * Complements the MulticastMembership unit test LeaveCancelsPendingReattempt
- * by driving SdServer through a real failed join (TEST-NET-1 interface) into
- * RETRYING, then asserting leave on shutdown clears that retrying state.
+ * by driving SdServer through MulticastFake::join_result into RETRYING, then
+ * asserting leave on shutdown clears that retrying state.
  */
 TEST_F(SdTest, ServerShutdownCancelsPendingMulticastReattempt) {
-    SdConfig config;
-    config.unicast_address = "192.0.2.1";
-    auto server = std::make_shared<SdServer>(config);
+    someip::test::MulticastFake net;
+    net.join_result = Result::MULTICAST_ERROR;
+    const SdConfig config;
+    SdServer server(config, net);
 
-    ASSERT_TRUE(server->initialize());
-    ASSERT_EQ(server->multicast_state(), MulticastState::RETRYING);
+    ASSERT_TRUE(server.initialize());
+    ASSERT_EQ(server.multicast_state(), MulticastState::RETRYING);
 
-    server->shutdown();
-    EXPECT_NE(server->multicast_state(), MulticastState::RETRYING);
-    EXPECT_EQ(server->multicast_state(), MulticastState::JOINED);
+    server.shutdown();
+    EXPECT_NE(server.multicast_state(), MulticastState::RETRYING);
+    EXPECT_EQ(server.multicast_state(), MulticastState::JOINED);
 }
 
 /**
@@ -1279,20 +1278,23 @@ TEST_F(SdTest, ServerShutdownCancelsPendingMulticastReattempt) {
  * @brief Re-attempts are bounded and exhaustion is reported
  */
 TEST_F(SdTest, ServerMulticastRejoinIsBoundedAndReportsExhaustion) {
+    someip::test::MulticastFake net;
+    net.join_result = Result::MULTICAST_ERROR;
     SdConfig config;
-    config.unicast_address = "192.0.2.1";
     config.multicast_rejoin_max_attempts = 1;
     config.multicast_rejoin_interval = std::chrono::milliseconds(10);
-    auto server = std::make_shared<SdServer>(config);
+    SdServer server(config, net);
 
-    ASSERT_TRUE(server->initialize());
+    ASSERT_TRUE(server.initialize());
 
-    for (int i = 0; i < 40 && server->multicast_state() != MulticastState::EXHAUSTED; ++i) {
+    for (int i = 0; i < 40 && server.multicast_state() != MulticastState::EXHAUSTED; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    EXPECT_EQ(server->multicast_state(), MulticastState::EXHAUSTED);
+    EXPECT_EQ(server.multicast_state(), MulticastState::EXHAUSTED);
 
-    server->shutdown();
+    server.shutdown();
+    // Initial join plus the one configured re-attempt.
+    EXPECT_EQ(net.join_count(), 2u);
 }
 
 /**
@@ -1301,15 +1303,16 @@ TEST_F(SdTest, ServerMulticastRejoinIsBoundedAndReportsExhaustion) {
  * @brief A zero bound disables re-attempt and reports exhaustion immediately
  */
 TEST_F(SdTest, ServerMulticastRejoinCanBeDisabled) {
+    someip::test::MulticastFake net;
+    net.join_result = Result::MULTICAST_ERROR;
     SdConfig config;
-    config.unicast_address = "192.0.2.1";
     config.multicast_rejoin_max_attempts = 0;
-    auto server = std::make_shared<SdServer>(config);
+    SdServer server(config, net);
 
-    ASSERT_TRUE(server->initialize());
-    EXPECT_EQ(server->multicast_state(), MulticastState::EXHAUSTED);
+    ASSERT_TRUE(server.initialize());
+    EXPECT_EQ(server.multicast_state(), MulticastState::EXHAUSTED);
 
-    server->shutdown();
+    server.shutdown();
 }
 
 /**
@@ -1318,11 +1321,12 @@ TEST_F(SdTest, ServerMulticastRejoinCanBeDisabled) {
  * @brief Client initialize remains fail-closed when SD multicast join fails
  */
 TEST_F(SdTest, ClientInitializeFailsClosedOnMulticastJoinFailure) {
-    SdConfig config;
-    config.unicast_address = "192.0.2.1";
-    auto client = std::make_shared<SdClient>(config);
+    someip::test::MulticastFake net;
+    net.join_result = Result::MULTICAST_ERROR;
+    const SdConfig config;
+    SdClient client(config, net);
 
-    EXPECT_FALSE(client->initialize());
+    EXPECT_FALSE(client.initialize());
 }
 
 /**

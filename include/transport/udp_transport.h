@@ -48,6 +48,11 @@ struct UdpTransportConfig {
     platform::String<> multicast_interface;  // Interface for multicast (empty = INADDR_ANY)
     int multicast_ttl{1};                   // Multicast TTL (1 = local network only)
 
+    /// When non-zero, join_multicast_group records this errno and returns
+    /// MULTICAST_ERROR without IP_ADD_MEMBERSHIP. Zero keeps the socket call.
+    /// Test seam so join failure does not depend on a host interface address.
+    int injected_multicast_join_errno{0};
+
     // SOME/IP spec recommends max 1400 bytes to avoid IP fragmentation.
     // Set to 0 to disable this check. When enable_tp is true, messages whose
     // payload exceeds TpConfig.max_segment_size are segmented instead of

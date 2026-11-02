@@ -255,6 +255,15 @@ Result UdpTransport::join_multicast_group(const platform::String<>& multicast_ad
         return Result::INVALID_ENDPOINT;
     }
 
+    if (config_.injected_multicast_join_errno != 0) {
+        MulticastError error;
+        error.group_address = multicast_address;
+        error.interface_address = config_.multicast_interface;
+        error.system_error = config_.injected_multicast_join_errno;
+        last_multicast_error_ = error;
+        return Result::MULTICAST_ERROR;
+    }
+
     struct ip_mreq mreq = {};
     mreq.imr_multiaddr.s_addr = someip_inet_addr(multicast_address.c_str());
     if (!config_.multicast_interface.empty()) {

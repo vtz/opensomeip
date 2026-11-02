@@ -449,26 +449,27 @@ TEST_F(UdpTransportTest, MulticastSupport) {
 /**
  * @test_case TC_UDP_MC_E01
  * @tests REQ_TRANSPORT_011_E01
- * @brief Failed IP_ADD_MEMBERSHIP must return MULTICAST_ERROR with diagnostics
+ * @brief A failed multicast join returns MULTICAST_ERROR with diagnostics
  *
- * 192.0.2.1 is TEST-NET-1 (RFC 5737) and is never a local interface address, so
- * membership fails regardless of whether the host supports multicast.
+ * injected_multicast_join_errno skips IP_ADD_MEMBERSHIP, so the failure does
+ * not depend on whether the configured interface is assigned on this host.
  */
 TEST_F(UdpTransportTest, MulticastJoinFailureIsReportedWithDiagnostics) {
-    config.multicast_interface = "192.0.2.1";
+    config.multicast_interface = "203.0.113.1";
+    config.injected_multicast_join_errno = 99;
 
     UdpTransport transport(local_endpoint, config);
     TestUdpListener listener;
     transport.set_listener(&listener);
 
     EXPECT_EQ(transport.start(), Result::SUCCESS);
-    EXPECT_EQ(transport.join_multicast_group("224.0.0.1"), Result::MULTICAST_ERROR);
+    EXPECT_EQ(transport.join_multicast_group("239.255.255.251"), Result::MULTICAST_ERROR);
 
     auto const error = transport.last_multicast_error();
     ASSERT_TRUE(error.has_value());
-    EXPECT_EQ(error->group_address, "224.0.0.1");
-    EXPECT_EQ(error->interface_address, "192.0.2.1");
-    EXPECT_NE(error->system_error, 0);
+    EXPECT_EQ(error->group_address, "239.255.255.251");
+    EXPECT_EQ(error->interface_address, "203.0.113.1");
+    EXPECT_EQ(error->system_error, 99);
 
     transport.stop();
 }
