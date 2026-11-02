@@ -69,9 +69,10 @@ SOME/IP messages can be much larger than typical network MTU limits (e.g., 1500 
 using namespace someip;
 using namespace someip::tp;
 
-// Create TP manager with custom configuration
+// Default max_segment_size is 1392 payload bytes. Non-last segments
+// use that cap rounded down to a multiple of 16.
 TpConfig config;
-config.max_segment_size = 1400;  // Ethernet MTU minus headers
+config.max_segment_size = 1392;
 config.reassembly_timeout = std::chrono::milliseconds(5000);
 
 TpManager tp_manager(config);
@@ -128,7 +129,8 @@ void on_segment_received(const TpSegment& segment) {
 ## Integration with Transport Layer
 
 UDP transport segments and reassembles automatically when
-`UdpTransportConfig.enable_tp` is true (the default):
+`UdpTransportConfig.enable_tp` is true. The field defaults to true,
+and to false when `SOMEIP_STATIC_ALLOC` is defined:
 
 1. **Outgoing messages**: `UdpTransport::send_message` calls `TpManager`
    when `needs_segmentation()` is true (payload larger than

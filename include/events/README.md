@@ -27,6 +27,7 @@ The Events layer implements SOME/IP event notifications and field publications, 
   - Field value publishing (on-demand or on-change)
   - Subscription management for event groups
   - Cyclic and triggered publication modes
+  - Incoming-message rejection callback (`set_message_rejection_handler`)
 
 #### EventSubscriber
 - **Purpose**: Client-side event reception and field requests
@@ -36,6 +37,7 @@ The Events layer implements SOME/IP event notifications and field publications, 
   - Field value requests (polling)
   - Subscription status tracking
   - Automatic reconnection handling
+  - Incoming-message rejection callback (`set_message_rejection_handler`)
 
 #### EventTypes
 - **Purpose**: Event system types and configurations

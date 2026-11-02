@@ -26,7 +26,13 @@ mkdir -p "$DOCS/api" "$DOCS/examples"
 strip_copyright "$PROJECT_ROOT/CONTRIBUTING.md" > "$DOCS/contributing.md"
 strip_copyright "$PROJECT_ROOT/CHANGELOG.md"    > "$DOCS/changelog.md"
 
-# ── API module docs (from include/ READMEs) ───────────────────────
+# ── API module docs ───────────────────────────────────────────────
+# docs/api/*.md is what MkDocs publishes. include/*/README.md is a
+# mirror for readers next to the headers. Replacing the site page from
+# that mirror drops front matter, diagrams, and sections that exist
+# only in docs/api, and has published a stale TP segment default.
+# Keep a page that is already in the tree. Generate one only when the
+# site file is missing.
 for pair in \
   "sd/README.md:api/sd.md" \
   "rpc/README.md:api/rpc.md" \
@@ -35,6 +41,9 @@ for pair in \
   "e2e/README.md:api/e2e.md"; do
   src="$PROJECT_ROOT/include/${pair%%:*}"
   dst="$DOCS/${pair##*:}"
+  if [ -f "$dst" ]; then
+    continue
+  fi
   if [ -f "$src" ]; then
     strip_copyright "$src" > "$dst"
     # Rewrite repo-relative links to MkDocs-relative links
@@ -48,11 +57,13 @@ for pair in \
   fi
 done
 
-# Serialization may or may not have a README
-if [ -f "$PROJECT_ROOT/include/serialization/README.md" ]; then
-  strip_copyright "$PROJECT_ROOT/include/serialization/README.md" > "$DOCS/api/serialization.md"
-else
-  cat > "$DOCS/api/serialization.md" << 'MDEOF'
+# Serialization may or may not have a README. Keep a page already in the tree.
+serialization_dst="$DOCS/api/serialization.md"
+if [ ! -f "$serialization_dst" ]; then
+  if [ -f "$PROJECT_ROOT/include/serialization/README.md" ]; then
+    strip_copyright "$PROJECT_ROOT/include/serialization/README.md" > "$serialization_dst"
+  else
+    cat > "$serialization_dst" << 'MDEOF'
 # Serialization
 
 The serialization module provides SOME/IP data type serialization and deserialization
@@ -69,6 +80,7 @@ with big-endian byte order handling per the SOME/IP specification.
 - String serialization
 - Buffer management
 MDEOF
+  fi
 fi
 
 # ── Examples overview ──────────────────────────────────────────────
