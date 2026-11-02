@@ -133,7 +133,8 @@ carry the default 12-byte E2E header (Offset 64). Fill the table before
 constructing the transport.
 
 - `E2EReceivePolicy::STACK_MANAGED` validates before the application handler.
-  Failure uses `MessageRejectionStage::E2E_INTEGRITY` and does not deliver.
+  A `validate()` failure uses `MessageRejectionStage::E2E_INTEGRITY` and does not deliver.
+  A protected frame that fails to deserialize uses `MessageRejectionStage::DESERIALIZE`.
 - `E2EReceivePolicy::APPLICATION_MANAGED` delivers a message whose payload
   excludes the header. Call `E2EProtection::validate` on that message.
   Stack-managed checks use the binding's `max_counter_value` and

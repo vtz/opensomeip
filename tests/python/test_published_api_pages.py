@@ -8,11 +8,47 @@ shipped the wrong TP segment default.
 
 from __future__ import annotations
 
-import shutil
+import os
 import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _posix_bash() -> str | None:
+    """Return a bash that can run scripts/prepare_site.sh.
+
+    On Windows, ``bash`` is often the WSL launcher in System32, which exits
+    before the script runs. Prefer Git Bash, and reject a shell that cannot
+    execute ``set -o pipefail``.
+    """
+    candidates: list[str] = []
+    if os.name == "nt":
+        program_files = os.environ.get("PROGRAMFILES", r"C:\Program Files")
+        candidates.append(str(Path(program_files) / "Git" / "bin" / "bash.exe"))
+        candidates.append(str(Path(program_files) / "Git" / "usr" / "bin" / "bash.exe"))
+    candidates.append("bash")
+    for candidate in candidates:
+        try:
+            proc = subprocess.run(
+                [candidate, "-c", "set -euo pipefail; printf ok"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if proc.returncode == 0 and proc.stdout == "ok":
+            return candidate
+    return None
+
+
+def _write_shell_script(destination: Path) -> None:
+    """Copy prepare_site.sh with LF endings so Git Bash can execute it."""
+    text = (ROOT / "scripts" / "prepare_site.sh").read_text(encoding="utf-8")
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    destination.write_text(normalized, encoding="utf-8", newline="\n")
 
 
 def _read(relative: str) -> str:
@@ -63,7 +99,9 @@ def test_prepare_site_does_not_replace_existing_api_pages(tmp_path: Path) -> Non
     (project / "CONTRIBUTING.md").write_text("# contributing\n", encoding="utf-8")
     (project / "CHANGELOG.md").write_text("# changelog\n", encoding="utf-8")
 
-    shutil.copy(ROOT / "scripts" / "prepare_site.sh", project / "scripts" / "prepare_site.sh")
+    _write_shell_script(project / "scripts" / "prepare_site.sh")
+    script_bytes = (project / "scripts" / "prepare_site.sh").read_bytes()
+    assert b"\r" not in script_bytes
 
     for module in ("sd", "rpc", "tp", "events", "e2e"):
         mirror = project / "include" / module
@@ -77,13 +115,32 @@ def test_prepare_site_does_not_replace_existing_api_pages(tmp_path: Path) -> Non
             encoding="utf-8",
         )
 
-    subprocess.run(
-        ["bash", "scripts/prepare_site.sh"],
+    serial_dir = project / "include" / "serialization"
+    serial_dir.mkdir(parents=True)
+    (serial_dir / "README.md").write_text("# stale serialization\n", encoding="utf-8")
+    (project / "docs" / "api" / "serialization.md").write_text(
+        "---\ntitle: kept serialization\n---\n\n# kept serialization\n",
+        encoding="utf-8",
+    )
+
+    bash = _posix_bash()
+    if bash is None:
+        if os.name == "nt":
+            print("skip prepare_site: no working bash")
+            return
+        raise AssertionError("bash is required to run scripts/prepare_site.sh")
+
+    proc = subprocess.run(
+        [bash, "scripts/prepare_site.sh"],
         cwd=project,
-        check=True,
         capture_output=True,
         text=True,
+        check=False,
     )
+    if proc.returncode != 0:
+        raise AssertionError(
+            f"{bash} scripts/prepare_site.sh exited {proc.returncode}\n{proc.stdout}\n{proc.stderr}"
+        )
 
     published = (project / "docs" / "api" / "tp.md").read_text(encoding="utf-8")
     assert "kept tp" in published
@@ -92,6 +149,10 @@ def test_prepare_site_does_not_replace_existing_api_pages(tmp_path: Path) -> Non
     for module in ("sd", "rpc", "events", "e2e"):
         text = (project / "docs" / "api" / f"{module}.md").read_text(encoding="utf-8")
         assert text.startswith(f"# kept {module}\n")
+
+    serial = (project / "docs" / "api" / "serialization.md").read_text(encoding="utf-8")
+    assert "kept serialization" in serial
+    assert "stale serialization" not in serial
 
 
 if __name__ == "__main__":
