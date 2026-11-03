@@ -232,9 +232,22 @@ _IMPL_DERIVED_PREFIXES = (
     "REQ_PAL_",
 )
 
+# No spec sentence exists for these IDs. Keep in sync with
+# scripts/validate_requirements.py and scripts/generate_traceability_matrix.py.
+_EXPLICIT_IMPL_DERIVED = frozenset(
+    {
+        "REQ_E2E_RECEIVE_001",
+        "REQ_MSG_150",
+        "REQ_TRANSPORT_026",
+        "REQ_TRANSPORT_030",
+    }
+)
+
 
 def classify_requirement(req_id: str) -> str:
     """Classify requirement as spec-derived or implementation-derived."""
+    if req_id in _EXPLICIT_IMPL_DERIVED:
+        return "impl_derived"
     if "_E0" in req_id or "_E1" in req_id or req_id.endswith("_ATOM"):
         return "impl_derived"
     for prefix in _IMPL_DERIVED_PREFIXES:
