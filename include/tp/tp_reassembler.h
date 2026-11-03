@@ -82,6 +82,7 @@ public:
      *                          the 16-byte SOME/IP header from the reassembly
      *                          buffer (atomic with the payload)
      * @return true if segment processed successfully, false on error
+     * @implements REQ_TP_081_ATOM
      * @implements feat_req_someiptp_797
      */
     bool process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message,

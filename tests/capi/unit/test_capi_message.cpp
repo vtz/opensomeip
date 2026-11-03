@@ -26,6 +26,7 @@
 /**
  * @test_case TC_CAPI_VERSION_001
  * @tests REQ_CAPI_005
+ * @tests REQ_CAPI_001
  */
 TEST(CapiVersion, RuntimeVersionMatchesMacros) {
     uint32_t ver = opensomeip_capi_version();
