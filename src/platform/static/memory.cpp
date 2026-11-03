@@ -14,6 +14,7 @@
 /**
  * @implements REQ_PLATFORM_STATIC_002, REQ_PAL_MEM_ALLOC,
  *             REQ_PAL_MEM_EXHAUST_E01, REQ_PAL_MEM_THREADSAFE_E01
+ * @implements REQ_PAL_MEM_THREADSAFE_E01, REQ_PLATFORM_STATIC_004, REQ_ARCH_008
  */
 
 #include "static_config.h"

@@ -234,6 +234,7 @@ TEST_F(ByteBufferTest, Insert) {
 /**
  * @test_case TC_CONTAINER_VECTOR_PUSH_BACK
  * @tests REQ_PAL_CONTAINER_VECTOR
+ * @tests REQ_PLATFORM_STATIC_001
  */
 TEST(ContainerTest, VectorPushBack) {
     Vector<int, 8> v;
@@ -313,7 +314,7 @@ TEST(ContainerTest, FunctionInvoke) {
 
 /**
  * @test_case TC_CONTAINER_CAPACITY_EXHAUST
- * @tests REQ_PAL_CONTAINER_CAPACITY_EXHAUST
+ * @tests REQ_PAL_CONTAINER_CAPACITY_E01
  */
 TEST(ContainerTest, CapacityExhaust) {
     Vector<int, 4> v;
@@ -329,6 +330,17 @@ TEST(ContainerTest, CapacityExhaust) {
     q.push(2);
     EXPECT_EQ(q.size(), 2U);
     EXPECT_TRUE(q.full());
+}
+
+/**
+ * @test_case TC_PAL_STATIC_CONFIG
+ * @tests REQ_PAL_STATIC_CONFIG
+ * @brief Compile-time pool and payload capacities come from static_config.h.
+ */
+TEST(StaticConfig, CapacitiesAreCompileTimePositive) {
+    EXPECT_GT(SOMEIP_MAX_PAYLOAD_SIZE, 0);
+    EXPECT_GE(SOMEIP_MAX_MESSAGE_SIZE, SOMEIP_MAX_PAYLOAD_SIZE);
+    EXPECT_GT(SOMEIP_MESSAGE_POOL_SIZE, 0);
 }
 
 }  // namespace
