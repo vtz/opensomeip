@@ -150,6 +150,14 @@ def validate_requirements(
 
     # Check for missing spec links (implementation requirements must satisfy at least one spec requirement)
     # Skip validation for implementation-derived requirements (error handling, architectural, plugin)
+    # Explicit IDs have no spec sentence to cite. Keep this set in sync with
+    # generate_traceability_matrix.py and check_spec_requirements.py.
+    explicit_impl_derived = {
+        "REQ_E2E_RECEIVE_001",  # local receive-policy table and Result
+        "REQ_MSG_150",  # local Result from try_deserialize; no spec ID
+        "REQ_TRANSPORT_026",  # local rejection hook; no spec ID
+        "REQ_TRANSPORT_030",  # application-owned transport injection
+    }
     missing_spec_links = []
     for req_id in requirements:
         if req_id.startswith("REQ_"):  # Implementation requirement
@@ -162,6 +170,7 @@ def validate_requirements(
                 or req_id.startswith("REQ_CAPI_")
                 or req_id.startswith("REQ_PAL_")
                 or req_id.endswith("_ATOM")
+                or req_id in explicit_impl_derived
             )
 
             if not is_implementation_derived:
