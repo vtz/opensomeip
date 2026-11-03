@@ -292,7 +292,7 @@ This document provides a comprehensive traceability matrix mapping requirements 
 | Requirements with code refs | 620 (88.8%) | Good |
 | Requirements with test coverage | 686 (98.3%) | Good |
 | Orphaned (no code annotation) | 78 (11.2%) | Needs improvement |
-| Spec-linked implementation reqs | 696/698 | REQ_MSG_150, REQ_TRANSPORT_026 open |
+| Spec-linked implementation reqs | 696/698 | REQ_MSG_150, REQ_TRANSPORT_026 exempt; see TRACEABILITY_SUMMARY.md |
 
 ### Test Suite Mapping
 
@@ -322,7 +322,7 @@ This document provides a comprehensive traceability matrix mapping requirements 
 
 1. Add `@implements` / `@satisfies` annotations to 78 unannotated requirements
 2. Add `@tests` annotations for the 12 remaining requirements without test coverage
-3. Add `:satisfies:` fields to REQ_MSG_150 and REQ_TRANSPORT_026
+3. Do not add `:satisfies:` fields for REQ_MSG_150, REQ_TRANSPORT_026, REQ_E2E_RECEIVE_001, or REQ_TRANSPORT_030. They are local contracts with no specification ID.
 
 ### Short-term
 
