@@ -363,7 +363,7 @@ def main():
                 print(f"Skipping non-existent directory: {src_path}")
             continue
 
-        cpp_files = find_source_files(src_path, {".cpp", ".c", ".h", ".hpp"})
+        cpp_files = find_source_files(src_path, {".cpp", ".c", ".h", ".hpp", ".inc"})
         for file_path in cpp_files:
             if args.verbose:
                 print(f"Processing: {file_path}")
@@ -380,7 +380,7 @@ def main():
             continue
 
         # C/C++ tests
-        cpp_files = find_source_files(test_path, {".cpp", ".c", ".h", ".hpp"})
+        cpp_files = find_source_files(test_path, {".cpp", ".c", ".h", ".hpp", ".inc"})
         for file_path in cpp_files:
             if args.verbose:
                 print(f"Processing: {file_path}")

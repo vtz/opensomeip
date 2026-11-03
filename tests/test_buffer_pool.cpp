@@ -233,6 +233,7 @@ TEST_F(BufferPoolTest, DoubleFreeProtection) {
  * @test_case TC_BUFPOOL_CONCURRENT
  * @tests REQ_PAL_BUFPOOL_ACQUIRE
  * @tests REQ_PAL_BUFPOOL_RELEASE
+ * @tests REQ_PAL_BUFPOOL_THREADSAFE_E01
  */
 TEST_F(BufferPoolTest, ConcurrentAcquireRelease) {
     constexpr int kThreads = 4;

@@ -256,6 +256,7 @@ public:
 
 private:
 #ifdef SOMEIP_STATIC_ALLOC
+    /** @implements REQ_PLATFORM_STATIC_005 */
     alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_EVENTSUB_SIZE];
     EventSubscriberImpl* impl() noexcept { return reinterpret_cast<EventSubscriberImpl*>(impl_storage_); }
     const EventSubscriberImpl* impl() const noexcept { return reinterpret_cast<const EventSubscriberImpl*>(impl_storage_); }

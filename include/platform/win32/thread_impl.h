@@ -19,6 +19,7 @@
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_WIN32_001 */
 using Mutex = std::mutex;
 
 /** @brief Opaque identity of a thread, usable for per-thread reentrancy checks. */

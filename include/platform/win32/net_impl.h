@@ -19,6 +19,7 @@ using someip_socket_t = SOCKET;
 
 /* ---------- Socket lifecycle ----------------------------------------------- */
 
+/** @implements REQ_PLATFORM_WIN32_003 */
 static inline int someip_close_socket(someip_socket_t fd) {
     return closesocket(fd);
 }

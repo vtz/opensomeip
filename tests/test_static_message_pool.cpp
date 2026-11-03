@@ -140,6 +140,7 @@ TEST_F(MessagePoolTest, PlacementNewInitialization) {
 /**
  * @test_case TC_MSGPOOL_CONCURRENT
  * @tests REQ_PAL_MEM_ALLOC
+ * @tests REQ_PAL_MEM_THREADSAFE_E01
  */
 TEST_F(MessagePoolTest, ConcurrentAllocRelease) {
     constexpr int kThreads = 4;

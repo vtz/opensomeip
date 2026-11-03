@@ -29,20 +29,20 @@ to implementation and test coverage. No safety certification is claimed.
 | Metric | Value | Assessment |
 |--------|-------|------------|
 | Total requirements (RST) | 701 | - |
-| Fully traced (code + tests) | 620 (88.4%) | Good |
-| Requirements with code refs | 624 | Good |
-| Requirements with test coverage | 688 | Good |
-| Orphaned (no code annotation) | 77 | Needs improvement |
+| Fully traced (code + tests) | 647 (92.3%) | Good |
+| Requirements with code refs | 647 | Good |
+| Requirements with test coverage | 700 | Good |
+| Orphaned (no code annotation) | 54 | Needs improvement |
 | Missing spec links | 4 | REQ_MSG_150, REQ_TRANSPORT_026, REQ_E2E_RECEIVE_001, REQ_TRANSPORT_030 |
-| Code references extracted | 629 | - |
-| Test references extracted | 753 | - |
+| Code references extracted | 652 | - |
+| Test references extracted | 781 | - |
 
 ### Status
 
-620 of 701 requirements are fully traced with both code implementation references
-and test coverage annotations. 77 requirements remain without code annotations.
-The extraction script properly parses comma-separated requirement IDs from
-`@implements` and `@tests` annotations.
+647 of 701 requirements are fully traced with both code implementation references
+and test coverage annotations. 54 requirements remain without code annotations.
+The extraction script parses comma-separated requirement IDs from
+`@implements` and `@tests` annotations, including `.inc` test files.
 
 > **Regeneration**: Run `cmake --build build --target requirements_check` to
 > update these metrics from `scripts/validate_requirements.py`.
