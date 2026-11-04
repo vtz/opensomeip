@@ -76,7 +76,6 @@ TEST_F(BufferPoolTest, AcquireLargeBuffer) {
 /**
  * @test_case TC_BUFPOOL_ACQUIRE_OVERSIZED
  * @tests REQ_PAL_BUFPOOL_EXHAUST_E01
- * @tests REQ_PAL_STATIC_CONFIG
  */
 TEST_F(BufferPoolTest, AcquireOversized) {
     std::vector<BufferSlot*> all_slots;
