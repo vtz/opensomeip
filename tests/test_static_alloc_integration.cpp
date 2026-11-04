@@ -20,6 +20,7 @@
  *
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
+ * @tests REQ_ARCH_008
  */
 
 #include <atomic>
@@ -357,6 +358,7 @@ TEST_F(StaticAllocIntegrationTest, FullStackUnderTrap) {
  * @test_case TC_STATIC_INT_RPCCLIENT_CTOR
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
+ * @tests REQ_PLATFORM_STATIC_005
  * @brief RpcClient construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, RpcClientConstructDestroyUnderTrap) {
@@ -368,6 +370,7 @@ TEST_F(StaticAllocIntegrationTest, RpcClientConstructDestroyUnderTrap) {
  * @test_case TC_STATIC_INT_RPCSERVER_CTOR
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
+ * @tests REQ_PLATFORM_STATIC_005
  * @brief RpcServer construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, RpcServerConstructDestroyUnderTrap) {
@@ -379,6 +382,7 @@ TEST_F(StaticAllocIntegrationTest, RpcServerConstructDestroyUnderTrap) {
  * @test_case TC_STATIC_INT_EVENTPUB_CTOR
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
+ * @tests REQ_PLATFORM_STATIC_005
  * @brief EventPublisher construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, EventPublisherConstructDestroyUnderTrap) {
@@ -390,6 +394,7 @@ TEST_F(StaticAllocIntegrationTest, EventPublisherConstructDestroyUnderTrap) {
  * @test_case TC_STATIC_INT_EVENTSUB_CTOR
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
+ * @tests REQ_PLATFORM_STATIC_005
  * @brief EventSubscriber construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, EventSubscriberConstructDestroyUnderTrap) {
@@ -401,6 +406,7 @@ TEST_F(StaticAllocIntegrationTest, EventSubscriberConstructDestroyUnderTrap) {
  * @test_case TC_STATIC_INT_SDCLIENT_CTOR
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
+ * @tests REQ_PLATFORM_STATIC_005
  * @brief SdClient construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, SdClientConstructDestroyUnderTrap) {
@@ -412,6 +418,7 @@ TEST_F(StaticAllocIntegrationTest, SdClientConstructDestroyUnderTrap) {
  * @test_case TC_STATIC_INT_SDSERVER_CTOR
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
+ * @tests REQ_PLATFORM_STATIC_005
  * @brief SdServer construction + destruction uses no heap under static alloc
  */
 TEST_F(StaticAllocIntegrationTest, SdServerConstructDestroyUnderTrap) {
