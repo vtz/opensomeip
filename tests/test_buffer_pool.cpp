@@ -76,6 +76,7 @@ TEST_F(BufferPoolTest, AcquireLargeBuffer) {
 /**
  * @test_case TC_BUFPOOL_ACQUIRE_OVERSIZED
  * @tests REQ_PAL_BUFPOOL_EXHAUST_E01
+ * @tests REQ_PAL_STATIC_CONFIG
  */
 TEST_F(BufferPoolTest, AcquireOversized) {
     std::vector<BufferSlot*> all_slots;
@@ -233,6 +234,7 @@ TEST_F(BufferPoolTest, DoubleFreeProtection) {
  * @test_case TC_BUFPOOL_CONCURRENT
  * @tests REQ_PAL_BUFPOOL_ACQUIRE
  * @tests REQ_PAL_BUFPOOL_RELEASE
+ * @tests REQ_PAL_BUFPOOL_THREADSAFE_E01
  */
 TEST_F(BufferPoolTest, ConcurrentAcquireRelease) {
     constexpr int kThreads = 4;
