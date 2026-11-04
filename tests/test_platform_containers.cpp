@@ -233,7 +233,7 @@ TEST_F(ByteBufferTest, Insert) {
 
 /**
  * @test_case TC_CONTAINER_VECTOR_PUSH_BACK
- * @tests REQ_PAL_CONTAINER_VECTOR
+ * @tests REQ_PAL_CONTAINER_VECTOR, REQ_PLATFORM_STATIC_001
  */
 TEST(ContainerTest, VectorPushBack) {
     Vector<int, 8> v;
@@ -253,7 +253,7 @@ TEST(ContainerTest, VectorPushBack) {
 
 /**
  * @test_case TC_CONTAINER_STRING_APPEND
- * @tests REQ_PAL_CONTAINER_STRING
+ * @tests REQ_PAL_CONTAINER_STRING, REQ_PLATFORM_STATIC_001
  */
 TEST(ContainerTest, StringAppend) {
     String<32> s;
@@ -266,7 +266,7 @@ TEST(ContainerTest, StringAppend) {
 
 /**
  * @test_case TC_CONTAINER_MAP_INSERT_LOOKUP
- * @tests REQ_PAL_CONTAINER_MAP
+ * @tests REQ_PAL_CONTAINER_MAP, REQ_PLATFORM_STATIC_001
  */
 TEST(ContainerTest, MapInsertLookup) {
     UnorderedMap<int, int, 8> m;
@@ -283,7 +283,7 @@ TEST(ContainerTest, MapInsertLookup) {
 
 /**
  * @test_case TC_CONTAINER_QUEUE_FIFO
- * @tests REQ_PAL_CONTAINER_QUEUE
+ * @tests REQ_PAL_CONTAINER_QUEUE, REQ_PLATFORM_STATIC_001
  */
 TEST(ContainerTest, QueueFIFO) {
     Queue<int, 4> q;
@@ -303,7 +303,7 @@ TEST(ContainerTest, QueueFIFO) {
 
 /**
  * @test_case TC_CONTAINER_FUNCTION_INVOKE
- * @tests REQ_PAL_CONTAINER_FUNCTION
+ * @tests REQ_PAL_CONTAINER_FUNCTION, REQ_PLATFORM_STATIC_001
  */
 TEST(ContainerTest, FunctionInvoke) {
     int captured = 42;
