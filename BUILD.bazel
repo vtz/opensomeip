@@ -1,0 +1,106 @@
+# Copyright (c) 2026 Vinicius Tadeu Zein
+# SPDX-License-Identifier: Apache-2.0
+
+load(
+    "//:opensomeip.bzl",
+    "freertos_sleep_cc_test",
+    "host_cc_test",
+    "opensomeip_targets",
+    "pal_mock_cc_test",
+)
+
+opensomeip_targets()
+
+host_cc_test("test_serialization", "tests/test_serialization.cpp")
+host_cc_test("test_message", "tests/test_message.cpp")
+host_cc_test("test_session_manager", "tests/test_session_manager.cpp")
+host_cc_test("test_endpoint", "tests/test_endpoint.cpp")
+host_cc_test("test_rpc", "tests/test_rpc.cpp")
+host_cc_test(
+    "test_transport_injection",
+    "tests/test_transport_injection.cpp",
+    extra_srcs = ["src/common/callback_storage.h"],
+)
+host_cc_test(
+    "test_sd_injection",
+    "tests/test_sd_injection.cpp",
+    extra_srcs = ["tests/multicast_fake.h"],
+)
+host_cc_test(
+    "test_subscriber_dispatch",
+    "tests/test_subscriber_dispatch.cpp",
+    extra_srcs = ["tests/callback_release_guard.h"],
+)
+host_cc_test("test_rpc_sync_lifetime", "tests/test_rpc_sync_lifetime.cpp")
+host_cc_test(
+    "test_facade_teardown",
+    "tests/test_facade_teardown.cpp",
+    extra_srcs = [
+        "src/transport/transport_session.h",
+        "tests/callback_release_guard.h",
+    ],
+)
+host_cc_test(
+    "test_sd",
+    "tests/test_sd.cpp",
+    extra_srcs = ["tests/multicast_fake.h"],
+)
+host_cc_test("test_events", "tests/test_events.cpp")
+host_cc_test("test_tcp_transport", "tests/test_tcp_transport.cpp")
+host_cc_test("test_udp_transport", "tests/test_udp_transport.cpp")
+host_cc_test("test_multicast_membership", "tests/test_multicast_membership.cpp")
+host_cc_test("test_event_driven_udp_transport", "tests/test_event_driven_udp_transport.cpp")
+host_cc_test("test_event_driven_tcp_transport", "tests/test_event_driven_tcp_transport.cpp")
+host_cc_test("test_tp", "tests/test_tp.cpp")
+host_cc_test("test_e2e", "tests/test_e2e.cpp")
+host_cc_test("test_platform_threading", "tests/test_platform_threading.cpp")
+
+pal_mock_cc_test(
+    "test_pal_freertos_mock",
+    "tests/test_pal_freertos_mock.cpp",
+    "tests/mocks/freertos",
+    "include/platform/freertos",
+)
+pal_mock_cc_test(
+    "test_pal_threadx_mock",
+    "tests/test_pal_threadx_mock.cpp",
+    "tests/mocks/threadx",
+    "include/platform/threadx",
+)
+pal_mock_cc_test(
+    "test_pal_zephyr_mock",
+    "tests/test_pal_zephyr_mock.cpp",
+    "tests/mocks/zephyr",
+    "include/platform/zephyr",
+)
+
+freertos_sleep_cc_test(
+    "test_freertos_sleep",
+    "tests/test_freertos_sleep.cpp",
+    ["configTICK_RATE_HZ=100"],
+)
+
+[
+    freertos_sleep_cc_test(
+        "test_freertos_sleep_%s_%s" % (bits, rate),
+        "tests/test_freertos_sleep_chunks.cpp",
+        [
+            "configTICK_RATE_HZ=%s" % rate,
+            "configUSE_16_BIT_TICKS=%s" % ("1" if bits == "16" else "0"),
+            "SOMEIP_FREERTOS_CAPTURE_DELAYS",
+        ],
+    )
+    for bits in ["16", "32"]
+    for rate in ["100", "128"]
+]
+
+host_cc_test("test_capi_message", "tests/capi/unit/test_capi_message.cpp", capi = True)
+host_cc_test("test_capi_serializer", "tests/capi/unit/test_capi_serializer.cpp", capi = True)
+host_cc_test("test_capi_transport", "tests/capi/unit/test_capi_transport.cpp", capi = True)
+host_cc_test("test_capi_rpc", "tests/capi/unit/test_capi_rpc.cpp", capi = True)
+host_cc_test("test_capi_sd", "tests/capi/unit/test_capi_sd.cpp", capi = True)
+host_cc_test("test_capi_events", "tests/capi/unit/test_capi_events.cpp", capi = True)
+host_cc_test("test_capi_tp", "tests/capi/unit/test_capi_tp.cpp", capi = True)
+host_cc_test("test_capi_e2e", "tests/capi/unit/test_capi_e2e.cpp", capi = True)
+host_cc_test("test_capi_udp_hello", "tests/capi/integration/test_capi_udp_hello.cpp", capi = True)
+host_cc_test("test_capi_rpc_roundtrip", "tests/capi/integration/test_capi_rpc_roundtrip.cpp", capi = True)

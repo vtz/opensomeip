@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Build**: Bazel module for the default host library and its C++ tests.
+  `bazel test //...` fetches GoogleTest as an external module. CMake remains
+  the configuration for presets, RTOS ports, and packaging.
+
 - **Transport**: `UdpTransportConfig::injected_multicast_join_errno`, when
   non-zero, makes `join_multicast_group` return `MULTICAST_ERROR` and record
   that errno without calling `IP_ADD_MEMBERSHIP`. Zero, the default, keeps

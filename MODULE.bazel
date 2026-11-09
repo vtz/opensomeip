@@ -1,0 +1,12 @@
+# Copyright (c) 2026 Vinicius Tadeu Zein
+# SPDX-License-Identifier: Apache-2.0
+
+"""Bazel module for the host library and its C++ tests."""
+
+module(
+    name = "opensomeip",
+    version = "0.2.0",
+    compatibility_level = 0,
+)
+
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1")

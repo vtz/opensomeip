@@ -1,0 +1,10 @@
+# Host C++17 build. CMake remains the source of truth for other presets.
+common --enable_bzlmod
+
+build --cxxopt=-std=c++17
+build --host_cxxopt=-std=c++17
+build --cxxopt=-fPIC
+
+# Transport, service discovery, RPC, and C API tests use localhost sockets.
+test --sandbox_default_allow_network=true
+test --test_output=errors
