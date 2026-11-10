@@ -19,6 +19,7 @@
 
 #include <atomic>
 #include <cstring>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -239,15 +240,46 @@ TEST_F(BufferPoolTest, ConcurrentAcquireRelease) {
     constexpr int kThreads = 4;
     constexpr int kOpsPerThread = 50;
     std::atomic<int> success_count{0};
+    std::atomic<int> live_reuse_count{0};
+    std::mutex live_mutex;
+    std::vector<BufferSlot*> live_slots;
 
     auto worker = [&]() {
         for (int i = 0; i < kOpsPerThread; ++i) {
             BufferSlot* s = acquire_buffer(64);
-            if (s) {
-                s->data[0] = 0x42;
-                release_buffer(s);
-                success_count.fetch_add(1, std::memory_order_relaxed);
+            if (!s) {
+                continue;
             }
+            bool already_live = false;
+            {
+                std::lock_guard<std::mutex> guard(live_mutex);
+                for (BufferSlot* held : live_slots) {
+                    if (held == s) {
+                        already_live = true;
+                        break;
+                    }
+                }
+                if (already_live) {
+                    live_reuse_count.fetch_add(1, std::memory_order_relaxed);
+                } else {
+                    live_slots.push_back(s);
+                }
+            }
+            if (already_live) {
+                continue;
+            }
+            s->data[0] = 0x42;
+            {
+                std::lock_guard<std::mutex> guard(live_mutex);
+                for (auto it = live_slots.begin(); it != live_slots.end(); ++it) {
+                    if (*it == s) {
+                        live_slots.erase(it);
+                        break;
+                    }
+                }
+            }
+            release_buffer(s);
+            success_count.fetch_add(1, std::memory_order_relaxed);
         }
     };
 
@@ -260,7 +292,8 @@ TEST_F(BufferPoolTest, ConcurrentAcquireRelease) {
         t.join();
     }
 
-    EXPECT_GT(success_count.load(), 0);
+    EXPECT_EQ(success_count.load(), kThreads * kOpsPerThread);
+    EXPECT_EQ(live_reuse_count.load(), 0);
 }
 
 /**

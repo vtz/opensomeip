@@ -19,6 +19,7 @@
 #include "static_config.h"
 
 #include <atomic>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -146,14 +147,46 @@ TEST_F(MessagePoolTest, ConcurrentAllocRelease) {
     constexpr int kThreads = 4;
     constexpr int kOpsPerThread = 4;
     std::atomic<int> success_count{0};
+    std::atomic<int> live_reuse_count{0};
+    std::mutex live_mutex;
+    std::vector<Message*> live_slots;
 
     auto worker = [&]() {
         for (int i = 0; i < kOpsPerThread; ++i) {
             auto msg = allocate_message();
-            if (msg) {
-                msg->set_service_id(0xBEEF);
-                success_count.fetch_add(1, std::memory_order_relaxed);
+            if (!msg) {
+                continue;
             }
+            Message* raw = msg.get();
+            bool already_live = false;
+            {
+                std::lock_guard<std::mutex> guard(live_mutex);
+                for (Message* held : live_slots) {
+                    if (held == raw) {
+                        already_live = true;
+                        break;
+                    }
+                }
+                if (already_live) {
+                    live_reuse_count.fetch_add(1, std::memory_order_relaxed);
+                } else {
+                    live_slots.push_back(raw);
+                }
+            }
+            if (already_live) {
+                continue;
+            }
+            msg->set_service_id(0xBEEF);
+            {
+                std::lock_guard<std::mutex> guard(live_mutex);
+                for (auto it = live_slots.begin(); it != live_slots.end(); ++it) {
+                    if (*it == raw) {
+                        live_slots.erase(it);
+                        break;
+                    }
+                }
+            }
+            success_count.fetch_add(1, std::memory_order_relaxed);
         }
     };
 
@@ -166,7 +199,8 @@ TEST_F(MessagePoolTest, ConcurrentAllocRelease) {
         t.join();
     }
 
-    EXPECT_GT(success_count.load(), 0);
+    EXPECT_EQ(success_count.load(), kThreads * kOpsPerThread);
+    EXPECT_EQ(live_reuse_count.load(), 0);
 }
 
 // --- IntrusivePtr tests ---
