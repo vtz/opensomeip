@@ -21,14 +21,14 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-11-10 14:59:55</p>
+    <p>Generated: 2026-11-10 15:09:13</p>
 
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
             <li>Total Requirements: 701</li>
             <li>Code References: 406</li>
-            <li>Test Cases: 599</li>
+            <li>Test Cases: 625</li>
         </ul>
     </div>
 
@@ -103,8 +103,8 @@
             <td>Static Allocation Policy</td>
             <td>REQ_ARCH_003</td>
             <td class="code-ref">-</td>
-            <td>-</td>
-            <td><span class="status-error">✗ Missing</span></td>
+            <td>TC_test_static_alloc_integration_14</td>
+            <td><span class="status-warning">⚠ Partial</span></td>
         </tr>
         <tr>
             <td>REQ_CAPI_001</td>
@@ -1471,8 +1471,8 @@
             <td>Error - Buffer Pool Thread Safety</td>
             <td>REQ_PAL_MEM_THREADSAFE_E01</td>
             <td class="code-ref">-</td>
-            <td>-</td>
-            <td><span class="status-error">✗ Missing</span></td>
+            <td>TC_BUFPOOL_CONCURRENT</td>
+            <td><span class="status-warning">⚠ Partial</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_BUFPOOL_TIERED</td>
@@ -1519,8 +1519,8 @@
             <td>Error - Container Capacity Exhaustion</td>
             <td>REQ_ARCH_008</td>
             <td class="code-ref">-</td>
-            <td>-</td>
-            <td><span class="status-error">✗ Missing</span></td>
+            <td>TC_ETL_HANDLER_VECTOR_OVERFLOW, TC_ETL_HANDLER_NO_ABORT</td>
+            <td><span class="status-warning">⚠ Partial</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_CONTAINER_FUNCTION</td>
@@ -1575,7 +1575,7 @@
             <td>PAL ConditionVariable Notify All</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_98, CODE_thread_impl_freertos_115, CODE_host_condition_variable_host_19, CODE_host_condition_variable_host_24, CODE_thread_impl_threadx_88, CODE_thread_impl_threadx_104, CODE_thread_impl_zephyr_57, CODE_thread_impl_zephyr_65</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
+            <td>TC_MOCK_CV_NOTIFY_ALL, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1583,7 +1583,7 @@
             <td>PAL ConditionVariable Notify One</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_98, CODE_thread_impl_freertos_112, CODE_host_condition_variable_host_19, CODE_host_condition_variable_host_22, CODE_thread_impl_threadx_88, CODE_thread_impl_threadx_99, CODE_thread_impl_zephyr_57, CODE_thread_impl_zephyr_63</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_CV_NOTIFY_ONE, TC_MOCK_CV_NOTIFY_BEFORE_WAIT, TC_MOCK_CV_REPEATED_NOTIFY_WAIT, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1591,7 +1591,7 @@
             <td>PAL ConditionVariable Mutex Ownership Guarantee</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_98, CODE_thread_impl_freertos_125, CODE_thread_impl_freertos_132, CODE_host_condition_variable_host_19, CODE_host_condition_variable_host_27, CODE_host_condition_variable_host_36, CODE_thread_impl_threadx_88, CODE_thread_impl_threadx_109, CODE_thread_impl_threadx_117, CODE_thread_impl_zephyr_57, CODE_thread_impl_zephyr_68, CODE_thread_impl_zephyr_73</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
+            <td>TC_MOCK_CV_WAIT, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1599,7 +1599,7 @@
             <td>PAL ConditionVariable Wait</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_98, CODE_thread_impl_freertos_125, CODE_host_condition_variable_host_19, CODE_host_condition_variable_host_27, CODE_thread_impl_threadx_88, CODE_thread_impl_threadx_109, CODE_thread_impl_zephyr_57, CODE_thread_impl_zephyr_68</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
+            <td>TC_MOCK_CV_WAIT, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1607,7 +1607,7 @@
             <td>PAL ConditionVariable Wait with Predicate</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_98, CODE_thread_impl_freertos_132, CODE_host_condition_variable_host_19, CODE_host_condition_variable_host_36, CODE_thread_impl_threadx_88, CODE_thread_impl_threadx_117, CODE_thread_impl_zephyr_57, CODE_thread_impl_zephyr_73</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
+            <td>TC_MOCK_CV_WAIT_PRED, TC_MOCK_CV_REPEATED_NOTIFY_WAIT, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1623,7 +1623,7 @@
             <td>PAL ScopedLock Acquisition on Construction</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_platform_30, CODE_thread_platform_33</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_SCOPEDLOCK_001</td>
+            <td>TC_MOCK_LOCK_ACQUIRE, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_SCOPEDLOCK_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1631,7 +1631,7 @@
             <td>PAL ScopedLock Non-Copyable</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_platform_30</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
+            <td>TC_MOCK_LOCK_NONCOPY, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1639,7 +1639,7 @@
             <td>PAL ScopedLock Release on Destruction</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_platform_30, CODE_thread_platform_35</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_SCOPEDLOCK_001</td>
+            <td>TC_MOCK_LOCK_RELEASE, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_SCOPEDLOCK_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1647,7 +1647,7 @@
             <td>PAL Memory Allocation</td>
             <td>REQ_ARCH_001, REQ_ARCH_003</td>
             <td class="code-ref">CODE_memory_static_14, CODE_memory_impl_freertos_23, CODE_memory_impl_posix_16, CODE_memory_impl_static_17, CODE_memory_impl_threadx_23, CODE_memory_impl_zephyr_17</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MEMORY_001, TC_STATIC_INT_MSG_POOL, TC_MSGPOOL_ALLOC_USABLE, TC_MSGPOOL_INDEPENDENT, TC_MSGPOOL_EXHAUST_RECOVER, TC_MSGPOOL_PLACEMENT_NEW, TC_MSGPOOL_CONCURRENT, TC_MSGPOOL_DOUBLE_RELEASE, TC_MSGPOOL_NULL_RELEASE, TC_MSGPOOL_FOREIGN_PTR_RELEASE, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_MEM_ALLOC, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MEMORY_001, TC_STATIC_INT_MSG_POOL, TC_MSGPOOL_ALLOC_USABLE, TC_MSGPOOL_INDEPENDENT, TC_MSGPOOL_EXHAUST_RECOVER, TC_MSGPOOL_PLACEMENT_NEW, TC_MSGPOOL_CONCURRENT, TC_MSGPOOL_DOUBLE_RELEASE, TC_MSGPOOL_NULL_RELEASE, TC_MSGPOOL_FOREIGN_PTR_RELEASE, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1663,7 +1663,7 @@
             <td>PAL Memory Independence</td>
             <td>REQ_ARCH_001, REQ_ARCH_003</td>
             <td class="code-ref">CODE_memory_impl_freertos_23, CODE_memory_impl_posix_16, CODE_memory_impl_threadx_23, CODE_memory_impl_zephyr_17, CODE_memory_impl_zephyr_19</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MEMORY_002, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_MEM_INDEPENDENT, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MEMORY_002, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1671,15 +1671,15 @@
             <td>Error - Memory Pool Thread Safety</td>
             <td>-</td>
             <td class="code-ref">CODE_memory_impl_freertos_23, CODE_memory_impl_threadx_23</td>
-            <td>-</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td>TC_MSGPOOL_CONCURRENT</td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_MUTEX_LOCK</td>
             <td>PAL Mutex Lock</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_74, CODE_thread_impl_posix_28, CODE_thread_impl_threadx_55, CODE_thread_impl_threadx_66, CODE_thread_impl_zephyr_32, CODE_thread_impl_zephyr_38</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MUTEX_001, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_MUTEX_LOCK, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MUTEX_001, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1687,7 +1687,7 @@
             <td>PAL Mutex Non-Copyable</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_posix_28, CODE_thread_impl_threadx_55, CODE_thread_impl_zephyr_32</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
+            <td>TC_MOCK_MUTEX_NONCOPY, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1695,7 +1695,7 @@
             <td>PAL Mutex Try Lock</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_86, CODE_thread_impl_posix_28, CODE_thread_impl_threadx_55, CODE_thread_impl_threadx_76, CODE_thread_impl_zephyr_32, CODE_thread_impl_zephyr_46</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MUTEX_001, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_MUTEX_TRYLOCK, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MUTEX_001, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1703,7 +1703,7 @@
             <td>PAL Mutex Unlock</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_80, CODE_thread_impl_posix_28, CODE_thread_impl_threadx_55, CODE_thread_impl_threadx_71, CODE_thread_impl_zephyr_32, CODE_thread_impl_zephyr_44</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MUTEX_001, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_MUTEX_UNLOCK, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MUTEX_001, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1711,7 +1711,7 @@
             <td>Error - Mutex Double Unlock</td>
             <td>-</td>
             <td class="code-ref">CODE_thread_impl_freertos_80, CODE_thread_impl_threadx_55, CODE_thread_impl_threadx_71, CODE_thread_impl_zephyr_32, CODE_thread_impl_zephyr_44</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MUTEX_002</td>
+            <td>TC_MOCK_MUTEX_DOUBLE_UNLOCK, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_MUTEX_002</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1767,7 +1767,7 @@
             <td>PAL sleep_for Minimum Duration</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_254, CODE_thread_impl_posix_95, CODE_thread_impl_threadx_291, CODE_thread_impl_zephyr_151</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_FREERTOS_SLEEP_SUBTICK, TC_FREERTOS_SLEEP_CEILING, TC_FREERTOS_SLEEP_FRACTIONAL_MILLISECOND, TC_FREERTOS_SLEEP_CHUNKS, TC_FREERTOS_SLEEP_CHUNK_ROUNDING, TC_FREERTOS_SLEEP_ARITHMETIC, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_SLEEP_001, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_SLEEP_DURATION, TC_FREERTOS_SLEEP_SUBTICK, TC_FREERTOS_SLEEP_CEILING, TC_FREERTOS_SLEEP_FRACTIONAL_MILLISECOND, TC_FREERTOS_SLEEP_CHUNKS, TC_FREERTOS_SLEEP_CHUNK_ROUNDING, TC_FREERTOS_SLEEP_ARITHMETIC, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_SLEEP_001, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1775,7 +1775,7 @@
             <td>PAL sleep_for Zero Duration</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_254, CODE_thread_impl_posix_95, CODE_thread_impl_threadx_291, CODE_thread_impl_zephyr_151</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_FREERTOS_SLEEP_SUBTICK, TC_FREERTOS_SLEEP_FRACTIONAL_MILLISECOND, TC_FREERTOS_SLEEP_CHUNK_ROUNDING, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_SLEEP_002, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_SLEEP_ZERO, TC_FREERTOS_SLEEP_SUBTICK, TC_FREERTOS_SLEEP_FRACTIONAL_MILLISECOND, TC_FREERTOS_SLEEP_CHUNK_ROUNDING, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_SLEEP_002, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1791,7 +1791,7 @@
             <td>PAL Thread Creation</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_152, CODE_thread_impl_posix_34, CODE_thread_impl_posix_39, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_137, CODE_thread_impl_win32_27, CODE_thread_impl_win32_32, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_92</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_THREAD_001, TC_PAL_THREAD_002, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_THREAD_CREATE, TC_MOCK_THREAD_WITH_ARGS, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_THREAD_001, TC_PAL_THREAD_002, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1807,7 +1807,7 @@
             <td>Error - Thread Destructor Without Join</td>
             <td>-</td>
             <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_177, CODE_thread_impl_posix_34, CODE_thread_impl_posix_56, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_172, CODE_thread_impl_win32_27, CODE_thread_impl_win32_43, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_107</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_THREAD_003</td>
+            <td>TC_MOCK_THREAD_DTOR, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_THREAD_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1815,15 +1815,15 @@
             <td>PAL Current Thread Identity</td>
             <td>REQ_ARCH_002</td>
             <td class="code-ref">CODE_thread_impl_freertos_276, CODE_thread_impl_posix_98, CODE_thread_impl_threadx_302, CODE_thread_impl_win32_79, CODE_thread_impl_zephyr_163</td>
-            <td>-</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td>TC_MOCK_THREAD_ID</td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_THREAD_JOIN</td>
             <td>PAL Thread Join</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_194, CODE_thread_impl_posix_34, CODE_thread_impl_posix_73, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_190, CODE_thread_impl_win32_27, CODE_thread_impl_win32_56, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_122</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_THREAD_001, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_THREAD_JOIN_FAST, TC_MOCK_THREAD_JOIN, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_THREAD_001, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1831,7 +1831,7 @@
             <td>PAL Thread Joinable Query</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_188, CODE_thread_impl_posix_34, CODE_thread_impl_posix_67, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_184, CODE_thread_impl_win32_27, CODE_thread_impl_win32_53, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_116</td>
-            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_test_threadx_core_7</td>
+            <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_THREAD_JOINABLE, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1839,7 +1839,7 @@
             <td>PAL Thread Non-Copyable</td>
             <td>REQ_ARCH_001</td>
             <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_posix_34, CODE_thread_impl_threadx_132, CODE_thread_impl_win32_27, CODE_thread_impl_zephyr_87</td>
-            <td>TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
+            <td>TC_MOCK_THREAD_NONCOPY, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1919,8 +1919,8 @@
             <td>Static Allocation Container Backend</td>
             <td>REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING, REQ_PAL_CONTAINER_MAP, REQ_PAL_CONTAINER_QUEUE, REQ_PAL_CONTAINER_FUNCTION</td>
             <td class="code-ref">-</td>
-            <td>-</td>
-            <td><span class="status-error">✗ Missing</span></td>
+            <td>TC_CONTAINER_VECTOR_PUSH_BACK, TC_CONTAINER_STRING_APPEND, TC_CONTAINER_MAP_INSERT_LOOKUP, TC_CONTAINER_QUEUE_FIFO, TC_CONTAINER_FUNCTION_INVOKE</td>
+            <td><span class="status-warning">⚠ Partial</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_STATIC_002</td>
@@ -1951,8 +1951,8 @@
             <td>Pimpl Static Storage</td>
             <td>REQ_ARCH_008</td>
             <td class="code-ref">-</td>
-            <td>-</td>
-            <td><span class="status-error">✗ Missing</span></td>
+            <td>TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR</td>
+            <td><span class="status-warning">⚠ Partial</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_THREADX_001</td>
@@ -4959,8 +4959,8 @@
             <td>Reject Misaligned Non-Final Segments</td>
             <td>feat_req_someiptp_772, feat_req_someiptp_792</td>
             <td class="code-ref">-</td>
-            <td>-</td>
-            <td><span class="status-error">✗ Missing</span></td>
+            <td>TC_TP_MISALIGNED_NONFINAL_REJECTED, TC_TP_MISALIGNED_FINAL_ACCEPTED</td>
+            <td><span class="status-warning">⚠ Partial</span></td>
         </tr>
         <tr>
             <td>REQ_TP_050</td>
@@ -5207,8 +5207,8 @@
             <td>First-Wins Semantics for Overlapping Segments</td>
             <td>feat_req_someiptp_797</td>
             <td class="code-ref">-</td>
-            <td>-</td>
-            <td><span class="status-error">✗ Missing</span></td>
+            <td>TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS</td>
+            <td><span class="status-warning">⚠ Partial</span></td>
         </tr>
         <tr>
             <td>REQ_TP_082</td>
@@ -8108,86 +8108,86 @@
         </tr>
         <tr>
             <td>TC_BUFPOOL_ACQUIRE_LARGE</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:63)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:63</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:64)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:64</td>
             <td>REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_TIERED</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_ACQUIRE_MEDIUM</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:50)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:50</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:51)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:51</td>
             <td>REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_TIERED</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_ACQUIRE_OVERSIZED</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:76)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:76</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:77)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:77</td>
             <td>REQ_PAL_BUFPOOL_EXHAUST_E01</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_ACQUIRE_SMALL</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:37)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:37</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:38)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:38</td>
             <td>REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_TIERED</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_CONCURRENT</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:232)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:232</td>
-            <td>REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_RELEASE</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:233)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:233</td>
+            <td>REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_RELEASE, REQ_PAL_BUFPOOL_THREADSAFE_E01</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_CROSS_TIER_FALLBACK</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:189)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:189</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:190)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:190</td>
             <td>REQ_PAL_BUFPOOL_TIERED</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_DATA_INTEGRITY</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:291)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:291</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:325)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:325</td>
             <td>REQ_PAL_BUFPOOL_ACQUIRE</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_DOUBLE_FREE</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:211)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:211</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:212)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:212</td>
             <td>REQ_PAL_BUFPOOL_RELEASE</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_EXHAUST_TIER0</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:116)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:116</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:117)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:117</td>
             <td>REQ_PAL_BUFPOOL_TIERED, REQ_PAL_BUFPOOL_EXHAUST_E01</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_EXHAUST_TIER1</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:140)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:140</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:141)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:141</td>
             <td>REQ_PAL_BUFPOOL_TIERED, REQ_PAL_BUFPOOL_EXHAUST_E01</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_EXHAUST_TIER2</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:170)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:170</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:171)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:171</td>
             <td>REQ_PAL_BUFPOOL_TIERED, REQ_PAL_BUFPOOL_EXHAUST_E01</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_FULL_CYCLE</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:265)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:265</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:299)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:299</td>
             <td>REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_RELEASE</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_NULL_RELEASE</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:309)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:309</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:343)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:343</td>
             <td>REQ_PAL_BUFPOOL_RELEASE</td>
         </tr>
         <tr>
             <td>TC_BUFPOOL_RELEASE_REUSE</td>
-            <td>TEST_F (tests/test_buffer_pool.cpp:101)</td>
-            <td class="code-ref">tests/test_buffer_pool.cpp:101</td>
+            <td>TEST_F (tests/test_buffer_pool.cpp:102)</td>
+            <td class="code-ref">tests/test_buffer_pool.cpp:102</td>
             <td>REQ_PAL_BUFPOOL_RELEASE</td>
         </tr>
         <tr>
@@ -8572,31 +8572,31 @@
             <td>TC_CONTAINER_FUNCTION_INVOKE</td>
             <td>TEST (tests/test_platform_containers.cpp:304)</td>
             <td class="code-ref">tests/test_platform_containers.cpp:304</td>
-            <td>REQ_PAL_CONTAINER_FUNCTION</td>
+            <td>REQ_PAL_CONTAINER_FUNCTION, REQ_PLATFORM_STATIC_001</td>
         </tr>
         <tr>
             <td>TC_CONTAINER_MAP_INSERT_LOOKUP</td>
             <td>TEST (tests/test_platform_containers.cpp:267)</td>
             <td class="code-ref">tests/test_platform_containers.cpp:267</td>
-            <td>REQ_PAL_CONTAINER_MAP</td>
+            <td>REQ_PAL_CONTAINER_MAP, REQ_PLATFORM_STATIC_001</td>
         </tr>
         <tr>
             <td>TC_CONTAINER_QUEUE_FIFO</td>
             <td>TEST (tests/test_platform_containers.cpp:284)</td>
             <td class="code-ref">tests/test_platform_containers.cpp:284</td>
-            <td>REQ_PAL_CONTAINER_QUEUE</td>
+            <td>REQ_PAL_CONTAINER_QUEUE, REQ_PLATFORM_STATIC_001</td>
         </tr>
         <tr>
             <td>TC_CONTAINER_STRING_APPEND</td>
             <td>TEST (tests/test_platform_containers.cpp:254)</td>
             <td class="code-ref">tests/test_platform_containers.cpp:254</td>
-            <td>REQ_PAL_CONTAINER_STRING</td>
+            <td>REQ_PAL_CONTAINER_STRING, REQ_PLATFORM_STATIC_001</td>
         </tr>
         <tr>
             <td>TC_CONTAINER_VECTOR_PUSH_BACK</td>
             <td>TEST (tests/test_platform_containers.cpp:234)</td>
             <td class="code-ref">tests/test_platform_containers.cpp:234</td>
-            <td>REQ_PAL_CONTAINER_VECTOR</td>
+            <td>REQ_PAL_CONTAINER_VECTOR, REQ_PLATFORM_STATIC_001</td>
         </tr>
         <tr>
             <td>TC_E2E_001</td>
@@ -8924,9 +8924,9 @@
         </tr>
         <tr>
             <td>TC_ETL_HANDLER_NO_ABORT</td>
-            <td>TEST_F (tests/test_etl_error_handler.cpp:88)</td>
-            <td class="code-ref">tests/test_etl_error_handler.cpp:88</td>
-            <td>REQ_PAL_ETL_ERROR_HANDLER</td>
+            <td>TEST_F (tests/test_etl_error_handler.cpp:89)</td>
+            <td class="code-ref">tests/test_etl_error_handler.cpp:89</td>
+            <td>REQ_PAL_ETL_ERROR_HANDLER, REQ_PAL_CONTAINER_CAPACITY_E01</td>
         </tr>
         <tr>
             <td>TC_ETL_HANDLER_REGISTERED</td>
@@ -8938,12 +8938,12 @@
             <td>TC_ETL_HANDLER_VECTOR_OVERFLOW</td>
             <td>TEST_F (tests/test_etl_error_handler.cpp:48)</td>
             <td class="code-ref">tests/test_etl_error_handler.cpp:48</td>
-            <td>REQ_PAL_ETL_ERROR_HANDLER</td>
+            <td>REQ_PAL_ETL_ERROR_HANDLER, REQ_PAL_CONTAINER_CAPACITY_E01</td>
         </tr>
         <tr>
             <td>TC_ETL_MAP_FULL_CHECK</td>
-            <td>TEST_F (tests/test_etl_error_handler.cpp:71)</td>
-            <td class="code-ref">tests/test_etl_error_handler.cpp:71</td>
+            <td>TEST_F (tests/test_etl_error_handler.cpp:72)</td>
+            <td class="code-ref">tests/test_etl_error_handler.cpp:72</td>
             <td>REQ_PAL_ETL_ERROR_HANDLER</td>
         </tr>
         <tr>
@@ -9140,38 +9140,38 @@
         </tr>
         <tr>
             <td>TC_INTRUSIVE_COMPARISON</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:239)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:239</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:274)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:274</td>
             <td>REQ_PAL_INTRUSIVE_PTR</td>
         </tr>
         <tr>
             <td>TC_INTRUSIVE_DEFAULT_NULL</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:175)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:175</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:210)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:210</td>
             <td>REQ_PAL_INTRUSIVE_PTR</td>
         </tr>
         <tr>
             <td>TC_INTRUSIVE_LIFECYCLE</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:194)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:194</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:229)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:229</td>
             <td>REQ_PAL_INTRUSIVE_PTR</td>
         </tr>
         <tr>
             <td>TC_INTRUSIVE_MOVE</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:214)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:214</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:249)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:249</td>
             <td>REQ_PAL_INTRUSIVE_PTR</td>
         </tr>
         <tr>
             <td>TC_INTRUSIVE_NULLPTR_CONSTRUCT</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:185)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:185</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:220)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:220</td>
             <td>REQ_PAL_INTRUSIVE_PTR</td>
         </tr>
         <tr>
             <td>TC_INTRUSIVE_RESET</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:228)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:228</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:263)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:263</td>
             <td>REQ_PAL_INTRUSIVE_PTR</td>
         </tr>
         <tr>
@@ -9217,63 +9217,219 @@
             <td>REQ_TRANSPORT_011_E03</td>
         </tr>
         <tr>
+            <td>TC_MOCK_CV_NOTIFY_ALL</td>
+            <td>TEST (tests/pal_conformance_tests.inc:219)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:219</td>
+            <td>REQ_PAL_CV_NOTIFY_ALL</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_CV_NOTIFY_BEFORE_WAIT</td>
+            <td>TEST (tests/pal_conformance_tests.inc:248)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:248</td>
+            <td>REQ_PAL_CV_NOTIFY_ONE</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_CV_NOTIFY_ONE</td>
+            <td>TEST (tests/pal_conformance_tests.inc:184)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:184</td>
+            <td>REQ_PAL_CV_NOTIFY_ONE</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_CV_REPEATED_NOTIFY_WAIT</td>
+            <td>TEST (tests/pal_conformance_tests.inc:277)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:277</td>
+            <td>REQ_PAL_CV_NOTIFY_ONE, REQ_PAL_CV_WAIT_PRED</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_CV_WAIT</td>
+            <td>TEST (tests/pal_conformance_tests.inc:123)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:123</td>
+            <td>REQ_PAL_CV_WAIT, REQ_PAL_CV_OWNERSHIP</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_CV_WAIT_PRED</td>
+            <td>TEST (tests/pal_conformance_tests.inc:157)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:157</td>
+            <td>REQ_PAL_CV_WAIT_PRED</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_LOCK_ACQUIRE</td>
+            <td>TEST (tests/pal_conformance_tests.inc:426)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:426</td>
+            <td>REQ_PAL_LOCK_ACQUIRE</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_LOCK_NONCOPY</td>
+            <td>TEST (tests/pal_conformance_tests.inc:464)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:464</td>
+            <td>REQ_PAL_LOCK_NONCOPY</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_LOCK_RELEASE</td>
+            <td>TEST (tests/pal_conformance_tests.inc:446)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:446</td>
+            <td>REQ_PAL_LOCK_RELEASE</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_MEM_ALLOC</td>
+            <td>TEST (tests/pal_conformance_tests.inc:525)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:525</td>
+            <td>REQ_PAL_MEM_ALLOC</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_MEM_INDEPENDENT</td>
+            <td>TEST (tests/pal_conformance_tests.inc:537)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:537</td>
+            <td>REQ_PAL_MEM_INDEPENDENT</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_MUTEX_DOUBLE_UNLOCK</td>
+            <td>TEST (tests/pal_conformance_tests.inc:106)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:106</td>
+            <td>REQ_PAL_MUTEX_UNLOCK_E01</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_MUTEX_LOCK</td>
+            <td>TEST (tests/pal_conformance_tests.inc:39)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:39</td>
+            <td>REQ_PAL_MUTEX_LOCK</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_MUTEX_NONCOPY</td>
+            <td>TEST (tests/pal_conformance_tests.inc:96)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:96</td>
+            <td>REQ_PAL_MUTEX_NONCOPY</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_MUTEX_TRYLOCK</td>
+            <td>TEST (tests/pal_conformance_tests.inc:77)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:77</td>
+            <td>REQ_PAL_MUTEX_TRYLOCK</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_MUTEX_UNLOCK</td>
+            <td>TEST (tests/pal_conformance_tests.inc:58)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:58</td>
+            <td>REQ_PAL_MUTEX_UNLOCK</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_SLEEP_DURATION</td>
+            <td>TEST (tests/pal_conformance_tests.inc:494)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:494</td>
+            <td>REQ_PAL_SLEEP_DURATION</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_SLEEP_ZERO</td>
+            <td>TEST (tests/pal_conformance_tests.inc:508)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:508</td>
+            <td>REQ_PAL_SLEEP_ZERO</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_THREAD_CREATE</td>
+            <td>TEST (tests/pal_conformance_tests.inc:335)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:335</td>
+            <td>REQ_PAL_THREAD_CREATE</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_THREAD_DTOR</td>
+            <td>TEST (tests/pal_conformance_tests.inc:404)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:404</td>
+            <td>REQ_PAL_THREAD_DTOR_E01</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_THREAD_ID</td>
+            <td>TEST (tests/pal_conformance_tests.inc:478)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:478</td>
+            <td>REQ_PAL_THREAD_ID</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_THREAD_JOIN</td>
+            <td>TEST (tests/pal_conformance_tests.inc:360)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:360</td>
+            <td>REQ_PAL_THREAD_JOIN</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_THREAD_JOINABLE</td>
+            <td>TEST (tests/pal_conformance_tests.inc:347)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:347</td>
+            <td>REQ_PAL_THREAD_JOINABLE</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_THREAD_JOIN_FAST</td>
+            <td>TEST (tests/pal_conformance_tests.inc:315)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:315</td>
+            <td>REQ_PAL_THREAD_JOIN</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_THREAD_NONCOPY</td>
+            <td>TEST (tests/pal_conformance_tests.inc:392)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:392</td>
+            <td>REQ_PAL_THREAD_NONCOPY</td>
+        </tr>
+        <tr>
+            <td>TC_MOCK_THREAD_WITH_ARGS</td>
+            <td>TEST (tests/pal_conformance_tests.inc:378)</td>
+            <td class="code-ref">tests/pal_conformance_tests.inc:378</td>
+            <td>REQ_PAL_THREAD_CREATE</td>
+        </tr>
+        <tr>
             <td>TC_MSGPOOL_ALLOC_USABLE</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:39)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:39</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:40)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:40</td>
             <td>REQ_PAL_MEM_ALLOC</td>
         </tr>
         <tr>
             <td>TC_MSGPOOL_CONCURRENT</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:140)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:140</td>
-            <td>REQ_PAL_MEM_ALLOC</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:141)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:141</td>
+            <td>REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_THREADSAFE_E01</td>
         </tr>
         <tr>
             <td>TC_MSGPOOL_DOUBLE_RELEASE</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:256)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:256</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:291)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:291</td>
             <td>REQ_PAL_MEM_ALLOC, REQ_PLATFORM_STATIC_002</td>
         </tr>
         <tr>
             <td>TC_MSGPOOL_EXHAUST</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:76)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:76</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:77)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:77</td>
             <td>REQ_PAL_MEM_EXHAUST_E01</td>
         </tr>
         <tr>
             <td>TC_MSGPOOL_EXHAUST_RECOVER</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:97)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:97</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:98)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:98</td>
             <td>REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_EXHAUST_E01</td>
         </tr>
         <tr>
             <td>TC_MSGPOOL_FOREIGN_PTR_RELEASE</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:296)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:296</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:331)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:331</td>
             <td>REQ_PAL_MEM_ALLOC</td>
         </tr>
         <tr>
             <td>TC_MSGPOOL_INDEPENDENT</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:49)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:49</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:50)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:50</td>
             <td>REQ_PAL_MEM_ALLOC</td>
         </tr>
         <tr>
             <td>TC_MSGPOOL_INTRUSIVE_PTR</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:63)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:63</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:64)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:64</td>
             <td>REQ_PAL_INTRUSIVE_PTR</td>
         </tr>
         <tr>
             <td>TC_MSGPOOL_NULL_RELEASE</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:288)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:288</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:323)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:323</td>
             <td>REQ_PAL_MEM_ALLOC</td>
         </tr>
         <tr>
             <td>TC_MSGPOOL_PLACEMENT_NEW</td>
-            <td>TEST_F (tests/test_static_message_pool.cpp:118)</td>
-            <td class="code-ref">tests/test_static_message_pool.cpp:118</td>
+            <td>TEST_F (tests/test_static_message_pool.cpp:119)</td>
+            <td class="code-ref">tests/test_static_message_pool.cpp:119</td>
             <td>REQ_PAL_MEM_ALLOC, REQ_PLATFORM_STATIC_002</td>
         </tr>
         <tr>
@@ -10646,104 +10802,104 @@
         </tr>
         <tr>
             <td>TC_STATIC_INT_BORROWED_TRANSPORT</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:79)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:79</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:80)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:80</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_003</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_BUFPOOL</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:245)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:245</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:246)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:246</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_RELEASE</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_CONTAINER_OPS</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:296)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:296</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:297)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:297</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_EVENTPUB_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:378)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:378</td>
-            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:381)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:381</td>
+            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_EVENTSUB_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:389)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:389</td>
-            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:393)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:393</td>
+            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_FULL_STACK</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:317)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:317</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:318)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:318</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_MSG_POOL</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:224)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:224</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:225)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:225</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PAL_MEM_ALLOC</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_PAYLOADVIEW</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:422)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:422</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:429)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:429</td>
             <td>REQ_API_PAYLOAD_VIEW, REQ_PAL_NOOP_HEAP_VERIFY</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_ROUNDTRIP</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:198)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:198</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:199)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:199</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_RPCCLIENT_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:356)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:356</td>
-            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:357)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:357</td>
+            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_RPCSERVER_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:367)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:367</td>
-            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:369)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:369</td>
+            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SDCLIENT_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:400)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:400</td>
-            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:405)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:405</td>
+            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SDSERVER_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:411)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:411</td>
-            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:417)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:417</td>
+            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SERIALIZER</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:267)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:267</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:268)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:268</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_003</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SYNC_CALLBACK_LIFETIME</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:107)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:107</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:108)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:108</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_003</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_TRAP_ARMED_ALLOC</td>
-            <td>TEST (tests/test_static_alloc_integration.cpp:169)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:169</td>
+            <td>TEST (tests/test_static_alloc_integration.cpp:170)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:170</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_TRAP_THREAD_SCOPE</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:129)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:129</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:130)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:130</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY</td>
         </tr>
         <tr>
@@ -11170,13 +11326,13 @@
             <td>TC_TP_MISALIGNED_FINAL_ACCEPTED</td>
             <td>TEST_F (tests/test_tp.cpp:1945)</td>
             <td class="code-ref">tests/test_tp.cpp:1945</td>
-            <td>feat_req_someiptp_772</td>
+            <td>feat_req_someiptp_772, REQ_TP_044</td>
         </tr>
         <tr>
             <td>TC_TP_MISALIGNED_NONFINAL_REJECTED</td>
             <td>TEST_F (tests/test_tp.cpp:1868)</td>
             <td class="code-ref">tests/test_tp.cpp:1868</td>
-            <td>feat_req_someiptp_772, feat_req_someiptp_792</td>
+            <td>feat_req_someiptp_772, feat_req_someiptp_792, REQ_TP_044</td>
         </tr>
         <tr>
             <td>TC_TP_MISMATCHED_MSG_LEN_REJECTED</td>
@@ -11200,7 +11356,7 @@
             <td>TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS</td>
             <td>TEST_F (tests/test_tp.cpp:2104)</td>
             <td class="code-ref">tests/test_tp.cpp:2104</td>
-            <td>feat_req_someiptp_797</td>
+            <td>feat_req_someiptp_797, REQ_TP_081_FW</td>
         </tr>
         <tr>
             <td>TC_TP_OVERLAP_SAME_DATA</td>
@@ -11650,7 +11806,7 @@
             <td>TC_test_static_alloc_integration_14</td>
             <td>unknown (tests/test_static_alloc_integration.cpp:14)</td>
             <td class="code-ref">tests/test_static_alloc_integration.cpp:14</td>
-            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
+            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_008</td>
         </tr>
         <tr>
             <td>TC_test_tcp_transport_SetUp</td>
