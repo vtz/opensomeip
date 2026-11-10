@@ -43,6 +43,15 @@ def extract_validation_metrics(output: str) -> dict[str, str]:
     if orphan_m:
         metrics["orphaned"] = orphan_m.group(1)
 
+    # These two rows sit in the "Validated" snapshot but were not compared.
+    with_tests_m = re.search(r"(?m)^\s*Requirements with tests:\s*(\d+)\s*$", output)
+    if with_tests_m:
+        metrics["with_tests"] = with_tests_m.group(1)
+
+    test_refs_m = re.search(r"(?m)^\s*Test references:\s*(\d+)\s*$", output)
+    if test_refs_m:
+        metrics["test_references"] = test_refs_m.group(1)
+
     return metrics
 
 
@@ -128,6 +137,8 @@ def main() -> int:
     committed_total = extract_metric(summary_text, "Total requirements (RST)")
     committed_traced = extract_metric(summary_text, "Fully traced (code + tests)")
     committed_orphaned = extract_metric(summary_text, "Orphaned (no code annotation)")
+    committed_with_tests = extract_metric(summary_text, "Requirements with test coverage")
+    committed_test_refs = extract_metric(summary_text, "Test references extracted")
 
     errors: list[str] = []
 
@@ -145,6 +156,18 @@ def main() -> int:
     if metric_counts_differ(committed_orphaned, actual.get("orphaned")):
         errors.append(
             f"Orphaned: committed={committed_orphaned}, actual={actual.get('orphaned', '?')}"
+        )
+
+    if metric_counts_differ(committed_with_tests, actual.get("with_tests")):
+        errors.append(
+            f"Requirements with test coverage: committed={committed_with_tests}, "
+            f"actual={actual.get('with_tests', '?')}"
+        )
+
+    if metric_counts_differ(committed_test_refs, actual.get("test_references")):
+        errors.append(
+            f"Test references extracted: committed={committed_test_refs}, "
+            f"actual={actual.get('test_references', '?')}"
         )
 
     if errors:
