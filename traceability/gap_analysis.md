@@ -1,6 +1,6 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-11-10 14:56:29
+Generated: 2026-11-10 14:59:55
 
 ## Summary
 
@@ -51,6 +51,22 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one
 | Unit Tests | 571 |
 | Integration Tests | 22 |
 | System Tests | 6 |
+
+### Specification requirements reached by integration or system tests
+
+Counts `feat_req_*` IDs cited by a software requirement `:satisfies:` field.
+The class comes from `classify_test_type` on tests of those software
+requirements. Specification IDs with no software requirement stay in
+`check_spec_requirements.py`.
+
+| Reach | Count |
+|-------|-------|
+| Linked specification IDs | 745 |
+| Reached by an integration test | 43 |
+| Reached by a system test | 26 |
+| Reached by integration or system | 50 |
+| Reached only by unit tests | 695 |
+| Linked, with no test | 0 |
 
 ## Gaps Requiring Attention
 
