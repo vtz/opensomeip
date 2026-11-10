@@ -292,7 +292,7 @@ This document provides a comprehensive traceability matrix mapping requirements 
 | Requirements with code refs | 620 (88.8%) | Good |
 | Requirements with test coverage | 686 (98.3%) | Good |
 | Orphaned (no code annotation) | 78 (11.2%) | Needs improvement |
-| Spec-linked implementation reqs | 696/698 | REQ_MSG_150, REQ_TRANSPORT_026 exempt; see TRACEABILITY_SUMMARY.md |
+| Spec-linked implementation reqs | 696/698 | REQ_MSG_150, REQ_TRANSPORT_026 known-unlinked; see TRACEABILITY_SUMMARY.md |
 
 ### Test Suite Mapping
 
