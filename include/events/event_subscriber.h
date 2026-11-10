@@ -41,7 +41,7 @@ class EventSubscriberImpl;
  * from services and receive notifications when events occur.
  */
 class EventSubscriber {
-public:
+   public:
     /**
      * @brief Constructor
      * @param client_id Client identifier
@@ -102,6 +102,11 @@ public:
     void set_default_endpoint(const platform::String<>& address, uint16_t port);
 
     /**
+     * @brief Local UDP endpoint. The port is assigned after initialize when bound to 0.
+     */
+    transport::Endpoint get_local_endpoint() const;
+
+    /**
      * @brief Set a resolver function that maps (service_id, instance_id) to an endpoint.
      * @param resolver Callable returning an Endpoint for the given service+instance
      */
@@ -130,9 +135,9 @@ public:
      *       and optional filters do not supply an unambiguous receive binding.
      */
     Result subscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
-                            EventNotificationCallback notification_callback,
-                            SubscriptionStatusCallback status_callback = nullptr,
-                            const platform::Vector<EventFilter>& filters = {});
+                                EventNotificationCallback notification_callback,
+                                SubscriptionStatusCallback status_callback = nullptr,
+                                const platform::Vector<EventFilter>& filters = {});
 
     /**
      * @brief Unsubscribe from an event group
@@ -173,27 +178,39 @@ public:
     bool unsubscribe_eventgroup(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id);
 
     /**
-     * @brief Request field value (one-time read)
+     * @brief Read a field with a getter request/response.
+     *
+     * Sends Message Type REQUEST (0x00) to @p getter_method_id with an empty
+     * payload. The callback receives the response. Message Type RESPONSE (0x80)
+     * carries the current field value. A notification does not complete the request.
      *
      * @param service_id Service identifier
-     * @param instance_id Service instance identifier
-     * @param event_id Field identifier
-     * @param callback Callback for field value response
-     * @return true if request sent, false if the remote destination is unresolved,
-     *         the field is already pending, or the send fails
-     * @note A second request for an already-pending field is rejected without replacing
-     *       its callback or sending another request. The field becomes available again
-     *       on response or shutdown; no field-request timeout is provided.
-     * @note Pending field requests are keyed by (service_id, event_id) only -- NOT by
-     *       instance_id. A SOME/IP notification carries no instance id, so the response
-     *       cannot be attributed to a specific instance; @p instance_id here only
-     *       addresses the initial request message. Consequently a pending field request
-     *       for one instance also blocks (as "already pending") a request for the same
-     *       service_id/event_id on a DIFFERENT instance, and whichever instance's
-     *       notification arrives first satisfies the pending callback.
+     * @param instance_id Service instance identifier. Not present on the wire;
+     *        it is reported back on the callback and selects the destination.
+     * @param getter_method_id Configured getter method id. This is not an event id.
+     * @param callback Callback for the getter response
+     * @return true if the request was sent, false if the remote destination is
+     *         unresolved, this getter is already pending, or the send fails
+     * @note A second request for the same service and getter method is rejected
+     *       without replacing the callback. The getter becomes available again
+     *       on response or shutdown. There is no field-request timeout.
+     *       Pending getters are keyed by (service_id, getter_method_id), not instance.
      */
-    bool request_field(uint16_t service_id, uint16_t instance_id, uint16_t event_id,
-                      EventNotificationCallback callback);
+    bool request_field(uint16_t service_id, uint16_t instance_id, uint16_t getter_method_id,
+                       EventNotificationCallback callback);
+
+    /**
+     * @brief Write a field with a setter request/response.
+     *
+     * Sends Message Type REQUEST (0x00) to @p setter_method_id. The payload is
+     * @p value. The callback receives the value the server stored, or an error
+     * return code when the server rejects the write.
+     *
+     * @return true if the request was sent, false if the remote destination is
+     *         unresolved, this setter is already pending, or the send fails
+     */
+    bool set_field(uint16_t service_id, uint16_t instance_id, uint16_t setter_method_id,
+                   const platform::ByteBuffer& value, EventNotificationCallback callback);
 
     /**
      * @brief Store event filter metadata (not enforced on received notifications)
@@ -205,7 +222,7 @@ public:
      * @return true if filters updated, false on error
      */
     bool set_event_filters(uint16_t service_id, uint16_t instance_id, uint16_t eventgroup_id,
-                         const platform::Vector<EventFilter>& filters);
+                           const platform::Vector<EventFilter>& filters);
 
     /**
      * @brief Get active subscriptions
@@ -223,7 +240,7 @@ public:
      * @return Current subscription state
      */
     SubscriptionState get_subscription_status(uint16_t service_id, uint16_t instance_id,
-                                            uint16_t eventgroup_id) const;
+                                              uint16_t eventgroup_id) const;
 
     /**
      * @brief Check if subscriber is initialized and ready
@@ -254,18 +271,30 @@ public:
     };
     Statistics get_statistics() const;
 
-private:
+   private:
 #ifdef SOMEIP_STATIC_ALLOC
     alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_EVENTSUB_SIZE];
-    EventSubscriberImpl* impl() noexcept { return reinterpret_cast<EventSubscriberImpl*>(impl_storage_); }
-    const EventSubscriberImpl* impl() const noexcept { return reinterpret_cast<const EventSubscriberImpl*>(impl_storage_); }
+    EventSubscriberImpl* impl() noexcept
+    {
+        return reinterpret_cast<EventSubscriberImpl*>(impl_storage_);
+    }
+    const EventSubscriberImpl* impl() const noexcept
+    {
+        return reinterpret_cast<const EventSubscriberImpl*>(impl_storage_);
+    }
 #else
     std::unique_ptr<EventSubscriberImpl> impl_;
-    EventSubscriberImpl* impl() noexcept { return impl_.get(); }
-    const EventSubscriberImpl* impl() const noexcept { return impl_.get(); }
+    EventSubscriberImpl* impl() noexcept
+    {
+        return impl_.get();
+    }
+    const EventSubscriberImpl* impl() const noexcept
+    {
+        return impl_.get();
+    }
 #endif
 };
 
 }  // namespace someip::events
 
-#endif // SOMEIP_EVENTS_SUBSCRIBER_H
+#endif  // SOMEIP_EVENTS_SUBSCRIBER_H

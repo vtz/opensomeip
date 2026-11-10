@@ -17,6 +17,7 @@
 #include "event_types.h"
 #include "platform/buffer_pool.h"
 #include "platform/containers.h"
+#include "transport/endpoint.h"
 #include "transport/message_rejection.h"
 #include "transport/transport.h"
 
@@ -40,7 +41,7 @@ class EventPublisherImpl;
  * to subscribed clients using the SOME/IP event mechanism.
  */
 class EventPublisher {
-public:
+   public:
     /**
      * @brief Constructor
      * @param service_id Service identifier
@@ -91,7 +92,10 @@ public:
      * @brief Register an event for publication
      *
      * @param config Event configuration
-     * @return true if registered successfully, false on error
+     * @return true if registered successfully, false on error.
+     *         A field with no getter, no setter, and no notifier is rejected.
+     *         Registering the same field notifier again replaces the previous
+     *         accessor ids and keeps the stored value.
      */
     bool register_event(const EventConfig& config);
 
@@ -131,6 +135,23 @@ public:
     bool publish_field(uint16_t event_id, const platform::ByteBuffer& data);
 
     /**
+     * @brief Local UDP endpoint. The port is assigned after initialize when bound to 0.
+     */
+    transport::Endpoint get_local_endpoint() const;
+
+    /**
+     * @brief Adapt or reject an incoming field setter request.
+     *
+     * When unset, the requested bytes are stored unchanged and the response
+     * payload is that value (Message Type 0x80, Return Code E_OK).
+     * ACCEPTED stores @p accepted (which may differ from the request).
+     * REJECTED leaves the stored value unchanged and answers with Message Type
+     * ERROR, Return Code E_NOT_OK, and the current value.
+     * The hook must not throw. It is not called while the publisher lock is held.
+     */
+    void set_field_setter(FieldSetter setter);
+
+    /**
      * @brief Set the default client endpoint for subscriptions that don't
      *        provide an explicit endpoint (e.g. from SD-discovered addresses).
      * @param address Client IP address
@@ -147,7 +168,7 @@ public:
      * @return true if subscription handled, false on error
      */
     bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
-                           const platform::Vector<EventFilter>& filters = {});
+                             const platform::Vector<EventFilter>& filters = {});
 
     /**
      * @brief Handle event subscription request with explicit TTL
@@ -163,9 +184,8 @@ public:
      * @param filters Optional filters for selective notifications
      * @return true if subscription handled, false on error
      */
-    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
-                           uint32_t ttl_seconds,
-                           const platform::Vector<EventFilter>& filters = {});
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id, uint32_t ttl_seconds,
+                             const platform::Vector<EventFilter>& filters = {});
 
     /**
      * @brief Record a subscription and optionally send cached field values.
@@ -175,10 +195,9 @@ public:
      * subscribed. The overloads without this flag keep the legacy rule: send
      * only for a new subscription.
      */
-    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id,
-                           uint32_t ttl_seconds,
-                           const platform::Vector<EventFilter>& filters,
-                           bool send_initial_events);
+    bool handle_subscription(uint16_t eventgroup_id, uint16_t client_id, uint32_t ttl_seconds,
+                             const platform::Vector<EventFilter>& filters,
+                             bool send_initial_events);
 
     /**
      * @brief Handle event unsubscription
@@ -243,18 +262,30 @@ public:
     };
     Statistics get_statistics() const;
 
-private:
+   private:
 #ifdef SOMEIP_STATIC_ALLOC
     alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_EVENTPUB_SIZE];
-    EventPublisherImpl* impl() noexcept { return reinterpret_cast<EventPublisherImpl*>(impl_storage_); }
-    const EventPublisherImpl* impl() const noexcept { return reinterpret_cast<const EventPublisherImpl*>(impl_storage_); }
+    EventPublisherImpl* impl() noexcept
+    {
+        return reinterpret_cast<EventPublisherImpl*>(impl_storage_);
+    }
+    const EventPublisherImpl* impl() const noexcept
+    {
+        return reinterpret_cast<const EventPublisherImpl*>(impl_storage_);
+    }
 #else
     std::unique_ptr<EventPublisherImpl> impl_;
-    EventPublisherImpl* impl() noexcept { return impl_.get(); }
-    const EventPublisherImpl* impl() const noexcept { return impl_.get(); }
+    EventPublisherImpl* impl() noexcept
+    {
+        return impl_.get();
+    }
+    const EventPublisherImpl* impl() const noexcept
+    {
+        return impl_.get();
+    }
 #endif
 };
 
 }  // namespace someip::events
 
-#endif // SOMEIP_EVENTS_PUBLISHER_H
+#endif  // SOMEIP_EVENTS_PUBLISHER_H

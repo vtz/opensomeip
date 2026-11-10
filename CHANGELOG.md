@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Breaking Changes
+
+- Field getter `EventSubscriber::request_field` is a SOME/IP request/response.
+  The third argument is the getter method id. The request payload is empty, and
+  the server answers with message type `0x80` and the stored field value.
+  The previous send (method `0x0003` with the event id in the payload) is gone.
+  `EventSubscriber::set_field` writes a field the same way: the request payload
+  is the desired value, and the response payload is the value the server stored.
+  `EventPublisher::set_field_setter` can adapt that stored value or reject the
+  write. A field registered with no getter, no setter, and no notifier is
+  rejected
+  ([#380](https://github.com/vtz/opensomeip/issues/380)).
+
 ### Added
 
 - **Transport**: `UdpTransportConfig::injected_multicast_join_errno`, when

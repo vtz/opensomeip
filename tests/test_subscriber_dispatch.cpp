@@ -75,11 +75,26 @@ class FakeTransport final : public transport::ITransport {
         return Result::SUCCESS;
     }
 
-    MessagePtr receive_message() override { return nullptr; }
-    Result connect(const Endpoint&) override { return Result::NOT_IMPLEMENTED; }
-    Result disconnect() override { return Result::NOT_IMPLEMENTED; }
-    bool is_connected() const override { return running_; }
-    Endpoint get_local_endpoint() const override { return Endpoint("192.0.2.11", 32002); }
+    MessagePtr receive_message() override
+    {
+        return nullptr;
+    }
+    Result connect(const Endpoint&) override
+    {
+        return Result::NOT_IMPLEMENTED;
+    }
+    Result disconnect() override
+    {
+        return Result::NOT_IMPLEMENTED;
+    }
+    bool is_connected() const override
+    {
+        return running_;
+    }
+    Endpoint get_local_endpoint() const override
+    {
+        return Endpoint("192.0.2.11", 32002);
+    }
 
     void set_listener(ITransportListener* listener) override
     {
@@ -102,7 +117,10 @@ class FakeTransport final : public transport::ITransport {
         return stop_result;
     }
 
-    bool is_running() const override { return running_; }
+    bool is_running() const override
+    {
+        return running_;
+    }
 
     ITransportListener* listener()
     {
@@ -211,18 +229,19 @@ TEST(SubscriberDispatch, RejectsAmbiguousServiceSubscriptionsWithoutReplacingCal
     ASSERT_TRUE(subscriber.initialize());
     unsigned original_calls = 0;
     unsigned other_calls = 0;
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A,
-                                                [&](const events::EventNotification& notification) {
-                                                    ++original_calls;
-                                                    EXPECT_EQ(notification.instance_id, 1u);
-                                                }));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A,
+                                              [&](const events::EventNotification& notification) {
+                                                  ++original_calls;
+                                                  EXPECT_EQ(notification.instance_id, 1u);
+                                              }));
     const size_t sent = transport.messages.size();
     EXPECT_EQ(subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP_B, [&](const events::EventNotification&) { ++other_calls; }),
-        Result::SUBSCRIPTION_FAILED);
+                  SERVICE, 1, GROUP_B, [&](const events::EventNotification&) { ++other_calls; }),
+              Result::SUBSCRIPTION_FAILED);
     EXPECT_EQ(subscriber.subscribe_eventgroup(
-        SERVICE, 2, GROUP_A, [&](const events::EventNotification&) { ++other_calls; }),
-        Result::SUBSCRIPTION_FAILED);
+                  SERVICE, 2, GROUP_A, [&](const events::EventNotification&) { ++other_calls; }),
+              Result::SUBSCRIPTION_FAILED);
     EXPECT_EQ(transport.messages.size(), sent);
     ASSERT_EQ(subscriber.get_active_subscriptions().size(), 1u);
     auto message = make_notification(SERVICE, EVENT);
@@ -231,18 +250,20 @@ TEST(SubscriberDispatch, RejectsAmbiguousServiceSubscriptionsWithoutReplacingCal
     EXPECT_EQ(original_calls, 1u);
     EXPECT_EQ(other_calls, 0u);
 
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP_A, [&](const events::EventNotification&) { ++other_calls; }));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(
+                  SERVICE, 1, GROUP_A, [&](const events::EventNotification&) { ++other_calls; }));
     ASSERT_TRUE(transport.emit(message));
     EXPECT_EQ(original_calls, 1u);
     EXPECT_EQ(other_calls, 1u);
 
     ASSERT_TRUE(subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP_A));
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(SERVICE, 2, GROUP_B,
-                                                [&](const events::EventNotification& notification) {
-                                                    ++other_calls;
-                                                    EXPECT_EQ(notification.instance_id, 2u);
-                                                }));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(SERVICE, 2, GROUP_B,
+                                              [&](const events::EventNotification& notification) {
+                                                  ++other_calls;
+                                                  EXPECT_EQ(notification.instance_id, 2u);
+                                              }));
     ASSERT_TRUE(transport.emit(message));
     EXPECT_EQ(other_calls, 2u);
 }
@@ -255,10 +276,12 @@ TEST(SubscriberDispatch, DifferentServicesRemainIndependentlyRoutable)
     ASSERT_TRUE(subscriber.initialize());
     unsigned first = 0;
     unsigned second = 0;
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP_A, [&](const events::EventNotification&) { ++first; }));
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE_B, 2, GROUP_B, [&](const events::EventNotification&) { ++second; }));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A,
+                                              [&](const events::EventNotification&) { ++first; }));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(SERVICE_B, 2, GROUP_B,
+                                              [&](const events::EventNotification&) { ++second; }));
     auto message = make_notification(SERVICE, EVENT);
     ASSERT_NE(message, nullptr);
     ASSERT_TRUE(transport.emit(message));
@@ -282,8 +305,8 @@ TEST(SubscriberDispatch, FailedSubscriptionDoesNotReserveTheService)
               Result::NETWORK_ERROR);
     EXPECT_TRUE(subscriber.get_active_subscriptions().empty());
     transport.send_result = Result::SUCCESS;
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(SERVICE, 2, GROUP_B,
-                                                [](const events::EventNotification&) {}));
+    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
+                                   SERVICE, 2, GROUP_B, [](const events::EventNotification&) {}));
 }
 
 /**
@@ -298,8 +321,9 @@ TEST(SubscriberDispatch, FailedRenewalKeepsTheLiveSubscription)
     subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
     ASSERT_TRUE(subscriber.initialize());
     unsigned calls = 0;
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP_A, [&](const events::EventNotification&) { ++calls; }));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A,
+                                              [&](const events::EventNotification&) { ++calls; }));
 
     transport.send_result = Result::NETWORK_ERROR;
     EXPECT_EQ(subscriber.subscribe_eventgroup(
@@ -307,8 +331,8 @@ TEST(SubscriberDispatch, FailedRenewalKeepsTheLiveSubscription)
               Result::NETWORK_ERROR);
 
     subscriber.set_default_endpoint("0.0.0.0", 0);
-    EXPECT_EQ(subscriber.subscribe_eventgroup(
-                  SERVICE, 1, GROUP_A, [](const events::EventNotification&) {}),
+    EXPECT_EQ(subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A,
+                                              [](const events::EventNotification&) {}),
               Result::INVALID_ENDPOINT);
 
     auto message = make_notification(SERVICE, EVENT);
@@ -339,8 +363,9 @@ TEST(SubscriberDispatch, ReentrancyIsPerCallingThreadNotGlobal)
     std::future<bool> dispatch;
     std::future<bool> unsubscribe;
     test::CallbackReleaseGuard release_guard(release);
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
+    ASSERT_EQ(
+        Result::SUCCESS,
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
             entered.set_value();
             EXPECT_EQ(released.wait_for(std::chrono::seconds(5)), std::future_status::ready);
         }));
@@ -389,8 +414,9 @@ TEST(SubscriberDispatch, ExternalUnsubscribeWaitsEvenWhenAlreadyRemoved)
     std::future<bool> dispatch;
     std::future<bool> second_unsubscribe;
     test::CallbackReleaseGuard release_guard(release);
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
+    ASSERT_EQ(
+        Result::SUCCESS,
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
             // Reentrant self-unsubscribe: erases the subscription while this
             // DispatchFrame (and this callback's captured state) is still alive.
             EXPECT_TRUE(subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP_A));
@@ -440,8 +466,9 @@ TEST(SubscriberDispatch, ShutdownDrainsInFlightDispatchBeforeReturning)
     std::future<bool> dispatch;
     std::future<void> shutdown;
     test::CallbackReleaseGuard release_guard(release);
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
+    ASSERT_EQ(
+        Result::SUCCESS,
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
             entered.set_value();
             EXPECT_EQ(released.wait_for(std::chrono::seconds(5)), std::future_status::ready);
         }));
@@ -482,13 +509,14 @@ TEST(SubscriberDispatch, UnsubscribeIsScopedToItsOwnSubscription)
     std::future<bool> dispatch;
     std::future<bool> unrelated_unsubscribe;
     test::CallbackReleaseGuard release_guard(release);
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
+    ASSERT_EQ(
+        Result::SUCCESS,
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP_A, [&](const events::EventNotification&) {
             entered.set_value();
             EXPECT_EQ(released.wait_for(std::chrono::seconds(5)), std::future_status::ready);
         }));
     ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE_B, 1, GROUP_B, [](const events::EventNotification&) {}));
+                                   SERVICE_B, 1, GROUP_B, [](const events::EventNotification&) {}));
 
     const auto message = make_notification(SERVICE, EVENT);
     ASSERT_NE(message, nullptr);
@@ -509,18 +537,10 @@ TEST(SubscriberDispatch, UnsubscribeIsScopedToItsOwnSubscription)
 }
 
 // ---------------------------------------------------------------------------
-// S2: make_field_key() is deliberately keyed on (service_id, event_id) only,
-// NOT instance_id. A SOME/IP notification (someip::Message) carries no
-// instance id, so on_message_received() has no way to attribute a field
-// response to one instance over another; the original hardcoded-0 key on
-// both call sites was already internally consistent for that reason. This
-// test locks in the documented, intentional behavior (see the @note on
-// EventSubscriber::request_field) as a characterization test, so a future
-// change can't silently make the two call sites drift and stop matching
-// (which is exactly what naively "fixing" this to be instance_id-scoped
-// does -- see TransportInjectionRouting.FieldCallbackCanRequestTheNextValue
-// and .DuplicateFieldRequestPreservesTheAcceptedCallback in
-// test_transport_injection.cpp, which assume this same behavior).
+// Pending field calls are keyed by (service_id, method_id), not instance_id.
+// The SOME/IP header has no instance id. A notification must not complete a
+// getter; only the matching RESPONSE/ERROR does. A second request for the
+// same method is rejected until that response arrives.
 // ---------------------------------------------------------------------------
 TEST(SubscriberDispatch, FieldRequestIsNotInstanceScoped)
 {
@@ -531,23 +551,29 @@ TEST(SubscriberDispatch, FieldRequestIsNotInstanceScoped)
 
     unsigned calls_instance1 = 0;
     unsigned calls_instance2 = 0;
-    ASSERT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
-        [&](const events::EventNotification&) { ++calls_instance1; }));
-    // Same service_id/event_id, different instance_id: rejected as "already
-    // pending" because the key doesn't carry instance_id.
-    EXPECT_FALSE(subscriber.request_field(SERVICE, 2, EVENT,
-        [&](const events::EventNotification&) { ++calls_instance2; }));
+    ASSERT_TRUE(subscriber.request_field(
+        SERVICE, 1, EVENT, [&](const events::EventNotification&) { ++calls_instance1; }));
+    // Same service and getter method, different instance: still one pending call.
+    EXPECT_FALSE(subscriber.request_field(
+        SERVICE, 2, EVENT, [&](const events::EventNotification&) { ++calls_instance2; }));
 
-    // Whichever notification arrives first satisfies the one pending callback.
-    const auto message = make_notification(SERVICE, EVENT, 0x77);
-    ASSERT_NE(message, nullptr);
-    ASSERT_TRUE(transport.emit(message));
+    const auto notification = make_notification(SERVICE, EVENT, 0x77);
+    ASSERT_NE(notification, nullptr);
+    ASSERT_TRUE(transport.emit(notification));
+    EXPECT_EQ(calls_instance1, 0u);
+
+    MessagePtr response = platform::allocate_message();
+    ASSERT_NE(response, nullptr);
+    *response = Message(MessageId(SERVICE, EVENT), RequestId(5, 1), MessageType::RESPONSE,
+                        ReturnCode::E_OK);
+    response->set_payload({0x77});
+    ASSERT_TRUE(transport.emit(response));
     EXPECT_EQ(calls_instance1, 1u);
     EXPECT_EQ(calls_instance2, 0u);
 
-    // The field is free again now, regardless of instance_id.
-    ASSERT_TRUE(subscriber.request_field(SERVICE, 2, EVENT,
-        [&](const events::EventNotification&) { ++calls_instance2; }));
+    // The getter is free again, regardless of instance_id.
+    ASSERT_TRUE(subscriber.request_field(
+        SERVICE, 2, EVENT, [&](const events::EventNotification&) { ++calls_instance2; }));
 }
 
 // ---------------------------------------------------------------------------
