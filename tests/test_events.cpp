@@ -27,6 +27,11 @@
 #include "platform/containers.h"
 #include "static_pool_init.h"
 
+// winsock.h, pulled in by the UDP transport, defines ERROR as a macro.
+#ifdef ERROR
+#undef ERROR
+#endif
+
 using namespace someip;
 using namespace someip::events;
 

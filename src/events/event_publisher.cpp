@@ -64,8 +64,8 @@ class EventPublisherImpl : public transport::ITransportListener {
         try {
             shutdown();
         }
-        catch (...) {
-        }  // NOLINT(bugprone-empty-catch) destructor must not throw
+        catch (...) {  // NOLINT(bugprone-empty-catch) destructor must not throw
+        }
 #else
         shutdown();
 #endif
@@ -756,11 +756,8 @@ class EventPublisherImpl : public transport::ITransportListener {
             return true;
         }
         const auto event_it = registered_events_.find(id);
-        if (event_it != registered_events_.end() &&
-            !owner_ignored(ignore_owner, ignore_key, event_it->first)) {
-            return true;
-        }
-        return false;
+        return event_it != registered_events_.end() &&
+               !owner_ignored(ignore_owner, ignore_key, event_it->first);
     }
 
     bool accessors_available_locked(const EventConfig& config, bool ignore_owner,
@@ -1067,7 +1064,7 @@ class EventPublisherImpl : public transport::ITransportListener {
                                   ReturnCode::E_MALFORMED_MESSAGE, {}, false);
                 return;
             }
-            platform::ByteBuffer empty;
+            const platform::ByteBuffer empty;
             send_field_result(message, sender, MessageType::RESPONSE, ReturnCode::E_OK,
                               has_value ? current : empty, true);
             return;

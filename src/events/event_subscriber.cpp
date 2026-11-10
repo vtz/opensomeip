@@ -192,8 +192,8 @@ class EventSubscriberImpl : public transport::ITransportListener {
         try {
             shutdown();
         }
-        catch (...) {
-        }  // NOLINT(bugprone-empty-catch) destructor must not throw
+        catch (...) {  // NOLINT(bugprone-empty-catch) destructor must not throw
+        }
 #else
         shutdown();
 #endif
@@ -419,7 +419,7 @@ class EventSubscriberImpl : public transport::ITransportListener {
     bool request_field(uint16_t service_id, uint16_t instance_id, uint16_t getter_method_id,
                        EventNotificationCallback callback)
     {
-        platform::ByteBuffer empty;
+        const platform::ByteBuffer empty;
         return send_field_request(service_id, instance_id, getter_method_id, empty,
                                   std::move(callback));
     }
@@ -649,7 +649,7 @@ class EventSubscriberImpl : public transport::ITransportListener {
         }
         if (callback) {
             // Same shutdown barrier as notification dispatch.
-            DispatchFrame dispatch(*this);
+            const DispatchFrame dispatch(*this);
             callback(notification);
         }
     }
