@@ -96,6 +96,7 @@ class EventPublisher {
      *         A field with no getter, no setter, and no notifier is rejected.
      *         Registering the same field notifier again replaces the previous
      *         accessor ids and keeps the stored value.
+     *         A notifier field and a notifier-less field cannot share an id.
      */
     bool register_event(const EventConfig& config);
 
@@ -110,9 +111,12 @@ class EventPublisher {
     /**
      * @brief Update event configuration
      *
-     * @param event_id Event identifier
+     * @param event_id Registered event id to update
      * @param config New event configuration
-     * @return true if updated, false if event not found
+     * @return true if updated. false if that event is not registered, the new
+     *         field has no accessor, or a new accessor id belongs to another
+     *         field. Turning a field notifier off removes @p event_id and keeps
+     *         the stored value on the new getter or setter.
      */
     bool update_event_config(uint16_t event_id, const EventConfig& config);
 

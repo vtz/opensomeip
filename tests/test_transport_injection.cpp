@@ -555,6 +555,62 @@ TEST(TransportInjectionRouting, EventPublisherUsesInjectedTransport)
     EXPECT_EQ(transport.destinations[0], PEER);
 }
 
+/**
+ * @test_case TC_EVENT_FIELD_SET_NOTIFY
+ * @tests REQ_MSG_124, REQ_MSG_125
+ * @brief A publish_field during the setter response must not put the old value back.
+ */
+TEST(TransportInjectionRouting, SetterNotificationKeepsANewerPublishedValue)
+{
+    FakeTransport transport;
+    events::EventPublisher publisher(SERVICE, 1, transport);
+    events::EventConfig config;
+    config.event_id = EVENT;
+    config.eventgroup_id = GROUP;
+    config.is_field = true;
+    config.has_notifier = true;
+    config.has_getter = true;
+    config.getter_method_id = 0x0100;
+    config.has_setter = true;
+    config.setter_method_id = 0x0101;
+    config.notification_type = events::NotificationType::ON_CHANGE;
+    ASSERT_TRUE(publisher.register_event(config));
+    ASSERT_TRUE(publisher.initialize());
+
+    transport.on_send = [&](const Message& message) {
+        if (message.get_message_type() != MessageType::RESPONSE ||
+            message.get_method_id() != 0x0101) {
+            return;
+        }
+        EXPECT_TRUE(publisher.publish_field(EVENT, {0x22}));
+    };
+
+    auto setter = platform::allocate_message();
+    ASSERT_NE(setter, nullptr);
+    *setter = Message(MessageId(SERVICE, 0x0101), RequestId(7, 1), MessageType::REQUEST,
+                      ReturnCode::E_OK);
+    setter->set_payload({0x11});
+    ASSERT_TRUE(transport.emit(setter));
+    transport.on_send = nullptr;
+
+    auto getter = platform::allocate_message();
+    ASSERT_NE(getter, nullptr);
+    *getter = Message(MessageId(SERVICE, 0x0100), RequestId(7, 2), MessageType::REQUEST,
+                      ReturnCode::E_OK);
+    ASSERT_TRUE(transport.emit(getter));
+
+    const Message* getter_reply = nullptr;
+    for (const Message& message : transport.messages) {
+        if (message.get_method_id() == 0x0100 &&
+            message.get_message_type() == MessageType::RESPONSE) {
+            getter_reply = &message;
+        }
+    }
+    ASSERT_NE(getter_reply, nullptr);
+    ASSERT_EQ(getter_reply->get_payload().size(), 1u);
+    EXPECT_EQ(getter_reply->get_payload()[0], 0x22);
+}
+
 TEST(TransportInjectionRouting, EventSubscriberReceivesInjectedNotification)
 {
     FakeTransport transport;

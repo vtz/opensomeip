@@ -127,6 +127,16 @@ class EventPublisherImpl : public transport::ITransportListener {
     bool register_event(const EventConfig& config)
     {
         platform::ScopedLock const events_lock(events_mutex_);
+        // Notifier fields are stored by event id. Notifier-less fields are
+        // stored by getter id, or setter id when there is no getter. Those
+        // keys share one map, so a different kind must not replace the other.
+        // update_event_config still retargets the field the caller named.
+        if (config.is_field && field_has_accessor(config)) {
+            const auto existing = fields_.find(field_storage_key(config));
+            if (existing != fields_.end() && existing->second.has_notifier != config.has_notifier) {
+                return false;
+            }
+        }
         return register_event_locked(config);
     }
 
@@ -172,12 +182,18 @@ class EventPublisherImpl : public transport::ITransportListener {
         if (config.has_notifier && config.event_id != event_id) {
             return false;
         }
+        FieldBinding selected;
+        const bool selected_field =
+            find_field_locked(event_id, selected) && selected.key == event_id;
+        if (selected_field && field_storage_key(config) != selected.key) {
+            return retarget_field_locked(selected, config);
+        }
         return register_event_locked(config);
     }
 
     /** @implements REQ_MSG_110, REQ_MSG_110_E01, REQ_MSG_119, REQ_MSG_121A */
     /** @implements REQ_MSG_121B, REQ_MSG_121C, REQ_MSG_121_E01, REQ_MSG_121_E02, REQ_MSG_141 */
-    bool publish_event(uint16_t event_id, const platform::ByteBuffer& data)
+    bool publish_event(uint16_t event_id, const platform::ByteBuffer& data, bool store_field_value)
     {
         if (!running_) {
             return false;
@@ -191,7 +207,10 @@ class EventPublisherImpl : public transport::ITransportListener {
                 return false;
             }
             eventgroup_id = event_it->second.eventgroup_id;
-            if (event_it->second.is_field) {
+            // A caller that already stored the value must not write it again.
+            // Otherwise a newer publish_field lands, then this send puts the
+            // older bytes back and the next getter returns the stale value.
+            if (store_field_value && event_it->second.is_field) {
                 if (field_values_.size() >= field_values_.max_size() &&
                     field_values_.find(event_id) == field_values_.end()) {
                     return false;
@@ -248,9 +267,9 @@ class EventPublisherImpl : public transport::ITransportListener {
             if (!notify) {
                 return true;
             }
-            return publish_event(notifier_id, data);
+            return publish_event(notifier_id, data, false);
         }
-        return publish_event(event_id, data);
+        return publish_event(event_id, data, true);
     }
 
     transport::Endpoint get_local_endpoint() const
@@ -632,7 +651,7 @@ class EventPublisherImpl : public transport::ITransportListener {
                 }
             }
             if (!skip_empty_field) {
-                publish_event(eid, payload);
+                publish_event(eid, payload, false);
             }
         }
     }
@@ -872,6 +891,61 @@ class EventPublisherImpl : public transport::ITransportListener {
         if (has_event) {
             registered_events_[binding.notifier_event_id] = event_config;
         }
+    }
+
+    bool retarget_field_locked(const FieldBinding& selected, const EventConfig& config)
+    {
+        if (!accessors_available_locked(config, true, selected.key)) {
+            return false;
+        }
+        const uint16_t new_key = field_storage_key(config);
+        if (new_key != selected.key && fields_.find(new_key) != fields_.end()) {
+            return false;
+        }
+
+        platform::ByteBuffer saved_value;
+        bool saved_value_ok = false;
+        const auto value_it = field_values_.find(selected.key);
+        if (value_it != field_values_.end()) {
+            saved_value = value_it->second;
+            saved_value_ok = true;
+        }
+        EventConfig saved_event;
+        bool saved_event_ok = false;
+        if (selected.has_notifier) {
+            const auto event_it = registered_events_.find(selected.notifier_event_id);
+            if (event_it != registered_events_.end()) {
+                saved_event = event_it->second;
+                saved_event_ok = true;
+            }
+        }
+
+        unbind_field_locked(selected.key);
+        field_values_.erase(selected.key);
+        if (selected.has_notifier) {
+            registered_events_.erase(selected.notifier_event_id);
+        }
+
+        const bool notifier_needs_slot =
+            config.has_notifier &&
+            registered_events_.find(config.event_id) == registered_events_.end();
+        if (notifier_needs_slot && registered_events_.size() >= registered_events_.max_size()) {
+            restore_field_locked(true, selected, saved_value_ok, saved_value, saved_event_ok,
+                                 saved_event);
+            return false;
+        }
+        if (!bind_field_locked(config)) {
+            restore_field_locked(true, selected, saved_value_ok, saved_value, saved_event_ok,
+                                 saved_event);
+            return false;
+        }
+        if (saved_value_ok) {
+            field_values_[new_key] = std::move(saved_value);
+        }
+        if (config.has_notifier) {
+            registered_events_[config.event_id] = config;
+        }
+        return true;
     }
 
     bool register_event_locked(const EventConfig& config)
@@ -1119,7 +1193,7 @@ class EventPublisherImpl : public transport::ITransportListener {
         }
         send_field_result(message, sender, MessageType::RESPONSE, ReturnCode::E_OK, accepted, true);
         if (notify && changed) {
-            (void)publish_event(notifier_id, accepted);
+            (void)publish_event(notifier_id, accepted, false);
         }
     }
 
@@ -1220,7 +1294,7 @@ bool EventPublisher::update_event_config(uint16_t event_id, const EventConfig& c
 
 bool EventPublisher::publish_event(uint16_t event_id, const platform::ByteBuffer& data)
 {
-    return impl()->publish_event(event_id, data);
+    return impl()->publish_event(event_id, data, true);
 }
 
 bool EventPublisher::publish_field(uint16_t event_id, const platform::ByteBuffer& data)

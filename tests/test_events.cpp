@@ -893,6 +893,132 @@ TEST_F(EventsTest, FieldRegistrationRequiresAnAccessorAndReplacesNotifier)
 }
 
 /**
+ * @test_case TC_EVT_FIELD_REG_002
+ * @tests REQ_MSG_126, REQ_MSG_125_E01
+ * @brief A notifier field and a notifier-less field cannot share a storage id.
+ */
+TEST_F(EventsTest, FieldRegistrationRejectsTheOtherNotifierKind)
+{
+    EventPublisher publisher(0x1234, 0x0001);
+    ASSERT_TRUE(publisher.initialize());
+    ASSERT_TRUE(publisher.register_event(field_with_accessors(0x0100, 0x0101, 0)));
+    platform::ByteBuffer stored;
+    stored.push_back(0x11);
+    ASSERT_TRUE(publisher.publish_field(0x0100, stored));
+    EXPECT_FALSE(publisher.register_event(field_with_accessors(0, 0x0100, 0x0102)));
+
+    auto events = publisher.get_registered_events();
+    ASSERT_EQ(events.size(), 1u);
+    EXPECT_EQ(events[0], 0x0100);
+
+    auto rx_cfg = nonblocking_udp_config();
+    transport::UdpTransport client(transport::Endpoint("0.0.0.0", 0), rx_cfg);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+    const auto dest = loopback_port(publisher.get_local_endpoint().get_port());
+    auto ask = [&](uint16_t method) {
+        Message request(MessageId(0x1234, method), RequestId(0x0001, method), MessageType::REQUEST,
+                        ReturnCode::E_OK);
+        EXPECT_EQ(client.send_message(request, dest), Result::SUCCESS);
+        return wait_for_method(client, method, std::chrono::milliseconds(1000));
+    };
+
+    MessagePtr kept = ask(0x0101);
+    ASSERT_NE(kept, nullptr);
+    EXPECT_EQ(kept->get_message_type(), MessageType::RESPONSE);
+    ASSERT_EQ(kept->get_payload().size(), 1u);
+    EXPECT_EQ(kept->get_payload()[0], 0x11);
+
+    MessagePtr stolen = ask(0x0100);
+    ASSERT_NE(stolen, nullptr);
+    EXPECT_EQ(stolen->get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(stolen->get_return_code(), ReturnCode::E_UNKNOWN_METHOD);
+
+    publisher.shutdown();
+    client.stop();
+
+    EventPublisher reverse(0x1234, 0x0001);
+    ASSERT_TRUE(reverse.initialize());
+    ASSERT_TRUE(reverse.register_event(field_with_accessors(0, 0x0200, 0)));
+    ASSERT_TRUE(reverse.publish_field(0x0200, stored));
+    EXPECT_FALSE(reverse.register_event(field_with_accessors(0x0200, 0x0201, 0)));
+    EXPECT_TRUE(reverse.get_registered_events().empty());
+
+    transport::UdpTransport reverse_client(transport::Endpoint("0.0.0.0", 0), rx_cfg);
+    ASSERT_EQ(reverse_client.start(), Result::SUCCESS);
+    const auto reverse_dest = loopback_port(reverse.get_local_endpoint().get_port());
+    Message getter(MessageId(0x1234, 0x0200), RequestId(0x0001, 0x0003), MessageType::REQUEST,
+                   ReturnCode::E_OK);
+    ASSERT_EQ(reverse_client.send_message(getter, reverse_dest), Result::SUCCESS);
+    MessagePtr reply = wait_for_method(reverse_client, 0x0200, std::chrono::milliseconds(1000));
+    ASSERT_NE(reply, nullptr);
+    EXPECT_EQ(reply->get_message_type(), MessageType::RESPONSE);
+    ASSERT_EQ(reply->get_payload().size(), 1u);
+    EXPECT_EQ(reply->get_payload()[0], 0x11);
+
+    reverse.shutdown();
+    reverse_client.stop();
+}
+
+/**
+ * @test_case TC_EVT_FIELD_REG_003
+ * @tests REQ_MSG_126, REQ_MSG_123
+ * @brief Updating the named notifier replaces that field. Disabling the notifier
+ *        drops the event id and serves the stored value from the new getter.
+ */
+TEST_F(EventsTest, UpdateKeepsTheNamedFieldWhenTheNotifierIsRemoved)
+{
+    EventPublisher publisher(0x1234, 0x0001);
+    ASSERT_TRUE(publisher.initialize());
+    ASSERT_TRUE(publisher.register_event(field_with_accessors(0x8001, 0x0100, 0x0101)));
+    platform::ByteBuffer stored;
+    stored.push_back(0x11);
+    ASSERT_TRUE(publisher.publish_field(0x8001, stored));
+    ASSERT_TRUE(publisher.register_event(field_with_accessors(0, 0x0102, 0)));
+    platform::ByteBuffer other;
+    other.push_back(0x22);
+    ASSERT_TRUE(publisher.publish_field(0x0102, other));
+
+    EXPECT_FALSE(publisher.update_event_config(0x8001, field_with_accessors(0, 0x0102, 0x0103)));
+    auto still = publisher.get_registered_events();
+    ASSERT_EQ(still.size(), 1u);
+    EXPECT_EQ(still[0], 0x8001);
+
+    ASSERT_TRUE(publisher.update_event_config(0x8001, field_with_accessors(0, 0x0106, 0x0107)));
+    EXPECT_TRUE(publisher.get_registered_events().empty());
+
+    auto rx_cfg = nonblocking_udp_config();
+    transport::UdpTransport client(transport::Endpoint("0.0.0.0", 0), rx_cfg);
+    ASSERT_EQ(client.start(), Result::SUCCESS);
+    const auto dest = loopback_port(publisher.get_local_endpoint().get_port());
+    auto ask = [&](uint16_t method) {
+        Message request(MessageId(0x1234, method), RequestId(0x0001, method), MessageType::REQUEST,
+                        ReturnCode::E_OK);
+        EXPECT_EQ(client.send_message(request, dest), Result::SUCCESS);
+        return wait_for_method(client, method, std::chrono::milliseconds(1000));
+    };
+
+    MessagePtr moved = ask(0x0106);
+    ASSERT_NE(moved, nullptr);
+    EXPECT_EQ(moved->get_message_type(), MessageType::RESPONSE);
+    ASSERT_EQ(moved->get_payload().size(), 1u);
+    EXPECT_EQ(moved->get_payload()[0], 0x11);
+
+    MessagePtr old_getter = ask(0x0100);
+    ASSERT_NE(old_getter, nullptr);
+    EXPECT_EQ(old_getter->get_message_type(), MessageType::ERROR);
+    EXPECT_EQ(old_getter->get_return_code(), ReturnCode::E_UNKNOWN_METHOD);
+
+    MessagePtr untouched = ask(0x0102);
+    ASSERT_NE(untouched, nullptr);
+    EXPECT_EQ(untouched->get_message_type(), MessageType::RESPONSE);
+    ASSERT_EQ(untouched->get_payload().size(), 1u);
+    EXPECT_EQ(untouched->get_payload()[0], 0x22);
+
+    publisher.shutdown();
+    client.stop();
+}
+
+/**
  * @test_case TC_EVT_FIELD_GET_002
  * @tests REQ_MSG_123, REQ_MSG_123_E01, REQ_MSG_124, REQ_MSG_124_E01
  * @brief The publisher answers a getter with the stored value (type 0x80) and a setter
