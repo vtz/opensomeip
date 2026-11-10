@@ -1,6 +1,6 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-11-10 11:39:35
+Generated: 2026-11-10 14:56:29
 
 ## Summary
 
@@ -9,7 +9,7 @@ Generated: 2026-11-10 11:39:35
 - **Missing Implementation**: 77
 - **Missing Tests**: 13
 - **Missing Spec Links (all)**: 161
-- **Missing Spec Links (required only)**: 4
+- **Missing Spec Links (required only)**: 2
 
 ### Requirement Categories
 
@@ -28,10 +28,12 @@ Generated: 2026-11-10 11:39:35
 
 **Note**: Implementation-derived requirements may omit direct spec links. The exemption
 matches `validate_requirements.py`: an ID containing `_E0`, `_ARCH_`, `PLUGIN`, or `MY_`;
-an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
+an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one of
+`REQ_E2E_RECEIVE_001`, `REQ_TRANSPORT_030` (local API contracts with no spec ID).
+`REQ_MSG_150` and `REQ_TRANSPORT_026` stay known-unlinked and are not exemptions.
 
-- **Spec-Derived Requirements**: 476
-- **Implementation-Derived Requirements**: 225
+- **Spec-Derived Requirements**: 474
+- **Implementation-Derived Requirements**: 227
 
 ### Priority Breakdown
 
@@ -150,8 +152,6 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 These requirements should have spec links but don't:
 
 - REQ_TRANSPORT_026
-- REQ_TRANSPORT_030
-- REQ_E2E_RECEIVE_001
 - REQ_MSG_150
 
 ### Implementation-Derived Requirements Without Spec Links (Expected)
@@ -275,8 +275,10 @@ These requirements match the implementation-derived exemption and do not need sp
 - REQ_TRANSPORT_003_E01
 - REQ_TRANSPORT_002_E04
 - REQ_TRANSPORT_011_E02
+- REQ_TRANSPORT_030
 - REQ_E2E_PLUGIN_002
 - REQ_E2E_PLUGIN_003
+- REQ_E2E_RECEIVE_001
 - REQ_CAPI_004
 - REQ_CAPI_005
 - REQ_MSG_004_E02
@@ -320,7 +322,7 @@ These requirements match the implementation-derived exemption and do not need sp
 ### SWE.1 (Software Requirements Analysis)
 - **Status**: ⚠️ PARTIAL - Some spec-derived requirements missing links
 - **Details**: Spec-derived requirements must satisfy at least one specification requirement
-- **Derived Requirements**: 225 implementation-derived requirements do not require spec links
+- **Derived Requirements**: 227 implementation-derived requirements do not require spec links
 
 ### SWE.3 (Software Architectural Design)
 - **Status**: ❌ FAIL - Missing implementations
