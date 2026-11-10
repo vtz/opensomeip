@@ -175,8 +175,8 @@ class EventPublisherImpl : public transport::ITransportListener {
         return register_event_locked(config);
     }
 
-    /** @implements REQ_MSG_110, REQ_MSG_110_E01, REQ_MSG_119, REQ_MSG_121A, REQ_MSG_121B,
-     * REQ_MSG_121C, REQ_MSG_121_E01, REQ_MSG_121_E02, REQ_MSG_141 */
+    /** @implements REQ_MSG_110, REQ_MSG_110_E01, REQ_MSG_119, REQ_MSG_121A */
+    /** @implements REQ_MSG_121B, REQ_MSG_121C, REQ_MSG_121_E01, REQ_MSG_121_E02, REQ_MSG_141 */
     bool publish_event(uint16_t event_id, const platform::ByteBuffer& data)
     {
         if (!running_) {
