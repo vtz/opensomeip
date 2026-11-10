@@ -17,6 +17,7 @@
  */
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <gtest/gtest.h>
 #include <string>
@@ -29,6 +30,32 @@ using someip::sd::load_deployment;
 using someip::sd::load_deployment_file;
 
 namespace {
+
+std::string deployment_temp_path(const char* name)
+{
+    const char* dir = std::getenv("TEMP");
+    if (dir == nullptr || dir[0] == '\0') {
+        dir = std::getenv("TMPDIR");
+    }
+    if (dir == nullptr || dir[0] == '\0') {
+#ifdef _WIN32
+        dir = ".";
+#else
+        dir = "/tmp";
+#endif
+    }
+    std::string path(dir);
+    const char last = path.back();
+    if (last != '/' && last != '\\') {
+#ifdef _WIN32
+        path.push_back('\\');
+#else
+        path.push_back('/');
+#endif
+    }
+    path += name;
+    return path;
+}
 
 constexpr char kValid[] = R"({
   "sd": {
@@ -217,19 +244,21 @@ TEST(DeploymentTest, MalformedTextUnknownKeyAndMissingFieldFail)
  */
 TEST(DeploymentTest, ValidFileLoadsAndMissingFileFails)
 {
-    const char* path = "/tmp/opensomeip-382-deployment.json";
-    std::FILE* file = std::fopen(path, "wb");
+    const std::string path = deployment_temp_path("opensomeip-deployment.json");
+    const std::string missing = deployment_temp_path("opensomeip-deployment-missing.json");
+    std::remove(missing.c_str());
+
+    std::FILE* file = std::fopen(path.c_str(), "wb");
     ASSERT_NE(file, nullptr);
     ASSERT_EQ(std::fwrite(kValid, 1, std::strlen(kValid), file), std::strlen(kValid));
     std::fclose(file);
 
     Deployment deployment;
-    EXPECT_EQ(load_deployment_file(path, deployment), Result::SUCCESS);
+    EXPECT_EQ(load_deployment_file(path.c_str(), deployment), Result::SUCCESS);
     EXPECT_EQ(deployment.provided_services.size(), 2u);
     EXPECT_EQ(deployment.sd.multicast_port, 30490);
-    std::remove(path);
+    std::remove(path.c_str());
 
-    EXPECT_EQ(load_deployment_file("/tmp/opensomeip-382-deployment-missing.json", deployment),
-              Result::INVALID_ARGUMENT);
+    EXPECT_EQ(load_deployment_file(missing.c_str(), deployment), Result::INVALID_ARGUMENT);
     EXPECT_TRUE(deployment.provided_services.empty());
 }
