@@ -345,6 +345,17 @@ def generate_json(
         json.dump(data, f, indent=2)
 
 
+# No spec sentence exists for these IDs. Keep in sync with
+# scripts/validate_requirements.py and scripts/check_spec_requirements.py.
+# REQ_MSG_150 and REQ_TRANSPORT_026 stay known-unlinked in the validator.
+_EXPLICIT_IMPL_DERIVED = frozenset(
+    {
+        "REQ_E2E_RECEIVE_001",  # local receive-policy table and Result
+        "REQ_TRANSPORT_030",  # application-owned transport injection
+    }
+)
+
+
 def is_implementation_derived(req_id: str) -> bool:
     """Return whether ``req_id`` is exempt from a required spec link.
 
@@ -362,6 +373,7 @@ def is_implementation_derived(req_id: str) -> bool:
         or req_id.startswith("REQ_CAPI_")
         or req_id.startswith("REQ_PAL_")
         or req_id.endswith("_ATOM")
+        or req_id in _EXPLICIT_IMPL_DERIVED
     )
 
 
@@ -604,7 +616,9 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 **Note**: Implementation-derived requirements may omit direct spec links. The exemption
 matches `validate_requirements.py`: an ID containing `_E0`, `_ARCH_`, `PLUGIN`, or `MY_`;
-an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
+an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one of
+`REQ_E2E_RECEIVE_001`, `REQ_TRANSPORT_030` (local API contracts with no spec ID).
+`REQ_MSG_150` and `REQ_TRANSPORT_026` stay known-unlinked and are not exemptions.
 
 - **Spec-Derived Requirements**: {spec_derived_count}
 - **Implementation-Derived Requirements**: {derived_count}

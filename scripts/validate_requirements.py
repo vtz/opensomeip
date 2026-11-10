@@ -150,10 +150,12 @@ def validate_requirements(
 
     # Check for missing spec links (implementation requirements must satisfy at least one spec requirement)
     # Skip validation for implementation-derived requirements (error handling, architectural, plugin)
-    # These two local seams have no spec sentence. Exempt them the same way as the predicates above.
+    # Explicit IDs have no spec sentence to cite. Keep this set in sync with
+    # generate_traceability_matrix.py and check_spec_requirements.py.
+    # REQ_MSG_150 and REQ_TRANSPORT_026 stay known-unlinked below.
     explicit_impl_derived = {
-        "REQ_E2E_RECEIVE_001",
-        "REQ_TRANSPORT_030",
+        "REQ_E2E_RECEIVE_001",  # local receive-policy table and Result
+        "REQ_TRANSPORT_030",  # application-owned transport injection
     }
     # Stay unlinked. Accepted so a missing :satisfies: is not, by itself, a failing error.
     known_unlinked = {
