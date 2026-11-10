@@ -82,6 +82,7 @@ if(CONFIG_SOMEIP_SD)
         ${SOMEIP_SRC}/sd/sd_message.cpp
         ${SOMEIP_SRC}/sd/sd_client.cpp
         ${SOMEIP_SRC}/sd/sd_server.cpp
+        ${SOMEIP_SRC}/sd/deployment.cpp
     )
 endif()
 

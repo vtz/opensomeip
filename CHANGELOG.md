@@ -22,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **SD**: `load_deployment` and `load_deployment_file` read one JSON document
+  into `SdConfig` and the service instances the offer and find APIs already
+  take. The document names provided services, required services, instance ids,
+  major and minor versions, reliable and unreliable ports, eventgroups, and
+  the SD multicast address, port, and timing. Unknown keys and missing
+  required fields fail the load. Parsing does not open a socket. The tree has
+  no JSON library, so the loader accepts only this document
+  ([#382](https://github.com/vtz/opensomeip/issues/382)).
+
 - **Transport**: `UdpTransportConfig::injected_multicast_join_errno`, when
   non-zero, makes `join_multicast_group` return `MULTICAST_ERROR` and record
   that errno without calling `IP_ADD_MEMBERSHIP`. Zero, the default, keeps

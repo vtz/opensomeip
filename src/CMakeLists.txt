@@ -23,6 +23,7 @@ set(OPENSOMEIP_SOURCES
     sd/sd_message.cpp
     sd/sd_client.cpp
     sd/sd_server.cpp
+    sd/deployment.cpp
     events/event_publisher.cpp
     events/event_subscriber.cpp
     tp/tp_segmenter.cpp

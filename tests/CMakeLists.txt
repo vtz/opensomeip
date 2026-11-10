@@ -46,6 +46,9 @@ if(BUILD_TESTS)
 add_executable(test_sd test_sd.cpp)
 target_link_libraries(test_sd someip-sd gtest_main)
 
+add_executable(test_deployment test_deployment.cpp)
+target_link_libraries(test_deployment someip-sd gtest_main)
+
 # Events tests
 add_executable(test_events test_events.cpp)
 target_link_libraries(test_events someip-events gtest_main)
@@ -306,6 +309,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     add_test(NAME EndpointTest COMMAND test_endpoint)
     add_test(NAME RpcTest COMMAND test_rpc)
     add_test(NAME SdTest COMMAND test_sd)
+    add_test(NAME DeploymentTest COMMAND test_deployment)
     add_test(NAME EventsTest COMMAND test_events)
     add_test(NAME TcpTransportTest COMMAND test_tcp_transport)
     add_test(NAME UdpTransportTest COMMAND test_udp_transport)
@@ -318,7 +322,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     # Per-test timeout (seconds) to catch hangs in local and CI runs
     set(_ALL_TESTS
         PlatformThreadingTest SerializationTest MessageTest
-        SessionManagerTest EndpointTest RpcTest SdTest EventsTest
+        SessionManagerTest EndpointTest RpcTest SdTest DeploymentTest EventsTest
         TcpTransportTest UdpTransportTest MulticastMembershipTest
         EventDrivenUdpTransportTest EventDrivenTcpTransportTest TpTest E2ETest
     )

@@ -1,0 +1,37 @@
+{
+  "sd": {
+    "multicast_address": "239.255.255.251",
+    "multicast_port": 30490,
+    "unicast_address": "127.0.0.1",
+    "unicast_port": 0,
+    "initial_delay_min_ms": 0,
+    "initial_delay_max_ms": 100,
+    "repetition_base_ms": 2000,
+    "repetition_max_ms": 3600000,
+    "repetition_multiplier": 2,
+    "cyclic_offer_ms": 5000,
+    "ttl_ms": 3600000
+  },
+  "provided_services": [
+    {
+      "service_id": "0x1000",
+      "instance_id": "0x0001",
+      "major_version": 1,
+      "minor_version": 0,
+      "unreliable_port": 30500,
+      "reliable_port": 0,
+      "eventgroups": [1]
+    }
+  ],
+  "required_services": [
+    {
+      "service_id": "0x1000",
+      "instance_id": "0x0001",
+      "major_version": 1,
+      "minor_version": 0,
+      "unreliable_port": 0,
+      "reliable_port": 0,
+      "eventgroups": [1]
+    }
+  ]
+}
