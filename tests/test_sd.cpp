@@ -1217,13 +1217,16 @@ TEST_F(SdTest, ServerDuplicateOffer) {
 /**
  * @test_case TC_SD_OFFER_TCP_PROTO
  * @tests REQ_SD_290
- * @brief A TCP service offer carries protocol 0x06, not the UDP default.
+ * @brief A TCP service offer carries protocol 0x06 on the multicast Offer and the Find reply.
  */
 TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
     someip::test::MulticastFake net;
     SdConfig config;
     config.has_initial_delay_override = true;
-    config.initial_delay_override_ms = 60000;
+    config.initial_delay_override_ms = 0;
+    config.repetition_base = std::chrono::milliseconds(60000);
+    config.repetition_max = std::chrono::milliseconds(60000);
+    config.cyclic_offer = std::chrono::milliseconds(60000);
     SdServer server(config, net);
     ASSERT_TRUE(server.initialize());
 
@@ -1231,6 +1234,31 @@ TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
     svc.protocol = 0x06;
     svc.ttl_seconds = 30;
     ASSERT_TRUE(server.offer_service(svc, "192.0.2.20:30509"));
+
+    const auto multicast = transport::Endpoint(config.multicast_address, config.multicast_port);
+    int multicast_index = -1;
+    for (int i = 0; i < 40 && multicast_index < 0; ++i) {
+        const size_t count = std::min(net.messages.size(), net.destinations.size());
+        for (size_t n = 0; n < count; ++n) {
+            if (net.destinations[n].get_address() == multicast.get_address() &&
+                net.destinations[n].get_port() == multicast.get_port()) {
+                multicast_index = static_cast<int>(n);
+                break;
+            }
+        }
+        if (multicast_index < 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+    }
+    ASSERT_GE(multicast_index, 0);
+    SdMessage multicast_offer;
+    ASSERT_TRUE(multicast_offer.deserialize(
+        net.messages[static_cast<size_t>(multicast_index)].get_payload()));
+    ASSERT_FALSE(multicast_offer.get_options().empty());
+    const auto* multicast_endpoint =
+        std::get_if<IPv4EndpointOption>(&multicast_offer.get_options().front());
+    ASSERT_NE(multicast_endpoint, nullptr);
+    EXPECT_EQ(multicast_endpoint->get_protocol(), 0x06);
 
     ServiceEntry find(EntryType::FIND_SERVICE);
     find.set_service_id(0x1234);
@@ -1256,16 +1284,24 @@ TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
     *inbound = std::move(someip_msg);
     listener->on_message_received(std::move(inbound), transport::Endpoint("192.0.2.10", 40000));
 
-    ASSERT_EQ(net.messages.size(), 1u);
-    EXPECT_EQ(net.destinations.back().get_address(), "192.0.2.10");
-    EXPECT_EQ(net.destinations.back().get_port(), 40000);
-
-    SdMessage offer;
-    ASSERT_TRUE(offer.deserialize(net.messages.back().get_payload()));
-    ASSERT_FALSE(offer.get_options().empty());
-    const auto* endpoint = std::get_if<IPv4EndpointOption>(&offer.get_options().front());
-    ASSERT_NE(endpoint, nullptr);
-    EXPECT_EQ(endpoint->get_protocol(), 0x06);
+    int unicast_index = -1;
+    const size_t count = std::min(net.messages.size(), net.destinations.size());
+    for (size_t n = 0; n < count; ++n) {
+        if (net.destinations[n].get_address() == "192.0.2.10" &&
+            net.destinations[n].get_port() == 40000) {
+            unicast_index = static_cast<int>(n);
+            break;
+        }
+    }
+    ASSERT_GE(unicast_index, 0);
+    SdMessage unicast_offer;
+    ASSERT_TRUE(unicast_offer.deserialize(
+        net.messages[static_cast<size_t>(unicast_index)].get_payload()));
+    ASSERT_FALSE(unicast_offer.get_options().empty());
+    const auto* unicast_endpoint =
+        std::get_if<IPv4EndpointOption>(&unicast_offer.get_options().front());
+    ASSERT_NE(unicast_endpoint, nullptr);
+    EXPECT_EQ(unicast_endpoint->get_protocol(), 0x06);
 
     server.shutdown();
 }
