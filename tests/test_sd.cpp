@@ -24,6 +24,7 @@
 #include <platform/byteorder.h>
 #include <platform/buffer_pool.h>
 #include <platform/containers.h>
+#include <platform/memory.h>
 #include <platform/net.h>
 #include <thread>
 #include <chrono>
@@ -1250,8 +1251,10 @@ TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
 
     auto* listener = net.listener();
     ASSERT_NE(listener, nullptr);
-    listener->on_message_received(std::make_shared<Message>(std::move(someip_msg)),
-                                  transport::Endpoint("192.0.2.10", 40000));
+    MessagePtr inbound = platform::allocate_message();
+    ASSERT_TRUE(inbound);
+    *inbound = std::move(someip_msg);
+    listener->on_message_received(std::move(inbound), transport::Endpoint("192.0.2.10", 40000));
 
     ASSERT_EQ(net.messages.size(), 1u);
     EXPECT_EQ(net.destinations.back().get_address(), "192.0.2.10");
