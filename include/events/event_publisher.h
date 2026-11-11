@@ -46,18 +46,22 @@ class EventPublisher {
      * @brief Constructor
      * @param service_id Service identifier
      * @param instance_id Service instance identifier
+     * @param interface_version Service major version stamped on success responses.
+     *        A request with a different version receives E_WRONG_INTERFACE_VERSION.
      */
-    EventPublisher(uint16_t service_id, uint16_t instance_id);
+    EventPublisher(uint16_t service_id, uint16_t instance_id, uint8_t interface_version = 0x01);
 
     /**
      * @brief Borrow an exclusive, stopped transport instead of creating UDP.
      * @param service_id Service identifier offering these events.
      * @param instance_id Service instance identifier.
      * @param transport Must outlive this publisher; the publisher manages start/stop.
+     * @param interface_version Service major version stamped on success responses.
      * @note Local binding and transport configuration belong to the supplied backend.
      * @see transport::ITransport for the injected-transport lifecycle contract.
      */
-    EventPublisher(uint16_t service_id, uint16_t instance_id, transport::ITransport& transport);
+    EventPublisher(uint16_t service_id, uint16_t instance_id, transport::ITransport& transport,
+                   uint8_t interface_version = 0x01);
 
     /**
      * @brief Destructor

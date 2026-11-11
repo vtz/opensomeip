@@ -99,6 +99,7 @@ struct EventNotification {
     // Event notifications leave the defaults (NOTIFICATION / E_OK).
     MessageType message_type{MessageType::NOTIFICATION};
     ReturnCode return_code{ReturnCode::E_OK};
+    uint8_t interface_version{0x01};
 
     explicit EventNotification(uint16_t svc_id = 0, uint16_t inst_id = 0, uint16_t evt_id = 0)
         : service_id(svc_id), instance_id(inst_id), event_id(evt_id)

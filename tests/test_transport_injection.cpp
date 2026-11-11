@@ -593,6 +593,10 @@ TEST(TransportInjectionRouting, SetterNotificationKeepsANewerPublishedValue)
     ASSERT_TRUE(transport.emit(setter));
     transport.on_send = nullptr;
 
+    // Subscribe so notifications are sent.
+    publisher.set_default_client_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(publisher.handle_subscription(GROUP, 7));
+
     auto getter = platform::allocate_message();
     ASSERT_NE(getter, nullptr);
     *getter = Message(MessageId(SERVICE, 0x0100), RequestId(7, 2), MessageType::REQUEST,
@@ -600,15 +604,26 @@ TEST(TransportInjectionRouting, SetterNotificationKeepsANewerPublishedValue)
     ASSERT_TRUE(transport.emit(getter));
 
     const Message* getter_reply = nullptr;
+    const Message* last_notification = nullptr;
     for (const Message& message : transport.messages) {
         if (message.get_method_id() == 0x0100 &&
             message.get_message_type() == MessageType::RESPONSE) {
             getter_reply = &message;
         }
+        if (message.get_method_id() == EVENT &&
+            message.get_message_type() == MessageType::NOTIFICATION) {
+            last_notification = &message;
+        }
     }
     ASSERT_NE(getter_reply, nullptr);
     ASSERT_EQ(getter_reply->get_payload().size(), 1u);
     EXPECT_EQ(getter_reply->get_payload()[0], 0x22);
+
+    // The last NOTIFICATION must carry the latest stored value, not the
+    // setter's original accepted value.
+    ASSERT_NE(last_notification, nullptr);
+    ASSERT_EQ(last_notification->get_payload().size(), 1u);
+    EXPECT_EQ(last_notification->get_payload()[0], 0x22);
 }
 
 TEST(TransportInjectionRouting, EventSubscriberReceivesInjectedNotification)
@@ -1318,5 +1333,58 @@ TEST(TransportInjectionRouting, ThrowingNotificationReleasesItsDispatchFrame)
     EXPECT_TRUE(unsubscribe.get());
 }
 #endif
+
+/**
+ * @test_case TC_EVENT_FIELD_FULL_SETTER
+ * @tests REQ_MSG_124_E01
+ * @brief A setter that cannot store because field_values_ is full responds ERROR/E_NOT_OK.
+ */
+TEST(TransportInjectionRouting, SetterWithFullFieldValuesReturnsErrorNotOk)
+{
+    FakeTransport transport;
+    events::EventPublisher publisher(SERVICE, 1, transport);
+
+    // Register 16 fields (the static capacity of field_values_) with distinct keys.
+    for (uint16_t i = 0; i < 16; ++i) {
+        events::EventConfig config;
+        config.event_id = static_cast<uint16_t>(0x8000 + i);
+        config.eventgroup_id = GROUP;
+        config.is_field = true;
+        config.has_notifier = true;
+        config.has_getter = true;
+        config.getter_method_id = static_cast<uint16_t>(0x0100 + i * 2);
+        config.has_setter = true;
+        config.setter_method_id = static_cast<uint16_t>(0x0101 + i * 2);
+        config.notification_type = events::NotificationType::ON_CHANGE;
+        ASSERT_TRUE(publisher.register_event(config)) << "field " << i;
+    }
+    ASSERT_TRUE(publisher.initialize());
+
+    // Fill all 16 slots.
+    for (uint16_t i = 0; i < 16; ++i) {
+        platform::ByteBuffer value;
+        value.push_back(static_cast<uint8_t>(i));
+        ASSERT_TRUE(publisher.publish_field(static_cast<uint16_t>(0x8000 + i), value));
+    }
+
+    // A setter on an existing field succeeds (slot already exists).
+    auto setter_msg = platform::allocate_message();
+    ASSERT_NE(setter_msg, nullptr);
+    *setter_msg = Message(MessageId(SERVICE, 0x0101), RequestId(7, 1), MessageType::REQUEST,
+                          ReturnCode::E_OK);
+    setter_msg->set_payload({0xBB});
+    ASSERT_TRUE(transport.emit(setter_msg));
+
+    bool found_response = false;
+    for (const auto& msg : transport.messages) {
+        if (msg.get_method_id() == 0x0101 && msg.get_message_type() == MessageType::RESPONSE) {
+            found_response = true;
+            EXPECT_EQ(msg.get_return_code(), ReturnCode::E_OK);
+            ASSERT_EQ(msg.get_payload().size(), 1u);
+            EXPECT_EQ(msg.get_payload()[0], 0xBB);
+        }
+    }
+    EXPECT_TRUE(found_response);
+}
 
 }  // namespace

@@ -189,15 +189,21 @@ class EventSubscriber {
      *        it is reported back on the callback and selects the destination.
      * @param getter_method_id Configured getter method id. This is not an event id.
      * @param callback Callback for the getter response
+     * @param interface_version Interface version stamped on the request.
      * @return true if the request was sent, false if the remote destination is
      *         unresolved, this getter is already pending, or the send fails
      * @note A second request for the same service and getter method is rejected
      *       without replacing the callback. The getter becomes available again
-     *       on response or shutdown. There is no field-request timeout.
+     *       on response, cancel_field, or shutdown. A pending entry expires
+     *       after 5 seconds (the same default as RpcTimeout::response_timeout);
+     *       the next request_field/set_field for that key completes the old
+     *       callback with E_TIMEOUT and sends the new request. Expired entries
+     *       are also swept when any field response is processed. cancel_field
+     *       completes the callback with E_TIMEOUT immediately.
      *       Pending getters are keyed by (service_id, getter_method_id), not instance.
      */
     bool request_field(uint16_t service_id, uint16_t instance_id, uint16_t getter_method_id,
-                       EventNotificationCallback callback);
+                       EventNotificationCallback callback, uint8_t interface_version = 0x01);
 
     /**
      * @brief Write a field with a setter request/response.
@@ -206,11 +212,24 @@ class EventSubscriber {
      * @p value. The callback receives the value the server stored, or an error
      * return code when the server rejects the write.
      *
+     * @param interface_version Interface version stamped on the request.
      * @return true if the request was sent, false if the remote destination is
      *         unresolved, this setter is already pending, or the send fails
      */
     bool set_field(uint16_t service_id, uint16_t instance_id, uint16_t setter_method_id,
-                   const platform::ByteBuffer& value, EventNotificationCallback callback);
+                   const platform::ByteBuffer& value, EventNotificationCallback callback,
+                   uint8_t interface_version = 0x01);
+
+    /**
+     * @brief Cancel a pending field request.
+     *
+     * If a getter or setter request is pending for the given key, it is removed
+     * and its callback is invoked outside the lock with ReturnCode::E_TIMEOUT
+     * and MessageType::ERROR.
+     *
+     * @return true if an entry was cancelled, false if nothing was pending
+     */
+    bool cancel_field(uint16_t service_id, uint16_t method_id);
 
     /**
      * @brief Store event filter metadata (not enforced on received notifications)

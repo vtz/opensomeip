@@ -48,9 +48,11 @@ namespace someip::events {
 class EventPublisherImpl : public transport::ITransportListener {
    public:
     template <typename Transport>
-    EventPublisherImpl(uint16_t service_id, uint16_t instance_id, Transport&& transport)
+    EventPublisherImpl(uint16_t service_id, uint16_t instance_id, Transport&& transport,
+                       uint8_t interface_version)
         : service_id_(service_id),
           instance_id_(instance_id),
+          interface_version_(interface_version),
           transport_session_(std::forward<Transport>(transport)),
           transport_(transport_session_.get()),
           next_session_id_(1),
@@ -126,6 +128,9 @@ class EventPublisherImpl : public transport::ITransportListener {
     /** @implements REQ_MSG_126, REQ_MSG_125_E01 */
     bool register_event(const EventConfig& config)
     {
+        if (config.is_field && uses_reserved_method_id(config)) {
+            return false;
+        }
         platform::ScopedLock const events_lock(events_mutex_);
         // Notifier fields are stored by event id. Notifier-less fields are
         // stored by getter id, or setter id when there is no getter. Those
@@ -162,6 +167,9 @@ class EventPublisherImpl : public transport::ITransportListener {
 
     bool update_event_config(uint16_t event_id, const EventConfig& config)
     {
+        if (config.is_field && uses_reserved_method_id(config)) {
+            return false;
+        }
         platform::ScopedLock const events_lock(events_mutex_);
         const auto it = registered_events_.find(event_id);
         if (it == registered_events_.end()) {
@@ -248,7 +256,7 @@ class EventPublisherImpl : public transport::ITransportListener {
     {
         bool found = false;
         bool notify = false;
-        uint16_t notifier_id = 0;
+        uint16_t field_key = 0;
         {
             platform::ScopedLock const events_lock(events_mutex_);
             FieldBinding binding;
@@ -260,14 +268,15 @@ class EventPublisherImpl : public transport::ITransportListener {
                 field_values_[binding.key] = data;
                 found = true;
                 notify = binding.has_notifier;
-                notifier_id = binding.notifier_event_id;
+                field_key = binding.key;
             }
         }
         if (found) {
             if (!notify) {
                 return true;
             }
-            return publish_event(notifier_id, data, false);
+            notify_field(field_key);
+            return true;
         }
         return publish_event(event_id, data, true);
     }
@@ -554,6 +563,8 @@ class EventPublisherImpl : public transport::ITransportListener {
         uint16_t getter_method_id{0};
         bool has_setter{false};
         uint16_t setter_method_id{0};
+        uint64_t notify_generation{0};
+        bool notify_in_flight{false};
     };
 
     struct ClientInfo {
@@ -711,6 +722,17 @@ class EventPublisherImpl : public transport::ITransportListener {
         if (handler) {
             handler(info);
         }
+    }
+
+    static bool is_reserved_method_id(uint16_t id)
+    {
+        return id == 0x0001 || id == 0x0002;
+    }
+
+    static bool uses_reserved_method_id(const EventConfig& config)
+    {
+        return (config.has_getter && is_reserved_method_id(config.getter_method_id)) ||
+               (config.has_setter && is_reserved_method_id(config.setter_method_id));
     }
 
     static bool field_has_accessor(const EventConfig& config)
@@ -1068,13 +1090,63 @@ class EventPublisherImpl : public transport::ITransportListener {
         const MessageId response_id(request->get_service_id(), request->get_method_id());
         Message response(response_id, request->get_request_id(), type, code);
         if (stamp_configured_version) {
-            response.set_interface_version(SOMEIP_INTERFACE_VERSION);
+            response.set_interface_version(interface_version_);
         }
         else {
             response.set_interface_version(request->get_interface_version());
         }
         response.set_payload(payload);
         (void)transport_.send_message(response, sender);
+    }
+
+    void notify_field(uint16_t field_key)
+    {
+        platform::ByteBuffer payload;
+        uint16_t notifier_id = 0;
+        uint64_t sent_gen = 0;
+        {
+            platform::ScopedLock const events_lock(events_mutex_);
+            auto field_it = fields_.find(field_key);
+            if (field_it == fields_.end() || !field_it->second.has_notifier) {
+                return;
+            }
+            auto& binding = field_it->second;
+            binding.notify_generation++;
+            if (binding.notify_in_flight) {
+                return;
+            }
+            auto val_it = field_values_.find(field_key);
+            if (val_it == field_values_.end()) {
+                return;
+            }
+            binding.notify_in_flight = true;
+            payload = val_it->second;
+            sent_gen = binding.notify_generation;
+            notifier_id = binding.notifier_event_id;
+        }
+
+        for (;;) {
+            publish_event(notifier_id, payload, false);
+            {
+                platform::ScopedLock const events_lock(events_mutex_);
+                auto field_it = fields_.find(field_key);
+                if (field_it == fields_.end() || !field_it->second.has_notifier) {
+                    return;
+                }
+                auto& binding = field_it->second;
+                if (binding.notify_generation == sent_gen) {
+                    binding.notify_in_flight = false;
+                    return;
+                }
+                auto val_it = field_values_.find(field_key);
+                if (val_it == field_values_.end()) {
+                    binding.notify_in_flight = false;
+                    return;
+                }
+                payload = val_it->second;
+                sent_gen = binding.notify_generation;
+            }
+        }
     }
 
     /** @implements REQ_MSG_123, REQ_MSG_123_E01, REQ_MSG_124, REQ_MSG_124_E01 */
@@ -1088,6 +1160,9 @@ class EventPublisherImpl : public transport::ITransportListener {
         }
 
         const uint16_t method_id = message->get_method_id();
+        if (is_reserved_method_id(method_id)) {
+            return;
+        }
         FieldBinding binding;
         bool is_getter = false;
         bool is_setter = false;
@@ -1127,7 +1202,7 @@ class EventPublisherImpl : public transport::ITransportListener {
                               false);
             return;
         }
-        if (message->get_interface_version() != SOMEIP_INTERFACE_VERSION) {
+        if (message->get_interface_version() != interface_version_) {
             send_field_result(message, sender, MessageType::ERROR,
                               ReturnCode::E_WRONG_INTERFACE_VERSION, {}, false);
             return;
@@ -1138,10 +1213,34 @@ class EventPublisherImpl : public transport::ITransportListener {
                                   ReturnCode::E_MALFORMED_MESSAGE, {}, false);
                 return;
             }
-            const platform::ByteBuffer empty;
-            send_field_result(message, sender, MessageType::RESPONSE, ReturnCode::E_OK,
-                              has_value ? current : empty, true);
+            if (!has_value) {
+                send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_NOT_OK, {},
+                                  false);
+                return;
+            }
+            send_field_result(message, sender, MessageType::RESPONSE, ReturnCode::E_OK, current,
+                              true);
             return;
+        }
+
+        // Check storage capacity before calling the setter hook.
+        {
+            platform::ScopedLock const events_lock(events_mutex_);
+            FieldBinding probe;
+            if (!find_field_locked(method_id, probe) || !probe.has_setter ||
+                probe.setter_method_id != method_id) {
+                // Unregistered while we released the lock. Already handled above
+                // for the initial check, but the binding may have been removed.
+                send_field_result(message, sender, MessageType::ERROR,
+                                  ReturnCode::E_UNKNOWN_METHOD, {}, false);
+                return;
+            }
+            if (field_values_.size() >= field_values_.max_size() &&
+                field_values_.find(probe.key) == field_values_.end()) {
+                send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_NOT_OK, {},
+                                  false);
+                return;
+            }
         }
 
         platform::ByteBuffer accepted = message->get_payload();
@@ -1165,7 +1264,7 @@ class EventPublisherImpl : public transport::ITransportListener {
 
         bool still_present = false;
         bool notify = false;
-        uint16_t notifier_id = 0;
+        uint16_t field_key = 0;
         bool changed = true;
         {
             platform::ScopedLock const events_lock(events_mutex_);
@@ -1182,23 +1281,24 @@ class EventPublisherImpl : public transport::ITransportListener {
                     field_values_[latest_binding.key] = accepted;
                     still_present = true;
                     notify = latest_binding.has_notifier;
-                    notifier_id = latest_binding.notifier_event_id;
+                    field_key = latest_binding.key;
                 }
             }
         }
         if (!still_present) {
-            send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_UNKNOWN_METHOD, {},
+            send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_NOT_OK, {},
                               false);
             return;
         }
         send_field_result(message, sender, MessageType::RESPONSE, ReturnCode::E_OK, accepted, true);
         if (notify && changed) {
-            (void)publish_event(notifier_id, accepted, false);
+            notify_field(field_key);
         }
     }
 
     uint16_t service_id_;
     uint16_t instance_id_;
+    uint8_t interface_version_;
     platform::String<> default_client_address_{"0.0.0.0"};
     uint16_t default_client_port_{0};
     transport::detail::TransportSession transport_session_;
@@ -1230,27 +1330,30 @@ static_assert(sizeof(EventPublisherImpl) <= SOMEIP_PIMPL_EVENTPUB_SIZE,
 #endif
 
 // EventPublisher implementation
-EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id)
+EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id,
+                               uint8_t interface_version)
 #ifdef SOMEIP_STATIC_ALLOC
 {
-    new (impl_storage_)
-        EventPublisherImpl(service_id, instance_id, transport::Endpoint("0.0.0.0", 0));
+    new (impl_storage_) EventPublisherImpl(service_id, instance_id,
+                                           transport::Endpoint("0.0.0.0", 0), interface_version);
 }
 #else
     : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id,
-                                                 transport::Endpoint("0.0.0.0", 0)))
+                                                 transport::Endpoint("0.0.0.0", 0),
+                                                 interface_version))
 {
 }
 #endif
 
 EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id,
-                               transport::ITransport& transport)
+                               transport::ITransport& transport, uint8_t interface_version)
 #ifdef SOMEIP_STATIC_ALLOC
 {
-    new (impl_storage_) EventPublisherImpl(service_id, instance_id, transport);
+    new (impl_storage_) EventPublisherImpl(service_id, instance_id, transport, interface_version);
 }
 #else
-    : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id, transport))
+    : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id, transport,
+                                                 interface_version))
 {
 }
 #endif

@@ -595,4 +595,112 @@ TEST(SubscriberDispatch, DestructorDoesNotPropagateTransportStopException)
 }
 #endif
 
+/**
+ * @test_case TC_EVENT_FIELD_CANCEL_001
+ * @brief cancel_field invokes the callback with E_TIMEOUT and a new request succeeds.
+ */
+TEST(SubscriberDispatch, CancelFieldInvokesTimeoutAndNewRequestSucceeds)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(5, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+
+    unsigned calls = 0;
+    someip::ReturnCode got_code = someip::ReturnCode::E_OK;
+    someip::MessageType got_type = someip::MessageType::RESPONSE;
+    ASSERT_TRUE(subscriber.request_field(
+        SERVICE, 1, EVENT, [&](const events::EventNotification& n) {
+            ++calls;
+            got_code = n.return_code;
+            got_type = n.message_type;
+        }));
+
+    ASSERT_TRUE(subscriber.cancel_field(SERVICE, EVENT));
+    EXPECT_EQ(calls, 1u);
+    EXPECT_EQ(got_code, someip::ReturnCode::E_TIMEOUT);
+    EXPECT_EQ(got_type, someip::MessageType::ERROR);
+
+    // New request succeeds.
+    unsigned second = 0;
+    EXPECT_TRUE(subscriber.request_field(
+        SERVICE, 1, EVENT, [&](const events::EventNotification&) { ++second; }));
+    EXPECT_EQ(second, 0u);
+}
+
+/**
+ * @test_case TC_EVENT_FIELD_CANCEL_002
+ * @brief A second call to cancel_field before the deadline returns false.
+ */
+TEST(SubscriberDispatch, SecondCancelFieldReturnsFalse)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(5, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+
+    ASSERT_TRUE(subscriber.request_field(
+        SERVICE, 1, EVENT, [](const events::EventNotification&) {}));
+
+    ASSERT_TRUE(subscriber.cancel_field(SERVICE, EVENT));
+    EXPECT_FALSE(subscriber.cancel_field(SERVICE, EVENT));
+}
+
+/**
+ * @test_case TC_EVENT_FIELD_CANCEL_003
+ * @brief A duplicate request before deadline returns false and keeps the original callback.
+ */
+TEST(SubscriberDispatch, DuplicateFieldBeforeDeadlineReturnsFalseKeepsOriginal)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(5, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+
+    unsigned first = 0;
+    unsigned second = 0;
+    ASSERT_TRUE(subscriber.request_field(
+        SERVICE, 1, EVENT, [&](const events::EventNotification&) { ++first; }));
+    EXPECT_FALSE(subscriber.request_field(
+        SERVICE, 2, EVENT, [&](const events::EventNotification&) { ++second; }));
+
+    // Complete the first request.
+    MessagePtr response = platform::allocate_message();
+    ASSERT_NE(response, nullptr);
+    *response = Message(MessageId(SERVICE, EVENT), RequestId(5, 1),
+                        MessageType::RESPONSE, ReturnCode::E_OK);
+    ASSERT_TRUE(transport.emit(response));
+    EXPECT_EQ(first, 1u);
+    EXPECT_EQ(second, 0u);
+}
+
+/**
+ * @test_case TC_EVENT_FIELD_CONNLOST_001
+ * @brief on_connection_lost completes pending field callbacks with E_TIMEOUT.
+ */
+TEST(SubscriberDispatch, ConnectionLostCompletesFieldCallbacksWithTimeout)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(5, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+
+    unsigned calls = 0;
+    someip::ReturnCode got_code = someip::ReturnCode::E_OK;
+    ASSERT_TRUE(subscriber.request_field(
+        SERVICE, 1, EVENT, [&](const events::EventNotification& n) {
+            ++calls;
+            got_code = n.return_code;
+        }));
+
+    transport.listener()->on_connection_lost(PEER);
+    EXPECT_EQ(calls, 1u);
+    EXPECT_EQ(got_code, someip::ReturnCode::E_TIMEOUT);
+
+    // A new request succeeds after connection loss.
+    unsigned second = 0;
+    EXPECT_TRUE(subscriber.request_field(
+        SERVICE, 1, EVENT, [&](const events::EventNotification&) { ++second; }));
+}
+
 }  // namespace

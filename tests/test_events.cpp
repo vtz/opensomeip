@@ -1129,3 +1129,154 @@ TEST_F(EventsTest, FieldGetterAndSetterRoundTrip)
     notifier_rx.stop();
     probe.stop();
 }
+
+/**
+ * @test_case TC_EVT_FIELD_RESERVED_001
+ * @brief Subscribe/unsubscribe datagrams must not be treated as field operations.
+ *        Method ids 0x0001 and 0x0002 are reserved for subscribe/unsubscribe.
+ */
+TEST_F(EventsTest, SubscribeUnsubscribeDoNotInterfereWithFields)
+{
+    EventPublisher publisher(0x1234, 0x0001);
+    ASSERT_TRUE(publisher.initialize());
+    ASSERT_TRUE(publisher.register_event(field_with_accessors(0x8001, 0x0100, 0x0101)));
+
+    platform::ByteBuffer initial;
+    initial.push_back(0x11);
+    ASSERT_TRUE(publisher.publish_field(0x8001, initial));
+
+    const auto dest = loopback_port(publisher.get_local_endpoint().get_port());
+
+    EventSubscriber subscriber(0x00AB);
+    subscriber.set_default_endpoint(dest.get_address(), dest.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+
+    // Start a pending getter.
+    FieldWait getter_wait;
+    EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(getter_wait)));
+
+    // subscribe_eventgroup sends method 0x0001 session 0x0001
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(0x1234, 0x0001, 0x0001,
+                                              [](const EventNotification&) {}));
+    // unsubscribe_eventgroup sends method 0x0002 session 0x0002
+    ASSERT_TRUE(subscriber.unsubscribe_eventgroup(0x1234, 0x0001, 0x0001));
+
+    // Wait a bit to ensure the publisher processed any subscribe/unsubscribe
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+    // The stored field value must not have changed.
+    FieldWait getter2;
+    EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(getter2)));
+    // The first getter should have completed (response came).
+    ASSERT_TRUE(wait_until(getter_wait, std::chrono::milliseconds(1000)));
+    {
+        std::lock_guard<std::mutex> const lock(getter_wait.mu);
+        EXPECT_EQ(getter_wait.note.message_type, MessageType::RESPONSE);
+        ASSERT_EQ(getter_wait.note.event_data.size(), 1u);
+        EXPECT_EQ(getter_wait.note.event_data[0], 0x11);
+    }
+
+    subscriber.shutdown();
+    publisher.shutdown();
+}
+
+/**
+ * @test_case TC_EVT_FIELD_RESERVED_002
+ * @brief Registering a getter or setter with method id 0x0001 or 0x0002 fails.
+ */
+TEST_F(EventsTest, ReservedMethodIdsRejectedOnRegistration)
+{
+    EventPublisher publisher(0x1234, 0x0001);
+    ASSERT_TRUE(publisher.initialize());
+
+    EXPECT_FALSE(publisher.register_event(field_with_accessors(0x8001, 0x0001, 0)));
+    EXPECT_FALSE(publisher.register_event(field_with_accessors(0x8001, 0, 0x0001)));
+    EXPECT_FALSE(publisher.register_event(field_with_accessors(0x8001, 0x0002, 0)));
+    EXPECT_FALSE(publisher.register_event(field_with_accessors(0x8001, 0, 0x0002)));
+
+    // Valid registration works
+    EXPECT_TRUE(publisher.register_event(field_with_accessors(0x8001, 0x0003, 0x0004)));
+
+    // update_event_config also rejects reserved ids
+    EXPECT_FALSE(publisher.update_event_config(0x8001, field_with_accessors(0x8001, 0x0001, 0)));
+    EXPECT_FALSE(publisher.update_event_config(0x8001, field_with_accessors(0x8001, 0, 0x0002)));
+
+    publisher.shutdown();
+}
+
+/**
+ * @test_case TC_EVT_FIELD_GETTER_UNSET
+ * @brief A getter with no stored value returns ERROR / E_NOT_OK and empty payload.
+ */
+TEST_F(EventsTest, GetterWithNoStoredValueReturnsError)
+{
+    EventPublisher publisher(0x1234, 0x0001);
+    ASSERT_TRUE(publisher.initialize());
+    ASSERT_TRUE(publisher.register_event(field_with_accessors(0x8001, 0x0100, 0x0101)));
+    // No publish_field
+
+    const auto dest = loopback_port(publisher.get_local_endpoint().get_port());
+    EventSubscriber subscriber(0x00AB);
+    subscriber.set_default_endpoint(dest.get_address(), dest.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+
+    FieldWait got;
+    EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(got)));
+    ASSERT_TRUE(wait_until(got, std::chrono::milliseconds(1000)));
+    {
+        std::lock_guard<std::mutex> const lock(got.mu);
+        EXPECT_EQ(got.note.message_type, MessageType::ERROR);
+        EXPECT_EQ(got.note.return_code, ReturnCode::E_NOT_OK);
+        EXPECT_TRUE(got.note.event_data.empty());
+    }
+
+    subscriber.shutdown();
+    publisher.shutdown();
+}
+
+/**
+ * @test_case TC_EVT_FIELD_VERSION_001
+ * @brief Interface version is stamped on responses and checked on requests.
+ */
+TEST_F(EventsTest, InterfaceVersionOnFieldRequestsAndResponses)
+{
+    EventPublisher publisher(0x1234, 0x0001, static_cast<uint8_t>(0x02));
+    ASSERT_TRUE(publisher.initialize());
+    ASSERT_TRUE(publisher.register_event(field_with_accessors(0x8001, 0x0100, 0x0101)));
+
+    platform::ByteBuffer initial;
+    initial.push_back(0xAA);
+    ASSERT_TRUE(publisher.publish_field(0x8001, initial));
+
+    const auto dest = loopback_port(publisher.get_local_endpoint().get_port());
+    EventSubscriber subscriber(0x00AB);
+    subscriber.set_default_endpoint(dest.get_address(), dest.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+
+    // Request with matching version 0x02: success
+    FieldWait ok_wait;
+    EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(ok_wait), 0x02));
+    ASSERT_TRUE(wait_until(ok_wait, std::chrono::milliseconds(1000)));
+    {
+        std::lock_guard<std::mutex> const lock(ok_wait.mu);
+        EXPECT_EQ(ok_wait.note.message_type, MessageType::RESPONSE);
+        EXPECT_EQ(ok_wait.note.return_code, ReturnCode::E_OK);
+        EXPECT_EQ(ok_wait.note.interface_version, 0x02);
+        ASSERT_EQ(ok_wait.note.event_data.size(), 1u);
+        EXPECT_EQ(ok_wait.note.event_data[0], 0xAA);
+    }
+
+    // Request with wrong version 0x01: E_WRONG_INTERFACE_VERSION
+    FieldWait bad_wait;
+    EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(bad_wait), 0x01));
+    ASSERT_TRUE(wait_until(bad_wait, std::chrono::milliseconds(1000)));
+    {
+        std::lock_guard<std::mutex> const lock(bad_wait.mu);
+        EXPECT_EQ(bad_wait.note.message_type, MessageType::ERROR);
+        EXPECT_EQ(bad_wait.note.return_code, ReturnCode::E_WRONG_INTERFACE_VERSION);
+    }
+
+    subscriber.shutdown();
+    publisher.shutdown();
+}
