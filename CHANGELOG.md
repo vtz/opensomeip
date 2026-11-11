@@ -94,6 +94,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **SD**: Drawing an initial wait over `[0, UINT32_MAX]` no longer divides by a
+  wrapped span, and an offered service endpoint uses the instance L4 protocol
+  so a TCP service is not advertised as UDP.
 - **E2E**: A receive binding that rejects a datagram before the SOME/IP header
   is parsed reports Message ID and Request ID from the wire prefix. A failed
   deserialize no longer publishes the default zero IDs.

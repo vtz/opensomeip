@@ -1213,6 +1213,60 @@ TEST_F(SdTest, ServerDuplicateOffer) {
     server->shutdown();
 }
 
+/**
+ * @test_case TC_SD_OFFER_TCP_PROTO
+ * @tests REQ_SD_290
+ * @brief A TCP service offer carries protocol 0x06, not the UDP default.
+ */
+TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
+    someip::test::MulticastFake net;
+    SdConfig config;
+    config.has_initial_delay_override = true;
+    config.initial_delay_override_ms = 60000;
+    SdServer server(config, net);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.protocol = 0x06;
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "192.0.2.20:30509"));
+
+    ServiceEntry find(EntryType::FIND_SERVICE);
+    find.set_service_id(0x1234);
+    find.set_instance_id(0x0001);
+    find.set_major_version(1);
+    find.set_ttl(3);
+    SdMessage find_msg;
+    find_msg.set_reboot(true);
+    find_msg.set_unicast(true);
+    ASSERT_TRUE(find_msg.add_entry(std::move(find)));
+
+    Message someip_msg(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                       RequestId(SOMEIP_SD_CLIENT_ID, 0x0001),
+                       MessageType::NOTIFICATION,
+                       ReturnCode::E_OK);
+    someip_msg.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
+    someip_msg.set_payload(find_msg.serialize());
+
+    auto* listener = net.listener();
+    ASSERT_NE(listener, nullptr);
+    listener->on_message_received(std::make_shared<Message>(std::move(someip_msg)),
+                                  transport::Endpoint("192.0.2.10", 40000));
+
+    ASSERT_EQ(net.messages.size(), 1u);
+    EXPECT_EQ(net.destinations.back().get_address(), "192.0.2.10");
+    EXPECT_EQ(net.destinations.back().get_port(), 40000);
+
+    SdMessage offer;
+    ASSERT_TRUE(offer.deserialize(net.messages.back().get_payload()));
+    ASSERT_FALSE(offer.get_options().empty());
+    const auto* endpoint = std::get_if<IPv4EndpointOption>(&offer.get_options().front());
+    ASSERT_NE(endpoint, nullptr);
+    EXPECT_EQ(endpoint->get_protocol(), 0x06);
+
+    server.shutdown();
+}
+
 // ============================================================================
 // Multicast Membership Reporting and Recovery Tests
 // ============================================================================
@@ -2489,6 +2543,30 @@ TEST_F(SdTest, InitialWaitOverrideAndRange) {
     SdConfig legacy_zero;
     legacy_zero.initial_delay = std::chrono::milliseconds(0);
     EXPECT_EQ(pick_initial_wait_ms(legacy_zero), 0u);
+
+    // Override still wins when the configured range would overflow a uint32 span.
+    SdConfig override_full;
+    override_full.has_initial_delay_override = true;
+    override_full.initial_delay_override_ms = 7;
+    override_full.initial_delay_min = std::chrono::milliseconds(0);
+    override_full.initial_delay_max = std::chrono::milliseconds(0xFFFFFFFFLL);
+    override_full.initial_delay = override_full.initial_delay_max;
+    EXPECT_EQ(pick_initial_wait_ms(override_full), 7u);
+
+    // Legacy initial_delay replaces max before the span is drawn.
+    SdConfig legacy_alias;
+    legacy_alias.initial_delay_min = std::chrono::milliseconds(15);
+    legacy_alias.initial_delay_max = std::chrono::milliseconds(0xFFFFFFFFLL);
+    legacy_alias.initial_delay = std::chrono::milliseconds(15);
+    EXPECT_EQ(pick_initial_wait_ms(legacy_alias), 15u);
+
+    // min 0 and max UINT32_MAX is the inclusive width that used to wrap to 0.
+    SdConfig full_span;
+    full_span.initial_delay_min = std::chrono::milliseconds(0);
+    full_span.initial_delay_max = std::chrono::milliseconds(0xFFFFFFFFLL);
+    full_span.initial_delay = full_span.initial_delay_max;
+    const uint64_t drawn = pick_initial_wait_ms(full_span);
+    EXPECT_LT(drawn, 0x100000000ULL);
 }
 
 /**
