@@ -270,7 +270,7 @@ bool parse_eventgroups(Cursor& cursor,
         if (!parse_bounded(cursor, 0xFFFFU, value)) {
             return false;
         }
-        if (eventgroups.size() >= eventgroups.max_size()) {
+        if (eventgroups.size() >= DEPLOYMENT_MAX_EVENTGROUPS) {
             cursor.fail(Result::BUFFER_OVERFLOW);
             return false;
         }
@@ -411,7 +411,7 @@ bool parse_service_array(Cursor& cursor,
                 return false;
             }
         }
-        if (services.size() >= services.max_size()) {
+        if (services.size() >= DEPLOYMENT_MAX_SERVICES) {
             cursor.fail(Result::BUFFER_OVERFLOW);
             return false;
         }
@@ -597,7 +597,8 @@ bool parse_sd_object(Cursor& cursor, SdConfig& config)
         return false;
     }
     if (config.repetition_multiplier == 0 || config.repetition_base.count() == 0 ||
-        config.cyclic_offer.count() == 0 || config.ttl.count() < 1000) {
+        config.repetition_max.count() == 0 || config.cyclic_offer.count() == 0 ||
+        config.ttl.count() < 1000) {
         cursor.fail(Result::INVALID_ARGUMENT);
         return false;
     }
@@ -696,11 +697,35 @@ Result parse_document(const char* text, std::size_t length, Deployment& out)
     return Result::SUCCESS;
 }
 
+void reset_deployment(Deployment& out)
+{
+    out.provided_services.clear();
+    out.required_services.clear();
+    SdConfig& sd = out.sd;
+    sd.multicast_address = "239.255.255.251";
+    sd.multicast_port = 30490;
+    sd.unicast_address = "127.0.0.1";
+    sd.unicast_port = 0;
+    sd.initial_delay_min = std::chrono::milliseconds(0);
+    sd.initial_delay_max = std::chrono::milliseconds(100);
+    sd.initial_delay = std::chrono::milliseconds(100);
+    sd.repetition_base = std::chrono::milliseconds(2000);
+    sd.repetition_max = std::chrono::milliseconds(3600000);
+    sd.repetition_multiplier = 2;
+    sd.cyclic_offer = std::chrono::milliseconds(30000);
+    sd.ttl = std::chrono::milliseconds(3600000);
+    sd.max_services = 100;
+    sd.has_initial_delay_override = false;
+    sd.initial_delay_override_ms = 0;
+    sd.multicast_rejoin_max_attempts = 5;
+    sd.multicast_rejoin_interval = std::chrono::milliseconds(1000);
+}
+
 }  // namespace
 
 Result load_deployment(const char* text, std::size_t length, Deployment& out)
 {
-    out = Deployment{};
+    reset_deployment(out);
     if (text == nullptr && length != 0) {
         return Result::INVALID_ARGUMENT;
     }
@@ -709,7 +734,7 @@ Result load_deployment(const char* text, std::size_t length, Deployment& out)
     }
     const Result result = parse_document(text, length, out);
     if (result != Result::SUCCESS) {
-        out = Deployment{};
+        reset_deployment(out);
     }
     return result;
 }
@@ -732,7 +757,7 @@ DeploymentFileImage& deployment_file_image()
 
 Result load_deployment_file(const char* path, Deployment& out)
 {
-    out = Deployment{};
+    reset_deployment(out);
     if (path == nullptr || path[0] == '\0') {
         return Result::INVALID_ARGUMENT;
     }

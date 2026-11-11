@@ -69,20 +69,26 @@ struct Deployment {
 };
 
 /**
- * @brief Stack budget for one automatic Deployment plus the loader frame.
+ * @brief Stack budget for an automatic Deployment plus the loader call.
  *
- * Zephyr images in this tree use main stacks of 2048, 4096, or 8192 bytes.
- * The file image is not an automatic variable. The reserve is left for the
- * caller. The loader frame covers one temporary DeployedService and the
- * parser's key buffers.
+ * The supported automatic-call budget is 4096 bytes. A 2048-byte thread
+ * cannot hold an automatic Deployment and call the loader. hello_s32k's
+ * 2048-byte main stack is below that budget.
+ *
+ * The load path places the caller's Deployment, one automatic
+ * DeployedService inside the service-array parse, and the parser's key
+ * buffers on the stack. Reset clears that Deployment in place and does not
+ * construct a second one. The file image is not an automatic variable. The
+ * reserve is left for the caller.
  */
 inline constexpr std::size_t DEPLOYMENT_STACK_BUDGET = 4096;
 inline constexpr std::size_t DEPLOYMENT_CALLER_RESERVE = 1024;
-inline constexpr std::size_t DEPLOYMENT_LOADER_FRAME = sizeof(DeployedService) + 384;
+inline constexpr std::size_t DEPLOYMENT_KEY_BUFFERS = 384;
 
-static_assert(sizeof(Deployment) + DEPLOYMENT_LOADER_FRAME + DEPLOYMENT_CALLER_RESERVE <=
+static_assert(sizeof(Deployment) + sizeof(DeployedService) + DEPLOYMENT_KEY_BUFFERS +
+                      DEPLOYMENT_CALLER_RESERVE <=
                   DEPLOYMENT_STACK_BUDGET,
-              "Deployment does not fit in a 4096-byte stack");
+              "an automatic Deployment does not fit in a 4096-byte stack");
 
 /**
  * @brief Largest deployment document `load_deployment_file` will read.
@@ -107,8 +113,9 @@ inline constexpr std::size_t DEPLOYMENT_FILE_MAX_BYTES = 8192;
  * `multicast_address` must be non-empty. `unicast_address`, when present,
  * must be non-empty; when omitted, the SdConfig default is kept.
  * `ttl_ms` below 1000, `repetition_multiplier` of 0, `repetition_base_ms`
- * of 0, and `cyclic_offer_ms` of 0 are rejected. `initial_delay_min_ms` of 0
- * is valid. `initial_delay_min_ms` greater than `initial_delay_max_ms` is
+ * of 0, `repetition_max_ms` of 0, and `cyclic_offer_ms` of 0 are rejected.
+ * `initial_delay_min_ms` of 0 is valid. `initial_delay_min_ms` greater than
+ * `initial_delay_max_ms` is
  * rejected, as is a min/max pair whose inclusive span does not fit in a
  * uint32 millisecond count (0 and 4294967295).
  *

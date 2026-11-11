@@ -429,3 +429,75 @@ TEST(DeploymentTest, FullUint32InitialWaitDoesNotDivideByZero)
     expect_rejected(replace_once("\"initial_delay_max_ms\": 100",
                                  "\"initial_delay_max_ms\": 4294967295"));
 }
+
+std::string deployment_document(int service_count, int eventgroup_count)
+{
+    std::string text =
+        R"({"sd":{"multicast_address":"239.255.255.251","multicast_port":30490,)"
+        R"("initial_delay_min_ms":0,"initial_delay_max_ms":100,"repetition_base_ms":2000,)"
+        R"("repetition_max_ms":3600000,"repetition_multiplier":2,"cyclic_offer_ms":5000,)"
+        R"("ttl_ms":3600000},"provided_services":[)";
+    for (int service = 0; service < service_count; ++service) {
+        if (service != 0) {
+            text += ',';
+        }
+        text += R"({"service_id":)";
+        text += std::to_string(service + 1);
+        text += R"(,"instance_id":1,"major_version":1,"minor_version":0,)";
+        text += R"("unreliable_port":30500,"reliable_port":0,"eventgroups":[)";
+        for (int group = 0; group < eventgroup_count; ++group) {
+            if (group != 0) {
+                text += ',';
+            }
+            text += std::to_string(group + 1);
+        }
+        text += "]}";
+    }
+    text += R"(],"required_services":[]})";
+    return text;
+}
+
+void expect_overflow(const std::string& text)
+{
+    Deployment deployment;
+    deployment.sd.multicast_port = 9;
+    EXPECT_EQ(load_deployment(text.data(), text.size(), deployment), Result::BUFFER_OVERFLOW) << text;
+    EXPECT_NE(deployment.sd.multicast_port, 9);
+    EXPECT_TRUE(deployment.provided_services.empty());
+    EXPECT_TRUE(deployment.required_services.empty());
+}
+
+/**
+ * @test_case TC_DEPLOY_010
+ * @brief Service and eventgroup caps apply on every allocation backend.
+ */
+TEST(DeploymentTest, ServiceAndEventgroupCapsAreEnforced)
+{
+    expect_overflow(deployment_document(5, 1));
+    expect_overflow(deployment_document(1, 9));
+
+    const std::string four = deployment_document(4, 1);
+    Deployment services;
+    ASSERT_EQ(load_deployment(four.data(), four.size(), services), Result::SUCCESS);
+    EXPECT_EQ(services.provided_services.size(), 4u);
+
+    const std::string eight = deployment_document(1, 8);
+    Deployment groups;
+    ASSERT_EQ(load_deployment(eight.data(), eight.size(), groups), Result::SUCCESS);
+    ASSERT_EQ(groups.provided_services.size(), 1u);
+    EXPECT_EQ(groups.provided_services[0].eventgroups.size(), 8u);
+}
+
+/**
+ * @test_case TC_DEPLOY_011
+ * @brief A zero repetition maximum would collapse the offer loop to 1 ms.
+ */
+TEST(DeploymentTest, ZeroRepetitionMaxIsRejected)
+{
+    expect_rejected(replace_once("\"repetition_max_ms\": 3600000", "\"repetition_max_ms\": 0"));
+
+    const std::string positive = replace_once("\"repetition_max_ms\": 3600000", "\"repetition_max_ms\": 1");
+    Deployment deployment;
+    ASSERT_EQ(load_deployment(positive.data(), positive.size(), deployment), Result::SUCCESS);
+    EXPECT_EQ(deployment.sd.repetition_max, std::chrono::milliseconds(1));
+}
