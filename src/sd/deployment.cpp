@@ -22,6 +22,7 @@
 
 #include "common/result.h"
 #include "platform/containers.h"
+#include "platform/thread.h"
 #include "sd/sd_types.h"
 
 namespace someip::sd {
@@ -254,7 +255,8 @@ bool same_instance(const DeployedService& service, uint16_t service_id, uint16_t
     return service.instance.service_id == service_id && service.instance.instance_id == instance_id;
 }
 
-bool parse_eventgroups(Cursor& cursor, platform::Vector<uint16_t>& eventgroups)
+bool parse_eventgroups(Cursor& cursor,
+                       platform::Vector<uint16_t, DEPLOYMENT_MAX_EVENTGROUPS>& eventgroups)
 {
     if (!cursor.take('[')) {
         cursor.fail(Result::MALFORMED_MESSAGE);
@@ -387,7 +389,8 @@ bool parse_service_object(Cursor& cursor, DeployedService& service)
     return true;
 }
 
-bool parse_service_array(Cursor& cursor, platform::Vector<DeployedService>& services)
+bool parse_service_array(Cursor& cursor,
+                         platform::Vector<DeployedService, DEPLOYMENT_MAX_SERVICES>& services)
 {
     if (!cursor.take('[')) {
         cursor.fail(Result::MALFORMED_MESSAGE);
@@ -469,6 +472,10 @@ bool parse_sd_object(Cursor& cursor, SdConfig& config)
                 cursor.fail(cursor.ok() ? Result::INVALID_ARGUMENT : cursor.error);
                 return false;
             }
+            if (text[0] == '\0') {
+                cursor.fail(Result::INVALID_ARGUMENT);
+                return false;
+            }
             if (!store_string(config.multicast_address, text.data())) {
                 cursor.fail(Result::BUFFER_OVERFLOW);
                 return false;
@@ -479,6 +486,10 @@ bool parse_sd_object(Cursor& cursor, SdConfig& config)
             std::array<char, MAX_TOKEN> text{};
             if (saw_unicast || !parse_string(cursor, text)) {
                 cursor.fail(cursor.ok() ? Result::INVALID_ARGUMENT : cursor.error);
+                return false;
+            }
+            if (text[0] == '\0') {
+                cursor.fail(Result::INVALID_ARGUMENT);
                 return false;
             }
             if (!store_string(config.unicast_address, text.data())) {
@@ -577,6 +588,19 @@ bool parse_sd_object(Cursor& cursor, SdConfig& config)
         cursor.fail(Result::INVALID_ARGUMENT);
         return false;
     }
+    const uint64_t min_ms = static_cast<uint64_t>(config.initial_delay_min.count());
+    const uint64_t max_ms = static_cast<uint64_t>(config.initial_delay_max.count());
+    // pick_initial_wait_ms draws with a uint32 span. min 0 and max 2^32-1
+    // is one past that width.
+    if (max_ms - min_ms + 1ULL > 0xFFFFFFFFULL) {
+        cursor.fail(Result::INVALID_ARGUMENT);
+        return false;
+    }
+    if (config.repetition_multiplier == 0 || config.repetition_base.count() == 0 ||
+        config.cyclic_offer.count() == 0 || config.ttl.count() < 1000) {
+        cursor.fail(Result::INVALID_ARGUMENT);
+        return false;
+    }
     config.initial_delay = config.initial_delay_max;
     return true;
 }
@@ -605,6 +629,12 @@ Result parse_document(const char* text, std::size_t length, Deployment& out)
     Cursor cursor;
     cursor.cur = text;
     cursor.end = text + length;
+    if (cursor.end - cursor.cur >= 3 &&
+        static_cast<unsigned char>(cursor.cur[0]) == 0xEF &&
+        static_cast<unsigned char>(cursor.cur[1]) == 0xBB &&
+        static_cast<unsigned char>(cursor.cur[2]) == 0xBF) {
+        cursor.cur += 3;
+    }
     if (!cursor.take('{')) {
         return Result::MALFORMED_MESSAGE;
     }
@@ -684,20 +714,37 @@ Result load_deployment(const char* text, std::size_t length, Deployment& out)
     return result;
 }
 
+namespace {
+
+struct DeploymentFileImage {
+    platform::Mutex mutex;
+    std::array<char, DEPLOYMENT_FILE_MAX_BYTES> bytes{};
+};
+
+// File bytes live for the process, not on the calling thread's stack.
+DeploymentFileImage& deployment_file_image()
+{
+    static DeploymentFileImage image;
+    return image;
+}
+
+}  // namespace
+
 Result load_deployment_file(const char* path, Deployment& out)
 {
     out = Deployment{};
     if (path == nullptr || path[0] == '\0') {
         return Result::INVALID_ARGUMENT;
     }
+    DeploymentFileImage& image = deployment_file_image();
+    const platform::ScopedLock lock(image.mutex);
     std::FILE* file = std::fopen(path, "rb");  // NOLINT(cppcoreguidelines-owning-memory)
     if (file == nullptr) {
         return Result::INVALID_ARGUMENT;
     }
-    std::array<char, DEPLOYMENT_FILE_MAX_BYTES> buffer{};
-    const std::size_t read = std::fread(buffer.data(), 1, buffer.size(), file);
+    const std::size_t read = std::fread(image.bytes.data(), 1, image.bytes.size(), file);
+    const int extra = (read == image.bytes.size()) ? std::fgetc(file) : EOF;
     const int io_error = std::ferror(file);
-    const int extra = (read == buffer.size()) ? std::fgetc(file) : EOF;
     const int closed = std::fclose(file);  // NOLINT(cppcoreguidelines-owning-memory)
     if (io_error != 0 || closed != 0) {
         return Result::INVALID_ARGUMENT;
@@ -705,7 +752,7 @@ Result load_deployment_file(const char* path, Deployment& out)
     if (extra != EOF) {
         return Result::BUFFER_OVERFLOW;
     }
-    return load_deployment(buffer.data(), read, out);
+    return load_deployment(image.bytes.data(), read, out);
 }
 
 }  // namespace someip::sd

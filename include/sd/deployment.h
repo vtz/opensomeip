@@ -23,6 +23,21 @@
 namespace someip::sd {
 
 /**
+ * @brief Services named in one list of a deployment document.
+ *
+ * Smaller than the default container cap so a stack `Deployment` fits in a
+ * 4096-byte thread stack. A longer list fails the load with BUFFER_OVERFLOW.
+ */
+inline constexpr std::size_t DEPLOYMENT_MAX_SERVICES = 4;
+
+/**
+ * @brief Eventgroup ids named on one service.
+ *
+ * A longer list fails the load with BUFFER_OVERFLOW.
+ */
+inline constexpr std::size_t DEPLOYMENT_MAX_EVENTGROUPS = 8;
+
+/**
  * @brief One service named by a deployment file.
  *
  * `instance` is the ServiceInstance the existing offer/find API already takes.
@@ -37,7 +52,7 @@ struct DeployedService {
     ServiceInstance instance;
     uint16_t unreliable_port{0};
     uint16_t reliable_port{0};
-    platform::Vector<uint16_t> eventgroups;
+    platform::Vector<uint16_t, DEPLOYMENT_MAX_EVENTGROUPS> eventgroups;
 };
 
 /**
@@ -49,9 +64,25 @@ struct DeployedService {
  */
 struct Deployment {
     SdConfig sd;
-    platform::Vector<DeployedService> provided_services;
-    platform::Vector<DeployedService> required_services;
+    platform::Vector<DeployedService, DEPLOYMENT_MAX_SERVICES> provided_services;
+    platform::Vector<DeployedService, DEPLOYMENT_MAX_SERVICES> required_services;
 };
+
+/**
+ * @brief Stack budget for one automatic Deployment plus the loader frame.
+ *
+ * Zephyr images in this tree use main stacks of 2048, 4096, or 8192 bytes.
+ * The file image is not an automatic variable. The reserve is left for the
+ * caller. The loader frame covers one temporary DeployedService and the
+ * parser's key buffers.
+ */
+inline constexpr std::size_t DEPLOYMENT_STACK_BUDGET = 4096;
+inline constexpr std::size_t DEPLOYMENT_CALLER_RESERVE = 1024;
+inline constexpr std::size_t DEPLOYMENT_LOADER_FRAME = sizeof(DeployedService) + 384;
+
+static_assert(sizeof(Deployment) + DEPLOYMENT_LOADER_FRAME + DEPLOYMENT_CALLER_RESERVE <=
+                  DEPLOYMENT_STACK_BUDGET,
+              "Deployment does not fit in a 4096-byte stack");
 
 /**
  * @brief Largest deployment document `load_deployment_file` will read.
@@ -72,6 +103,15 @@ inline constexpr std::size_t DEPLOYMENT_FILE_MAX_BYTES = 8192;
  * required once; a second copy in the same list fails. A provided service
  * needs a non-zero reliable or unreliable port.
  *
+ * One leading UTF-8 BOM is skipped. A BOM anywhere else is malformed.
+ * `multicast_address` must be non-empty. `unicast_address`, when present,
+ * must be non-empty; when omitted, the SdConfig default is kept.
+ * `ttl_ms` below 1000, `repetition_multiplier` of 0, `repetition_base_ms`
+ * of 0, and `cyclic_offer_ms` of 0 are rejected. `initial_delay_min_ms` of 0
+ * is valid. `initial_delay_min_ms` greater than `initial_delay_max_ms` is
+ * rejected, as is a min/max pair whose inclusive span does not fit in a
+ * uint32 millisecond count (0 and 4294967295).
+ *
  * Required top-level keys: `sd`, `provided_services`, `required_services`.
  * Required `sd` keys: `multicast_address`, `multicast_port`,
  * `initial_delay_min_ms`, `initial_delay_max_ms`, `repetition_base_ms`,
@@ -84,16 +124,18 @@ inline constexpr std::size_t DEPLOYMENT_FILE_MAX_BYTES = 8192;
  *
  * On failure @p out is empty. `INVALID_ARGUMENT` is a schema rejection,
  * `MALFORMED_MESSAGE` is text that is not this JSON shape, and
- * `BUFFER_OVERFLOW` is a document or string past the static cap.
+ * `BUFFER_OVERFLOW` is a document, string, or service list past the static cap.
  */
 Result load_deployment(const char* text, std::size_t length, Deployment& out);
 
 /**
  * @brief Read @p path and parse it.
  *
- * The file is read into a fixed buffer. This function does not open a socket
- * and does not construct an SD client or server. A missing path is
- * `INVALID_ARGUMENT`.
+ * The file image lives in static storage, not on the caller's stack and not
+ * on the heap. This function does not open a socket and does not construct an
+ * SD client or server. A missing path or a read error is `INVALID_ARGUMENT`.
+ * A file longer than DEPLOYMENT_FILE_MAX_BYTES is `BUFFER_OVERFLOW` and is
+ * not parsed.
  */
 Result load_deployment_file(const char* path, Deployment& out);
 

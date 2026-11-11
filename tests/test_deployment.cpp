@@ -25,9 +25,12 @@
 #include "sd/deployment.h"
 
 using someip::Result;
+using someip::sd::DEPLOYMENT_FILE_MAX_BYTES;
 using someip::sd::Deployment;
+using someip::sd::SdConfig;
 using someip::sd::load_deployment;
 using someip::sd::load_deployment_file;
+using someip::sd::pick_initial_wait_ms;
 
 namespace {
 
@@ -261,4 +264,168 @@ TEST(DeploymentTest, ValidFileLoadsAndMissingFileFails)
 
     EXPECT_EQ(load_deployment_file(missing.c_str(), deployment), Result::INVALID_ARGUMENT);
     EXPECT_TRUE(deployment.provided_services.empty());
+}
+
+constexpr char kTiming[] = R"({
+  "sd": {
+    "multicast_address": "239.255.255.251",
+    "multicast_port": 30490,
+    "initial_delay_min_ms": 0,
+    "initial_delay_max_ms": 100,
+    "repetition_base_ms": 2000,
+    "repetition_max_ms": 3600000,
+    "repetition_multiplier": 2,
+    "cyclic_offer_ms": 5000,
+    "ttl_ms": 3600000
+  },
+  "provided_services": [{
+    "service_id": 1, "instance_id": 1, "major_version": 1, "minor_version": 0,
+    "unreliable_port": 0, "reliable_port": 40000, "eventgroups": []
+  }],
+  "required_services": []
+})";
+
+std::string replace_once(const char* from, const char* to)
+{
+    std::string text(kTiming);
+    const auto pos = text.find(from);
+    EXPECT_NE(pos, std::string::npos);
+    if (pos == std::string::npos) {
+        return text;
+    }
+    text.replace(pos, std::strlen(from), to);
+    return text;
+}
+
+void expect_rejected(const std::string& text)
+{
+    Deployment deployment;
+    deployment.sd.multicast_port = 9;
+    EXPECT_EQ(load_deployment(text.data(), text.size(), deployment), Result::INVALID_ARGUMENT) << text;
+    EXPECT_NE(deployment.sd.multicast_port, 9);
+    EXPECT_TRUE(deployment.provided_services.empty());
+}
+
+/**
+ * @test_case TC_DEPLOY_005
+ * @brief A reliable-port-only service is TCP, and an omitted unicast address keeps the default.
+ */
+TEST(DeploymentTest, ReliablePortOnlyServiceIsTcp)
+{
+    Deployment deployment;
+    ASSERT_EQ(load_deployment(kTiming, std::strlen(kTiming), deployment), Result::SUCCESS);
+    ASSERT_EQ(deployment.provided_services.size(), 1u);
+    const auto& tcp = deployment.provided_services[0];
+    EXPECT_EQ(tcp.unreliable_port, 0);
+    EXPECT_EQ(tcp.reliable_port, 40000);
+    EXPECT_EQ(tcp.instance.port, 40000);
+    EXPECT_EQ(tcp.instance.protocol, 0x06);
+    EXPECT_EQ(tcp.instance.ip_address, "127.0.0.1");
+    EXPECT_EQ(deployment.sd.initial_delay_min, std::chrono::milliseconds(0));
+}
+
+/**
+ * @test_case TC_DEPLOY_006
+ * @brief Timing, address, and span values the offer loop cannot run are rejected.
+ */
+TEST(DeploymentTest, UnsafeTimingAndEmptyAddressesAreRejected)
+{
+    expect_rejected(replace_once("\"ttl_ms\": 3600000", "\"ttl_ms\": 999"));
+    expect_rejected(replace_once("\"repetition_multiplier\": 2", "\"repetition_multiplier\": 0"));
+    expect_rejected(replace_once("\"repetition_base_ms\": 2000", "\"repetition_base_ms\": 0"));
+    expect_rejected(replace_once("\"cyclic_offer_ms\": 5000", "\"cyclic_offer_ms\": 0"));
+    expect_rejected(replace_once("\"initial_delay_max_ms\": 100",
+                                 "\"initial_delay_max_ms\": 4294967295"));
+    expect_rejected(replace_once("\"initial_delay_min_ms\": 0", "\"initial_delay_min_ms\": 200"));
+    expect_rejected(replace_once("\"multicast_address\": \"239.255.255.251\"",
+                                 "\"multicast_address\": \"\""));
+    expect_rejected(replace_once("\"multicast_address\": \"239.255.255.251\"",
+                                 "\"multicast_address\": \"239.255.255.251\", \"unicast_address\": \"\""));
+
+    const std::string ttl_ok = replace_once("\"ttl_ms\": 3600000", "\"ttl_ms\": 1000");
+    Deployment deployment;
+    EXPECT_EQ(load_deployment(ttl_ok.data(), ttl_ok.size(), deployment), Result::SUCCESS);
+    EXPECT_EQ(deployment.sd.ttl, std::chrono::milliseconds(1000));
+}
+
+/**
+ * @test_case TC_DEPLOY_007
+ * @brief One leading UTF-8 BOM is skipped. A BOM after the first byte is malformed.
+ */
+TEST(DeploymentTest, LeadingBomIsSkipped)
+{
+    const std::string bom = std::string("\xEF\xBB\xBF", 3);
+    const std::string leading = bom + kTiming;
+    Deployment deployment;
+    EXPECT_EQ(load_deployment(leading.data(), leading.size(), deployment), Result::SUCCESS);
+    EXPECT_EQ(deployment.sd.multicast_port, 30490);
+
+    const std::string after_space = std::string(" ") + bom + kTiming;
+    deployment.sd.multicast_port = 9;
+    EXPECT_EQ(load_deployment(after_space.data(), after_space.size(), deployment),
+              Result::MALFORMED_MESSAGE);
+    EXPECT_NE(deployment.sd.multicast_port, 9);
+
+    std::string after_brace(kTiming);
+    const auto brace = after_brace.find('{');
+    ASSERT_NE(brace, std::string::npos);
+    after_brace.insert(brace + 1, bom);
+    EXPECT_EQ(load_deployment(after_brace.data(), after_brace.size(), deployment),
+              Result::MALFORMED_MESSAGE);
+}
+
+/**
+ * @test_case TC_DEPLOY_008
+ * @brief A file one byte past the cap is not parsed. A file of exactly the cap is.
+ */
+TEST(DeploymentTest, FilePastCapIsOverflowAndExactCapLoads)
+{
+    const std::string exact_path = deployment_temp_path("opensomeip-deployment-exact.json");
+    const std::string over_path = deployment_temp_path("opensomeip-deployment-over.json");
+    std::string exact(kTiming);
+    ASSERT_LT(exact.size(), DEPLOYMENT_FILE_MAX_BYTES);
+    exact.append(DEPLOYMENT_FILE_MAX_BYTES - exact.size(), ' ');
+    const std::string over = exact + " ";
+
+    std::FILE* exact_file = std::fopen(exact_path.c_str(), "wb");
+    ASSERT_NE(exact_file, nullptr);
+    ASSERT_EQ(std::fwrite(exact.data(), 1, exact.size(), exact_file), exact.size());
+    std::fclose(exact_file);
+
+    std::FILE* over_file = std::fopen(over_path.c_str(), "wb");
+    ASSERT_NE(over_file, nullptr);
+    ASSERT_EQ(std::fwrite(over.data(), 1, over.size(), over_file), over.size());
+    std::fclose(over_file);
+
+    Deployment deployment;
+    EXPECT_EQ(load_deployment_file(exact_path.c_str(), deployment), Result::SUCCESS);
+    EXPECT_EQ(deployment.provided_services.size(), 1u);
+    EXPECT_EQ(deployment.provided_services[0].instance.protocol, 0x06);
+
+    deployment.sd.multicast_port = 9;
+    EXPECT_EQ(load_deployment_file(over_path.c_str(), deployment), Result::BUFFER_OVERFLOW);
+    EXPECT_NE(deployment.sd.multicast_port, 9);
+    EXPECT_TRUE(deployment.provided_services.empty());
+
+    std::remove(exact_path.c_str());
+    std::remove(over_path.c_str());
+}
+
+/**
+ * @test_case TC_DEPLOY_009
+ * @brief The full uint32 initial-wait span does not divide by zero.
+ */
+TEST(DeploymentTest, FullUint32InitialWaitDoesNotDivideByZero)
+{
+    SdConfig config;
+    config.initial_delay_min = std::chrono::milliseconds(0);
+    config.initial_delay_max = std::chrono::milliseconds(0xFFFFFFFFLL);
+    config.initial_delay = config.initial_delay_max;
+    for (int i = 0; i < 8; ++i) {
+        const uint32_t wait = pick_initial_wait_ms(config);
+        EXPECT_LE(wait, 0xFFFFFFFFu);
+    }
+
+    expect_rejected(replace_once("\"initial_delay_max_ms\": 100",
+                                 "\"initial_delay_max_ms\": 4294967295"));
 }

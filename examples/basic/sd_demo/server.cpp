@@ -155,7 +155,12 @@ int main(int argc, char** argv)
     ServiceInstance svc = offered.instance;
     svc.ip_address = host;
     const std::string unicast_ep = host + ":" + std::to_string(service_port);
-    sd.offer_service(svc, unicast_ep, "", offered.eventgroups);
+    if (!sd.offer_service(svc, unicast_ep, "", offered.eventgroups)) {
+        std::cerr << "Failed to offer service" << std::endl;
+        sd.shutdown();
+        service_transport->stop();
+        return 1;
+    }
 
     std::cout << "[sd] Offering service 0x" << std::hex << svc.service_id << " instance 0x"
               << svc.instance_id << std::dec << " at " << unicast_ep << std::endl;

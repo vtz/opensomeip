@@ -97,6 +97,29 @@ public:
                       const platform::Vector<uint16_t>& eventgroup_ids = {});
 
     /**
+     * @brief Offer a service whose eventgroup list uses a smaller static cap.
+     *
+     * The static backend's vector capacity is part of the type. Deployment
+     * lists use DEPLOYMENT_MAX_EVENTGROUPS, which is not the default cap, so
+     * this copies into the vector `offer_service` stores. The dynamic backend
+     * ignores the cap and uses the overload above.
+     */
+    template <std::size_t EventgroupCap>
+    bool offer_service(const ServiceInstance& instance,
+                       const platform::String<>& unicast_endpoint,
+                       const platform::String<>& multicast_endpoint,
+                       const platform::Vector<uint16_t, EventgroupCap>& eventgroup_ids) {
+        platform::Vector<uint16_t> copied;
+        for (const uint16_t id : eventgroup_ids) {
+            if (copied.size() >= copied.max_size()) {
+                return false;
+            }
+            copied.push_back(id);
+        }
+        return offer_service(instance, unicast_endpoint, multicast_endpoint, copied);
+    }
+
+    /**
      * @brief Stop offering a service instance
      *
      * @param service_id Service ID
