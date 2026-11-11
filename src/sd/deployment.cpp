@@ -24,6 +24,7 @@
 #include "platform/containers.h"
 #include "platform/thread.h"
 #include "sd/sd_types.h"
+#include "thread_impl.h"
 
 namespace someip::sd {
 namespace {
@@ -588,8 +589,8 @@ bool parse_sd_object(Cursor& cursor, SdConfig& config)
         cursor.fail(Result::INVALID_ARGUMENT);
         return false;
     }
-    const uint64_t min_ms = static_cast<uint64_t>(config.initial_delay_min.count());
-    const uint64_t max_ms = static_cast<uint64_t>(config.initial_delay_max.count());
+    const auto min_ms = static_cast<uint64_t>(config.initial_delay_min.count());
+    const auto max_ms = static_cast<uint64_t>(config.initial_delay_max.count());
     // pick_initial_wait_ms draws with a uint32 span. min 0 and max 2^32-1
     // is one past that width.
     if (max_ms - min_ms + 1ULL > 0xFFFFFFFFULL) {
