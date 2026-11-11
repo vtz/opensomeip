@@ -1238,7 +1238,10 @@ TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
     const auto multicast = transport::Endpoint(config.multicast_address, config.multicast_port);
     int multicast_index = -1;
     for (int i = 0; i < 40 && multicast_index < 0; ++i) {
-        const size_t count = std::min(net.messages.size(), net.destinations.size());
+        const size_t message_count = net.messages.size();
+        const size_t destination_count = net.destinations.size();
+        const size_t count =
+            message_count < destination_count ? message_count : destination_count;
         for (size_t n = 0; n < count; ++n) {
             if (net.destinations[n].get_address() == multicast.get_address() &&
                 net.destinations[n].get_port() == multicast.get_port()) {
@@ -1285,7 +1288,9 @@ TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
     listener->on_message_received(std::move(inbound), transport::Endpoint("192.0.2.10", 40000));
 
     int unicast_index = -1;
-    const size_t count = std::min(net.messages.size(), net.destinations.size());
+    const size_t message_count = net.messages.size();
+    const size_t destination_count = net.destinations.size();
+    const size_t count = message_count < destination_count ? message_count : destination_count;
     for (size_t n = 0; n < count; ++n) {
         if (net.destinations[n].get_address() == "192.0.2.10" &&
             net.destinations[n].get_port() == 40000) {
