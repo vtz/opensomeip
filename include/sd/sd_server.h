@@ -182,6 +182,7 @@ public:
 
 private:
 #ifdef SOMEIP_STATIC_ALLOC
+    /** @implements REQ_PLATFORM_STATIC_005 */
     alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_SDSERVER_SIZE];
     SdServerImpl* impl() noexcept { return reinterpret_cast<SdServerImpl*>(impl_storage_); }
     const SdServerImpl* impl() const noexcept { return reinterpret_cast<const SdServerImpl*>(impl_storage_); }

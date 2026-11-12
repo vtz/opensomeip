@@ -213,6 +213,7 @@ public:
 
 private:
 #ifdef SOMEIP_STATIC_ALLOC
+    /** @implements REQ_PLATFORM_STATIC_005 */
     alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_RPCCLIENT_SIZE];
     RpcClientImpl* impl() noexcept { return reinterpret_cast<RpcClientImpl*>(impl_storage_); }
     const RpcClientImpl* impl() const noexcept { return reinterpret_cast<const RpcClientImpl*>(impl_storage_); }

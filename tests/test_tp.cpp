@@ -2069,10 +2069,48 @@ platform::ByteBuffer make_tp_datagram(uint16_t service, uint16_t method,
     return dg;
 }
 
+#ifdef SOMEIP_STATIC_ALLOC
+/**
+ * @test_case TC_TP_REASSEMBLY_CLAMP
+ * @tests REQ_TP_030_E03
+ * @brief Static builds clamp max_message_size to the compile-time reassembly buffer.
+ *
+ * A segment that starts at the buffer capacity fits an unclamped config and
+ * does not fit once construction or update_config reduces the limit.
+ */
+TEST_F(TpTest, StaticBuildClampsReassemblySize) {
+    const auto cap = static_cast<uint32_t>(MAX_TP_REASSEMBLY_SIZE);
+    const platform::ByteBuffer chunk(16, 0x11);
+    const auto over_cap = make_tp_datagram(0x1234, 0x0001, 0x0001, 0x0001, cap, false, chunk);
+    const auto within = make_tp_datagram(0x1234, 0x0001, 0x0001, 0x0002, 0, true, chunk);
+
+    TpSegment over_segment;
+    TpSegment within_segment;
+    ASSERT_TRUE(parse_wire_segment(over_cap.data(), over_cap.size(), over_segment));
+    ASSERT_TRUE(parse_wire_segment(within.data(), within.size(), within_segment));
+
+    TpConfig oversized = config;
+    oversized.max_message_size = cap + 1000U;
+    TpReassembler constructed(oversized);
+    platform::ByteBuffer complete;
+    EXPECT_FALSE(constructed.process_segment(over_segment, complete));
+    EXPECT_TRUE(constructed.process_segment(within_segment, complete));
+
+    TpConfig small = config;
+    small.max_message_size = 64U;
+    TpReassembler updated(small);
+    TpConfig raised = config;
+    raised.max_message_size = cap + 1000U;
+    updated.update_config(raised);
+    EXPECT_FALSE(updated.process_segment(over_segment, complete));
+}
+#endif
+
 }  // namespace
 
 /**
  * @test_case TC_TP_OVERLAP_SAME_DATA
+ * @tests REQ_TP_081_FW
  * @tests feat_req_someiptp_797
  * @brief Overlapping segment with identical data succeeds (first-wins, no corruption)
  *
