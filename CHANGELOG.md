@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Build**: Bazel module for the default host library and its C++ tests.
+  `bazel test //...` fetches GoogleTest as a dev dependency, so it stays out
+  of a downstream module graph. `//:opensomeip` does not define
+  `SOMEIP_TCP_TEST_CONNECT_HOLD`; the TCP handshake test links a private
+  test-only library that does. `.bazelversion` pins Bazel 8.8.2. CMake
+  remains the configuration for presets, RTOS ports, and packaging.
+
 - **Transport**: `UdpTransportConfig::injected_multicast_join_errno`, when
   non-zero, makes `join_multicast_group` return `MULTICAST_ERROR` and record
   that errno without calling `IP_ADD_MEMBERSHIP`. Zero, the default, keeps
@@ -94,6 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **SD**: Drawing an initial wait over `[0, UINT32_MAX]` no longer divides by a
+  wrapped span, and an offered service endpoint uses the instance L4 protocol
+  so a TCP service is not advertised as UDP.
 - **E2E**: A receive binding that rejects a datagram before the SOME/IP header
   is parsed reports Message ID and Request ID from the wire prefix. A failed
   deserialize no longer publishes the default zero IDs.

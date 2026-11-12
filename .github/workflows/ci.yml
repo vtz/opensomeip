@@ -29,6 +29,7 @@ jobs:
     outputs:
       shared: ${{ steps.filter.outputs.shared }}
       host: ${{ steps.filter.outputs.host }}
+      bazel: ${{ steps.filter.outputs.bazel }}
       freertos: ${{ steps.filter.outputs.freertos }}
       threadx: ${{ steps.filter.outputs.threadx }}
       zephyr: ${{ steps.filter.outputs.zephyr }}
@@ -90,6 +91,23 @@ jobs:
               - '.github/workflows/host.yml'
               - 'scripts/clean_build.sh'
               - 'scripts/verify_build.sh'
+            bazel:
+              - 'BUILD.bazel'
+              - 'REPO.bazel'
+              - 'MODULE.bazel'
+              - 'MODULE.bazel.lock'
+              - 'opensomeip.bzl'
+              - '.bazelrc'
+              - '.bazelversion'
+              - '.bazelignore'
+              - '.github/workflows/bazel.yml'
+              - '.github/workflows/ci.yml'
+              - 'src/**'
+              - 'include/**'
+              - 'tests/**/*.cpp'
+              - 'tests/**/*.h'
+              - 'tests/**/*.inc'
+              - 'tests/mocks/**'
             freertos:
               - 'src/platform/freertos/**'
               - 'include/platform/freertos/**'
@@ -203,6 +221,7 @@ jobs:
         env:
           SHARED: ${{ steps.filter.outputs.shared }}
           HOST: ${{ steps.filter.outputs.host }}
+          BAZEL: ${{ steps.filter.outputs.bazel }}
           FREERTOS: ${{ steps.filter.outputs.freertos }}
           THREADX: ${{ steps.filter.outputs.threadx }}
           ZEPHYR: ${{ steps.filter.outputs.zephyr }}
@@ -216,6 +235,7 @@ jobs:
           echo "Path filter results:"
           echo "  shared=$SHARED"
           echo "  host=$HOST"
+          echo "  bazel=$BAZEL"
           echo "  freertos=$FREERTOS"
           echo "  threadx=$THREADX"
           echo "  zephyr=$ZEPHYR"
@@ -228,6 +248,7 @@ jobs:
 
           if [[ "$SHARED" == "false" && \
                 "$HOST" == "false" && \
+                "$BAZEL" == "false" && \
                 "$FREERTOS" == "false" && \
                 "$THREADX" == "false" && \
                 "$ZEPHYR" == "false" && \
@@ -264,6 +285,13 @@ jobs:
       contents: read
       checks: write
     secrets: inherit
+
+  bazel:
+    needs: changes
+    if: needs.changes.outputs.bazel == 'true'
+    uses: ./.github/workflows/bazel.yml
+    permissions:
+      contents: read
 
   freertos:
     needs: changes

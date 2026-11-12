@@ -9,6 +9,7 @@
 
 #include <lwip/def.h>
 
+/** @implements REQ_PLATFORM_LWIP_002 */
 #define someip_htons(x) lwip_htons(x)
 #define someip_ntohs(x) lwip_ntohs(x)
 #define someip_htonl(x) lwip_htonl(x)

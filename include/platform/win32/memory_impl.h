@@ -10,6 +10,7 @@
 namespace someip {
 namespace platform {
 
+/** @implements REQ_PLATFORM_WIN32_002 */
 inline MessagePtr allocate_message() {
     return std::make_shared<Message>();
 }

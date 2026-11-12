@@ -196,6 +196,14 @@ ctest -R TpTest             # Test transport protocol
 ctest -R TcpTransportTest   # Test TCP transport binding
 ```
 
+The same host library and C++ tests also build with Bazel. CMake remains the
+configuration for presets, RTOS ports, and packaging. See
+[Build Instructions](docs/BUILD.md).
+
+```bash
+bazel test //...
+```
+
 ### Development Tools
 
 #### Code Quality & Analysis

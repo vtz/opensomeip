@@ -24,6 +24,7 @@
 #include <platform/byteorder.h>
 #include <platform/buffer_pool.h>
 #include <platform/containers.h>
+#include <platform/memory.h>
 #include <platform/net.h>
 #include <thread>
 #include <chrono>
@@ -1211,6 +1212,108 @@ TEST_F(SdTest, ServerDuplicateOffer) {
     EXPECT_FALSE(server->offer_service(service1, "127.0.0.1:30490"));
 
     server->shutdown();
+}
+
+/**
+ * @test_case TC_SD_OFFER_TCP_PROTO
+ * @tests REQ_SD_290
+ * @brief A TCP service offer carries a TCP endpoint option (protocol 0x06, the
+ *        offered port) on the multicast Offer and the Find reply.
+ */
+TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
+    someip::test::MulticastFake net;
+    SdConfig config;
+    config.has_initial_delay_override = true;
+    config.initial_delay_override_ms = 0;
+    config.repetition_base = std::chrono::milliseconds(60000);
+    config.repetition_max = std::chrono::milliseconds(60000);
+    config.cyclic_offer = std::chrono::milliseconds(60000);
+    SdServer server(config, net);
+    ASSERT_TRUE(server.initialize());
+
+    ServiceInstance svc(0x1234, 0x0001, 1, 0);
+    svc.protocol = 0x06;
+    svc.ttl_seconds = 30;
+    ASSERT_TRUE(server.offer_service(svc, "192.0.2.20:30509"));
+
+    const auto multicast = transport::Endpoint(config.multicast_address, config.multicast_port);
+    int multicast_index = -1;
+    for (int i = 0; i < 40 && multicast_index < 0; ++i) {
+        const size_t message_count = net.messages.size();
+        const size_t destination_count = net.destinations.size();
+        const size_t count =
+            message_count < destination_count ? message_count : destination_count;
+        for (size_t n = 0; n < count; ++n) {
+            if (net.destinations[n].get_address() == multicast.get_address() &&
+                net.destinations[n].get_port() == multicast.get_port()) {
+                multicast_index = static_cast<int>(n);
+                break;
+            }
+        }
+        if (multicast_index < 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+    }
+    ASSERT_GE(multicast_index, 0);
+    SdMessage multicast_offer;
+    ASSERT_TRUE(multicast_offer.deserialize(
+        net.messages[static_cast<size_t>(multicast_index)].get_payload()));
+    ASSERT_FALSE(multicast_offer.get_options().empty());
+    const auto* multicast_endpoint =
+        std::get_if<IPv4EndpointOption>(&multicast_offer.get_options().front());
+    ASSERT_NE(multicast_endpoint, nullptr);
+    EXPECT_EQ(multicast_endpoint->get_protocol(), 0x06);
+    EXPECT_EQ(multicast_endpoint->get_port(), 30509);
+    EXPECT_EQ(multicast_endpoint->get_ipv4_address_string(), "192.0.2.20");
+
+    ServiceEntry find(EntryType::FIND_SERVICE);
+    find.set_service_id(0x1234);
+    find.set_instance_id(0x0001);
+    find.set_major_version(1);
+    find.set_ttl(3);
+    SdMessage find_msg;
+    find_msg.set_reboot(true);
+    find_msg.set_unicast(true);
+    ASSERT_TRUE(find_msg.add_entry(std::move(find)));
+
+    Message someip_msg(MessageId(0xFFFF, SOMEIP_SD_METHOD_ID),
+                       RequestId(SOMEIP_SD_CLIENT_ID, 0x0001),
+                       MessageType::NOTIFICATION,
+                       ReturnCode::E_OK);
+    someip_msg.set_interface_version(SOMEIP_SD_INTERFACE_VERSION);
+    someip_msg.set_payload(find_msg.serialize());
+
+    auto* listener = net.listener();
+    ASSERT_NE(listener, nullptr);
+    MessagePtr inbound = platform::allocate_message();
+    ASSERT_TRUE(inbound);
+    *inbound = std::move(someip_msg);
+    listener->on_message_received(std::move(inbound), transport::Endpoint("192.0.2.10", 40000));
+
+    int unicast_index = -1;
+    const size_t message_count = net.messages.size();
+    const size_t destination_count = net.destinations.size();
+    const size_t count = message_count < destination_count ? message_count : destination_count;
+    for (size_t n = 0; n < count; ++n) {
+        if (net.destinations[n].get_address() == "192.0.2.10" &&
+            net.destinations[n].get_port() == 40000) {
+            unicast_index = static_cast<int>(n);
+            break;
+        }
+    }
+    ASSERT_GE(unicast_index, 0);
+    SdMessage unicast_offer;
+    ASSERT_TRUE(unicast_offer.deserialize(
+        net.messages[static_cast<size_t>(unicast_index)].get_payload()));
+    ASSERT_FALSE(unicast_offer.get_options().empty());
+    const auto* unicast_endpoint =
+        std::get_if<IPv4EndpointOption>(&unicast_offer.get_options().front());
+    ASSERT_NE(unicast_endpoint, nullptr);
+    EXPECT_EQ(unicast_endpoint->get_protocol(), 0x06);
+    EXPECT_EQ(unicast_endpoint->get_port(), 30509);
+    EXPECT_EQ(unicast_endpoint->get_ipv4_address_string(), "192.0.2.20");
+
+    server.shutdown();
 }
 
 // ============================================================================
@@ -2489,6 +2592,41 @@ TEST_F(SdTest, InitialWaitOverrideAndRange) {
     SdConfig legacy_zero;
     legacy_zero.initial_delay = std::chrono::milliseconds(0);
     EXPECT_EQ(pick_initial_wait_ms(legacy_zero), 0u);
+
+    // Override still wins when the configured range would overflow a uint32 span.
+    SdConfig override_full;
+    override_full.has_initial_delay_override = true;
+    override_full.initial_delay_override_ms = 7;
+    override_full.initial_delay_min = std::chrono::milliseconds(0);
+    override_full.initial_delay_max = std::chrono::milliseconds(0xFFFFFFFFLL);
+    override_full.initial_delay = override_full.initial_delay_max;
+    EXPECT_EQ(pick_initial_wait_ms(override_full), 7u);
+
+    // Legacy initial_delay replaces max before the span is drawn.
+    SdConfig legacy_alias;
+    legacy_alias.initial_delay_min = std::chrono::milliseconds(15);
+    legacy_alias.initial_delay_max = std::chrono::milliseconds(0xFFFFFFFFLL);
+    legacy_alias.initial_delay = std::chrono::milliseconds(15);
+    EXPECT_EQ(pick_initial_wait_ms(legacy_alias), 15u);
+
+    // min 0 and max UINT32_MAX is the inclusive width that used to wrap to 0.
+    SdConfig full_span;
+    full_span.initial_delay_min = std::chrono::milliseconds(0);
+    full_span.initial_delay_max = std::chrono::milliseconds(0xFFFFFFFFLL);
+    full_span.initial_delay = full_span.initial_delay_max;
+    const uint64_t drawn = pick_initial_wait_ms(full_span);
+    EXPECT_LT(drawn, 0x100000000ULL);
+
+    // Top-of-uint32 range: span fits in uint32_t and asserts real bounds.
+    SdConfig top_span;
+    top_span.initial_delay_min = std::chrono::milliseconds(0xFFFFFFF5LL);  // UINT32_MAX - 10
+    top_span.initial_delay_max = std::chrono::milliseconds(0xFFFFFFFFLL);  // UINT32_MAX
+    top_span.initial_delay = top_span.initial_delay_max;
+    for (int i = 0; i < 20; ++i) {
+        const uint32_t v = pick_initial_wait_ms(top_span);
+        EXPECT_GE(v, 0xFFFFFFF5u);  // UINT32_MAX - 10
+        EXPECT_LE(v, 0xFFFFFFFFu);  // UINT32_MAX
+    }
 }
 
 /**

@@ -9,6 +9,7 @@
 
 #include <winsock2.h>
 
+/** @implements REQ_PLATFORM_WIN32_004 */
 #define someip_htons htons
 #define someip_ntohs ntohs
 #define someip_htonl htonl
