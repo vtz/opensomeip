@@ -57,7 +57,8 @@ void TpManager::shutdown() {
 }
 
 bool TpManager::needs_segmentation(const Message& message) const {
-    return message.get_payload().size() > config_.max_segment_size;
+    // Header plus payload (and any E2E bytes). Not the application length alone.
+    return message.get_total_size() > config_.max_single_datagram_size;
 }
 
 /**

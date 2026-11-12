@@ -49,8 +49,18 @@ UdpTransport::UdpTransport(const Endpoint& local_endpoint, const UdpTransportCon
     : local_endpoint_(local_endpoint),
       config_(config),
       running_(false) {
+    if (config_.enable_tp && config_.max_message_size > 0) {
+        const size_t budget = config_.max_message_size;
+        config_.tp_config.max_single_datagram_size =
+            budget > static_cast<size_t>(UINT32_MAX)
+                ? UINT32_MAX
+                : static_cast<uint32_t>(budget);
+    }
     if (config_.enable_tp) {
-        const size_t min_rx = 20U + static_cast<size_t>(config_.tp_config.max_segment_size);
+        const size_t tp_datagram =
+            20U + static_cast<size_t>(config_.tp_config.max_segment_size);
+        const size_t single = config_.max_message_size;
+        const size_t min_rx = single > tp_datagram ? single : tp_datagram;
         if (config_.receive_buffer_size < min_rx) {
             config_.receive_buffer_size = min_rx;
         }
@@ -85,12 +95,8 @@ Result UdpTransport::send_message(const Message& message, const Endpoint& endpoi
         return Result::INVALID_ENDPOINT;
     }
 
-    if (config_.enable_tp && tp_manager_) {
-        const bool over_udp_max = config_.max_message_size > 0 &&
-            message.serialize().size() > config_.max_message_size;
-        if (tp_manager_->needs_segmentation(message) || over_udp_max) {
-            return send_tp_segments(message, endpoint);
-        }
+    if (config_.enable_tp && tp_manager_ && tp_manager_->needs_segmentation(message)) {
+        return send_tp_segments(message, endpoint);
     }
 
     const platform::ByteBuffer data = message.serialize();

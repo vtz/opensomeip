@@ -113,6 +113,10 @@ public:
     /**
      * @brief Check if a message needs TP segmentation
      *
+     * True when the serialized SOME/IP message, including the 16-byte
+     * header, exceeds TpConfig::max_single_datagram_size. max_segment_size
+     * is the aligned chunk size used after that decision.
+     *
      * @param message The message to check
      * @return true if message should use TP, false if it can be sent directly
      */

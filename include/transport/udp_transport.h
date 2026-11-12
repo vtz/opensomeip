@@ -53,13 +53,16 @@ struct UdpTransportConfig {
     /// Test seam so join failure does not depend on a host interface address.
     int injected_multicast_join_errno{0};
 
-    // SOME/IP spec recommends max 1400 bytes to avoid IP fragmentation.
-    // Set to 0 to disable this check. When enable_tp is true, messages whose
-    // payload exceeds TpConfig.max_segment_size are segmented instead of
-    // sent as a single datagram.
-    size_t max_message_size{1400};
+    /// Serialized SOME/IP message budget (16-byte header + payload).
+    /// The default fits a 1400-byte application payload. Set to 0 to leave
+    /// TpConfig::max_single_datagram_size unchanged. When enable_tp is true,
+    /// segmentation starts only when the serialized message exceeds this
+    /// budget. 16-byte alignment applies to TP segments, not to a message
+    /// that still fits in one datagram.
+    size_t max_message_size{tp::DEFAULT_SINGLE_DATAGRAM_SIZE};
 
 #ifdef SOMEIP_STATIC_ALLOC
+    /// Static builds leave TP off until the caller turns it on.
     bool enable_tp{false};
 #else
     bool enable_tp{true};

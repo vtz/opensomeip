@@ -47,10 +47,11 @@ TpResult TpSegmenter::segment_message(const Message& message, TpSegmentVector& s
         return TpResult::MESSAGE_TOO_LARGE;
     }
 
-    if (payload.size() <= config_.max_segment_size) {
-        // Payload fits in one non-TP SOME/IP message: no TP-Flag, no TP header.
+    // Ceiling is the serialized message, header included. A payload that is
+    // not a multiple of 16 is still one SOME/IP message when it fits.
+    // 16-byte alignment is applied only while building TP segments.
+    if (message.get_total_size() <= config_.max_single_datagram_size) {
         platform::ByteBuffer message_data = message.serialize();
-
         if (message_data.size() > UINT16_MAX) {
             return TpResult::SEGMENTATION_FAILED;
         }

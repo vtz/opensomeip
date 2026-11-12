@@ -58,6 +58,10 @@ class TpTest : public ::testing::Test {
 protected:
     void SetUp() override {
         config.max_segment_size = 512;  // Small for testing
+        // Keep the fixture's segmentation threshold at a 512-byte payload.
+        // The ceiling is the serialized message, so the budget includes the header.
+        config.max_single_datagram_size =
+            static_cast<uint32_t>(Message::get_header_size()) + config.max_segment_size;
         config.max_message_size = 10000;
         config.reassembly_timeout = std::chrono::milliseconds(1000);
     }
@@ -314,21 +318,40 @@ TEST_F(TpTest, StatisticsTracking) {
  */
 TEST_F(TpTest, MaximumSegmentSize) {
     TpConfig test_config;
-    // Verify the max segment size is set to 1392 bytes (87 * 16)
-    EXPECT_EQ(test_config.max_segment_size, 1392u);
+    EXPECT_EQ(test_config.max_segment_size, DEFAULT_MAX_SEGMENT_PAYLOAD);
+    EXPECT_EQ(test_config.max_single_datagram_size, DEFAULT_SINGLE_DATAGRAM_SIZE);
+    EXPECT_GE(test_config.max_single_datagram_size, 1416u);
 
-    // Test that messages larger than 1392 bytes get segmented
     TpSegmenter segmenter(test_config);
 
-    Message message(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
-                   MessageType::REQUEST, ReturnCode::E_OK);
-    platform::ByteBuffer large_payload(1393, 0xAA);
-    message.set_payload(large_payload);
+    Message fits(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    platform::ByteBuffer one_datagram(1400, 0xAA);
+    ASSERT_EQ(one_datagram.size(), 1400u);
+    fits.set_payload(one_datagram);
+
+    TpSegmentVector single;
+    EXPECT_EQ(segmenter.segment_message(fits, single), TpResult::SUCCESS);
+    ASSERT_EQ(single.size(), 1u);
+    EXPECT_EQ(single[0].header.message_type, TpMessageType::SINGLE_MESSAGE);
+    EXPECT_EQ(single[0].payload.size(), 1416u);
+    EXPECT_EQ(single[0].payload[14] & 0x20, 0u);
+    EXPECT_NE(1400u % 16u, 0u);
+
+    Message over(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0002),
+                 MessageType::REQUEST, ReturnCode::E_OK);
+    platform::ByteBuffer past_budget(1401, 0xBB);
+    ASSERT_EQ(past_budget.size(), 1401u);
+    over.set_payload(past_budget);
 
     TpSegmentVector segments;
-    TpResult result = segmenter.segment_message(message, segments);
-    EXPECT_EQ(result, TpResult::SUCCESS);
+    EXPECT_EQ(segmenter.segment_message(over, segments), TpResult::SUCCESS);
     EXPECT_GT(segments.size(), 1u);
+    for (size_t i = 0; i + 1 < segments.size(); ++i) {
+        ASSERT_GT(segments[i].payload.size(), 20u);
+        EXPECT_EQ((segments[i].payload.size() - 20u) % 16u, 0u);
+        EXPECT_NE(segments[i].payload[14] & 0x20, 0u);
+    }
 }
 
 /**
@@ -1245,28 +1268,45 @@ TEST_F(TpTest, ZeroPayloadTpSegmentDoesNotComplete) {
 }
 
 /**
- * @test_case TC_TP_NEEDS_SEGMENTATION_USES_PAYLOAD
+ * @test_case TC_TP_NEEDS_SEGMENTATION_USES_SERIALIZED
  * @tests REQ_TP_001
- * @brief TpManager::needs_segmentation compares payload size, not serialized size
+ * @brief Segmentation follows the serialized message, header included
  */
-TEST_F(TpTest, NeedsSegmentationUsesPayloadSize) {
-    TpConfig test_config;
-    test_config.max_segment_size = 100;
-    TpManager tp_manager(test_config);
-    ASSERT_TRUE(tp_manager.initialize());
+TEST_F(TpTest, NeedsSegmentationUsesSerializedSize) {
+    TpConfig defaults;
+    TpManager default_manager(defaults);
+    ASSERT_TRUE(default_manager.initialize());
 
     Message msg(MessageId(0x1234, 0x5678), RequestId(0xABCD, 0x0001),
                MessageType::REQUEST, ReturnCode::E_OK);
 
-    // Payload = 100 bytes → fits (≤ max_segment_size)
+    msg.set_payload(platform::ByteBuffer(1400, 0xAA));
+    ASSERT_EQ(msg.get_payload().size(), 1400u);
+    EXPECT_EQ(msg.get_total_size(), 1416u);
+    EXPECT_FALSE(default_manager.needs_segmentation(msg))
+        << "1400-byte payload plus the 16-byte header fits the default budget";
+
+    msg.set_payload(platform::ByteBuffer(1401, 0xBB));
+    ASSERT_EQ(msg.get_total_size(), 1417u);
+    EXPECT_TRUE(default_manager.needs_segmentation(msg))
+        << "one byte past the serialized budget must be segmented";
+    default_manager.shutdown();
+
+    // A lowered budget still keys off the serialized size, not max_segment_size.
+    TpConfig test_config;
+    test_config.max_segment_size = 100;
+    test_config.max_single_datagram_size =
+        static_cast<uint32_t>(Message::get_header_size()) + 100;
+    TpManager tp_manager(test_config);
+    ASSERT_TRUE(tp_manager.initialize());
+
     msg.set_payload(platform::ByteBuffer(100, 0xAA));
     EXPECT_FALSE(tp_manager.needs_segmentation(msg))
-        << "100-byte payload must not need segmentation with max_segment_size=100";
+        << "serialized size equal to the budget must stay one message";
 
-    // Payload = 101 bytes → needs segmentation
     msg.set_payload(platform::ByteBuffer(101, 0xBB));
     EXPECT_TRUE(tp_manager.needs_segmentation(msg))
-        << "101-byte payload must need segmentation with max_segment_size=100";
+        << "serialized size one past the budget must be segmented";
 
     tp_manager.shutdown();
 }
