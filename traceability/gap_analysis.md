@@ -1,13 +1,13 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-11-12 21:18:27
+Generated: 2026-11-12 21:41:02
 
 ## Summary
 
 - **Total Requirements**: 701
-- **Fully Traced (impl + tests)**: 622 (88.7%)
+- **Fully Traced (impl + tests)**: 623 (88.9%)
 - **Missing Implementation**: 77
-- **Missing Tests**: 4
+- **Missing Tests**: 3
 - **Missing Spec Links (all)**: 161
 - **Missing Spec Links (required only)**: 2
 
@@ -18,7 +18,7 @@ Generated: 2026-11-12 21:18:27
 | Architectural (derived) | 8 | 7 (88%) | 8 (100%) | 3 (38%) |
 | Error Handling (derived) | 156 | 131 (84%) | 155 (99%) | 10 (6%) |
 | Message Header | 93 | 88 (95%) | 93 (100%) | 92 (99%) |
-| Other | 92 | 77 (84%) | 89 (97%) | 88 (96%) |
+| Other | 92 | 77 (84%) | 90 (98%) | 88 (96%) |
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
 | Serialization | 75 | 52 (69%) | 75 (100%) | 75 (100%) |
 | Service Discovery | 173 | 170 (98%) | 173 (100%) | 173 (100%) |
@@ -41,14 +41,14 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one
 |----------|-------|-------------|--------|----------|
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 55 | 56 | 98% |
-| Medium | 429 | 380 | 426 | 89% |
+| Medium | 429 | 380 | 427 | 89% |
 | Low | 184 | 157 | 183 | 85% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 597 |
+| Unit Tests | 598 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -88,16 +88,6 @@ requirements. Specification IDs with no software requirement stay in
 - REQ_PLATFORM_WIN32_002
 - REQ_PLATFORM_WIN32_003
 - REQ_PLATFORM_WIN32_004
-- REQ_SD_125
-- REQ_SD_126
-- REQ_SD_170
-- REQ_SD_222_E01
-- REQ_SD_134_E01
-- REQ_SD_113_E01
-- REQ_TP_044
-- REQ_TP_030_E03
-- REQ_TP_081_FW
-- REQ_TP_081_ATOM
 - REQ_SER_022_E01
 - REQ_SER_046_E01
 - REQ_SER_047_E02
@@ -139,27 +129,36 @@ requirements. Specification IDs with no software requirement stay in
 - REQ_SER_056_E01
 - REQ_SER_073_E01
 - REQ_ARCH_008
-- REQ_TRANSPORT_013
-- REQ_TRANSPORT_015
-- REQ_CAPI_006
 - REQ_MSG_132B
 - REQ_MSG_133A
 - REQ_MSG_133B
 - REQ_MSG_135
 - REQ_MSG_140
 - REQ_MSG_113_E01
+- REQ_TP_044
+- REQ_TP_030_E03
+- REQ_TP_081_FW
+- REQ_TP_081_ATOM
+- REQ_SD_125
+- REQ_SD_126
+- REQ_SD_170
+- REQ_SD_222_E01
+- REQ_SD_134_E01
+- REQ_SD_113_E01
+- REQ_TRANSPORT_013
+- REQ_TRANSPORT_015
+- REQ_CAPI_006
 
 ### Requirements Without Test Coverage
 - REQ_PAL_STATIC_CONFIG
 - REQ_TP_030_E03
-- REQ_CAPI_001
 - REQ_CAPI_006
 
 ### Implementation Requirements Without Spec Links (Required)
 These requirements should have spec links but don't:
 
-- REQ_TRANSPORT_026
 - REQ_MSG_150
+- REQ_TRANSPORT_026
 
 ### Implementation-Derived Requirements Without Spec Links (Expected)
 These requirements match the implementation-derived exemption and do not need spec links:
@@ -172,57 +171,6 @@ These requirements match the implementation-derived exemption and do not need sp
 - REQ_PAL_MEM_EXHAUST_E01
 - REQ_PAL_MEM_THREADSAFE_E01
 - REQ_PAL_NET_MODE_E01
-- REQ_SD_001_E01
-- REQ_SD_010_E01
-- REQ_SD_021_E01
-- REQ_SD_022_E01
-- REQ_SD_020_E01
-- REQ_SD_020_E02
-- REQ_SD_041_E01
-- REQ_SD_040_E01
-- REQ_SD_052_E01
-- REQ_SD_050_E01
-- REQ_SD_061_E01
-- REQ_SD_062_E01
-- REQ_SD_060_E01
-- REQ_SD_064_E01
-- REQ_SD_075_E01
-- REQ_SD_001_E02
-- REQ_SD_120_E01
-- REQ_SD_119_E01
-- REQ_SD_222_E01
-- REQ_SD_116_E01
-- REQ_SD_115_E01
-- REQ_SD_115_E02
-- REQ_SD_134_E01
-- REQ_SD_030_E01
-- REQ_SD_080_E01
-- REQ_SD_070_E01
-- REQ_SD_010_E02
-- REQ_SD_060_E02
-- REQ_SD_044_E01
-- REQ_SD_083_E01
-- REQ_SD_113_E01
-- REQ_SD_116_E02
-- REQ_SD_123_E01
-- REQ_TP_001_E01
-- REQ_TP_001_E02
-- REQ_TP_001_E03
-- REQ_TP_013_E01
-- REQ_TP_015_E01
-- REQ_TP_039_E01
-- REQ_TP_030_E01
-- REQ_TP_030_E02
-- REQ_TP_050_E01
-- REQ_TP_050_E02
-- REQ_TP_081_ATOM
-- REQ_TP_072_E01
-- REQ_TP_076_E01
-- REQ_TP_082_E01
-- REQ_TP_082_E02
-- REQ_TP_082_E03
-- REQ_TP_082_E04
-- REQ_TP_076_E02
 - REQ_SER_001_E01
 - REQ_SER_002_E01
 - REQ_SER_003_E01
@@ -268,26 +216,6 @@ These requirements match the implementation-derived exemption and do not need sp
 - REQ_ARCH_004
 - REQ_ARCH_006
 - REQ_ARCH_007
-- REQ_TRANSPORT_001_E01
-- REQ_TRANSPORT_001_E02
-- REQ_TRANSPORT_002_E01
-- REQ_TRANSPORT_002_E02
-- REQ_TRANSPORT_011_E01
-- REQ_TRANSPORT_011_E03
-- REQ_TRANSPORT_014_E01
-- REQ_TRANSPORT_016_E01
-- REQ_TRANSPORT_002_E03
-- REQ_TRANSPORT_001_E03
-- REQ_TRANSPORT_006_E01
-- REQ_TRANSPORT_003_E01
-- REQ_TRANSPORT_002_E04
-- REQ_TRANSPORT_011_E02
-- REQ_TRANSPORT_030
-- REQ_E2E_PLUGIN_002
-- REQ_E2E_PLUGIN_003
-- REQ_E2E_RECEIVE_001
-- REQ_CAPI_004
-- REQ_CAPI_005
 - REQ_MSG_004_E02
 - REQ_MSG_012_E01
 - REQ_MSG_012_E02
@@ -323,6 +251,77 @@ These requirements match the implementation-derived exemption and do not need sp
 - REQ_MSG_054_E01
 - REQ_MSG_053_E01
 - REQ_MSG_121_E02
+- REQ_TP_001_E01
+- REQ_TP_001_E02
+- REQ_TP_001_E03
+- REQ_TP_013_E01
+- REQ_TP_015_E01
+- REQ_TP_039_E01
+- REQ_TP_030_E01
+- REQ_TP_030_E02
+- REQ_TP_050_E01
+- REQ_TP_050_E02
+- REQ_TP_081_ATOM
+- REQ_TP_072_E01
+- REQ_TP_076_E01
+- REQ_TP_082_E01
+- REQ_TP_082_E02
+- REQ_TP_082_E03
+- REQ_TP_082_E04
+- REQ_TP_076_E02
+- REQ_SD_001_E01
+- REQ_SD_010_E01
+- REQ_SD_021_E01
+- REQ_SD_022_E01
+- REQ_SD_020_E01
+- REQ_SD_020_E02
+- REQ_SD_041_E01
+- REQ_SD_040_E01
+- REQ_SD_052_E01
+- REQ_SD_050_E01
+- REQ_SD_061_E01
+- REQ_SD_062_E01
+- REQ_SD_060_E01
+- REQ_SD_064_E01
+- REQ_SD_075_E01
+- REQ_SD_001_E02
+- REQ_SD_120_E01
+- REQ_SD_119_E01
+- REQ_SD_222_E01
+- REQ_SD_116_E01
+- REQ_SD_115_E01
+- REQ_SD_115_E02
+- REQ_SD_134_E01
+- REQ_SD_030_E01
+- REQ_SD_080_E01
+- REQ_SD_070_E01
+- REQ_SD_010_E02
+- REQ_SD_060_E02
+- REQ_SD_044_E01
+- REQ_SD_083_E01
+- REQ_SD_113_E01
+- REQ_SD_116_E02
+- REQ_SD_123_E01
+- REQ_TRANSPORT_001_E01
+- REQ_TRANSPORT_001_E02
+- REQ_TRANSPORT_002_E01
+- REQ_TRANSPORT_002_E02
+- REQ_TRANSPORT_011_E01
+- REQ_TRANSPORT_011_E03
+- REQ_TRANSPORT_014_E01
+- REQ_TRANSPORT_016_E01
+- REQ_TRANSPORT_002_E03
+- REQ_TRANSPORT_001_E03
+- REQ_TRANSPORT_006_E01
+- REQ_TRANSPORT_003_E01
+- REQ_TRANSPORT_002_E04
+- REQ_TRANSPORT_011_E02
+- REQ_TRANSPORT_030
+- REQ_E2E_PLUGIN_002
+- REQ_E2E_PLUGIN_003
+- REQ_E2E_RECEIVE_001
+- REQ_CAPI_004
+- REQ_CAPI_005
 
 ## ASPICE Compliance Assessment
 
@@ -342,7 +341,7 @@ These requirements match the implementation-derived exemption and do not need sp
 ### Overall Compliance Level
 - **Current Level**: CL1
 - **Target for Production**: CL2 (100% traceability)
-- **Gap to Target**: 79 requirements
+- **Gap to Target**: 78 requirements
 
 ## Recommendations
 
