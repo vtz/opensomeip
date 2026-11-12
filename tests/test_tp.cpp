@@ -1867,7 +1867,7 @@ TEST_F(TpTest, IngestDatagramReportsErrorOnLengthMismatch) {
 
 /**
  * @test_case TC_TP_MISALIGNED_NONFINAL_REJECTED
- * @tests feat_req_someiptp_772, feat_req_someiptp_792
+ * @tests feat_req_someiptp_772, feat_req_someiptp_792, REQ_TP_044
  * @brief Non-final TP segment with payload not a multiple of 16 bytes is rejected
  *
  * Per feat_req_someiptp_772 (SHALL): "all but the last segment shall have a
@@ -1944,7 +1944,7 @@ TEST_F(TpTest, AlignedNonFinalSegmentAccepted) {
 
 /**
  * @test_case TC_TP_MISALIGNED_FINAL_ACCEPTED
- * @tests feat_req_someiptp_772
+ * @tests feat_req_someiptp_772, REQ_TP_044
  * @brief Final TP segment (More=0) with non-16-aligned payload is accepted
  *
  * Only non-final segments must be 16-byte aligned; the last segment can be any size.
@@ -2103,7 +2103,7 @@ TEST_F(TpTest, OverlapSameDataSucceeds) {
 
 /**
  * @test_case TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS
- * @tests feat_req_someiptp_797
+ * @tests feat_req_someiptp_797, REQ_TP_081_FW
  * @brief Overlapping segment with different data → first-wins preserves original bytes
  *
  * Segment A: offset 0, 32 bytes of 0xAA (more=1)  → covers [0..31]

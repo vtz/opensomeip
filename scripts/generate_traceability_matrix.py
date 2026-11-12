@@ -345,6 +345,17 @@ def generate_json(
         json.dump(data, f, indent=2)
 
 
+# No spec sentence exists for these IDs. Keep in sync with
+# scripts/validate_requirements.py and scripts/check_spec_requirements.py.
+# REQ_MSG_150 and REQ_TRANSPORT_026 stay known-unlinked in the validator.
+_EXPLICIT_IMPL_DERIVED = frozenset(
+    {
+        "REQ_E2E_RECEIVE_001",  # local receive-policy table and Result
+        "REQ_TRANSPORT_030",  # application-owned transport injection
+    }
+)
+
+
 def is_implementation_derived(req_id: str) -> bool:
     """Return whether ``req_id`` is exempt from a required spec link.
 
@@ -362,6 +373,7 @@ def is_implementation_derived(req_id: str) -> bool:
         or req_id.startswith("REQ_CAPI_")
         or req_id.startswith("REQ_PAL_")
         or req_id.endswith("_ATOM")
+        or req_id in _EXPLICIT_IMPL_DERIVED
     )
 
 
@@ -485,6 +497,58 @@ def classify_test_type(test_path: str) -> str:
     return "unit"
 
 
+def summarize_spec_verification(
+    requirements: dict[str, Requirement],
+    test_cases: dict[str, TestCase],
+) -> dict[str, int]:
+    """Count ``feat_req_*`` IDs by the tests of the software requirements that cite them.
+
+    A specification ID is reached by a class when any linked software
+    requirement has a test of that class. IDs with no software requirement
+    are omitted; ``check_spec_requirements.py`` reports those.
+    """
+    levels_by_spec: dict[str, set[str]] = {}
+    for req in requirements.values():
+        levels: set[str] = set()
+        for test_id in req.tested_by:
+            test_case = test_cases.get(test_id)
+            if test_case is None:
+                continue
+            levels.add(classify_test_type(test_case.location))
+        for spec_id in req.satisfies:
+            if not spec_id.casefold().startswith("feat_req_"):
+                continue
+            levels_by_spec.setdefault(spec_id.casefold(), set()).update(levels)
+
+    integration = 0
+    system = 0
+    integration_or_system = 0
+    unit_only = 0
+    no_test = 0
+    for levels in levels_by_spec.values():
+        has_integration = "integration" in levels
+        has_system = "system" in levels
+        if has_integration:
+            integration += 1
+        if has_system:
+            system += 1
+        if has_integration or has_system:
+            integration_or_system += 1
+        elif "unit" in levels:
+            unit_only += 1
+        else:
+            no_test += 1
+
+    return {
+        "linked": len(levels_by_spec),
+        "integration": integration,
+        "system": system,
+        "integration_or_system": integration_or_system,
+        "unit_only": unit_only,
+        "no_test": no_test,
+    }
+
+
 def generate_gap_analysis(
     requirements: dict[str, Requirement],
     satisfies_map: dict[str, list[str]],
@@ -583,6 +647,7 @@ def generate_gap_analysis(
     # per ID so _ATOM, C ABI, PAL, and custom IDs are not left in the spec total.
     derived_count = sum(1 for req_id in requirements if is_implementation_derived(req_id))
     spec_derived_count = len(requirements) - derived_count
+    spec_verification = summarize_spec_verification(requirements, test_cases or {})
 
     # Generate report
     report = f"""# ASPICE Traceability Gap Analysis Report
@@ -604,7 +669,9 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 **Note**: Implementation-derived requirements may omit direct spec links. The exemption
 matches `validate_requirements.py`: an ID containing `_E0`, `_ARCH_`, `PLUGIN`, or `MY_`;
-an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
+an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one of
+`REQ_E2E_RECEIVE_001`, `REQ_TRANSPORT_030` (local API contracts with no spec ID).
+`REQ_MSG_150` and `REQ_TRANSPORT_026` stay known-unlinked and are not exemptions.
 
 - **Spec-Derived Requirements**: {spec_derived_count}
 - **Implementation-Derived Requirements**: {derived_count}
@@ -625,6 +692,22 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; or an ID ending with `_ATOM`.
 | Unit Tests | {test_type_counts.get("unit", 0)} |
 | Integration Tests | {test_type_counts.get("integration", 0)} |
 | System Tests | {test_type_counts.get("system", 0)} |
+
+### Specification requirements reached by integration or system tests
+
+Counts `feat_req_*` IDs cited by a software requirement `:satisfies:` field.
+The class comes from `classify_test_type` on tests of those software
+requirements. Specification IDs with no software requirement stay in
+`check_spec_requirements.py`.
+
+| Reach | Count |
+|-------|-------|
+| Linked specification IDs | {spec_verification["linked"]} |
+| Reached by an integration test | {spec_verification["integration"]} |
+| Reached by a system test | {spec_verification["system"]} |
+| Reached by integration or system | {spec_verification["integration_or_system"]} |
+| Reached only by unit tests | {spec_verification["unit_only"]} |
+| Linked, with no test | {spec_verification["no_test"]} |
 
 ## Gaps Requiring Attention
 
@@ -802,6 +885,14 @@ def main():
     print(
         f"  Fully Traced: {fully_traced}/{len(requirements)} ({fully_traced / len(requirements) * 100:.1f}%)"
     )
+    spec_verification = summarize_spec_verification(requirements, test_cases)
+    print("  Spec IDs linked from software requirements:")
+    print(f"    Linked: {spec_verification['linked']}")
+    print(f"    Integration: {spec_verification['integration']}")
+    print(f"    System: {spec_verification['system']}")
+    print(f"    Integration or system: {spec_verification['integration_or_system']}")
+    print(f"    Unit only: {spec_verification['unit_only']}")
+    print(f"    No test: {spec_verification['no_test']}")
 
     return 0
 
