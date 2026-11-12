@@ -1217,7 +1217,8 @@ TEST_F(SdTest, ServerDuplicateOffer) {
 /**
  * @test_case TC_SD_OFFER_TCP_PROTO
  * @tests REQ_SD_290
- * @brief A TCP service offer carries protocol 0x06 on the multicast Offer and the Find reply.
+ * @brief A TCP service offer carries a TCP endpoint option (protocol 0x06, the
+ *        offered port) on the multicast Offer and the Find reply.
  */
 TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
     someip::test::MulticastFake net;
@@ -1262,6 +1263,8 @@ TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
         std::get_if<IPv4EndpointOption>(&multicast_offer.get_options().front());
     ASSERT_NE(multicast_endpoint, nullptr);
     EXPECT_EQ(multicast_endpoint->get_protocol(), 0x06);
+    EXPECT_EQ(multicast_endpoint->get_port(), 30509);
+    EXPECT_EQ(multicast_endpoint->get_ipv4_address_string(), "192.0.2.20");
 
     ServiceEntry find(EntryType::FIND_SERVICE);
     find.set_service_id(0x1234);
@@ -1307,6 +1310,8 @@ TEST_F(SdTest, TcpOfferAdvertisesInstanceProtocol) {
         std::get_if<IPv4EndpointOption>(&unicast_offer.get_options().front());
     ASSERT_NE(unicast_endpoint, nullptr);
     EXPECT_EQ(unicast_endpoint->get_protocol(), 0x06);
+    EXPECT_EQ(unicast_endpoint->get_port(), 30509);
+    EXPECT_EQ(unicast_endpoint->get_ipv4_address_string(), "192.0.2.20");
 
     server.shutdown();
 }
