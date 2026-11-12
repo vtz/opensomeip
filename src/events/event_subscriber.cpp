@@ -672,11 +672,16 @@ class EventSubscriberImpl : public transport::ITransportListener {
         EventNotification notification;
     };
 
-    void sweep_expired_fields_locked(platform::Vector<ExpiredField, 8>& expired)
+    static constexpr size_t FIELD_COMPLETION_BATCH = 8;
+
+    void sweep_expired_fields_locked(platform::Vector<ExpiredField, FIELD_COMPLETION_BATCH>& expired)
     {
         const auto now = std::chrono::steady_clock::now();
-        platform::Vector<platform::String<>, 8> keys_to_erase;
+        platform::Vector<platform::String<>, FIELD_COMPLETION_BATCH> keys_to_erase;
         for (auto& entry : field_requests_) {
+            if (expired.size() >= expired.max_size()) {
+                break;
+            }
             if (now >= entry.second.deadline) {
                 ExpiredField item;
                 item.notification = EventNotification(entry.second.service_id,
@@ -696,12 +701,21 @@ class EventSubscriberImpl : public transport::ITransportListener {
         }
     }
 
-    void fire_expired_fields(platform::Vector<ExpiredField, 8>& expired)
+    void fire_expired_fields(platform::Vector<ExpiredField, FIELD_COMPLETION_BATCH>& expired)
     {
         for (auto& item : expired) {
             if (item.callback) {
+#ifdef __cpp_exceptions
+                try {
+                    const DispatchFrame dispatch(*this);
+                    item.callback(item.notification);
+                }
+                catch (...) {
+                }
+#else
                 const DispatchFrame dispatch(*this);
                 item.callback(item.notification);
+#endif
             }
         }
     }
@@ -715,29 +729,37 @@ class EventSubscriberImpl : public transport::ITransportListener {
             make_field_key(message->get_service_id(), message->get_method_id());
         EventNotificationCallback callback;
         EventNotification notification;
-        platform::Vector<ExpiredField, 8> expired;
-        {
-            platform::ScopedLock const field_lock(field_requests_mutex_);
-            const auto it = field_requests_.find(key);
-            if (it == field_requests_.end() || it->second.session_id != message->get_session_id()) {
+        for (;;) {
+            platform::Vector<ExpiredField, FIELD_COMPLETION_BATCH> expired;
+            bool more = false;
+            {
+                platform::ScopedLock const field_lock(field_requests_mutex_);
+                if (!callback) {
+                    const auto it = field_requests_.find(key);
+                    if (it != field_requests_.end() &&
+                        it->second.session_id == message->get_session_id()) {
+                        notification =
+                            EventNotification(message->get_service_id(), it->second.instance_id,
+                                              message->get_method_id());
+                        notification.client_id = message->get_client_id();
+                        notification.session_id = message->get_session_id();
+                        notification.event_data = message->get_payload();
+                        notification.message_type = message->get_message_type();
+                        notification.return_code = message->get_return_code();
+                        notification.interface_version = message->get_interface_version();
+                        callback = std::move(it->second.callback);
+                        field_requests_.erase(it);
+                    }
+                }
+                const auto before = expired.size();
                 sweep_expired_fields_locked(expired);
-                // Release lock, then fire expired callbacks below.
+                more = expired.size() - before >= FIELD_COMPLETION_BATCH;
             }
-            else {
-                notification = EventNotification(message->get_service_id(), it->second.instance_id,
-                                                 message->get_method_id());
-                notification.client_id = message->get_client_id();
-                notification.session_id = message->get_session_id();
-                notification.event_data = message->get_payload();
-                notification.message_type = message->get_message_type();
-                notification.return_code = message->get_return_code();
-                notification.interface_version = message->get_interface_version();
-                callback = std::move(it->second.callback);
-                field_requests_.erase(it);
-                sweep_expired_fields_locked(expired);
+            fire_expired_fields(expired);
+            if (!more) {
+                break;
             }
         }
-        fire_expired_fields(expired);
         if (callback) {
             const DispatchFrame dispatch(*this);
             callback(notification);
@@ -819,24 +841,36 @@ class EventSubscriberImpl : public transport::ITransportListener {
             }
         }
 
-        platform::Vector<ExpiredField, 8> pending;
-        {
-            platform::ScopedLock const field_lock(field_requests_mutex_);
-            for (auto& entry : field_requests_) {
-                ExpiredField item;
-                item.notification = EventNotification(entry.second.service_id,
-                                                      entry.second.instance_id,
-                                                      entry.second.method_id);
-                item.notification.client_id = client_id_;
-                item.notification.session_id = entry.second.session_id;
-                item.notification.message_type = MessageType::ERROR;
-                item.notification.return_code = ReturnCode::E_TIMEOUT;
-                item.callback = std::move(entry.second.callback);
-                pending.push_back(std::move(item));
+        for (;;) {
+            platform::Vector<ExpiredField, FIELD_COMPLETION_BATCH> batch;
+            {
+                platform::ScopedLock const field_lock(field_requests_mutex_);
+                if (field_requests_.empty()) {
+                    break;
+                }
+                platform::Vector<platform::String<>, FIELD_COMPLETION_BATCH> keys_to_erase;
+                for (auto& entry : field_requests_) {
+                    if (batch.size() >= batch.max_size()) {
+                        break;
+                    }
+                    ExpiredField item;
+                    item.notification = EventNotification(entry.second.service_id,
+                                                          entry.second.instance_id,
+                                                          entry.second.method_id);
+                    item.notification.client_id = client_id_;
+                    item.notification.session_id = entry.second.session_id;
+                    item.notification.message_type = MessageType::ERROR;
+                    item.notification.return_code = ReturnCode::E_TIMEOUT;
+                    item.callback = std::move(entry.second.callback);
+                    batch.push_back(std::move(item));
+                    keys_to_erase.push_back(entry.first);
+                }
+                for (const auto& k : keys_to_erase) {
+                    field_requests_.erase(k);
+                }
             }
-            field_requests_.clear();
+            fire_expired_fields(batch);
         }
-        fire_expired_fields(pending);
     }
 
     void on_connection_established(const transport::Endpoint& /*endpoint*/) override

@@ -585,6 +585,10 @@ TEST(TransportInjectionRouting, SetterNotificationKeepsANewerPublishedValue)
         EXPECT_TRUE(publisher.publish_field(EVENT, {0x22}));
     };
 
+    // Subscribe before triggering the setter so notifications reach a subscriber.
+    publisher.set_default_client_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(publisher.handle_subscription(GROUP, 7));
+
     auto setter = platform::allocate_message();
     ASSERT_NE(setter, nullptr);
     *setter = Message(MessageId(SERVICE, 0x0101), RequestId(7, 1), MessageType::REQUEST,
@@ -592,10 +596,6 @@ TEST(TransportInjectionRouting, SetterNotificationKeepsANewerPublishedValue)
     setter->set_payload({0x11});
     ASSERT_TRUE(transport.emit(setter));
     transport.on_send = nullptr;
-
-    // Subscribe so notifications are sent.
-    publisher.set_default_client_endpoint(PEER.get_address(), PEER.get_port());
-    ASSERT_TRUE(publisher.handle_subscription(GROUP, 7));
 
     auto getter = platform::allocate_message();
     ASSERT_NE(getter, nullptr);
@@ -1061,6 +1061,44 @@ TEST(TransportInjectionRouting, DuplicateFieldRequestPreservesTheAcceptedCallbac
     EXPECT_EQ(second, 0u);
     EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
                                          [&](const events::EventNotification&) { ++second; }));
+}
+
+/**
+ * @test_case TC_EVENT_FIELD_DEADLINE_EXPIRY
+ * @tests REQ_MSG_123
+ * @brief A new request for the same key, after the 5-second deadline, replaces the
+ *        stale entry and completes the old callback with E_TIMEOUT.
+ */
+TEST(TransportInjectionRouting, ExpiredFieldRequestIsReplacedByNextRequest)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    unsigned first_calls = 0;
+    events::EventNotification first_note;
+    ASSERT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                         [&](const events::EventNotification& note) {
+                                             ++first_calls;
+                                             first_note = note;
+                                         }));
+    ASSERT_EQ(transport.messages.size(), 1u);
+
+    // Wait for the deadline to pass. The default is 5 seconds.
+    std::this_thread::sleep_for(std::chrono::milliseconds(5200));
+
+    // A second request for the same key replaces the expired entry.
+    unsigned second_calls = 0;
+    EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                         [&](const events::EventNotification&) { ++second_calls; }));
+    EXPECT_EQ(first_calls, 1u);
+    EXPECT_EQ(first_note.message_type, MessageType::ERROR);
+    EXPECT_EQ(first_note.return_code, ReturnCode::E_TIMEOUT);
+    EXPECT_EQ(second_calls, 0u);
+
+    // The second request sent a new message.
+    ASSERT_EQ(transport.messages.size(), 2u);
+    EXPECT_NE(transport.messages[1].get_session_id(), transport.messages[0].get_session_id());
 }
 
 /**

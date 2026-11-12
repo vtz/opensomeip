@@ -110,6 +110,7 @@ class EventPublisherImpl : public transport::ITransportListener {
         stop_publish_timer();
         transport_session_.stop();
 
+        FieldSetter previous_setter;
         {
             platform::ScopedLock const events_lock(events_mutex_);
             registered_events_.clear();
@@ -117,7 +118,7 @@ class EventPublisherImpl : public transport::ITransportListener {
             fields_.clear();
             getter_index_.clear();
             setter_index_.clear();
-            field_setter_ = FieldSetter{};
+            previous_setter = std::move(field_setter_);
         }
         {
             platform::ScopedLock const subs_lock(subscriptions_mutex_);
@@ -288,8 +289,12 @@ class EventPublisherImpl : public transport::ITransportListener {
 
     void set_field_setter(FieldSetter setter)
     {
-        platform::ScopedLock const events_lock(events_mutex_);
-        field_setter_ = std::move(setter);
+        FieldSetter previous;
+        {
+            platform::ScopedLock const events_lock(events_mutex_);
+            previous = std::move(field_setter_);
+            field_setter_ = std::move(setter);
+        }
     }
 
     void set_default_client_endpoint(const platform::String<>& address, uint16_t port)
@@ -563,6 +568,7 @@ class EventPublisherImpl : public transport::ITransportListener {
         uint16_t getter_method_id{0};
         bool has_setter{false};
         uint16_t setter_method_id{0};
+        uint64_t registration_generation{0};
         uint64_t notify_generation{0};
         bool notify_in_flight{false};
     };
@@ -857,6 +863,7 @@ class EventPublisherImpl : public transport::ITransportListener {
         binding.getter_method_id = config.getter_method_id;
         binding.has_setter = config.has_setter;
         binding.setter_method_id = config.setter_method_id;
+        binding.registration_generation = next_field_generation_++;
         fields_[key] = binding;
         if (config.has_getter) {
             getter_index_[config.getter_method_id] = key;
@@ -1053,12 +1060,12 @@ class EventPublisherImpl : public transport::ITransportListener {
 
         if (saved_binding_ok) {
             unbind_field_locked(old_key);
+            if (saved_binding.has_notifier) {
+                registered_events_.erase(saved_binding.notifier_event_id);
+            }
         }
         if (old_key != new_key) {
             field_values_.erase(old_key);
-            if (saved_binding_ok && saved_binding.has_notifier) {
-                registered_events_.erase(saved_binding.notifier_event_id);
-            }
         }
 
         const bool notifier_needs_slot =
@@ -1224,23 +1231,29 @@ class EventPublisherImpl : public transport::ITransportListener {
         }
 
         // Check storage capacity before calling the setter hook.
+        bool probe_gone = false;
+        bool probe_full = false;
         {
             platform::ScopedLock const events_lock(events_mutex_);
             FieldBinding probe;
             if (!find_field_locked(method_id, probe) || !probe.has_setter ||
                 probe.setter_method_id != method_id) {
-                // Unregistered while we released the lock. Already handled above
-                // for the initial check, but the binding may have been removed.
-                send_field_result(message, sender, MessageType::ERROR,
-                                  ReturnCode::E_UNKNOWN_METHOD, {}, false);
-                return;
+                probe_gone = true;
             }
-            if (field_values_.size() >= field_values_.max_size() &&
-                field_values_.find(probe.key) == field_values_.end()) {
-                send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_NOT_OK, {},
-                                  false);
-                return;
+            else if (field_values_.size() >= field_values_.max_size() &&
+                     field_values_.find(probe.key) == field_values_.end()) {
+                probe_full = true;
             }
+        }
+        if (probe_gone) {
+            send_field_result(message, sender, MessageType::ERROR,
+                              ReturnCode::E_UNKNOWN_METHOD, {}, false);
+            return;
+        }
+        if (probe_full) {
+            send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_NOT_OK, {},
+                              false);
+            return;
         }
 
         platform::ByteBuffer accepted = message->get_payload();
@@ -1270,7 +1283,8 @@ class EventPublisherImpl : public transport::ITransportListener {
             platform::ScopedLock const events_lock(events_mutex_);
             FieldBinding latest_binding;
             if (find_field_locked(method_id, latest_binding) && latest_binding.has_setter &&
-                latest_binding.setter_method_id == method_id) {
+                latest_binding.setter_method_id == method_id &&
+                latest_binding.registration_generation == binding.registration_generation) {
                 if (field_values_.size() >= field_values_.max_size() &&
                     field_values_.find(latest_binding.key) == field_values_.end()) {
                     still_present = false;
@@ -1310,6 +1324,7 @@ class EventPublisherImpl : public transport::ITransportListener {
     platform::UnorderedMap<uint16_t, uint16_t, 16> getter_index_;
     platform::UnorderedMap<uint16_t, uint16_t, 16> setter_index_;
     FieldSetter field_setter_;
+    uint64_t next_field_generation_{1};
     mutable platform::Mutex events_mutex_;
 
     platform::UnorderedMap<uint16_t, platform::Vector<ClientInfo, 8>, 16> subscriptions_;

@@ -1047,6 +1047,10 @@ TEST_F(EventsTest, FieldGetterAndSetterRoundTrip)
     initial.push_back(0x11);
     ASSERT_TRUE(publisher.publish_field(0x8001, initial));
 
+    FieldWait got;
+    FieldWait set_wait;
+    FieldWait reject_wait;
+
     const auto dest = loopback_port(publisher.get_local_endpoint().get_port());
     EventSubscriber subscriber(0x00AB);
     subscriber.set_default_endpoint(dest.get_address(), dest.get_port());
@@ -1059,7 +1063,6 @@ TEST_F(EventsTest, FieldGetterAndSetterRoundTrip)
     ASSERT_TRUE(publisher.handle_subscription(0x0001, 0x00AB, 3600u));
     ASSERT_NE(wait_for_method(notifier_rx, 0x8001, std::chrono::milliseconds(1000)), nullptr);
 
-    FieldWait got;
     EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(got)));
     ASSERT_TRUE(wait_until(got, std::chrono::milliseconds(1000)));
     {
@@ -1073,7 +1076,6 @@ TEST_F(EventsTest, FieldGetterAndSetterRoundTrip)
 
     platform::ByteBuffer adapt;
     adapt.push_back(0xFF);
-    FieldWait set_wait;
     EXPECT_TRUE(subscriber.set_field(0x1234, 0x0001, 0x0101, adapt, field_waiter(set_wait)));
     ASSERT_TRUE(wait_until(set_wait, std::chrono::milliseconds(1000)));
     {
@@ -1091,7 +1093,6 @@ TEST_F(EventsTest, FieldGetterAndSetterRoundTrip)
 
     platform::ByteBuffer rejected;
     rejected.push_back(0x00);
-    FieldWait reject_wait;
     EXPECT_TRUE(subscriber.set_field(0x1234, 0x0001, 0x0101, rejected, field_waiter(reject_wait)));
     ASSERT_TRUE(wait_until(reject_wait, std::chrono::milliseconds(1000)));
     {
@@ -1147,12 +1148,13 @@ TEST_F(EventsTest, SubscribeUnsubscribeDoNotInterfereWithFields)
 
     const auto dest = loopback_port(publisher.get_local_endpoint().get_port());
 
+    FieldWait getter_wait;
+    FieldWait getter2;
     EventSubscriber subscriber(0x00AB);
     subscriber.set_default_endpoint(dest.get_address(), dest.get_port());
     ASSERT_TRUE(subscriber.initialize());
 
     // Start a pending getter.
-    FieldWait getter_wait;
     EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(getter_wait)));
 
     // subscribe_eventgroup sends method 0x0001 session 0x0001
@@ -1162,13 +1164,7 @@ TEST_F(EventsTest, SubscribeUnsubscribeDoNotInterfereWithFields)
     // unsubscribe_eventgroup sends method 0x0002 session 0x0002
     ASSERT_TRUE(subscriber.unsubscribe_eventgroup(0x1234, 0x0001, 0x0001));
 
-    // Wait a bit to ensure the publisher processed any subscribe/unsubscribe
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-
-    // The stored field value must not have changed.
-    FieldWait getter2;
-    EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(getter2)));
-    // The first getter should have completed (response came).
+    // Wait for the first getter to complete (response came).
     ASSERT_TRUE(wait_until(getter_wait, std::chrono::milliseconds(1000)));
     {
         std::lock_guard<std::mutex> const lock(getter_wait.mu);
@@ -1176,6 +1172,9 @@ TEST_F(EventsTest, SubscribeUnsubscribeDoNotInterfereWithFields)
         ASSERT_EQ(getter_wait.note.event_data.size(), 1u);
         EXPECT_EQ(getter_wait.note.event_data[0], 0x11);
     }
+
+    // The stored field value must not have changed.
+    EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(getter2)));
 
     subscriber.shutdown();
     publisher.shutdown();
@@ -1217,11 +1216,11 @@ TEST_F(EventsTest, GetterWithNoStoredValueReturnsError)
     // No publish_field
 
     const auto dest = loopback_port(publisher.get_local_endpoint().get_port());
+    FieldWait got;
     EventSubscriber subscriber(0x00AB);
     subscriber.set_default_endpoint(dest.get_address(), dest.get_port());
     ASSERT_TRUE(subscriber.initialize());
 
-    FieldWait got;
     EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(got)));
     ASSERT_TRUE(wait_until(got, std::chrono::milliseconds(1000)));
     {
@@ -1250,12 +1249,13 @@ TEST_F(EventsTest, InterfaceVersionOnFieldRequestsAndResponses)
     ASSERT_TRUE(publisher.publish_field(0x8001, initial));
 
     const auto dest = loopback_port(publisher.get_local_endpoint().get_port());
+    FieldWait ok_wait;
+    FieldWait bad_wait;
     EventSubscriber subscriber(0x00AB);
     subscriber.set_default_endpoint(dest.get_address(), dest.get_port());
     ASSERT_TRUE(subscriber.initialize());
 
     // Request with matching version 0x02: success
-    FieldWait ok_wait;
     EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(ok_wait), 0x02));
     ASSERT_TRUE(wait_until(ok_wait, std::chrono::milliseconds(1000)));
     {
@@ -1268,7 +1268,6 @@ TEST_F(EventsTest, InterfaceVersionOnFieldRequestsAndResponses)
     }
 
     // Request with wrong version 0x01: E_WRONG_INTERFACE_VERSION
-    FieldWait bad_wait;
     EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(bad_wait), 0x01));
     ASSERT_TRUE(wait_until(bad_wait, std::chrono::milliseconds(1000)));
     {
