@@ -1,13 +1,13 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-11-12 22:19:12
+Generated: 2026-11-12 22:25:55
 
 ## Summary
 
 - **Total Requirements**: 701
-- **Fully Traced (impl + tests)**: 647 (92.3%)
-- **Missing Implementation**: 54
-- **Missing Tests**: 1
+- **Fully Traced (impl + tests)**: 623 (88.9%)
+- **Missing Implementation**: 77
+- **Missing Tests**: 3
 - **Missing Spec Links (all)**: 161
 - **Missing Spec Links (required only)**: 2
 
@@ -15,15 +15,15 @@ Generated: 2026-11-12 22:19:12
 
 | Category | Total | Implemented | Tested | Spec Linked |
 |----------|-------|-------------|--------|-------------|
-| Architectural (derived) | 8 | 8 (100%) | 8 (100%) | 3 (38%) |
-| Error Handling (derived) | 156 | 135 (87%) | 156 (100%) | 10 (6%) |
+| Architectural (derived) | 8 | 7 (88%) | 8 (100%) | 3 (38%) |
+| Error Handling (derived) | 156 | 131 (84%) | 155 (99%) | 10 (6%) |
 | Message Header | 93 | 88 (95%) | 93 (100%) | 92 (99%) |
-| Other | 92 | 91 (99%) | 91 (99%) | 88 (96%) |
+| Other | 92 | 77 (84%) | 90 (98%) | 88 (96%) |
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
-| Serialization | 75 | 53 (71%) | 75 (100%) | 75 (100%) |
+| Serialization | 75 | 52 (69%) | 75 (100%) | 75 (100%) |
 | Service Discovery | 173 | 170 (98%) | 173 (100%) | 173 (100%) |
 | Transport Layer | 34 | 32 (94%) | 34 (100%) | 32 (94%) |
-| Transport Protocol | 65 | 65 (100%) | 65 (100%) | 64 (98%) |
+| Transport Protocol | 65 | 62 (95%) | 65 (100%) | 64 (98%) |
 
 
 **Note**: Implementation-derived requirements may omit direct spec links. The exemption
@@ -40,15 +40,15 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one
 | Priority | Total | Implemented | Tested | Coverage |
 |----------|-------|-------------|--------|----------|
 | Critical | 32 | 32 | 32 | 100% |
-| High | 56 | 56 | 56 | 100% |
-| Medium | 429 | 396 | 428 | 92% |
-| Low | 184 | 163 | 184 | 89% |
+| High | 56 | 55 | 56 | 98% |
+| Medium | 429 | 380 | 427 | 89% |
+| Low | 184 | 157 | 183 | 85% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 601 |
+| Unit Tests | 599 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -71,12 +71,33 @@ requirements. Specification IDs with no software requirement stay in
 ## Gaps Requiring Attention
 
 ### Requirements Without Implementation
+- REQ_PAL_CONTAINER_MAP
+- REQ_PAL_CONTAINER_QUEUE
+- REQ_PAL_CONTAINER_FUNCTION
+- REQ_PAL_CONTAINER_CAPACITY_E01
+- REQ_PAL_BUFPOOL_TIERED
+- REQ_PAL_BUFPOOL_EXHAUST_E01
+- REQ_PAL_BUFPOOL_THREADSAFE_E01
+- REQ_PLATFORM_STATIC_001
+- REQ_PLATFORM_STATIC_004
+- REQ_PLATFORM_STATIC_005
+- REQ_PLATFORM_LWIP_002
+- REQ_PLATFORM_ZEPHYR_003
+- REQ_PLATFORM_ZEPHYR_004
+- REQ_PLATFORM_WIN32_001
+- REQ_PLATFORM_WIN32_002
+- REQ_PLATFORM_WIN32_003
+- REQ_PLATFORM_WIN32_004
 - REQ_SD_125
 - REQ_SD_126
 - REQ_SD_170
 - REQ_SD_222_E01
 - REQ_SD_134_E01
 - REQ_SD_113_E01
+- REQ_TP_044
+- REQ_TP_030_E03
+- REQ_TP_081_FW
+- REQ_TP_081_ATOM
 - REQ_SER_022_E01
 - REQ_SER_046_E01
 - REQ_SER_047_E02
@@ -88,6 +109,7 @@ requirements. Specification IDs with no software requirement stay in
 - REQ_SER_070
 - REQ_SER_070_E01
 - REQ_SER_070_E02
+- REQ_SER_074
 - REQ_SER_090
 - REQ_SER_091
 - REQ_SER_092
@@ -116,6 +138,7 @@ requirements. Specification IDs with no software requirement stay in
 - REQ_SER_034_E01
 - REQ_SER_056_E01
 - REQ_SER_073_E01
+- REQ_ARCH_008
 - REQ_TRANSPORT_013
 - REQ_TRANSPORT_015
 - REQ_CAPI_006
@@ -127,6 +150,8 @@ requirements. Specification IDs with no software requirement stay in
 - REQ_MSG_113_E01
 
 ### Requirements Without Test Coverage
+- REQ_PAL_STATIC_CONFIG
+- REQ_TP_030_E03
 - REQ_CAPI_006
 
 ### Implementation Requirements Without Spec Links (Required)
@@ -316,7 +341,7 @@ These requirements match the implementation-derived exemption and do not need sp
 ### Overall Compliance Level
 - **Current Level**: CL1
 - **Target for Production**: CL2 (100% traceability)
-- **Gap to Target**: 54 requirements
+- **Gap to Target**: 78 requirements
 
 ## Recommendations
 
