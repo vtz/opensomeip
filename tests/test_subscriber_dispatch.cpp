@@ -703,4 +703,39 @@ TEST(SubscriberDispatch, ConnectionLostCompletesFieldCallbacksWithTimeout)
         SERVICE, 1, EVENT, [&](const events::EventNotification&) { ++second; }));
 }
 
+/**
+ * @test_case TC_EVENT_FIELD_CONNLOST_002
+ * @brief A request created by a connection-loss callback stays pending.
+ */
+TEST(SubscriberDispatch, ConnectionLostLeavesRequestsCreatedByTheCallback)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(5, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+
+    unsigned first = 0;
+    unsigned retry = 0;
+    someip::ReturnCode first_code = someip::ReturnCode::E_OK;
+    ASSERT_TRUE(subscriber.request_field(
+        SERVICE, 1, EVENT, [&](const events::EventNotification& note) {
+            ++first;
+            first_code = note.return_code;
+            EXPECT_TRUE(subscriber.request_field(
+                SERVICE, 1, EVENT, [&](const events::EventNotification&) { ++retry; }));
+        }));
+
+    transport.listener()->on_connection_lost(PEER);
+    EXPECT_EQ(first, 1u);
+    EXPECT_EQ(first_code, someip::ReturnCode::E_TIMEOUT);
+    EXPECT_EQ(retry, 0u);
+
+    MessagePtr response = platform::allocate_message();
+    ASSERT_NE(response, nullptr);
+    *response = Message(MessageId(SERVICE, EVENT), RequestId(5, 2), MessageType::RESPONSE,
+                        ReturnCode::E_OK);
+    ASSERT_TRUE(transport.emit(response));
+    EXPECT_EQ(retry, 1u);
+}
+
 }  // namespace

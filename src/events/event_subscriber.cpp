@@ -841,17 +841,26 @@ class EventSubscriberImpl : public transport::ITransportListener {
             }
         }
 
+        // Requests created by a completion callback are past this ticket and
+        // stay queued. Draining them here would time out a retry immediately
+        // and could loop if that retry's callback requests again.
+        uint64_t cutoff_ticket = 0;
+        {
+            platform::ScopedLock const field_lock(field_requests_mutex_);
+            cutoff_ticket = next_field_ticket_;
+        }
+
         for (;;) {
             platform::Vector<ExpiredField, FIELD_COMPLETION_BATCH> batch;
             {
                 platform::ScopedLock const field_lock(field_requests_mutex_);
-                if (field_requests_.empty()) {
-                    break;
-                }
                 platform::Vector<platform::String<>, FIELD_COMPLETION_BATCH> keys_to_erase;
                 for (auto& entry : field_requests_) {
                     if (batch.size() >= batch.max_size()) {
                         break;
+                    }
+                    if (entry.second.ticket >= cutoff_ticket) {
+                        continue;
                     }
                     ExpiredField item;
                     item.notification = EventNotification(entry.second.service_id,
@@ -867,6 +876,9 @@ class EventSubscriberImpl : public transport::ITransportListener {
                 }
                 for (const auto& k : keys_to_erase) {
                     field_requests_.erase(k);
+                }
+                if (batch.empty()) {
+                    break;
                 }
             }
             fire_expired_fields(batch);

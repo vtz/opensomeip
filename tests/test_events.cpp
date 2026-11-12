@@ -1175,6 +1175,13 @@ TEST_F(EventsTest, SubscribeUnsubscribeDoNotInterfereWithFields)
 
     // The stored field value must not have changed.
     EXPECT_TRUE(subscriber.request_field(0x1234, 0x0001, 0x0100, field_waiter(getter2)));
+    ASSERT_TRUE(wait_until(getter2, std::chrono::milliseconds(1000)));
+    {
+        std::lock_guard<std::mutex> const lock(getter2.mu);
+        EXPECT_EQ(getter2.note.message_type, MessageType::RESPONSE);
+        ASSERT_EQ(getter2.note.event_data.size(), 1u);
+        EXPECT_EQ(getter2.note.event_data[0], 0x11);
+    }
 
     subscriber.shutdown();
     publisher.shutdown();
