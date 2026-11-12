@@ -634,8 +634,10 @@ uint32_t pick_initial_wait_ms(const SdConfig& config) {
     }
     static thread_local uint32_t lcg_state = 0xA5A5A5A5U;
     lcg_state = lcg_state * 1664525U + 1013904223U;
-    const uint32_t span = max_ms - min_ms + 1U;
-    return min_ms + (lcg_state % span);
+    // Inclusive width is 2^32 when min is 0 and max is UINT32_MAX. A uint32
+    // span wraps to 0 there, and modulo by zero is undefined.
+    const uint64_t span = static_cast<uint64_t>(max_ms) - static_cast<uint64_t>(min_ms) + 1ULL;
+    return min_ms + static_cast<uint32_t>(static_cast<uint64_t>(lcg_state) % span);
 }
 
 std::chrono::milliseconds sd_repetition_interval(const SdConfig& config, uint8_t repetition_index) {

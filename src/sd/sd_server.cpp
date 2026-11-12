@@ -572,7 +572,7 @@ private:
         if (parse_endpoint_string(service.unicast_endpoint, ep_ip, ep_port)) {
             endpoint_option.set_ipv4_address_from_string(ep_ip);
             endpoint_option.set_port(ep_port);
-            endpoint_option.set_protocol(0x11);
+            endpoint_option.set_protocol(service.instance.protocol);
         } else {
             return;
         }
@@ -970,7 +970,7 @@ private:
         if (parse_endpoint_string(service.unicast_endpoint, ep_ip, ep_port)) {
             endpoint_option.set_ipv4_address_from_string(ep_ip);
             endpoint_option.set_port(ep_port);
-            endpoint_option.set_protocol(0x11);
+            endpoint_option.set_protocol(service.instance.protocol);
         } else {
             return;
         }
