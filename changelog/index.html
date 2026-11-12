@@ -3484,6 +3484,14 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
 <li>
+<p><strong>Build</strong>: Bazel module for the default host library and its C++ tests.
+  <code>bazel test //...</code> fetches GoogleTest as a dev dependency, so it stays out
+  of a downstream module graph. <code>//:opensomeip</code> does not define
+  <code>SOMEIP_TCP_TEST_CONNECT_HOLD</code>; the TCP handshake test links a private
+  test-only library that does. <code>.bazelversion</code> pins Bazel 8.8.2. CMake
+  remains the configuration for presets, RTOS ports, and packaging.</p>
+</li>
+<li>
 <p><strong>Transport</strong>: <code>UdpTransportConfig::injected_multicast_join_errno</code>, when
   non-zero, makes <code>join_multicast_group</code> return <code>MULTICAST_ERROR</code> and record
   that errno without calling <code>IP_ADD_MEMBERSHIP</code>. Zero, the default, keeps
