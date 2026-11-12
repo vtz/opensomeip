@@ -216,6 +216,8 @@ std::size_t ServiceDemux::snapshot_targets(std::array<BroadcastTarget, MAX_DEMUX
 template <typename Callback>
 void ServiceDemux::broadcast(Callback&& callback)
 {
+    // Record who is registered, then claim one handler as its callback starts.
+    // A callback can unregister a later service before that service is claimed.
     std::array<BroadcastTarget, MAX_DEMUX_SERVICES> targets{};
     const std::size_t count = snapshot_targets(targets);
     for (std::size_t index = 0; index < count; ++index) {
