@@ -29,6 +29,7 @@
 #include "someip/message.h"
 #include "someip/types.h"
 #include "transport/endpoint.h"
+#include "transport/service_demux.h"
 #include "transport/transport.h"
 
 namespace someip::rpc {
@@ -78,6 +79,16 @@ public:
     {
     }
 
+    RpcServerImpl(uint16_t service_id, uint8_t interface_version, transport::ServiceDemux& demux)
+        : service_id_(service_id),
+          interface_version_(interface_version),
+          transport_session_(demux.transport()),
+          transport_(transport_session_.get()),
+          demux_(&demux),
+          running_(false)
+    {
+    }
+
     ~RpcServerImpl() override
     {
 #ifdef __cpp_exceptions
@@ -96,12 +107,25 @@ public:
 
     Result get_transport_result() const
     {
+        if (demux_ != nullptr) {
+            return registration_result_.load(std::memory_order_acquire);
+        }
         return transport_session_.result();
     }
 
     bool initialize() {
         platform::ScopedLock const lifecycle_lock(lifecycle_mutex_);
         if (running_) {
+            return true;
+        }
+
+        if (demux_ != nullptr) {
+            const Result registered = demux_->register_service(service_id_, *this);
+            registration_result_.store(registered, std::memory_order_release);
+            if (registered != Result::SUCCESS) {
+                return false;
+            }
+            running_ = true;
             return true;
         }
 
@@ -116,6 +140,15 @@ public:
     void shutdown() {
         platform::ScopedLock const lifecycle_lock(lifecycle_mutex_);
         ShutdownGate const gate(*this);
+        if (demux_ != nullptr) {
+            if (running_) {
+                running_ = false;
+                static_cast<void>(demux_->unregister_service(service_id_));
+            }
+            someip::detail::release_entries(method_handlers_, methods_mutex_);
+            return;
+        }
+
         if (!running_) {
             transport_session_.stop();
             return;
@@ -341,6 +374,8 @@ private:
     uint8_t interface_version_;
     transport::detail::TransportSession transport_session_;
     transport::ITransport& transport_;
+    transport::ServiceDemux* demux_{nullptr};
+    std::atomic<Result> registration_result_{Result::SUCCESS};
 
     platform::UnorderedMap<MethodId, RegisteredMethod, 32> method_handlers_;
     mutable platform::Mutex methods_mutex_;
@@ -378,6 +413,18 @@ RpcServer::RpcServer(uint16_t service_id, transport::ITransport& transport,
 }
 #else
     : impl_(std::make_unique<RpcServerImpl>(service_id, interface_version, transport))
+{
+}
+#endif
+
+RpcServer::RpcServer(uint16_t service_id, transport::ServiceDemux& demux,
+                     uint8_t interface_version)
+#ifdef SOMEIP_STATIC_ALLOC
+{
+    new (impl_storage_) RpcServerImpl(service_id, interface_version, demux);
+}
+#else
+    : impl_(std::make_unique<RpcServerImpl>(service_id, interface_version, demux))
 {
 }
 #endif

@@ -27,6 +27,10 @@
 #include <memory>
 #endif
 
+namespace someip::transport {
+class ServiceDemux;
+}
+
 namespace someip::rpc {
 
 /**
@@ -75,6 +79,28 @@ public:
      * @see transport::ITransport for the injected-transport lifecycle contract.
      */
     RpcServer(uint16_t service_id, transport::ITransport& transport,
+              uint8_t interface_version = 0x01);
+
+    /**
+     * @brief Register this service on a shared socket.
+     *
+     * The demux borrows one UdpTransport or TcpTransport and is its listener.
+     * initialize() registers service_id and does not start or stop the
+     * transport. A second server with a different service id is added beside
+     * this one. A second server with the same service id fails initialize()
+     * and leaves the first registration in place. Two instances of one
+     * service id need two demuxes on two ports.
+     *
+     * The demux and the transport must outlive this server. shutdown()
+     * removes only this service id. Call it, and do not destroy this server,
+     * from a transport callback.
+     *
+     * @param service_id Service identifier handled by this server.
+     * @param demux Shared-socket dispatcher. Include transport/service_demux.h.
+     * @param interface_version Service major accepted by this server.
+     * @see transport::ServiceDemux
+     */
+    RpcServer(uint16_t service_id, transport::ServiceDemux& demux,
               uint8_t interface_version = 0x01);
 
     /**
