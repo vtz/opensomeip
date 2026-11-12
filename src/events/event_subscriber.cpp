@@ -710,7 +710,7 @@ class EventSubscriberImpl : public transport::ITransportListener {
                     const DispatchFrame dispatch(*this);
                     item.callback(item.notification);
                 }
-                catch (...) {
+                catch (...) {  // NOLINT(bugprone-empty-catch) attempt every completion
                 }
 #else
                 const DispatchFrame dispatch(*this);
