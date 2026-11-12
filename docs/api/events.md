@@ -68,6 +68,10 @@ speed_config.event_id = 0x8002;
 speed_config.eventgroup_id = 0x0001;
 speed_config.notification_type = NotificationType::ON_CHANGE;
 speed_config.is_field = true;
+speed_config.has_getter = true;
+speed_config.getter_method_id = 0x0010;
+speed_config.has_setter = true;
+speed_config.setter_method_id = 0x0011;
 
 publisher.register_event(speed_config);
 
@@ -104,10 +108,20 @@ subscriber.subscribe_eventgroup(0x1001, 0x0001, 0x0001,
         std::cout << "Subscription state: " << (int)state << std::endl;
     });
 
-// Request field value
-subscriber.request_field(0x1001, 0x0001, 0x8002,
+// Getter: empty REQUEST to the configured method id. Response type is 0x80.
+subscriber.request_field(0x1001, 0x0001, 0x0010,
     [](const EventNotification& field_value) {
-        // Handle field response
+        // field_value.event_data is the current field value
+    });
+
+// Setter: REQUEST payload is the desired value. The response payload is the
+// value the server stored.
+platform::ByteBuffer new_speed;
+new_speed.push_back(0x00);
+new_speed.push_back(0x3C);
+subscriber.set_field(0x1001, 0x0001, 0x0011, new_speed,
+    [](const EventNotification& stored) {
+        // stored.event_data is the value actually stored
     });
 ```
 

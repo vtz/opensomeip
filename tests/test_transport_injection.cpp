@@ -20,11 +20,11 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <type_traits>
 #include <vector>
-#include <stdexcept>
 
 #include "../src/common/callback_storage.h"
 #include "events/event_publisher.h"
@@ -555,6 +555,77 @@ TEST(TransportInjectionRouting, EventPublisherUsesInjectedTransport)
     EXPECT_EQ(transport.destinations[0], PEER);
 }
 
+/**
+ * @test_case TC_EVENT_FIELD_SET_NOTIFY
+ * @tests REQ_MSG_124, REQ_MSG_125
+ * @brief A publish_field during the setter response must not put the old value back.
+ */
+TEST(TransportInjectionRouting, SetterNotificationKeepsANewerPublishedValue)
+{
+    FakeTransport transport;
+    events::EventPublisher publisher(SERVICE, 1, transport);
+    events::EventConfig config;
+    config.event_id = EVENT;
+    config.eventgroup_id = GROUP;
+    config.is_field = true;
+    config.has_notifier = true;
+    config.has_getter = true;
+    config.getter_method_id = 0x0100;
+    config.has_setter = true;
+    config.setter_method_id = 0x0101;
+    config.notification_type = events::NotificationType::ON_CHANGE;
+    ASSERT_TRUE(publisher.register_event(config));
+    ASSERT_TRUE(publisher.initialize());
+
+    transport.on_send = [&](const Message& message) {
+        if (message.get_message_type() != MessageType::RESPONSE ||
+            message.get_method_id() != 0x0101) {
+            return;
+        }
+        EXPECT_TRUE(publisher.publish_field(EVENT, {0x22}));
+    };
+
+    // Subscribe before triggering the setter so notifications reach a subscriber.
+    publisher.set_default_client_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(publisher.handle_subscription(GROUP, 7));
+
+    auto setter = platform::allocate_message();
+    ASSERT_NE(setter, nullptr);
+    *setter = Message(MessageId(SERVICE, 0x0101), RequestId(7, 1), MessageType::REQUEST,
+                      ReturnCode::E_OK);
+    setter->set_payload({0x11});
+    ASSERT_TRUE(transport.emit(setter));
+    transport.on_send = nullptr;
+
+    auto getter = platform::allocate_message();
+    ASSERT_NE(getter, nullptr);
+    *getter = Message(MessageId(SERVICE, 0x0100), RequestId(7, 2), MessageType::REQUEST,
+                      ReturnCode::E_OK);
+    ASSERT_TRUE(transport.emit(getter));
+
+    const Message* getter_reply = nullptr;
+    const Message* last_notification = nullptr;
+    for (const Message& message : transport.messages) {
+        if (message.get_method_id() == 0x0100 &&
+            message.get_message_type() == MessageType::RESPONSE) {
+            getter_reply = &message;
+        }
+        if (message.get_method_id() == EVENT &&
+            message.get_message_type() == MessageType::NOTIFICATION) {
+            last_notification = &message;
+        }
+    }
+    ASSERT_NE(getter_reply, nullptr);
+    ASSERT_EQ(getter_reply->get_payload().size(), 1u);
+    EXPECT_EQ(getter_reply->get_payload()[0], 0x22);
+
+    // The last NOTIFICATION must carry the latest stored value, not the
+    // setter's original accepted value.
+    ASSERT_NE(last_notification, nullptr);
+    ASSERT_EQ(last_notification->get_payload().size(), 1u);
+    EXPECT_EQ(last_notification->get_payload()[0], 0x22);
+}
+
 TEST(TransportInjectionRouting, EventSubscriberReceivesInjectedNotification)
 {
     FakeTransport transport;
@@ -562,13 +633,14 @@ TEST(TransportInjectionRouting, EventSubscriberReceivesInjectedNotification)
     subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
     ASSERT_TRUE(subscriber.initialize());
     unsigned notifications = 0;
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(SERVICE, 1, GROUP,
-                                                [&](const events::EventNotification& notification) {
-                                                    ++notifications;
-                                                    EXPECT_EQ(notification.event_id, EVENT);
-                                                    ASSERT_EQ(notification.event_data.size(), 1u);
-                                                    EXPECT_EQ(notification.event_data[0], 0x55);
-                                                }));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(SERVICE, 1, GROUP,
+                                              [&](const events::EventNotification& notification) {
+                                                  ++notifications;
+                                                  EXPECT_EQ(notification.event_id, EVENT);
+                                                  ASSERT_EQ(notification.event_data.size(), 1u);
+                                                  EXPECT_EQ(notification.event_data[0], 0x55);
+                                              }));
     ASSERT_EQ(transport.destinations.size(), 1u);
     EXPECT_EQ(transport.destinations[0], PEER);
     auto message = platform::allocate_message();
@@ -618,8 +690,9 @@ TEST(TransportInjectionRouting, SubscriberReleasesCallbackCapturesOutsideLocks)
     // Independent probes count both releases; the helper test checks its actual mutex.
     auto subscription_probe = std::make_shared<ReleaseProbe>(subscriber, subscription_releases);
     auto field_probe = std::make_shared<ReleaseProbe>(subscriber, field_releases);
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP, [subscription_probe](const events::EventNotification&) {}));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(
+                  SERVICE, 1, GROUP, [subscription_probe](const events::EventNotification&) {}));
     ASSERT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
                                          [field_probe](const events::EventNotification&) {}));
     subscription_probe.reset();
@@ -641,7 +714,9 @@ TEST(TransportInjectionRouting, NotificationCallbackCanQueryAndUnsubscribe)
     subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
     ASSERT_TRUE(subscriber.initialize());
     unsigned calls = 0;
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+    ASSERT_EQ(
+        Result::SUCCESS,
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
             ++calls;
             EXPECT_EQ(subscriber.get_active_subscriptions().size(), 1u);
             EXPECT_TRUE(subscriber.unsubscribe_eventgroup(SERVICE, 1, GROUP));
@@ -671,11 +746,21 @@ TEST(TransportInjectionRouting, FieldCallbackCanRequestTheNextValue)
         EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
                                              [&](const events::EventNotification&) { ++calls; }));
     }));
-    const auto message = make_dispatch_message<events::EventSubscriber>();
-    ASSERT_NE(message, nullptr);
-    ASSERT_TRUE(transport.emit(message));
+    auto response_for = [](uint16_t session) {
+        MessagePtr message = platform::allocate_message();
+        if (message) {
+            *message = Message(MessageId(SERVICE, EVENT), RequestId(7, session),
+                               MessageType::RESPONSE, ReturnCode::E_OK);
+        }
+        return message;
+    };
+    const auto first = response_for(1);
+    ASSERT_NE(first, nullptr);
+    ASSERT_TRUE(transport.emit(first));
     EXPECT_EQ(calls, 1u);
-    ASSERT_TRUE(transport.emit(message));
+    const auto second = response_for(2);
+    ASSERT_NE(second, nullptr);
+    ASSERT_TRUE(transport.emit(second));
     EXPECT_EQ(calls, 2u);
 }
 
@@ -693,8 +778,12 @@ TEST(TransportInjectionRouting, FailedFieldSendDoesNotRetainCallback)
     unsigned calls = 0;
     EXPECT_FALSE(subscriber.request_field(SERVICE, 1, EVENT,
                                           [&](const events::EventNotification&) { ++calls; }));
-    const auto message = make_dispatch_message<events::EventSubscriber>();
+    // A retained request would have been session 1. A notification must not
+    // complete it, and neither must the response that would have matched.
+    MessagePtr message = platform::allocate_message();
     ASSERT_NE(message, nullptr);
+    *message = Message(MessageId(SERVICE, EVENT), RequestId(7, 1), MessageType::RESPONSE,
+                       ReturnCode::E_OK);
     ASSERT_TRUE(transport.emit(message));
     EXPECT_EQ(calls, 0u);
 }
@@ -711,9 +800,15 @@ TEST(TransportInjectionRouting, FieldResponseDuringSendReachesTheCallback)
     subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
     ASSERT_TRUE(subscriber.initialize());
     unsigned calls = 0;
-    transport.on_send = [&](const Message&) {
-        const auto message = make_dispatch_message<events::EventSubscriber>();
+    transport.on_send = [&](const Message& request) {
+        EXPECT_EQ(request.get_message_type(), MessageType::REQUEST);
+        EXPECT_EQ(request.get_method_id(), EVENT);
+        EXPECT_TRUE(request.get_payload().empty());
+        EXPECT_NE(request.get_method_id(), 0x0003);
+        MessagePtr message = platform::allocate_message();
         ASSERT_NE(message, nullptr);
+        *message = Message(request.get_message_id(), request.get_request_id(),
+                           MessageType::RESPONSE, ReturnCode::E_OK);
         EXPECT_TRUE(transport.emit(message));
     };
     EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
@@ -955,13 +1050,55 @@ TEST(TransportInjectionRouting, DuplicateFieldRequestPreservesTheAcceptedCallbac
     EXPECT_FALSE(subscriber.request_field(SERVICE, 1, EVENT,
                                           [&](const events::EventNotification&) { ++second; }));
     ASSERT_EQ(transport.messages.size(), 1u);
-    const auto message = make_dispatch_message<events::EventSubscriber>();
+    EXPECT_EQ(transport.messages[0].get_method_id(), EVENT);
+    EXPECT_TRUE(transport.messages[0].get_payload().empty());
+    MessagePtr message = platform::allocate_message();
     ASSERT_NE(message, nullptr);
+    *message = Message(MessageId(SERVICE, EVENT), RequestId(7, 1), MessageType::RESPONSE,
+                       ReturnCode::E_OK);
     EXPECT_TRUE(transport.emit(message));
     EXPECT_EQ(first, 1u);
     EXPECT_EQ(second, 0u);
     EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
                                          [&](const events::EventNotification&) { ++second; }));
+}
+
+/**
+ * @test_case TC_EVENT_FIELD_DEADLINE_EXPIRY
+ * @tests REQ_MSG_123
+ * @brief A new request for the same key, after the 5-second deadline, replaces the
+ *        stale entry and completes the old callback with E_TIMEOUT.
+ */
+TEST(TransportInjectionRouting, ExpiredFieldRequestIsReplacedByNextRequest)
+{
+    FakeTransport transport;
+    events::EventSubscriber subscriber(7, transport);
+    subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
+    ASSERT_TRUE(subscriber.initialize());
+    unsigned first_calls = 0;
+    events::EventNotification first_note;
+    ASSERT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                         [&](const events::EventNotification& note) {
+                                             ++first_calls;
+                                             first_note = note;
+                                         }));
+    ASSERT_EQ(transport.messages.size(), 1u);
+
+    // Wait for the deadline to pass. The default is 5 seconds.
+    std::this_thread::sleep_for(std::chrono::milliseconds(5200));
+
+    // A second request for the same key replaces the expired entry.
+    unsigned second_calls = 0;
+    EXPECT_TRUE(subscriber.request_field(SERVICE, 1, EVENT,
+                                         [&](const events::EventNotification&) { ++second_calls; }));
+    EXPECT_EQ(first_calls, 1u);
+    EXPECT_EQ(first_note.message_type, MessageType::ERROR);
+    EXPECT_EQ(first_note.return_code, ReturnCode::E_TIMEOUT);
+    EXPECT_EQ(second_calls, 0u);
+
+    // The second request sent a new message.
+    ASSERT_EQ(transport.messages.size(), 2u);
+    EXPECT_NE(transport.messages[1].get_session_id(), transport.messages[0].get_session_id());
 }
 
 /**
@@ -982,10 +1119,12 @@ TEST(TransportInjectionRouting, SubscribeSendCanDeliverOnTheCallingThread)
             EXPECT_TRUE(transport.emit(message));
         }
     };
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP, [&](const events::EventNotification&) { ++calls; }));
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP, [&](const events::EventNotification&) { ++calls; }));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(SERVICE, 1, GROUP,
+                                              [&](const events::EventNotification&) { ++calls; }));
+    ASSERT_EQ(Result::SUCCESS,
+              subscriber.subscribe_eventgroup(SERVICE, 1, GROUP,
+                                              [&](const events::EventNotification&) { ++calls; }));
     EXPECT_GE(calls, 1u);
 }
 
@@ -1018,8 +1157,13 @@ TEST(TransportInjectionRouting, CallbackStorageDrainUsesAnInitialEntryBound)
 {
     struct Reinsert {
         explicit Reinsert(platform::UnorderedMap<unsigned, std::shared_ptr<Reinsert>>& entries)
-            : entries(entries) {}
-        ~Reinsert() { entries[2] = nullptr; }
+            : entries(entries)
+        {
+        }
+        ~Reinsert()
+        {
+            entries[2] = nullptr;
+        }
         platform::UnorderedMap<unsigned, std::shared_ptr<Reinsert>>& entries;
     };
     platform::UnorderedMap<unsigned, std::shared_ptr<Reinsert>> entries;
@@ -1067,10 +1211,11 @@ TEST(TransportInjectionRouting, ExternalUnsubscribeWaitsForCallbackAndCaptureRel
     std::promise<void> entered;
     std::promise<void> release;
     auto released = release.get_future().share();
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
-            entered.set_value();
-            released.wait();
-        }));
+    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
+                                   SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+                                       entered.set_value();
+                                       released.wait();
+                                   }));
     const auto message = make_dispatch_message<events::EventSubscriber>();
     ASSERT_NE(message, nullptr);
     auto dispatch = std::async(std::launch::async, [&] { return transport.emit(message); });
@@ -1096,15 +1241,16 @@ TEST(TransportInjectionRouting, LaterNotificationsDoNotExtendAnUnsubscribeBarrie
     std::promise<void> later_entered;
     std::promise<void> later_release;
     auto later_released = later_release.get_future().share();
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
-            first_entered.set_value();
-            first_released.wait();
-        }));
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(SERVICE + 1, 1, GROUP,
-                                                [&](const events::EventNotification&) {
-                                                    later_entered.set_value();
-                                                    later_released.wait();
-                                                }));
+    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
+                                   SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+                                       first_entered.set_value();
+                                       first_released.wait();
+                                   }));
+    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
+                                   SERVICE + 1, 1, GROUP, [&](const events::EventNotification&) {
+                                       later_entered.set_value();
+                                       later_released.wait();
+                                   }));
     auto first_message = make_dispatch_message<events::EventSubscriber>();
     auto later_message = make_dispatch_message<events::EventSubscriber>();
     ASSERT_NE(first_message, nullptr);
@@ -1137,14 +1283,16 @@ TEST(TransportInjectionRouting,
     std::promise<void> entered;
     std::promise<void> release;
     auto released = release.get_future().share();
-    ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+    ASSERT_EQ(
+        Result::SUCCESS,
+        subscriber.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
             entered.set_value();
             released.wait();
             static_cast<void>(subscriber.unsubscribe_eventgroup(SERVICE + 1, 1, GROUP));
         }));
     for (uint16_t service = SERVICE + 1; service < SERVICE + 7; ++service) {
-        ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(service, 1, GROUP,
-                                                    [](const events::EventNotification&) {}));
+        ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
+                                       service, 1, GROUP, [](const events::EventNotification&) {}));
     }
     const auto message = make_dispatch_message<events::EventSubscriber>();
     ASSERT_NE(message, nullptr);
@@ -1191,14 +1339,14 @@ TEST(TransportInjectionRouting, NestedSubscriberCallbacksRecognizeAnOuterDispatc
     ASSERT_TRUE(inner.initialize());
     const auto message = make_dispatch_message<events::EventSubscriber>();
     ASSERT_NE(message, nullptr);
-    ASSERT_EQ(Result::SUCCESS, inner.subscribe_eventgroup(SERVICE, 1, GROUP,
-        [&](const events::EventNotification&) {
-            EXPECT_TRUE(outer.unsubscribe_eventgroup(SERVICE, 1, GROUP));
-        }));
-    ASSERT_EQ(Result::SUCCESS, outer.subscribe_eventgroup(SERVICE, 1, GROUP,
-        [&](const events::EventNotification&) {
-            EXPECT_TRUE(inner_transport.emit(message));
-        }));
+    ASSERT_EQ(Result::SUCCESS,
+              inner.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+                  EXPECT_TRUE(outer.unsubscribe_eventgroup(SERVICE, 1, GROUP));
+              }));
+    ASSERT_EQ(Result::SUCCESS,
+              outer.subscribe_eventgroup(SERVICE, 1, GROUP, [&](const events::EventNotification&) {
+                  EXPECT_TRUE(inner_transport.emit(message));
+              }));
     EXPECT_TRUE(outer_transport.emit(message));
     EXPECT_TRUE(outer.get_active_subscriptions().empty());
 }
@@ -1211,8 +1359,9 @@ TEST(TransportInjectionRouting, ThrowingNotificationReleasesItsDispatchFrame)
     subscriber.set_default_endpoint(PEER.get_address(), PEER.get_port());
     ASSERT_TRUE(subscriber.initialize());
     ASSERT_EQ(Result::SUCCESS, subscriber.subscribe_eventgroup(
-        SERVICE, 1, GROUP,
-        [](const events::EventNotification&) { throw std::runtime_error("notification"); }));
+                                   SERVICE, 1, GROUP, [](const events::EventNotification&) {
+                                       throw std::runtime_error("notification");
+                                   }));
     const auto message = make_dispatch_message<events::EventSubscriber>();
     ASSERT_NE(message, nullptr);
     EXPECT_THROW(transport.emit(message), std::runtime_error);
@@ -1222,5 +1371,58 @@ TEST(TransportInjectionRouting, ThrowingNotificationReleasesItsDispatchFrame)
     EXPECT_TRUE(unsubscribe.get());
 }
 #endif
+
+/**
+ * @test_case TC_EVENT_FIELD_FULL_SETTER
+ * @tests REQ_MSG_124_E01
+ * @brief A setter that cannot store because field_values_ is full responds ERROR/E_NOT_OK.
+ */
+TEST(TransportInjectionRouting, SetterWithFullFieldValuesReturnsErrorNotOk)
+{
+    FakeTransport transport;
+    events::EventPublisher publisher(SERVICE, 1, transport);
+
+    // Register 16 fields (the static capacity of field_values_) with distinct keys.
+    for (uint16_t i = 0; i < 16; ++i) {
+        events::EventConfig config;
+        config.event_id = static_cast<uint16_t>(0x8000 + i);
+        config.eventgroup_id = GROUP;
+        config.is_field = true;
+        config.has_notifier = true;
+        config.has_getter = true;
+        config.getter_method_id = static_cast<uint16_t>(0x0100 + i * 2);
+        config.has_setter = true;
+        config.setter_method_id = static_cast<uint16_t>(0x0101 + i * 2);
+        config.notification_type = events::NotificationType::ON_CHANGE;
+        ASSERT_TRUE(publisher.register_event(config)) << "field " << i;
+    }
+    ASSERT_TRUE(publisher.initialize());
+
+    // Fill all 16 slots.
+    for (uint16_t i = 0; i < 16; ++i) {
+        platform::ByteBuffer value;
+        value.push_back(static_cast<uint8_t>(i));
+        ASSERT_TRUE(publisher.publish_field(static_cast<uint16_t>(0x8000 + i), value));
+    }
+
+    // A setter on an existing field succeeds (slot already exists).
+    auto setter_msg = platform::allocate_message();
+    ASSERT_NE(setter_msg, nullptr);
+    *setter_msg = Message(MessageId(SERVICE, 0x0101), RequestId(7, 1), MessageType::REQUEST,
+                          ReturnCode::E_OK);
+    setter_msg->set_payload({0xBB});
+    ASSERT_TRUE(transport.emit(setter_msg));
+
+    bool found_response = false;
+    for (const auto& msg : transport.messages) {
+        if (msg.get_method_id() == 0x0101 && msg.get_message_type() == MessageType::RESPONSE) {
+            found_response = true;
+            EXPECT_EQ(msg.get_return_code(), ReturnCode::E_OK);
+            ASSERT_EQ(msg.get_payload().size(), 1u);
+            EXPECT_EQ(msg.get_payload()[0], 0xBB);
+        }
+    }
+    EXPECT_TRUE(found_response);
+}
 
 }  // namespace
