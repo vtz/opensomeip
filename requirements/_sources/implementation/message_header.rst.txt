@@ -1555,7 +1555,7 @@ Event and Field Support
 
    **Rationale**: Field getters allow clients to read current field values on demand.
 
-   **Code Location**: ``src/events/event_subscriber.cpp`` (request_field), ``include/events/event_subscriber.h``
+   **Code Location**: ``src/events/event_subscriber.cpp`` (request_field), ``src/events/event_publisher.cpp`` (getter response)
 
 .. requirement:: Field Setter Support
    :id: REQ_MSG_124
@@ -1571,7 +1571,7 @@ Event and Field Support
 
    **Rationale**: Field setters allow clients to update field values with server-side validation.
 
-   **Code Location**: ``src/events/event_publisher.cpp`` (publish_field), ``include/events/event_publisher.h``
+   **Code Location**: ``src/events/event_subscriber.cpp`` (set_field), ``src/events/event_publisher.cpp`` (setter response)
 
 .. requirement:: Field Notifier Support
    :id: REQ_MSG_125
@@ -1601,7 +1601,7 @@ Event and Field Support
 
    **Rationale**: A field without any accessor serves no purpose and indicates a design error.
 
-   **Code Location**: ``include/events/event_publisher.h``
+   **Code Location**: ``src/events/event_publisher.cpp`` (register_event)
 
 
 Error Handling Extensions
@@ -1979,7 +1979,7 @@ Header Informational References
 
    **Error Handling**: Return E_UNKNOWN_METHOD in error response.
 
-   **Code Location**: ``src/events/event_subscriber.cpp``
+   **Code Location**: ``src/events/event_publisher.cpp`` (unknown getter or setter method)
 
 .. requirement:: Error - Field Setter Validation Failure
    :id: REQ_MSG_124_E01

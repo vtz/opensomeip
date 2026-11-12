@@ -2360,6 +2360,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#added" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2382,7 +2393,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+  <a href="#breaking-changes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -2421,7 +2432,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_1" class="md-nav__link">
+  <a href="#breaking-changes_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -2515,7 +2526,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_2" class="md-nav__link">
+  <a href="#breaking-changes_3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -3064,6 +3075,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#added" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3086,7 +3108,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+  <a href="#breaking-changes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -3125,7 +3147,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_1" class="md-nav__link">
+  <a href="#breaking-changes_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -3219,7 +3241,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_2" class="md-nav__link">
+  <a href="#breaking-changes_3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -3481,6 +3503,19 @@
 <p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Field getter <code>EventSubscriber::request_field</code> is a SOME/IP request/response.
+  The third argument is the getter method id. The request payload is empty, and
+  the server answers with message type <code>0x80</code> and the stored field value.
+  The previous send (method <code>0x0003</code> with the event id in the payload) is gone.
+  <code>EventSubscriber::set_field</code> writes a field the same way: the request payload
+  is the desired value, and the response payload is the value the server stored.
+  <code>EventPublisher::set_field_setter</code> can adapt that stored value or reject the
+  write. A field registered with no getter, no setter, and no notifier is
+  rejected
+  (<a href="https://github.com/vtz/opensomeip/issues/380">#380</a>).</li>
+</ul>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
 <li>
@@ -3560,7 +3595,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
   prefix and header (default 1544 = 16 + 64 + 64 + 1400). The default medium
   byte-pool slot is 1600 bytes so that message fits the medium tier.</li>
 </ul>
-<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
+<h3 id="breaking-changes_1">Breaking Changes<a class="headerlink" href="#breaking-changes_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>SD</strong>: <code>SdServer::SubscriptionAcceptedCallback</code> now requires
   <code>InitialDataDelivery</code> as its fifth argument. Existing callbacks must
@@ -3710,7 +3745,7 @@ fire-and-forget RPC, event-driven transports, multi-client TCP) and
 v0.1.0. Per this repo's 0.x policy, incompatible API and wire changes bump
 the minor version; 1.0.0 remains reserved until the public API is declared
 stable.</p>
-<h3 id="breaking-changes_1">Breaking Changes<a class="headerlink" href="#breaking-changes_1" title="Permanent link">&para;</a></h3>
+<h3 id="breaking-changes_2">Breaking Changes<a class="headerlink" href="#breaking-changes_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>E2E</strong>: <code>E2EConfig::offset</code> is renamed to <code>offset_bits</code> (no alias). The
   field is bits from the start of the Length-covered region / Request ID
@@ -4188,7 +4223,7 @@ stable.</p>
 <p>This is the first minor release and includes <strong>breaking changes</strong> to wire formats,
 public API types, and default behaviors to bring the stack into compliance with the
 SOME/IP and SOME/IP-SD specifications.</p>
-<h3 id="breaking-changes_2">Breaking Changes<a class="headerlink" href="#breaking-changes_2" title="Permanent link">&para;</a></h3>
+<h3 id="breaking-changes_3">Breaking Changes<a class="headerlink" href="#breaking-changes_3" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>SD minor version widened to 32-bit</strong>: <code>ServiceEntry::minor_version_</code> and <code>ServiceInstance::minor_version</code> changed from <code>uint8_t</code> to <code>uint32_t</code>; <code>get_minor_version()</code> / <code>set_minor_version()</code> signatures updated accordingly (#245, #251)</li>
 <li><strong>SD ConfigurationOption length field corrected</strong>: Wire-format length now includes the Reserved byte per spec; messages serialized by v0.0.x are <strong>not</strong> wire-compatible with v0.1.0 (#246, #251)</li>
