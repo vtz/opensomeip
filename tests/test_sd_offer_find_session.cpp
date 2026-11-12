@@ -395,9 +395,28 @@ SdConfig make_sd_config(uint16_t port, uint32_t initial_delay_ms, const char* mu
     return config;
 }
 
+#if defined(_WIN32)
+bool ipv4_is_multicast(const char* address)
+{
+    in_addr parsed{};
+    if (someip_inet_pton(AF_INET, address, &parsed) != 1) {
+        return false;
+    }
+    const uint32_t host_order = ntohl(parsed.s_addr);
+    return (host_order & 0xF0000000U) == 0xE0000000U;
+}
+#endif
+
 bool open_peer(RawUdpPeer& peer, const char* address, uint16_t port)
 {
-    if (!peer.open() || !peer.enable_reuse() || !peer.bind_to(address, port)) {
+#if defined(_WIN32)
+    // Winsock rejects bind() on a multicast group (WSAEADDRNOTAVAIL / 10049).
+    // Bind the wildcard address and select the group with IP_ADD_MEMBERSHIP.
+    const char* bind_address = ipv4_is_multicast(address) ? "0.0.0.0" : address;
+#else
+    const char* bind_address = address;
+#endif
+    if (!peer.open() || !peer.enable_reuse() || !peer.bind_to(bind_address, port)) {
         return false;
     }
     return true;
