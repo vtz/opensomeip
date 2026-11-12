@@ -24,8 +24,8 @@
 #include "transport/message_rejection.h"
 #include "transport/transport.h"
 
-#ifndef SOMEIP_MAX_DEMUX_SERVICES
-#define SOMEIP_MAX_DEMUX_SERVICES 16
+#ifndef SOMEIP_MAX_DEMUX_SERVICES     // NOLINT(cppcoreguidelines-macro-usage)
+#define SOMEIP_MAX_DEMUX_SERVICES 16  // NOLINT(cppcoreguidelines-macro-usage)
 #endif
 
 namespace someip::transport {
@@ -52,7 +52,9 @@ static_assert(MAX_DEMUX_SERVICES <= 256, "SOMEIP_MAX_DEMUX_SERVICES is bounded")
  * The transport must outlive this object. Handlers must outlive their
  * registration. start() and stop() must not be called from a handler callback.
  * unregister_service() waits until an in-flight callback for that service id
- * returns, so it must not be called from that callback.
+ * returns, so it must not be called from that callback. A callback may
+ * unregister a different service. Broadcasts claim each handler only when
+ * its callback is about to run, and an exception releases that claim.
  *
  * @implements REQ_TRANSPORT_013, REQ_TRANSPORT_022
  * @satisfies feat_req_someip_445
@@ -91,7 +93,8 @@ class ServiceDemux : public ITransportListener {
      * @brief Remove the handler for one service id.
      *
      * Waits until an in-flight callback for this id returns. Do not call this
-     * from that callback.
+     * from that callback. Calling it for a different id from a callback is
+     * safe, including when that id is later in the same broadcast.
      *
      * @param service_id Service id previously registered on this demux.
      * @return SUCCESS, or SERVICE_NOT_FOUND when the id is not registered.
@@ -161,6 +164,11 @@ class ServiceDemux : public ITransportListener {
         std::size_t index{0};
     };
 
+    struct BroadcastTarget {
+        std::size_t index{0};
+        uint16_t service_id{0};
+    };
+
     class FlightGuard {
        public:
         FlightGuard(ServiceDemux& demux, std::size_t index);
@@ -176,8 +184,14 @@ class ServiceDemux : public ITransportListener {
     };
 
     [[nodiscard]] static bool slot_is_free(const Slot& slot);
+    [[nodiscard]] Slot& slot_at(std::size_t index);
+    [[nodiscard]] static BroadcastTarget& target_at(
+        std::array<BroadcastTarget, MAX_DEMUX_SERVICES>& targets, std::size_t index);
     [[nodiscard]] bool claim(uint16_t service_id, Claimed& claimed);
-    std::size_t claim_all(std::array<Claimed, MAX_DEMUX_SERVICES>& claimed);
+    [[nodiscard]] bool claim_at(std::size_t index, uint16_t service_id, Claimed& claimed);
+    std::size_t snapshot_targets(std::array<BroadcastTarget, MAX_DEMUX_SERVICES>& targets);
+    template <typename Callback>
+    void broadcast(Callback&& callback);
     void release_flight(std::size_t index);
 
     ITransport& transport_;

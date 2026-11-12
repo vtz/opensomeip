@@ -13,9 +13,13 @@
 
 #include "transport/service_demux.h"
 
+#include <array>
+#include <cstddef>
+#include <cstdint>
+
 #include "common/result.h"
+#include "platform/message_ptr.h"
 #include "platform/thread.h"
-#include "someip/message.h"
 #include "transport/endpoint.h"
 #include "transport/message_rejection.h"
 #include "transport/transport.h"
@@ -41,9 +45,7 @@ ServiceDemux::~ServiceDemux()
 #ifdef __cpp_exceptions
     try {
         static_cast<void>(stop());
-    }
-    catch (...) {
-    }  // NOLINT(bugprone-empty-catch) destructor must not throw
+    } catch (...) {}  // NOLINT(bugprone-empty-catch) destructor must not throw
 #else
     static_cast<void>(stop());
 #endif
@@ -149,11 +151,24 @@ Result ServiceDemux::stop()
     return stopped;
 }
 
+ServiceDemux::Slot& ServiceDemux::slot_at(std::size_t index)
+{
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+    return slots_[index];
+}
+
+ServiceDemux::BroadcastTarget& ServiceDemux::target_at(
+    std::array<BroadcastTarget, MAX_DEMUX_SERVICES>& targets, std::size_t index)
+{
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-constant-array-index)
+    return targets[index];
+}
+
 bool ServiceDemux::claim(uint16_t service_id, Claimed& claimed)
 {
     platform::ScopedLock const lock(table_mutex_);
     for (std::size_t index = 0; index < slots_.size(); ++index) {
-        Slot& slot = slots_[index];
+        Slot& slot = slot_at(index);
         if (!slot.occupied || slot.service_id != service_id || slot.handler == nullptr) {
             continue;
         }
@@ -165,30 +180,62 @@ bool ServiceDemux::claim(uint16_t service_id, Claimed& claimed)
     return false;
 }
 
-std::size_t ServiceDemux::claim_all(std::array<Claimed, MAX_DEMUX_SERVICES>& claimed)
+bool ServiceDemux::claim_at(std::size_t index, uint16_t service_id, Claimed& claimed)
+{
+    platform::ScopedLock const lock(table_mutex_);
+    if (index >= slots_.size()) {
+        return false;
+    }
+    Slot& slot = slot_at(index);
+    if (!slot.occupied || slot.service_id != service_id || slot.handler == nullptr) {
+        return false;
+    }
+    ++slot.in_flight;
+    claimed.handler = slot.handler;
+    claimed.index = index;
+    return true;
+}
+
+std::size_t ServiceDemux::snapshot_targets(std::array<BroadcastTarget, MAX_DEMUX_SERVICES>& targets)
 {
     platform::ScopedLock const lock(table_mutex_);
     std::size_t count = 0;
     for (std::size_t index = 0; index < slots_.size(); ++index) {
-        Slot& slot = slots_[index];
+        const Slot& slot = slot_at(index);
         if (!slot.occupied || slot.handler == nullptr) {
             continue;
         }
-        ++slot.in_flight;
-        claimed[count].handler = slot.handler;
-        claimed[count].index = index;
+        BroadcastTarget& target = target_at(targets, count);
+        target.index = index;
+        target.service_id = slot.service_id;
         ++count;
     }
     return count;
 }
 
+template <typename Callback>
+void ServiceDemux::broadcast(Callback&& callback)
+{
+    std::array<BroadcastTarget, MAX_DEMUX_SERVICES> targets{};
+    const std::size_t count = snapshot_targets(targets);
+    for (std::size_t index = 0; index < count; ++index) {
+        const BroadcastTarget& target = target_at(targets, index);
+        Claimed claimed;
+        if (!claim_at(target.index, target.service_id, claimed) || claimed.handler == nullptr) {
+            continue;
+        }
+        FlightGuard const guard(*this, claimed.index);
+        callback(*claimed.handler);
+    }
+}
+
 void ServiceDemux::release_flight(std::size_t index)
 {
     platform::ScopedLock const lock(table_mutex_);
-    if (index >= slots_.size() || slots_[index].in_flight == 0U) {
+    if (index >= slots_.size() || slot_at(index).in_flight == 0U) {
         return;
     }
-    --slots_[index].in_flight;
+    --slot_at(index).in_flight;
     drained_.notify_all();
 }
 
@@ -215,32 +262,18 @@ void ServiceDemux::on_message_received(const MessagePtr& message, const Endpoint
 
 void ServiceDemux::on_connection_lost(const Endpoint& endpoint)
 {
-    std::array<Claimed, MAX_DEMUX_SERVICES> claimed{};
-    const std::size_t count = claim_all(claimed);
-    for (std::size_t index = 0; index < count; ++index) {
-        FlightGuard const guard(*this, claimed[index].index);
-        claimed[index].handler->on_connection_lost(endpoint);
-    }
+    broadcast([&endpoint](ITransportListener& handler) { handler.on_connection_lost(endpoint); });
 }
 
 void ServiceDemux::on_connection_established(const Endpoint& endpoint)
 {
-    std::array<Claimed, MAX_DEMUX_SERVICES> claimed{};
-    const std::size_t count = claim_all(claimed);
-    for (std::size_t index = 0; index < count; ++index) {
-        FlightGuard const guard(*this, claimed[index].index);
-        claimed[index].handler->on_connection_established(endpoint);
-    }
+    broadcast(
+        [&endpoint](ITransportListener& handler) { handler.on_connection_established(endpoint); });
 }
 
 void ServiceDemux::on_error(Result error)
 {
-    std::array<Claimed, MAX_DEMUX_SERVICES> claimed{};
-    const std::size_t count = claim_all(claimed);
-    for (std::size_t index = 0; index < count; ++index) {
-        FlightGuard const guard(*this, claimed[index].index);
-        claimed[index].handler->on_error(error);
-    }
+    broadcast([error](ITransportListener& handler) { handler.on_error(error); });
 }
 
 void ServiceDemux::on_message_rejected(const MessageRejectionInfo& info)

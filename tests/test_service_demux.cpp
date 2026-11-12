@@ -17,6 +17,7 @@
 #include <cstring>
 #include <gtest/gtest.h>
 #include <mutex>
+#include <stdexcept>
 
 #include "platform/buffer_pool.h"
 #include "platform/net.h"
@@ -587,3 +588,115 @@ TEST(ServiceDemux, TwoServiceIdsShareOneTcpListener)
     expect_echo(response_b, kServiceB, 0x0009, kMarkerB);
     EXPECT_EQ(demux.stop(), Result::SUCCESS);
 }
+
+class DropOtherHandler : public ITransportListener {
+   public:
+    DropOtherHandler(ServiceDemux& demux, uint16_t other) : demux_(demux), other_(other)
+    {
+    }
+
+    void on_message_received(MessagePtr /*message*/, const Endpoint& /*sender*/) override
+    {
+    }
+    void on_connection_lost(const Endpoint& /*endpoint*/) override
+    {
+    }
+    void on_connection_established(const Endpoint& /*endpoint*/) override
+    {
+        ++established_;
+        drop_result_ = demux_.unregister_service(other_);
+    }
+    void on_error(Result /*error*/) override
+    {
+    }
+
+    ServiceDemux& demux_;
+    uint16_t other_;
+    int established_{0};
+    Result drop_result_{Result::INVALID_STATE};
+};
+
+class CountHandler : public ITransportListener {
+   public:
+    void on_message_received(MessagePtr /*message*/, const Endpoint& /*sender*/) override
+    {
+    }
+    void on_connection_lost(const Endpoint& /*endpoint*/) override
+    {
+    }
+    void on_connection_established(const Endpoint& /*endpoint*/) override
+    {
+        ++established_;
+    }
+    void on_error(Result /*error*/) override
+    {
+        ++errors_;
+    }
+
+    int established_{0};
+    int errors_{0};
+};
+
+/**
+ * @test_case TC_DEMUX_UNREGISTER_LATER_SERVICE
+ * @tests REQ_TRANSPORT_013, REQ_TRANSPORT_022
+ * @brief A callback may unregister a later service without waiting on that callback.
+ */
+TEST(ServiceDemux, CallbackUnregistersLaterService)
+{
+    UdpTransport transport(Endpoint("127.0.0.1", 0), udp_config());
+    ServiceDemux demux(transport);
+    DropOtherHandler first(demux, kServiceB);
+    CountHandler second;
+    ASSERT_EQ(demux.register_service(kServiceA, first), Result::SUCCESS);
+    ASSERT_EQ(demux.register_service(kServiceB, second), Result::SUCCESS);
+
+    demux.on_connection_established(Endpoint("127.0.0.1", 9));
+
+    EXPECT_EQ(first.established_, 1);
+    EXPECT_EQ(first.drop_result_, Result::SUCCESS);
+    EXPECT_EQ(second.established_, 0);
+    EXPECT_FALSE(demux.contains(kServiceB));
+    EXPECT_TRUE(demux.contains(kServiceA));
+    EXPECT_EQ(demux.unregister_service(kServiceA), Result::SUCCESS);
+}
+
+#if defined(__cpp_exceptions)
+class ThrowingHandler : public ITransportListener {
+   public:
+    void on_message_received(MessagePtr /*message*/, const Endpoint& /*sender*/) override
+    {
+    }
+    void on_connection_lost(const Endpoint& /*endpoint*/) override
+    {
+    }
+    void on_connection_established(const Endpoint& /*endpoint*/) override
+    {
+    }
+    void on_error(Result /*error*/) override
+    {
+        throw std::runtime_error("demux handler");
+    }
+};
+
+/**
+ * @test_case TC_DEMUX_BROADCAST_EXCEPTION
+ * @tests REQ_TRANSPORT_013, REQ_TRANSPORT_022
+ * @brief A throwing handler releases its claim so later services can still be removed.
+ */
+TEST(ServiceDemux, BroadcastExceptionReleasesClaims)
+{
+    UdpTransport transport(Endpoint("127.0.0.1", 0), udp_config());
+    ServiceDemux demux(transport);
+    ThrowingHandler first;
+    CountHandler second;
+    ASSERT_EQ(demux.register_service(kServiceA, first), Result::SUCCESS);
+    ASSERT_EQ(demux.register_service(kServiceB, second), Result::SUCCESS);
+
+    EXPECT_THROW(demux.on_error(Result::NETWORK_ERROR), std::runtime_error);
+
+    EXPECT_EQ(second.errors_, 0);
+    EXPECT_EQ(demux.unregister_service(kServiceB), Result::SUCCESS);
+    EXPECT_EQ(demux.unregister_service(kServiceA), Result::SUCCESS);
+}
+#endif
