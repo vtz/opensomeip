@@ -18,6 +18,7 @@ OPENSOMEIP_SRCS = [
     "src/transport/tcp_transport.cpp",
     "src/transport/event_driven_udp_transport.cpp",
     "src/transport/event_driven_tcp_transport.cpp",
+    "src/transport/service_demux.cpp",
     "src/e2e/e2e_protection.cpp",
     "src/e2e/e2e_receive.cpp",
     "src/e2e/e2e_header.cpp",

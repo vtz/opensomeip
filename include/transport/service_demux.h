@@ -190,8 +190,9 @@ class ServiceDemux : public ITransportListener {
     [[nodiscard]] bool claim(uint16_t service_id, Claimed& claimed);
     [[nodiscard]] bool claim_at(std::size_t index, uint16_t service_id, Claimed& claimed);
     std::size_t snapshot_targets(std::array<BroadcastTarget, MAX_DEMUX_SERVICES>& targets);
+    // Invoked once per registered handler, so the callback stays an lvalue.
     template <typename Callback>
-    void broadcast(Callback&& callback);
+    void broadcast(const Callback& callback);
     void release_flight(std::size_t index);
 
     ITransport& transport_;

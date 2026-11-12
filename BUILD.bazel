@@ -52,6 +52,7 @@ host_cc_test(
     hold_connect = True,
 )
 host_cc_test("test_udp_transport", "tests/test_udp_transport.cpp")
+host_cc_test("test_service_demux", "tests/test_service_demux.cpp")
 host_cc_test("test_multicast_membership", "tests/test_multicast_membership.cpp")
 host_cc_test("test_event_driven_udp_transport", "tests/test_event_driven_udp_transport.cpp")
 host_cc_test("test_event_driven_tcp_transport", "tests/test_event_driven_tcp_transport.cpp")
