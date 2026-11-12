@@ -422,21 +422,16 @@ bool open_peer(RawUdpPeer& peer, const char* address, uint16_t port)
     return true;
 }
 
-bool prepare_endpoints(SdEndpoints& endpoints, const char* multicast_address,
-                       uint32_t initial_delay_ms, bool offer_now, uint16_t service_id,
-                       uint16_t instance_id, uint32_t ttl_seconds)
+bool open_group_sockets(SdEndpoints& endpoints, const char* other_address, uint16_t port)
 {
-    const bool library_default = multicast_address == nullptr ||
-                                 std::strcmp(multicast_address, kLibraryDefaultMulticast) == 0;
-    endpoints.offer_address = library_default ? kLibraryDefaultMulticast : multicast_address;
-    const char* other_address = library_default ? kConfiguredMulticast : kLibraryDefaultMulticast;
-
-    if (!open_peer(endpoints.offer_group, endpoints.offer_address, 0)) {
+    if (!open_peer(endpoints.offer_group, endpoints.offer_address, port)) {
         ADD_FAILURE() << "offer-group socket failed for " << endpoints.offer_address << ", errno "
                       << someip_socket_errno();
         return false;
     }
-    endpoints.port = endpoints.offer_group.port();
+    if (port == 0) {
+        endpoints.port = endpoints.offer_group.port();
+    }
     if (!open_peer(endpoints.other_group, other_address, endpoints.port)) {
         ADD_FAILURE() << "other-group socket failed for " << other_address << ", errno "
                       << someip_socket_errno();
@@ -451,9 +446,14 @@ bool prepare_endpoints(SdEndpoints& endpoints, const char* multicast_address,
         ADD_FAILURE() << "failed to tune peer sockets";
         return false;
     }
+    return true;
+}
 
+bool start_server(SdEndpoints& endpoints, uint32_t initial_delay_ms, bool library_default,
+                  bool offer_now, uint16_t service_id, uint16_t instance_id, uint32_t ttl_seconds)
+{
     endpoints.server = std::make_unique<SdServer>(make_sd_config(
-        endpoints.port, initial_delay_ms, library_default ? nullptr : multicast_address));
+        endpoints.port, initial_delay_ms, library_default ? nullptr : endpoints.offer_address));
     if (offer_now) {
         ServiceInstance instance(service_id, instance_id, 1, 0);
         instance.ttl_seconds = ttl_seconds;
@@ -471,6 +471,53 @@ bool prepare_endpoints(SdEndpoints& endpoints, const char* multicast_address,
         return false;
     }
     return true;
+}
+
+bool prepare_endpoints(SdEndpoints& endpoints, const char* multicast_address,
+                       uint32_t initial_delay_ms, bool offer_now, uint16_t service_id,
+                       uint16_t instance_id, uint32_t ttl_seconds)
+{
+    const bool library_default = multicast_address == nullptr ||
+                                 std::strcmp(multicast_address, kLibraryDefaultMulticast) == 0;
+    endpoints.offer_address = library_default ? kLibraryDefaultMulticast : multicast_address;
+    const char* other_address = library_default ? kConfiguredMulticast : kLibraryDefaultMulticast;
+
+#if defined(_WIN32)
+    // Unicast on a shared UDP port goes to the first socket that bound it.
+    // Multicast still reaches every member. Bind the server first, then the
+    // group sockets, and only then offer, so the offer is not sent before
+    // those sockets have joined.
+    RawUdpPeer port_holder;
+    if (!port_holder.open() || !port_holder.bind_to("0.0.0.0", 0)) {
+        ADD_FAILURE() << "could not reserve an SD port, errno " << someip_socket_errno();
+        return false;
+    }
+    endpoints.port = port_holder.port();
+    port_holder.close();
+    if (!start_server(endpoints, initial_delay_ms, library_default, false, service_id, instance_id,
+                      ttl_seconds)) {
+        return false;
+    }
+    if (!open_group_sockets(endpoints, other_address, endpoints.port)) {
+        return false;
+    }
+    if (!offer_now) {
+        return true;
+    }
+    ServiceInstance instance(service_id, instance_id, 1, 0);
+    instance.ttl_seconds = ttl_seconds;
+    if (!endpoints.server->offer_service(instance, kServiceEndpoint)) {
+        ADD_FAILURE() << "offer_service failed after the group sockets joined";
+        return false;
+    }
+    return true;
+#else
+    if (!open_group_sockets(endpoints, other_address, 0)) {
+        return false;
+    }
+    return start_server(endpoints, initial_delay_ms, library_default, offer_now, service_id,
+                        instance_id, ttl_seconds);
+#endif
 }
 
 platform::ByteBuffer build_find(uint16_t service_id, uint16_t instance_id)
