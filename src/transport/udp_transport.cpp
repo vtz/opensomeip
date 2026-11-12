@@ -429,7 +429,7 @@ void UdpTransport::apply_multicast_send_options() {
         if (someip_setsockopt(socket_fd_, IPPROTO_IP, option, &as_int, sizeof(as_int)) == 0) {
             return;
         }
-        unsigned char const as_byte = static_cast<unsigned char>(value);
+        auto const as_byte = static_cast<unsigned char>(value);
         static_cast<void>(someip_setsockopt(socket_fd_, IPPROTO_IP, option, &as_byte, sizeof(as_byte)));
     };
 
