@@ -2616,6 +2616,17 @@ TEST_F(SdTest, InitialWaitOverrideAndRange) {
     full_span.initial_delay = full_span.initial_delay_max;
     const uint64_t drawn = pick_initial_wait_ms(full_span);
     EXPECT_LT(drawn, 0x100000000ULL);
+
+    // Top-of-uint32 range: span fits in uint32_t and asserts real bounds.
+    SdConfig top_span;
+    top_span.initial_delay_min = std::chrono::milliseconds(0xFFFFFFF5LL);  // UINT32_MAX - 10
+    top_span.initial_delay_max = std::chrono::milliseconds(0xFFFFFFFFLL);  // UINT32_MAX
+    top_span.initial_delay = top_span.initial_delay_max;
+    for (int i = 0; i < 20; ++i) {
+        const uint32_t v = pick_initial_wait_ms(top_span);
+        EXPECT_GE(v, 0xFFFFFFF5u);  // UINT32_MAX - 10
+        EXPECT_LE(v, 0xFFFFFFFFu);  // UINT32_MAX
+    }
 }
 
 /**
