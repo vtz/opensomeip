@@ -57,9 +57,14 @@ UdpTransport::UdpTransport(const Endpoint& local_endpoint, const UdpTransportCon
                 : static_cast<uint32_t>(budget);
     }
     if (config_.enable_tp) {
+        // A fitting message is one datagram, so the receive buffer has to hold
+        // that datagram. max_message_size 0 leaves the budget on
+        // tp_config.max_single_datagram_size instead of shrinking the buffer
+        // to the segment chunk.
+        const size_t single =
+            static_cast<size_t>(config_.tp_config.max_single_datagram_size);
         const size_t tp_datagram =
             20U + static_cast<size_t>(config_.tp_config.max_segment_size);
-        const size_t single = config_.max_message_size;
         const size_t min_rx = single > tp_datagram ? single : tp_datagram;
         if (config_.receive_buffer_size < min_rx) {
             config_.receive_buffer_size = min_rx;

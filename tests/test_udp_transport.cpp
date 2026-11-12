@@ -1721,3 +1721,42 @@ TEST(UdpSingleDatagram, PayloadPastDatagramBudgetIsSegmented) {
     sender.stop();
     receiver.stop();
 }
+
+/**
+ * @test_case TC_UDP_TP_ZERO_BUDGET_RX
+ * @tests REQ_TP_090
+ * @brief max_message_size 0 still receives a datagram that fits the TP budget
+ */
+TEST(UdpSingleDatagram, ZeroMessageBudgetReceivesFittingDatagram) {
+    UdpTransportConfig config;
+    config.enable_tp = true;
+    config.max_message_size = 0;
+    config.tp_config.max_segment_size = 32;
+    config.receive_buffer_size = 64;
+    EXPECT_EQ(config.tp_config.max_single_datagram_size, someip::tp::DEFAULT_SINGLE_DATAGRAM_SIZE);
+
+    constexpr size_t kPayload = 80;
+    const Message message =
+        message_with_payload(MessageType::REQUEST, 0x0004, kPayload, 0x44);
+    ASSERT_GT(message.get_total_size(), config.receive_buffer_size);
+    ASSERT_LE(message.get_total_size(), config.tp_config.max_single_datagram_size);
+
+    UdpTransport sender(Endpoint("127.0.0.1", 0), config);
+    UdpTransport receiver(Endpoint("127.0.0.1", 0), config);
+    TestUdpListener listener;
+    receiver.set_listener(&listener);
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    ASSERT_EQ(sender.send_message(message, receiver.get_local_endpoint()), Result::SUCCESS);
+    ASSERT_TRUE(listener.wait_for_message(std::chrono::milliseconds(2000)));
+    ASSERT_EQ(listener.received_messages_.size(), 1u);
+    const MessagePtr& received = listener.received_messages_[0].first;
+    ASSERT_NE(received, nullptr);
+    EXPECT_FALSE(received->uses_tp());
+    EXPECT_EQ(received->get_payload().size(), kPayload);
+    EXPECT_EQ(received->get_payload(), message.get_payload());
+
+    sender.stop();
+    receiver.stop();
+}
