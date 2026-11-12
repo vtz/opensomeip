@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+        <meta name="description" content="C++ API for SOME/IP End-to-End protection. CRC profiles, data integrity verification, and sequence counters for safety-critical automotive messaging.">
       
       
         <meta name="author" content="Vinicius Tadeu Zein">
@@ -29,7 +29,7 @@
     
     
       
-        <title>E2E Protection - OpenSOME/IP</title>
+        <title>SOME/IP E2E Protection API - OpenSOME/IP</title>
       
     
     
@@ -79,14 +79,14 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vtz.github.io/opensomeip/api/e2e/">
   <meta property="og:title" content="E2E Protection">
-  <meta property="og:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta property="og:description" content="C++ API for SOME/IP End-to-End protection. CRC profiles, data integrity verification, and sequence counters for safety-critical automotive messaging.">
   <meta property="og:site_name" content="OpenSOME/IP">
   <meta property="og:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://vtz.github.io/opensomeip/api/e2e/">
   <meta name="twitter:title" content="E2E Protection">
-  <meta name="twitter:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta name="twitter:description" content="C++ API for SOME/IP End-to-End protection. CRC profiles, data integrity verification, and sequence counters for safety-critical automotive messaging.">
   <meta name="twitter:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   
@@ -149,7 +149,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              E2E Protection
+              SOME/IP E2E Protection API
             
           </span>
         </div>
@@ -2040,6 +2040,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#receive-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Receive policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2912,6 +2923,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#receive-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Receive policy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3000,8 +3022,6 @@
 - <code>uint32_t max_counter_value</code> - Maximum counter value before rollover
 - <code>uint32_t freshness_timeout_ms</code> - Freshness timeout in milliseconds
 - <code>uint8_t crc_type</code> - CRC type (0 = SAE-J1850, 1 = ITU-T X.25, 2 = CRC32)</p>
-<p>Receive bindings live on the transport config (<code>E2EReceiveTable</code>), not on
-<code>E2EConfig</code>. They select the default 12-byte Offset-64 layout only.</p>
 <h3 id="e2eheader">E2EHeader<a class="headerlink" href="#e2eheader" title="Permanent link">&para;</a></h3>
 <p>E2E protection header structure.</p>
 <p><strong>Fields:</strong>
@@ -3043,6 +3063,22 @@
 - <code>Result::NOT_IMPLEMENTED</code> - prefix or profile header above the compile-time cap
 - <code>Result::TIMEOUT</code> - Freshness timeout detected
 - Other error codes as appropriate</p>
+<h2 id="receive-policy">Receive policy<a class="headerlink" href="#receive-policy" title="Permanent link">&para;</a></h2>
+<p><code>E2EReceiveTable</code> on <code>UdpTransportConfig</code>, <code>TcpTransportConfig</code>, and the
+event-driven transport configs names which Service ID and Method/Event ID
+carry the default 12-byte E2E header (Offset 64). Fill the table before
+constructing the transport.</p>
+<ul>
+<li><code>E2EReceivePolicy::STACK_MANAGED</code> validates before the application handler.
+  A <code>validate()</code> failure uses <code>MessageRejectionStage::E2E_INTEGRITY</code> and does not deliver.
+  A protected frame that fails to deserialize uses <code>MessageRejectionStage::DESERIALIZE</code>.</li>
+<li><code>E2EReceivePolicy::APPLICATION_MANAGED</code> delivers a message whose payload
+  excludes the header. Call <code>E2EProtection::validate</code> on that message.
+  Stack-managed checks use the binding's <code>max_counter_value</code> and
+  <code>freshness_timeout_ms</code> (same defaults as <code>E2EConfig</code>).</li>
+</ul>
+<p>TP reassembly finishes before this check. A full table returns
+<code>Result::RESOURCE_EXHAUSTED</code> from <code>add</code>, not a receive rejection.</p>
 <h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../architecture/e2e_protection/">E2E Protection Architecture</a> -- Design and data flow</li>
@@ -3054,6 +3090,9 @@
 
 
 
+
+  
+  
 
 
 

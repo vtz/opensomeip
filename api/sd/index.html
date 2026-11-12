@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+        <meta name="description" content="C++ API for SOME/IP Service Discovery. Multicast-based offer, find, subscribe with IPv4/IPv6 endpoint options and TTL management.">
       
       
         <meta name="author" content="Vinicius Tadeu Zein">
@@ -29,7 +29,7 @@
     
     
       
-        <title>Service Discovery - OpenSOME/IP</title>
+        <title>SOME/IP-SD Service Discovery API - OpenSOME/IP</title>
       
     
     
@@ -79,14 +79,14 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vtz.github.io/opensomeip/api/sd/">
   <meta property="og:title" content="Service Discovery">
-  <meta property="og:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta property="og:description" content="C++ API for SOME/IP Service Discovery. Multicast-based offer, find, subscribe with IPv4/IPv6 endpoint options and TTL management.">
   <meta property="og:site_name" content="OpenSOME/IP">
   <meta property="og:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://vtz.github.io/opensomeip/api/sd/">
   <meta name="twitter:title" content="Service Discovery">
-  <meta name="twitter:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta name="twitter:description" content="C++ API for SOME/IP Service Discovery. Multicast-based offer, find, subscribe with IPv4/IPv6 endpoint options and TTL management.">
   <meta name="twitter:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   
@@ -149,7 +149,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Service Discovery
+              SOME/IP-SD Service Discovery API
             
           </span>
         </div>
@@ -3303,6 +3303,7 @@
 <h1 id="service-discovery-sd-layer">Service Discovery (SD) Layer<a class="headerlink" href="#service-discovery-sd-layer" title="Permanent link">&para;</a></h1>
 <p>The Service Discovery layer implements the SOME/IP-SD protocol, enabling dynamic service discovery in automotive networks. This layer allows services to advertise their availability and clients to find and subscribe to services automatically.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<p><img alt="SOME/IP-SD Sequence" src="../../diagrams/svg/sd_sequence_diagram.svg" /></p>
 <h3 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h3>
 <h4 id="sdclient">SdClient<a class="headerlink" href="#sdclient" title="Permanent link">&para;</a></h4>
 <ul>
@@ -3341,6 +3342,8 @@
 <li>Event group definitions</li>
 <li>SD configuration parameters</li>
 <li>Result codes and subscription states</li>
+<li><code>MulticastState</code> / rejoin bounds (<code>multicast_rejoin_max_attempts</code>,
+    <code>multicast_rejoin_interval</code>) for local membership observability</li>
 </ul>
 <h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
 <h3 id="server-side-offering-services">Server Side - Offering Services<a class="headerlink" href="#server-side-offering-services" title="Permanent link">&para;</a></h3>
@@ -3421,7 +3424,7 @@
 <li><strong>IPV6_ENDPOINT (0x06)</strong>: IPv6 unicast endpoint (codec; <code>AF_INET6</code> transport is separate)</li>
 <li><strong>IPV4_MULTICAST (0x14)</strong>: IPv4 multicast address</li>
 <li><strong>IPV6_MULTICAST (0x16)</strong>: IPv6 multicast address (codec; <code>AF_INET6</code> transport is separate)</li>
-<li><strong>IPV4_SD_ENDPOINT (0x24)</strong>: IPv4 SD endpoint (received; not referenced by entries). When it is the first option, replies and reboot detection use it instead of the datagram source.</li>
+<li><strong>IPV4_SD_ENDPOINT (0x24)</strong>: IPv4 SD endpoint. Reception only; a usable first option overrides the datagram source for SD replies and reboot detection. Entries must not reference it.</li>
 <li><strong>IPV6_SD_ENDPOINT (0x26)</strong>: IPv6 SD endpoint (type reserved; codec pending)</li>
 </ul>
 <h3 id="message-flow">Message Flow<a class="headerlink" href="#message-flow" title="Permanent link">&para;</a></h3>
@@ -3463,7 +3466,7 @@
 <li><strong>Initial Wait</strong>: First Offer/Find is delayed by a random duration in <code>[initial_delay_min, initial_delay_max]</code> (override available for tests)</li>
 <li><strong>Repetition Phase</strong>: After the first Offer, exponential back-off repeats at <code>repetition_base × 2^n</code> until the interval reaches <code>cyclic_offer</code></li>
 <li><strong>Cyclic Phase</strong>: Regular offers sent every <code>cyclic_offer</code> (default 30 s)</li>
-<li><strong>TTL Expiration</strong>: Services expire after the configured <code>ttl</code> duration (<code>std::chrono::milliseconds</code>)</li>
+<li><strong>TTL Expiration</strong>: Services expire after TTL seconds</li>
 </ol>
 <h2 id="safety-considerations-non-certified">Safety Considerations (non-certified)<a class="headerlink" href="#safety-considerations-non-certified" title="Permanent link">&para;</a></h2>
 <ol>
@@ -3522,6 +3525,9 @@
 
 
 
+
+  
+  
 
 
 

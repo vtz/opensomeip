@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+        <meta name="description" content="C++ API for SOME/IP Remote Procedure Calls. Request/response communication with session handling, return codes, and timeout management.">
       
       
         <meta name="author" content="Vinicius Tadeu Zein">
@@ -29,7 +29,7 @@
     
     
       
-        <title>RPC - OpenSOME/IP</title>
+        <title>SOME/IP RPC API - OpenSOME/IP</title>
       
     
     
@@ -79,14 +79,14 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vtz.github.io/opensomeip/api/rpc/">
   <meta property="og:title" content="RPC">
-  <meta property="og:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta property="og:description" content="C++ API for SOME/IP Remote Procedure Calls. Request/response communication with session handling, return codes, and timeout management.">
   <meta property="og:site_name" content="OpenSOME/IP">
   <meta property="og:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://vtz.github.io/opensomeip/api/rpc/">
   <meta name="twitter:title" content="RPC">
-  <meta name="twitter:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta name="twitter:description" content="C++ API for SOME/IP Remote Procedure Calls. Request/response communication with session handling, return codes, and timeout management.">
   <meta name="twitter:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   
@@ -149,7 +149,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              RPC
+              SOME/IP RPC API
             
           </span>
         </div>
@@ -3281,30 +3281,33 @@
 <h1 id="rpc-remote-procedure-call-layer">RPC (Remote Procedure Call) Layer<a class="headerlink" href="#rpc-remote-procedure-call-layer" title="Permanent link">&para;</a></h1>
 <p>The RPC layer provides high-level interfaces for making method calls between SOME/IP clients and servers. This layer handles request/response correlation, timeout management, and parameter serialization/deserialization.</p>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<p><img alt="RPC Sequence" src="../../diagrams/svg/rpc_sequence_diagram.svg" /></p>
 <h3 id="components">Components<a class="headerlink" href="#components" title="Permanent link">&para;</a></h3>
 <h4 id="rpcclient">RpcClient<a class="headerlink" href="#rpcclient" title="Permanent link">&para;</a></h4>
 <ul>
 <li><strong>Purpose</strong>: Client-side interface for making RPC method calls</li>
 <li><strong>Features</strong>:</li>
 <li>Synchronous and asynchronous method calls</li>
-<li>Fire-and-forget <code>REQUEST_NO_RETURN</code></li>
-<li>Explicit remote endpoint (not the SD port)</li>
+<li>Fire-and-forget <code>REQUEST_NO_RETURN</code> (<code>send_request_no_return</code>)</li>
+<li>Explicit remote endpoint (offered service address, not the SD port)</li>
 <li>Service major / Interface Version on outgoing messages</li>
 <li>Automatic timeout handling</li>
 <li>Request/response correlation</li>
 <li>Call cancellation support</li>
 <li>Statistics tracking</li>
+<li>Incoming-message rejection callback (<code>set_message_rejection_handler</code>)</li>
 </ul>
 <h4 id="rpcserver">RpcServer<a class="headerlink" href="#rpcserver" title="Permanent link">&para;</a></h4>
 <ul>
 <li><strong>Purpose</strong>: Server-side interface for handling RPC method calls</li>
 <li><strong>Features</strong>:</li>
-<li>Method handler registration (request/response or fire-and-forget)</li>
-<li>Default bind <code>127.0.0.1:30501</code></li>
-<li><code>E_WRONG_INTERFACE_VERSION</code> on major mismatch</li>
+<li>Method handler registration with request/response or fire-and-forget semantics</li>
+<li>Binds an application RPC endpoint (default <code>127.0.0.1:30501</code>, not port 30490)</li>
+<li><code>E_WRONG_INTERFACE_VERSION</code> when a response-expecting request's major does not match</li>
 <li>Automatic response generation</li>
 <li>Error handling and return codes</li>
 <li>Statistics tracking</li>
+<li>Incoming-message rejection callback (<code>set_message_rejection_handler</code>)</li>
 </ul>
 <h4 id="rpctypes">RpcTypes<a class="headerlink" href="#rpctypes" title="Permanent link">&para;</a></h4>
 <ul>
@@ -3317,56 +3320,73 @@
 <h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
 <h3 id="server-side">Server Side<a class="headerlink" href="#server-side" title="Permanent link">&para;</a></h3>
 <div class="language-cpp highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;rpc/rpc_server.h&gt;</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">someip</span><span class="o">::</span><span class="nn">rpc</span><span class="p">;</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1">// Create server for service ID 0x1234</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">RpcServer</span><span class="w"> </span><span class="nf">server</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">);</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1">// Initialize server</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">server</span><span class="p">.</span><span class="n">initialize</span><span class="p">();</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1">// Register method handler</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">server</span><span class="p">.</span><span class="n">register_method</span><span class="p">(</span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="p">[](</span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">client_id</span><span class="p">,</span><span class="w"> </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">session_id</span><span class="p">,</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">                                 </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">input</span><span class="p">,</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">                                 </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">output</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">RpcResult</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="c1">// Process input parameters</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="c1">// Generate output parameters</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">RpcResult</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">;</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="p">});</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1">// Server runs until shutdown</span>
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="n">server</span><span class="p">.</span><span class="n">shutdown</span><span class="p">();</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;transport/endpoint.h&gt;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">someip</span><span class="o">::</span><span class="nn">rpc</span><span class="p">;</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1">// Create server for service ID 0x1234, major 0x01, application RPC port</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">RpcServer</span><span class="w"> </span><span class="n">server</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x01</span><span class="p">,</span><span class="w"> </span><span class="n">someip</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"127.0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="n">SOMEIP_DEFAULT_RPC_PORT</span><span class="p">));</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1">// Initialize server</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">server</span><span class="p">.</span><span class="n">initialize</span><span class="p">();</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1">// Register method handler (request/response by default)</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">server</span><span class="p">.</span><span class="n">register_method</span><span class="p">(</span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="p">[](</span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">client_id</span><span class="p">,</span><span class="w"> </span><span class="kt">uint16_t</span><span class="w"> </span><span class="n">session_id</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">                                 </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">input</span><span class="p">,</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">                                 </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;&amp;</span><span class="w"> </span><span class="n">output</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">RpcResult</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="c1">// Process input parameters</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">    </span><span class="c1">// Generate output parameters</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">RpcResult</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">;</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="p">});</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="c1">// Fire-and-forget method: incoming REQUEST_NO_RETURN runs the handler with no RESPONSE</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="n">server</span><span class="p">.</span><span class="n">register_method</span><span class="p">(</span><span class="mh">0x0002</span><span class="p">,</span><span class="w"> </span><span class="p">[](</span><span class="kt">uint16_t</span><span class="p">,</span><span class="w"> </span><span class="kt">uint16_t</span><span class="p">,</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">                                 </span><span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;&amp;</span><span class="p">,</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">                                 </span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;&amp;</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">RpcResult</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">RpcResult</span><span class="o">::</span><span class="n">SUCCESS</span><span class="p">;</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="p">},</span><span class="w"> </span><span class="n">MethodSemantics</span><span class="o">::</span><span class="n">FIRE_AND_FORGET</span><span class="p">);</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="c1">// Server runs until shutdown</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="n">server</span><span class="p">.</span><span class="n">shutdown</span><span class="p">();</span>
 </span></code></pre></div>
 <h3 id="client-side">Client Side<a class="headerlink" href="#client-side" title="Permanent link">&para;</a></h3>
 <div class="language-cpp highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;rpc/rpc_client.h&gt;</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;rpc/rpc_types.h&gt;</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;transport/endpoint.h&gt;</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">using</span><span class="w"> </span><span class="k">namespace</span><span class="w"> </span><span class="nn">someip</span><span class="o">::</span><span class="nn">rpc</span><span class="p">;</span>
 </span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1">// Create client with ID 0xABCD</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">RpcClient</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="mh">0xABCD</span><span class="p">);</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1">// Create client with ID 0xABCD (optional service major, ephemeral local bind)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">RpcClient</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="mh">0xABCD</span><span class="p">,</span><span class="w"> </span><span class="mh">0x01</span><span class="p">);</span>
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1">// Configure the remote endpoint (offered-service RPC port, not the SD port)</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">client</span><span class="p">.</span><span class="n">set_remote_endpoint</span><span class="p">(</span><span class="n">someip</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"127.0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="n">SOMEIP_DEFAULT_RPC_PORT</span><span class="p">));</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1">// Initialize client</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">client</span><span class="p">.</span><span class="n">initialize</span><span class="p">();</span>
 </span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1">// Initialize client</span>
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">client</span><span class="p">.</span><span class="n">initialize</span><span class="p">();</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1">// Destination is the offered service endpoint — never the SD port (30490)</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">client</span><span class="p">.</span><span class="n">set_remote_endpoint</span><span class="p">(</span><span class="n">someip</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"127.0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="n">SOMEIP_DEFAULT_RPC_PORT</span><span class="p">));</span>
 </span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
 </span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1">// Synchronous call</span>
 </span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="n">RpcSyncResult</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">call_method_sync</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="n">parameters</span><span class="p">);</span>
 </span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="c1">// Asynchronous call</span>
-</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="n">RpcCallHandle</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">call_method_async</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="n">parameters</span><span class="p">,</span>
-</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="p">[](</span><span class="k">const</span><span class="w"> </span><span class="n">RpcResponse</span><span class="o">&amp;</span><span class="w"> </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">        </span><span class="c1">// Handle response</span>
-</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">    </span><span class="p">});</span>
-</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
-</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="c1">// Cancel async call if needed</span>
-</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="n">client</span><span class="p">.</span><span class="n">cancel_call</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
-</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
-</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="c1">// Client shutdown</span>
-</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="n">client</span><span class="p">.</span><span class="n">shutdown</span><span class="p">();</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="c1">// Per-call destination overload</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="n">RpcSyncResult</span><span class="w"> </span><span class="n">result2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">call_method_sync</span><span class="p">(</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="n">parameters</span><span class="p">,</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="n">someip</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"127.0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="n">SOMEIP_DEFAULT_RPC_PORT</span><span class="p">));</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="c1">// Asynchronous call</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="n">RpcCallHandle</span><span class="w"> </span><span class="n">handle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">call_method_async</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0001</span><span class="p">,</span><span class="w"> </span><span class="n">parameters</span><span class="p">,</span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="p">[](</span><span class="k">const</span><span class="w"> </span><span class="n">RpcResponse</span><span class="o">&amp;</span><span class="w"> </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">        </span><span class="c1">// Handle response</span>
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">    </span><span class="p">});</span>
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="c1">// Fire-and-forget (message type REQUEST_NO_RETURN / 0x01)</span>
+</span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="n">client</span><span class="p">.</span><span class="n">send_request_no_return</span><span class="p">(</span><span class="mh">0x1234</span><span class="p">,</span><span class="w"> </span><span class="mh">0x0002</span><span class="p">,</span><span class="w"> </span><span class="n">parameters</span><span class="p">,</span>
+</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">    </span><span class="n">someip</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"127.0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="n">SOMEIP_DEFAULT_RPC_PORT</span><span class="p">));</span>
+</span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>
+</span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="c1">// Cancel async call if needed</span>
+</span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a><span class="n">client</span><span class="p">.</span><span class="n">cancel_call</span><span class="p">(</span><span class="n">handle</span><span class="p">);</span>
+</span><span id="__span-1-35"><a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>
+</span><span id="__span-1-36"><a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a><span class="c1">// Client shutdown</span>
+</span><span id="__span-1-37"><a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="n">client</span><span class="p">.</span><span class="n">shutdown</span><span class="p">();</span>
 </span></code></pre></div>
 <h2 id="safety-considerations-non-certified">Safety Considerations (non-certified)<a class="headerlink" href="#safety-considerations-non-certified" title="Permanent link">&para;</a></h2>
 <ol>
@@ -3392,7 +3412,8 @@
 </span></code></pre></div>
 <h3 id="message-types-used">Message Types Used<a class="headerlink" href="#message-types-used" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>REQUEST</strong>: Client to server method invocation</li>
+<li><strong>REQUEST</strong>: Client to server method invocation (response required)</li>
+<li><strong>REQUEST_NO_RETURN</strong>: Fire-and-forget request (no response)</li>
 <li><strong>RESPONSE</strong>: Server to client method result (success)</li>
 <li><strong>ERROR</strong>: Server to client method result (failure)</li>
 </ul>
@@ -3415,12 +3436,11 @@
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">timeout</span><span class="p">.</span><span class="n">response_timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">chrono</span><span class="o">::</span><span class="n">milliseconds</span><span class="p">(</span><span class="mi">5000</span><span class="p">);</span>
 </span></code></pre></div>
 <h3 id="client-configuration">Client Configuration<a class="headerlink" href="#client-configuration" title="Permanent link">&para;</a></h3>
-<div class="language-cpp highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">RpcClient</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="n">client_id</span><span class="p">);</span>
+<div class="language-cpp highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">RpcClient</span><span class="w"> </span><span class="nf">client</span><span class="p">(</span><span class="n">client_id</span><span class="p">);</span><span class="w">  </span><span class="c1">// binds 0.0.0.0:0 (ephemeral)</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">client</span><span class="p">.</span><span class="n">set_remote_endpoint</span><span class="p">(</span><span class="n">someip</span><span class="o">::</span><span class="n">transport</span><span class="o">::</span><span class="n">Endpoint</span><span class="p">(</span><span class="s">"127.0.0.1"</span><span class="p">,</span><span class="w"> </span><span class="n">SOMEIP_DEFAULT_RPC_PORT</span><span class="p">));</span>
 </span></code></pre></div>
 <h3 id="server-configuration">Server Configuration<a class="headerlink" href="#server-configuration" title="Permanent link">&para;</a></h3>
-<div class="language-cpp highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">RpcServer</span><span class="w"> </span><span class="nf">server</span><span class="p">(</span><span class="n">service_id</span><span class="p">);</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="c1">// Server binds to 127.0.0.1:30501 by default (application RPC, not SD)</span>
+<div class="language-cpp highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">RpcServer</span><span class="w"> </span><span class="nf">server</span><span class="p">(</span><span class="n">service_id</span><span class="p">);</span><span class="w">  </span><span class="c1">// binds 127.0.0.1:30501 by default</span>
 </span></code></pre></div>
 <h2 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h2>
 <h3 id="client-errors">Client Errors<a class="headerlink" href="#client-errors" title="Permanent link">&para;</a></h3>
@@ -3441,6 +3461,8 @@
 <p>Unit tests cover:
 - Method registration/unregistration
 - Synchronous and asynchronous calls
+- Fire-and-forget <code>REQUEST_NO_RETURN</code>
+- Service major / Interface Version round-trip and mismatch errors
 - Timeout behavior
 - Error handling
 - Statistics tracking</p>
@@ -3457,6 +3479,9 @@
 
 
 
+
+  
+  
 
 
 

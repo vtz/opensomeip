@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+        <meta name="description" content="C++ API for SOME/IP publish/subscribe events. Event groups, notification handlers, and subscriber management for automotive SOA.">
       
       
         <meta name="author" content="Vinicius Tadeu Zein">
@@ -29,7 +29,7 @@
     
     
       
-        <title>Events - OpenSOME/IP</title>
+        <title>SOME/IP Events API - OpenSOME/IP</title>
       
     
     
@@ -79,14 +79,14 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://vtz.github.io/opensomeip/api/events/">
   <meta property="og:title" content="Events">
-  <meta property="og:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta property="og:description" content="C++ API for SOME/IP publish/subscribe events. Event groups, notification handlers, and subscriber management for automotive SOA.">
   <meta property="og:site_name" content="OpenSOME/IP">
   <meta property="og:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://vtz.github.io/opensomeip/api/events/">
   <meta name="twitter:title" content="Events">
-  <meta name="twitter:description" content="Open-source C++17 SOME/IP protocol stack for automotive and embedded systems">
+  <meta name="twitter:description" content="C++ API for SOME/IP publish/subscribe events. Event groups, notification handlers, and subscriber management for automotive SOA.">
   <meta name="twitter:image" content="https://vtz.github.io/opensomeip/images/social-card.png">
 
   
@@ -149,7 +149,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Events
+              SOME/IP Events API
             
           </span>
         </div>
@@ -3413,6 +3413,7 @@
 <li>Field value publishing (on-demand or on-change)</li>
 <li>Subscription management for event groups</li>
 <li>Cyclic and triggered publication modes</li>
+<li>Incoming-message rejection callback (<code>set_message_rejection_handler</code>)</li>
 </ul>
 <h4 id="eventsubscriber">EventSubscriber<a class="headerlink" href="#eventsubscriber" title="Permanent link">&para;</a></h4>
 <ul>
@@ -3423,6 +3424,7 @@
 <li>Field value requests (polling)</li>
 <li>Subscription status tracking</li>
 <li>Automatic reconnection handling</li>
+<li>Incoming-message rejection callback (<code>set_message_rejection_handler</code>)</li>
 </ul>
 <h4 id="eventtypes">EventTypes<a class="headerlink" href="#eventtypes" title="Permanent link">&para;</a></h4>
 <ul>
@@ -3640,6 +3642,9 @@ Selective sending/filter enforcement remains unimplemented (<code>REQ_MSG_122</c
 
 
 
+
+  
+  
 
 
 
