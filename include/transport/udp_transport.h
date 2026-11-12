@@ -45,7 +45,10 @@ struct UdpTransportConfig {
     bool reuse_address{true};               // Allow address reuse (SO_REUSEADDR)
     bool reuse_port{false};                 // Allow port reuse (SO_REUSEPORT) - for multicast
     bool enable_broadcast{false};           // Enable broadcast sending
-    platform::String<> multicast_interface;  // Interface for multicast (empty = INADDR_ANY)
+    /// Outgoing multicast interface and group membership. Empty uses the
+    /// default route. Applied when the socket starts, so a send does not
+    /// require joining that group.
+    platform::String<> multicast_interface;
     int multicast_ttl{1};                   // Multicast TTL (1 = local network only)
 
     /// When non-zero, join_multicast_group records this errno and returns
@@ -190,6 +193,7 @@ private:
     void receive_loop();
     void notify_rejection(const MessageRejectionInfo& info);
     Result send_data(const platform::ByteBuffer& data, const Endpoint& endpoint);
+    void apply_multicast_send_options();
     Result receive_data(platform::ByteBuffer& data, Endpoint& sender, Endpoint& destination,
                        size_t& bytes_received);
     Result send_tp_segments(const Message& message, const Endpoint& endpoint);

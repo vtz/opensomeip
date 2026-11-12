@@ -219,6 +219,9 @@ Result UdpTransport::start() {
         return result;
     }
 
+    // Outgoing multicast uses the configured interface before any join.
+    apply_multicast_send_options();
+
     running_ = true;
     receive_thread_.emplace(&UdpTransport::receive_loop, this);
 
@@ -412,6 +415,33 @@ Result UdpTransport::create_socket() {
     static_cast<void>(someip_enable_recv_dest(socket_fd_));
 
     return Result::SUCCESS;
+}
+
+void UdpTransport::apply_multicast_send_options() {
+    platform::ScopedLock const lock(socket_mutex_);
+    if (socket_fd_ == SOMEIP_INVALID_SOCKET) {
+        return;
+    }
+
+    // macOS accepts these options as unsigned char; Linux accepts int.
+    auto set_byte_option = [this](int option, int value) {
+        int const as_int = value;
+        if (someip_setsockopt(socket_fd_, IPPROTO_IP, option, &as_int, sizeof(as_int)) == 0) {
+            return;
+        }
+        unsigned char const as_byte = static_cast<unsigned char>(value);
+        static_cast<void>(someip_setsockopt(socket_fd_, IPPROTO_IP, option, &as_byte, sizeof(as_byte)));
+    };
+
+    set_byte_option(IP_MULTICAST_LOOP, 1);
+    set_byte_option(IP_MULTICAST_TTL, config_.multicast_ttl);
+
+    if (!config_.multicast_interface.empty()) {
+        struct in_addr interface_addr = {};
+        interface_addr.s_addr = someip_inet_addr(config_.multicast_interface.c_str());
+        static_cast<void>(someip_setsockopt(socket_fd_, IPPROTO_IP, IP_MULTICAST_IF, &interface_addr,
+                                            sizeof(interface_addr)));
+    }
 }
 
 /** @implements REQ_TRANSPORT_014, REQ_TRANSPORT_014_E01 */

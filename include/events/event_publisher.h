@@ -125,6 +125,26 @@ class EventPublisher {
     bool update_event_config(uint16_t event_id, const EventConfig& config);
 
     /**
+     * @brief Configure the multicast threshold for an eventgroup
+     *
+     * Threshold 0 unicasts to each subscriber. Threshold 1 sends one
+     * multicast datagram and no unicast copy. A threshold above 1 unicasts
+     * while the active subscriber count is below it and multicasts at and
+     * above it. The multicast address and port come from @p config. Initial
+     * field events stay unicast. The library does not copy the datagram
+     * into other local processes.
+     *
+     * An unconfigured eventgroup stays at threshold 0. Returns false when a
+     * non-zero threshold has no IPv4 multicast address, the port is 0, or
+     * the eventgroup table is full.
+     *
+     * @implements REQ_TRANSPORT_012
+     * @param config Eventgroup threshold and multicast endpoint
+     * @return true if stored
+     */
+    bool configure_eventgroup(const EventgroupConfig& config);
+
+    /**
      * @brief Publish an event notification
      *
      * @param event_id Event identifier

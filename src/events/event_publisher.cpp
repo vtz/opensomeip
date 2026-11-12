@@ -115,6 +115,7 @@ class EventPublisherImpl : public transport::ITransportListener {
             platform::ScopedLock const events_lock(events_mutex_);
             registered_events_.clear();
             field_values_.clear();
+            eventgroups_.clear();
             fields_.clear();
             getter_index_.clear();
             setter_index_.clear();
@@ -200,8 +201,24 @@ class EventPublisherImpl : public transport::ITransportListener {
         return register_event_locked(config);
     }
 
+    bool configure_eventgroup(const EventgroupConfig& config)
+    {
+        if (config.multicast_threshold > 0 && !multicast_endpoint_ready(config)) {
+            return false;
+        }
+        platform::ScopedLock const events_lock(events_mutex_);
+        const bool exists = eventgroups_.find(config.eventgroup_id) != eventgroups_.end();
+        if (!exists && eventgroups_.size() >= eventgroups_.max_size()) {
+            return false;
+        }
+        eventgroups_[config.eventgroup_id] = config;
+        return true;
+    }
+
     /** @implements REQ_MSG_110, REQ_MSG_110_E01, REQ_MSG_119, REQ_MSG_121A */
     /** @implements REQ_MSG_121B, REQ_MSG_121C, REQ_MSG_121_E01, REQ_MSG_121_E02, REQ_MSG_141 */
+    /** @implements REQ_TRANSPORT_012
+     *  @satisfies feat_req_someip_813 */
     bool publish_event(uint16_t event_id, const platform::ByteBuffer& data, bool store_field_value)
     {
         if (!running_) {
@@ -209,6 +226,7 @@ class EventPublisherImpl : public transport::ITransportListener {
         }
 
         uint16_t eventgroup_id = 0;
+        EventgroupConfig group;
         {
             platform::ScopedLock const events_lock(events_mutex_);
             auto event_it = registered_events_.find(event_id);
@@ -225,6 +243,10 @@ class EventPublisherImpl : public transport::ITransportListener {
                     return false;
                 }
                 field_values_[event_id] = data;
+            }
+            auto group_it = eventgroups_.find(eventgroup_id);
+            if (group_it != eventgroups_.end()) {
+                group = group_it->second;
             }
         }
 
@@ -245,8 +267,18 @@ class EventPublisherImpl : public transport::ITransportListener {
             }
         }
 
+        if (multicast_selected(group.multicast_threshold, targets.size())) {
+            if (!multicast_endpoint_ready(group)) {
+                return false;
+            }
+            const transport::Endpoint multicast_endpoint(
+                group.multicast_address, group.multicast_port,
+                transport::TransportProtocol::MULTICAST_UDP);
+            return send_event_notification(notification, multicast_endpoint) == Result::SUCCESS;
+        }
+
         for (const auto& ep : targets) {
-            send_event_notification(notification, ep);
+            static_cast<void>(send_event_notification(notification, ep));
         }
 
         return true;
@@ -435,6 +467,10 @@ class EventPublisherImpl : public transport::ITransportListener {
                }) != clients.end();
     }
 
+    /** @implements REQ_TRANSPORT_011, REQ_TRANSPORT_012
+     *  @satisfies feat_req_someip_813
+     *  Initial field events stay unicast to the subscriber that just joined.
+     */
     void send_initial_fields(uint16_t eventgroup_id, const transport::Endpoint& dest)
     {
         if (!running_) {
@@ -469,7 +505,7 @@ class EventPublisherImpl : public transport::ITransportListener {
             EventNotification notification(service_id_, instance_id_, item.event_id);
             notification.event_data = item.payload;
             notification.session_id = next_session_id_++;
-            send_event_notification(notification, dest);
+            static_cast<void>(send_event_notification(notification, dest));
         }
     }
 
@@ -673,8 +709,26 @@ class EventPublisherImpl : public transport::ITransportListener {
         }
     }
 
-    void send_event_notification(const EventNotification& notification,
-                                 const transport::Endpoint& client_endpoint)
+    static bool multicast_selected(uint16_t threshold, size_t active_subscribers)
+    {
+        if (threshold == 0) {
+            return false;
+        }
+        return active_subscribers >= static_cast<size_t>(threshold);
+    }
+
+    static bool multicast_endpoint_ready(const EventgroupConfig& config)
+    {
+        if (config.multicast_address.empty() || config.multicast_port == 0) {
+            return false;
+        }
+        const transport::Endpoint endpoint(config.multicast_address, config.multicast_port,
+                                           transport::TransportProtocol::MULTICAST_UDP);
+        return endpoint.is_multicast();
+    }
+
+    Result send_event_notification(const EventNotification& notification,
+                                   const transport::Endpoint& client_endpoint)
     {
         // Create SOME/IP message for event notification
         MessageId const msg_id(service_id_, notification.event_id);
@@ -682,10 +736,7 @@ class EventPublisherImpl : public transport::ITransportListener {
                                MessageType::NOTIFICATION, ReturnCode::E_OK);
         someip_message.set_payload(notification.event_data);
 
-        Result const result = transport_.send_message(someip_message, client_endpoint);
-        if (result != Result::SUCCESS) {
-            // Log error or handle failure
-        }
+        return transport_.send_message(someip_message, client_endpoint);
     }
 
     void on_message_received(MessagePtr message, const transport::Endpoint& sender) override
@@ -1251,13 +1302,12 @@ class EventPublisherImpl : public transport::ITransportListener {
             }
         }
         if (probe_gone) {
-            send_field_result(message, sender, MessageType::ERROR,
-                              ReturnCode::E_UNKNOWN_METHOD, {}, false);
+            send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_UNKNOWN_METHOD, {},
+                              false);
             return;
         }
         if (probe_full) {
-            send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_NOT_OK, {},
-                              false);
+            send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_NOT_OK, {}, false);
             return;
         }
 
@@ -1305,8 +1355,7 @@ class EventPublisherImpl : public transport::ITransportListener {
             }
         }
         if (!still_present) {
-            send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_NOT_OK, {},
-                              false);
+            send_field_result(message, sender, MessageType::ERROR, ReturnCode::E_NOT_OK, {}, false);
             return;
         }
         send_field_result(message, sender, MessageType::RESPONSE, ReturnCode::E_OK, accepted, true);
@@ -1324,6 +1373,7 @@ class EventPublisherImpl : public transport::ITransportListener {
     transport::ITransport& transport_;
 
     platform::UnorderedMap<uint16_t, EventConfig, 16> registered_events_;
+    platform::UnorderedMap<uint16_t, EventgroupConfig, 16> eventgroups_;
     platform::UnorderedMap<uint16_t, platform::ByteBuffer, 16> field_values_;
     platform::UnorderedMap<uint16_t, FieldBinding, 16> fields_;
     platform::UnorderedMap<uint16_t, uint16_t, 16> getter_index_;
@@ -1350,17 +1400,15 @@ static_assert(sizeof(EventPublisherImpl) <= SOMEIP_PIMPL_EVENTPUB_SIZE,
 #endif
 
 // EventPublisher implementation
-EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id,
-                               uint8_t interface_version)
+EventPublisher::EventPublisher(uint16_t service_id, uint16_t instance_id, uint8_t interface_version)
 #ifdef SOMEIP_STATIC_ALLOC
 {
     new (impl_storage_) EventPublisherImpl(service_id, instance_id,
                                            transport::Endpoint("0.0.0.0", 0), interface_version);
 }
 #else
-    : impl_(std::make_unique<EventPublisherImpl>(service_id, instance_id,
-                                                 transport::Endpoint("0.0.0.0", 0),
-                                                 interface_version))
+    : impl_(std::make_unique<EventPublisherImpl>(
+          service_id, instance_id, transport::Endpoint("0.0.0.0", 0), interface_version))
 {
 }
 #endif
@@ -1413,6 +1461,11 @@ bool EventPublisher::unregister_event(uint16_t event_id)
 bool EventPublisher::update_event_config(uint16_t event_id, const EventConfig& config)
 {
     return impl()->update_event_config(event_id, config);
+}
+
+bool EventPublisher::configure_eventgroup(const EventgroupConfig& config)
+{
+    return impl()->configure_eventgroup(config);
 }
 
 bool EventPublisher::publish_event(uint16_t event_id, const platform::ByteBuffer& data)

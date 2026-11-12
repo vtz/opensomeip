@@ -131,6 +131,20 @@ struct EventConfig {
 };
 
 /**
+ * @brief Eventgroup multicast threshold
+ *
+ * Threshold 0 unicasts each subscriber. Threshold 1 multicasts only.
+ * Above 1, unicast while the active subscriber count is below this value
+ * and send one multicast datagram at and above it.
+ */
+struct EventgroupConfig {
+    uint16_t eventgroup_id{0};
+    uint16_t multicast_threshold{0};
+    platform::String<> multicast_address;
+    uint16_t multicast_port{0};
+};
+
+/**
  * @brief Application decision for one field setter request.
  *
  * ACCEPTED stores @p accepted, which may differ from the requested bytes.
