@@ -61,7 +61,7 @@ UdpTransport::UdpTransport(const Endpoint& local_endpoint, const UdpTransportCon
         // that datagram. max_message_size 0 leaves the budget on
         // tp_config.max_single_datagram_size instead of shrinking the buffer
         // to the segment chunk.
-        const size_t single =
+        const auto single =
             static_cast<size_t>(config_.tp_config.max_single_datagram_size);
         const size_t tp_datagram =
             20U + static_cast<size_t>(config_.tp_config.max_segment_size);
