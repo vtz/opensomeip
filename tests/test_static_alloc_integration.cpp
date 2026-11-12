@@ -21,6 +21,7 @@
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @tests REQ_PLATFORM_STATIC_002
  * @tests REQ_ARCH_008
+ * @tests REQ_PLATFORM_STATIC_005
  */
 
 #include <atomic>

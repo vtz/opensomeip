@@ -7,6 +7,8 @@
 #ifndef SOMEIP_PLATFORM_ZEPHYR_NET_IMPL_H
 #define SOMEIP_PLATFORM_ZEPHYR_NET_IMPL_H
 
+/** @implements REQ_PLATFORM_ZEPHYR_003 */
+
 #include <zephyr/net/socket.h>
 #include <zephyr/net/net_ip.h>
 #include <zephyr/sys/byteorder.h>

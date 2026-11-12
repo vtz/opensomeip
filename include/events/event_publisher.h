@@ -245,6 +245,7 @@ public:
 
 private:
 #ifdef SOMEIP_STATIC_ALLOC
+    /** @implements REQ_PLATFORM_STATIC_005 */
     alignas(alignof(std::max_align_t)) char impl_storage_[SOMEIP_PIMPL_EVENTPUB_SIZE];
     EventPublisherImpl* impl() noexcept { return reinterpret_cast<EventPublisherImpl*>(impl_storage_); }
     const EventPublisherImpl* impl() const noexcept { return reinterpret_cast<const EventPublisherImpl*>(impl_storage_); }

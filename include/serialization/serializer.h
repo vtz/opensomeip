@@ -233,6 +233,7 @@ public:
     // Status and navigation
     bool is_valid() const { return position_ <= buffer_.size(); }
     size_t get_position() const { return position_; }
+    /** @implements REQ_SER_074 */
     size_t get_remaining() const { return buffer_.size() - position_; }
     bool set_position(size_t pos);
     void skip(size_t bytes);
