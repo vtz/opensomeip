@@ -56,6 +56,30 @@ make -j$(nproc)
 make test
 ```
 
+### Bazel
+
+CMake remains the source of truth for presets, RTOS ports, and packaging.
+The Bazel module builds the default host library (POSIX sockets, dynamic
+allocation, C API) and the C++ tests that the default host CMake build runs.
+GoogleTest is a dev dependency from the Bazel module registry, not a
+checked-in copy, so it does not enter the module graph of a downstream
+module that only links the library. Static-allocation tests and RTOS
+runtime tests are not part of this graph.
+
+`//:opensomeip` does not define `SOMEIP_TCP_TEST_CONNECT_HOLD`. External
+modules that link that target do not get the test hook, and connect is not
+delayed. CMake defines it only when `BUILD_TESTS` is on. The Bazel TCP
+handshake test links a private test-only library compiled with that
+definition. The hold defaults to zero until the test sets it.
+
+```bash
+bazel test //...
+```
+
+`.bazelversion` pins Bazel 8.8.2. Verified with that Bazel and Apple clang
+21.0.0 (`arm64-apple-darwin25.6.0`, clang-2100.0.123.102): `bazel test //...`
+ran 38 tests and all passed.
+
 ### Direct Compiler Build (Without CMake)
 
 ```bash

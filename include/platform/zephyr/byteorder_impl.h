@@ -9,6 +9,7 @@
 
 #include <zephyr/sys/byteorder.h>
 
+/** @implements REQ_PLATFORM_ZEPHYR_004 */
 #define someip_htons(x) sys_cpu_to_be16(x)
 #define someip_ntohs(x) sys_be16_to_cpu(x)
 #define someip_htonl(x) sys_cpu_to_be32(x)

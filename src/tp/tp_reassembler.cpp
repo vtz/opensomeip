@@ -193,6 +193,7 @@ bool parse_wire_segment(const uint8_t* data, size_t size, TpSegment& out_segment
  * @satisfies feat_req_someiptp_410
  * @satisfies feat_req_someiptp_412
  * @satisfies feat_req_someiptp_782
+ * @implements REQ_TP_030_E03
  */
 TpReassembler::TpReassembler(const TpConfig& config)
     : config_(config) {
@@ -311,10 +312,10 @@ bool TpReassembler::validate_segment(const TpSegment& segment) const {
         return false;
     }
 
-    // feat_req_someiptp_772 (SHALL): all but the last segment shall have a
-    // length that is a multiple of 16 bytes.
-    // feat_req_someiptp_792 (SHALL): cancel reassembly if a non-final segment
-    // length is not a multiple of 16.
+    /**
+     * @implements REQ_TP_044
+     * Non-final segments (more-segments set) must carry a multiple of 16 bytes.
+     */
     if (wire_more && (actual_payload_bytes % 16U) != 0U) {
         return false;
     }
@@ -421,7 +422,7 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
             return false;
         }
 
-        // feat_req_someiptp_797: first-wins — only write bytes not already received
+        /** @implements REQ_TP_081_FW */
         {
             const auto* src = segment.payload.data() + header_size;
             for (size_t i = 0; i < bytes; ++i) {
@@ -490,7 +491,7 @@ bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSe
         }
     }
 
-    // feat_req_someiptp_797: first-wins — only write bytes not already received
+    /** @implements REQ_TP_081_FW */
     {
         const auto* src = segment.payload.data() + TP_OVERHEAD;
         for (uint32_t i = 0; i < bytes; ++i) {
@@ -607,6 +608,7 @@ void TpReassembler::update_config(const TpConfig& config) {
     platform::ScopedLock const lock(config_mutex_);
     config_ = config;
 #ifdef SOMEIP_STATIC_ALLOC
+    /** @implements REQ_TP_030_E03 */
     // feat_req_someiptp_782: reassemble only up to the configured buffer size.
     if (config_.max_message_size > MAX_TP_REASSEMBLY_SIZE) {
         config_.max_message_size = static_cast<uint32_t>(MAX_TP_REASSEMBLY_SIZE);
