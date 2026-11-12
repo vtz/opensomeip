@@ -95,6 +95,8 @@ Registry for managing E2E protection profiles.
 **Methods:**
 - `static E2EProfileRegistry& instance()` - Get singleton instance
 - `bool register_profile(E2EProfilePtr profile)` - Register a profile
+- `bool unregister_profile(uint32_t profile_id)` - Unregister a profile by ID; returns `false` if not found
+- `bool is_registered(uint32_t profile_id) const` - Check whether a profile is registered
 - `E2EProfile* get_profile(uint32_t profile_id)` - Get profile by ID
 - `E2EProfile* get_profile(const std::string& profile_name)` - Get profile by name
 - `E2EProfile* get_default_profile()` - Get default (basic) profile
@@ -133,7 +135,8 @@ carry the default 12-byte E2E header (Offset 64). Fill the table before
 constructing the transport.
 
 - `E2EReceivePolicy::STACK_MANAGED` validates before the application handler.
-  Failure uses `MessageRejectionStage::E2E_INTEGRITY` and does not deliver.
+  A `validate()` failure uses `MessageRejectionStage::E2E_INTEGRITY` and does not deliver.
+  A protected frame that fails to deserialize uses `MessageRejectionStage::DESERIALIZE`.
 - `E2EReceivePolicy::APPLICATION_MANAGED` delivers a message whose payload
   excludes the header. Call `E2EProtection::validate` on that message.
   Stack-managed checks use the binding's `max_counter_value` and

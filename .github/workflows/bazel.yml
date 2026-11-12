@@ -1,0 +1,30 @@
+name: Bazel host
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: bazel test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Bazelisk reads .bazelversion (8.8.2). CMake stays the owner of
+      # presets, RTOS ports, and packaging; this job builds the host module.
+      - name: Set up Bazel
+        uses: bazel-contrib/setup-bazel@f34d6a05eae3c24acab7fa54587492daeaeffdab # 0.19.2
+        with:
+          bazelisk-version: 1.30.0
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+          cache-save: ${{ github.event_name != 'pull_request' }}
+
+      - name: Test
+        run: |
+          bazel version
+          bazel test //...

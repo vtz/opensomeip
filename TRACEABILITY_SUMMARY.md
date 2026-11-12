@@ -29,17 +29,17 @@ to implementation and test coverage. No safety certification is claimed.
 | Metric | Value | Assessment |
 |--------|-------|------------|
 | Total requirements (RST) | 701 | - |
-| Fully traced (code + tests) | 623 (88.9%) | Good |
+| Fully traced (code + tests) | 624 (89.0%) | Good |
 | Requirements with code refs | 625 | Good |
-| Requirements with test coverage | 697 | Good |
+| Requirements with test coverage | 698 | Good |
 | Orphaned (no code annotation) | 76 | Needs improvement |
 | Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 known-unlinked (accepted); REQ_E2E_RECEIVE_001, REQ_TRANSPORT_030 exempt implementation-derived IDs with no spec ID |
 | Code references extracted | 630 | - |
-| Test references extracted | 781 | - |
+| Test references extracted | 782 | - |
 
 ### Status
 
-623 of 701 requirements are fully traced with both code implementation references
+624 of 701 requirements are fully traced with both code implementation references
 and test coverage annotations. 76 requirements remain without code annotations.
 The extraction script properly parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations.
@@ -121,12 +121,12 @@ Current validated traceability metrics should be read from the most recent
 
 - Implement remaining serialization requirements (REQ_SER_090 through REQ_SER_107)
 - Add `@implements` annotations for the 76 orphaned requirements
-- Add test coverage for REQ_PAL_STATIC_CONFIG, REQ_TP_030_E03, REQ_CAPI_001, and REQ_CAPI_006
+- Add test coverage for REQ_PAL_STATIC_CONFIG, REQ_TP_030_E03, and REQ_CAPI_006
 - Add performance, stress, and fault-injection tests
 
 ### Long-term
 
-- Achieve >95% full traceability (currently 88.9%)
+- Achieve >95% full traceability (currently 89.0%)
 - Implement advanced SD features (load balancing, IPv6)
 - Add cross-platform test coverage (FreeRTOS, ThreadX hardware)
 - Implement Win32 and LwIP platform backends

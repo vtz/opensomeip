@@ -1,0 +1,3 @@
+open-someip-spec
+build
+# build-* is a glob. .bazelignore cannot express it; REPO.bazel does.

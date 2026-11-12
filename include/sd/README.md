@@ -52,6 +52,8 @@ The Service Discovery layer implements the SOME/IP-SD protocol, enabling dynamic
   - Event group definitions
   - SD configuration parameters
   - Result codes and subscription states
+  - `MulticastState` / rejoin bounds (`multicast_rejoin_max_attempts`,
+    `multicast_rejoin_interval`) for local membership observability
 
 ## Usage Examples
 
@@ -143,7 +145,7 @@ SOME/IP-SD Message:
 - **IPV6_ENDPOINT (0x06)**: IPv6 unicast endpoint (codec; ``AF_INET6`` transport is separate)
 - **IPV4_MULTICAST (0x14)**: IPv4 multicast address
 - **IPV6_MULTICAST (0x16)**: IPv6 multicast address (codec; ``AF_INET6`` transport is separate)
-- **IPV4_SD_ENDPOINT (0x24)**: IPv4 SD endpoint (received; not referenced by entries). When it is the first option, replies and reboot detection use it instead of the datagram source.
+- **IPV4_SD_ENDPOINT (0x24)**: IPv4 SD endpoint. Reception only; a usable first option overrides the datagram source for SD replies and reboot detection. Entries must not reference it.
 - **IPV6_SD_ENDPOINT (0x26)**: IPv6 SD endpoint (type reserved; codec pending)
 
 ### Message Flow

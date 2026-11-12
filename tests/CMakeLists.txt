@@ -282,6 +282,16 @@ target_link_libraries(test_e2e someip-core gtest_main)
         add_test(NAME CapiRpcRoundtripTest COMMAND test_capi_rpc_roundtrip)
         set_tests_properties(CapiRpcRoundtripTest PROPERTIES TIMEOUT 30 LABELS "capi;integration")
 
+        # Compiled as C. The library is C++, so the link step uses the C++ driver.
+        add_executable(test_capi_pure_c capi/unit/test_capi_pure_c.c)
+        target_link_libraries(test_capi_pure_c PRIVATE opensomeip_capi)
+        set_target_properties(test_capi_pure_c PROPERTIES
+            C_STANDARD 11
+            C_STANDARD_REQUIRED ON
+            LINKER_LANGUAGE CXX)
+        add_test(NAME CapiPureCConsumer COMMAND test_capi_pure_c)
+        set_tests_properties(CapiPureCConsumer PROPERTIES TIMEOUT 30 LABELS "capi;unit")
+
         set(_CAPI_TESTS
             CapiMessageTest CapiSerializerTest CapiTransportTest
             CapiRpcTest CapiSdTest CapiEventsTest CapiTpTest CapiE2ETest)
@@ -332,4 +342,13 @@ target_link_libraries(test_e2e someip-core gtest_main)
         )
     endif()
     set_tests_properties(${_ALL_TESTS} PROPERTIES TIMEOUT 30)
+
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_FOUND)
+        add_test(
+            NAME ApiDocSources
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tests/python/test_published_api_pages.py
+        )
+        set_tests_properties(ApiDocSources PROPERTIES TIMEOUT 30 LABELS "docs")
+    endif()
 endif()

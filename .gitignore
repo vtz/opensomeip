@@ -102,3 +102,7 @@ docs/diagrams/svg/
 *.patch
 *.diff
 some-ip-clang-tidy-fixes/
+
+# Bazel output symlinks and caches
+/bazel-*
+/user.bazelrc
