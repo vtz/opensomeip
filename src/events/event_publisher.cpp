@@ -1111,6 +1111,7 @@ class EventPublisherImpl : public transport::ITransportListener {
         platform::ByteBuffer payload;
         uint16_t notifier_id = 0;
         uint64_t sent_gen = 0;
+        uint64_t reg_gen = 0;
         {
             platform::ScopedLock const events_lock(events_mutex_);
             auto field_it = fields_.find(field_key);
@@ -1129,6 +1130,7 @@ class EventPublisherImpl : public transport::ITransportListener {
             binding.notify_in_flight = true;
             payload = val_it->second;
             sent_gen = binding.notify_generation;
+            reg_gen = binding.registration_generation;
             notifier_id = binding.notifier_event_id;
         }
 
@@ -1141,6 +1143,9 @@ class EventPublisherImpl : public transport::ITransportListener {
                     return;
                 }
                 auto& binding = field_it->second;
+                if (binding.registration_generation != reg_gen) {
+                    return;
+                }
                 if (binding.notify_generation == sent_gen) {
                     binding.notify_in_flight = false;
                     return;

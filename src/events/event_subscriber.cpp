@@ -481,6 +481,7 @@ class EventSubscriberImpl : public transport::ITransportListener {
         uint16_t session_id = 0;
         EventNotificationCallback expired_callback;
         EventNotification expired_notification;
+        platform::Vector<ExpiredField, FIELD_COMPLETION_BATCH> swept;
         {
             platform::ScopedLock const field_lock(field_requests_mutex_);
             if (!running_) {
@@ -502,7 +503,10 @@ class EventSubscriberImpl : public transport::ITransportListener {
                 field_requests_.erase(existing);
             }
             if (field_requests_.size() >= field_requests_.max_size()) {
-                return false;
+                sweep_expired_fields_locked(swept);
+                if (field_requests_.size() >= field_requests_.max_size()) {
+                    return false;
+                }
             }
             ticket = next_field_ticket_++;
             session_id = next_field_session_id_;
@@ -519,10 +523,22 @@ class EventSubscriberImpl : public transport::ITransportListener {
             field_requests_[key] = std::move(request);
         }
 
+        fire_expired_fields(swept);
+#ifdef __cpp_exceptions
+        try {
+            if (expired_callback) {
+                const DispatchFrame dispatch(*this);
+                expired_callback(expired_notification);
+            }
+        }
+        catch (...) {  // NOLINT(bugprone-empty-catch) must not skip the replacement send
+        }
+#else
         if (expired_callback) {
             const DispatchFrame dispatch(*this);
             expired_callback(expired_notification);
         }
+#endif
 
         MessageId const msg_id(service_id, method_id);
         Message field_msg(msg_id, RequestId(client_id_, session_id), MessageType::REQUEST,
