@@ -46,6 +46,9 @@ if(BUILD_TESTS)
 add_executable(test_sd test_sd.cpp)
 target_link_libraries(test_sd someip-sd gtest_main)
 
+add_executable(test_sd_offer_find_session test_sd_offer_find_session.cpp)
+target_link_libraries(test_sd_offer_find_session someip-sd gtest_main)
+
 # Events tests
 add_executable(test_events test_events.cpp)
 target_link_libraries(test_events someip-events gtest_main)
@@ -85,7 +88,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     if(WIN32)
         set(_SOCKET_TESTS
             test_platform_threading test_udp_transport test_tcp_transport
-            test_rpc test_sd test_events
+            test_rpc test_sd test_sd_offer_find_session test_events
             test_transport_injection test_sd_injection test_subscriber_dispatch
             test_facade_teardown test_rpc_sync_lifetime)
         foreach(_t ${_SOCKET_TESTS})
@@ -306,6 +309,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     add_test(NAME EndpointTest COMMAND test_endpoint)
     add_test(NAME RpcTest COMMAND test_rpc)
     add_test(NAME SdTest COMMAND test_sd)
+    add_test(NAME SdOfferFindSessionTest COMMAND test_sd_offer_find_session)
     add_test(NAME EventsTest COMMAND test_events)
     add_test(NAME TcpTransportTest COMMAND test_tcp_transport)
     add_test(NAME UdpTransportTest COMMAND test_udp_transport)
@@ -318,7 +322,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     # Per-test timeout (seconds) to catch hangs in local and CI runs
     set(_ALL_TESTS
         PlatformThreadingTest SerializationTest MessageTest
-        SessionManagerTest EndpointTest RpcTest SdTest EventsTest
+        SessionManagerTest EndpointTest RpcTest SdTest SdOfferFindSessionTest EventsTest
         TcpTransportTest UdpTransportTest MulticastMembershipTest
         EventDrivenUdpTransportTest EventDrivenTcpTransportTest TpTest E2ETest
     )
