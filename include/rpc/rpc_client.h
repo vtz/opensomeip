@@ -20,6 +20,8 @@
 #include "transport/message_rejection.h"
 #include "transport/transport.h"
 
+#include <cstddef>
+
 #ifdef SOMEIP_STATIC_ALLOC
 #include "static_config.h"
 #else
@@ -185,6 +187,15 @@ public:
      * @return true if ready for RPC calls
      */
     bool is_ready() const;
+
+    /**
+     * @brief Entries currently stored in this client's session table.
+     *
+     * A completed call removes its session before the call returns to the
+     * application. The count is the number of sessions still held for
+     * outstanding calls, not the number of calls this client has finished.
+     */
+    size_t session_count() const;
 
     /**
      * @brief Observe structural rejections of incoming messages.

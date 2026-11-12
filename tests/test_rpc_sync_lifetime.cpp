@@ -67,7 +67,7 @@ class FakeTransport final : public transport::ITransport {
         if (send_result != Result::SUCCESS) {
             return send_result;
         }
-        {
+        if (retain_sent) {
             std::lock_guard<std::mutex> lock(mutex_);
             messages.push_back(message);
             destinations.push_back(endpoint);
@@ -163,6 +163,9 @@ class FakeTransport final : public transport::ITransport {
     Result stop_result{Result::SUCCESS};
     Result send_result{Result::SUCCESS};
     bool remain_running_on_stop{false};
+    // The long-run test replies from on_send and does not need retained copies.
+    // Keeping 65536 messages would hold static-pool buffers for the whole loop.
+    bool retain_sent{true};
     std::chrono::milliseconds send_delay{0};
     std::vector<Message> messages;
     std::vector<Endpoint> destinations;
@@ -504,6 +507,76 @@ TEST(RpcSyncLifetime, CancelCallStillCompletesCallbackAndReportsUnknownHandle)
     EXPECT_TRUE(client.cancel_call(handle));
     EXPECT_EQ(invocations, 1u);
     EXPECT_FALSE(client.cancel_call(handle));
+}
+
+/**
+ * @test_case TC_RPC_LONG_RUN_SESSION
+ * @tests REQ_ARCH_002, REQ_ARCH_003, REQ_MSG_118
+ * @brief One client completes 65536 sequential request/response cycles.
+ *
+ * Session ids are 16-bit and skip 0. Call 65536 is the first id after the
+ * wrap (session id 1 again). The client object is not reset between calls.
+ * Replies are injected on the send path so the loop does not sleep per call.
+ * The same binary is built for the dynamic host and the static-allocation preset.
+ */
+TEST(RpcSyncLifetime, SixtyFiveThousandSequentialCallsOnOneClient)
+{
+    constexpr uint32_t kCalls = 65536U;
+    constexpr uint32_t kUsableSessionIds = 65535U;
+    FakeTransport transport;
+    rpc::RpcClient client(7, transport);
+    ASSERT_TRUE(client.initialize());
+    ASSERT_EQ(client.session_count(), 0u);
+
+    transport.retain_sent = false;
+    uint16_t observed_session = 0;
+    bool replied = false;
+    transport.on_send = [&](const Message& request) {
+        observed_session = request.get_session_id();
+        replied = reply_to(transport, request, request.get_payload());
+    };
+
+    rpc::RpcTimeout timeout;
+    timeout.response_timeout = std::chrono::seconds(1);
+    platform::ByteBuffer params{0};
+    uint16_t first_session = 0;
+
+    const auto loop_start = std::chrono::steady_clock::now();
+    for (uint32_t n = 0; n < kCalls; ++n) {
+        params[0] = static_cast<uint8_t>(n & 0xFFU);
+        replied = false;
+        observed_session = 0;
+        const bool last_call = (n + 1U) == kCalls;
+        const auto call_start = std::chrono::steady_clock::now();
+        const auto result = client.call_method_sync(SERVICE, METHOD, params, PEER, timeout);
+        const auto call_wall = std::chrono::steady_clock::now() - call_start;
+
+        ASSERT_TRUE(replied) << "call " << (n + 1U);
+        ASSERT_EQ(result.result, rpc::RpcResult::SUCCESS) << "call " << (n + 1U);
+        ASSERT_EQ(result.return_values.size(), 1u) << "call " << (n + 1U);
+        ASSERT_EQ(result.return_values[0], params[0]) << "call " << (n + 1U);
+        const uint16_t expected_session =
+            static_cast<uint16_t>((n % kUsableSessionIds) + 1U);
+        ASSERT_EQ(observed_session, expected_session) << "call " << (n + 1U);
+        ASSERT_NE(observed_session, 0u) << "call " << (n + 1U);
+        // A completed call must not leave its session in the table.
+        ASSERT_EQ(client.session_count(), 0u) << "call " << (n + 1U);
+        if (n == 0U) {
+            first_session = observed_session;
+        }
+        if (last_call) {
+            // The wrap call returns the response inside the response budget.
+            // A full-table scan that blocked until timeout would fail this.
+            EXPECT_LT(call_wall, timeout.response_timeout);
+            EXPECT_LT(result.response_time, timeout.response_timeout);
+            EXPECT_EQ(observed_session, first_session);
+        }
+    }
+    EXPECT_EQ(first_session, 1u);
+    EXPECT_EQ(client.session_count(), 0u);
+    // 65536 injected replies must not turn into 65536 one-millisecond sleeps.
+    EXPECT_LT(std::chrono::steady_clock::now() - loop_start, std::chrono::seconds(30));
+    client.shutdown();
 }
 
 }  // namespace
