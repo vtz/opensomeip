@@ -697,9 +697,16 @@ TEST(SdOfferFindSession, FindServiceAnswerIsUnicastOffer)
         << "initial OfferService missing before Find";
     expect_quiet(endpoints.other_group, std::chrono::milliseconds(50));
 
+#if defined(_WIN32)
+    // UDP sent to this host's LAN address is not delivered back to a local
+    // socket. The server listens on 0.0.0.0, so loopback still reaches it
+    // and the Offer returns to that source instead of the multicast group.
+    const std::string finder_address = kLoopback;
+#else
     const std::string finder_address = choose_finder_address();
     ASSERT_FALSE(finder_address.empty())
         << "need a local address other than " << kLoopback << " to lock the unicast reply";
+#endif
     RawUdpPeer finder;
     ASSERT_TRUE(finder.open());
     ASSERT_TRUE(finder.bind_to(finder_address.c_str(), 0))
@@ -709,8 +716,9 @@ TEST(SdOfferFindSession, FindServiceAnswerIsUnicastOffer)
     const platform::ByteBuffer find_bytes = build_find(kOfferServiceId, kOfferInstanceId);
     ASSERT_FALSE(find_bytes.empty());
     // Address the Find at the finder address. The server socket is 0.0.0.0, so it
-    // receives that datagram, and a socket bound to a non-loopback address cannot
-    // send to 127.0.0.1 on Linux. The Offer has to come back to this source.
+    // receives that datagram. On Linux a socket bound to a non-loopback address
+    // cannot send to 127.0.0.1, so the finder uses the LAN address there. The
+    // Offer has to come back to this source.
     ASSERT_TRUE(finder.send_to(finder_address.c_str(), endpoints.port, find_bytes.data(),
                                find_bytes.size()))
         << "Find send to " << finder_address;
