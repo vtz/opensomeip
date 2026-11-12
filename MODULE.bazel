@@ -9,4 +9,6 @@ module(
     compatibility_level = 0,
 )
 
-bazel_dep(name = "googletest", version = "1.14.0.bcr.1")
+# Dev-only so a downstream module that links //:opensomeip does not pull
+# GoogleTest into its module graph.
+bazel_dep(name = "googletest", version = "1.14.0.bcr.1", dev_dependency = True)

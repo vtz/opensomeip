@@ -61,10 +61,10 @@ PAL_CORE_SRCS = [
     "src/e2e/e2e_crc.cpp",
 ]
 
-def opensomeip_targets():
-    """Library targets for the default host configuration."""
+def _host_library(name, local_defines = [], testonly = False, visibility = ["//visibility:public"]):
     native.cc_library(
-        name = "opensomeip",
+        name = name,
+        testonly = testonly,
         srcs = OPENSOMEIP_SRCS + [
             "src/common/callback_storage.h",
             "src/transport/transport_session.h",
@@ -72,12 +72,26 @@ def opensomeip_targets():
         hdrs = native.glob(["include/**/*.h"]),
         includes = OPENSOMEIP_INCLUDES,
         copts = _COPTS,
-        # Same definition the CMake host test build adds when BUILD_TESTS is
-        # on. The hold defaults to zero, so connect is not delayed unless a
-        # test sets it. Packaging builds without this definition stay on CMake.
-        local_defines = ["SOMEIP_TCP_TEST_CONNECT_HOLD"],
+        local_defines = local_defines,
         linkopts = _LINKOPTS,
-        visibility = ["//visibility:public"],
+        visibility = visibility,
+    )
+
+def opensomeip_targets():
+    """Library targets for the default host configuration."""
+    # External modules link this target. It does not define
+    # SOMEIP_TCP_TEST_CONNECT_HOLD. CMake adds that definition only to the
+    # test build of tcp_transport.cpp when BUILD_TESTS is on.
+    _host_library("opensomeip")
+
+    # The TCP handshake test calls set_test_outbound_connect_hold_ms. That
+    # hook stays off //:opensomeip. The hold defaults to zero until the test
+    # sets it.
+    _host_library(
+        "opensomeip_tcp_connect_hold",
+        local_defines = ["SOMEIP_TCP_TEST_CONNECT_HOLD"],
+        testonly = True,
+        visibility = ["//visibility:private"],
     )
 
     native.cc_library(
@@ -99,14 +113,24 @@ def opensomeip_targets():
         visibility = ["//visibility:public"],
     )
 
-def host_cc_test(name, src, extra_srcs = [], capi = False):
-    """One C++ test that links the host library, or the C API when capi is set."""
+def host_cc_test(name, src, extra_srcs = [], capi = False, hold_connect = False):
+    """One C++ test that links the host library, or the C API when capi is set.
+
+    hold_connect links the test-only library that defines
+    SOMEIP_TCP_TEST_CONNECT_HOLD. The public //:opensomeip target does not.
+    """
+    if capi:
+        library = ":opensomeip_capi"
+    elif hold_connect:
+        library = ":opensomeip_tcp_connect_hold"
+    else:
+        library = ":opensomeip"
     native.cc_test(
         name = name,
         srcs = [src, "tests/static_pool_init.h"] + extra_srcs,
         includes = ["tests"],
         deps = [
-            ":opensomeip_capi" if capi else ":opensomeip",
+            library,
             "@googletest//:gtest_main",
         ],
         copts = _COPTS,

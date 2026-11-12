@@ -46,7 +46,11 @@ host_cc_test(
     extra_srcs = ["tests/multicast_fake.h"],
 )
 host_cc_test("test_events", "tests/test_events.cpp")
-host_cc_test("test_tcp_transport", "tests/test_tcp_transport.cpp")
+host_cc_test(
+    "test_tcp_transport",
+    "tests/test_tcp_transport.cpp",
+    hold_connect = True,
+)
 host_cc_test("test_udp_transport", "tests/test_udp_transport.cpp")
 host_cc_test("test_multicast_membership", "tests/test_multicast_membership.cpp")
 host_cc_test("test_event_driven_udp_transport", "tests/test_event_driven_udp_transport.cpp")
