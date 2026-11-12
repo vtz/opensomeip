@@ -21,14 +21,14 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-11-12 21:57:07</p>
+    <p>Generated: 2026-11-12 22:19:12</p>
 
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
             <li>Total Requirements: 701</li>
-            <li>Code References: 406</li>
-            <li>Test Cases: 626</li>
+            <li>Code References: 424</li>
+            <li>Test Cases: 629</li>
         </ul>
     </div>
 
@@ -102,16 +102,16 @@
             <td>REQ_ARCH_008</td>
             <td>Static Allocation Policy</td>
             <td>REQ_ARCH_003</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_memory_static_14</td>
             <td>TC_test_static_alloc_integration_14</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_CAPI_001</td>
             <td>Stable C ABI</td>
             <td>feat_req_someip_2, feat_req_someip_3</td>
             <td class="code-ref">CODE_opensomeip_capi_14</td>
-            <td>TC_CAPI_PURE_C_CONSUMER</td>
+            <td>TC_CAPI_VERSION_001, TC_CAPI_PURE_C_CONSUMER</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1454,9 +1454,9 @@
             <td>REQ_PAL_BUFPOOL_EXHAUST_E01</td>
             <td>Error - Buffer Pool Exhaustion</td>
             <td>REQ_PAL_MEM_EXHAUST_E01</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_buffer_pool_static_14</td>
             <td>TC_BUFPOOL_ACQUIRE_OVERSIZED, TC_BUFPOOL_EXHAUST_TIER0, TC_BUFPOOL_EXHAUST_TIER1, TC_BUFPOOL_EXHAUST_TIER2</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_BUFPOOL_RELEASE</td>
@@ -1470,17 +1470,17 @@
             <td>REQ_PAL_BUFPOOL_THREADSAFE_E01</td>
             <td>Error - Buffer Pool Thread Safety</td>
             <td>REQ_PAL_MEM_THREADSAFE_E01</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_buffer_pool_static_14</td>
             <td>TC_BUFPOOL_CONCURRENT</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_BUFPOOL_TIERED</td>
             <td>Tiered Buffer Pool Selection</td>
             <td>REQ_ARCH_008</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_buffer_pool_static_14</td>
             <td>TC_BUFPOOL_ACQUIRE_SMALL, TC_BUFPOOL_ACQUIRE_MEDIUM, TC_BUFPOOL_ACQUIRE_LARGE, TC_BUFPOOL_EXHAUST_TIER0, TC_BUFPOOL_EXHAUST_TIER1, TC_BUFPOOL_EXHAUST_TIER2, TC_BUFPOOL_CROSS_TIER_FALLBACK</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_BYTE_HTONL</td>
@@ -1518,33 +1518,33 @@
             <td>REQ_PAL_CONTAINER_CAPACITY_E01</td>
             <td>Error - Container Capacity Exhaustion</td>
             <td>REQ_ARCH_008</td>
-            <td class="code-ref">-</td>
-            <td>TC_ETL_HANDLER_VECTOR_OVERFLOW, TC_ETL_HANDLER_NO_ABORT</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td class="code-ref">CODE_containers_impl_static_10</td>
+            <td>TC_ETL_HANDLER_VECTOR_OVERFLOW, TC_ETL_HANDLER_NO_ABORT, TC_CONTAINER_CAPACITY_EXHAUST</td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_CONTAINER_FUNCTION</td>
             <td>Platform Function Type</td>
             <td>REQ_ARCH_008</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_containers_impl_static_10</td>
             <td>TC_CONTAINER_FUNCTION_INVOKE</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_CONTAINER_MAP</td>
             <td>Platform Unordered Map Type</td>
             <td>REQ_ARCH_008</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_containers_impl_static_10</td>
             <td>TC_CONTAINER_MAP_INSERT_LOOKUP</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_CONTAINER_QUEUE</td>
             <td>Platform Queue Type</td>
             <td>REQ_ARCH_008</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_containers_impl_static_10</td>
             <td>TC_CONTAINER_QUEUE_FIFO</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_CONTAINER_STRING</td>
@@ -1670,7 +1670,7 @@
             <td>REQ_PAL_MEM_THREADSAFE_E01</td>
             <td>Error - Memory Pool Thread Safety</td>
             <td>-</td>
-            <td class="code-ref">CODE_memory_impl_freertos_23, CODE_memory_impl_threadx_23</td>
+            <td class="code-ref">CODE_memory_static_14, CODE_memory_impl_freertos_23, CODE_memory_impl_threadx_23</td>
             <td>TC_MSGPOOL_CONCURRENT</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1783,14 +1783,14 @@
             <td>Compile-Time Capacity Configuration</td>
             <td>REQ_ARCH_008</td>
             <td class="code-ref">CODE_static_config_static_17</td>
-            <td>-</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td>TC_PAL_STATIC_CONFIG</td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PAL_THREAD_CREATE</td>
             <td>PAL Thread Creation</td>
             <td>REQ_ARCH_001</td>
-            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_152, CODE_thread_impl_posix_34, CODE_thread_impl_posix_39, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_137, CODE_thread_impl_win32_27, CODE_thread_impl_win32_32, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_92</td>
+            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_152, CODE_thread_impl_posix_34, CODE_thread_impl_posix_39, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_137, CODE_thread_impl_win32_28, CODE_thread_impl_win32_33, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_92</td>
             <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_THREAD_CREATE, TC_MOCK_THREAD_WITH_ARGS, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_THREAD_001, TC_PAL_THREAD_002, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1798,7 +1798,7 @@
             <td>REQ_PAL_THREAD_CREATE_E01</td>
             <td>Error - Thread Creation Failure</td>
             <td>-</td>
-            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_152, CODE_thread_impl_posix_34, CODE_thread_impl_posix_39, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_137, CODE_thread_impl_win32_27, CODE_thread_impl_win32_32, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_92</td>
+            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_152, CODE_thread_impl_posix_34, CODE_thread_impl_posix_39, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_137, CODE_thread_impl_win32_28, CODE_thread_impl_win32_33, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_92</td>
             <td>TC_test_platform_threading_wait</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1806,7 +1806,7 @@
             <td>REQ_PAL_THREAD_DTOR_E01</td>
             <td>Error - Thread Destructor Without Join</td>
             <td>-</td>
-            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_177, CODE_thread_impl_posix_34, CODE_thread_impl_posix_56, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_172, CODE_thread_impl_win32_27, CODE_thread_impl_win32_43, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_107</td>
+            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_177, CODE_thread_impl_posix_34, CODE_thread_impl_posix_56, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_172, CODE_thread_impl_win32_28, CODE_thread_impl_win32_44, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_107</td>
             <td>TC_MOCK_THREAD_DTOR, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_THREAD_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1814,7 +1814,7 @@
             <td>REQ_PAL_THREAD_ID</td>
             <td>PAL Current Thread Identity</td>
             <td>REQ_ARCH_002</td>
-            <td class="code-ref">CODE_thread_impl_freertos_276, CODE_thread_impl_posix_98, CODE_thread_impl_threadx_302, CODE_thread_impl_win32_79, CODE_thread_impl_zephyr_163</td>
+            <td class="code-ref">CODE_thread_impl_freertos_276, CODE_thread_impl_posix_98, CODE_thread_impl_threadx_302, CODE_thread_impl_win32_80, CODE_thread_impl_zephyr_163</td>
             <td>TC_MOCK_THREAD_ID</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1822,7 +1822,7 @@
             <td>REQ_PAL_THREAD_JOIN</td>
             <td>PAL Thread Join</td>
             <td>REQ_ARCH_001</td>
-            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_194, CODE_thread_impl_posix_34, CODE_thread_impl_posix_73, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_190, CODE_thread_impl_win32_27, CODE_thread_impl_win32_56, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_122</td>
+            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_194, CODE_thread_impl_posix_34, CODE_thread_impl_posix_73, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_190, CODE_thread_impl_win32_28, CODE_thread_impl_win32_57, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_122</td>
             <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_THREAD_JOIN_FAST, TC_MOCK_THREAD_JOIN, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_PAL_THREAD_001, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1830,7 +1830,7 @@
             <td>REQ_PAL_THREAD_JOINABLE</td>
             <td>PAL Thread Joinable Query</td>
             <td>REQ_ARCH_001</td>
-            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_188, CODE_thread_impl_posix_34, CODE_thread_impl_posix_67, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_184, CODE_thread_impl_win32_27, CODE_thread_impl_win32_53, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_116</td>
+            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_freertos_188, CODE_thread_impl_posix_34, CODE_thread_impl_posix_67, CODE_thread_impl_threadx_132, CODE_thread_impl_threadx_184, CODE_thread_impl_win32_28, CODE_thread_impl_win32_54, CODE_thread_impl_zephyr_87, CODE_thread_impl_zephyr_116</td>
             <td>TC_test_freertos_core_vApplicationMallocFailedHook, TC_MOCK_THREAD_JOINABLE, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait, TC_test_threadx_core_7</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1838,7 +1838,7 @@
             <td>REQ_PAL_THREAD_NONCOPY</td>
             <td>PAL Thread Non-Copyable</td>
             <td>REQ_ARCH_001</td>
-            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_posix_34, CODE_thread_impl_threadx_132, CODE_thread_impl_win32_27, CODE_thread_impl_zephyr_87</td>
+            <td class="code-ref">CODE_thread_impl_freertos_147, CODE_thread_impl_posix_34, CODE_thread_impl_threadx_132, CODE_thread_impl_win32_28, CODE_thread_impl_zephyr_87</td>
             <td>TC_MOCK_THREAD_NONCOPY, TC_test_pal_freertos_mock_allocate_message, TC_test_pal_static_alloc_mock_allocate_message, TC_test_pal_threadx_mock_allocate_message, TC_test_pal_zephyr_mock_allocate_message, TC_test_platform_threading_wait</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1878,9 +1878,9 @@
             <td>REQ_PLATFORM_LWIP_002</td>
             <td>lwIP Byte-Order Backend</td>
             <td>REQ_PAL_BYTE_HTONS, REQ_PAL_BYTE_NTOHS, REQ_PAL_BYTE_HTONL, REQ_PAL_BYTE_NTOHL</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_byteorder_impl_lwip_12</td>
             <td>TC_test_udp_transport_SetUp</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_POSIX_001</td>
@@ -1918,9 +1918,9 @@
             <td>REQ_PLATFORM_STATIC_001</td>
             <td>Static Allocation Container Backend</td>
             <td>REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING, REQ_PAL_CONTAINER_MAP, REQ_PAL_CONTAINER_QUEUE, REQ_PAL_CONTAINER_FUNCTION</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_containers_impl_static_10</td>
             <td>TC_CONTAINER_VECTOR_PUSH_BACK, TC_CONTAINER_STRING_APPEND, TC_CONTAINER_MAP_INSERT_LOOKUP, TC_CONTAINER_QUEUE_FIFO, TC_CONTAINER_FUNCTION_INVOKE</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_STATIC_002</td>
@@ -1942,17 +1942,17 @@
             <td>REQ_PLATFORM_STATIC_004</td>
             <td>OS-Agnostic Pool Synchronization</td>
             <td>REQ_PAL_BUFPOOL_THREADSAFE_E01</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_buffer_pool_static_14, CODE_memory_static_14</td>
             <td>TC_test_pal_static_alloc_mock_allocate_message</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_STATIC_005</td>
             <td>Pimpl Static Storage</td>
             <td>REQ_ARCH_008</td>
-            <td class="code-ref">-</td>
-            <td>TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td class="code-ref">CODE_event_publisher_events_248, CODE_event_subscriber_events_259, CODE_rpc_client_rpc_216, CODE_rpc_server_rpc_189, CODE_sd_client_sd_185, CODE_sd_server_sd_185</td>
+            <td>TC_test_static_alloc_integration_14, TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR</td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_THREADX_001</td>
@@ -1974,33 +1974,33 @@
             <td>REQ_PLATFORM_WIN32_001</td>
             <td>Win32 Threading Backend</td>
             <td>REQ_PAL_MUTEX_LOCK, REQ_PAL_MUTEX_UNLOCK, REQ_PAL_MUTEX_TRYLOCK, REQ_PAL_CV_WAIT, REQ_PAL_CV_WAIT_PRED, REQ_PAL_CV_NOTIFY_ONE, REQ_PAL_CV_NOTIFY_ALL, REQ_PAL_CV_OWNERSHIP, REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_JOINABLE, REQ_PAL_THREAD_JOIN, REQ_PAL_LOCK_ACQUIRE, REQ_PAL_LOCK_RELEASE, REQ_PAL_SLEEP_DURATION, REQ_PAL_SLEEP_ZERO</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_thread_impl_win32_22</td>
             <td>TC_test_platform_threading_wait</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_WIN32_002</td>
             <td>Win32 Memory Backend</td>
             <td>REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_INDEPENDENT</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_memory_impl_win32_13</td>
             <td>TC_test_platform_threading_wait</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_WIN32_003</td>
             <td>Win32 Networking Backend</td>
             <td>REQ_PAL_NET_CLOSE, REQ_PAL_NET_SHUTDOWN, REQ_PAL_NET_NONBLOCK, REQ_PAL_NET_BLOCK</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_net_impl_win32_22</td>
             <td>TC_test_platform_threading_wait</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_WIN32_004</td>
             <td>Win32 Byte-Order Backend</td>
             <td>REQ_PAL_BYTE_HTONS, REQ_PAL_BYTE_NTOHS, REQ_PAL_BYTE_HTONL, REQ_PAL_BYTE_NTOHL</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_byteorder_impl_win32_12</td>
             <td>TC_test_platform_threading_wait</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_ZEPHYR_001</td>
@@ -2022,17 +2022,17 @@
             <td>REQ_PLATFORM_ZEPHYR_003</td>
             <td>Zephyr Networking Backend</td>
             <td>REQ_PAL_NET_CLOSE, REQ_PAL_NET_SHUTDOWN, REQ_PAL_NET_NONBLOCK, REQ_PAL_NET_BLOCK</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_net_impl_zephyr_10</td>
             <td>TC_test_pal_zephyr_mock_allocate_message</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_PLATFORM_ZEPHYR_004</td>
             <td>Zephyr Byte-Order Backend</td>
             <td>REQ_PAL_BYTE_HTONS, REQ_PAL_BYTE_NTOHS, REQ_PAL_BYTE_HTONL, REQ_PAL_BYTE_NTOHL</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_byteorder_impl_zephyr_12</td>
             <td>TC_test_pal_zephyr_mock_allocate_message</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_001</td>
@@ -2262,7 +2262,7 @@
             <td>REQ_SD_030_E01</td>
             <td>Error - SD Entry References No Options</td>
             <td>-</td>
-            <td class="code-ref">CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp, TC_SD_E03, TC_SD_ADD_ENTRY_RETURNS_BOOL</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3126,7 +3126,7 @@
             <td>REQ_SD_200A</td>
             <td>SD Message Structure - Flags and Reserved</td>
             <td>feat_req_someipsd_38, feat_req_someipsd_39, feat_req_someipsd_40</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731, CODE_sd_message_sd_28, CODE_sd_message_sd_375</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733, CODE_sd_message_sd_28, CODE_sd_message_sd_375</td>
             <td>TC_test_sd_SetUp, TC_SD_UNKNOWN_ENTRY_001</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3134,7 +3134,7 @@
             <td>REQ_SD_200B</td>
             <td>SD Entries Array Format</td>
             <td>feat_req_someipsd_41, feat_req_someipsd_42, feat_req_someipsd_44</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731, CODE_sd_message_sd_28, CODE_sd_message_sd_67</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733, CODE_sd_message_sd_28, CODE_sd_message_sd_67</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3142,7 +3142,7 @@
             <td>REQ_SD_200C</td>
             <td>SD Options Array Format</td>
             <td>feat_req_someipsd_1, feat_req_someipsd_2, feat_req_someipsd_13</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731, CODE_sd_message_sd_28, CODE_sd_message_sd_375</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733, CODE_sd_message_sd_28, CODE_sd_message_sd_375</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3150,7 +3150,7 @@
             <td>REQ_SD_201</td>
             <td>SD Transport Requirements</td>
             <td>feat_req_someipsd_46, feat_req_someipsd_47</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3158,7 +3158,7 @@
             <td>REQ_SD_202</td>
             <td>SD ECU Internal Interface</td>
             <td>feat_req_someipsd_22, feat_req_someipsd_23, feat_req_someipsd_24, feat_req_someipsd_25, feat_req_someipsd_26, feat_req_someipsd_27, feat_req_someipsd_16, feat_req_someipsd_17, feat_req_someipsd_18</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3278,7 +3278,7 @@
             <td>REQ_SD_236</td>
             <td>SD IPv4 SD Endpoint Option Format</td>
             <td>feat_req_someipsd_1080, feat_req_someipsd_1082, feat_req_someipsd_1083, feat_req_someipsd_1085, feat_req_someipsd_1087</td>
-            <td class="code-ref">CODE_sd_message_sd_574, CODE_sd_message_sd_901, CODE_sd_message_sd_209, CODE_sd_message_sd_434</td>
+            <td class="code-ref">CODE_sd_message_sd_574, CODE_sd_message_sd_903, CODE_sd_message_sd_209, CODE_sd_message_sd_434</td>
             <td>TC_test_sd_SetUp, TC_SD_024_WIRE, TC_SD_024_BADLEN, TC_SD_024_TRUNC</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3342,7 +3342,7 @@
             <td>REQ_SD_261</td>
             <td>SD StopOfferService Construction</td>
             <td>feat_req_someipsd_256, feat_req_someipsd_261, feat_req_someipsd_262</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp, TC_SD_SPEC_299_STOP</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3406,7 +3406,7 @@
             <td>REQ_SD_282</td>
             <td>SD Multicast Group Management</td>
             <td>feat_req_someipsd_101, feat_req_someipsd_102, feat_req_someipsd_103, feat_req_someipsd_104</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3423,14 +3423,14 @@
             <td>SD Server Endpoint Registration</td>
             <td>feat_req_someipsd_806, feat_req_someipsd_807, feat_req_someipsd_808, feat_req_someipsd_809, feat_req_someipsd_811</td>
             <td class="code-ref">CODE_sd_server_sd_635</td>
-            <td>TC_test_sd_SetUp</td>
+            <td>TC_test_sd_SetUp, TC_SD_OFFER_TCP_PROTO</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SD_291</td>
             <td>SD Client Endpoint Resolution</td>
             <td>feat_req_someipsd_812, feat_req_someipsd_813, feat_req_someipsd_814, feat_req_someipsd_816</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3462,7 +3462,7 @@
             <td>REQ_SD_301</td>
             <td>SD Service State Tracking</td>
             <td>feat_req_someipsd_771, feat_req_someipsd_772, feat_req_someipsd_776, feat_req_someipsd_777, feat_req_someipsd_778</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3470,7 +3470,7 @@
             <td>REQ_SD_302</td>
             <td>SD Subscription State Tracking</td>
             <td>feat_req_someipsd_779, feat_req_someipsd_780, feat_req_someipsd_781, feat_req_someipsd_782, feat_req_someipsd_783</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3478,7 +3478,7 @@
             <td>REQ_SD_303</td>
             <td>SD Service Registry Management</td>
             <td>feat_req_someipsd_784, feat_req_someipsd_785, feat_req_someipsd_786, feat_req_someipsd_787, feat_req_someipsd_788</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3510,7 +3510,7 @@
             <td>REQ_SD_320</td>
             <td>SD Non-SOME/IP Service Announcement</td>
             <td>feat_req_someipsd_497, feat_req_someipsd_498, feat_req_someipsd_499, feat_req_someipsd_500, feat_req_someipsd_501, feat_req_someipsd_502, feat_req_someipsd_503</td>
-            <td class="code-ref">CODE_sd_message_sd_665, CODE_sd_message_sd_731</td>
+            <td class="code-ref">CODE_sd_message_sd_667, CODE_sd_message_sd_733</td>
             <td>TC_test_sd_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3526,7 +3526,7 @@
             <td>REQ_SD_331</td>
             <td>SD Initial Event Requesting</td>
             <td>feat_req_someipsd_322, feat_req_someipsd_1187, feat_req_someipsd_1188, feat_req_someipsd_1191, feat_req_someipsd_1192, feat_req_someipsd_1193, feat_req_someipsd_1194, feat_req_someipsd_946</td>
-            <td class="code-ref">CODE_event_publisher_events_244, CODE_sd_client_sd_274, CODE_sd_client_sd_922, CODE_sd_client_sd_955, CODE_sd_message_sd_665, CODE_sd_server_sd_867</td>
+            <td class="code-ref">CODE_event_publisher_events_244, CODE_sd_client_sd_274, CODE_sd_client_sd_922, CODE_sd_client_sd_955, CODE_sd_message_sd_667, CODE_sd_server_sd_867</td>
             <td>TC_test_sd_SetUp, TC_SD_1194_FLAG, TC_SD_1194_CLIENT, TC_SD_1194_CAPABLE, TC_SD_1194_FIELD</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -3558,7 +3558,7 @@
             <td>REQ_SD_343</td>
             <td>SD IPv4 SD Endpoint Processing</td>
             <td>feat_req_someipsd_1114, feat_req_someipsd_1151, feat_req_someipsd_1152, feat_req_someipsd_1153, feat_req_someipsd_1154, feat_req_someipsd_1155, feat_req_someipsd_1156</td>
-            <td class="code-ref">CODE_sd_client_sd_1027, CODE_sd_client_sd_1358, CODE_sd_message_sd_901, CODE_sd_message_sd_934, CODE_sd_server_sd_678, CODE_sd_server_sd_710, CODE_sd_message_sd_434, CODE_sd_message_sd_447, CODE_sd_message_sd_483</td>
+            <td class="code-ref">CODE_sd_client_sd_1027, CODE_sd_client_sd_1358, CODE_sd_message_sd_903, CODE_sd_message_sd_936, CODE_sd_server_sd_678, CODE_sd_server_sd_710, CODE_sd_message_sd_434, CODE_sd_message_sd_447, CODE_sd_message_sd_483</td>
             <td>TC_test_sd_SetUp, TC_SD_024_PLACE, TC_SD_024_FIND, TC_SD_024_SUB, TC_SD_024_REBOOT, TC_SD_024_SKIP, TC_SD_024_INDEX16, TC_SD_024_MCAST</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4366,9 +4366,9 @@
             <td>REQ_SER_074</td>
             <td>Get Remaining Buffer Capacity</td>
             <td>feat_req_someip_168</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_serializer_serialization_236</td>
             <td>TC_test_serialization_EXPECT_DESERIALIZE_SUCCESS</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_SER_075</td>
@@ -4814,7 +4814,7 @@
             <td>REQ_TP_030</td>
             <td>Allocate Reassembly Buffer</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_782</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_213</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_214</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4822,7 +4822,7 @@
             <td>REQ_TP_030_E01</td>
             <td>Error - Buffer Overflow on Large Message</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_213</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_214</td>
             <td>TC_test_tp_SetUp, TC_TP_ERR_003, TC_TP_ERR_007</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4830,7 +4830,7 @@
             <td>REQ_TP_030_E02</td>
             <td>Error - Maximum Concurrent Transfers</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_271</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_272</td>
             <td>TC_test_tp_SetUp, TC_TP_ERR_004, TC_TP_ERR_007, TC_TP_MISMATCHED_MSG_LEN_REJECTED</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4838,15 +4838,15 @@
             <td>REQ_TP_030_E03</td>
             <td>Clamp Reassembly Size to Static Buffer Capacity</td>
             <td>feat_req_someiptp_782</td>
-            <td class="code-ref">-</td>
-            <td>-</td>
-            <td><span class="status-error">✗ Missing</span></td>
+            <td class="code-ref">CODE_tp_reassembler_tp_191, CODE_tp_reassembler_tp_611</td>
+            <td>TC_TP_REASSEMBLY_CLAMP</td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TP_031</td>
             <td>Buffer Identification</td>
             <td>feat_req_someiptp_781, feat_req_someiptp_794</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_213, CODE_tp_types_tp_124</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_214, CODE_tp_types_tp_124</td>
             <td>TC_test_tp_SetUp, TC_TP_REASSEMBLY_KEY_INCLUDES_SENDER</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4854,7 +4854,7 @@
             <td>REQ_TP_032</td>
             <td>Buffer Size Estimation</td>
             <td>feat_req_someiptp_787</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_213</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_214</td>
             <td>TC_test_tp_SetUp, TC_TP_WIRE_INGEST_UNKNOWN_TOTAL, TC_TP_WIRE_LAST_ARRIVES_FIRST</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4862,7 +4862,7 @@
             <td>REQ_TP_033</td>
             <td>Buffer Resize on Final Segment</td>
             <td>feat_req_someiptp_770, feat_req_someiptp_783</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_213, CODE_tp_reassembler_tp_271</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_214, CODE_tp_reassembler_tp_272</td>
             <td>TC_test_tp_SetUp, TC_TP_UNDERSIZED_FIRST_SEGMENT_REJECTED, TC_TP_ZERO_PAYLOAD_NO_COMPLETE, TC_TP_WIRE_INGEST_UNKNOWN_TOTAL, TC_TP_WIRE_LAST_ARRIVES_FIRST</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4870,7 +4870,7 @@
             <td>REQ_TP_034</td>
             <td>Store Segment by Offset</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_789</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_271</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_272</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4878,7 +4878,7 @@
             <td>REQ_TP_035</td>
             <td>Track Received Segments</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_789</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_271</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_272</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4886,7 +4886,7 @@
             <td>REQ_TP_036</td>
             <td>Detect Duplicate Segments</td>
             <td>feat_req_someiptp_780</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_338</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_339</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4894,7 +4894,7 @@
             <td>REQ_TP_037</td>
             <td>Detect Overlapping Segments</td>
             <td>feat_req_someiptp_780, feat_req_someiptp_797</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_338</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_339</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4902,7 +4902,7 @@
             <td>REQ_TP_038</td>
             <td>Handle Out-of-Order Segments</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_789, feat_req_someiptp_790, feat_req_someiptp_820</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_338</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_339</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4910,7 +4910,7 @@
             <td>REQ_TP_039</td>
             <td>Complete on Last Segment with No Gaps</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_783</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_399</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_400</td>
             <td>TC_test_tp_SetUp, TC_TP_PROGRESS_COUNTS_BYTES</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4918,7 +4918,7 @@
             <td>REQ_TP_039_E01</td>
             <td>Error - Missing Segments at Completion</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_399</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_400</td>
             <td>TC_test_tp_SetUp, TC_TP_ERR_004, TC_TP_PLACEMENT_FAILURE_PRESERVES_BUFFER</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4926,7 +4926,7 @@
             <td>REQ_TP_040</td>
             <td>Delayed Completion for Out-of-Order Last</td>
             <td>feat_req_someiptp_774</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_399</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_400</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4934,7 +4934,7 @@
             <td>REQ_TP_041</td>
             <td>Deliver Reassembled Message</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_783</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_399</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_400</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4942,7 +4942,7 @@
             <td>REQ_TP_042</td>
             <td>Release Buffer After Delivery</td>
             <td>feat_req_someiptp_774</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_399</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_400</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4950,7 +4950,7 @@
             <td>REQ_TP_043</td>
             <td>Error - Total Length Inconsistency</td>
             <td>feat_req_someiptp_774, feat_req_someiptp_792</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_399</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_400</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -4958,9 +4958,9 @@
             <td>REQ_TP_044</td>
             <td>Reject Misaligned Non-Final Segments</td>
             <td>feat_req_someiptp_772, feat_req_someiptp_792</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_315</td>
             <td>TC_TP_MISALIGNED_NONFINAL_REJECTED, TC_TP_MISALIGNED_FINAL_ACCEPTED</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TP_050</td>
@@ -5102,7 +5102,7 @@
             <td>REQ_TP_072_E01</td>
             <td>Error - Segment Size Exceeds Maximum</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_99, CODE_tp_reassembler_tp_271</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_99, CODE_tp_reassembler_tp_272</td>
             <td>TC_test_tp_SetUp, TC_TP_E01</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5134,7 +5134,7 @@
             <td>REQ_TP_076</td>
             <td>Session ID Based Reassembly Detection</td>
             <td>feat_req_someiptp_793, feat_req_someiptp_795, feat_req_someiptp_776</td>
-            <td class="code-ref">CODE_tp_manager_tp_379, CODE_tp_reassembler_tp_213, CODE_tp_segmenter_tp_91</td>
+            <td class="code-ref">CODE_tp_manager_tp_379, CODE_tp_reassembler_tp_214, CODE_tp_segmenter_tp_91</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5142,7 +5142,7 @@
             <td>REQ_TP_076_E01</td>
             <td>Error - Reassembly Buffer Full</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_99, CODE_tp_reassembler_tp_271</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_99, CODE_tp_reassembler_tp_272</td>
             <td>TC_test_tp_SetUp, TC_TP_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5150,7 +5150,7 @@
             <td>REQ_TP_076_E02</td>
             <td>Error - TP Reassembly Result Exceeds Maximum Message Size</td>
             <td>-</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_99, CODE_tp_reassembler_tp_271</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_99, CODE_tp_reassembler_tp_272</td>
             <td>TC_test_tp_SetUp, TC_TP_E02</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5158,7 +5158,7 @@
             <td>REQ_TP_077</td>
             <td>Return Code from Last Segment</td>
             <td>feat_req_someiptp_784</td>
-            <td class="code-ref">CODE_tp_manager_tp_379, CODE_tp_reassembler_tp_213, CODE_tp_segmenter_tp_91</td>
+            <td class="code-ref">CODE_tp_manager_tp_379, CODE_tp_reassembler_tp_214, CODE_tp_segmenter_tp_91</td>
             <td>TC_test_tp_SetUp, TC_TP_HEADER_MATCHES_PAYLOAD</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5166,7 +5166,7 @@
             <td>REQ_TP_078</td>
             <td>Clear TP Flag After Reassembly</td>
             <td>feat_req_someiptp_785</td>
-            <td class="code-ref">CODE_tp_manager_tp_192, CODE_tp_manager_tp_379, CODE_tp_reassembler_tp_213, CODE_tp_segmenter_tp_91, CODE_tp_manager_tp_148</td>
+            <td class="code-ref">CODE_tp_manager_tp_192, CODE_tp_manager_tp_379, CODE_tp_reassembler_tp_214, CODE_tp_segmenter_tp_91, CODE_tp_manager_tp_148</td>
             <td>TC_test_tp_SetUp, TC_test_tp_SetUp, TC_TP_HEADER_MATCHES_PAYLOAD, TC_UDP_TP_REASSEMBLY</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5174,7 +5174,7 @@
             <td>REQ_TP_079</td>
             <td>Cancel Reassembly on Resource Exhaustion</td>
             <td>feat_req_someiptp_796</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_213, CODE_tp_reassembler_tp_569, CODE_tp_reassembler_tp_589</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_214, CODE_tp_reassembler_tp_570, CODE_tp_reassembler_tp_590</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5182,7 +5182,7 @@
             <td>REQ_TP_080</td>
             <td>No Cross-Message Reordering</td>
             <td>feat_req_someiptp_802, feat_req_someiptp_803</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_213, CODE_tp_reassembler_tp_399</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_214, CODE_tp_reassembler_tp_400</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5190,7 +5190,7 @@
             <td>REQ_TP_081</td>
             <td>Overlapping Segment Handling</td>
             <td>feat_req_someiptp_810, feat_req_someiptp_797</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_213, CODE_tp_reassembler_tp_399</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_214, CODE_tp_reassembler_tp_400</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5198,23 +5198,23 @@
             <td>REQ_TP_081_ATOM</td>
             <td>Atomic Header and Payload Completion</td>
             <td>-</td>
-            <td class="code-ref">-</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_70</td>
             <td>TC_TP_PROCESS_SEGMENT_RETURNS_HEADER</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TP_081_FW</td>
             <td>First-Wins Semantics for Overlapping Segments</td>
             <td>feat_req_someiptp_797</td>
-            <td class="code-ref">-</td>
-            <td>TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td class="code-ref">CODE_tp_reassembler_tp_425, CODE_tp_reassembler_tp_494</td>
+            <td>TC_TP_OVERLAP_SAME_DATA, TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS</td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TP_082</td>
             <td>TP Error Handling</td>
             <td>feat_req_someiptp_792, feat_req_someiptp_832</td>
-            <td class="code-ref">CODE_tp_reassembler_tp_99, CODE_tp_reassembler_tp_213</td>
+            <td class="code-ref">CODE_tp_reassembler_tp_99, CODE_tp_reassembler_tp_214</td>
             <td>TC_test_tp_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5669,7 +5669,13 @@
         <tr>
             <td>CODE_buffer_pool_static_14</td>
             <td class="code-ref">src/platform/static/buffer_pool.cpp:14</td>
-            <td>REQ_PLATFORM_STATIC_003, REQ_PAL_BUFPOOL_ACQUIRE</td>
+            <td>REQ_PLATFORM_STATIC_003, REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_TIERED, REQ_PAL_BUFPOOL_EXHAUST_E01, REQ_PAL_BUFPOOL_THREADSAFE_E01, REQ_PLATFORM_STATIC_004</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_byteorder_impl_lwip_12</td>
+            <td class="code-ref">include/platform/lwip/byteorder_impl.h:12</td>
+            <td>REQ_PLATFORM_LWIP_002</td>
             <td>-</td>
         </tr>
         <tr>
@@ -5697,6 +5703,18 @@
             <td>-</td>
         </tr>
         <tr>
+            <td>CODE_byteorder_impl_win32_12</td>
+            <td class="code-ref">include/platform/win32/byteorder_impl.h:12</td>
+            <td>REQ_PLATFORM_WIN32_004</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_byteorder_impl_zephyr_12</td>
+            <td class="code-ref">include/platform/zephyr/byteorder_impl.h:12</td>
+            <td>REQ_PLATFORM_ZEPHYR_004</td>
+            <td>-</td>
+        </tr>
+        <tr>
             <td>CODE_callback_storage_common_24</td>
             <td class="code-ref">src/common/callback_storage.h:24</td>
             <td>REQ_ARCH_002, REQ_ARCH_003</td>
@@ -5705,7 +5723,7 @@
         <tr>
             <td>CODE_containers_impl_static_10</td>
             <td class="code-ref">include/platform/static/containers_impl.h:10</td>
-            <td>REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING</td>
+            <td>REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING, REQ_PAL_CONTAINER_MAP, REQ_PAL_CONTAINER_QUEUE, REQ_PAL_CONTAINER_FUNCTION, REQ_PLATFORM_STATIC_001, REQ_PAL_CONTAINER_CAPACITY_E01</td>
             <td>-</td>
         </tr>
         <tr>
@@ -5901,6 +5919,12 @@
             <td>feat_req_someipsd_1194</td>
         </tr>
         <tr>
+            <td>CODE_event_publisher_events_248</td>
+            <td class="code-ref">include/events/event_publisher.h:248</td>
+            <td>REQ_PLATFORM_STATIC_005</td>
+            <td>-</td>
+        </tr>
+        <tr>
             <td>CODE_event_publisher_events_40</td>
             <td class="code-ref">src/events/event_publisher.cpp:40</td>
             <td>REQ_ARCH_001, REQ_ARCH_002</td>
@@ -5922,6 +5946,12 @@
             <td>CODE_event_subscriber_events_250</td>
             <td class="code-ref">src/events/event_subscriber.cpp:250</td>
             <td>REQ_MSG_122, REQ_TRANSPORT_014, REQ_TRANSPORT_030</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_event_subscriber_events_259</td>
+            <td class="code-ref">include/events/event_subscriber.h:259</td>
+            <td>REQ_PLATFORM_STATIC_005</td>
             <td>-</td>
         </tr>
         <tr>
@@ -6045,6 +6075,12 @@
             <td>-</td>
         </tr>
         <tr>
+            <td>CODE_memory_impl_win32_13</td>
+            <td class="code-ref">include/platform/win32/memory_impl.h:13</td>
+            <td>REQ_PLATFORM_WIN32_002</td>
+            <td>-</td>
+        </tr>
+        <tr>
             <td>CODE_memory_impl_zephyr_17</td>
             <td class="code-ref">include/platform/zephyr/memory_impl.h:17</td>
             <td>REQ_PLATFORM_ZEPHYR_002, REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_INDEPENDENT</td>
@@ -6059,7 +6095,7 @@
         <tr>
             <td>CODE_memory_static_14</td>
             <td class="code-ref">src/platform/static/memory.cpp:14</td>
-            <td>REQ_PLATFORM_STATIC_002, REQ_PAL_MEM_ALLOC</td>
+            <td>REQ_PLATFORM_STATIC_002, REQ_PAL_MEM_ALLOC, REQ_PAL_MEM_THREADSAFE_E01, REQ_PLATFORM_STATIC_004, REQ_ARCH_008</td>
             <td>-</td>
         </tr>
         <tr>
@@ -6240,6 +6276,18 @@
             <td>CODE_net_impl_posix_57</td>
             <td class="code-ref">include/platform/posix/net_impl.h:57</td>
             <td>REQ_PAL_NET_BLOCK, REQ_PAL_NET_MODE_E01</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_net_impl_win32_22</td>
+            <td class="code-ref">include/platform/win32/net_impl.h:22</td>
+            <td>REQ_PLATFORM_WIN32_003</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_net_impl_zephyr_10</td>
+            <td class="code-ref">include/platform/zephyr/net_impl.h:10</td>
+            <td>REQ_PLATFORM_ZEPHYR_003</td>
             <td>-</td>
         </tr>
         <tr>
@@ -6549,6 +6597,12 @@
             <td>-</td>
         </tr>
         <tr>
+            <td>CODE_rpc_client_rpc_216</td>
+            <td class="code-ref">include/rpc/rpc_client.h:216</td>
+            <td>REQ_PLATFORM_STATIC_005</td>
+            <td>-</td>
+        </tr>
+        <tr>
             <td>CODE_rpc_client_rpc_303</td>
             <td class="code-ref">src/rpc/rpc_client.cpp:303</td>
             <td>REQ_MSG_114, REQ_MSG_114_E01, REQ_MSG_114_E02, REQ_MSG_118, REQ_MSG_118_E01, REQ_MSG_120, REQ_MSG_120_E01</td>
@@ -6582,6 +6636,12 @@
             <td>CODE_rpc_server_rpc_162</td>
             <td class="code-ref">include/rpc/rpc_server.h:162</td>
             <td>REQ_TRANSPORT_026</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_rpc_server_rpc_189</td>
+            <td class="code-ref">include/rpc/rpc_server.h:189</td>
+            <td>REQ_PLATFORM_STATIC_005</td>
             <td>-</td>
         </tr>
         <tr>
@@ -6660,6 +6720,12 @@
             <td>CODE_sd_client_sd_184</td>
             <td class="code-ref">src/sd/sd_client.cpp:184</td>
             <td>REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_127, REQ_SD_131, REQ_SD_210, REQ_SD_211, REQ_SD_212</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_client_sd_185</td>
+            <td class="code-ref">include/sd/sd_client.h:185</td>
+            <td>REQ_PLATFORM_STATIC_005</td>
             <td>-</td>
         </tr>
         <tr>
@@ -6867,8 +6933,8 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_665</td>
-            <td class="code-ref">src/sd/sd_message.cpp:665</td>
+            <td>CODE_sd_message_sd_667</td>
+            <td class="code-ref">src/sd/sd_message.cpp:667</td>
             <td>REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320, REQ_SD_331</td>
             <td>feat_req_someipsd_1187, feat_req_someipsd_1188</td>
         </tr>
@@ -6879,8 +6945,8 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_731</td>
-            <td class="code-ref">src/sd/sd_message.cpp:731</td>
+            <td>CODE_sd_message_sd_733</td>
+            <td class="code-ref">src/sd/sd_message.cpp:733</td>
             <td>REQ_SD_030_E01, REQ_SD_200A, REQ_SD_200B, REQ_SD_200C, REQ_SD_201, REQ_SD_202, REQ_SD_261, REQ_SD_282, REQ_SD_291, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_320</td>
             <td>-</td>
         </tr>
@@ -6891,14 +6957,14 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_901</td>
-            <td class="code-ref">src/sd/sd_message.cpp:901</td>
+            <td>CODE_sd_message_sd_903</td>
+            <td class="code-ref">src/sd/sd_message.cpp:903</td>
             <td>REQ_SD_236, REQ_SD_343</td>
             <td>feat_req_someipsd_1151, feat_req_someipsd_1152</td>
         </tr>
         <tr>
-            <td>CODE_sd_message_sd_934</td>
-            <td class="code-ref">src/sd/sd_message.cpp:934</td>
+            <td>CODE_sd_message_sd_936</td>
+            <td class="code-ref">src/sd/sd_message.cpp:936</td>
             <td>REQ_SD_343</td>
             <td>feat_req_someipsd_1114</td>
         </tr>
@@ -6924,6 +6990,12 @@
             <td>CODE_sd_server_sd_177</td>
             <td class="code-ref">src/sd/sd_server.cpp:177</td>
             <td>REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_130, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_sd_server_sd_185</td>
+            <td class="code-ref">include/sd/sd_server.h:185</td>
+            <td>REQ_PLATFORM_STATIC_005</td>
             <td>-</td>
         </tr>
         <tr>
@@ -7110,6 +7182,12 @@
             <td>CODE_serializer_serialization_181</td>
             <td class="code-ref">src/serialization/serializer.cpp:181</td>
             <td>REQ_SER_052, REQ_SER_081</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_serializer_serialization_236</td>
+            <td class="code-ref">include/serialization/serializer.h:236</td>
+            <td>REQ_SER_074</td>
             <td>-</td>
         </tr>
         <tr>
@@ -7383,8 +7461,8 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_test_sd_4118</td>
-            <td class="code-ref">tests/test_sd.cpp:4118</td>
+            <td>CODE_test_sd_4256</td>
+            <td class="code-ref">tests/test_sd.cpp:4256</td>
             <td>-</td>
             <td>feat_req_someipsd_1114</td>
         </tr>
@@ -7629,38 +7707,44 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_thread_impl_win32_27</td>
-            <td class="code-ref">include/platform/win32/thread_impl.h:27</td>
+            <td>CODE_thread_impl_win32_22</td>
+            <td class="code-ref">include/platform/win32/thread_impl.h:22</td>
+            <td>REQ_PLATFORM_WIN32_001</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_thread_impl_win32_28</td>
+            <td class="code-ref">include/platform/win32/thread_impl.h:28</td>
             <td>REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_JOINABLE, REQ_PAL_THREAD_JOIN, REQ_PAL_THREAD_NONCOPY, REQ_PAL_THREAD_CREATE_E01, REQ_PAL_THREAD_DTOR_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_thread_impl_win32_32</td>
-            <td class="code-ref">include/platform/win32/thread_impl.h:32</td>
+            <td>CODE_thread_impl_win32_33</td>
+            <td class="code-ref">include/platform/win32/thread_impl.h:33</td>
             <td>REQ_PAL_THREAD_CREATE, REQ_PAL_THREAD_CREATE_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_thread_impl_win32_43</td>
-            <td class="code-ref">include/platform/win32/thread_impl.h:43</td>
+            <td>CODE_thread_impl_win32_44</td>
+            <td class="code-ref">include/platform/win32/thread_impl.h:44</td>
             <td>REQ_PAL_THREAD_DTOR_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_thread_impl_win32_53</td>
-            <td class="code-ref">include/platform/win32/thread_impl.h:53</td>
+            <td>CODE_thread_impl_win32_54</td>
+            <td class="code-ref">include/platform/win32/thread_impl.h:54</td>
             <td>REQ_PAL_THREAD_JOINABLE</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_thread_impl_win32_56</td>
-            <td class="code-ref">include/platform/win32/thread_impl.h:56</td>
+            <td>CODE_thread_impl_win32_57</td>
+            <td class="code-ref">include/platform/win32/thread_impl.h:57</td>
             <td>REQ_PAL_THREAD_JOIN</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_thread_impl_win32_79</td>
-            <td class="code-ref">include/platform/win32/thread_impl.h:79</td>
+            <td>CODE_thread_impl_win32_80</td>
+            <td class="code-ref">include/platform/win32/thread_impl.h:80</td>
             <td>REQ_PAL_THREAD_ID</td>
             <td>-</td>
         </tr>
@@ -7847,18 +7931,18 @@
         <tr>
             <td>CODE_tp_reassembler_tp_191</td>
             <td class="code-ref">src/tp/tp_reassembler.cpp:191</td>
-            <td>-</td>
+            <td>REQ_TP_030_E03</td>
             <td>feat_req_someiptp_410, feat_req_someiptp_412, feat_req_someiptp_782</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_213</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:213</td>
+            <td>CODE_tp_reassembler_tp_214</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:214</td>
             <td>REQ_TP_030, REQ_TP_031, REQ_TP_032, REQ_TP_033, REQ_TP_030_E01, REQ_TP_076, REQ_TP_077, REQ_TP_078, REQ_TP_079, REQ_TP_080, REQ_TP_081, REQ_TP_082, REQ_SOMEIPTP_797</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_271</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:271</td>
+            <td>CODE_tp_reassembler_tp_272</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:272</td>
             <td>REQ_TP_033, REQ_TP_034, REQ_TP_035, REQ_TP_030_E02, REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02, REQ_SOMEIPTP_772, REQ_SOMEIPTP_792</td>
             <td>-</td>
         </tr>
@@ -7875,33 +7959,57 @@
             <td>feat_req_someiptp_781</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_338</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:338</td>
+            <td>CODE_tp_reassembler_tp_315</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:315</td>
+            <td>REQ_TP_044</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tp_reassembler_tp_339</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:339</td>
             <td>REQ_TP_036, REQ_TP_037, REQ_TP_038</td>
             <td>feat_req_someiptp_781, feat_req_someiptp_794, feat_req_someiptp_795, feat_req_someiptp_793</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_399</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:399</td>
+            <td>CODE_tp_reassembler_tp_400</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:400</td>
             <td>REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043, REQ_TP_039_E01, REQ_TP_080, REQ_TP_081, REQ_SOMEIPTP_797</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_569</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:569</td>
+            <td>CODE_tp_reassembler_tp_425</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:425</td>
+            <td>REQ_TP_081_FW</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tp_reassembler_tp_494</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:494</td>
+            <td>REQ_TP_081_FW</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tp_reassembler_tp_570</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:570</td>
             <td>REQ_TP_079</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_tp_reassembler_tp_589</td>
-            <td class="code-ref">src/tp/tp_reassembler.cpp:589</td>
+            <td>CODE_tp_reassembler_tp_590</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:590</td>
             <td>REQ_TP_079</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_tp_reassembler_tp_611</td>
+            <td class="code-ref">src/tp/tp_reassembler.cpp:611</td>
+            <td>REQ_TP_030_E03</td>
             <td>-</td>
         </tr>
         <tr>
             <td>CODE_tp_reassembler_tp_70</td>
             <td class="code-ref">include/tp/tp_reassembler.h:70</td>
-            <td>REQ_SOMEIPTP_797</td>
+            <td>REQ_TP_081_ATOM, REQ_SOMEIPTP_797</td>
             <td>-</td>
         </tr>
         <tr>
@@ -8360,44 +8468,44 @@
         </tr>
         <tr>
             <td>TC_CAPI_MSG_CREATE_001</td>
-            <td>TEST (tests/capi/unit/test_capi_message.cpp:38)</td>
-            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:38</td>
+            <td>TEST (tests/capi/unit/test_capi_message.cpp:39)</td>
+            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:39</td>
             <td>REQ_CAPI_003, REQ_CAPI_008</td>
         </tr>
         <tr>
             <td>TC_CAPI_MSG_HEADER_001</td>
-            <td>TEST (tests/capi/unit/test_capi_message.cpp:58)</td>
-            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:58</td>
+            <td>TEST (tests/capi/unit/test_capi_message.cpp:59)</td>
+            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:59</td>
             <td>REQ_CAPI_008</td>
         </tr>
         <tr>
             <td>TC_CAPI_MSG_NULL_001</td>
-            <td>TEST (tests/capi/unit/test_capi_message.cpp:49)</td>
-            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:49</td>
+            <td>TEST (tests/capi/unit/test_capi_message.cpp:50)</td>
+            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:50</td>
             <td>REQ_CAPI_002, REQ_CAPI_007</td>
         </tr>
         <tr>
             <td>TC_CAPI_MSG_NULL_OUT_001</td>
-            <td>TEST (tests/capi/unit/test_capi_message.cpp:200)</td>
-            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:200</td>
+            <td>TEST (tests/capi/unit/test_capi_message.cpp:201)</td>
+            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:201</td>
             <td>REQ_CAPI_002</td>
         </tr>
         <tr>
             <td>TC_CAPI_MSG_PAYLOAD_001</td>
-            <td>TEST (tests/capi/unit/test_capi_message.cpp:111)</td>
-            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:111</td>
+            <td>TEST (tests/capi/unit/test_capi_message.cpp:112)</td>
+            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:112</td>
             <td>REQ_CAPI_008</td>
         </tr>
         <tr>
             <td>TC_CAPI_MSG_PAYLOAD_OVERFLOW_001</td>
-            <td>TEST (tests/capi/unit/test_capi_message.cpp:135)</td>
-            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:135</td>
+            <td>TEST (tests/capi/unit/test_capi_message.cpp:136)</td>
+            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:136</td>
             <td>REQ_CAPI_002, REQ_CAPI_008</td>
         </tr>
         <tr>
             <td>TC_CAPI_MSG_SERIALIZE_001</td>
-            <td>TEST (tests/capi/unit/test_capi_message.cpp:155)</td>
-            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:155</td>
+            <td>TEST (tests/capi/unit/test_capi_message.cpp:156)</td>
+            <td class="code-ref">tests/capi/unit/test_capi_message.cpp:156</td>
             <td>REQ_CAPI_008</td>
         </tr>
         <tr>
@@ -8566,13 +8674,13 @@
             <td>TC_CAPI_VERSION_001</td>
             <td>TEST (tests/capi/unit/test_capi_message.cpp:26)</td>
             <td class="code-ref">tests/capi/unit/test_capi_message.cpp:26</td>
-            <td>REQ_CAPI_005</td>
+            <td>REQ_CAPI_005, REQ_CAPI_001</td>
         </tr>
         <tr>
             <td>TC_CONTAINER_CAPACITY_EXHAUST</td>
             <td>TEST (tests/test_platform_containers.cpp:314)</td>
             <td class="code-ref">tests/test_platform_containers.cpp:314</td>
-            <td>REQ_PAL_CONTAINER_CAPACITY_EXHAUST</td>
+            <td>REQ_PAL_CONTAINER_CAPACITY_E01</td>
         </tr>
         <tr>
             <td>TC_CONTAINER_FUNCTION_INVOKE</td>
@@ -9667,6 +9775,12 @@
             <td>REQ_PAL_SLEEP_ZERO</td>
         </tr>
         <tr>
+            <td>TC_PAL_STATIC_CONFIG</td>
+            <td>TEST (tests/test_platform_containers.cpp:334)</td>
+            <td class="code-ref">tests/test_platform_containers.cpp:334</td>
+            <td>REQ_PAL_STATIC_CONFIG</td>
+        </tr>
+        <tr>
             <td>TC_PAL_THREAD_001</td>
             <td>TEST (tests/test_platform_threading.cpp:384)</td>
             <td class="code-ref">tests/test_platform_threading.cpp:384</td>
@@ -9782,278 +9896,278 @@
         </tr>
         <tr>
             <td>TC_SD_001</td>
-            <td>TEST_F (tests/test_sd.cpp:101)</td>
-            <td class="code-ref">tests/test_sd.cpp:101</td>
+            <td>TEST_F (tests/test_sd.cpp:102)</td>
+            <td class="code-ref">tests/test_sd.cpp:102</td>
             <td>REQ_SD_001, REQ_SD_002</td>
         </tr>
         <tr>
             <td>TC_SD_002</td>
-            <td>TEST_F (tests/test_sd.cpp:113)</td>
-            <td class="code-ref">tests/test_sd.cpp:113</td>
+            <td>TEST_F (tests/test_sd.cpp:114)</td>
+            <td class="code-ref">tests/test_sd.cpp:114</td>
             <td>REQ_SD_060, REQ_SD_061, REQ_SD_062</td>
         </tr>
         <tr>
             <td>TC_SD_003</td>
-            <td>TEST_F (tests/test_sd.cpp:124)</td>
-            <td class="code-ref">tests/test_sd.cpp:124</td>
+            <td>TEST_F (tests/test_sd.cpp:125)</td>
+            <td class="code-ref">tests/test_sd.cpp:125</td>
             <td>REQ_SD_010, REQ_SD_011, REQ_SD_012</td>
         </tr>
         <tr>
             <td>TC_SD_004</td>
-            <td>TEST_F (tests/test_sd.cpp:142)</td>
-            <td class="code-ref">tests/test_sd.cpp:142</td>
+            <td>TEST_F (tests/test_sd.cpp:143)</td>
+            <td class="code-ref">tests/test_sd.cpp:143</td>
             <td>REQ_SD_060, REQ_SD_063, REQ_SD_064, REQ_SD_065</td>
         </tr>
         <tr>
             <td>TC_SD_005</td>
-            <td>TEST_F (tests/test_sd.cpp:185)</td>
-            <td class="code-ref">tests/test_sd.cpp:185</td>
+            <td>TEST_F (tests/test_sd.cpp:186)</td>
+            <td class="code-ref">tests/test_sd.cpp:186</td>
             <td>REQ_SD_060, REQ_SD_063, REQ_SD_064, REQ_SD_065</td>
         </tr>
         <tr>
             <td>TC_SD_006</td>
-            <td>TEST_F (tests/test_sd.cpp:377)</td>
-            <td class="code-ref">tests/test_sd.cpp:377</td>
+            <td>TEST_F (tests/test_sd.cpp:378)</td>
+            <td class="code-ref">tests/test_sd.cpp:378</td>
             <td>REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023</td>
         </tr>
         <tr>
             <td>TC_SD_007</td>
-            <td>TEST_F (tests/test_sd.cpp:397)</td>
-            <td class="code-ref">tests/test_sd.cpp:397</td>
+            <td>TEST_F (tests/test_sd.cpp:398)</td>
+            <td class="code-ref">tests/test_sd.cpp:398</td>
             <td>REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054</td>
         </tr>
         <tr>
             <td>TC_SD_008</td>
-            <td>TEST_F (tests/test_sd.cpp:419)</td>
-            <td class="code-ref">tests/test_sd.cpp:419</td>
+            <td>TEST_F (tests/test_sd.cpp:420)</td>
+            <td class="code-ref">tests/test_sd.cpp:420</td>
             <td>REQ_SD_060, REQ_SD_063, REQ_SD_064</td>
         </tr>
         <tr>
             <td>TC_SD_009</td>
-            <td>TEST_F (tests/test_sd.cpp:437)</td>
-            <td class="code-ref">tests/test_sd.cpp:437</td>
+            <td>TEST_F (tests/test_sd.cpp:438)</td>
+            <td class="code-ref">tests/test_sd.cpp:438</td>
             <td>REQ_SD_073</td>
         </tr>
         <tr>
             <td>TC_SD_010</td>
-            <td>TEST_F (tests/test_sd.cpp:453)</td>
-            <td class="code-ref">tests/test_sd.cpp:453</td>
+            <td>TEST_F (tests/test_sd.cpp:454)</td>
+            <td class="code-ref">tests/test_sd.cpp:454</td>
             <td>REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007</td>
         </tr>
         <tr>
             <td>TC_SD_024_BADLEN</td>
-            <td>TEST_F (tests/test_sd.cpp:3665)</td>
-            <td class="code-ref">tests/test_sd.cpp:3665</td>
+            <td>TEST_F (tests/test_sd.cpp:3803)</td>
+            <td class="code-ref">tests/test_sd.cpp:3803</td>
             <td>REQ_SD_236</td>
         </tr>
         <tr>
             <td>TC_SD_024_BUNDLE</td>
-            <td>TEST_F (tests/test_sd.cpp:4181)</td>
-            <td class="code-ref">tests/test_sd.cpp:4181</td>
+            <td>TEST_F (tests/test_sd.cpp:4319)</td>
+            <td class="code-ref">tests/test_sd.cpp:4319</td>
             <td>REQ_SD_1084, REQ_SD_311, feat_req_someipsd_764</td>
         </tr>
         <tr>
             <td>TC_SD_024_FIND</td>
-            <td>TEST_F (tests/test_sd.cpp:3783)</td>
-            <td class="code-ref">tests/test_sd.cpp:3783</td>
+            <td>TEST_F (tests/test_sd.cpp:3921)</td>
+            <td class="code-ref">tests/test_sd.cpp:3921</td>
             <td>REQ_SD_1084, REQ_SD_343, feat_req_someipsd_1084</td>
         </tr>
         <tr>
             <td>TC_SD_024_INDEX16</td>
-            <td>TEST_F (tests/test_sd.cpp:4118)</td>
-            <td class="code-ref">tests/test_sd.cpp:4118</td>
+            <td>TEST_F (tests/test_sd.cpp:4256)</td>
+            <td class="code-ref">tests/test_sd.cpp:4256</td>
             <td>REQ_SD_343, feat_req_someipsd_1114</td>
         </tr>
         <tr>
             <td>TC_SD_024_MCAST</td>
-            <td>TEST_F (tests/test_sd.cpp:4151)</td>
-            <td class="code-ref">tests/test_sd.cpp:4151</td>
+            <td>TEST_F (tests/test_sd.cpp:4289)</td>
+            <td class="code-ref">tests/test_sd.cpp:4289</td>
             <td>REQ_SD_343, REQ_SD_1084</td>
         </tr>
         <tr>
             <td>TC_SD_024_PLACE</td>
-            <td>TEST_F (tests/test_sd.cpp:3697)</td>
-            <td class="code-ref">tests/test_sd.cpp:3697</td>
+            <td>TEST_F (tests/test_sd.cpp:3835)</td>
+            <td class="code-ref">tests/test_sd.cpp:3835</td>
             <td>REQ_SD_343, feat_req_someipsd_1151, feat_req_someipsd_1152, feat_req_someipsd_1114</td>
         </tr>
         <tr>
             <td>TC_SD_024_REBOOT</td>
-            <td>TEST_F (tests/test_sd.cpp:3954)</td>
-            <td class="code-ref">tests/test_sd.cpp:3954</td>
+            <td>TEST_F (tests/test_sd.cpp:4092)</td>
+            <td class="code-ref">tests/test_sd.cpp:4092</td>
             <td>REQ_SD_1084, REQ_SD_311, REQ_SD_343, feat_req_someipsd_1084</td>
         </tr>
         <tr>
             <td>TC_SD_024_SKIP</td>
-            <td>TEST_F (tests/test_sd.cpp:4066)</td>
-            <td class="code-ref">tests/test_sd.cpp:4066</td>
+            <td>TEST_F (tests/test_sd.cpp:4204)</td>
+            <td class="code-ref">tests/test_sd.cpp:4204</td>
             <td>REQ_SD_343, feat_req_someipsd_1151, feat_req_someipsd_1114</td>
         </tr>
         <tr>
             <td>TC_SD_024_SUB</td>
-            <td>TEST_F (tests/test_sd.cpp:3845)</td>
-            <td class="code-ref">tests/test_sd.cpp:3845</td>
+            <td>TEST_F (tests/test_sd.cpp:3983)</td>
+            <td class="code-ref">tests/test_sd.cpp:3983</td>
             <td>REQ_SD_1084, REQ_SD_343, feat_req_someipsd_1084, feat_req_someipsd_1114</td>
         </tr>
         <tr>
             <td>TC_SD_024_TRUNC</td>
-            <td>TEST_F (tests/test_sd.cpp:3681)</td>
-            <td class="code-ref">tests/test_sd.cpp:3681</td>
+            <td>TEST_F (tests/test_sd.cpp:3819)</td>
+            <td class="code-ref">tests/test_sd.cpp:3819</td>
             <td>REQ_SD_236</td>
         </tr>
         <tr>
             <td>TC_SD_024_WIRE</td>
-            <td>TEST_F (tests/test_sd.cpp:3628)</td>
-            <td class="code-ref">tests/test_sd.cpp:3628</td>
+            <td>TEST_F (tests/test_sd.cpp:3766)</td>
+            <td class="code-ref">tests/test_sd.cpp:3766</td>
             <td>REQ_SD_122, REQ_SD_236, feat_req_someipsd_1085, feat_req_someipsd_1086, feat_req_someipsd_1087</td>
         </tr>
         <tr>
             <td>TC_SD_1084</td>
-            <td>TEST_F (tests/test_sd.cpp:3162)</td>
-            <td class="code-ref">tests/test_sd.cpp:3162</td>
+            <td>TEST_F (tests/test_sd.cpp:3300)</td>
+            <td class="code-ref">tests/test_sd.cpp:3300</td>
             <td>REQ_SD_1084, feat_req_someipsd_1084</td>
         </tr>
         <tr>
             <td>TC_SD_1084_STREAM</td>
-            <td>TEST_F (tests/test_sd.cpp:4691)</td>
-            <td class="code-ref">tests/test_sd.cpp:4691</td>
+            <td>TEST_F (tests/test_sd.cpp:4829)</td>
+            <td class="code-ref">tests/test_sd.cpp:4829</td>
             <td>REQ_SD_1084, REQ_SD_311, feat_req_someipsd_1084</td>
         </tr>
         <tr>
             <td>TC_SD_1194_CAPABLE</td>
-            <td>TEST_F (tests/test_sd.cpp:3393)</td>
-            <td class="code-ref">tests/test_sd.cpp:3393</td>
+            <td>TEST_F (tests/test_sd.cpp:3531)</td>
+            <td class="code-ref">tests/test_sd.cpp:3531</td>
             <td>REQ_SD_331, feat_req_someipsd_1192, feat_req_someipsd_1193</td>
         </tr>
         <tr>
             <td>TC_SD_1194_CLIENT</td>
-            <td>TEST_F (tests/test_sd.cpp:3306)</td>
-            <td class="code-ref">tests/test_sd.cpp:3306</td>
+            <td>TEST_F (tests/test_sd.cpp:3444)</td>
+            <td class="code-ref">tests/test_sd.cpp:3444</td>
             <td>REQ_SD_331, feat_req_someipsd_1191, feat_req_someipsd_1192, feat_req_someipsd_1193, feat_req_someipsd_1194</td>
         </tr>
         <tr>
             <td>TC_SD_1194_FIELD</td>
-            <td>TEST_F (tests/test_sd.cpp:3496)</td>
-            <td class="code-ref">tests/test_sd.cpp:3496</td>
+            <td>TEST_F (tests/test_sd.cpp:3634)</td>
+            <td class="code-ref">tests/test_sd.cpp:3634</td>
             <td>REQ_SD_331, REQ_MSG_125, feat_req_someipsd_1188, feat_req_someipsd_1194</td>
         </tr>
         <tr>
             <td>TC_SD_1194_FLAG</td>
-            <td>TEST_F (tests/test_sd.cpp:3213)</td>
-            <td class="code-ref">tests/test_sd.cpp:3213</td>
+            <td>TEST_F (tests/test_sd.cpp:3351)</td>
+            <td class="code-ref">tests/test_sd.cpp:3351</td>
             <td>REQ_SD_331, feat_req_someipsd_1187, feat_req_someipsd_322</td>
         </tr>
         <tr>
             <td>TC_SD_171_ACK</td>
-            <td>TEST_F (tests/test_sd.cpp:4506)</td>
-            <td class="code-ref">tests/test_sd.cpp:4506</td>
+            <td>TEST_F (tests/test_sd.cpp:4644)</td>
+            <td class="code-ref">tests/test_sd.cpp:4644</td>
             <td>REQ_SD_171, REQ_SD_311, feat_req_someipsd_764, feat_req_someipsd_765, feat_req_someipsd_872</td>
         </tr>
         <tr>
             <td>TC_SD_171_INDEX</td>
-            <td>TEST_F (tests/test_sd.cpp:4595)</td>
-            <td class="code-ref">tests/test_sd.cpp:4595</td>
+            <td>TEST_F (tests/test_sd.cpp:4733)</td>
+            <td class="code-ref">tests/test_sd.cpp:4733</td>
             <td>REQ_SD_171, REQ_SD_1084, REQ_SD_311, feat_req_someipsd_764, feat_req_someipsd_1084</td>
         </tr>
         <tr>
             <td>TC_SD_171_SPLIT</td>
-            <td>TEST_F (tests/test_sd.cpp:4411)</td>
-            <td class="code-ref">tests/test_sd.cpp:4411</td>
+            <td>TEST_F (tests/test_sd.cpp:4549)</td>
+            <td class="code-ref">tests/test_sd.cpp:4549</td>
             <td>REQ_SD_171, REQ_SD_311, feat_req_someipsd_764, feat_req_someipsd_765, feat_req_someipsd_872</td>
         </tr>
         <tr>
             <td>TC_SD_848</td>
-            <td>TEST_F (tests/test_sd.cpp:3067)</td>
-            <td class="code-ref">tests/test_sd.cpp:3067</td>
+            <td>TEST_F (tests/test_sd.cpp:3205)</td>
+            <td class="code-ref">tests/test_sd.cpp:3205</td>
             <td>REQ_SD_848, feat_req_someipsd_848</td>
         </tr>
         <tr>
             <td>TC_SD_848_DUP</td>
-            <td>TEST_F (tests/test_sd.cpp:3116)</td>
-            <td class="code-ref">tests/test_sd.cpp:3116</td>
+            <td>TEST_F (tests/test_sd.cpp:3254)</td>
+            <td class="code-ref">tests/test_sd.cpp:3254</td>
             <td>REQ_SD_848</td>
         </tr>
         <tr>
             <td>TC_SD_ADD_ENTRY_RETURNS_BOOL</td>
-            <td>TEST_F (tests/test_sd.cpp:2317)</td>
-            <td class="code-ref">tests/test_sd.cpp:2317</td>
+            <td>TEST_F (tests/test_sd.cpp:2420)</td>
+            <td class="code-ref">tests/test_sd.cpp:2420</td>
             <td>REQ_SD_030_E01</td>
         </tr>
         <tr>
             <td>TC_SD_CLIENT_001</td>
-            <td>TEST_F (tests/test_sd.cpp:1351)</td>
-            <td class="code-ref">tests/test_sd.cpp:1351</td>
+            <td>TEST_F (tests/test_sd.cpp:1454)</td>
+            <td class="code-ref">tests/test_sd.cpp:1454</td>
             <td>REQ_SD_041_E01</td>
         </tr>
         <tr>
             <td>TC_SD_CLIENT_MC_001</td>
-            <td>TEST_F (tests/test_sd.cpp:1318)</td>
-            <td class="code-ref">tests/test_sd.cpp:1318</td>
+            <td>TEST_F (tests/test_sd.cpp:1421)</td>
+            <td class="code-ref">tests/test_sd.cpp:1421</td>
             <td>REQ_TRANSPORT_011_E01</td>
         </tr>
         <tr>
             <td>TC_SD_CLIENT_MC_002</td>
-            <td>TEST_F (tests/test_sd.cpp:1332)</td>
-            <td class="code-ref">tests/test_sd.cpp:1332</td>
+            <td>TEST_F (tests/test_sd.cpp:1435)</td>
+            <td class="code-ref">tests/test_sd.cpp:1435</td>
             <td>REQ_TRANSPORT_011_E01</td>
         </tr>
         <tr>
             <td>TC_SD_CLIENT_MC_INT_001</td>
-            <td>TEST_F (tests/test_sd.cpp:2640)</td>
-            <td class="code-ref">tests/test_sd.cpp:2640</td>
+            <td>TEST_F (tests/test_sd.cpp:2778)</td>
+            <td class="code-ref">tests/test_sd.cpp:2778</td>
             <td>REQ_TRANSPORT_011_E01, REQ_SD_119</td>
         </tr>
         <tr>
             <td>TC_SD_COUNTER_001</td>
-            <td>TEST_F (tests/test_sd.cpp:2335)</td>
-            <td class="code-ref">tests/test_sd.cpp:2335</td>
+            <td>TEST_F (tests/test_sd.cpp:2438)</td>
+            <td class="code-ref">tests/test_sd.cpp:2438</td>
             <td>REQ_SD_060</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_001</td>
-            <td>TEST_F (tests/test_sd.cpp:1091)</td>
-            <td class="code-ref">tests/test_sd.cpp:1091</td>
+            <td>TEST_F (tests/test_sd.cpp:1092)</td>
+            <td class="code-ref">tests/test_sd.cpp:1092</td>
             <td>REQ_SD_001_E01, REQ_SD_010_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_002</td>
-            <td>TEST_F (tests/test_sd.cpp:1102)</td>
-            <td class="code-ref">tests/test_sd.cpp:1102</td>
+            <td>TEST_F (tests/test_sd.cpp:1103)</td>
+            <td class="code-ref">tests/test_sd.cpp:1103</td>
             <td>REQ_SD_001_E01, REQ_SD_020_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_003</td>
-            <td>TEST_F (tests/test_sd.cpp:1113)</td>
-            <td class="code-ref">tests/test_sd.cpp:1113</td>
+            <td>TEST_F (tests/test_sd.cpp:1114)</td>
+            <td class="code-ref">tests/test_sd.cpp:1114</td>
             <td>REQ_SD_020_E02, REQ_SD_021_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_004</td>
-            <td>TEST_F (tests/test_sd.cpp:1128)</td>
-            <td class="code-ref">tests/test_sd.cpp:1128</td>
+            <td>TEST_F (tests/test_sd.cpp:1129)</td>
+            <td class="code-ref">tests/test_sd.cpp:1129</td>
             <td>REQ_SD_022_E01, REQ_SD_040_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_005</td>
-            <td>TEST_F (tests/test_sd.cpp:1140)</td>
-            <td class="code-ref">tests/test_sd.cpp:1140</td>
+            <td>TEST_F (tests/test_sd.cpp:1141)</td>
+            <td class="code-ref">tests/test_sd.cpp:1141</td>
             <td>REQ_SD_041_E01, REQ_SD_050_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_006</td>
-            <td>TEST_F (tests/test_sd.cpp:1152)</td>
-            <td class="code-ref">tests/test_sd.cpp:1152</td>
+            <td>TEST_F (tests/test_sd.cpp:1153)</td>
+            <td class="code-ref">tests/test_sd.cpp:1153</td>
             <td>REQ_SD_052_E01, REQ_SD_060_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_007</td>
-            <td>TEST_F (tests/test_sd.cpp:1164)</td>
-            <td class="code-ref">tests/test_sd.cpp:1164</td>
+            <td>TEST_F (tests/test_sd.cpp:1165)</td>
+            <td class="code-ref">tests/test_sd.cpp:1165</td>
             <td>REQ_SD_061_E01, REQ_SD_062_E01</td>
         </tr>
         <tr>
             <td>TC_SD_DESER_008</td>
-            <td>TEST_F (tests/test_sd.cpp:1176)</td>
-            <td class="code-ref">tests/test_sd.cpp:1176</td>
+            <td>TEST_F (tests/test_sd.cpp:1177)</td>
+            <td class="code-ref">tests/test_sd.cpp:1177</td>
             <td>REQ_SD_064_E01, REQ_SD_075_E01</td>
         </tr>
         <tr>
@@ -10064,86 +10178,86 @@
         </tr>
         <tr>
             <td>TC_SD_E01</td>
-            <td>TEST_F (tests/test_sd.cpp:1377)</td>
-            <td class="code-ref">tests/test_sd.cpp:1377</td>
+            <td>TEST_F (tests/test_sd.cpp:1480)</td>
+            <td class="code-ref">tests/test_sd.cpp:1480</td>
             <td>REQ_SD_001_E01, REQ_SD_001_E02</td>
         </tr>
         <tr>
             <td>TC_SD_E02</td>
-            <td>TEST_F (tests/test_sd.cpp:1398)</td>
-            <td class="code-ref">tests/test_sd.cpp:1398</td>
+            <td>TEST_F (tests/test_sd.cpp:1501)</td>
+            <td class="code-ref">tests/test_sd.cpp:1501</td>
             <td>REQ_SD_010_E01, REQ_SD_010_E02</td>
         </tr>
         <tr>
             <td>TC_SD_E03</td>
-            <td>TEST_F (tests/test_sd.cpp:1415)</td>
-            <td class="code-ref">tests/test_sd.cpp:1415</td>
+            <td>TEST_F (tests/test_sd.cpp:1518)</td>
+            <td class="code-ref">tests/test_sd.cpp:1518</td>
             <td>REQ_SD_030_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E04</td>
-            <td>TEST_F (tests/test_sd.cpp:1431)</td>
-            <td class="code-ref">tests/test_sd.cpp:1431</td>
+            <td>TEST_F (tests/test_sd.cpp:1534)</td>
+            <td class="code-ref">tests/test_sd.cpp:1534</td>
             <td>REQ_SD_050_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E05</td>
-            <td>TEST_F (tests/test_sd.cpp:1447)</td>
-            <td class="code-ref">tests/test_sd.cpp:1447</td>
+            <td>TEST_F (tests/test_sd.cpp:1550)</td>
+            <td class="code-ref">tests/test_sd.cpp:1550</td>
             <td>REQ_SD_060_E01, REQ_SD_060_E02</td>
         </tr>
         <tr>
             <td>TC_SD_E06</td>
-            <td>TEST_F (tests/test_sd.cpp:1469)</td>
-            <td class="code-ref">tests/test_sd.cpp:1469</td>
+            <td>TEST_F (tests/test_sd.cpp:1572)</td>
+            <td class="code-ref">tests/test_sd.cpp:1572</td>
             <td>REQ_SD_070_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E07</td>
-            <td>TEST_F (tests/test_sd.cpp:1489)</td>
-            <td class="code-ref">tests/test_sd.cpp:1489</td>
+            <td>TEST_F (tests/test_sd.cpp:1592)</td>
+            <td class="code-ref">tests/test_sd.cpp:1592</td>
             <td>REQ_SD_080_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E08</td>
-            <td>TEST_F (tests/test_sd.cpp:1508)</td>
-            <td class="code-ref">tests/test_sd.cpp:1508</td>
+            <td>TEST_F (tests/test_sd.cpp:1611)</td>
+            <td class="code-ref">tests/test_sd.cpp:1611</td>
             <td>REQ_SD_083_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E09</td>
-            <td>TEST_F (tests/test_sd.cpp:1523)</td>
-            <td class="code-ref">tests/test_sd.cpp:1523</td>
+            <td>TEST_F (tests/test_sd.cpp:1626)</td>
+            <td class="code-ref">tests/test_sd.cpp:1626</td>
             <td>REQ_SD_113_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E10</td>
-            <td>TEST_F (tests/test_sd.cpp:1551)</td>
-            <td class="code-ref">tests/test_sd.cpp:1551</td>
+            <td>TEST_F (tests/test_sd.cpp:1654)</td>
+            <td class="code-ref">tests/test_sd.cpp:1654</td>
             <td>REQ_SD_116_E01, REQ_SD_116_E02</td>
         </tr>
         <tr>
             <td>TC_SD_E11</td>
-            <td>TEST_F (tests/test_sd.cpp:1567)</td>
-            <td class="code-ref">tests/test_sd.cpp:1567</td>
+            <td>TEST_F (tests/test_sd.cpp:1670)</td>
+            <td class="code-ref">tests/test_sd.cpp:1670</td>
             <td>REQ_SD_119_E01</td>
         </tr>
         <tr>
             <td>TC_SD_E12</td>
-            <td>TEST_F (tests/test_sd.cpp:1589)</td>
-            <td class="code-ref">tests/test_sd.cpp:1589</td>
+            <td>TEST_F (tests/test_sd.cpp:1692)</td>
+            <td class="code-ref">tests/test_sd.cpp:1692</td>
             <td>REQ_SD_120_E01</td>
         </tr>
         <tr>
             <td>TC_SD_FLAGS_001</td>
-            <td>TEST_F (tests/test_sd.cpp:2420)</td>
-            <td class="code-ref">tests/test_sd.cpp:2420</td>
+            <td>TEST_F (tests/test_sd.cpp:2523)</td>
+            <td class="code-ref">tests/test_sd.cpp:2523</td>
             <td>REQ_SD_013</td>
         </tr>
         <tr>
             <td>TC_SD_INITIAL_WAIT_001</td>
-            <td>TEST_F (tests/test_sd.cpp:2468)</td>
-            <td class="code-ref">tests/test_sd.cpp:2468</td>
+            <td>TEST_F (tests/test_sd.cpp:2571)</td>
+            <td class="code-ref">tests/test_sd.cpp:2571</td>
             <td>REQ_SD_180</td>
         </tr>
         <tr>
@@ -10166,75 +10280,81 @@
         </tr>
         <tr>
             <td>TC_SD_INTEGRATION_001</td>
-            <td>TEST_F (tests/test_sd.cpp:858)</td>
-            <td class="code-ref">tests/test_sd.cpp:858</td>
+            <td>TEST_F (tests/test_sd.cpp:859)</td>
+            <td class="code-ref">tests/test_sd.cpp:859</td>
             <td>REQ_SD_030, REQ_SD_031, REQ_SD_032</td>
         </tr>
         <tr>
             <td>TC_SD_INTEGRATION_002</td>
-            <td>TEST_F (tests/test_sd.cpp:902)</td>
-            <td class="code-ref">tests/test_sd.cpp:902</td>
+            <td>TEST_F (tests/test_sd.cpp:903)</td>
+            <td class="code-ref">tests/test_sd.cpp:903</td>
             <td>REQ_SD_033, REQ_SD_034</td>
         </tr>
         <tr>
             <td>TC_SD_INTEGRATION_003</td>
-            <td>TEST_F (tests/test_sd.cpp:962)</td>
-            <td class="code-ref">tests/test_sd.cpp:962</td>
+            <td>TEST_F (tests/test_sd.cpp:963)</td>
+            <td class="code-ref">tests/test_sd.cpp:963</td>
             <td>REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093</td>
         </tr>
         <tr>
             <td>TC_SD_INTEGRATION_004</td>
-            <td>TEST_F (tests/test_sd.cpp:991)</td>
-            <td class="code-ref">tests/test_sd.cpp:991</td>
+            <td>TEST_F (tests/test_sd.cpp:992)</td>
+            <td class="code-ref">tests/test_sd.cpp:992</td>
             <td>REQ_SD_110, REQ_SD_160, REQ_SD_161</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_001</td>
-            <td>TEST_F (tests/test_sd.cpp:571)</td>
-            <td class="code-ref">tests/test_sd.cpp:571</td>
+            <td>TEST_F (tests/test_sd.cpp:572)</td>
+            <td class="code-ref">tests/test_sd.cpp:572</td>
             <td>feat_req_someipsd_129</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_002</td>
-            <td>TEST_F (tests/test_sd.cpp:593)</td>
-            <td class="code-ref">tests/test_sd.cpp:593</td>
+            <td>TEST_F (tests/test_sd.cpp:594)</td>
+            <td class="code-ref">tests/test_sd.cpp:594</td>
             <td>feat_req_someipsd_129</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_003</td>
-            <td>TEST_F (tests/test_sd.cpp:615)</td>
-            <td class="code-ref">tests/test_sd.cpp:615</td>
+            <td>TEST_F (tests/test_sd.cpp:616)</td>
+            <td class="code-ref">tests/test_sd.cpp:616</td>
             <td>feat_req_someipsd_129</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_004</td>
-            <td>TEST_F (tests/test_sd.cpp:645)</td>
-            <td class="code-ref">tests/test_sd.cpp:645</td>
+            <td>TEST_F (tests/test_sd.cpp:646)</td>
+            <td class="code-ref">tests/test_sd.cpp:646</td>
             <td>feat_req_someipsd_129</td>
         </tr>
         <tr>
             <td>TC_SD_INTEROP_005</td>
-            <td>TEST_F (tests/test_sd.cpp:678)</td>
-            <td class="code-ref">tests/test_sd.cpp:678</td>
+            <td>TEST_F (tests/test_sd.cpp:679)</td>
+            <td class="code-ref">tests/test_sd.cpp:679</td>
             <td>feat_req_someipsd_129</td>
         </tr>
         <tr>
             <td>TC_SD_IPV6_EP_001</td>
-            <td>TEST_F (tests/test_sd.cpp:207)</td>
-            <td class="code-ref">tests/test_sd.cpp:207</td>
+            <td>TEST_F (tests/test_sd.cpp:208)</td>
+            <td class="code-ref">tests/test_sd.cpp:208</td>
             <td>REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_233, feat_req_someipsd_140, feat_req_someipsd_163, feat_req_someipsd_164</td>
         </tr>
         <tr>
             <td>TC_SD_IPV6_MC_001</td>
-            <td>TEST_F (tests/test_sd.cpp:248)</td>
-            <td class="code-ref">tests/test_sd.cpp:248</td>
+            <td>TEST_F (tests/test_sd.cpp:249)</td>
+            <td class="code-ref">tests/test_sd.cpp:249</td>
             <td>REQ_SD_074, REQ_SD_235, feat_req_someipsd_737, feat_req_someipsd_738, feat_req_someipsd_739, feat_req_someipsd_750</td>
         </tr>
         <tr>
             <td>TC_SD_IPV6_MSG_001</td>
-            <td>TEST_F (tests/test_sd.cpp:279)</td>
-            <td class="code-ref">tests/test_sd.cpp:279</td>
+            <td>TEST_F (tests/test_sd.cpp:280)</td>
+            <td class="code-ref">tests/test_sd.cpp:280</td>
             <td>REQ_SD_067, REQ_SD_074, REQ_SD_233, REQ_SD_235</td>
+        </tr>
+        <tr>
+            <td>TC_SD_OFFER_TCP_PROTO</td>
+            <td>TEST_F (tests/test_sd.cpp:1217)</td>
+            <td class="code-ref">tests/test_sd.cpp:1217</td>
+            <td>REQ_SD_290</td>
         </tr>
         <tr>
             <td>TC_SD_PY_818</td>
@@ -10250,206 +10370,206 @@
         </tr>
         <tr>
             <td>TC_SD_REG_001</td>
-            <td>TEST_F (tests/test_sd.cpp:1598)</td>
-            <td class="code-ref">tests/test_sd.cpp:1598</td>
+            <td>TEST_F (tests/test_sd.cpp:1701)</td>
+            <td class="code-ref">tests/test_sd.cpp:1701</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_002</td>
-            <td>TEST_F (tests/test_sd.cpp:1629)</td>
-            <td class="code-ref">tests/test_sd.cpp:1629</td>
+            <td>TEST_F (tests/test_sd.cpp:1732)</td>
+            <td class="code-ref">tests/test_sd.cpp:1732</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_003</td>
-            <td>TEST_F (tests/test_sd.cpp:1648)</td>
-            <td class="code-ref">tests/test_sd.cpp:1648</td>
+            <td>TEST_F (tests/test_sd.cpp:1751)</td>
+            <td class="code-ref">tests/test_sd.cpp:1751</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_004</td>
-            <td>TEST_F (tests/test_sd.cpp:1677)</td>
-            <td class="code-ref">tests/test_sd.cpp:1677</td>
+            <td>TEST_F (tests/test_sd.cpp:1780)</td>
+            <td class="code-ref">tests/test_sd.cpp:1780</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_REG_005</td>
-            <td>TEST_F (tests/test_sd.cpp:1704)</td>
-            <td class="code-ref">tests/test_sd.cpp:1704</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>TC_SD_REG_006</td>
-            <td>TEST_F (tests/test_sd.cpp:1772)</td>
-            <td class="code-ref">tests/test_sd.cpp:1772</td>
-            <td>-</td>
-        </tr>
-        <tr>
-            <td>TC_SD_REG_007</td>
             <td>TEST_F (tests/test_sd.cpp:1807)</td>
             <td class="code-ref">tests/test_sd.cpp:1807</td>
             <td>-</td>
         </tr>
         <tr>
+            <td>TC_SD_REG_006</td>
+            <td>TEST_F (tests/test_sd.cpp:1875)</td>
+            <td class="code-ref">tests/test_sd.cpp:1875</td>
+            <td>-</td>
+        </tr>
+        <tr>
+            <td>TC_SD_REG_007</td>
+            <td>TEST_F (tests/test_sd.cpp:1910)</td>
+            <td class="code-ref">tests/test_sd.cpp:1910</td>
+            <td>-</td>
+        </tr>
+        <tr>
             <td>TC_SD_REPETITION_INTERVAL_001</td>
-            <td>TEST_F (tests/test_sd.cpp:2494)</td>
-            <td class="code-ref">tests/test_sd.cpp:2494</td>
+            <td>TEST_F (tests/test_sd.cpp:2632)</td>
+            <td class="code-ref">tests/test_sd.cpp:2632</td>
             <td>REQ_SD_111, REQ_SD_112</td>
         </tr>
         <tr>
             <td>TC_SD_SERVER_001</td>
-            <td>TEST_F (tests/test_sd.cpp:1195)</td>
-            <td class="code-ref">tests/test_sd.cpp:1195</td>
+            <td>TEST_F (tests/test_sd.cpp:1196)</td>
+            <td class="code-ref">tests/test_sd.cpp:1196</td>
             <td>REQ_SD_040_E01</td>
         </tr>
         <tr>
             <td>TC_SD_SERVER_MC_001</td>
-            <td>TEST_F (tests/test_sd.cpp:1220)</td>
-            <td class="code-ref">tests/test_sd.cpp:1220</td>
+            <td>TEST_F (tests/test_sd.cpp:1323)</td>
+            <td class="code-ref">tests/test_sd.cpp:1323</td>
             <td>REQ_TRANSPORT_011_E01</td>
         </tr>
         <tr>
             <td>TC_SD_SERVER_MC_002</td>
-            <td>TEST_F (tests/test_sd.cpp:1235)</td>
-            <td class="code-ref">tests/test_sd.cpp:1235</td>
+            <td>TEST_F (tests/test_sd.cpp:1338)</td>
+            <td class="code-ref">tests/test_sd.cpp:1338</td>
             <td>REQ_TRANSPORT_011_E01</td>
         </tr>
         <tr>
             <td>TC_SD_SERVER_MC_003</td>
-            <td>TEST_F (tests/test_sd.cpp:1275)</td>
-            <td class="code-ref">tests/test_sd.cpp:1275</td>
+            <td>TEST_F (tests/test_sd.cpp:1378)</td>
+            <td class="code-ref">tests/test_sd.cpp:1378</td>
             <td>REQ_TRANSPORT_011_E03</td>
         </tr>
         <tr>
             <td>TC_SD_SERVER_MC_004</td>
-            <td>TEST_F (tests/test_sd.cpp:1300)</td>
-            <td class="code-ref">tests/test_sd.cpp:1300</td>
+            <td>TEST_F (tests/test_sd.cpp:1403)</td>
+            <td class="code-ref">tests/test_sd.cpp:1403</td>
             <td>REQ_TRANSPORT_011_E03</td>
         </tr>
         <tr>
             <td>TC_SD_SERVER_MC_005</td>
-            <td>TEST_F (tests/test_sd.cpp:1252)</td>
-            <td class="code-ref">tests/test_sd.cpp:1252</td>
+            <td>TEST_F (tests/test_sd.cpp:1355)</td>
+            <td class="code-ref">tests/test_sd.cpp:1355</td>
             <td>REQ_TRANSPORT_011_E03</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_001</td>
-            <td>TEST_F (tests/test_sd.cpp:1898)</td>
-            <td class="code-ref">tests/test_sd.cpp:1898</td>
+            <td>TEST_F (tests/test_sd.cpp:2001)</td>
+            <td class="code-ref">tests/test_sd.cpp:2001</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_002</td>
-            <td>TEST_F (tests/test_sd.cpp:1908)</td>
-            <td class="code-ref">tests/test_sd.cpp:1908</td>
+            <td>TEST_F (tests/test_sd.cpp:2011)</td>
+            <td class="code-ref">tests/test_sd.cpp:2011</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_003</td>
-            <td>TEST_F (tests/test_sd.cpp:1920)</td>
-            <td class="code-ref">tests/test_sd.cpp:1920</td>
+            <td>TEST_F (tests/test_sd.cpp:2023)</td>
+            <td class="code-ref">tests/test_sd.cpp:2023</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_004</td>
-            <td>TEST_F (tests/test_sd.cpp:1935)</td>
-            <td class="code-ref">tests/test_sd.cpp:1935</td>
+            <td>TEST_F (tests/test_sd.cpp:2038)</td>
+            <td class="code-ref">tests/test_sd.cpp:2038</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_005</td>
-            <td>TEST_F (tests/test_sd.cpp:1951)</td>
-            <td class="code-ref">tests/test_sd.cpp:1951</td>
+            <td>TEST_F (tests/test_sd.cpp:2054)</td>
+            <td class="code-ref">tests/test_sd.cpp:2054</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SESSION_REBOOT_001</td>
-            <td>TEST_F (tests/test_sd.cpp:2404)</td>
-            <td class="code-ref">tests/test_sd.cpp:2404</td>
+            <td>TEST_F (tests/test_sd.cpp:2507)</td>
+            <td class="code-ref">tests/test_sd.cpp:2507</td>
             <td>REQ_SD_070, REQ_SD_071</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_120</td>
-            <td>TEST_F (tests/test_sd.cpp:2718)</td>
-            <td class="code-ref">tests/test_sd.cpp:2718</td>
+            <td>TEST_F (tests/test_sd.cpp:2856)</td>
+            <td class="code-ref">tests/test_sd.cpp:2856</td>
             <td>REQ_SD_120</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_272</td>
-            <td>TEST_F (tests/test_sd.cpp:2773)</td>
-            <td class="code-ref">tests/test_sd.cpp:2773</td>
+            <td>TEST_F (tests/test_sd.cpp:2911)</td>
+            <td class="code-ref">tests/test_sd.cpp:2911</td>
             <td>REQ_SD_272</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_272_UNICAST</td>
-            <td>TEST_F (tests/test_sd.cpp:2816)</td>
-            <td class="code-ref">tests/test_sd.cpp:2816</td>
+            <td>TEST_F (tests/test_sd.cpp:2954)</td>
+            <td class="code-ref">tests/test_sd.cpp:2954</td>
             <td>REQ_SD_272</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_299_OFFER</td>
-            <td>TEST_F (tests/test_sd.cpp:2918)</td>
-            <td class="code-ref">tests/test_sd.cpp:2918</td>
+            <td>TEST_F (tests/test_sd.cpp:3056)</td>
+            <td class="code-ref">tests/test_sd.cpp:3056</td>
             <td>REQ_SD_110</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_299_STOP</td>
-            <td>TEST_F (tests/test_sd.cpp:2962)</td>
-            <td class="code-ref">tests/test_sd.cpp:2962</td>
+            <td>TEST_F (tests/test_sd.cpp:3100)</td>
+            <td class="code-ref">tests/test_sd.cpp:3100</td>
             <td>REQ_SD_261</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_304</td>
-            <td>TEST_F (tests/test_sd.cpp:2857)</td>
-            <td class="code-ref">tests/test_sd.cpp:2857</td>
+            <td>TEST_F (tests/test_sd.cpp:2995)</td>
+            <td class="code-ref">tests/test_sd.cpp:2995</td>
             <td>REQ_SD_060</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_613</td>
-            <td>TEST_F (tests/test_sd.cpp:2583)</td>
-            <td class="code-ref">tests/test_sd.cpp:2583</td>
+            <td>TEST_F (tests/test_sd.cpp:2721)</td>
+            <td class="code-ref">tests/test_sd.cpp:2721</td>
             <td>REQ_SD_119, feat_req_someipsd_613</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_818</td>
-            <td>TEST_F (tests/test_sd.cpp:2515)</td>
-            <td class="code-ref">tests/test_sd.cpp:2515</td>
+            <td>TEST_F (tests/test_sd.cpp:2653)</td>
+            <td class="code-ref">tests/test_sd.cpp:2653</td>
             <td>REQ_SD_818, feat_req_someipsd_818</td>
         </tr>
         <tr>
             <td>TC_SD_SPEC_818_RX</td>
-            <td>TEST_F (tests/test_sd.cpp:3011)</td>
-            <td class="code-ref">tests/test_sd.cpp:3011</td>
+            <td>TEST_F (tests/test_sd.cpp:3149)</td>
+            <td class="code-ref">tests/test_sd.cpp:3149</td>
             <td>REQ_SD_818, feat_req_someipsd_818</td>
         </tr>
         <tr>
             <td>TC_SD_TTL_001</td>
-            <td>TEST_F (tests/test_sd.cpp:2186)</td>
-            <td class="code-ref">tests/test_sd.cpp:2186</td>
+            <td>TEST_F (tests/test_sd.cpp:2289)</td>
+            <td class="code-ref">tests/test_sd.cpp:2289</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_TTL_002</td>
-            <td>TEST_F (tests/test_sd.cpp:2235)</td>
-            <td class="code-ref">tests/test_sd.cpp:2235</td>
+            <td>TEST_F (tests/test_sd.cpp:2338)</td>
+            <td class="code-ref">tests/test_sd.cpp:2338</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_TTL_003</td>
-            <td>TEST_F (tests/test_sd.cpp:2282)</td>
-            <td class="code-ref">tests/test_sd.cpp:2282</td>
+            <td>TEST_F (tests/test_sd.cpp:2385)</td>
+            <td class="code-ref">tests/test_sd.cpp:2385</td>
             <td>-</td>
         </tr>
         <tr>
             <td>TC_SD_TTL_OFFER_001</td>
-            <td>TEST_F (tests/test_sd.cpp:2444)</td>
-            <td class="code-ref">tests/test_sd.cpp:2444</td>
+            <td>TEST_F (tests/test_sd.cpp:2547)</td>
+            <td class="code-ref">tests/test_sd.cpp:2547</td>
             <td>REQ_SD_110</td>
         </tr>
         <tr>
             <td>TC_SD_UNKNOWN_ENTRY_001</td>
-            <td>TEST_F (tests/test_sd.cpp:2363)</td>
-            <td class="code-ref">tests/test_sd.cpp:2363</td>
+            <td>TEST_F (tests/test_sd.cpp:2466)</td>
+            <td class="code-ref">tests/test_sd.cpp:2466</td>
             <td>REQ_SD_200A</td>
         </tr>
         <tr>
@@ -10808,104 +10928,104 @@
         </tr>
         <tr>
             <td>TC_STATIC_INT_BORROWED_TRANSPORT</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:80)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:80</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:81)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:81</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_003</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_BUFPOOL</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:246)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:246</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:247)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:247</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_RELEASE</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_CONTAINER_OPS</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:297)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:297</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:298)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:298</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_EVENTPUB_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:381)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:381</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:382)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:382</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_EVENTSUB_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:393)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:393</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:394)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:394</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_FULL_STACK</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:318)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:318</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:319)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:319</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_MSG_POOL</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:225)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:225</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:226)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:226</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PAL_MEM_ALLOC</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_PAYLOADVIEW</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:429)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:429</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:430)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:430</td>
             <td>REQ_API_PAYLOAD_VIEW, REQ_PAL_NOOP_HEAP_VERIFY</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_ROUNDTRIP</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:199)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:199</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:200)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:200</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_RPCCLIENT_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:357)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:357</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:358)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:358</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_RPCSERVER_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:369)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:369</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:370)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:370</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SDCLIENT_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:405)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:405</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:406)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:406</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SDSERVER_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:417)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:417</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:418)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:418</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SERIALIZER</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:268)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:268</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:269)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:269</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_003</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SYNC_CALLBACK_LIFETIME</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:108)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:108</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:109)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:109</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_003</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_TRAP_ARMED_ALLOC</td>
-            <td>TEST (tests/test_static_alloc_integration.cpp:170)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:170</td>
+            <td>TEST (tests/test_static_alloc_integration.cpp:171)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:171</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_TRAP_THREAD_SCOPE</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:130)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:130</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:131)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:131</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY</td>
         </tr>
         <tr>
@@ -11306,8 +11426,8 @@
         </tr>
         <tr>
             <td>TC_TP_EXACT_DUPLICATE_ACCEPTED</td>
-            <td>TEST_F (tests/test_tp.cpp:2146)</td>
-            <td class="code-ref">tests/test_tp.cpp:2146</td>
+            <td>TEST_F (tests/test_tp.cpp:2184)</td>
+            <td class="code-ref">tests/test_tp.cpp:2184</td>
             <td>feat_req_someiptp_797</td>
         </tr>
         <tr>
@@ -11318,8 +11438,8 @@
         </tr>
         <tr>
             <td>TC_TP_HEADER_MATCHES_PAYLOAD</td>
-            <td>TEST_F (tests/test_tp.cpp:2188)</td>
-            <td class="code-ref">tests/test_tp.cpp:2188</td>
+            <td>TEST_F (tests/test_tp.cpp:2226)</td>
+            <td class="code-ref">tests/test_tp.cpp:2226</td>
             <td>REQ_TP_077, REQ_TP_078</td>
         </tr>
         <tr>
@@ -11360,15 +11480,15 @@
         </tr>
         <tr>
             <td>TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS</td>
-            <td>TEST_F (tests/test_tp.cpp:2104)</td>
-            <td class="code-ref">tests/test_tp.cpp:2104</td>
+            <td>TEST_F (tests/test_tp.cpp:2142)</td>
+            <td class="code-ref">tests/test_tp.cpp:2142</td>
             <td>feat_req_someiptp_797, REQ_TP_081_FW</td>
         </tr>
         <tr>
             <td>TC_TP_OVERLAP_SAME_DATA</td>
-            <td>TEST_F (tests/test_tp.cpp:2074)</td>
-            <td class="code-ref">tests/test_tp.cpp:2074</td>
-            <td>feat_req_someiptp_797</td>
+            <td>TEST_F (tests/test_tp.cpp:2111)</td>
+            <td class="code-ref">tests/test_tp.cpp:2111</td>
+            <td>REQ_TP_081_FW, feat_req_someiptp_797</td>
         </tr>
         <tr>
             <td>TC_TP_PAYLOAD_1392</td>
@@ -11384,8 +11504,8 @@
         </tr>
         <tr>
             <td>TC_TP_PROCESS_SEGMENT_RETURNS_HEADER</td>
-            <td>TEST_F (tests/test_tp.cpp:2227)</td>
-            <td class="code-ref">tests/test_tp.cpp:2227</td>
+            <td>TEST_F (tests/test_tp.cpp:2265)</td>
+            <td class="code-ref">tests/test_tp.cpp:2265</td>
             <td>REQ_TP_081_ATOM</td>
         </tr>
         <tr>
@@ -11393,6 +11513,12 @@
             <td>TEST_F (tests/test_tp.cpp:1274)</td>
             <td class="code-ref">tests/test_tp.cpp:1274</td>
             <td>REQ_TP_039</td>
+        </tr>
+        <tr>
+            <td>TC_TP_REASSEMBLY_CLAMP</td>
+            <td>TEST_F (tests/test_tp.cpp:2073)</td>
+            <td class="code-ref">tests/test_tp.cpp:2073</td>
+            <td>REQ_TP_030_E03</td>
         </tr>
         <tr>
             <td>TC_TP_REASSEMBLY_CLAMP_WORKS</td>
@@ -11786,8 +11912,8 @@
         </tr>
         <tr>
             <td>TC_test_sd_SetUp</td>
-            <td>SetUp (tests/test_sd.cpp:40)</td>
-            <td class="code-ref">tests/test_sd.cpp:40</td>
+            <td>SetUp (tests/test_sd.cpp:41)</td>
+            <td class="code-ref">tests/test_sd.cpp:41</td>
             <td>REQ_ARCH_001, REQ_ARCH_002, REQ_SD_001, REQ_SD_002, REQ_SD_003, REQ_SD_004, REQ_SD_005, REQ_SD_006, REQ_SD_007, REQ_SD_010, REQ_SD_011, REQ_SD_012, REQ_SD_013, REQ_SD_014, REQ_SD_020, REQ_SD_021, REQ_SD_022, REQ_SD_023, REQ_SD_024, REQ_SD_025, REQ_SD_026, REQ_SD_030, REQ_SD_031, REQ_SD_032, REQ_SD_033, REQ_SD_034, REQ_SD_035, REQ_SD_040, REQ_SD_041, REQ_SD_042, REQ_SD_043, REQ_SD_044, REQ_SD_045, REQ_SD_046, REQ_SD_050, REQ_SD_051, REQ_SD_052, REQ_SD_053, REQ_SD_054, REQ_SD_055, REQ_SD_056, REQ_SD_060, REQ_SD_061, REQ_SD_062, REQ_SD_063, REQ_SD_064, REQ_SD_065, REQ_SD_066, REQ_SD_067, REQ_SD_068, REQ_SD_069, REQ_SD_070, REQ_SD_071, REQ_SD_072, REQ_SD_073, REQ_SD_074, REQ_SD_075, REQ_SD_076, REQ_SD_077, REQ_SD_080, REQ_SD_081, REQ_SD_082, REQ_SD_083, REQ_SD_084, REQ_SD_090, REQ_SD_091, REQ_SD_092, REQ_SD_093, REQ_SD_094, REQ_SD_100, REQ_SD_101, REQ_SD_102, REQ_SD_103, REQ_SD_001_E01, REQ_SD_010_E01, REQ_SD_020_E01, REQ_SD_020_E02, REQ_SD_021_E01, REQ_SD_022_E01, REQ_SD_040_E01, REQ_SD_041_E01, REQ_SD_050_E01, REQ_SD_052_E01, REQ_SD_060_E01, REQ_SD_061_E01, REQ_SD_062_E01, REQ_SD_064_E01, REQ_SD_075_E01, REQ_SD_110, REQ_SD_111, REQ_SD_112, REQ_SD_113, REQ_SD_114, REQ_SD_115, REQ_SD_116, REQ_SD_117, REQ_SD_118, REQ_SD_119, REQ_SD_120, REQ_SD_121, REQ_SD_122, REQ_SD_123, REQ_SD_124, REQ_SD_125, REQ_SD_126, REQ_SD_127, REQ_SD_130, REQ_SD_131, REQ_SD_132, REQ_SD_140, REQ_SD_141, REQ_SD_142, REQ_SD_150, REQ_SD_151, REQ_SD_152, REQ_SD_160, REQ_SD_161, REQ_SD_170, REQ_SD_171, REQ_SD_180, REQ_SD_200a, REQ_SD_200b, REQ_SD_200c, REQ_SD_201, REQ_SD_202, REQ_SD_210, REQ_SD_211, REQ_SD_212, REQ_SD_220, REQ_SD_221, REQ_SD_222, REQ_SD_223, REQ_SD_230, REQ_SD_231, REQ_SD_232, REQ_SD_233, REQ_SD_234, REQ_SD_235, REQ_SD_236, REQ_SD_240, REQ_SD_241, REQ_SD_242, REQ_SD_243, REQ_SD_250, REQ_SD_251, REQ_SD_260, REQ_SD_261, REQ_SD_270, REQ_SD_271, REQ_SD_272, REQ_SD_273, REQ_SD_274, REQ_SD_280, REQ_SD_281, REQ_SD_282, REQ_SD_283, REQ_SD_290, REQ_SD_291, REQ_SD_292, REQ_SD_293, REQ_SD_300, REQ_SD_301, REQ_SD_302, REQ_SD_303, REQ_SD_310, REQ_SD_311, REQ_SD_312, REQ_SD_320, REQ_SD_330, REQ_SD_331, REQ_SD_340, REQ_SD_341, REQ_SD_342, REQ_SD_343, REQ_SD_344, REQ_SD_345, REQ_SD_346, REQ_SD_347, REQ_SD_348, REQ_SD_349, REQ_SD_350, REQ_SD_351, REQ_SD_352, REQ_SD_353, REQ_SD_354, REQ_SD_355, REQ_SD_356, REQ_COMPAT_030, REQ_SD_001_E02, REQ_SD_010_E02, REQ_SD_030_E01, REQ_SD_044_E01, REQ_SD_060_E02, REQ_SD_070_E01, REQ_SD_080_E01, REQ_SD_083_E01, REQ_SD_113_E01, REQ_SD_115_E01, REQ_SD_115_E02, REQ_SD_116_E01, REQ_SD_116_E02, REQ_SD_119_E01, REQ_SD_120_E01, REQ_SD_123_E01, REQ_SD_134_E01, REQ_SD_222_E01, feat_req_someipsd_100, feat_req_someipsd_200, feat_req_someipsd_300, feat_req_someipsd_613, feat_req_someipsd_818, REQ_SD_818</td>
         </tr>
         <tr>
@@ -11812,7 +11938,7 @@
             <td>TC_test_static_alloc_integration_14</td>
             <td>unknown (tests/test_static_alloc_integration.cpp:14)</td>
             <td class="code-ref">tests/test_static_alloc_integration.cpp:14</td>
-            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_008</td>
+            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_008, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_test_tcp_transport_SetUp</td>

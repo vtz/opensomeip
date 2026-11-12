@@ -3569,6 +3569,9 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 </ul>
 <h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
 <ul>
+<li><strong>SD</strong>: Drawing an initial wait over <code>[0, UINT32_MAX]</code> no longer divides by a
+  wrapped span, and an offered service endpoint uses the instance L4 protocol
+  so a TCP service is not advertised as UDP.</li>
 <li><strong>E2E</strong>: A receive binding that rejects a datagram before the SOME/IP header
   is parsed reports Message ID and Request ID from the wire prefix. A failed
   deserialize no longer publishes the default zero IDs.</li>
