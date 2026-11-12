@@ -148,7 +148,9 @@ private:
         double throughput = static_cast<double>(result.return_values.size()) / duration.count() * 1000 / 1024; // KB/s
         std::cout << "Transfer rate: " << std::fixed << std::setprecision(2) << throughput << " KB/s" << std::endl;
 
-        size_t estimated_segments = (result.return_values.size() / 1400) + 1; // MTU ~1400 payload
+        const size_t nbytes = result.return_values.size();
+        // One datagram at or below the default payload; otherwise ceil(nbytes / 1392).
+        const size_t estimated_segments = (nbytes / 1392) + (nbytes % 1392 != 0 ? 1 : 0);
         std::cout << "Estimated TP segments: " << estimated_segments << std::endl;
     }
 

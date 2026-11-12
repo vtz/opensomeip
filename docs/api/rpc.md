@@ -31,7 +31,7 @@ The RPC layer provides high-level interfaces for making method calls between SOM
 - **Features**:
   - Method handler registration with request/response or fire-and-forget semantics
   - Binds an application RPC endpoint (default `127.0.0.1:30501`, not port 30490)
-  - `E_WRONG_INTERFACE_VERSION` when the request major does not match
+  - `E_WRONG_INTERFACE_VERSION` when a response-expecting request's major does not match
   - Automatic response generation
   - Error handling and return codes
   - Statistics tracking
