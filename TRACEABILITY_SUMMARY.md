@@ -29,18 +29,18 @@ to implementation and test coverage. No safety certification is claimed.
 | Metric | Value | Assessment |
 |--------|-------|------------|
 | Total requirements (RST) | 701 | - |
-| Fully traced (code + tests) | 647 (92.3%) | Good |
-| Requirements with code refs | 647 | Good |
+| Fully traced (code + tests) | 648 (92.4%) | Good |
+| Requirements with code refs | 648 | Good |
 | Requirements with test coverage | 700 | Good |
-| Orphaned (no code annotation) | 54 | Needs improvement |
+| Orphaned (no code annotation) | 53 | Needs improvement |
 | Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 known-unlinked (accepted); REQ_E2E_RECEIVE_001, REQ_TRANSPORT_030 exempt implementation-derived IDs with no spec ID |
-| Code references extracted | 652 | - |
-| Test references extracted | 781 | - |
+| Code references extracted | 653 | - |
+| Test references extracted | 783 | - |
 
 ### Status
 
-647 of 701 requirements are fully traced with both code implementation references
-and test coverage annotations. 54 requirements remain without code annotations.
+648 of 701 requirements are fully traced with both code implementation references
+and test coverage annotations. 53 requirements remain without code annotations.
 The extraction script parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations, including `.inc` files.
 
@@ -120,13 +120,13 @@ Current validated traceability metrics should be read from the most recent
 ### Short-term
 
 - Implement remaining serialization requirements (REQ_SER_090 through REQ_SER_107)
-- Add `@implements` annotations for the 54 orphaned requirements
+- Add `@implements` annotations for the 53 orphaned requirements
 - Add test coverage for REQ_CAPI_006
 - Add performance, stress, and fault-injection tests
 
 ### Long-term
 
-- Achieve >95% full traceability (currently 92.3%)
+- Achieve >95% full traceability (currently 92.4%)
 - Implement advanced SD features (load balancing, IPv6)
 - Add cross-platform test coverage (FreeRTOS, ThreadX hardware)
 - Implement Win32 and LwIP platform backends

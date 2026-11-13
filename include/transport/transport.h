@@ -119,8 +119,10 @@ class IMulticastTransport;
  * if is_running() remains true, shutdown() may be called again to retry cleanup
  * before reinitialization.
  * Lifecycle calls must be serialized externally and must not
- * be made from a transport/application callback. Sharing a running transport
- * requires a separate dispatcher and is not supported by these overloads.
+ * be made from a transport/application callback. These overloads stay
+ * exclusive. Several handlers share one socket through ServiceDemux, which
+ * is the transport's only listener and selects a handler from the SOME/IP
+ * service id.
  */
 class ITransport {
 public:
