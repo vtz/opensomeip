@@ -45,6 +45,8 @@
 #include "someip/message.h"
 #include "someip/payload_view.h"
 #include "static_config.h"
+#include "transport/endpoint.h"
+#include "transport/service_demux.h"
 #include "transport/udp_transport.h"
 
 namespace someip::platform {
@@ -58,6 +60,18 @@ public:
     ~MallocTrapGuard() { malloc_trap_disarm(); }
     MallocTrapGuard(const MallocTrapGuard&) = delete;
     MallocTrapGuard& operator=(const MallocTrapGuard&) = delete;
+};
+
+/// Empty transport listener for register_service() under the malloc trap.
+class NopListener : public transport::ITransportListener {
+public:
+    void on_message_received(MessagePtr /*message*/,
+                             const transport::Endpoint& /*sender*/) override
+    {
+    }
+    void on_connection_lost(const transport::Endpoint& /*endpoint*/) override {}
+    void on_connection_established(const transport::Endpoint& /*endpoint*/) override {}
+    void on_error(Result /*error*/) override {}
 };
 
 class StaticAllocEnv : public ::testing::Environment {
@@ -377,6 +391,26 @@ TEST_F(StaticAllocIntegrationTest, RpcClientConstructDestroyUnderTrap) {
 TEST_F(StaticAllocIntegrationTest, RpcServerConstructDestroyUnderTrap) {
     MallocTrapGuard guard;
     { rpc::RpcServer server(0x1234); }
+}
+
+/**
+ * @test_case TC_STATIC_INT_SERVICEDEMUX_REGISTER
+ * @tests REQ_PAL_NOOP_HEAP_VERIFY
+ * @tests REQ_PLATFORM_STATIC_002
+ * @tests REQ_PLATFORM_STATIC_005
+ * @brief ServiceDemux construction and register_service uses no heap under static alloc
+ */
+TEST_F(StaticAllocIntegrationTest, ServiceDemuxRegisterUnderTrap) {
+    MallocTrapGuard guard;
+    {
+        // Default config: blocking=true, enable_tp=false under SOMEIP_STATIC_ALLOC.
+        const transport::UdpTransportConfig config;
+        transport::UdpTransport transport(transport::Endpoint("127.0.0.1", 0), config);
+        transport::ServiceDemux demux(transport);
+        NopListener listener;
+        ASSERT_EQ(demux.register_service(0x1234, listener), Result::SUCCESS);
+        ASSERT_EQ(demux.register_service(0x5678, listener), Result::SUCCESS);
+    }
 }
 
 /**
