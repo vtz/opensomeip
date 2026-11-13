@@ -1782,6 +1782,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../QNX_PORT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    QNX Neutrino
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../cross-compilation/" class="md-nav__link">
         
   
@@ -3001,8 +3029,16 @@
 <td><img alt="✅" class="twemoji" src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@16.0.1/assets/svg/2705.svg" title=":white_check_mark:" /></td>
 <td>Verified locally</td>
 </tr>
+<tr>
+<td>QNX Neutrino</td>
+<td>x86_64</td>
+<td><code>qcc</code> / <code>q++</code> from <code>QNX_HOST</code></td>
+<td>No</td>
+<td>POSIX socket toolchain, not verified with an SDP in CI. <a href="../QNX_PORT/">Port note</a></td>
+</tr>
 </tbody>
 </table>
+<p>QNX Neutrino is not a separate PAL. The toolchain sets <code>CMAKE_SYSTEM_NAME</code> to <code>QNX</code>, and the build keeps <code>include/platform/posix</code>.</p>
 <h3 id="embedded-rtos-platforms">Embedded / RTOS Platforms<a class="headerlink" href="#embedded-rtos-platforms" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
