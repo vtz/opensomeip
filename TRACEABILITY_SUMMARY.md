@@ -35,7 +35,7 @@ to implementation and test coverage. No safety certification is claimed.
 | Orphaned (no code annotation) | 53 | Needs improvement |
 | Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 known-unlinked (accepted); REQ_E2E_RECEIVE_001, REQ_TRANSPORT_030 exempt implementation-derived IDs with no spec ID |
 | Code references extracted | 653 | - |
-| Test references extracted | 783 | - |
+| Test references extracted | 784 | - |
 
 ### Status
 

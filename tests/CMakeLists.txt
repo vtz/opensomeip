@@ -53,6 +53,10 @@ target_link_libraries(test_sd_offer_find_session someip-sd gtest_main)
 add_executable(test_events test_events.cpp)
 target_link_libraries(test_events someip-events gtest_main)
 
+# Eventgroup multicast threshold: raw sockets count datagrams.
+add_executable(test_eventgroup_multicast test_eventgroup_multicast.cpp)
+target_link_libraries(test_eventgroup_multicast someip-events gtest_main)
+
 # TCP Transport tests
 add_executable(test_tcp_transport test_tcp_transport.cpp)
 target_link_libraries(test_tcp_transport someip-transport gtest_main)
@@ -92,7 +96,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     if(WIN32)
         set(_SOCKET_TESTS
             test_platform_threading test_udp_transport test_tcp_transport
-            test_rpc test_sd test_sd_offer_find_session test_events
+            test_rpc test_sd test_sd_offer_find_session test_events test_eventgroup_multicast
             test_transport_injection test_sd_injection test_subscriber_dispatch
             test_facade_teardown test_rpc_sync_lifetime test_service_demux)
         foreach(_t ${_SOCKET_TESTS})
@@ -325,6 +329,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     add_test(NAME SdTest COMMAND test_sd)
     add_test(NAME SdOfferFindSessionTest COMMAND test_sd_offer_find_session)
     add_test(NAME EventsTest COMMAND test_events)
+    add_test(NAME EventgroupMulticastTest COMMAND test_eventgroup_multicast)
     add_test(NAME TcpTransportTest COMMAND test_tcp_transport)
     add_test(NAME UdpTransportTest COMMAND test_udp_transport)
     add_test(NAME MulticastMembershipTest COMMAND test_multicast_membership)
@@ -337,6 +342,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     set(_ALL_TESTS
         PlatformThreadingTest SerializationTest MessageTest
         SessionManagerTest EndpointTest RpcTest SdTest SdOfferFindSessionTest EventsTest
+        EventgroupMulticastTest
         TcpTransportTest UdpTransportTest ServiceDemuxTest MulticastMembershipTest
         EventDrivenUdpTransportTest EventDrivenTcpTransportTest TpTest E2ETest
     )
