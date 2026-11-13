@@ -52,12 +52,34 @@ enum class TpMessageType : uint8_t {
 };
 
 /**
+ * @brief Default budget for one unsegmented SOME/IP message on UDP.
+ *
+ * This is the serialized message: the 16-byte SOME/IP header plus the
+ * application payload. 1416 covers a 1400-byte payload. Segmentation
+ * starts only when the serialized message is larger than this. A message
+ * that still fits is not padded to a 16-byte boundary.
+ */
+inline constexpr uint32_t DEFAULT_SINGLE_DATAGRAM_SIZE = 1416;
+
+/**
+ * @brief Default TP segment payload. Already a multiple of 16.
+ *
+ * A TP datagram is the 16-byte SOME/IP header, the 4-byte TP header, and
+ * this payload (1412 bytes). That fits in DEFAULT_SINGLE_DATAGRAM_SIZE.
+ * The value is the chunk size for segments, not the single-message ceiling.
+ */
+inline constexpr uint32_t DEFAULT_MAX_SEGMENT_PAYLOAD = 1392;
+
+/**
  * @brief TP segmentation configuration
  */
 struct TpConfig {
-    // TP payload bytes per segment (default 1392). Full UDP datagram is
-    // 16-byte SOME/IP header + 4-byte TP header + payload.
-    uint32_t max_segment_size{1392};
+    /// TP payload bytes per segment. Non-final segments are rounded down
+    /// to a multiple of 16. Not the single-datagram ceiling.
+    uint32_t max_segment_size{DEFAULT_MAX_SEGMENT_PAYLOAD};
+    /// Serialized SOME/IP message (header + payload) that still fits in
+    /// one UDP datagram. The 16-byte header counts toward this budget.
+    uint32_t max_single_datagram_size{DEFAULT_SINGLE_DATAGRAM_SIZE};
     uint32_t max_message_size{1000000};     // Maximum total message size (1MB default)
     uint8_t max_retries{3};                 // Maximum retransmission attempts
     std::chrono::milliseconds retry_timeout{500};      // Timeout between retries

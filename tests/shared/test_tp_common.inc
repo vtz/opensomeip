@@ -38,6 +38,9 @@ static void test_tp() {
 
     TpConfig config;
     config.max_segment_size = 512;
+    // The one-datagram ceiling is not the segment chunk. Keep this suite's
+    // split point at a 512-byte segment plus the SOME/IP header.
+    config.max_single_datagram_size = 16U + config.max_segment_size;
     config.max_message_size = 10000;
     config.reassembly_timeout = std::chrono::milliseconds(1000);
 

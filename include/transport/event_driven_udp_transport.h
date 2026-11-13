@@ -31,7 +31,9 @@ namespace someip::transport {
  */
 struct EventDrivenUdpTransportConfig {
     platform::String<> multicast_interface;
-    size_t max_message_size{1400};
+    /// Serialized SOME/IP message budget: 16-byte header + 1400-byte payload.
+    /// This transport does not segment; a larger message is rejected.
+    size_t max_message_size{1416};
 
     // Filled before the transport is constructed. Default layout only.
     e2e::E2EReceiveTable e2e_receive{};

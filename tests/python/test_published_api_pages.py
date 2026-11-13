@@ -57,7 +57,8 @@ def _read(relative: str) -> str:
 
 def test_tp_docs_match_default_payload() -> None:
     header = _read("include/tp/tp_types.h")
-    assert "max_segment_size{1392}" in header
+    assert "DEFAULT_MAX_SEGMENT_PAYLOAD = 1392" in header
+    assert "max_segment_size{DEFAULT_MAX_SEGMENT_PAYLOAD}" in header
 
     for relative in (
         "docs/api/tp.md",
@@ -66,7 +67,9 @@ def test_tp_docs_match_default_payload() -> None:
     ):
         text = _read(relative)
         assert "1392" in text, relative
-        assert "1400" not in text, relative
+        # A 1400-byte application payload is the single-datagram example.
+        # The segment default itself must not be documented as 1400.
+        assert "max_segment_size = 1400" not in text, relative
         assert "max_reassembly_time" not in text, relative
         assert "enable_compression" not in text, relative
 

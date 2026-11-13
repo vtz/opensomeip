@@ -24,7 +24,9 @@
 #include <thread>
 #include <chrono>
 #include <atomic>
+#include <array>
 #include <cstdint>
+#include <cstring>
 #include <vector>
 #include "static_pool_init.h"
 
@@ -1246,9 +1248,11 @@ TEST_F(UdpTransportTest, QueuedMessagesPreservedWhenListenerInstalled) {
  */
 TEST_F(UdpTransportTest, TpSegmentsAndReassemblesLargePayload) {
     config.enable_tp = true;
-    config.tp_config.max_segment_size = 32;  // force multiple TP segments
+    config.tp_config.max_segment_size = 32;  // TP chunk size, 16-byte aligned
     config.tp_config.max_message_size = 10000;
-    config.max_message_size = 0;
+    // Budget is the serialized message. An 80-byte payload is 96 bytes on
+    // the wire, which is past this ceiling, so it is segmented.
+    config.max_message_size = Message::get_header_size() + 32;
 
     UdpTransport sender(local_endpoint, config);
     UdpTransport receiver(local_endpoint, config);
@@ -1491,5 +1495,268 @@ TEST_F(UdpTransportTest, BoundShortDatagramReportsWireIds) {
     EXPECT_EQ(info.request_id.session_id, 0x0022);
     EXPECT_TRUE(receiver_listener.received_messages_.empty());
 
+    receiver.stop();
+}
+
+namespace {
+
+constexpr size_t kSomeIpHeaderSize = 16;
+constexpr size_t kApplicationPayload = 1400;
+constexpr size_t kSingleDatagramSize = kSomeIpHeaderSize + kApplicationPayload;
+
+struct CapturedDatagram {
+    std::array<uint8_t, 2048> bytes{};
+    size_t size{0};
+};
+
+class LoopbackPeer {
+public:
+    LoopbackPeer() {
+        fd_ = someip_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        if (fd_ == SOMEIP_INVALID_SOCKET) {
+            return;
+        }
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(0);
+        addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        if (someip_bind(fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+            someip_close_socket(fd_);
+            fd_ = SOMEIP_INVALID_SOCKET;
+            return;
+        }
+        socklen_t len = sizeof(addr);
+        if (someip_getsockname(fd_, reinterpret_cast<sockaddr*>(&addr), &len) == 0) {
+            port_ = ntohs(addr.sin_port);
+        }
+    }
+
+    ~LoopbackPeer() {
+        if (fd_ != SOMEIP_INVALID_SOCKET) {
+            someip_close_socket(fd_);
+        }
+    }
+
+    LoopbackPeer(const LoopbackPeer&) = delete;
+    LoopbackPeer& operator=(const LoopbackPeer&) = delete;
+
+    [[nodiscard]] bool ok() const { return fd_ != SOMEIP_INVALID_SOCKET && port_ != 0; }
+    [[nodiscard]] uint16_t port() const { return port_; }
+
+    size_t capture(std::array<CapturedDatagram, 8>& out) {
+        someip_set_socket_timeout(fd_, SO_RCVTIMEO, 2000);
+        size_t count = 0;
+        while (count < out.size()) {
+            std::array<uint8_t, 2048> buf{};
+            sockaddr_in src{};
+            socklen_t src_len = sizeof(src);
+            const ssize_t got = someip_recvfrom(fd_, buf.data(), buf.size(), 0,
+                                                reinterpret_cast<sockaddr*>(&src), &src_len);
+            if (got < 0) {
+                const int err = someip_socket_errno();
+                if (err == SOMEIP_EINTR) {
+                    continue;
+                }
+                break;
+            }
+            out[count].size = static_cast<size_t>(got);
+            std::memcpy(out[count].bytes.data(), buf.data(), out[count].size);
+            ++count;
+            someip_set_socket_timeout(fd_, SO_RCVTIMEO, 200);
+        }
+        return count;
+    }
+
+private:
+    someip_socket_t fd_{SOMEIP_INVALID_SOCKET};
+    uint16_t port_{0};
+};
+
+Message message_with_payload(MessageType type, uint16_t session, size_t payload_size,
+                             uint8_t fill) {
+    Message message(MessageId(0x1234, 0x0001), RequestId(0x00A1, session), type, ReturnCode::E_OK);
+    message.set_payload(platform::ByteBuffer(payload_size, fill));
+    return message;
+}
+
+uint32_t read_be32(const uint8_t* bytes) {
+    return (static_cast<uint32_t>(bytes[0]) << 24U) |
+           (static_cast<uint32_t>(bytes[1]) << 16U) |
+           (static_cast<uint32_t>(bytes[2]) << 8U) |
+           static_cast<uint32_t>(bytes[3]);
+}
+
+void expect_one_unsegmented(const CapturedDatagram& datagram, MessageType type, uint8_t fill) {
+    EXPECT_EQ(datagram.size, kSingleDatagramSize);
+    if (datagram.size < kSingleDatagramSize) {
+        return;
+    }
+    EXPECT_EQ(datagram.bytes[14], static_cast<uint8_t>(type));
+    EXPECT_EQ(datagram.bytes[14] & 0x20U, 0u);
+    EXPECT_EQ(read_be32(datagram.bytes.data() + 4), 8u + kApplicationPayload);
+    EXPECT_NE(kApplicationPayload % 16u, 0u);
+    bool payload_ok = true;
+    for (size_t i = 0; i < kApplicationPayload; ++i) {
+        if (datagram.bytes[kSomeIpHeaderSize + i] != fill) {
+            payload_ok = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(payload_ok);
+}
+
+}  // namespace
+
+/**
+ * @test_case TC_UDP_TP_SINGLE_1400
+ * @tests REQ_TP_090
+ * @brief A 1400-byte request and a 1400-byte response are each one datagram
+ */
+TEST(UdpSingleDatagram, PayloadOf1400IsOneDatagram) {
+    UdpTransportConfig config;
+    EXPECT_EQ(config.max_message_size, someip::tp::DEFAULT_SINGLE_DATAGRAM_SIZE);
+    EXPECT_EQ(config.max_message_size, kSingleDatagramSize);
+    EXPECT_EQ(config.tp_config.max_segment_size, someip::tp::DEFAULT_MAX_SEGMENT_PAYLOAD);
+    EXPECT_EQ(config.tp_config.max_single_datagram_size, someip::tp::DEFAULT_SINGLE_DATAGRAM_SIZE);
+#ifdef SOMEIP_STATIC_ALLOC
+    EXPECT_FALSE(config.enable_tp);
+#else
+    EXPECT_TRUE(config.enable_tp);
+#endif
+
+    LoopbackPeer peer;
+    ASSERT_TRUE(peer.ok());
+
+    UdpTransport sender(Endpoint("127.0.0.1", 0), config);
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    const Endpoint dest("127.0.0.1", peer.port());
+
+    const Message request =
+        message_with_payload(MessageType::REQUEST, 0x0001, kApplicationPayload, 0x11);
+    ASSERT_EQ(request.get_payload().size(), kApplicationPayload);
+    ASSERT_EQ(request.get_total_size(), kSingleDatagramSize);
+    ASSERT_EQ(sender.send_message(request, dest), Result::SUCCESS);
+
+    std::array<CapturedDatagram, 8> datagrams{};
+    const size_t request_count = peer.capture(datagrams);
+    ASSERT_EQ(request_count, 1u);
+    expect_one_unsegmented(datagrams[0], MessageType::REQUEST, 0x11);
+
+    const Message response =
+        message_with_payload(MessageType::RESPONSE, 0x0001, kApplicationPayload, 0x22);
+    ASSERT_EQ(response.get_total_size(), kSingleDatagramSize);
+    ASSERT_EQ(sender.send_message(response, dest), Result::SUCCESS);
+
+    const size_t response_count = peer.capture(datagrams);
+    ASSERT_EQ(response_count, 1u);
+    expect_one_unsegmented(datagrams[0], MessageType::RESPONSE, 0x22);
+
+    sender.stop();
+}
+
+/**
+ * @test_case TC_UDP_TP_PAST_BUDGET
+ * @tests REQ_TP_090, REQ_TP_003
+ * @brief A payload one byte past the UDP budget is segmented, and real segments stay aligned
+ */
+TEST(UdpSingleDatagram, PayloadPastDatagramBudgetIsSegmented) {
+    UdpTransportConfig config;
+    config.enable_tp = true;
+    EXPECT_EQ(config.max_message_size, kSingleDatagramSize);
+
+    LoopbackPeer peer;
+    ASSERT_TRUE(peer.ok());
+
+    UdpTransport sender(Endpoint("127.0.0.1", 0), config);
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+
+    constexpr size_t kOverPayload = kApplicationPayload + 1;
+    const Message over =
+        message_with_payload(MessageType::REQUEST, 0x0002, kOverPayload, 0x33);
+    ASSERT_EQ(over.get_payload().size(), kOverPayload);
+    ASSERT_EQ(over.get_total_size(), kSingleDatagramSize + 1);
+    ASSERT_EQ(sender.send_message(over, Endpoint("127.0.0.1", peer.port())), Result::SUCCESS);
+
+    std::array<CapturedDatagram, 8> datagrams{};
+    const size_t count = peer.capture(datagrams);
+    ASSERT_GT(count, 1u);
+
+    size_t application_bytes = 0;
+    bool saw_non_final = false;
+    for (size_t i = 0; i < count; ++i) {
+        const CapturedDatagram& datagram = datagrams[i];
+        ASSERT_GE(datagram.size, 20u) << "segment " << i;
+        EXPECT_EQ(datagram.bytes[14] & 0x20U, 0x20U) << "segment " << i << " TP flag";
+        const uint32_t tp_header = read_be32(datagram.bytes.data() + 16);
+        const bool more = (tp_header & 0x01U) != 0U;
+        const uint32_t offset = (tp_header >> 4U) * 16U;
+        const size_t segment_payload = datagram.size - 20U;
+        application_bytes += segment_payload;
+        if (more) {
+            saw_non_final = true;
+            EXPECT_EQ(segment_payload % 16U, 0u) << "non-final segment " << i;
+            EXPECT_EQ(segment_payload, someip::tp::DEFAULT_MAX_SEGMENT_PAYLOAD);
+        }
+        if (i == 0) {
+            EXPECT_EQ(offset, 0u);
+        }
+    }
+    EXPECT_TRUE(saw_non_final);
+    EXPECT_EQ(application_bytes, kOverPayload);
+
+    UdpTransport receiver(Endpoint("127.0.0.1", 0), config);
+    TestUdpListener listener;
+    receiver.set_listener(&listener);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+    ASSERT_EQ(sender.send_message(over, receiver.get_local_endpoint()), Result::SUCCESS);
+    ASSERT_TRUE(listener.wait_for_message(std::chrono::milliseconds(2000)));
+    ASSERT_EQ(listener.received_messages_.size(), 1u);
+    const MessagePtr& received = listener.received_messages_[0].first;
+    ASSERT_NE(received, nullptr);
+    EXPECT_FALSE(received->uses_tp());
+    EXPECT_EQ(received->get_message_type(), MessageType::REQUEST);
+    EXPECT_EQ(received->get_payload().size(), kOverPayload);
+    EXPECT_EQ(received->get_payload(), over.get_payload());
+
+    sender.stop();
+    receiver.stop();
+}
+
+/**
+ * @test_case TC_UDP_TP_ZERO_BUDGET_RX
+ * @tests REQ_TP_090
+ * @brief max_message_size 0 still receives a datagram that fits the TP budget
+ */
+TEST(UdpSingleDatagram, ZeroMessageBudgetReceivesFittingDatagram) {
+    UdpTransportConfig config;
+    config.enable_tp = true;
+    config.max_message_size = 0;
+    config.tp_config.max_segment_size = 32;
+    config.receive_buffer_size = 64;
+    EXPECT_EQ(config.tp_config.max_single_datagram_size, someip::tp::DEFAULT_SINGLE_DATAGRAM_SIZE);
+
+    constexpr size_t kPayload = 80;
+    const Message message =
+        message_with_payload(MessageType::REQUEST, 0x0004, kPayload, 0x44);
+    ASSERT_GT(message.get_total_size(), config.receive_buffer_size);
+    ASSERT_LE(message.get_total_size(), config.tp_config.max_single_datagram_size);
+
+    UdpTransport sender(Endpoint("127.0.0.1", 0), config);
+    UdpTransport receiver(Endpoint("127.0.0.1", 0), config);
+    TestUdpListener listener;
+    receiver.set_listener(&listener);
+    ASSERT_EQ(sender.start(), Result::SUCCESS);
+    ASSERT_EQ(receiver.start(), Result::SUCCESS);
+
+    ASSERT_EQ(sender.send_message(message, receiver.get_local_endpoint()), Result::SUCCESS);
+    ASSERT_TRUE(listener.wait_for_message(std::chrono::milliseconds(2000)));
+    ASSERT_EQ(listener.received_messages_.size(), 1u);
+    const MessagePtr& received = listener.received_messages_[0].first;
+    ASSERT_NE(received, nullptr);
+    EXPECT_FALSE(received->uses_tp());
+    EXPECT_EQ(received->get_payload().size(), kPayload);
+    EXPECT_EQ(received->get_payload(), message.get_payload());
+
+    sender.stop();
     receiver.stop();
 }
