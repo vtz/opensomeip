@@ -407,6 +407,61 @@ TEST_F(SessionManagerTest, SessionIdGeneration_Uniqueness) {
     }
 }
 
+/**
+ * @test_case TC_SM_IDGEN_003
+ * @tests REQ_MSG_118
+ * @brief Releasing each session lets the 16-bit counter wrap past 65535.
+ *        Session id 0 stays unused and the table does not retain completed sessions.
+ */
+TEST_F(SessionManagerTest, SessionIdWrapsWhenReleased) {
+    constexpr uint32_t kCalls = 65536U;
+    constexpr uint32_t kUsableSessionIds = 65535U;
+    uint16_t first = 0;
+    for (uint32_t n = 0; n < kCalls; ++n) {
+        const uint16_t sid = session_mgr_->create_session(0x1001);
+        ASSERT_NE(sid, 0u) << "call " << (n + 1U);
+        const uint16_t expected = static_cast<uint16_t>((n % kUsableSessionIds) + 1U);
+        ASSERT_EQ(sid, expected) << "call " << (n + 1U);
+        ASSERT_EQ(session_mgr_->session_count(), 1u) << "call " << (n + 1U);
+        session_mgr_->remove_session(sid);
+        ASSERT_EQ(session_mgr_->session_count(), 0u) << "call " << (n + 1U);
+        if (n == 0U) {
+            first = sid;
+        }
+    }
+    EXPECT_EQ(first, 1u);
+    const uint16_t after_wrap = session_mgr_->create_session(0x1001);
+    EXPECT_EQ(after_wrap, 2u);
+    EXPECT_EQ(session_mgr_->session_count(), 1u);
+}
+
+#ifndef SOMEIP_STATIC_ALLOC
+/**
+ * @test_case TC_SM_IDGEN_004
+ * @tests REQ_MSG_118
+ * @brief Every usable session id held at once: the next create returns 0
+ *        instead of scanning forever. The static map cannot hold 65535 entries.
+ */
+TEST_F(SessionManagerTest, FullSessionIdSpaceReturnsZero) {
+    constexpr uint32_t kUsableSessionIds = 65535U;
+    for (uint32_t n = 0; n < kUsableSessionIds; ++n) {
+        ASSERT_NE(session_mgr_->create_session(0x1001), 0u) << n;
+    }
+    EXPECT_EQ(session_mgr_->session_count(), kUsableSessionIds);
+
+    const auto started = std::chrono::steady_clock::now();
+    EXPECT_EQ(session_mgr_->create_session(0x1001), 0u);
+    const auto elapsed = std::chrono::steady_clock::now() - started;
+    EXPECT_LT(elapsed, std::chrono::milliseconds(200));
+    EXPECT_EQ(session_mgr_->session_count(), kUsableSessionIds);
+
+    session_mgr_->remove_session(1);
+    EXPECT_EQ(session_mgr_->session_count(), kUsableSessionIds - 1U);
+    EXPECT_EQ(session_mgr_->create_session(0x1001), 1u);
+    EXPECT_EQ(session_mgr_->session_count(), kUsableSessionIds);
+}
+#endif
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

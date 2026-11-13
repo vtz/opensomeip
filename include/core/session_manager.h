@@ -81,7 +81,8 @@ public:
     /**
      * @brief Create a new session for a client
      * @param client_id The client ID
-     * @return New session ID
+     * @return New session ID in the range 1..65535, or 0 when the table is full
+     *         or every usable session ID is already taken. Session ID 0 is reserved.
      */
     uint16_t create_session(uint16_t client_id);
 
@@ -128,8 +129,9 @@ public:
 
     /**
      * @brief Get the next available session ID
-     * @param client_id The client ID
-     * @return Next available session ID for the client
+     * @return Next unused session ID in 1..65535, or 0 when every usable ID is taken.
+     *         Session ID 0 is reserved and is never returned as a live ID.
+     * @note Caller must already hold sessions_mutex_. Does not spin if the ID space is full.
      */
     uint16_t get_next_session_id();
 
@@ -138,6 +140,12 @@ public:
      * @return Number of active sessions
      */
     size_t get_active_session_count() const;
+
+    /**
+     * @brief Entries stored in the session table, including non-active ones
+     * @return Table size. Completed sessions that were removed do not count.
+     */
+    size_t session_count() const;
 
     // Prevent copying
     SessionManager(const SessionManager&) = delete;

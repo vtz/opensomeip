@@ -61,6 +61,10 @@ target_link_libraries(test_tcp_transport someip-transport gtest_main)
 add_executable(test_udp_transport test_udp_transport.cpp)
 target_link_libraries(test_udp_transport someip-transport gtest_main)
 
+add_executable(test_service_demux test_service_demux.cpp)
+target_link_libraries(test_service_demux opensomeip gtest_main)
+add_test(NAME ServiceDemuxTest COMMAND test_service_demux)
+
 # Multicast membership retry state machine (header-only helper)
 add_executable(test_multicast_membership test_multicast_membership.cpp)
 target_link_libraries(test_multicast_membership someip-sd gtest_main)
@@ -90,7 +94,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
             test_platform_threading test_udp_transport test_tcp_transport
             test_rpc test_sd test_sd_offer_find_session test_events
             test_transport_injection test_sd_injection test_subscriber_dispatch
-            test_facade_teardown test_rpc_sync_lifetime)
+            test_facade_teardown test_rpc_sync_lifetime test_service_demux)
         foreach(_t ${_SOCKET_TESTS})
             target_sources(${_t} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/winsock_init.cpp)
         endforeach()
@@ -333,7 +337,7 @@ target_link_libraries(test_e2e someip-core gtest_main)
     set(_ALL_TESTS
         PlatformThreadingTest SerializationTest MessageTest
         SessionManagerTest EndpointTest RpcTest SdTest SdOfferFindSessionTest EventsTest
-        TcpTransportTest UdpTransportTest MulticastMembershipTest
+        TcpTransportTest UdpTransportTest ServiceDemuxTest MulticastMembershipTest
         EventDrivenUdpTransportTest EventDrivenTcpTransportTest TpTest E2ETest
     )
     if(NOT WIN32)

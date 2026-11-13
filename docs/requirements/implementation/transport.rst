@@ -330,17 +330,17 @@ Transport Protocol Binding
 .. requirement:: Internal Message Multiplexing
    :id: REQ_TRANSPORT_013
    :satisfies: feat_req_someip_732
-   :status: draft
+   :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: Send messages for Service A and Service B on same UDP socket, verify each is dispatched to the correct handler by Service ID.
+   :verification: Unit test: Two service ids on one UDP socket are answered by different handlers. Registering a service id already present on that socket fails and the first handler still answers. The same demux on one TCP listener answers both service ids. A raw peer, not a gateway, drives the socket.
 
    The software shall support internal de/multiplexing of SOME/IP messages
    independent of the number of controllers, cores, and IP addresses.
 
    **Rationale**: Internal multiplexing decouples service routing from physical network topology.
 
-   **Code Location**: ``src/rpc/rpc_server.cpp`` (service_id_ filtering), ``src/sd/sd_server.cpp``
+   **Code Location**: ``src/transport/service_demux.cpp`` (service-id table), ``src/rpc/rpc_server.cpp`` (one server registers on a shared socket)
 
 .. requirement:: Port Configuration
    :id: REQ_TRANSPORT_014
@@ -494,7 +494,7 @@ Service Instance Binding
 
    **Rationale**: Multi-port binding enables horizontal scaling of service instances.
 
-   **Code Location**: ``src/sd/sd_server.cpp`` (offer_service per instance), ``include/sd/sd_types.h``
+   **Code Location**: ``src/transport/service_demux.cpp`` (same service id on one socket fails), ``src/sd/sd_server.cpp`` (offer_service per instance), ``include/sd/sd_types.h``
 
 .. requirement:: Client Server Address Resolution
    :id: REQ_TRANSPORT_023

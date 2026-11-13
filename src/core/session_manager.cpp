@@ -44,6 +44,10 @@ uint16_t SessionManager::create_session(uint16_t client_id) {
     }
 
     uint16_t const session_id = get_next_session_id();
+    // 0 means the 16-bit space is exhausted. Do not insert a reserved ID.
+    if (session_id == 0) {
+        return 0;
+    }
     sessions_.insert({session_id, Session(session_id, client_id)});
 
     return session_id;
@@ -117,24 +121,32 @@ size_t SessionManager::cleanup_expired_sessions(std::chrono::steady_clock::durat
 }
 
 uint16_t SessionManager::get_next_session_id() {
-    // Find the next available session ID for this client
-    // SOME/IP session IDs should not be 0
+    // Session id 0 is reserved. Usable ids are 1..65535. A table that already
+    // holds every usable id returns 0; searching until one is free would not finish.
+    constexpr uint16_t first_session_id = 1;
+    constexpr uint32_t usable_session_id_count = 65535U;
+    if (sessions_.size() >= usable_session_id_count) {
+        return 0;
+    }
+
     uint16_t candidate = next_session_id_;
+    if (candidate == 0) {
+        candidate = first_session_id;
+    }
 
-    // Simple linear search for available ID (could be optimized)
-    while (sessions_.find(candidate) != sessions_.end()) {
-        candidate++;
-        if (candidate == 0) { // Wrap around, skip 0
-            candidate = 1;
+    for (uint32_t scanned = 0; scanned < usable_session_id_count; ++scanned) {
+        if (sessions_.find(candidate) == sessions_.end()) {
+            const uint32_t advanced = static_cast<uint32_t>(candidate) + 1U;
+            next_session_id_ = (advanced > usable_session_id_count)
+                                   ? first_session_id
+                                   : static_cast<uint16_t>(advanced);
+            return candidate;
         }
+        const uint32_t advanced = static_cast<uint32_t>(candidate) + 1U;
+        candidate = (advanced > usable_session_id_count) ? first_session_id
+                                                         : static_cast<uint16_t>(advanced);
     }
-
-    next_session_id_ = candidate + 1;
-    if (next_session_id_ == 0) {
-        next_session_id_ = 1;
-    }
-
-    return candidate;
+    return 0;
 }
 
 size_t SessionManager::get_active_session_count() const {
@@ -148,6 +160,11 @@ size_t SessionManager::get_active_session_count() const {
     }
 
     return count;
+}
+
+size_t SessionManager::session_count() const {
+    platform::ScopedLock const lock(sessions_mutex_);
+    return sessions_.size();
 }
 
 } // namespace someip
