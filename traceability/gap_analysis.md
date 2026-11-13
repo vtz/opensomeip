@@ -1,12 +1,12 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-11-13 02:48:23
+Generated: 2026-11-13 03:43:29
 
 ## Summary
 
 - **Total Requirements**: 701
-- **Fully Traced (impl + tests)**: 647 (92.3%)
-- **Missing Implementation**: 54
+- **Fully Traced (impl + tests)**: 648 (92.4%)
+- **Missing Implementation**: 53
 - **Missing Tests**: 1
 - **Missing Spec Links (all)**: 161
 - **Missing Spec Links (required only)**: 2
@@ -22,7 +22,7 @@ Generated: 2026-11-13 02:48:23
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
 | Serialization | 75 | 53 (71%) | 75 (100%) | 75 (100%) |
 | Service Discovery | 173 | 170 (98%) | 173 (100%) | 173 (100%) |
-| Transport Layer | 34 | 32 (94%) | 34 (100%) | 32 (94%) |
+| Transport Layer | 34 | 33 (97%) | 34 (100%) | 32 (94%) |
 | Transport Protocol | 65 | 65 (100%) | 65 (100%) | 64 (98%) |
 
 
@@ -41,14 +41,14 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one
 |----------|-------|-------------|--------|----------|
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 56 | 56 | 100% |
-| Medium | 429 | 396 | 428 | 92% |
+| Medium | 429 | 397 | 428 | 93% |
 | Low | 184 | 163 | 184 | 89% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 621 |
+| Unit Tests | 631 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -116,7 +116,6 @@ requirements. Specification IDs with no software requirement stay in
 - REQ_SER_034_E01
 - REQ_SER_056_E01
 - REQ_SER_073_E01
-- REQ_TRANSPORT_013
 - REQ_TRANSPORT_015
 - REQ_CAPI_006
 - REQ_MSG_132B
@@ -316,7 +315,7 @@ These requirements match the implementation-derived exemption and do not need sp
 ### Overall Compliance Level
 - **Current Level**: CL1
 - **Target for Production**: CL2 (100% traceability)
-- **Gap to Target**: 54 requirements
+- **Gap to Target**: 53 requirements
 
 ## Recommendations
 

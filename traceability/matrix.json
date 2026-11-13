@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-13T02:48:23.845997",
+  "generated": "2026-11-13T03:43:29.441072",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -1093,6 +1093,7 @@
         "TC_STATIC_INT_FULL_STACK",
         "TC_STATIC_INT_RPCCLIENT_CTOR",
         "TC_STATIC_INT_RPCSERVER_CTOR",
+        "TC_STATIC_INT_SERVICEDEMUX_REGISTER",
         "TC_STATIC_INT_EVENTPUB_CTOR",
         "TC_STATIC_INT_EVENTSUB_CTOR",
         "TC_STATIC_INT_SDCLIENT_CTOR",
@@ -1145,6 +1146,7 @@
         "TC_STATIC_INT_FULL_STACK",
         "TC_STATIC_INT_RPCCLIENT_CTOR",
         "TC_STATIC_INT_RPCSERVER_CTOR",
+        "TC_STATIC_INT_SERVICEDEMUX_REGISTER",
         "TC_STATIC_INT_EVENTPUB_CTOR",
         "TC_STATIC_INT_EVENTSUB_CTOR",
         "TC_STATIC_INT_SDCLIENT_CTOR",
@@ -1196,7 +1198,7 @@
         "CODE_event_publisher_events_275",
         "CODE_event_subscriber_events_295",
         "CODE_rpc_client_rpc_227",
-        "CODE_rpc_server_rpc_189",
+        "CODE_rpc_server_rpc_215",
         "CODE_sd_client_sd_185",
         "CODE_sd_server_sd_185"
       ],
@@ -1204,6 +1206,7 @@
         "TC_test_static_alloc_integration_14",
         "TC_STATIC_INT_RPCCLIENT_CTOR",
         "TC_STATIC_INT_RPCSERVER_CTOR",
+        "TC_STATIC_INT_SERVICEDEMUX_REGISTER",
         "TC_STATIC_INT_EVENTPUB_CTOR",
         "TC_STATIC_INT_EVENTSUB_CTOR",
         "TC_STATIC_INT_SDCLIENT_CTOR",
@@ -7953,7 +7956,7 @@
         "feat_req_someip_808"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202"
+        "CODE_rpc_server_rpc_235"
       ],
       "tested_by": [
         "TC_test_message_SetUp"
@@ -8182,7 +8185,7 @@
         "CODE_event_publisher_events_41",
         "CODE_event_subscriber_events_75",
         "CODE_rpc_client_rpc_41",
-        "CODE_rpc_server_rpc_39",
+        "CODE_rpc_server_rpc_40",
         "CODE_sd_client_sd_57",
         "CODE_sd_message_sd_44",
         "CODE_sd_server_sd_62",
@@ -8212,7 +8215,7 @@
         "CODE_event_publisher_events_41",
         "CODE_event_subscriber_events_75",
         "CODE_rpc_client_rpc_41",
-        "CODE_rpc_server_rpc_39",
+        "CODE_rpc_server_rpc_40",
         "CODE_sd_client_sd_57",
         "CODE_sd_server_sd_62",
         "CODE_transport_session_transport_27"
@@ -8695,8 +8698,18 @@
       "satisfies": [
         "feat_req_someip_732"
       ],
-      "implemented_by": [],
+      "implemented_by": [
+        "CODE_service_demux_transport_38"
+      ],
       "tested_by": [
+        "TC_test_service_demux_32",
+        "TC_DEMUX_CAPACITY",
+        "TC_DEMUX_UDP_TWO_SERVICES",
+        "TC_DEMUX_UDP_REREGISTER",
+        "TC_DEMUX_UDP_SENDER",
+        "TC_DEMUX_TCP_TWO_SERVICES",
+        "TC_DEMUX_UNREGISTER_LATER_SERVICE",
+        "TC_DEMUX_BROADCAST_EXCEPTION",
         "TC_test_udp_transport_SetUp"
       ]
     },
@@ -8763,6 +8776,8 @@
         "CODE_tcp_transport_transport_656"
       ],
       "tested_by": [
+        "TC_test_service_demux_32",
+        "TC_DEMUX_TCP_TWO_SERVICES",
         "TC_test_tcp_transport_SetUp"
       ]
     },
@@ -8855,9 +8870,14 @@
         "feat_req_someip_444"
       ],
       "implemented_by": [
-        "CODE_udp_transport_transport_189"
+        "CODE_udp_transport_transport_189",
+        "CODE_service_demux_transport_38"
       ],
       "tested_by": [
+        "TC_test_service_demux_32",
+        "TC_DEMUX_UDP_INSTANCES",
+        "TC_DEMUX_UNREGISTER_LATER_SERVICE",
+        "TC_DEMUX_BROADCAST_EXCEPTION",
         "TC_test_udp_transport_SetUp"
       ]
     },
@@ -8979,7 +8999,7 @@
         "CODE_event_publisher_events_720",
         "CODE_event_subscriber_events_914",
         "CODE_rpc_client_rpc_518",
-        "CODE_rpc_server_rpc_279",
+        "CODE_rpc_server_rpc_312",
         "CODE_event_driven_tcp_transport_transport_234",
         "CODE_event_driven_tcp_transport_transport_243",
         "CODE_tcp_transport_transport_831",
@@ -8989,7 +9009,7 @@
         "CODE_event_publisher_events_251",
         "CODE_event_subscriber_events_271",
         "CODE_rpc_client_rpc_200",
-        "CODE_rpc_server_rpc_162",
+        "CODE_rpc_server_rpc_188",
         "CODE_message_rejection_transport_38",
         "CODE_tcp_transport_transport_329",
         "CODE_transport_transport_78"
@@ -10308,8 +10328,8 @@
         "feat_req_someip_371"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202",
-        "CODE_rpc_server_rpc_310",
+        "CODE_rpc_server_rpc_235",
+        "CODE_rpc_server_rpc_343",
         "CODE_message_someip_432"
       ],
       "tested_by": [
@@ -10375,7 +10395,7 @@
       ],
       "implemented_by": [
         "CODE_rpc_client_rpc_380",
-        "CODE_rpc_server_rpc_202",
+        "CODE_rpc_server_rpc_235",
         "CODE_message_someip_432"
       ],
       "tested_by": [
@@ -10992,7 +11012,7 @@
         "feat_req_someip_541"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202",
+        "CODE_rpc_server_rpc_235",
         "CODE_types_someip_69"
       ],
       "tested_by": [
@@ -11059,8 +11079,8 @@
         "feat_req_someip_344"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_295",
-        "CODE_rpc_server_rpc_310"
+        "CODE_rpc_server_rpc_328",
+        "CODE_rpc_server_rpc_343"
       ],
       "tested_by": [
         "TC_test_message_SetUp",
@@ -11077,7 +11097,7 @@
         "feat_req_someip_48"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202"
+        "CODE_rpc_server_rpc_235"
       ],
       "tested_by": [
         "TC_test_message_SetUp",
@@ -11093,8 +11113,8 @@
         "feat_req_someip_164"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_295",
-        "CODE_rpc_server_rpc_310"
+        "CODE_rpc_server_rpc_328",
+        "CODE_rpc_server_rpc_343"
       ],
       "tested_by": [
         "TC_test_message_SetUp"
@@ -11303,7 +11323,7 @@
         "feat_req_someip_654"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202"
+        "CODE_rpc_server_rpc_235"
       ],
       "tested_by": [
         "TC_test_message_SetUp",
@@ -11318,7 +11338,7 @@
         "feat_req_someip_597"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202"
+        "CODE_rpc_server_rpc_235"
       ],
       "tested_by": [
         "TC_test_message_SetUp",
@@ -11333,7 +11353,7 @@
         "feat_req_someip_655"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_310"
+        "CODE_rpc_server_rpc_343"
       ],
       "tested_by": [
         "TC_test_message_SetUp",
@@ -11348,7 +11368,7 @@
         "feat_req_someip_704"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202"
+        "CODE_rpc_server_rpc_235"
       ],
       "tested_by": [
         "TC_test_message_SetUp",
@@ -11381,7 +11401,7 @@
         "feat_req_someip_421"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202"
+        "CODE_rpc_server_rpc_235"
       ],
       "tested_by": [
         "TC_test_message_SetUp",
@@ -11442,7 +11462,7 @@
         "feat_req_someip_720"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202"
+        "CODE_rpc_server_rpc_235"
       ],
       "tested_by": [
         "TC_test_message_SetUp",
@@ -11459,7 +11479,7 @@
         "feat_req_someip_446"
       ],
       "implemented_by": [
-        "CODE_rpc_server_rpc_202"
+        "CODE_rpc_server_rpc_235"
       ],
       "tested_by": [
         "TC_test_message_SetUp"
@@ -11577,8 +11597,8 @@
       "type": "requirement",
       "satisfies": [],
       "implemented_by": [
-        "CODE_rpc_server_rpc_295",
-        "CODE_rpc_server_rpc_310"
+        "CODE_rpc_server_rpc_328",
+        "CODE_rpc_server_rpc_343"
       ],
       "tested_by": [
         "TC_test_message_SetUp",
@@ -12267,9 +12287,9 @@
       ],
       "satisfies": []
     },
-    "CODE_rpc_server_rpc_39": {
-      "id": "CODE_rpc_server_rpc_39",
-      "location": "src/rpc/rpc_server.cpp:39",
+    "CODE_rpc_server_rpc_40": {
+      "id": "CODE_rpc_server_rpc_40",
+      "location": "src/rpc/rpc_server.cpp:40",
       "implements": [
         "REQ_ARCH_001",
         "REQ_ARCH_002"
@@ -12281,9 +12301,9 @@
         "feat_req_someip_92"
       ]
     },
-    "CODE_rpc_server_rpc_202": {
-      "id": "CODE_rpc_server_rpc_202",
-      "location": "src/rpc/rpc_server.cpp:202",
+    "CODE_rpc_server_rpc_235": {
+      "id": "CODE_rpc_server_rpc_235",
+      "location": "src/rpc/rpc_server.cpp:235",
       "implements": [
         "REQ_MSG_042",
         "REQ_MSG_052",
@@ -12299,17 +12319,17 @@
       ],
       "satisfies": []
     },
-    "CODE_rpc_server_rpc_279": {
-      "id": "CODE_rpc_server_rpc_279",
-      "location": "src/rpc/rpc_server.cpp:279",
+    "CODE_rpc_server_rpc_312": {
+      "id": "CODE_rpc_server_rpc_312",
+      "location": "src/rpc/rpc_server.cpp:312",
       "implements": [
         "REQ_TRANSPORT_026"
       ],
       "satisfies": []
     },
-    "CODE_rpc_server_rpc_295": {
-      "id": "CODE_rpc_server_rpc_295",
-      "location": "src/rpc/rpc_server.cpp:295",
+    "CODE_rpc_server_rpc_328": {
+      "id": "CODE_rpc_server_rpc_328",
+      "location": "src/rpc/rpc_server.cpp:328",
       "implements": [
         "REQ_MSG_115",
         "REQ_MSG_117",
@@ -12317,9 +12337,9 @@
       ],
       "satisfies": []
     },
-    "CODE_rpc_server_rpc_310": {
-      "id": "CODE_rpc_server_rpc_310",
-      "location": "src/rpc/rpc_server.cpp:310",
+    "CODE_rpc_server_rpc_343": {
+      "id": "CODE_rpc_server_rpc_343",
+      "location": "src/rpc/rpc_server.cpp:343",
       "implements": [
         "REQ_MSG_042",
         "REQ_MSG_115",
@@ -15855,17 +15875,17 @@
       ],
       "satisfies": []
     },
-    "CODE_rpc_server_rpc_162": {
-      "id": "CODE_rpc_server_rpc_162",
-      "location": "include/rpc/rpc_server.h:162",
+    "CODE_rpc_server_rpc_188": {
+      "id": "CODE_rpc_server_rpc_188",
+      "location": "include/rpc/rpc_server.h:188",
       "implements": [
         "REQ_TRANSPORT_026"
       ],
       "satisfies": []
     },
-    "CODE_rpc_server_rpc_189": {
-      "id": "CODE_rpc_server_rpc_189",
-      "location": "include/rpc/rpc_server.h:189",
+    "CODE_rpc_server_rpc_215": {
+      "id": "CODE_rpc_server_rpc_215",
+      "location": "include/rpc/rpc_server.h:215",
       "implements": [
         "REQ_PLATFORM_STATIC_005"
       ],
@@ -16208,6 +16228,18 @@
         "REQ_TRANSPORT_026"
       ],
       "satisfies": []
+    },
+    "CODE_service_demux_transport_38": {
+      "id": "CODE_service_demux_transport_38",
+      "location": "include/transport/service_demux.h:38",
+      "implements": [
+        "REQ_TRANSPORT_013",
+        "REQ_TRANSPORT_022"
+      ],
+      "satisfies": [
+        "feat_req_someip_445",
+        "feat_req_someip_732"
+      ]
     },
     "CODE_tcp_transport_transport_329": {
       "id": "CODE_tcp_transport_transport_329",
@@ -20543,6 +20575,89 @@
       "location": "tests/test_serialization.cpp:1428",
       "tests": []
     },
+    "TC_test_service_demux_32": {
+      "id": "TC_test_service_demux_32",
+      "name": "unknown (tests/test_service_demux.cpp:32)",
+      "location": "tests/test_service_demux.cpp:32",
+      "tests": [
+        "REQ_TRANSPORT_013",
+        "REQ_TRANSPORT_017",
+        "REQ_TRANSPORT_022",
+        "feat_req_someip_445",
+        "feat_req_someip_732"
+      ]
+    },
+    "TC_DEMUX_CAPACITY": {
+      "id": "TC_DEMUX_CAPACITY",
+      "name": "TEST (tests/test_service_demux.cpp:338)",
+      "location": "tests/test_service_demux.cpp:338",
+      "tests": [
+        "REQ_TRANSPORT_013"
+      ]
+    },
+    "TC_DEMUX_UDP_TWO_SERVICES": {
+      "id": "TC_DEMUX_UDP_TWO_SERVICES",
+      "name": "TEST (tests/test_service_demux.cpp:368)",
+      "location": "tests/test_service_demux.cpp:368",
+      "tests": [
+        "REQ_TRANSPORT_013",
+        "feat_req_someip_732"
+      ]
+    },
+    "TC_DEMUX_UDP_REREGISTER": {
+      "id": "TC_DEMUX_UDP_REREGISTER",
+      "name": "TEST (tests/test_service_demux.cpp:411)",
+      "location": "tests/test_service_demux.cpp:411",
+      "tests": [
+        "REQ_TRANSPORT_013",
+        "feat_req_someip_445"
+      ]
+    },
+    "TC_DEMUX_UDP_INSTANCES": {
+      "id": "TC_DEMUX_UDP_INSTANCES",
+      "name": "TEST (tests/test_service_demux.cpp:454)",
+      "location": "tests/test_service_demux.cpp:454",
+      "tests": [
+        "REQ_TRANSPORT_022",
+        "feat_req_someip_445"
+      ]
+    },
+    "TC_DEMUX_UDP_SENDER": {
+      "id": "TC_DEMUX_UDP_SENDER",
+      "name": "TEST (tests/test_service_demux.cpp:508)",
+      "location": "tests/test_service_demux.cpp:508",
+      "tests": [
+        "REQ_TRANSPORT_013"
+      ]
+    },
+    "TC_DEMUX_TCP_TWO_SERVICES": {
+      "id": "TC_DEMUX_TCP_TWO_SERVICES",
+      "name": "TEST (tests/test_service_demux.cpp:539)",
+      "location": "tests/test_service_demux.cpp:539",
+      "tests": [
+        "REQ_TRANSPORT_013",
+        "REQ_TRANSPORT_017",
+        "feat_req_someip_732"
+      ]
+    },
+    "TC_DEMUX_UNREGISTER_LATER_SERVICE": {
+      "id": "TC_DEMUX_UNREGISTER_LATER_SERVICE",
+      "name": "TEST (tests/test_service_demux.cpp:640)",
+      "location": "tests/test_service_demux.cpp:640",
+      "tests": [
+        "REQ_TRANSPORT_013",
+        "REQ_TRANSPORT_022"
+      ]
+    },
+    "TC_DEMUX_BROADCAST_EXCEPTION": {
+      "id": "TC_DEMUX_BROADCAST_EXCEPTION",
+      "name": "TEST (tests/test_service_demux.cpp:682)",
+      "location": "tests/test_service_demux.cpp:682",
+      "tests": [
+        "REQ_TRANSPORT_013",
+        "REQ_TRANSPORT_022"
+      ]
+    },
     "TC_test_session_manager_SetUp": {
       "id": "TC_test_session_manager_SetUp",
       "name": "SetUp (tests/test_session_manager.cpp:23)",
@@ -20726,8 +20841,8 @@
     },
     "TC_STATIC_INT_BORROWED_TRANSPORT": {
       "id": "TC_STATIC_INT_BORROWED_TRANSPORT",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:81)",
-      "location": "tests/test_static_alloc_integration.cpp:81",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:95)",
+      "location": "tests/test_static_alloc_integration.cpp:95",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002",
@@ -20736,8 +20851,8 @@
     },
     "TC_STATIC_INT_SYNC_CALLBACK_LIFETIME": {
       "id": "TC_STATIC_INT_SYNC_CALLBACK_LIFETIME",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:109)",
-      "location": "tests/test_static_alloc_integration.cpp:109",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:123)",
+      "location": "tests/test_static_alloc_integration.cpp:123",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002",
@@ -20746,24 +20861,24 @@
     },
     "TC_STATIC_INT_TRAP_THREAD_SCOPE": {
       "id": "TC_STATIC_INT_TRAP_THREAD_SCOPE",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:131)",
-      "location": "tests/test_static_alloc_integration.cpp:131",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:145)",
+      "location": "tests/test_static_alloc_integration.cpp:145",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY"
       ]
     },
     "TC_STATIC_INT_TRAP_ARMED_ALLOC": {
       "id": "TC_STATIC_INT_TRAP_ARMED_ALLOC",
-      "name": "TEST (tests/test_static_alloc_integration.cpp:171)",
-      "location": "tests/test_static_alloc_integration.cpp:171",
+      "name": "TEST (tests/test_static_alloc_integration.cpp:185)",
+      "location": "tests/test_static_alloc_integration.cpp:185",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY"
       ]
     },
     "TC_STATIC_INT_ROUNDTRIP": {
       "id": "TC_STATIC_INT_ROUNDTRIP",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:200)",
-      "location": "tests/test_static_alloc_integration.cpp:200",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:214)",
+      "location": "tests/test_static_alloc_integration.cpp:214",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002"
@@ -20771,8 +20886,8 @@
     },
     "TC_STATIC_INT_MSG_POOL": {
       "id": "TC_STATIC_INT_MSG_POOL",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:226)",
-      "location": "tests/test_static_alloc_integration.cpp:226",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:240)",
+      "location": "tests/test_static_alloc_integration.cpp:240",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PAL_MEM_ALLOC"
@@ -20780,8 +20895,8 @@
     },
     "TC_STATIC_INT_BUFPOOL": {
       "id": "TC_STATIC_INT_BUFPOOL",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:247)",
-      "location": "tests/test_static_alloc_integration.cpp:247",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:261)",
+      "location": "tests/test_static_alloc_integration.cpp:261",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PAL_BUFPOOL_ACQUIRE",
@@ -20790,8 +20905,8 @@
     },
     "TC_STATIC_INT_SERIALIZER": {
       "id": "TC_STATIC_INT_SERIALIZER",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:269)",
-      "location": "tests/test_static_alloc_integration.cpp:269",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:283)",
+      "location": "tests/test_static_alloc_integration.cpp:283",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_003"
@@ -20799,8 +20914,8 @@
     },
     "TC_STATIC_INT_CONTAINER_OPS": {
       "id": "TC_STATIC_INT_CONTAINER_OPS",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:298)",
-      "location": "tests/test_static_alloc_integration.cpp:298",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:312)",
+      "location": "tests/test_static_alloc_integration.cpp:312",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PAL_CONTAINER_VECTOR",
@@ -20809,8 +20924,8 @@
     },
     "TC_STATIC_INT_FULL_STACK": {
       "id": "TC_STATIC_INT_FULL_STACK",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:319)",
-      "location": "tests/test_static_alloc_integration.cpp:319",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:333)",
+      "location": "tests/test_static_alloc_integration.cpp:333",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002"
@@ -20818,8 +20933,8 @@
     },
     "TC_STATIC_INT_RPCCLIENT_CTOR": {
       "id": "TC_STATIC_INT_RPCCLIENT_CTOR",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:358)",
-      "location": "tests/test_static_alloc_integration.cpp:358",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:372)",
+      "location": "tests/test_static_alloc_integration.cpp:372",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002",
@@ -20828,8 +20943,18 @@
     },
     "TC_STATIC_INT_RPCSERVER_CTOR": {
       "id": "TC_STATIC_INT_RPCSERVER_CTOR",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:370)",
-      "location": "tests/test_static_alloc_integration.cpp:370",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:384)",
+      "location": "tests/test_static_alloc_integration.cpp:384",
+      "tests": [
+        "REQ_PAL_NOOP_HEAP_VERIFY",
+        "REQ_PLATFORM_STATIC_002",
+        "REQ_PLATFORM_STATIC_005"
+      ]
+    },
+    "TC_STATIC_INT_SERVICEDEMUX_REGISTER": {
+      "id": "TC_STATIC_INT_SERVICEDEMUX_REGISTER",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:396)",
+      "location": "tests/test_static_alloc_integration.cpp:396",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002",
@@ -20838,8 +20963,8 @@
     },
     "TC_STATIC_INT_EVENTPUB_CTOR": {
       "id": "TC_STATIC_INT_EVENTPUB_CTOR",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:382)",
-      "location": "tests/test_static_alloc_integration.cpp:382",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:416)",
+      "location": "tests/test_static_alloc_integration.cpp:416",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002",
@@ -20848,8 +20973,8 @@
     },
     "TC_STATIC_INT_EVENTSUB_CTOR": {
       "id": "TC_STATIC_INT_EVENTSUB_CTOR",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:394)",
-      "location": "tests/test_static_alloc_integration.cpp:394",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:428)",
+      "location": "tests/test_static_alloc_integration.cpp:428",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002",
@@ -20858,8 +20983,8 @@
     },
     "TC_STATIC_INT_SDCLIENT_CTOR": {
       "id": "TC_STATIC_INT_SDCLIENT_CTOR",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:406)",
-      "location": "tests/test_static_alloc_integration.cpp:406",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:440)",
+      "location": "tests/test_static_alloc_integration.cpp:440",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002",
@@ -20868,8 +20993,8 @@
     },
     "TC_STATIC_INT_SDSERVER_CTOR": {
       "id": "TC_STATIC_INT_SDSERVER_CTOR",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:418)",
-      "location": "tests/test_static_alloc_integration.cpp:418",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:452)",
+      "location": "tests/test_static_alloc_integration.cpp:452",
       "tests": [
         "REQ_PAL_NOOP_HEAP_VERIFY",
         "REQ_PLATFORM_STATIC_002",
@@ -20878,8 +21003,8 @@
     },
     "TC_STATIC_INT_PAYLOADVIEW": {
       "id": "TC_STATIC_INT_PAYLOADVIEW",
-      "name": "TEST_F (tests/test_static_alloc_integration.cpp:430)",
-      "location": "tests/test_static_alloc_integration.cpp:430",
+      "name": "TEST_F (tests/test_static_alloc_integration.cpp:464)",
+      "location": "tests/test_static_alloc_integration.cpp:464",
       "tests": [
         "REQ_API_PAYLOAD_VIEW",
         "REQ_PAL_NOOP_HEAP_VERIFY"

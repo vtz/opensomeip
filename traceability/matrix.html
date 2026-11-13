@@ -21,14 +21,14 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-11-13 02:48:23</p>
+    <p>Generated: 2026-11-13 03:43:29</p>
 
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
             <li>Total Requirements: 701</li>
-            <li>Code References: 427</li>
-            <li>Test Cases: 649</li>
+            <li>Code References: 428</li>
+            <li>Test Cases: 659</li>
         </ul>
     </div>
 
@@ -46,7 +46,7 @@
             <td>REQ_ARCH_001</td>
             <td>Modular Architecture</td>
             <td>feat_req_someip_2, feat_req_someip_3, feat_req_someip_4, feat_req_someip_14, feat_req_someip_15, feat_req_someip_697</td>
-            <td class="code-ref">CODE_event_publisher_events_41, CODE_event_subscriber_events_75, CODE_rpc_client_rpc_41, CODE_rpc_server_rpc_39, CODE_sd_client_sd_57, CODE_sd_message_sd_44, CODE_sd_server_sd_62, CODE_types_someip_28</td>
+            <td class="code-ref">CODE_event_publisher_events_41, CODE_event_subscriber_events_75, CODE_rpc_client_rpc_41, CODE_rpc_server_rpc_40, CODE_sd_client_sd_57, CODE_sd_message_sd_44, CODE_sd_server_sd_62, CODE_types_someip_28</td>
             <td>TC_test_someip_system_SetUp, TC_test_events_SetUp, TC_test_message_SetUp, TC_test_rpc_SetUp, TC_test_sd_SetUp, TC_test_serialization_EXPECT_DESERIALIZE_SUCCESS, TC_test_tp_SetUp, TC_test_echo_integration_74, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -54,7 +54,7 @@
             <td>REQ_ARCH_002</td>
             <td>Thread Safety</td>
             <td>-</td>
-            <td class="code-ref">CODE_callback_storage_common_24, CODE_session_manager_core_33, CODE_event_publisher_events_41, CODE_event_subscriber_events_75, CODE_rpc_client_rpc_41, CODE_rpc_server_rpc_39, CODE_sd_client_sd_57, CODE_sd_server_sd_62, CODE_transport_session_transport_27</td>
+            <td class="code-ref">CODE_callback_storage_common_24, CODE_session_manager_core_33, CODE_event_publisher_events_41, CODE_event_subscriber_events_75, CODE_rpc_client_rpc_41, CODE_rpc_server_rpc_40, CODE_sd_client_sd_57, CODE_sd_server_sd_62, CODE_transport_session_transport_27</td>
             <td>TC_FACADE_TEARDOWN, TC_FACADE_CONCURRENT_SHUTDOWN, TC_RPC_SHUTDOWN_SERIALIZATION, TC_FACADE_DESTRUCTOR_EXCEPTION_FIREWALL, TC_TRANSPORT_SESSION_RETRY, TC_TRANSPORT_SESSION_CONCURRENT_STOP, TC_test_platform_threading_wait, TC_test_rpc_SetUp, TC_RPC_SYNC_LIFETIME, TC_RPC_SYNC_HANDLE_SENTINEL, TC_RPC_SYNC_SUCCESS_NO_LEAK, TC_RPC_CANCEL_STILL_WORKS, TC_RPC_LONG_RUN_SESSION, TC_test_sd_SetUp, TC_SD_DESTRUCTOR_EXCEPTION_FIREWALL, TC_test_session_manager_SetUp, TC_SM_REMOVE_001, TC_SM_REMOVE_002, TC_SM_GET_001, TC_SM_MULTI_001, TC_SM_STATE_001, TC_SM_STATE_002, TC_SM_ACTIVITY_001, TC_SM_ACTIVITY_002, TC_SM_EXPIRY_001, TC_SM_EXPIRY_002, TC_SM_COUNT_001, TC_SM_STRUCT_001, TC_SM_STRUCT_002, TC_SM_STRUCT_003, TC_SM_STRUCT_004, TC_SM_CAPACITY_001, TC_EVENT_UNAMBIGUOUS_SUBSCRIPTION, TC_test_tp_SetUp, TC_TRANSPORT_INJECTION, TC_INJECTED_RECEIVE_SESSION_DRAIN, TC_EVENT_NOTIFICATION_REENTRANCY, TC_EVENT_FIELD_REENTRANCY, TC_EVENT_FIELD_SEND_DELIVERS, TC_RPC_HANDLER_RELEASE, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -238,7 +238,7 @@
             <td>REQ_COMPAT_003</td>
             <td>Drop Unknown Messages</td>
             <td>feat_req_someipcompat_1201, feat_req_someip_808</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -710,7 +710,7 @@
             <td>REQ_MSG_042</td>
             <td>Error - Interface Version Mismatch Handling</td>
             <td>feat_req_someip_371</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202, CODE_rpc_server_rpc_310, CODE_message_someip_432</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235, CODE_rpc_server_rpc_343, CODE_message_someip_432</td>
             <td>TC_test_message_SetUp, TC_MSG_005, TC_test_rpc_spec_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -742,7 +742,7 @@
             <td>REQ_MSG_052</td>
             <td>Accept REQUEST_NO_RETURN Message Type</td>
             <td>feat_req_someip_95, feat_req_someip_345</td>
-            <td class="code-ref">CODE_rpc_client_rpc_380, CODE_rpc_server_rpc_202, CODE_message_someip_432</td>
+            <td class="code-ref">CODE_rpc_client_rpc_380, CODE_rpc_server_rpc_235, CODE_message_someip_432</td>
             <td>TC_test_message_SetUp, TC_MSG_006, TC_test_rpc_spec_integration_1, TC_test_rpc_spec_integration_87</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1086,7 +1086,7 @@
             <td>REQ_MSG_111</td>
             <td>Service ID Uniqueness</td>
             <td>feat_req_someip_541</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202, CODE_types_someip_69</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235, CODE_types_someip_69</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1142,7 +1142,7 @@
             <td>REQ_MSG_115</td>
             <td>Fire-and-Forget No Response</td>
             <td>feat_req_someip_345, feat_req_someip_348, feat_req_someip_344</td>
-            <td class="code-ref">CODE_rpc_server_rpc_295, CODE_rpc_server_rpc_310</td>
+            <td class="code-ref">CODE_rpc_server_rpc_328, CODE_rpc_server_rpc_343</td>
             <td>TC_test_message_SetUp, TC_test_rpc_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1150,7 +1150,7 @@
             <td>REQ_MSG_116</td>
             <td>Response IP Address Mapping</td>
             <td>feat_req_someip_49, feat_req_someip_46, feat_req_someip_48</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235</td>
             <td>TC_test_message_SetUp, TC_test_rpc_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1158,7 +1158,7 @@
             <td>REQ_MSG_117</td>
             <td>Payload Field Extraction</td>
             <td>feat_req_someip_165, feat_req_someip_164</td>
-            <td class="code-ref">CODE_rpc_server_rpc_295, CODE_rpc_server_rpc_310</td>
+            <td class="code-ref">CODE_rpc_server_rpc_328, CODE_rpc_server_rpc_343</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1166,7 +1166,7 @@
             <td>REQ_MSG_117_E01</td>
             <td>Error - Payload Size Exceeds Maximum</td>
             <td>-</td>
-            <td class="code-ref">CODE_rpc_server_rpc_295, CODE_rpc_server_rpc_310</td>
+            <td class="code-ref">CODE_rpc_server_rpc_328, CODE_rpc_server_rpc_343</td>
             <td>TC_test_message_SetUp, TC_MSG_E07</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1318,7 +1318,7 @@
             <td>REQ_MSG_127</td>
             <td>No Error for Fire-and-Forget</td>
             <td>feat_req_someip_654</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235</td>
             <td>TC_test_message_SetUp, TC_test_rpc_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1326,7 +1326,7 @@
             <td>REQ_MSG_128</td>
             <td>No Error for Events</td>
             <td>feat_req_someip_597</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235</td>
             <td>TC_test_message_SetUp, TC_test_rpc_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1334,7 +1334,7 @@
             <td>REQ_MSG_129</td>
             <td>Error Header Copy</td>
             <td>feat_req_someip_655</td>
-            <td class="code-ref">CODE_rpc_server_rpc_310</td>
+            <td class="code-ref">CODE_rpc_server_rpc_343</td>
             <td>TC_test_message_SetUp, TC_test_rpc_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1342,7 +1342,7 @@
             <td>REQ_MSG_130</td>
             <td>No Error Response to Error Messages</td>
             <td>feat_req_someip_704</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235</td>
             <td>TC_test_message_SetUp, TC_test_rpc_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1358,7 +1358,7 @@
             <td>REQ_MSG_132A</td>
             <td>Exception Message Type 0x81</td>
             <td>feat_req_someip_101, feat_req_someip_726, feat_req_someip_421</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235</td>
             <td>TC_test_message_SetUp, TC_test_rpc_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1390,7 +1390,7 @@
             <td>REQ_MSG_133C</td>
             <td>Error Check Step 3 - Service and Method Validation</td>
             <td>feat_req_someip_366, feat_req_someip_364, feat_req_someip_365, feat_req_someip_720</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235</td>
             <td>TC_test_message_SetUp, TC_test_rpc_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1398,7 +1398,7 @@
             <td>REQ_MSG_134</td>
             <td>Service Instance Port Multiplexing</td>
             <td>feat_req_someip_648, feat_req_someip_444, feat_req_someip_446</td>
-            <td class="code-ref">CODE_rpc_server_rpc_202</td>
+            <td class="code-ref">CODE_rpc_server_rpc_235</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1759,7 +1759,7 @@
             <td>No-Heap Runtime Verification</td>
             <td>REQ_ARCH_008</td>
             <td class="code-ref">CODE_malloc_trap_static_14, CODE_malloc_trap_static_10</td>
-            <td>TC_test_static_alloc_integration_14, TC_STATIC_INT_BORROWED_TRANSPORT, TC_STATIC_INT_SYNC_CALLBACK_LIFETIME, TC_STATIC_INT_TRAP_THREAD_SCOPE, TC_STATIC_INT_TRAP_ARMED_ALLOC, TC_STATIC_INT_ROUNDTRIP, TC_STATIC_INT_MSG_POOL, TC_STATIC_INT_BUFPOOL, TC_STATIC_INT_SERIALIZER, TC_STATIC_INT_CONTAINER_OPS, TC_STATIC_INT_FULL_STACK, TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR, TC_STATIC_INT_PAYLOADVIEW</td>
+            <td>TC_test_static_alloc_integration_14, TC_STATIC_INT_BORROWED_TRANSPORT, TC_STATIC_INT_SYNC_CALLBACK_LIFETIME, TC_STATIC_INT_TRAP_THREAD_SCOPE, TC_STATIC_INT_TRAP_ARMED_ALLOC, TC_STATIC_INT_ROUNDTRIP, TC_STATIC_INT_MSG_POOL, TC_STATIC_INT_BUFPOOL, TC_STATIC_INT_SERIALIZER, TC_STATIC_INT_CONTAINER_OPS, TC_STATIC_INT_FULL_STACK, TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_SERVICEDEMUX_REGISTER, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR, TC_STATIC_INT_PAYLOADVIEW</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1927,7 +1927,7 @@
             <td>Static Message Object Pool</td>
             <td>REQ_PAL_MEM_ALLOC, REQ_ARCH_008</td>
             <td class="code-ref">CODE_memory_static_14, CODE_memory_impl_static_17, CODE_memory_impl_static_30</td>
-            <td>TC_FREERTOS_STATIC_ZERO_HEAP, TC_test_pal_static_alloc_mock_allocate_message, TC_test_static_alloc_integration_14, TC_STATIC_INT_BORROWED_TRANSPORT, TC_STATIC_INT_SYNC_CALLBACK_LIFETIME, TC_STATIC_INT_ROUNDTRIP, TC_STATIC_INT_FULL_STACK, TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR, TC_MSGPOOL_PLACEMENT_NEW, TC_MSGPOOL_DOUBLE_RELEASE, TC_THREADX_STATIC_ROUNDTRIP</td>
+            <td>TC_FREERTOS_STATIC_ZERO_HEAP, TC_test_pal_static_alloc_mock_allocate_message, TC_test_static_alloc_integration_14, TC_STATIC_INT_BORROWED_TRANSPORT, TC_STATIC_INT_SYNC_CALLBACK_LIFETIME, TC_STATIC_INT_ROUNDTRIP, TC_STATIC_INT_FULL_STACK, TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_SERVICEDEMUX_REGISTER, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR, TC_MSGPOOL_PLACEMENT_NEW, TC_MSGPOOL_DOUBLE_RELEASE, TC_THREADX_STATIC_ROUNDTRIP</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -1950,8 +1950,8 @@
             <td>REQ_PLATFORM_STATIC_005</td>
             <td>Pimpl Static Storage</td>
             <td>REQ_ARCH_008</td>
-            <td class="code-ref">CODE_event_publisher_events_275, CODE_event_subscriber_events_295, CODE_rpc_client_rpc_227, CODE_rpc_server_rpc_189, CODE_sd_client_sd_185, CODE_sd_server_sd_185</td>
-            <td>TC_test_static_alloc_integration_14, TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR</td>
+            <td class="code-ref">CODE_event_publisher_events_275, CODE_event_subscriber_events_295, CODE_rpc_client_rpc_227, CODE_rpc_server_rpc_215, CODE_sd_client_sd_185, CODE_sd_server_sd_185</td>
+            <td>TC_test_static_alloc_integration_14, TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_SERVICEDEMUX_REGISTER, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -5494,9 +5494,9 @@
             <td>REQ_TRANSPORT_013</td>
             <td>Internal Message Multiplexing</td>
             <td>feat_req_someip_732</td>
-            <td class="code-ref">-</td>
-            <td>TC_test_udp_transport_SetUp</td>
-            <td><span class="status-warning">⚠ Partial</span></td>
+            <td class="code-ref">CODE_service_demux_transport_38</td>
+            <td>TC_test_service_demux_32, TC_DEMUX_CAPACITY, TC_DEMUX_UDP_TWO_SERVICES, TC_DEMUX_UDP_REREGISTER, TC_DEMUX_UDP_SENDER, TC_DEMUX_TCP_TWO_SERVICES, TC_DEMUX_UNREGISTER_LATER_SERVICE, TC_DEMUX_BROADCAST_EXCEPTION, TC_test_udp_transport_SetUp</td>
+            <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_TRANSPORT_014</td>
@@ -5543,7 +5543,7 @@
             <td>TCP Connection Sharing</td>
             <td>feat_req_someip_644, feat_req_someip_645</td>
             <td class="code-ref">CODE_tcp_transport_transport_656</td>
-            <td>TC_test_tcp_transport_SetUp</td>
+            <td>TC_test_service_demux_32, TC_DEMUX_TCP_TWO_SERVICES, TC_test_tcp_transport_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -5582,8 +5582,8 @@
             <td>REQ_TRANSPORT_022</td>
             <td>Multiple Service Instance Port Binding</td>
             <td>feat_req_someip_445, feat_req_someip_636, feat_req_someip_967, feat_req_someip_1079, feat_req_someip_444</td>
-            <td class="code-ref">CODE_udp_transport_transport_189</td>
-            <td>TC_test_udp_transport_SetUp</td>
+            <td class="code-ref">CODE_udp_transport_transport_189, CODE_service_demux_transport_38</td>
+            <td>TC_test_service_demux_32, TC_DEMUX_UDP_INSTANCES, TC_DEMUX_UNREGISTER_LATER_SERVICE, TC_DEMUX_BROADCAST_EXCEPTION, TC_test_udp_transport_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -5614,7 +5614,7 @@
             <td>REQ_TRANSPORT_026</td>
             <td>Incoming Message Rejection Diagnostics</td>
             <td>-</td>
-            <td class="code-ref">CODE_event_publisher_events_720, CODE_event_subscriber_events_914, CODE_rpc_client_rpc_518, CODE_rpc_server_rpc_279, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_831, CODE_tcp_transport_transport_1240, CODE_udp_transport_transport_473, CODE_udp_transport_transport_604, CODE_event_publisher_events_251, CODE_event_subscriber_events_271, CODE_rpc_client_rpc_200, CODE_rpc_server_rpc_162, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_329, CODE_transport_transport_78</td>
+            <td class="code-ref">CODE_event_publisher_events_720, CODE_event_subscriber_events_914, CODE_rpc_client_rpc_518, CODE_rpc_server_rpc_312, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_831, CODE_tcp_transport_transport_1240, CODE_udp_transport_transport_473, CODE_udp_transport_transport_604, CODE_event_publisher_events_251, CODE_event_subscriber_events_271, CODE_rpc_client_rpc_200, CODE_rpc_server_rpc_188, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_329, CODE_transport_transport_78</td>
             <td>TC_ED_TCP_REJECT_001, TC_ED_UDP_E2E_002, TC_test_rpc_SetUp, TC_test_rpc_TEST_F, TC_test_tcp_transport_SetUp, TC_TCP_REJECT_001, TC_TCP_REJECT_003, TC_TCP_REJECT_004, TC_TCP_REJECT_005, TC_TCP_REJECT_002, TC_TCP_REJECT_002b, TC_test_udp_transport_SetUp, TC_UDP_REJECT_001, TC_UDP_E2E_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -6651,44 +6651,44 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_server_rpc_162</td>
-            <td class="code-ref">include/rpc/rpc_server.h:162</td>
+            <td>CODE_rpc_server_rpc_188</td>
+            <td class="code-ref">include/rpc/rpc_server.h:188</td>
             <td>REQ_TRANSPORT_026</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_server_rpc_189</td>
-            <td class="code-ref">include/rpc/rpc_server.h:189</td>
+            <td>CODE_rpc_server_rpc_215</td>
+            <td class="code-ref">include/rpc/rpc_server.h:215</td>
             <td>REQ_PLATFORM_STATIC_005</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_server_rpc_202</td>
-            <td class="code-ref">src/rpc/rpc_server.cpp:202</td>
+            <td>CODE_rpc_server_rpc_235</td>
+            <td class="code-ref">src/rpc/rpc_server.cpp:235</td>
             <td>REQ_MSG_042, REQ_MSG_052, REQ_MSG_111, REQ_MSG_116, REQ_MSG_127, REQ_MSG_128, REQ_MSG_130, REQ_MSG_132A, REQ_MSG_133C, REQ_MSG_134, REQ_COMPAT_003</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_server_rpc_279</td>
-            <td class="code-ref">src/rpc/rpc_server.cpp:279</td>
+            <td>CODE_rpc_server_rpc_312</td>
+            <td class="code-ref">src/rpc/rpc_server.cpp:312</td>
             <td>REQ_TRANSPORT_026</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_server_rpc_295</td>
-            <td class="code-ref">src/rpc/rpc_server.cpp:295</td>
+            <td>CODE_rpc_server_rpc_328</td>
+            <td class="code-ref">src/rpc/rpc_server.cpp:328</td>
             <td>REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_server_rpc_310</td>
-            <td class="code-ref">src/rpc/rpc_server.cpp:310</td>
+            <td>CODE_rpc_server_rpc_343</td>
+            <td class="code-ref">src/rpc/rpc_server.cpp:343</td>
             <td>REQ_MSG_042, REQ_MSG_115, REQ_MSG_117, REQ_MSG_117_E01, REQ_MSG_129</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_server_rpc_39</td>
-            <td class="code-ref">src/rpc/rpc_server.cpp:39</td>
+            <td>CODE_rpc_server_rpc_40</td>
+            <td class="code-ref">src/rpc/rpc_server.cpp:40</td>
             <td>REQ_ARCH_001, REQ_ARCH_002</td>
             <td>feat_req_someip_710, feat_req_someip_711, feat_req_someip_712, feat_req_someip_92</td>
         </tr>
@@ -7345,6 +7345,12 @@
             <td class="code-ref">src/serialization/serializer.cpp:95</td>
             <td>REQ_SER_011</td>
             <td>-</td>
+        </tr>
+        <tr>
+            <td>CODE_service_demux_transport_38</td>
+            <td class="code-ref">include/transport/service_demux.h:38</td>
+            <td>REQ_TRANSPORT_013, REQ_TRANSPORT_022</td>
+            <td>feat_req_someip_445, feat_req_someip_732</td>
         </tr>
         <tr>
             <td>CODE_session_manager_core_33</td>
@@ -8729,6 +8735,54 @@
             <td>TEST (tests/test_platform_containers.cpp:234)</td>
             <td class="code-ref">tests/test_platform_containers.cpp:234</td>
             <td>REQ_PAL_CONTAINER_VECTOR, REQ_PLATFORM_STATIC_001</td>
+        </tr>
+        <tr>
+            <td>TC_DEMUX_BROADCAST_EXCEPTION</td>
+            <td>TEST (tests/test_service_demux.cpp:682)</td>
+            <td class="code-ref">tests/test_service_demux.cpp:682</td>
+            <td>REQ_TRANSPORT_013, REQ_TRANSPORT_022</td>
+        </tr>
+        <tr>
+            <td>TC_DEMUX_CAPACITY</td>
+            <td>TEST (tests/test_service_demux.cpp:338)</td>
+            <td class="code-ref">tests/test_service_demux.cpp:338</td>
+            <td>REQ_TRANSPORT_013</td>
+        </tr>
+        <tr>
+            <td>TC_DEMUX_TCP_TWO_SERVICES</td>
+            <td>TEST (tests/test_service_demux.cpp:539)</td>
+            <td class="code-ref">tests/test_service_demux.cpp:539</td>
+            <td>REQ_TRANSPORT_013, REQ_TRANSPORT_017, feat_req_someip_732</td>
+        </tr>
+        <tr>
+            <td>TC_DEMUX_UDP_INSTANCES</td>
+            <td>TEST (tests/test_service_demux.cpp:454)</td>
+            <td class="code-ref">tests/test_service_demux.cpp:454</td>
+            <td>REQ_TRANSPORT_022, feat_req_someip_445</td>
+        </tr>
+        <tr>
+            <td>TC_DEMUX_UDP_REREGISTER</td>
+            <td>TEST (tests/test_service_demux.cpp:411)</td>
+            <td class="code-ref">tests/test_service_demux.cpp:411</td>
+            <td>REQ_TRANSPORT_013, feat_req_someip_445</td>
+        </tr>
+        <tr>
+            <td>TC_DEMUX_UDP_SENDER</td>
+            <td>TEST (tests/test_service_demux.cpp:508)</td>
+            <td class="code-ref">tests/test_service_demux.cpp:508</td>
+            <td>REQ_TRANSPORT_013</td>
+        </tr>
+        <tr>
+            <td>TC_DEMUX_UDP_TWO_SERVICES</td>
+            <td>TEST (tests/test_service_demux.cpp:368)</td>
+            <td class="code-ref">tests/test_service_demux.cpp:368</td>
+            <td>REQ_TRANSPORT_013, feat_req_someip_732</td>
+        </tr>
+        <tr>
+            <td>TC_DEMUX_UNREGISTER_LATER_SERVICE</td>
+            <td>TEST (tests/test_service_demux.cpp:640)</td>
+            <td class="code-ref">tests/test_service_demux.cpp:640</td>
+            <td>REQ_TRANSPORT_013, REQ_TRANSPORT_022</td>
         </tr>
         <tr>
             <td>TC_E2E_001</td>
@@ -11066,104 +11120,110 @@
         </tr>
         <tr>
             <td>TC_STATIC_INT_BORROWED_TRANSPORT</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:81)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:81</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:95)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:95</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_003</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_BUFPOOL</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:247)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:247</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:261)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:261</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PAL_BUFPOOL_ACQUIRE, REQ_PAL_BUFPOOL_RELEASE</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_CONTAINER_OPS</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:298)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:298</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:312)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:312</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PAL_CONTAINER_VECTOR, REQ_PAL_CONTAINER_STRING</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_EVENTPUB_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:382)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:382</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:416)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:416</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_EVENTSUB_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:394)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:394</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:428)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:428</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_FULL_STACK</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:319)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:319</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:333)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:333</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_MSG_POOL</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:226)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:226</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:240)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:240</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PAL_MEM_ALLOC</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_PAYLOADVIEW</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:430)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:430</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:464)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:464</td>
             <td>REQ_API_PAYLOAD_VIEW, REQ_PAL_NOOP_HEAP_VERIFY</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_ROUNDTRIP</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:200)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:200</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:214)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:214</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_RPCCLIENT_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:358)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:358</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:372)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:372</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_RPCSERVER_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:370)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:370</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:384)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:384</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SDCLIENT_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:406)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:406</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:440)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:440</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SDSERVER_CTOR</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:418)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:418</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:452)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:452</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_SERIALIZER</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:269)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:269</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:283)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:283</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_003</td>
         </tr>
         <tr>
+            <td>TC_STATIC_INT_SERVICEDEMUX_REGISTER</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:396)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:396</td>
+            <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_PLATFORM_STATIC_005</td>
+        </tr>
+        <tr>
             <td>TC_STATIC_INT_SYNC_CALLBACK_LIFETIME</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:109)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:109</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:123)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:123</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY, REQ_PLATFORM_STATIC_002, REQ_ARCH_003</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_TRAP_ARMED_ALLOC</td>
-            <td>TEST (tests/test_static_alloc_integration.cpp:171)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:171</td>
+            <td>TEST (tests/test_static_alloc_integration.cpp:185)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:185</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY</td>
         </tr>
         <tr>
             <td>TC_STATIC_INT_TRAP_THREAD_SCOPE</td>
-            <td>TEST_F (tests/test_static_alloc_integration.cpp:131)</td>
-            <td class="code-ref">tests/test_static_alloc_integration.cpp:131</td>
+            <td>TEST_F (tests/test_static_alloc_integration.cpp:145)</td>
+            <td class="code-ref">tests/test_static_alloc_integration.cpp:145</td>
             <td>REQ_PAL_NOOP_HEAP_VERIFY</td>
         </tr>
         <tr>
@@ -12059,6 +12119,12 @@
             <td>EXPECT_DESERIALIZE_SUCCESS (tests/test_serialization.cpp:26)</td>
             <td class="code-ref">tests/test_serialization.cpp:26</td>
             <td>REQ_ARCH_001, REQ_SER_001, REQ_SER_002, REQ_SER_003, REQ_SER_004, REQ_SER_005, REQ_SER_006, REQ_SER_007, REQ_SER_008, REQ_SER_010, REQ_SER_011, REQ_SER_012, REQ_SER_013, REQ_SER_014, REQ_SER_015, REQ_SER_016, REQ_SER_017, REQ_SER_020, REQ_SER_021, REQ_SER_022, REQ_SER_023, REQ_SER_024, REQ_SER_030, REQ_SER_031, REQ_SER_032, REQ_SER_033, REQ_SER_034, REQ_SER_035, REQ_SER_040, REQ_SER_041, REQ_SER_042, REQ_SER_043, REQ_SER_044, REQ_SER_045, REQ_SER_046, REQ_SER_047, REQ_SER_050, REQ_SER_051, REQ_SER_052, REQ_SER_053, REQ_SER_054, REQ_SER_055, REQ_SER_056, REQ_SER_060, REQ_SER_061, REQ_SER_062, REQ_SER_063, REQ_SER_070, REQ_SER_071, REQ_SER_072, REQ_SER_073, REQ_SER_074, REQ_SER_075, REQ_SER_080, REQ_SER_081, REQ_SER_082, REQ_SER_001_E01, REQ_SER_002_E01, REQ_SER_003_E01, REQ_SER_004_E01, REQ_SER_005_E01, REQ_SER_006_E01, REQ_SER_007_E01, REQ_SER_008_E01, REQ_SER_020_E01, REQ_SER_022_E01, REQ_SER_030_E01, REQ_SER_031_E01, REQ_SER_032_E01, REQ_SER_033_E01, REQ_SER_040_E01, REQ_SER_043_E01, REQ_SER_046_E01, REQ_SER_047_E01, REQ_SER_047_E02, REQ_SER_050_E01, REQ_SER_050_E02, REQ_SER_053_E01, REQ_SER_055_E01, REQ_SER_060_E01, REQ_SER_060_E02, REQ_SER_070_E01, REQ_SER_070_E02, REQ_SER_090, REQ_SER_091, REQ_SER_092, REQ_SER_093, REQ_SER_094A, REQ_SER_094B, REQ_SER_094C, REQ_SER_095, REQ_SER_096, REQ_SER_097, REQ_SER_098, REQ_SER_099, REQ_SER_100, REQ_SER_101, REQ_SER_102, REQ_SER_103, REQ_SER_104, REQ_SER_105, REQ_SER_106, REQ_SER_107, REQ_SER_090_E01, REQ_SER_094_E01, REQ_SER_094_E02, REQ_SER_051_E01, REQ_SER_043_E02, REQ_SER_042_E01, REQ_SER_040_E02, REQ_SER_080_E01, REQ_SER_080_E02, REQ_SER_010_E01, REQ_SER_034_E01, REQ_SER_056_E01, REQ_SER_073_E01, feat_req_someip_600, feat_req_someip_601, feat_req_someip_602, feat_req_someip_610, feat_req_someip_611, feat_req_someip_231</td>
+        </tr>
+        <tr>
+            <td>TC_test_service_demux_32</td>
+            <td>unknown (tests/test_service_demux.cpp:32)</td>
+            <td class="code-ref">tests/test_service_demux.cpp:32</td>
+            <td>REQ_TRANSPORT_013, REQ_TRANSPORT_017, REQ_TRANSPORT_022, feat_req_someip_445, feat_req_someip_732</td>
         </tr>
         <tr>
             <td>TC_test_session_manager_SetUp</td>
