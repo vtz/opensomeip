@@ -72,6 +72,13 @@ set(QNX_SDP_ARCH "gcc_ntox86_64" CACHE STRING
 set(QNX_SDP_PROCESSOR "x86_64" CACHE STRING
   "CMAKE_SYSTEM_PROCESSOR for the Neutrino target")
 
+# try_compile() reloads this file in a nested project. Without this list the
+# nested project keeps the x86_64 CACHE defaults and checks the wrong CPU
+# when QNX_SDP_ARCH / QNX_SDP_PROCESSOR were overridden.
+list(APPEND CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
+  QNX_SDP_ARCH
+  QNX_SDP_PROCESSOR)
+
 set(CMAKE_SYSTEM_PROCESSOR "${QNX_SDP_PROCESSOR}")
 
 # Same qcc -V pattern CMake uses to derive the nto-prefixed binutils names,
