@@ -15,6 +15,7 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <new>  // NOLINT(misc-include-cleaner) - static allocation placement new
@@ -430,6 +431,10 @@ public:
         return running_ && transport_.is_connected();
     }
 
+    size_t session_count() const {
+        return session_manager_.session_count();
+    }
+
     RpcClient::Statistics get_statistics() const {
         // TODO: Implement statistics tracking
         return RpcClient::Statistics{};
@@ -637,6 +642,10 @@ bool RpcClient::cancel_call(RpcCallHandle handle) {
 
 bool RpcClient::is_ready() const {
     return impl()->is_ready();
+}
+
+size_t RpcClient::session_count() const {
+    return impl()->session_count();
 }
 
 void RpcClient::set_message_rejection_handler(
