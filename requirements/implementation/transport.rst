@@ -315,17 +315,24 @@ Transport Protocol Binding
 .. requirement:: Multicast Threshold Switching
    :id: REQ_TRANSPORT_012
    :satisfies: feat_req_someip_813
-   :status: draft
+   :status: implemented
    :priority: medium
    :category: happy_path
-   :verification: Unit test: Configure multicast threshold=3, subscribe 2 clients (unicast), subscribe 3rd (switch to multicast), verify mode change.
+   :verification: Raw UDP sockets count datagrams. Threshold 1 and a configured multicast group produce one datagram on that group and no unicast copy. Threshold 0 unicasts once per subscriber. An initial field event stays unicast. Threshold 2 unicasts with one subscriber and multicasts once two subscribers are active.
 
    The software shall support dynamic switching of eventgroups between
    unicast and multicast based on the Multicast-Threshold configuration.
+   Threshold 0 sends one unicast datagram to each active subscriber.
+   Threshold 1 sends one multicast datagram and no unicast copy.
+   A threshold above 1 unicasts while the active subscriber count is
+   below it and sends one multicast datagram at and above it. The
+   multicast address and port come from caller configuration. Initial
+   field events stay unicast. The library does not copy that datagram
+   into other local processes.
 
    **Rationale**: Dynamic switching optimizes bandwidth based on actual subscriber count.
 
-   **Code Location**: ``src/transport/udp_transport.cpp``, ``include/sd/sd_types.h``
+   **Code Location**: ``src/events/event_publisher.cpp`` (publish_event, send_initial_fields, configure_eventgroup), ``include/events/event_types.h`` (EventgroupConfig)
 
 .. requirement:: Internal Message Multiplexing
    :id: REQ_TRANSPORT_013
