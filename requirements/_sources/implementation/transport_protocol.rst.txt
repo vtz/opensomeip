@@ -1383,13 +1383,17 @@ TP Informational References
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Integration test: Two ``UdpTransport`` instances on loopback; send a payload larger than ``TpConfig.max_segment_size``; receiver gets one reassembled message. Small messages have no TP flag. Tests: ``tests/test_udp_transport.cpp`` (TpSegmentsAndReassemblesLargePayload, SmallMessageNotTpFlagged).
+   :verification: Integration test: A raw UDP peer counts datagrams. A 1400-byte request and a 1400-byte response are each one 1416-byte datagram with the TP flag clear. A payload whose serialized size is one byte past the budget is segmented, and non-final segment payloads are multiples of 16. Tests: ``tests/test_udp_transport.cpp`` (PayloadOf1400IsOneDatagram, PayloadPastDatagramBudgetIsSegmented, TpSegmentsAndReassemblesLargePayload, SmallMessageNotTpFlagged).
 
    When ``UdpTransportConfig.enable_tp`` is true, UDP send shall segment
-   messages whose payload exceeds ``TpConfig.max_segment_size`` (TP
-   payload bytes, default 1392; full datagram is 16+4+payload) and
-   transmit each segment as its own datagram. The unsegmented message
-   shall not be sent. Small messages shall be sent without the TP flag.
+   a message only when its serialized size, including the 16-byte SOME/IP
+   header, exceeds the single-datagram budget
+   (``UdpTransportConfig::max_message_size``, default 1416). Each TP
+   segment's payload is at most ``TpConfig.max_segment_size`` (default
+   1392) rounded down to a multiple of 16, plus the SOME/IP and TP
+   headers. A message that still fits shall be sent as one datagram
+   without the TP flag and without 16-byte padding. The static build
+   keeps ``enable_tp`` false until the caller sets it.
 
    **Rationale**: Automatic TP on UDP avoids IP fragmentation and exposes a single Message API.
 

@@ -3316,8 +3316,13 @@
 <tbody>
 <tr>
 <td><code>max_segment_size</code></td>
-<td>Maximum <strong>payload</strong> bytes per TP segment (not including 16+4 header bytes)</td>
+<td>Maximum <strong>payload</strong> bytes per TP segment (not including 16+4 header bytes). Non-final segments are rounded down to a multiple of 16.</td>
 <td>1392</td>
+</tr>
+<tr>
+<td><code>max_single_datagram_size</code></td>
+<td>Serialized SOME/IP message (16-byte header + payload) that still fits in one UDP datagram</td>
+<td>1416</td>
 </tr>
 <tr>
 <td><code>max_message_size</code></td>
@@ -3364,11 +3369,14 @@
 and to false when <code>SOMEIP_STATIC_ALLOC</code> is defined:</p>
 <ol>
 <li><strong>Outgoing messages</strong>: <code>UdpTransport::send_message</code> calls <code>TpManager</code>
-   when <code>needs_segmentation()</code> is true (payload larger than
-   <code>TpConfig.max_segment_size</code>, default <strong>1392 TP payload bytes</strong>; the
-   UDP datagram is 16-byte SOME/IP header + 4-byte TP header + payload).
-   Each segment is sent as its own datagram. Small messages are sent
-   unchanged, without the TP flag.</li>
+   when the serialized message exceeds the single-datagram budget
+   (<code>UdpTransportConfig::max_message_size</code>, default <strong>1416</strong> bytes:
+   16-byte SOME/IP header + 1400-byte payload). The 16-byte header is
+   part of that comparison. Each TP segment is then at most
+   <code>TpConfig.max_segment_size</code> payload bytes (default <strong>1392</strong>, rounded
+   down to a multiple of 16) plus the 16-byte SOME/IP header and 4-byte
+   TP header. A message that still fits is one datagram, with no TP flag
+   and no 16-byte padding.</li>
 <li><strong>Incoming datagrams</strong>: if Message Type bit 5 is set, the receive
    loop feeds <code>TpManager::ingest_datagram</code>. A complete reassembly is
    delivered as one <code>Message</code> with the TP flag cleared. Incomplete
