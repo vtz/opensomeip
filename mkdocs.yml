@@ -113,6 +113,7 @@ nav:
     - Zephyr RTOS: ZEPHYR_PORT.md
     - FreeRTOS: FREERTOS_PORT.md
     - Eclipse ThreadX: THREADX_PORT.md
+    - QNX Neutrino: QNX_PORT.md
     - Cross-Compilation: cross-compilation.md
     - Risk Register: PLATFORM_RISK_REGISTER.md
   - API Reference:

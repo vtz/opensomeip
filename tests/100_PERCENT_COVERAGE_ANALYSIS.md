@@ -99,7 +99,7 @@ SOME/IP supports multiple transport bindings:
 
 **Hardware/Platform Specific Features:**
 - **MCU-specific optimizations**
-- **RTOS integration** (FreeRTOS, QNX, etc.)
+- **RTOS integration** (FreeRTOS, etc.)
 - **Hardware acceleration** for cryptography
 - **Platform-specific transport drivers**
 

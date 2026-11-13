@@ -20,6 +20,8 @@ For **RTOS targets**, see the dedicated port guides:
 [FreeRTOS](FREERTOS_PORT.md) |
 [ThreadX](THREADX_PORT.md)
 
+QNX Neutrino is a POSIX socket toolchain, not a separate RTOS backend, and it is not verified with an SDP in CI. See [QNX Neutrino](QNX_PORT.md).
+
 ## Clone and Build
 
 ```bash

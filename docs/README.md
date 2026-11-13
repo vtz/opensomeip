@@ -61,6 +61,7 @@ See [requirements/README.md](requirements/README.md) for details.
 - [Zephyr RTOS Port](ZEPHYR_PORT.md)
 - [FreeRTOS + lwIP Port](FREERTOS_PORT.md)
 - [ThreadX + lwIP Port](THREADX_PORT.md)
+- [QNX Neutrino (POSIX sockets)](QNX_PORT.md) — toolchain only; not verified with an SDP in CI
 - [Platform Risk Register](PLATFORM_RISK_REGISTER.md)
 
 ## Documentation Standards

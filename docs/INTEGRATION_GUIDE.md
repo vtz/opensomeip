@@ -166,6 +166,10 @@ target_link_libraries(my_app PRIVATE someip-transport)
 
 Platform backends (FreeRTOS, ThreadX, lwIP) are **never** fetched unless explicitly enabled. The Zephyr port uses a separate West/Zephyr build and is not part of the root CMake tree.
 
+### QNX Neutrino
+
+QNX Neutrino uses the POSIX socket backend through [`cmake/toolchains/qnx-sdp.cmake`](../cmake/toolchains/qnx-sdp.cmake). It is not a new PAL. The port was not compiled with a licensed SDP, and CI does not claim a QNX compile. See [QNX_PORT.md](QNX_PORT.md).
+
 ### External Project
 
 ```cmake

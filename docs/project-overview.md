@@ -134,6 +134,7 @@ full architecture diagram.
 | Zephyr RTOS | Zephyr sockets | k_thread / k_mutex | Stable |
 | FreeRTOS | lwIP | xTaskCreate / xSemaphore | Stable |
 | Eclipse ThreadX | lwIP | tx_thread / TX_MUTEX | Stable |
+| QNX Neutrino | POSIX sockets | std::thread / std::mutex | POSIX socket toolchain; not verified with an SDP in CI |
 
 ## Project Structure
 
