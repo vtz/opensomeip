@@ -21,14 +21,14 @@
 </head>
 <body>
     <h1>OpenSOMEIP Traceability Matrix</h1>
-    <p>Generated: 2026-11-12 22:59:22</p>
+    <p>Generated: 2026-11-13 02:48:23</p>
 
     <div class="summary">
         <strong>Summary:</strong>
         <ul>
             <li>Total Requirements: 701</li>
             <li>Code References: 427</li>
-            <li>Test Cases: 646</li>
+            <li>Test Cases: 649</li>
         </ul>
     </div>
 
@@ -46,7 +46,7 @@
             <td>REQ_ARCH_001</td>
             <td>Modular Architecture</td>
             <td>feat_req_someip_2, feat_req_someip_3, feat_req_someip_4, feat_req_someip_14, feat_req_someip_15, feat_req_someip_697</td>
-            <td class="code-ref">CODE_event_publisher_events_41, CODE_event_subscriber_events_75, CODE_rpc_client_rpc_40, CODE_rpc_server_rpc_39, CODE_sd_client_sd_57, CODE_sd_message_sd_44, CODE_sd_server_sd_62, CODE_types_someip_28</td>
+            <td class="code-ref">CODE_event_publisher_events_41, CODE_event_subscriber_events_75, CODE_rpc_client_rpc_41, CODE_rpc_server_rpc_39, CODE_sd_client_sd_57, CODE_sd_message_sd_44, CODE_sd_server_sd_62, CODE_types_someip_28</td>
             <td>TC_test_someip_system_SetUp, TC_test_events_SetUp, TC_test_message_SetUp, TC_test_rpc_SetUp, TC_test_sd_SetUp, TC_test_serialization_EXPECT_DESERIALIZE_SUCCESS, TC_test_tp_SetUp, TC_test_echo_integration_74, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -54,8 +54,8 @@
             <td>REQ_ARCH_002</td>
             <td>Thread Safety</td>
             <td>-</td>
-            <td class="code-ref">CODE_callback_storage_common_24, CODE_session_manager_core_33, CODE_event_publisher_events_41, CODE_event_subscriber_events_75, CODE_rpc_client_rpc_40, CODE_rpc_server_rpc_39, CODE_sd_client_sd_57, CODE_sd_server_sd_62, CODE_transport_session_transport_27</td>
-            <td>TC_FACADE_TEARDOWN, TC_FACADE_CONCURRENT_SHUTDOWN, TC_RPC_SHUTDOWN_SERIALIZATION, TC_FACADE_DESTRUCTOR_EXCEPTION_FIREWALL, TC_TRANSPORT_SESSION_RETRY, TC_TRANSPORT_SESSION_CONCURRENT_STOP, TC_test_platform_threading_wait, TC_test_rpc_SetUp, TC_RPC_SYNC_LIFETIME, TC_RPC_SYNC_HANDLE_SENTINEL, TC_RPC_SYNC_SUCCESS_NO_LEAK, TC_RPC_CANCEL_STILL_WORKS, TC_test_sd_SetUp, TC_SD_DESTRUCTOR_EXCEPTION_FIREWALL, TC_test_session_manager_SetUp, TC_SM_REMOVE_001, TC_SM_REMOVE_002, TC_SM_GET_001, TC_SM_MULTI_001, TC_SM_STATE_001, TC_SM_STATE_002, TC_SM_ACTIVITY_001, TC_SM_ACTIVITY_002, TC_SM_EXPIRY_001, TC_SM_EXPIRY_002, TC_SM_COUNT_001, TC_SM_STRUCT_001, TC_SM_STRUCT_002, TC_SM_STRUCT_003, TC_SM_STRUCT_004, TC_SM_CAPACITY_001, TC_EVENT_UNAMBIGUOUS_SUBSCRIPTION, TC_test_tp_SetUp, TC_TRANSPORT_INJECTION, TC_INJECTED_RECEIVE_SESSION_DRAIN, TC_EVENT_NOTIFICATION_REENTRANCY, TC_EVENT_FIELD_REENTRANCY, TC_EVENT_FIELD_SEND_DELIVERS, TC_RPC_HANDLER_RELEASE, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
+            <td class="code-ref">CODE_callback_storage_common_24, CODE_session_manager_core_33, CODE_event_publisher_events_41, CODE_event_subscriber_events_75, CODE_rpc_client_rpc_41, CODE_rpc_server_rpc_39, CODE_sd_client_sd_57, CODE_sd_server_sd_62, CODE_transport_session_transport_27</td>
+            <td>TC_FACADE_TEARDOWN, TC_FACADE_CONCURRENT_SHUTDOWN, TC_RPC_SHUTDOWN_SERIALIZATION, TC_FACADE_DESTRUCTOR_EXCEPTION_FIREWALL, TC_TRANSPORT_SESSION_RETRY, TC_TRANSPORT_SESSION_CONCURRENT_STOP, TC_test_platform_threading_wait, TC_test_rpc_SetUp, TC_RPC_SYNC_LIFETIME, TC_RPC_SYNC_HANDLE_SENTINEL, TC_RPC_SYNC_SUCCESS_NO_LEAK, TC_RPC_CANCEL_STILL_WORKS, TC_RPC_LONG_RUN_SESSION, TC_test_sd_SetUp, TC_SD_DESTRUCTOR_EXCEPTION_FIREWALL, TC_test_session_manager_SetUp, TC_SM_REMOVE_001, TC_SM_REMOVE_002, TC_SM_GET_001, TC_SM_MULTI_001, TC_SM_STATE_001, TC_SM_STATE_002, TC_SM_ACTIVITY_001, TC_SM_ACTIVITY_002, TC_SM_EXPIRY_001, TC_SM_EXPIRY_002, TC_SM_COUNT_001, TC_SM_STRUCT_001, TC_SM_STRUCT_002, TC_SM_STRUCT_003, TC_SM_STRUCT_004, TC_SM_CAPACITY_001, TC_EVENT_UNAMBIGUOUS_SUBSCRIPTION, TC_test_tp_SetUp, TC_TRANSPORT_INJECTION, TC_INJECTED_RECEIVE_SESSION_DRAIN, TC_EVENT_NOTIFICATION_REENTRANCY, TC_EVENT_FIELD_REENTRANCY, TC_EVENT_FIELD_SEND_DELIVERS, TC_RPC_HANDLER_RELEASE, TC_test_e2e_system_2, TC_test_full_stack_integration_1</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -63,7 +63,7 @@
             <td>Safe Memory Management</td>
             <td>-</td>
             <td class="code-ref">CODE_callback_storage_common_24, CODE_session_manager_core_33, CODE_transport_session_transport_27</td>
-            <td>TC_test_message_SetUp, TC_RPC_SYNC_LIFETIME, TC_RPC_SHUTDOWN_NOTHROW, TC_RPC_SYNC_DEADLINE_EXCLUDES_SEND, TC_RPC_SYNC_DEADLINE_ARBITRATION, TC_RPC_SUBMIT_FAILURE_REASON, TC_test_session_manager_SetUp, TC_STATIC_INT_BORROWED_TRANSPORT, TC_STATIC_INT_SYNC_CALLBACK_LIFETIME, TC_TRANSPORT_INJECTION, TC_INJECTED_RECEIVE_SESSION_DRAIN, TC_INJECTED_FAILED_START_RETRY, TC_EVENT_FIELD_SEND_FAILURE, TC_RPC_HANDLER_RELEASE, TC_RPC_SYNC_TIMEOUT_DURING_STOP, TC_RPC_SYNC_EXTRACTED_CALLBACK_LIFETIME</td>
+            <td>TC_test_message_SetUp, TC_RPC_SYNC_LIFETIME, TC_RPC_SHUTDOWN_NOTHROW, TC_RPC_SYNC_DEADLINE_EXCLUDES_SEND, TC_RPC_SYNC_DEADLINE_ARBITRATION, TC_RPC_SUBMIT_FAILURE_REASON, TC_RPC_LONG_RUN_SESSION, TC_test_session_manager_SetUp, TC_STATIC_INT_BORROWED_TRANSPORT, TC_STATIC_INT_SYNC_CALLBACK_LIFETIME, TC_TRANSPORT_INJECTION, TC_INJECTED_RECEIVE_SESSION_DRAIN, TC_INJECTED_FAILED_START_RETRY, TC_EVENT_FIELD_SEND_FAILURE, TC_RPC_HANDLER_RELEASE, TC_RPC_SYNC_TIMEOUT_DURING_STOP, TC_RPC_SYNC_EXTRACTED_CALLBACK_LIFETIME</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
@@ -742,7 +742,7 @@
             <td>REQ_MSG_052</td>
             <td>Accept REQUEST_NO_RETURN Message Type</td>
             <td>feat_req_someip_95, feat_req_someip_345</td>
-            <td class="code-ref">CODE_rpc_client_rpc_379, CODE_rpc_server_rpc_202, CODE_message_someip_432</td>
+            <td class="code-ref">CODE_rpc_client_rpc_380, CODE_rpc_server_rpc_202, CODE_message_someip_432</td>
             <td>TC_test_message_SetUp, TC_MSG_006, TC_test_rpc_spec_integration_1, TC_test_rpc_spec_integration_87</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1118,7 +1118,7 @@
             <td>REQ_MSG_114</td>
             <td>Request/Response Header Construction</td>
             <td>feat_req_someip_329, feat_req_someip_338, feat_req_someip_327, feat_req_someip_328</td>
-            <td class="code-ref">CODE_rpc_client_rpc_303</td>
+            <td class="code-ref">CODE_rpc_client_rpc_304</td>
             <td>TC_test_message_SetUp, TC_test_rpc_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1126,7 +1126,7 @@
             <td>REQ_MSG_114_E01</td>
             <td>Error - Response Without Matching Request</td>
             <td>-</td>
-            <td class="code-ref">CODE_rpc_client_rpc_303</td>
+            <td class="code-ref">CODE_rpc_client_rpc_304</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1134,7 +1134,7 @@
             <td>REQ_MSG_114_E02</td>
             <td>Error - Response Timeout</td>
             <td>-</td>
-            <td class="code-ref">CODE_rpc_client_rpc_303</td>
+            <td class="code-ref">CODE_rpc_client_rpc_304</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1174,15 +1174,15 @@
             <td>REQ_MSG_118</td>
             <td>Session Handling for Request/Response</td>
             <td>feat_req_someip_669</td>
-            <td class="code-ref">CODE_session_manager_core_33, CODE_rpc_client_rpc_303, CODE_rpc_client_rpc_455</td>
-            <td>TC_test_message_SetUp, TC_test_rpc_SetUp, TC_RPC_SYNC_LIFETIME, TC_RPC_SYNC_DEADLINE_EXCLUDES_SEND, TC_test_session_manager_SetUp, TC_SM_IDGEN_001, TC_SM_IDGEN_002, TC_RPC_SYNC_TIMEOUT_DURING_STOP, TC_RPC_SYNC_EXTRACTED_CALLBACK_LIFETIME</td>
+            <td class="code-ref">CODE_session_manager_core_33, CODE_rpc_client_rpc_304, CODE_rpc_client_rpc_460</td>
+            <td>TC_test_message_SetUp, TC_test_rpc_SetUp, TC_RPC_SYNC_LIFETIME, TC_RPC_SYNC_DEADLINE_EXCLUDES_SEND, TC_RPC_LONG_RUN_SESSION, TC_test_session_manager_SetUp, TC_SM_IDGEN_001, TC_SM_IDGEN_002, TC_SM_IDGEN_003, TC_SM_IDGEN_004, TC_RPC_SYNC_TIMEOUT_DURING_STOP, TC_RPC_SYNC_EXTRACTED_CALLBACK_LIFETIME</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
         <tr>
             <td>REQ_MSG_118_E01</td>
             <td>Error - Session ID Zero in Active Session</td>
             <td>-</td>
-            <td class="code-ref">CODE_rpc_client_rpc_303, CODE_rpc_client_rpc_455</td>
+            <td class="code-ref">CODE_rpc_client_rpc_304, CODE_rpc_client_rpc_460</td>
             <td>TC_test_message_SetUp, TC_MSG_E09</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1198,7 +1198,7 @@
             <td>REQ_MSG_120</td>
             <td>Client ID Configurable Prefix</td>
             <td>feat_req_someip_701</td>
-            <td class="code-ref">CODE_rpc_client_rpc_303</td>
+            <td class="code-ref">CODE_rpc_client_rpc_304</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1206,7 +1206,7 @@
             <td>REQ_MSG_120_E01</td>
             <td>Error - Client ID Conflict</td>
             <td>-</td>
-            <td class="code-ref">CODE_rpc_client_rpc_303</td>
+            <td class="code-ref">CODE_rpc_client_rpc_304</td>
             <td>TC_test_message_SetUp</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -1950,7 +1950,7 @@
             <td>REQ_PLATFORM_STATIC_005</td>
             <td>Pimpl Static Storage</td>
             <td>REQ_ARCH_008</td>
-            <td class="code-ref">CODE_event_publisher_events_275, CODE_event_subscriber_events_295, CODE_rpc_client_rpc_216, CODE_rpc_server_rpc_189, CODE_sd_client_sd_185, CODE_sd_server_sd_185</td>
+            <td class="code-ref">CODE_event_publisher_events_275, CODE_event_subscriber_events_295, CODE_rpc_client_rpc_227, CODE_rpc_server_rpc_189, CODE_sd_client_sd_185, CODE_sd_server_sd_185</td>
             <td>TC_test_static_alloc_integration_14, TC_STATIC_INT_RPCCLIENT_CTOR, TC_STATIC_INT_RPCSERVER_CTOR, TC_STATIC_INT_EVENTPUB_CTOR, TC_STATIC_INT_EVENTSUB_CTOR, TC_STATIC_INT_SDCLIENT_CTOR, TC_STATIC_INT_SDSERVER_CTOR</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -5614,7 +5614,7 @@
             <td>REQ_TRANSPORT_026</td>
             <td>Incoming Message Rejection Diagnostics</td>
             <td>-</td>
-            <td class="code-ref">CODE_event_publisher_events_720, CODE_event_subscriber_events_914, CODE_rpc_client_rpc_513, CODE_rpc_server_rpc_279, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_831, CODE_tcp_transport_transport_1240, CODE_udp_transport_transport_473, CODE_udp_transport_transport_604, CODE_event_publisher_events_251, CODE_event_subscriber_events_271, CODE_rpc_client_rpc_189, CODE_rpc_server_rpc_162, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_329, CODE_transport_transport_78</td>
+            <td class="code-ref">CODE_event_publisher_events_720, CODE_event_subscriber_events_914, CODE_rpc_client_rpc_518, CODE_rpc_server_rpc_279, CODE_event_driven_tcp_transport_transport_234, CODE_event_driven_tcp_transport_transport_243, CODE_tcp_transport_transport_831, CODE_tcp_transport_transport_1240, CODE_udp_transport_transport_473, CODE_udp_transport_transport_604, CODE_event_publisher_events_251, CODE_event_subscriber_events_271, CODE_rpc_client_rpc_200, CODE_rpc_server_rpc_162, CODE_message_rejection_transport_38, CODE_tcp_transport_transport_329, CODE_transport_transport_78</td>
             <td>TC_ED_TCP_REJECT_001, TC_ED_UDP_E2E_002, TC_test_rpc_SetUp, TC_test_rpc_TEST_F, TC_test_tcp_transport_SetUp, TC_TCP_REJECT_001, TC_TCP_REJECT_003, TC_TCP_REJECT_004, TC_TCP_REJECT_005, TC_TCP_REJECT_002, TC_TCP_REJECT_002b, TC_test_udp_transport_SetUp, TC_UDP_REJECT_001, TC_UDP_E2E_003</td>
             <td><span class="status-ok">✓ Complete</span></td>
         </tr>
@@ -6609,44 +6609,44 @@
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_client_rpc_189</td>
-            <td class="code-ref">include/rpc/rpc_client.h:189</td>
+            <td>CODE_rpc_client_rpc_200</td>
+            <td class="code-ref">include/rpc/rpc_client.h:200</td>
             <td>REQ_TRANSPORT_026</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_client_rpc_216</td>
-            <td class="code-ref">include/rpc/rpc_client.h:216</td>
+            <td>CODE_rpc_client_rpc_227</td>
+            <td class="code-ref">include/rpc/rpc_client.h:227</td>
             <td>REQ_PLATFORM_STATIC_005</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_client_rpc_303</td>
-            <td class="code-ref">src/rpc/rpc_client.cpp:303</td>
+            <td>CODE_rpc_client_rpc_304</td>
+            <td class="code-ref">src/rpc/rpc_client.cpp:304</td>
             <td>REQ_MSG_114, REQ_MSG_114_E01, REQ_MSG_114_E02, REQ_MSG_118, REQ_MSG_118_E01, REQ_MSG_120, REQ_MSG_120_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_client_rpc_379</td>
-            <td class="code-ref">src/rpc/rpc_client.cpp:379</td>
+            <td>CODE_rpc_client_rpc_380</td>
+            <td class="code-ref">src/rpc/rpc_client.cpp:380</td>
             <td>REQ_MSG_052</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_client_rpc_40</td>
-            <td class="code-ref">src/rpc/rpc_client.cpp:40</td>
+            <td>CODE_rpc_client_rpc_41</td>
+            <td class="code-ref">src/rpc/rpc_client.cpp:41</td>
             <td>REQ_ARCH_001, REQ_ARCH_002</td>
             <td>feat_req_someip_700, feat_req_someip_701, feat_req_someip_702, feat_req_someip_92</td>
         </tr>
         <tr>
-            <td>CODE_rpc_client_rpc_455</td>
-            <td class="code-ref">src/rpc/rpc_client.cpp:455</td>
+            <td>CODE_rpc_client_rpc_460</td>
+            <td class="code-ref">src/rpc/rpc_client.cpp:460</td>
             <td>REQ_MSG_118, REQ_MSG_118_E01</td>
             <td>-</td>
         </tr>
         <tr>
-            <td>CODE_rpc_client_rpc_513</td>
-            <td class="code-ref">src/rpc/rpc_client.cpp:513</td>
+            <td>CODE_rpc_client_rpc_518</td>
+            <td class="code-ref">src/rpc/rpc_client.cpp:518</td>
             <td>REQ_TRANSPORT_026</td>
             <td>-</td>
         </tr>
@@ -9944,8 +9944,8 @@
         </tr>
         <tr>
             <td>TC_RPC_CANCEL_STILL_WORKS</td>
-            <td>TEST (tests/test_rpc_sync_lifetime.cpp:483)</td>
-            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:483</td>
+            <td>TEST (tests/test_rpc_sync_lifetime.cpp:486)</td>
+            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:486</td>
             <td>REQ_ARCH_002</td>
         </tr>
         <tr>
@@ -9955,9 +9955,15 @@
             <td>REQ_ARCH_002, REQ_ARCH_003</td>
         </tr>
         <tr>
+            <td>TC_RPC_LONG_RUN_SESSION</td>
+            <td>TEST (tests/test_rpc_sync_lifetime.cpp:512)</td>
+            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:512</td>
+            <td>REQ_ARCH_002, REQ_ARCH_003, REQ_MSG_118</td>
+        </tr>
+        <tr>
             <td>TC_RPC_SHUTDOWN_NOTHROW</td>
-            <td>TEST (tests/test_rpc_sync_lifetime.cpp:258)</td>
-            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:258</td>
+            <td>TEST (tests/test_rpc_sync_lifetime.cpp:261)</td>
+            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:261</td>
             <td>REQ_ARCH_003</td>
         </tr>
         <tr>
@@ -9968,20 +9974,20 @@
         </tr>
         <tr>
             <td>TC_RPC_SUBMIT_FAILURE_REASON</td>
-            <td>TEST (tests/test_rpc_sync_lifetime.cpp:384)</td>
-            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:384</td>
+            <td>TEST (tests/test_rpc_sync_lifetime.cpp:387)</td>
+            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:387</td>
             <td>REQ_ARCH_003</td>
         </tr>
         <tr>
             <td>TC_RPC_SYNC_DEADLINE_ARBITRATION</td>
-            <td>TEST (tests/test_rpc_sync_lifetime.cpp:359)</td>
-            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:359</td>
+            <td>TEST (tests/test_rpc_sync_lifetime.cpp:362)</td>
+            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:362</td>
             <td>REQ_ARCH_003</td>
         </tr>
         <tr>
             <td>TC_RPC_SYNC_DEADLINE_EXCLUDES_SEND</td>
-            <td>TEST (tests/test_rpc_sync_lifetime.cpp:322)</td>
-            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:322</td>
+            <td>TEST (tests/test_rpc_sync_lifetime.cpp:325)</td>
+            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:325</td>
             <td>REQ_ARCH_003, REQ_MSG_118</td>
         </tr>
         <tr>
@@ -9992,8 +9998,8 @@
         </tr>
         <tr>
             <td>TC_RPC_SYNC_HANDLE_SENTINEL</td>
-            <td>TEST (tests/test_rpc_sync_lifetime.cpp:191)</td>
-            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:191</td>
+            <td>TEST (tests/test_rpc_sync_lifetime.cpp:194)</td>
+            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:194</td>
             <td>REQ_ARCH_002</td>
         </tr>
         <tr>
@@ -10004,8 +10010,8 @@
         </tr>
         <tr>
             <td>TC_RPC_SYNC_SUCCESS_NO_LEAK</td>
-            <td>TEST (tests/test_rpc_sync_lifetime.cpp:412)</td>
-            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:412</td>
+            <td>TEST (tests/test_rpc_sync_lifetime.cpp:415)</td>
+            <td class="code-ref">tests/test_rpc_sync_lifetime.cpp:415</td>
             <td>REQ_ARCH_002</td>
         </tr>
         <tr>
@@ -10990,6 +10996,18 @@
             <td>TC_SM_IDGEN_002</td>
             <td>TEST_F (tests/test_session_manager.cpp:396)</td>
             <td class="code-ref">tests/test_session_manager.cpp:396</td>
+            <td>REQ_MSG_118</td>
+        </tr>
+        <tr>
+            <td>TC_SM_IDGEN_003</td>
+            <td>TEST_F (tests/test_session_manager.cpp:410)</td>
+            <td class="code-ref">tests/test_session_manager.cpp:410</td>
+            <td>REQ_MSG_118</td>
+        </tr>
+        <tr>
+            <td>TC_SM_IDGEN_004</td>
+            <td>TEST_F (tests/test_session_manager.cpp:439)</td>
+            <td class="code-ref">tests/test_session_manager.cpp:439</td>
             <td>REQ_MSG_118</td>
         </tr>
         <tr>
