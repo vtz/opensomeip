@@ -167,6 +167,17 @@ cmake .. -G Ninja
 ninja
 ```
 
+### QNX Neutrino
+
+POSIX sockets via the existing host PAL. This is not a new RTOS backend, and it is not verified with an SDP in CI. Configuration needs `QNX_HOST` and `QNX_TARGET` from a sourced SDP 8.0.0 environment. This tree was not configured that way. See [QNX_PORT.md](QNX_PORT.md).
+
+```bash
+cmake -S . -B build/qnx-x86_64 \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/qnx-sdp.cmake \
+  -DBUILD_TESTS=OFF \
+  -DBUILD_EXAMPLES=OFF
+```
+
 ### Embedded Systems
 
 #### FreeRTOS + lwIP

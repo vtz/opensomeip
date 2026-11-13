@@ -38,6 +38,7 @@ OpenSOME/IP provides a complete, standards-compliant C++ implementation of the S
 - **End-to-End (E2E) Protection**: CRC-based message integrity with profile registry and standard profile
 - **Safety-Oriented Design**: Patterns for error handling and validation (not certified)
 - **Multi-Platform**: Runs on POSIX/Linux, macOS, [Zephyr RTOS](docs/ZEPHYR_PORT.md), [FreeRTOS](docs/FREERTOS_PORT.md), and [Eclipse ThreadX](docs/THREADX_PORT.md)
+- **QNX Neutrino**: POSIX socket toolchain for SDP 8.0.0 ([port note](docs/QNX_PORT.md)). Not verified with an SDP in CI.
 
 ### Why Choose OpenSOME/IP?
 
@@ -73,6 +74,7 @@ This project uses [Semantic Versioning](https://semver.org/). See [VERSION.md](V
 - [FreeRTOS port](docs/FREERTOS_PORT.md) – Linux POSIX tests + Renode STM32F407 Cortex-M4F simulation
 - [Eclipse ThreadX port](docs/THREADX_PORT.md) – Linux port tests + Renode STM32F407 Cortex-M4 simulation
 - [Cross-compilation guide](docs/cross-compilation.md) – presets, toolchains, and Renode testing
+- [QNX Neutrino](docs/QNX_PORT.md) – POSIX socket toolchain, not verified with an SDP in CI
 
 ### Optional Development Tools
 

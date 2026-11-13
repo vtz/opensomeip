@@ -63,7 +63,7 @@ cmake --list-presets
 | `SOMEIP_FREERTOS_LINUX_TESTS` | `OFF` | FreeRTOS POSIX port runtime tests (Linux only) |
 | `SOMEIP_THREADX_LINUX_TESTS` | `OFF` | ThreadX Linux port runtime tests (Linux only) |
 
-When none of the RTOS options are set, the build defaults to POSIX (Linux/macOS) or Win32 (Windows).
+When none of the RTOS options are set, the build defaults to POSIX (Linux/macOS) or Win32 (Windows). `CMAKE_SYSTEM_NAME=QNX` stays on that POSIX socket PAL. The QNX toolchain is not verified with an SDP in CI.
 
 ## Build Options
 
@@ -115,6 +115,24 @@ cmake -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/linux-cross-gcc.cmake \
       -DLINUX_CROSS_SYSROOT=/opt/sysroot/armhf ..
 ```
 
+### `cmake/toolchains/qnx-sdp.cmake`
+
+QNX Neutrino toolchain for the existing POSIX socket PAL. Compiler and sysroot come from `QNX_HOST` and `QNX_TARGET`. If either is unset, configure fails and does not use the host compiler. Intended SDP is 8.0.0 (`gcc_ntox86_64`). This file was not run against a licensed SDP, and CI does not claim a QNX compile. See [`docs/QNX_PORT.md`](../docs/QNX_PORT.md).
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `QNX_HOST` | *(environment)* | SDP host tools. Must contain `usr/bin/qcc` and `usr/bin/q++` |
+| `QNX_TARGET` | *(environment)* | SDP target sysroot (`CMAKE_SYSROOT`) |
+| `QNX_SDP_ARCH` | `gcc_ntox86_64` | `qcc -V` target (`CMAKE_<LANG>_COMPILER_TARGET`) |
+| `QNX_SDP_PROCESSOR` | `x86_64` | `CMAKE_SYSTEM_PROCESSOR` |
+
+```bash
+# Source the SDP environment first. This command was not run in this tree.
+cmake -S . -B build/qnx-x86_64 \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/qnx-sdp.cmake \
+  -DBUILD_TESTS=OFF -DBUILD_EXAMPLES=OFF
+```
+
 ## Zephyr
 
 Zephyr uses its own build system (`west`) and does **not** use CMake Presets. The project integrates as a Zephyr module via `zephyr/module.yml`. See [`docs/cross-compilation.md`](../docs/cross-compilation.md) for Zephyr build instructions.
@@ -125,7 +143,7 @@ The build system selects the correct PAL backend via include-path switching. Eac
 
 | Backend | Threading | Networking | When Selected |
 |---------|-----------|------------|---------------|
-| `posix` | `std::thread`, `std::mutex` | BSD sockets | Default (Linux/macOS) |
+| `posix` | `std::thread`, `std::mutex` | BSD sockets | Default (Linux/macOS), and `CMAKE_SYSTEM_NAME=QNX` |
 | `win32` | `std::thread`, `std::mutex` | Winsock2 | `WIN32` detected |
 | `freertos` | FreeRTOS tasks, semaphores | (via lwIP) | `SOMEIP_USE_FREERTOS=ON` |
 | `threadx` | ThreadX threads, mutexes | (via lwIP) | `SOMEIP_USE_THREADX=ON` |

@@ -320,6 +320,20 @@ The module is controlled via Kconfig in `zephyr/Kconfig`:
 | `CONFIG_SOMEIP_E2E` | Enable E2E protection |
 | `CONFIG_SOMEIP_TP` | Enable SOME/IP-TP |
 
+## QNX Neutrino (POSIX sockets)
+
+QNX is not a new PAL and not a CI-verified port. The host library keeps the POSIX socket backend. The intended SDP is 8.0.0, matching `--config=x86_64-qnx` / `x86_64-qnx-sdp_8.0.0-posix`. A licensed SDP was not available for this change, and the invocation below was not run. See [QNX_PORT.md](QNX_PORT.md).
+
+```bash
+# Source qnxsdp-env.sh first so QNX_HOST and QNX_TARGET are set.
+cmake -S . -B build/qnx-x86_64 \
+  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/qnx-sdp.cmake \
+  -DBUILD_TESTS=OFF \
+  -DBUILD_EXAMPLES=OFF
+```
+
+With `QNX_HOST` or `QNX_TARGET` unset, configuration stops instead of using the host compiler. POSIX sockets only. No message passing.
+
 ## Adding a New Target
 
 To add support for a new board or RTOS:
@@ -367,3 +381,7 @@ Compiler flags set by the toolchain:
 - `-ffunction-sections -fdata-sections` (dead code elimination via `--gc-sections`)
 - `-fno-exceptions -fno-rtti` (C++ only, for embedded size optimization)
 - `-specs=nosys.specs` (bare-metal, no OS syscalls)
+
+### `cmake/toolchains/qnx-sdp.cmake`
+
+POSIX socket toolchain for QNX Neutrino. `QNX_HOST` and `QNX_TARGET` come from the sourced SDP environment. The default qcc target is `gcc_ntox86_64`. Not verified with an SDP in CI. Details and the invocation that was not run here: [QNX_PORT.md](QNX_PORT.md).

@@ -14,6 +14,9 @@ OpenSOME/IP is designed for portability across host operating systems, embedded 
 | Fedora 42 | x86_64 | Clang | :white_check_mark: | Container-based CI |
 | Windows (latest) | x86_64 | MSVC (cl) | :white_check_mark: | |
 | macOS (latest) | arm64 (Apple Silicon) | AppleClang | :white_check_mark: | Verified locally |
+| QNX Neutrino | x86_64 | `qcc` / `q++` from `QNX_HOST` | No | POSIX socket toolchain, not verified with an SDP in CI. [Port note](QNX_PORT.md) |
+
+QNX Neutrino is not a separate PAL. The toolchain sets `CMAKE_SYSTEM_NAME` to `QNX`, and the build keeps `include/platform/posix`.
 
 ### Embedded / RTOS Platforms
 
