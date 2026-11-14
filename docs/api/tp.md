@@ -153,7 +153,7 @@ reassemble without going through UDP.
 
 ## Receiver Validation
 
-### Overlapping segment handling — first-wins (feat_req_someiptp_797)
+### Overlapping segment handling — first-wins (REQ_TP_081_FW)
 
 When a received TP segment overlaps with bytes that were already written
 to the reassembly buffer, the reassembler applies **first-wins**
@@ -177,7 +177,7 @@ and payload are retrieved atomically under the reassembly lock.  This
 eliminates a race where concurrent `ingest_datagram()` calls could pair
 the wrong header with a payload.
 
-### Non-final segment alignment (feat_req_someiptp_772, feat_req_someiptp_792)
+### Non-final segment alignment (REQ_TP_044)
 
 All non-final TP segments (More Segments = 1) **must** have a payload
 length that is a multiple of 16 bytes. The reassembler rejects any

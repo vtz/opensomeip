@@ -463,7 +463,7 @@ TEST_F(StaticAllocIntegrationTest, SdServerConstructDestroyUnderTrap) {
 
 /**
  * @test_case TC_STATIC_INT_PAYLOADVIEW
- * @tests REQ_API_PAYLOAD_VIEW
+ * @tests REQ_MSG_151
  * @tests REQ_PAL_NOOP_HEAP_VERIFY
  * @brief PayloadView operations under malloc trap prove zero-copy access
  */

@@ -20,20 +20,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-### Breaking Changes
-
-- Field getter `EventSubscriber::request_field` is a SOME/IP request/response.
-  The third argument is the getter method id. The request payload is empty, and
-  the server answers with message type `0x80` and the stored field value.
-  The previous send (method `0x0003` with the event id in the payload) is gone.
-  `EventSubscriber::set_field` writes a field the same way: the request payload
-  is the desired value, and the response payload is the value the server stored.
-  `EventPublisher::set_field_setter` can adapt that stored value or reject the
-  write. A field registered with no getter, no setter, and no notifier is
-  rejected
-  ([#380](https://github.com/vtz/opensomeip/issues/380)).
+## [0.2.1] - 2026-10-31
 
 ### Added
+
+- **Build**: CMake toolchain `cmake/toolchains/qnx-sdp.cmake` for QNX
+  Neutrino. It keeps the POSIX socket PAL and sets `CMAKE_SYSTEM_NAME` to
+  `QNX`. The intended SDP is 8.0.0. Configure fails when `QNX_HOST` or
+  `QNX_TARGET` is unset, so the host compiler is not used by mistake. This
+  port is not compiled in CI
+  ([#405](https://github.com/vtz/opensomeip/pull/405)).
+
+- **Events**: `EventgroupConfig::multicast_threshold`, stored with
+  `EventPublisher::configure_eventgroup`. Threshold 0 unicasts each
+  subscriber. Threshold 1 sends one multicast datagram. Above 1, unicast
+  while the active subscriber count is below the threshold and send one
+  multicast datagram at and above it. A non-zero threshold needs an IPv4
+  multicast address and a non-zero port. Initial field events stay unicast
+  ([#401](https://github.com/vtz/opensomeip/pull/401)).
+
+- **Transport**: `ServiceDemux` borrows one UDP or TCP socket and delivers
+  each message to the handler registered for its service id. The table holds
+  `SOMEIP_MAX_DEMUX_SERVICES` handlers (16). Registering a service id that is
+  already on that socket fails. Two instances of one service id use two
+  sockets. `RpcServer` can register on a demux without starting that socket
+  ([#399](https://github.com/vtz/opensomeip/pull/399)).
 
 - **Build**: Bazel module for the default host library and its C++ tests.
   `bazel test //...` fetches GoogleTest as a dev dependency, so it stays out
@@ -112,7 +123,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   accept that argument
   ([#342](https://github.com/vtz/opensomeip/issues/342)).
 
+- **Events**: Field getter `EventSubscriber::request_field` is a SOME/IP
+  request/response. The third argument is the getter method id. The request
+  payload is empty, and the server answers with message type `0x80` and the
+  stored field value. The previous send (method `0x0003` with the event id
+  in the payload) is gone. `EventSubscriber::set_field` writes a field the
+  same way: the request payload is the desired value, and the response
+  payload is the value the server stored. `EventPublisher::set_field_setter`
+  can adapt that stored value or reject the write. A field registered with
+  no getter, no setter, and no notifier is rejected
+  ([#380](https://github.com/vtz/opensomeip/issues/380)).
+
 ### Fixed
+
+- **TP**: A serialized message that fits in the single-datagram budget
+  (default 1416 bytes, the 16-byte SOME/IP header plus payload) is one UDP
+  datagram. Segmentation starts only above that budget. Non-final TP
+  payloads stay capped at 1392 bytes and aligned to 16. A message that still
+  fits is not padded to a 16-byte boundary
+  ([#400](https://github.com/vtz/opensomeip/pull/400)).
 
 - **SD**: Drawing an initial wait over `[0, UINT32_MAX]` no longer divides by a
   wrapped span, and an offered service endpoint uses the instance L4 protocol
@@ -903,6 +932,7 @@ _Superseded by v0.0.5 — Copr packages were not published for this release._
 
 ---
 
+[0.2.1]: https://github.com/vtz/opensomeip/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/vtz/opensomeip/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vtz/opensomeip/compare/v0.0.5...v0.1.0
 [0.0.5]: https://github.com/vtz/opensomeip/compare/v0.0.4...v0.0.5

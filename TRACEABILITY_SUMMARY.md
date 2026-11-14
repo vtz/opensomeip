@@ -28,18 +28,18 @@ to implementation and test coverage. No safety certification is claimed.
 
 | Metric | Value | Assessment |
 |--------|-------|------------|
-| Total requirements (RST) | 701 | - |
-| Fully traced (code + tests) | 648 (92.4%) | Good |
-| Requirements with code refs | 648 | Good |
-| Requirements with test coverage | 700 | Good |
+| Total requirements (RST) | 703 | - |
+| Fully traced (code + tests) | 650 (92.5%) | Good |
+| Requirements with code refs | 650 | Good |
+| Requirements with test coverage | 702 | Good |
 | Orphaned (no code annotation) | 53 | Needs improvement |
-| Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 known-unlinked (accepted); REQ_E2E_RECEIVE_001, REQ_TRANSPORT_030 exempt implementation-derived IDs with no spec ID |
-| Code references extracted | 653 | - |
-| Test references extracted | 784 | - |
+| Missing spec links | 2 | REQ_MSG_150, REQ_TRANSPORT_026 known-unlinked (accepted); REQ_E2E_RECEIVE_001, REQ_TRANSPORT_030, REQ_MSG_151 exempt implementation-derived IDs with no spec ID |
+| Code references extracted | 650 | - |
+| Test references extracted | 781 | - |
 
 ### Status
 
-648 of 701 requirements are fully traced with both code implementation references
+650 of 703 requirements are fully traced with both code implementation references
 and test coverage annotations. 53 requirements remain without code annotations.
 The extraction script parses comma-separated requirement IDs from
 `@implements` and `@tests` annotations, including `.inc` files.
@@ -54,10 +54,10 @@ The extraction script parses comma-separated requirement IDs from
 | Module | Total Reqs |
 |--------|-----------|
 | Service Discovery (REQ_SD_*) | 206 |
-| Message Header (REQ_MSG_*) | 130 |
+| Message Header (REQ_MSG_*) | 131 |
 | Serialization (REQ_SER_*) | 115 |
 | Transport Protocol (REQ_TP_*) | 83 |
-| Platform (REQ_PLATFORM_*, REQ_PAL_*) | 74 |
+| Platform (REQ_PLATFORM_*, REQ_PAL_*) | 75 |
 | Transport (REQ_TRANSPORT_*) | 48 |
 | Compatibility (REQ_COMPAT_*) | 17 |
 | C ABI (REQ_CAPI_*) | 13 |
@@ -126,7 +126,7 @@ Current validated traceability metrics should be read from the most recent
 
 ### Long-term
 
-- Achieve >95% full traceability (currently 92.4%)
+- Achieve >95% full traceability (currently 92.5%)
 - Implement advanced SD features (load balancing, IPv6)
 - Add cross-platform test coverage (FreeRTOS, ThreadX hardware)
 - Implement Win32 and LwIP platform backends

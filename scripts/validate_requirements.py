@@ -156,6 +156,7 @@ def validate_requirements(
     explicit_impl_derived = {
         "REQ_E2E_RECEIVE_001",  # local receive-policy table and Result
         "REQ_TRANSPORT_030",  # application-owned transport injection
+        "REQ_MSG_151",  # non-owning message payload view
     }
     # Stay unlinked. Accepted so a missing :satisfies: is not, by itself, a failing error.
     known_unlinked = {

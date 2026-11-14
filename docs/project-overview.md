@@ -36,6 +36,7 @@ Network communication layer:
 
 - **UDP** -- Configurable blocking/non-blocking modes with socket buffer sizes
 - **TCP** -- Connection management with message framing
+- **ServiceDemux** -- One borrowed UDP or TCP socket, with one handler per service id
 - **ITransport interface** -- Clean abstraction for transport implementations
 - **Platform Abstraction Layer (PAL)** -- Portable socket and threading APIs
 
@@ -162,7 +163,7 @@ opensomeip/
 
 Protocol coverage is tracked against the [Open SOME/IP Specification](https://github.com/some-ip-com/open-someip-spec):
 
-- **585 / 649** specification requirements traced
+- **745 / 748** specification requirements mapped
 - Traceability maintained via Sphinx-Needs annotations in code
 - Coverage reports generated on every CI run
 
