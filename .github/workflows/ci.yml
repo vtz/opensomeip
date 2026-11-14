@@ -200,6 +200,8 @@ jobs:
               - 'scripts/install_dev_tools.sh'
               - 'scripts/add_copyright_headers.sh'
               - 'scripts/bump_version.sh'
+              - 'scripts/check_release_versions.sh'
+              - 'scripts/check_version_consistency.sh'
               - 'scripts/bump_submodule.sh'
               - 'scripts/prepare_site.sh'
               - 'scripts/run_pre_pr_tests.sh'
