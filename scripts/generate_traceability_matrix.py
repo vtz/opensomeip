@@ -352,6 +352,7 @@ _EXPLICIT_IMPL_DERIVED = frozenset(
     {
         "REQ_E2E_RECEIVE_001",  # local receive-policy table and Result
         "REQ_TRANSPORT_030",  # application-owned transport injection
+        "REQ_MSG_151",  # non-owning message payload view
     }
 )
 
@@ -670,7 +671,7 @@ Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 **Note**: Implementation-derived requirements may omit direct spec links. The exemption
 matches `validate_requirements.py`: an ID containing `_E0`, `_ARCH_`, `PLUGIN`, or `MY_`;
 an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one of
-`REQ_E2E_RECEIVE_001`, `REQ_TRANSPORT_030` (local API contracts with no spec ID).
+`REQ_E2E_RECEIVE_001`, `REQ_TRANSPORT_030`, `REQ_MSG_151` (local API contracts with no spec ID).
 `REQ_MSG_150` and `REQ_TRANSPORT_026` stay known-unlinked and are not exemptions.
 
 - **Spec-Derived Requirements**: {spec_derived_count}

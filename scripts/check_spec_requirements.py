@@ -239,6 +239,7 @@ _EXPLICIT_IMPL_DERIVED = frozenset(
     {
         "REQ_E2E_RECEIVE_001",
         "REQ_TRANSPORT_030",
+        "REQ_MSG_151",  # non-owning message payload view
     }
 )
 

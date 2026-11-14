@@ -48,7 +48,7 @@ using namespace someip::tp;
  * @tests REQ_TP_082_E01, REQ_TP_082_E02, REQ_TP_082_E03, REQ_TP_082_E04
  * @tests feat_req_someiptp_400
  * @tests feat_req_someiptp_402
- * @tests feat_req_someiptp_772, feat_req_someiptp_782, feat_req_someiptp_792
+ * @tests feat_req_someiptp_782, REQ_TP_044
  * @tests feat_req_someiptp_410
  * @tests feat_req_someip_761
  * @tests REQ_MSG_056, REQ_MSG_060_TP_RESPONSE
@@ -375,7 +375,7 @@ TEST_F(TpTest, SegmentAlignment) {
     // Check alignment of all segments except the last
     for (size_t i = 0; i < segments.size() - 1; ++i) {
         // All segments: subtract 20 (SOME/IP header + TP header) to get payload
-        // Payload of non-last segments must be multiple of 16 (feat_req_someiptp_772)
+        // Payload of non-last segments must be multiple of 16 (REQ_TP_003)
         ASSERT_GT(segments[i].payload.size(), 20u);
         size_t data_size = segments[i].payload.size() - 20;
         EXPECT_EQ(data_size % 16, 0u) << "Segment " << i << " payload not 16-byte aligned";
@@ -1902,18 +1902,16 @@ TEST_F(TpTest, IngestDatagramReportsErrorOnLengthMismatch) {
 }
 
 // ============================================================================
-// Fix 1: Misaligned non-final segment rejection (feat_req_someiptp_772)
+// Fix 1: Misaligned non-final segment rejection (REQ_TP_044)
 // ============================================================================
 
 /**
  * @test_case TC_TP_MISALIGNED_NONFINAL_REJECTED
- * @tests feat_req_someiptp_772, feat_req_someiptp_792, REQ_TP_044
+ * @tests REQ_TP_044
  * @brief Non-final TP segment with payload not a multiple of 16 bytes is rejected
  *
- * Per feat_req_someiptp_772 (SHALL): "all but the last segment shall have a
- * length that is a multiple of 16 bytes".
- * Per feat_req_someiptp_792 (SHALL): "cancel reassembly if segment length of
- * a segment with MS=1 is not a multiple of 16".
+ * REQ_TP_044 rejects a segment with More Segments = 1 whose payload length
+ * is not a multiple of 16 bytes. The last segment may have any length.
  */
 TEST_F(TpTest, MisalignedNonFinalSegmentRejected) {
     TpManager manager(config);
@@ -1950,7 +1948,7 @@ TEST_F(TpTest, MisalignedNonFinalSegmentRejected) {
 
 /**
  * @test_case TC_TP_ALIGNED_NONFINAL_ACCEPTED
- * @tests feat_req_someiptp_772
+ * @tests REQ_TP_044
  * @brief Non-final TP segment with 16-byte-aligned payload is accepted
  */
 TEST_F(TpTest, AlignedNonFinalSegmentAccepted) {
@@ -1984,7 +1982,7 @@ TEST_F(TpTest, AlignedNonFinalSegmentAccepted) {
 
 /**
  * @test_case TC_TP_MISALIGNED_FINAL_ACCEPTED
- * @tests feat_req_someiptp_772, REQ_TP_044
+ * @tests REQ_TP_044
  * @brief Final TP segment (More=0) with non-16-aligned payload is accepted
  *
  * Only non-final segments must be 16-byte aligned; the last segment can be any size.
@@ -2062,7 +2060,7 @@ TEST_F(TpTest, MaxTpReassemblySizeIsAtLeast16) {
 }
 
 // ============================================================================
-// Fix: Overlapping TP segment handling — first-wins (feat_req_someiptp_797)
+// Fix: Overlapping TP segment handling — first-wins (REQ_TP_081_FW)
 // ============================================================================
 
 namespace {
@@ -2151,7 +2149,6 @@ TEST_F(TpTest, StaticBuildClampsReassemblySize) {
 /**
  * @test_case TC_TP_OVERLAP_SAME_DATA
  * @tests REQ_TP_081_FW
- * @tests feat_req_someiptp_797
  * @brief Overlapping segment with identical data succeeds (first-wins, no corruption)
  *
  * Segment A: offset 0, 32 bytes of 0xAA (more=1)
@@ -2181,7 +2178,7 @@ TEST_F(TpTest, OverlapSameDataSucceeds) {
 
 /**
  * @test_case TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS
- * @tests feat_req_someiptp_797, REQ_TP_081_FW
+ * @tests REQ_TP_081_FW
  * @brief Overlapping segment with different data → first-wins preserves original bytes
  *
  * Segment A: offset 0, 32 bytes of 0xAA (more=1)  → covers [0..31]
@@ -2223,7 +2220,7 @@ TEST_F(TpTest, OverlapDifferentDataFirstWins) {
 
 /**
  * @test_case TC_TP_EXACT_DUPLICATE_ACCEPTED
- * @tests feat_req_someiptp_797
+ * @tests REQ_TP_081_FW
  * @brief Exact duplicate segment is accepted without changing data
  *
  * Send segment A twice (offset 0, 32 bytes 0xAA, more=1).

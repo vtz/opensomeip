@@ -71,7 +71,7 @@ TEST_F(EtlErrorHandlerTest, VectorOverflowInvokesHandler) {
 
 /**
  * @test_case TC_ETL_MAP_FULL_CHECK
- * @tests REQ_PAL_ETL_ERROR_HANDLER
+ * @tests REQ_PAL_CONTAINER_MAP
  *
  * ETL unordered_map does NOT degrade gracefully on overflow (it segfaults),
  * so callers MUST use full() before insert. Verify the full() API works.

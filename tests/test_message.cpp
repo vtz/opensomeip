@@ -831,7 +831,7 @@ TEST_F(MessageTest, TryDeserializeE2EDefaultLayout) {
 
 /**
  * @test_case TC_PAYLOADVIEW_001
- * @tests REQ_API_PAYLOAD_VIEW
+ * @tests REQ_MSG_151
  * @brief PayloadView provides zero-copy access to message payload
  */
 TEST_F(MessageTest, PayloadViewBasic) {
@@ -849,7 +849,7 @@ TEST_F(MessageTest, PayloadViewBasic) {
 
 /**
  * @test_case TC_PAYLOADVIEW_002
- * @tests REQ_API_PAYLOAD_VIEW
+ * @tests REQ_MSG_151
  * @brief Empty payload yields empty PayloadView
  */
 TEST_F(MessageTest, PayloadViewEmpty) {
@@ -861,7 +861,7 @@ TEST_F(MessageTest, PayloadViewEmpty) {
 
 /**
  * @test_case TC_PAYLOADVIEW_003
- * @tests REQ_API_PAYLOAD_VIEW
+ * @tests REQ_MSG_151
  * @brief PayloadView::subview returns a sub-range
  */
 TEST_F(MessageTest, PayloadViewSubview) {
@@ -877,7 +877,7 @@ TEST_F(MessageTest, PayloadViewSubview) {
 
 /**
  * @test_case TC_PAYLOADVIEW_004
- * @tests REQ_API_PAYLOAD_VIEW
+ * @tests REQ_MSG_151
  * @brief PayloadView supports range-based for loop
  */
 TEST_F(MessageTest, PayloadViewIterable) {

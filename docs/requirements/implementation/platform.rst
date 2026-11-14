@@ -868,6 +868,30 @@ Container Interface
    **Code Location**: ``include/platform/static/containers_impl.h``,
    ``src/CMakeLists.txt`` (ETL build flags)
 
+.. requirement:: ETL Error Handler
+   :id: REQ_PAL_ETL_ERROR_HANDLER
+   :satisfies: REQ_ARCH_008
+   :status: implemented
+   :priority: high
+   :category: error_path
+   :verification: Unit test: ``test_etl_error_handler.cpp`` — TC_ETL_HANDLER_REGISTERED, TC_ETL_HANDLER_VECTOR_OVERFLOW, TC_ETL_HANDLER_NO_ABORT. After reset the error count is zero. Pushing a ``Vector`` past its capacity increments the count and leaves ``size()`` unchanged. Ten further overflows increment the count and do not abort.
+
+   When static allocation is enabled, ``init_static_allocator()`` shall
+   register an ETL error callback before the message pool is initialized.
+   The callback shall count the error and return, so an ETL assertion does
+   not abort the process.
+
+   **Rationale**: With exceptions disabled, a bounded container reports
+   capacity failure through ETL. Returning from the callback leaves the
+   process running so the caller can see the failure.
+
+   **Error Handling**: Increment the error count and return. The container
+   size stays at its compile-time capacity.
+
+   **Code Location**: ``include/platform/static/etl_error_handler.h``,
+   ``src/platform/static/etl_error_handler.cpp``,
+   ``src/platform/static/memory.cpp`` (``init_static_allocator``)
+
 Buffer Pool Interface
 ---------------------
 

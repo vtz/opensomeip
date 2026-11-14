@@ -14,7 +14,7 @@
  * without requiring C++20's std::span. Works identically with both
  * dynamic (std::vector) and static (slab-backed ByteBuffer) payloads.
  *
- * @implements REQ_API_PAYLOAD_VIEW
+ * @implements REQ_MSG_151
  */
 
 #include <cassert>

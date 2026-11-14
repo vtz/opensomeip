@@ -83,7 +83,7 @@ public:
      *                          buffer (atomic with the payload)
      * @return true if segment processed successfully, false on error
      * @implements REQ_TP_081_ATOM
-     * @implements feat_req_someiptp_797
+     * @implements REQ_TP_081_FW
      */
     bool process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message,
                          std::array<uint8_t, 16>* out_someip_header = nullptr);

@@ -322,7 +322,7 @@ This document provides a comprehensive traceability matrix mapping requirements 
 
 1. Add `@implements` / `@satisfies` annotations to 78 unannotated requirements
 2. Add `@tests` annotations for the 12 remaining requirements without test coverage
-3. Do not add `:satisfies:` fields for REQ_MSG_150, REQ_TRANSPORT_026, REQ_E2E_RECEIVE_001, or REQ_TRANSPORT_030. They are local contracts with no specification ID.
+3. Do not add `:satisfies:` fields for REQ_MSG_150, REQ_TRANSPORT_026, REQ_E2E_RECEIVE_001, REQ_TRANSPORT_030, or REQ_MSG_151. They are local contracts with no specification ID.
 
 ### Short-term
 

@@ -216,7 +216,7 @@ TpReassembler::~TpReassembler() {
  * @implements REQ_TP_030, REQ_TP_031, REQ_TP_032, REQ_TP_033
  * @implements REQ_TP_030_E01, REQ_TP_076, REQ_TP_077, REQ_TP_078
  * @implements REQ_TP_079, REQ_TP_080, REQ_TP_081, REQ_TP_082
- * @implements feat_req_someiptp_797
+ * @implements REQ_TP_081_FW
  */
 bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuffer& complete_message,
                                      std::array<uint8_t, 16>* out_someip_header) {
@@ -273,7 +273,7 @@ bool TpReassembler::process_segment(const TpSegment& segment, platform::ByteBuff
  * @brief Validate a TP segment
  * @implements REQ_TP_033, REQ_TP_034, REQ_TP_035
  * @implements REQ_TP_030_E02, REQ_TP_072_E01, REQ_TP_076_E01, REQ_TP_076_E02
- * @implements feat_req_someiptp_772, feat_req_someiptp_792
+ * @implements REQ_TP_044
  */
 bool TpReassembler::validate_segment(const TpSegment& segment) const {
     const auto config = get_config_copy();
@@ -401,7 +401,7 @@ TpReassemblyBuffer* TpReassembler::find_or_create_buffer(const TpSegment& segmen
  * @brief Add segment to reassembly buffer
  * @implements REQ_TP_039, REQ_TP_040, REQ_TP_041, REQ_TP_042, REQ_TP_043
  * @implements REQ_TP_039_E01, REQ_TP_080, REQ_TP_081
- * @implements feat_req_someiptp_797
+ * @implements REQ_TP_081_FW
  */
 bool TpReassembler::add_segment_to_buffer(TpReassemblyBuffer& buffer, const TpSegment& segment,
                                           uint32_t max_message_size) {
