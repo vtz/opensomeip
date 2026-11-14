@@ -1850,7 +1850,7 @@ Header Informational References
    :status: implemented
    :priority: high
    :category: happy_path
-   :verification: Unit test: ``test_message.cpp`` — TC_PAYLOADVIEW_001 through TC_PAYLOADVIEW_004. A view of a four-byte payload reports that size, the first and last bytes, and the same data pointer as ``get_payload()``. An empty payload yields an empty view. ``subview(1, 3)`` returns three bytes starting at the second. Range-for visits each byte. ``test_static_alloc_integration.cpp`` — TC_STATIC_INT_PAYLOADVIEW reads the view under a malloc trap.
+   :verification: Unit test: ``test_message.cpp`` — TC_PAYLOADVIEW_001 through TC_PAYLOADVIEW_005. A view of a four-byte payload reports that size, the first and last bytes, and the same data pointer as ``get_payload()``. An empty payload yields an empty view. ``subview(1, 3)`` returns three bytes starting at the second. ``subview(3, 10)`` on a five-byte payload returns the two bytes that remain. Range-for visits each byte. ``test_static_alloc_integration.cpp`` — TC_STATIC_INT_PAYLOADVIEW reads the view under a malloc trap.
 
    ``Message::payload_view()`` shall return a non-owning view of the message
    payload. The view shall expose the payload bytes and their size, return a

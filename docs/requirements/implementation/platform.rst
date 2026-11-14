@@ -881,9 +881,11 @@ Container Interface
    The callback shall count the error and return, so an ETL assertion does
    not abort the process.
 
-   **Rationale**: With exceptions disabled, a bounded container reports
+   **Rationale**: With exceptions disabled, a bounded ``Vector`` reports
    capacity failure through ETL. Returning from the callback leaves the
-   process running so the caller can see the failure.
+   process running and increments the error count, so the caller can
+   detect the failure. This does not apply to ``UnorderedMap``: its ETL
+   overflow segfaults, so callers must check ``full()`` before ``insert``.
 
    **Error Handling**: Increment the error count and return. The container
    size stays at its compile-time capacity.

@@ -876,6 +876,22 @@ TEST_F(MessageTest, PayloadViewSubview) {
 }
 
 /**
+ * @test_case TC_PAYLOADVIEW_005
+ * @tests REQ_MSG_151
+ * @brief PayloadView::subview clips a range that extends past the payload
+ */
+TEST_F(MessageTest, PayloadViewSubviewClipped) {
+    Message msg;
+    platform::ByteBuffer payload = {0x01, 0x02, 0x03, 0x04, 0x05};
+    msg.set_payload(payload);
+
+    auto sub = msg.payload_view().subview(3, 10);
+    EXPECT_EQ(sub.size(), 2u);
+    EXPECT_EQ(sub[0], 0x04);
+    EXPECT_EQ(sub[1], 0x05);
+}
+
+/**
  * @test_case TC_PAYLOADVIEW_004
  * @tests REQ_MSG_151
  * @brief PayloadView supports range-based for loop
