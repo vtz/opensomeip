@@ -3118,6 +3118,7 @@ Each layer can be used independently or composed into a full-stack SOME/IP solut
 <ul>
 <li><strong>UDP</strong> -- Configurable blocking/non-blocking modes with socket buffer sizes</li>
 <li><strong>TCP</strong> -- Connection management with message framing</li>
+<li><strong>ServiceDemux</strong> -- One borrowed UDP or TCP socket, with one handler per service id</li>
 <li><strong>ITransport interface</strong> -- Clean abstraction for transport implementations</li>
 <li><strong>Platform Abstraction Layer (PAL)</strong> -- Portable socket and threading APIs</li>
 </ul>
@@ -3287,7 +3288,7 @@ full architecture diagram.</p>
 <h2 id="standards-compliance">Standards Compliance<a class="headerlink" href="#standards-compliance" title="Permanent link">&para;</a></h2>
 <p>Protocol coverage is tracked against the <a href="https://github.com/some-ip-com/open-someip-spec">Open SOME/IP Specification</a>:</p>
 <ul>
-<li><strong>585 / 649</strong> specification requirements traced</li>
+<li><strong>745 / 748</strong> specification requirements mapped</li>
 <li>Traceability maintained via Sphinx-Needs annotations in code</li>
 <li>Coverage reports generated on every CI run</li>
 </ul>

@@ -2384,19 +2384,19 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Unreleased">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2026-10-31" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Breaking Changes
+        0.2.1 - 2026-10-31
       
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="0.2.1 - 2026-10-31">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#added" class="md-nav__link">
@@ -2421,7 +2421,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_1" class="md-nav__link">
+  <a href="#breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -2460,7 +2460,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_2" class="md-nav__link">
+  <a href="#breaking-changes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -2554,7 +2554,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_3" class="md-nav__link">
+  <a href="#breaking-changes_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -3099,19 +3099,19 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Unreleased">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#breaking-changes" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#021-2026-10-31" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Breaking Changes
+        0.2.1 - 2026-10-31
       
     </span>
   </a>
   
-</li>
+    <nav class="md-nav" aria-label="0.2.1 - 2026-10-31">
+      <ul class="md-nav__list">
         
           <li class="md-nav__item">
   <a href="#added" class="md-nav__link">
@@ -3136,7 +3136,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_1" class="md-nav__link">
+  <a href="#breaking-changes" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -3175,7 +3175,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_2" class="md-nav__link">
+  <a href="#breaking-changes_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -3269,7 +3269,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#breaking-changes_3" class="md-nav__link">
+  <a href="#breaking-changes_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Breaking Changes
@@ -3531,21 +3531,34 @@
 <p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="unreleased">Unreleased<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
-<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Field getter <code>EventSubscriber::request_field</code> is a SOME/IP request/response.
-  The third argument is the getter method id. The request payload is empty, and
-  the server answers with message type <code>0x80</code> and the stored field value.
-  The previous send (method <code>0x0003</code> with the event id in the payload) is gone.
-  <code>EventSubscriber::set_field</code> writes a field the same way: the request payload
-  is the desired value, and the response payload is the value the server stored.
-  <code>EventPublisher::set_field_setter</code> can adapt that stored value or reject the
-  write. A field registered with no getter, no setter, and no notifier is
-  rejected
-  (<a href="https://github.com/vtz/opensomeip/issues/380">#380</a>).</li>
-</ul>
+<h2 id="021-2026-10-31"><a href="https://github.com/vtz/opensomeip/compare/v0.2.0...v0.2.1">0.2.1</a> - 2026-10-31<a class="headerlink" href="#021-2026-10-31" title="Permanent link">&para;</a></h2>
 <h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
 <ul>
+<li>
+<p><strong>Build</strong>: CMake toolchain <code>cmake/toolchains/qnx-sdp.cmake</code> for QNX
+  Neutrino. It keeps the POSIX socket PAL and sets <code>CMAKE_SYSTEM_NAME</code> to
+  <code>QNX</code>. The intended SDP is 8.0.0. Configure fails when <code>QNX_HOST</code> or
+  <code>QNX_TARGET</code> is unset, so the host compiler is not used by mistake. This
+  port is not compiled in CI
+  (<a href="https://github.com/vtz/opensomeip/pull/405">#405</a>).</p>
+</li>
+<li>
+<p><strong>Events</strong>: <code>EventgroupConfig::multicast_threshold</code>, stored with
+  <code>EventPublisher::configure_eventgroup</code>. Threshold 0 unicasts each
+  subscriber. Threshold 1 sends one multicast datagram. Above 1, unicast
+  while the active subscriber count is below the threshold and send one
+  multicast datagram at and above it. A non-zero threshold needs an IPv4
+  multicast address and a non-zero port. Initial field events stay unicast
+  (<a href="https://github.com/vtz/opensomeip/pull/401">#401</a>).</p>
+</li>
+<li>
+<p><strong>Transport</strong>: <code>ServiceDemux</code> borrows one UDP or TCP socket and delivers
+  each message to the handler registered for its service id. The table holds
+  <code>SOMEIP_MAX_DEMUX_SERVICES</code> handlers (16). Registering a service id that is
+  already on that socket fails. Two instances of one service id use two
+  sockets. <code>RpcServer</code> can register on a demux without starting that socket
+  (<a href="https://github.com/vtz/opensomeip/pull/399">#399</a>).</p>
+</li>
 <li>
 <p><strong>Build</strong>: Bazel module for the default host library and its C++ tests.
   <code>bazel test //...</code> fetches GoogleTest as a dev dependency, so it stays out
@@ -3623,18 +3636,42 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
   prefix and header (default 1544 = 16 + 64 + 64 + 1400). The default medium
   byte-pool slot is 1600 bytes so that message fits the medium tier.</li>
 </ul>
-<h3 id="breaking-changes_1">Breaking Changes<a class="headerlink" href="#breaking-changes_1" title="Permanent link">&para;</a></h3>
+<h3 id="breaking-changes">Breaking Changes<a class="headerlink" href="#breaking-changes" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>SD</strong>: <code>SdServer::SubscriptionAcceptedCallback</code> now requires
+<li>
+<p><strong>SD</strong>: <code>SdServer::SubscriptionAcceptedCallback</code> now requires
   <code>InitialDataDelivery</code> as its fifth argument. Existing callbacks must
   accept that argument
-  (<a href="https://github.com/vtz/opensomeip/issues/342">#342</a>).</li>
+  (<a href="https://github.com/vtz/opensomeip/issues/342">#342</a>).</p>
+</li>
+<li>
+<p><strong>Events</strong>: Field getter <code>EventSubscriber::request_field</code> is a SOME/IP
+  request/response. The third argument is the getter method id. The request
+  payload is empty, and the server answers with message type <code>0x80</code> and the
+  stored field value. The previous send (method <code>0x0003</code> with the event id
+  in the payload) is gone. <code>EventSubscriber::set_field</code> writes a field the
+  same way: the request payload is the desired value, and the response
+  payload is the value the server stored. <code>EventPublisher::set_field_setter</code>
+  can adapt that stored value or reject the write. A field registered with
+  no getter, no setter, and no notifier is rejected
+  (<a href="https://github.com/vtz/opensomeip/issues/380">#380</a>).</p>
+</li>
 </ul>
 <h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>SD</strong>: Drawing an initial wait over <code>[0, UINT32_MAX]</code> no longer divides by a
+<li>
+<p><strong>TP</strong>: A serialized message that fits in the single-datagram budget
+  (default 1416 bytes, the 16-byte SOME/IP header plus payload) is one UDP
+  datagram. Segmentation starts only above that budget. Non-final TP
+  payloads stay capped at 1392 bytes and aligned to 16. A message that still
+  fits is not padded to a 16-byte boundary
+  (<a href="https://github.com/vtz/opensomeip/pull/400">#400</a>).</p>
+</li>
+<li>
+<p><strong>SD</strong>: Drawing an initial wait over <code>[0, UINT32_MAX]</code> no longer divides by a
   wrapped span, and an offered service endpoint uses the instance L4 protocol
-  so a TCP service is not advertised as UDP.</li>
+  so a TCP service is not advertised as UDP.</p>
+</li>
 <li><strong>E2E</strong>: A receive binding that rejects a datagram before the SOME/IP header
   is parsed reports Message ID and Request ID from the wire prefix. A failed
   deserialize no longer publishes the default zero IDs.</li>
@@ -3773,7 +3810,7 @@ fire-and-forget RPC, event-driven transports, multi-client TCP) and
 v0.1.0. Per this repo's 0.x policy, incompatible API and wire changes bump
 the minor version; 1.0.0 remains reserved until the public API is declared
 stable.</p>
-<h3 id="breaking-changes_2">Breaking Changes<a class="headerlink" href="#breaking-changes_2" title="Permanent link">&para;</a></h3>
+<h3 id="breaking-changes_1">Breaking Changes<a class="headerlink" href="#breaking-changes_1" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>E2E</strong>: <code>E2EConfig::offset</code> is renamed to <code>offset_bits</code> (no alias). The
   field is bits from the start of the Length-covered region / Request ID
@@ -4251,7 +4288,7 @@ stable.</p>
 <p>This is the first minor release and includes <strong>breaking changes</strong> to wire formats,
 public API types, and default behaviors to bring the stack into compliance with the
 SOME/IP and SOME/IP-SD specifications.</p>
-<h3 id="breaking-changes_3">Breaking Changes<a class="headerlink" href="#breaking-changes_3" title="Permanent link">&para;</a></h3>
+<h3 id="breaking-changes_2">Breaking Changes<a class="headerlink" href="#breaking-changes_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li><strong>SD minor version widened to 32-bit</strong>: <code>ServiceEntry::minor_version_</code> and <code>ServiceInstance::minor_version</code> changed from <code>uint8_t</code> to <code>uint32_t</code>; <code>get_minor_version()</code> / <code>set_minor_version()</code> signatures updated accordingly (#245, #251)</li>
 <li><strong>SD ConfigurationOption length field corrected</strong>: Wire-format length now includes the Reserved byte per spec; messages serialized by v0.0.x are <strong>not</strong> wire-compatible with v0.1.0 (#246, #251)</li>

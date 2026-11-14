@@ -2024,10 +2024,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#overlapping-segment-handling-first-wins-feat_req_someiptp_797" class="md-nav__link">
+  <a href="#overlapping-segment-handling-first-wins-req_tp_081_fw" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overlapping segment handling — first-wins (feat_req_someiptp_797)
+        Overlapping segment handling — first-wins (REQ_TP_081_FW)
       
     </span>
   </a>
@@ -2046,10 +2046,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#non-final-segment-alignment-feat_req_someiptp_772-feat_req_someiptp_792" class="md-nav__link">
+  <a href="#non-final-segment-alignment-req_tp_044" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Non-final segment alignment (feat_req_someiptp_772, feat_req_someiptp_792)
+        Non-final segment alignment (REQ_TP_044)
       
     </span>
   </a>
@@ -3085,10 +3085,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#overlapping-segment-handling-first-wins-feat_req_someiptp_797" class="md-nav__link">
+  <a href="#overlapping-segment-handling-first-wins-req_tp_081_fw" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overlapping segment handling — first-wins (feat_req_someiptp_797)
+        Overlapping segment handling — first-wins (REQ_TP_081_FW)
       
     </span>
   </a>
@@ -3107,10 +3107,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#non-final-segment-alignment-feat_req_someiptp_772-feat_req_someiptp_792" class="md-nav__link">
+  <a href="#non-final-segment-alignment-req_tp_044" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Non-final segment alignment (feat_req_someiptp_772, feat_req_someiptp_792)
+        Non-final segment alignment (REQ_TP_044)
       
     </span>
   </a>
@@ -3414,7 +3414,7 @@ and to false when <code>SOMEIP_STATIC_ALLOC</code> is defined:</p>
 <p>Applications that talk to <code>TpManager</code> directly can still segment and
 reassemble without going through UDP.</p>
 <h2 id="receiver-validation">Receiver Validation<a class="headerlink" href="#receiver-validation" title="Permanent link">&para;</a></h2>
-<h3 id="overlapping-segment-handling-first-wins-feat_req_someiptp_797">Overlapping segment handling — first-wins (feat_req_someiptp_797)<a class="headerlink" href="#overlapping-segment-handling-first-wins-feat_req_someiptp_797" title="Permanent link">&para;</a></h3>
+<h3 id="overlapping-segment-handling-first-wins-req_tp_081_fw">Overlapping segment handling — first-wins (REQ_TP_081_FW)<a class="headerlink" href="#overlapping-segment-handling-first-wins-req_tp_081_fw" title="Permanent link">&para;</a></h3>
 <p>When a received TP segment overlaps with bytes that were already written
 to the reassembly buffer, the reassembler applies <strong>first-wins</strong>
 semantics: only bytes that have not yet been received are written; bytes
@@ -3435,7 +3435,7 @@ separate <code>copy_last_completed_someip_header()</code> call, ensuring the hea
 and payload are retrieved atomically under the reassembly lock.  This
 eliminates a race where concurrent <code>ingest_datagram()</code> calls could pair
 the wrong header with a payload.</p>
-<h3 id="non-final-segment-alignment-feat_req_someiptp_772-feat_req_someiptp_792">Non-final segment alignment (feat_req_someiptp_772, feat_req_someiptp_792)<a class="headerlink" href="#non-final-segment-alignment-feat_req_someiptp_772-feat_req_someiptp_792" title="Permanent link">&para;</a></h3>
+<h3 id="non-final-segment-alignment-req_tp_044">Non-final segment alignment (REQ_TP_044)<a class="headerlink" href="#non-final-segment-alignment-req_tp_044" title="Permanent link">&para;</a></h3>
 <p>All non-final TP segments (More Segments = 1) <strong>must</strong> have a payload
 length that is a multiple of 16 bytes. The reassembler rejects any
 non-final segment whose payload is not 16-byte aligned and drops it

@@ -3580,6 +3580,14 @@ to different services remain supported; unsubscribe releases the service slot.
 This restriction also applies through the C API. Notifications contain service
 and event IDs but no instance/eventgroup identity, and the current subscriber API
 has no receive-endpoint binding that could disambiguate them.</p>
+<p><code>EventgroupConfig::multicast_threshold</code>, stored with
+<code>EventPublisher::configure_eventgroup</code>, chooses how an eventgroup is sent.
+Threshold 0, the default for an unconfigured group, unicasts each subscriber.
+Threshold 1 sends one multicast datagram and no unicast copy. A threshold
+above 1 unicasts while the active subscriber count is below it and sends one
+multicast datagram at and above it. The multicast address and port come from
+the same config. A non-zero threshold without an IPv4 multicast address, or
+with port 0, is rejected. Initial field events stay unicast.</p>
 <h2 id="fields-vs-events">Fields vs Events<a class="headerlink" href="#fields-vs-events" title="Permanent link">&para;</a></h2>
 <h3 id="fields">Fields<a class="headerlink" href="#fields" title="Permanent link">&para;</a></h3>
 <ul>

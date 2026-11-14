@@ -3083,14 +3083,14 @@
 
 
 <h1 id="aspice-traceability-gap-analysis-report">ASPICE Traceability Gap Analysis Report<a class="headerlink" href="#aspice-traceability-gap-analysis-report" title="Permanent link">&para;</a></h1>
-<p>Generated: 2026-11-13 21:19:37</p>
+<p>Generated: 2026-11-14 03:19:40</p>
 <h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Total Requirements</strong>: 701</li>
-<li><strong>Fully Traced (impl + tests)</strong>: 648 (92.4%)</li>
+<li><strong>Total Requirements</strong>: 703</li>
+<li><strong>Fully Traced (impl + tests)</strong>: 650 (92.5%)</li>
 <li><strong>Missing Implementation</strong>: 53</li>
 <li><strong>Missing Tests</strong>: 1</li>
-<li><strong>Missing Spec Links (all)</strong>: 161</li>
+<li><strong>Missing Spec Links (all)</strong>: 162</li>
 <li><strong>Missing Spec Links (required only)</strong>: 2</li>
 </ul>
 <h3 id="requirement-categories">Requirement Categories<a class="headerlink" href="#requirement-categories" title="Permanent link">&para;</a></h3>
@@ -3121,17 +3121,17 @@
 </tr>
 <tr>
 <td>Message Header</td>
-<td>93</td>
-<td>88 (95%)</td>
-<td>93 (100%)</td>
-<td>92 (99%)</td>
+<td>94</td>
+<td>89 (95%)</td>
+<td>94 (100%)</td>
+<td>92 (98%)</td>
 </tr>
 <tr>
 <td>Other</td>
-<td>92</td>
-<td>91 (99%)</td>
-<td>91 (99%)</td>
-<td>88 (96%)</td>
+<td>93</td>
+<td>92 (99%)</td>
+<td>92 (99%)</td>
+<td>89 (96%)</td>
 </tr>
 <tr>
 <td>Plugin (derived)</td>
@@ -3173,11 +3173,11 @@
 <p><strong>Note</strong>: Implementation-derived requirements may omit direct spec links. The exemption
 matches <code>validate_requirements.py</code>: an ID containing <code>_E0</code>, <code>_ARCH_</code>, <code>PLUGIN</code>, or <code>MY_</code>;
 an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; an ID ending with <code>_ATOM</code>; or one of
-<code>REQ_E2E_RECEIVE_001</code>, <code>REQ_TRANSPORT_030</code> (local API contracts with no spec ID).
+<code>REQ_E2E_RECEIVE_001</code>, <code>REQ_TRANSPORT_030</code>, <code>REQ_MSG_151</code> (local API contracts with no spec ID).
 <code>REQ_MSG_150</code> and <code>REQ_TRANSPORT_026</code> stay known-unlinked and are not exemptions.</p>
 <ul>
 <li><strong>Spec-Derived Requirements</strong>: 474</li>
-<li><strong>Implementation-Derived Requirements</strong>: 227</li>
+<li><strong>Implementation-Derived Requirements</strong>: 229</li>
 </ul>
 <h3 id="priority-breakdown">Priority Breakdown<a class="headerlink" href="#priority-breakdown" title="Permanent link">&para;</a></h3>
 <table>
@@ -3207,9 +3207,9 @@ an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; an ID endin
 </tr>
 <tr>
 <td>Medium</td>
-<td>429</td>
-<td>397</td>
-<td>428</td>
+<td>431</td>
+<td>399</td>
+<td>430</td>
 <td>93%</td>
 </tr>
 <tr>
@@ -3232,7 +3232,7 @@ an ID starting with <code>REQ_CAPI_</code> or <code>REQ_PAL_</code>; an ID endin
 <tbody>
 <tr>
 <td>Unit Tests</td>
-<td>640</td>
+<td>641</td>
 </tr>
 <tr>
 <td>Integration Tests</td>
@@ -3423,6 +3423,7 @@ requirements. Specification IDs with no software requirement stay in
 <li>REQ_MSG_100_E01</li>
 <li>REQ_MSG_100_E02</li>
 <li>REQ_MSG_100_E03</li>
+<li>REQ_MSG_151</li>
 <li>REQ_MSG_110_E01</li>
 <li>REQ_MSG_113_E01</li>
 <li>REQ_MSG_114_E01</li>
@@ -3518,7 +3519,7 @@ requirements. Specification IDs with no software requirement stay in
 <ul>
 <li><strong>Status</strong>: ⚠️ PARTIAL - Some spec-derived requirements missing links</li>
 <li><strong>Details</strong>: Spec-derived requirements must satisfy at least one specification requirement</li>
-<li><strong>Derived Requirements</strong>: 227 implementation-derived requirements do not require spec links</li>
+<li><strong>Derived Requirements</strong>: 229 implementation-derived requirements do not require spec links</li>
 </ul>
 <h3 id="swe3-software-architectural-design">SWE.3 (Software Architectural Design)<a class="headerlink" href="#swe3-software-architectural-design" title="Permanent link">&para;</a></h3>
 <ul>

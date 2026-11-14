@@ -1,14 +1,14 @@
 # ASPICE Traceability Gap Analysis Report
 
-Generated: 2026-11-13 21:19:37
+Generated: 2026-11-14 03:19:40
 
 ## Summary
 
-- **Total Requirements**: 701
-- **Fully Traced (impl + tests)**: 648 (92.4%)
+- **Total Requirements**: 703
+- **Fully Traced (impl + tests)**: 650 (92.5%)
 - **Missing Implementation**: 53
 - **Missing Tests**: 1
-- **Missing Spec Links (all)**: 161
+- **Missing Spec Links (all)**: 162
 - **Missing Spec Links (required only)**: 2
 
 ### Requirement Categories
@@ -17,8 +17,8 @@ Generated: 2026-11-13 21:19:37
 |----------|-------|-------------|--------|-------------|
 | Architectural (derived) | 8 | 8 (100%) | 8 (100%) | 3 (38%) |
 | Error Handling (derived) | 156 | 135 (87%) | 156 (100%) | 10 (6%) |
-| Message Header | 93 | 88 (95%) | 93 (100%) | 92 (99%) |
-| Other | 92 | 91 (99%) | 91 (99%) | 88 (96%) |
+| Message Header | 94 | 89 (95%) | 94 (100%) | 92 (98%) |
+| Other | 93 | 92 (99%) | 92 (99%) | 89 (96%) |
 | Plugin (derived) | 5 | 5 (100%) | 5 (100%) | 3 (60%) |
 | Serialization | 75 | 53 (71%) | 75 (100%) | 75 (100%) |
 | Service Discovery | 173 | 170 (98%) | 173 (100%) | 173 (100%) |
@@ -29,11 +29,11 @@ Generated: 2026-11-13 21:19:37
 **Note**: Implementation-derived requirements may omit direct spec links. The exemption
 matches `validate_requirements.py`: an ID containing `_E0`, `_ARCH_`, `PLUGIN`, or `MY_`;
 an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one of
-`REQ_E2E_RECEIVE_001`, `REQ_TRANSPORT_030` (local API contracts with no spec ID).
+`REQ_E2E_RECEIVE_001`, `REQ_TRANSPORT_030`, `REQ_MSG_151` (local API contracts with no spec ID).
 `REQ_MSG_150` and `REQ_TRANSPORT_026` stay known-unlinked and are not exemptions.
 
 - **Spec-Derived Requirements**: 474
-- **Implementation-Derived Requirements**: 227
+- **Implementation-Derived Requirements**: 229
 
 ### Priority Breakdown
 
@@ -41,14 +41,14 @@ an ID starting with `REQ_CAPI_` or `REQ_PAL_`; an ID ending with `_ATOM`; or one
 |----------|-------|-------------|--------|----------|
 | Critical | 32 | 32 | 32 | 100% |
 | High | 56 | 56 | 56 | 100% |
-| Medium | 429 | 397 | 428 | 93% |
+| Medium | 431 | 399 | 430 | 93% |
 | Low | 184 | 163 | 184 | 89% |
 
 ### Test Coverage Breakdown
 
 | Test Type | Count |
 |-----------|-------|
-| Unit Tests | 640 |
+| Unit Tests | 641 |
 | Integration Tests | 22 |
 | System Tests | 6 |
 
@@ -207,6 +207,7 @@ These requirements match the implementation-derived exemption and do not need sp
 - REQ_MSG_100_E01
 - REQ_MSG_100_E02
 - REQ_MSG_100_E03
+- REQ_MSG_151
 - REQ_MSG_110_E01
 - REQ_MSG_113_E01
 - REQ_MSG_114_E01
@@ -302,7 +303,7 @@ These requirements match the implementation-derived exemption and do not need sp
 ### SWE.1 (Software Requirements Analysis)
 - **Status**: ⚠️ PARTIAL - Some spec-derived requirements missing links
 - **Details**: Spec-derived requirements must satisfy at least one specification requirement
-- **Derived Requirements**: 227 implementation-derived requirements do not require spec links
+- **Derived Requirements**: 229 implementation-derived requirements do not require spec links
 
 ### SWE.3 (Software Architectural Design)
 - **Status**: ❌ FAIL - Missing implementations

@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-13T21:19:37.149549",
+  "generated": "2026-11-14T03:19:40.309641",
   "requirements": {
     "REQ_MY_001": {
       "id": "REQ_MY_001",
@@ -879,6 +879,7 @@
         "CODE_containers_impl_static_10"
       ],
       "tested_by": [
+        "TC_ETL_MAP_FULL_CHECK",
         "TC_CONTAINER_MAP_INSERT_LOOKUP"
       ]
     },
@@ -924,6 +925,23 @@
         "TC_ETL_HANDLER_VECTOR_OVERFLOW",
         "TC_ETL_HANDLER_NO_ABORT",
         "TC_CONTAINER_CAPACITY_EXHAUST"
+      ]
+    },
+    "REQ_PAL_ETL_ERROR_HANDLER": {
+      "id": "REQ_PAL_ETL_ERROR_HANDLER",
+      "title": "ETL Error Handler",
+      "type": "requirement",
+      "satisfies": [
+        "REQ_ARCH_008"
+      ],
+      "implemented_by": [
+        "CODE_etl_error_handler_static_7",
+        "CODE_etl_error_handler_static_10"
+      ],
+      "tested_by": [
+        "TC_ETL_HANDLER_REGISTERED",
+        "TC_ETL_HANDLER_VECTOR_OVERFLOW",
+        "TC_ETL_HANDLER_NO_ABORT"
       ]
     },
     "REQ_PAL_BUFPOOL_ACQUIRE": {
@@ -5479,6 +5497,23 @@
         "TC_MSG_150_E2E"
       ]
     },
+    "REQ_MSG_151": {
+      "id": "REQ_MSG_151",
+      "title": "Non-owning Payload View",
+      "type": "requirement",
+      "satisfies": [],
+      "implemented_by": [
+        "CODE_payload_view_someip_10"
+      ],
+      "tested_by": [
+        "TC_PAYLOADVIEW_001",
+        "TC_PAYLOADVIEW_002",
+        "TC_PAYLOADVIEW_003",
+        "TC_PAYLOADVIEW_005",
+        "TC_PAYLOADVIEW_004",
+        "TC_STATIC_INT_PAYLOADVIEW"
+      ]
+    },
     "REQ_MSG_110_E01": {
       "id": "REQ_MSG_110_E01",
       "title": "Error - Invalid Service Instance ID",
@@ -6360,10 +6395,13 @@
         "feat_req_someiptp_792"
       ],
       "implemented_by": [
+        "CODE_tp_reassembler_tp_272",
         "CODE_tp_reassembler_tp_315"
       ],
       "tested_by": [
+        "TC_test_tp_SetUp",
         "TC_TP_MISALIGNED_NONFINAL_REJECTED",
+        "TC_TP_ALIGNED_NONFINAL_ACCEPTED",
         "TC_TP_MISALIGNED_FINAL_ACCEPTED"
       ]
     },
@@ -6840,12 +6878,16 @@
         "feat_req_someiptp_797"
       ],
       "implemented_by": [
+        "CODE_tp_reassembler_tp_214",
+        "CODE_tp_reassembler_tp_400",
         "CODE_tp_reassembler_tp_425",
-        "CODE_tp_reassembler_tp_494"
+        "CODE_tp_reassembler_tp_494",
+        "CODE_tp_reassembler_tp_70"
       ],
       "tested_by": [
         "TC_TP_OVERLAP_SAME_DATA",
-        "TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS"
+        "TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS",
+        "TC_TP_EXACT_DUPLICATE_ACCEPTED"
       ]
     },
     "REQ_TP_081_ATOM": {
@@ -13943,7 +13985,7 @@
         "REQ_TP_080",
         "REQ_TP_081",
         "REQ_TP_082",
-        "REQ_SOMEIPTP_797"
+        "REQ_TP_081_FW"
       ],
       "satisfies": []
     },
@@ -13958,8 +14000,7 @@
         "REQ_TP_072_E01",
         "REQ_TP_076_E01",
         "REQ_TP_076_E02",
-        "REQ_SOMEIPTP_772",
-        "REQ_SOMEIPTP_792"
+        "REQ_TP_044"
       ],
       "satisfies": []
     },
@@ -13998,7 +14039,7 @@
         "REQ_TP_039_E01",
         "REQ_TP_080",
         "REQ_TP_081",
-        "REQ_SOMEIPTP_797"
+        "REQ_TP_081_FW"
       ],
       "satisfies": []
     },
@@ -16165,7 +16206,7 @@
       "id": "CODE_payload_view_someip_10",
       "location": "include/someip/payload_view.h:10",
       "implements": [
-        "REQ_API_PAYLOAD_VIEW"
+        "REQ_MSG_151"
       ],
       "satisfies": []
     },
@@ -16249,7 +16290,7 @@
       "location": "include/tp/tp_reassembler.h:70",
       "implements": [
         "REQ_TP_081_ATOM",
-        "REQ_SOMEIPTP_797"
+        "REQ_TP_081_FW"
       ],
       "satisfies": []
     },
@@ -17527,7 +17568,7 @@
       "name": "TEST_F (tests/test_etl_error_handler.cpp:72)",
       "location": "tests/test_etl_error_handler.cpp:72",
       "tests": [
-        "REQ_PAL_ETL_ERROR_HANDLER"
+        "REQ_PAL_CONTAINER_MAP"
       ]
     },
     "TC_ETL_HANDLER_NO_ABORT": {
@@ -18342,7 +18383,7 @@
       "name": "TEST_F (tests/test_message.cpp:832)",
       "location": "tests/test_message.cpp:832",
       "tests": [
-        "REQ_API_PAYLOAD_VIEW"
+        "REQ_MSG_151"
       ]
     },
     "TC_PAYLOADVIEW_002": {
@@ -18350,7 +18391,7 @@
       "name": "TEST_F (tests/test_message.cpp:850)",
       "location": "tests/test_message.cpp:850",
       "tests": [
-        "REQ_API_PAYLOAD_VIEW"
+        "REQ_MSG_151"
       ]
     },
     "TC_PAYLOADVIEW_003": {
@@ -18358,15 +18399,23 @@
       "name": "TEST_F (tests/test_message.cpp:862)",
       "location": "tests/test_message.cpp:862",
       "tests": [
-        "REQ_API_PAYLOAD_VIEW"
+        "REQ_MSG_151"
+      ]
+    },
+    "TC_PAYLOADVIEW_005": {
+      "id": "TC_PAYLOADVIEW_005",
+      "name": "TEST_F (tests/test_message.cpp:878)",
+      "location": "tests/test_message.cpp:878",
+      "tests": [
+        "REQ_MSG_151"
       ]
     },
     "TC_PAYLOADVIEW_004": {
       "id": "TC_PAYLOADVIEW_004",
-      "name": "TEST_F (tests/test_message.cpp:878)",
-      "location": "tests/test_message.cpp:878",
+      "name": "TEST_F (tests/test_message.cpp:894)",
+      "location": "tests/test_message.cpp:894",
       "tests": [
-        "REQ_API_PAYLOAD_VIEW"
+        "REQ_MSG_151"
       ]
     },
     "TC_test_multicast_membership_t0": {
@@ -21142,7 +21191,7 @@
       "name": "TEST_F (tests/test_static_alloc_integration.cpp:464)",
       "location": "tests/test_static_alloc_integration.cpp:464",
       "tests": [
-        "REQ_API_PAYLOAD_VIEW",
+        "REQ_MSG_151",
         "REQ_PAL_NOOP_HEAP_VERIFY"
       ]
     },
@@ -21771,9 +21820,8 @@
         "REQ_TP_082_E04",
         "feat_req_someiptp_400",
         "feat_req_someiptp_402",
-        "feat_req_someiptp_772",
         "feat_req_someiptp_782",
-        "feat_req_someiptp_792",
+        "REQ_TP_044",
         "feat_req_someiptp_410",
         "feat_req_someip_761",
         "REQ_MSG_056",
@@ -22183,74 +22231,69 @@
       "name": "TEST_F (tests/test_tp.cpp:1908)",
       "location": "tests/test_tp.cpp:1908",
       "tests": [
-        "feat_req_someiptp_772",
-        "feat_req_someiptp_792",
         "REQ_TP_044"
       ]
     },
     "TC_TP_ALIGNED_NONFINAL_ACCEPTED": {
       "id": "TC_TP_ALIGNED_NONFINAL_ACCEPTED",
-      "name": "TEST_F (tests/test_tp.cpp:1951)",
-      "location": "tests/test_tp.cpp:1951",
+      "name": "TEST_F (tests/test_tp.cpp:1949)",
+      "location": "tests/test_tp.cpp:1949",
       "tests": [
-        "feat_req_someiptp_772"
+        "REQ_TP_044"
       ]
     },
     "TC_TP_MISALIGNED_FINAL_ACCEPTED": {
       "id": "TC_TP_MISALIGNED_FINAL_ACCEPTED",
-      "name": "TEST_F (tests/test_tp.cpp:1985)",
-      "location": "tests/test_tp.cpp:1985",
+      "name": "TEST_F (tests/test_tp.cpp:1983)",
+      "location": "tests/test_tp.cpp:1983",
       "tests": [
-        "feat_req_someiptp_772",
         "REQ_TP_044"
       ]
     },
     "TC_TP_REASSEMBLY_CLAMP_WORKS": {
       "id": "TC_TP_REASSEMBLY_CLAMP_WORKS",
-      "name": "TEST_F (tests/test_tp.cpp:2048)",
-      "location": "tests/test_tp.cpp:2048",
+      "name": "TEST_F (tests/test_tp.cpp:2046)",
+      "location": "tests/test_tp.cpp:2046",
       "tests": [
         "feat_req_someiptp_782"
       ]
     },
     "TC_TP_REASSEMBLY_CLAMP": {
       "id": "TC_TP_REASSEMBLY_CLAMP",
-      "name": "TEST_F (tests/test_tp.cpp:2113)",
-      "location": "tests/test_tp.cpp:2113",
+      "name": "TEST_F (tests/test_tp.cpp:2111)",
+      "location": "tests/test_tp.cpp:2111",
       "tests": [
         "REQ_TP_030_E03"
       ]
     },
     "TC_TP_OVERLAP_SAME_DATA": {
       "id": "TC_TP_OVERLAP_SAME_DATA",
-      "name": "TEST_F (tests/test_tp.cpp:2151)",
-      "location": "tests/test_tp.cpp:2151",
+      "name": "TEST_F (tests/test_tp.cpp:2149)",
+      "location": "tests/test_tp.cpp:2149",
       "tests": [
-        "REQ_TP_081_FW",
-        "feat_req_someiptp_797"
+        "REQ_TP_081_FW"
       ]
     },
     "TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS": {
       "id": "TC_TP_OVERLAP_DIFFERENT_DATA_FIRST_WINS",
-      "name": "TEST_F (tests/test_tp.cpp:2182)",
-      "location": "tests/test_tp.cpp:2182",
+      "name": "TEST_F (tests/test_tp.cpp:2179)",
+      "location": "tests/test_tp.cpp:2179",
       "tests": [
-        "feat_req_someiptp_797",
         "REQ_TP_081_FW"
       ]
     },
     "TC_TP_EXACT_DUPLICATE_ACCEPTED": {
       "id": "TC_TP_EXACT_DUPLICATE_ACCEPTED",
-      "name": "TEST_F (tests/test_tp.cpp:2224)",
-      "location": "tests/test_tp.cpp:2224",
+      "name": "TEST_F (tests/test_tp.cpp:2221)",
+      "location": "tests/test_tp.cpp:2221",
       "tests": [
-        "feat_req_someiptp_797"
+        "REQ_TP_081_FW"
       ]
     },
     "TC_TP_HEADER_MATCHES_PAYLOAD": {
       "id": "TC_TP_HEADER_MATCHES_PAYLOAD",
-      "name": "TEST_F (tests/test_tp.cpp:2266)",
-      "location": "tests/test_tp.cpp:2266",
+      "name": "TEST_F (tests/test_tp.cpp:2263)",
+      "location": "tests/test_tp.cpp:2263",
       "tests": [
         "REQ_TP_077",
         "REQ_TP_078"
@@ -22258,8 +22301,8 @@
     },
     "TC_TP_PROCESS_SEGMENT_RETURNS_HEADER": {
       "id": "TC_TP_PROCESS_SEGMENT_RETURNS_HEADER",
-      "name": "TEST_F (tests/test_tp.cpp:2305)",
-      "location": "tests/test_tp.cpp:2305",
+      "name": "TEST_F (tests/test_tp.cpp:2302)",
+      "location": "tests/test_tp.cpp:2302",
       "tests": [
         "REQ_TP_081_ATOM"
       ]

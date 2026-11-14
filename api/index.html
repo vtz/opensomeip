@@ -2930,6 +2930,12 @@
 <ul>
 <li><strong><code>udp_transport.h</code></strong> -- <code>UdpTransport</code> for sending and receiving SOME/IP messages over UDP</li>
 <li><strong><code>tcp_transport.h</code></strong> -- <code>TcpTransport</code> for stream-oriented SOME/IP</li>
+<li><strong><code>service_demux.h</code></strong> -- <code>ServiceDemux</code> borrows one UDP or TCP socket and
+  delivers each message to the handler registered for its service id. The
+  table holds <code>SOMEIP_MAX_DEMUX_SERVICES</code> handlers (16). Registering a
+  service id that is already on that socket fails. Two instances of one
+  service id use two sockets. <code>RpcServer</code> can register on a demux without
+  starting that socket.</li>
 <li><strong><code>event_driven_udp_transport.h</code> / <code>event_driven_tcp_transport.h</code></strong> -- adapter-driven
   <code>ITransport</code> backends. Event-driven TCP parses and delivers one complete
   SOME/IP frame per step (listener XOR queue). Pool exhaustion consumes that
