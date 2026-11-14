@@ -28,6 +28,7 @@ Core SOME/IP protocol interfaces:
 Transport layer abstractions:
 - `udp_transport.h` - UDP transport interface
 - `tcp_transport.h` - TCP transport interface
+- `service_demux.h` - One borrowed socket dispatched to several service handlers
 - `transport_manager.h` - Transport lifecycle management
 
 ### `sd/`

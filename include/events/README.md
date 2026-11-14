@@ -174,6 +174,15 @@ This restriction also applies through the C API. Notifications contain service
 and event IDs but no instance/eventgroup identity, and the current subscriber API
 has no receive-endpoint binding that could disambiguate them.
 
+`EventgroupConfig::multicast_threshold`, stored with
+`EventPublisher::configure_eventgroup`, chooses how an eventgroup is sent.
+Threshold 0, the default for an unconfigured group, unicasts each subscriber.
+Threshold 1 sends one multicast datagram and no unicast copy. A threshold
+above 1 unicasts while the active subscriber count is below it and sends one
+multicast datagram at and above it. The multicast address and port come from
+the same config. A non-zero threshold without an IPv4 multicast address, or
+with port 0, is rejected. Initial field events stay unicast.
+
 ## Fields vs Events
 
 ### Fields

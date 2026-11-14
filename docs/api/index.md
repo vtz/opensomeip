@@ -31,6 +31,12 @@ The transport layer in `include/transport/`:
 
 - **`udp_transport.h`** -- `UdpTransport` for sending and receiving SOME/IP messages over UDP
 - **`tcp_transport.h`** -- `TcpTransport` for stream-oriented SOME/IP
+- **`service_demux.h`** -- `ServiceDemux` borrows one UDP or TCP socket and
+  delivers each message to the handler registered for its service id. The
+  table holds `SOMEIP_MAX_DEMUX_SERVICES` handlers (16). Registering a
+  service id that is already on that socket fails. Two instances of one
+  service id use two sockets. `RpcServer` can register on a demux without
+  starting that socket.
 - **`event_driven_udp_transport.h` / `event_driven_tcp_transport.h`** -- adapter-driven
   `ITransport` backends. Event-driven TCP parses and delivers one complete
   SOME/IP frame per step (listener XOR queue). Pool exhaustion consumes that
