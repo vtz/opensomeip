@@ -22,7 +22,8 @@ updated by `bump_version.sh`.
 
 | File | How it gets the version |
 |------|------------------------|
-| `VERSION` | **Source of truth** — plain text, e.g. `0.2.1` |
+| `VERSION` | **Source of truth** — plain text, e.g. `0.2.2` |
+| `MODULE.bazel` | `module()` `version`, updated by `bump_version.sh` |
 | `CMakeLists.txt` | `file(READ ... VERSION)` — reads at configure time |
 | `.packit.yaml` | `get-current-version: cat VERSION` — read by Packit |
 | `packaging/opensomeip.spec` | Updated by `bump_version.sh` |
@@ -37,13 +38,13 @@ Bump the project version following semantic versioning rules. This script
 updates **all** version-bearing files in a single command:
 
 ```bash
-# Bump patch version (0.2.1 -> 0.2.2)
+# Bump patch version (0.2.2 -> 0.2.3)
 ./scripts/bump_version.sh patch
 
-# Bump minor version (0.2.1 -> 0.3.0)
+# Bump minor version (0.2.2 -> 0.3.0)
 ./scripts/bump_version.sh minor
 
-# Bump major version (0.2.1 -> 1.0.0)
+# Bump major version (0.2.2 -> 1.0.0)
 ./scripts/bump_version.sh major
 
 # Set specific version
@@ -52,20 +53,34 @@ updates **all** version-bearing files in a single command:
 
 Files updated automatically:
 - `VERSION`
+- `MODULE.bazel` (`module()` `version`)
 - `packaging/opensomeip.spec` (Version + Release reset)
 - `README.md` (**Current Version** line)
 - `CHANGELOG.md` (scaffolded section header + comparison link)
 
+### check_release_versions.sh
+
+Release guard. The git tag, `MODULE.bazel` `module()` `version`, `VERSION`,
+the README line, the spec `Version:` field, and the matching changelog
+section must be the same version. A tag `v0.2.2` means version `0.2.2`.
+
+```bash
+./scripts/check_release_versions.sh v0.2.2
+```
+
+Exits non-zero when any of those strings disagree. `.github/workflows/release.yml`
+runs this before it creates a GitHub Release. Pull requests run the same script
+with `v` plus the contents of `VERSION`.
+
 ### check_version_consistency.sh
 
-CI guard that verifies all version references match `VERSION`:
+Runs `check_release_versions.sh` using the tag implied by `VERSION`:
 
 ```bash
 ./scripts/check_version_consistency.sh
 ```
 
-Exits non-zero if any file is out of sync. Run this in CI to catch drift before
-it reaches `main`.
+Exits non-zero if any file is out of sync, including `MODULE.bazel`.
 
 ### bump_submodule.sh
 
@@ -85,12 +100,12 @@ Update git submodules to latest commits or specific targets:
 ## Release Process
 
 1. **Development**: Work on features/fixes in feature branches
-2. **Version Bump**: Use `bump_version.sh` to update version appropriately
+2. **Version Bump**: Use `bump_version.sh` so `VERSION`, `MODULE.bazel`, the README, the RPM spec, and `CHANGELOG.md` change in one commit
 3. **Submodule Updates**: Use `bump_submodule.sh` to update dependencies if needed
 4. **Testing**: Ensure all tests pass
 5. **Commit**: Commit version changes with descriptive message
-6. **Tag**: Create git tag (e.g., `v1.2.3`)
-7. **Release**: Push tag to trigger release process
+6. **Tag**: Create a git tag (e.g., `v1.2.3`). The tag, `MODULE.bazel`, `VERSION`, the README, the RPM spec, and the changelog section must be the same version
+7. **Release**: Push the tag. `.github/workflows/release.yml` fails the release when those version strings disagree
 
 ## Version History
 

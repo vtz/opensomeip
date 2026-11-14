@@ -450,14 +450,14 @@ make test
 # Create release branch
 git checkout -b release/v1.0.0
 
-# Update version
-echo "1.0.0" > VERSION
+# Update VERSION, MODULE.bazel, the README, the RPM spec, and CHANGELOG together
+./scripts/bump_version.sh 1.0.0
 
 # Build release
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make package
 
-# Tag release
+# Tag release. The tag must match VERSION and MODULE.bazel.
 git tag v1.0.0
 git push origin v1.0.0
 ```

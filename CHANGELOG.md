@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.2.2] - 2026-11-14
+
+### Changed
+
+- **Build**: The Bazel module version now tracks the release. `MODULE.bazel`
+  `module()` `version` moves with `VERSION`, the README, the RPM spec, and
+  the changelog section. Creating a release fails when those strings disagree
+  ([#406](https://github.com/vtz/opensomeip/issues/406)).
+
 ## [0.2.1] - 2026-10-31
 
 ### Added
@@ -932,6 +941,7 @@ _Superseded by v0.0.5 — Copr packages were not published for this release._
 
 ---
 
+[0.2.2]: https://github.com/vtz/opensomeip/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/vtz/opensomeip/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/vtz/opensomeip/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/vtz/opensomeip/compare/v0.0.5...v0.1.0
