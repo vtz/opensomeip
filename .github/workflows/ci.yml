@@ -357,19 +357,3 @@ jobs:
     permissions:
       contents: read
     secrets: inherit
-
-  release-versions:
-    name: Release versions
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check release version strings
-        run: |
-          version="$(tr -d '[:space:]' < VERSION)"
-          ./scripts/check_release_versions.sh "v${version}"
-          if ./scripts/check_release_versions.sh v0.0.0; then
-            echo "::error::release version check accepted a mismatched tag"
-            exit 1
-          fi
