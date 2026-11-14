@@ -105,7 +105,7 @@ if [ ! -f "$readme_file" ]; then
 else
     readme_ver="$(awk '
         {
-            if (match($0, /\*\*Current Version\*\*: [0-9]+\.[0-9]+\.[0-9]+/)) {
+            if (match($0, /\*\*Current Version\*\*: [^[:space:]]+/)) {
                 s = substr($0, RSTART, RLENGTH)
                 sub(/.*: /, "", s)
                 print s

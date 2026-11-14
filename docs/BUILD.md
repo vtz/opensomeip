@@ -453,11 +453,16 @@ git checkout -b release/v1.0.0
 # Update VERSION, MODULE.bazel, the README, the RPM spec, and CHANGELOG together
 ./scripts/bump_version.sh 1.0.0
 
+# Commit the bump before tagging. The release check compares the tag
+# with the version files at that commit.
+git add VERSION MODULE.bazel README.md packaging/opensomeip.spec CHANGELOG.md
+git commit -m "chore(release): bump version to 1.0.0"
+
 # Build release
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make package
 
-# Tag release. The tag must match VERSION and MODULE.bazel.
+# Tag the commit that contains the new version files.
 git tag v1.0.0
 git push origin v1.0.0
 ```
