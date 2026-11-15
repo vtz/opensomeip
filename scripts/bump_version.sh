@@ -152,23 +152,68 @@ main() {
         echo -e "${GREEN}Updated:${NC} README.md"
     fi
 
+    # Update MODULE.bazel module() version. Leave bazel_dep versions alone.
+    local module_file="${PROJECT_ROOT}/MODULE.bazel"
+    if [ ! -f "$module_file" ]; then
+        echo -e "${RED}Error: MODULE.bazel not found at $module_file${NC}" >&2
+        exit 1
+    fi
+    local module_tmp
+    module_tmp=$(mktemp)
+    awk -v ver="$new_version" '
+        /^module[[:space:]]*\(/ { in_mod = 1 }
+        in_mod && !done && /^[[:space:]]*version[[:space:]]*=/ {
+            sub(/"[^"]*"/, "\"" ver "\"")
+            done = 1
+        }
+        { print }
+        in_mod && /^\)/ { in_mod = 0 }
+    ' "$module_file" > "$module_tmp"
+    local module_ver
+    module_ver=$(awk '
+        /^module[[:space:]]*\(/ { in_mod = 1 }
+        in_mod && /^[[:space:]]*version[[:space:]]*=/ {
+            if (match($0, /"[^"]*"/)) {
+                print substr($0, RSTART + 1, RLENGTH - 2)
+                exit
+            }
+        }
+        in_mod && /^\)/ { exit }
+    ' "$module_tmp")
+    if [ "$module_ver" != "$new_version" ]; then
+        rm -f "$module_tmp"
+        echo -e "${RED}Error: failed to update module() version in MODULE.bazel${NC}" >&2
+        exit 1
+    fi
+    cat "$module_tmp" > "$module_file"
+    rm -f "$module_tmp"
+    echo -e "${GREEN}Updated:${NC} MODULE.bazel"
+
     # Scaffold CHANGELOG.md entry (only if section doesn't already exist)
     local changelog_file="${PROJECT_ROOT}/CHANGELOG.md"
     if [ -f "$changelog_file" ]; then
         if ! grep -q "## \[${new_version}\]" "$changelog_file"; then
-            local today
+            local today changelog_tmp
             today=$(date +%Y-%m-%d)
-            # Insert new section after the "adheres to" preamble line
-            sed -i.bak "/^## \[/i\\
-## [${new_version}] - ${today}\\
-\\
-### Added\\
-\\
-### Fixed\\
-\\
-### Changed\\
-" "$changelog_file"
-            rm -f "${changelog_file}.bak"
+            # Insert one section before the first released version heading.
+            # "## Unreleased" has no brackets, so it stays above the new section.
+            changelog_tmp=$(mktemp)
+            awk -v ver="$new_version" -v today="$today" '
+                !inserted && /^## \[/ {
+                    print "## [" ver "] - " today
+                    print ""
+                    print "### Added"
+                    print ""
+                    print "### Fixed"
+                    print ""
+                    print "### Changed"
+                    print ""
+                    inserted = 1
+                }
+                { print }
+            ' "$changelog_file" > "$changelog_tmp"
+            cat "$changelog_tmp" > "$changelog_file"
+            rm -f "$changelog_tmp"
 
             # Add comparison link if not present
             if ! grep -q "^\[${new_version}\]:" "$changelog_file"; then
@@ -187,6 +232,7 @@ main() {
     echo ""
     echo -e "${BLUE}Files modified:${NC}"
     echo "  VERSION"
+    echo "  MODULE.bazel"
     echo "  packaging/opensomeip.spec"
     echo "  README.md"
     echo "  CHANGELOG.md"
@@ -195,7 +241,7 @@ main() {
     if command -v git >/dev/null 2>&1 && [ -d "${PROJECT_ROOT}/.git" ]; then
         echo ""
         echo -e "${YELLOW}Consider committing this version change:${NC}"
-        echo "  git add VERSION packaging/opensomeip.spec README.md CHANGELOG.md"
+        echo "  git add VERSION MODULE.bazel packaging/opensomeip.spec README.md CHANGELOG.md"
         echo "  git commit -m \"release: bump version to $new_version\""
         echo "  git tag v$new_version"
     fi
