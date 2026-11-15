@@ -1,1 +1,1 @@
-[{"values":["main"],"name":"Branch"},{"values":["3e4584a88e93758f6aae39b7f590af21c73af8f6"],"name":"Commit"},{"values":["#691"],"name":"Run"},{"values":["push"],"name":"Event"},{"values":["failure"],"name":"Conclusion"}]
+[{"values":["main"],"name":"Branch"},{"values":["6924ab0709215fe57302f5f6134ec5f0b68eb0d3"],"name":"Commit"},{"values":["#695"],"name":"Run"},{"values":["push"],"name":"Event"},{"values":["success"],"name":"Conclusion"}]
