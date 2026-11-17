@@ -1,0 +1,39 @@
+name: Performance Benchmark
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-bench:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run host benchmark
+        run: bash scripts/run_host_bench.sh
+
+      - name: Validate report
+        run: |
+          json="build/perf/host-bench.json"
+          if [ ! -f "$json" ]; then
+            echo "ERROR: $json not found"
+            exit 1
+          fi
+          for case in serialize udp_rpc udp_notify udp_rpc_demux; do
+            if ! grep -q "\"name\": \"$case\"" "$json"; then
+              echo "ERROR: missing case '$case' in report"
+              exit 1
+            fi
+          done
+          echo "All cases present in report"
+
+      - name: Upload benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: host-bench
+          path: build/perf/host-bench.json
+          retention-days: 14
