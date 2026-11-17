@@ -2,9 +2,12 @@ name: Performance Benchmark
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
 
 permissions:
-  contents: read
+  contents: write
+  pages: write
 
 jobs:
   host-bench:
@@ -12,11 +15,31 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for recent commits on main
+        if: github.event_name == 'schedule'
+        id: check
+        run: |
+          if git log --since="25 hours ago" --oneline origin/main | head -1 | grep -q .; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip if no recent changes
+        if: github.event_name == 'schedule' && steps.check.outputs.has_changes == 'false'
+        run: |
+          echo "No commits on main in the last 24 hours — skipping benchmark."
+          echo "SKIP_BENCH=true" >> "$GITHUB_ENV"
 
       - name: Run host benchmark
+        if: env.SKIP_BENCH != 'true'
         run: bash scripts/run_host_bench.sh
 
       - name: Validate report
+        if: env.SKIP_BENCH != 'true'
         run: |
           json="build/perf/host-bench.json"
           if [ ! -f "$json" ]; then
@@ -32,8 +55,75 @@ jobs:
           echo "All cases present in report"
 
       - name: Upload benchmark report
+        if: env.SKIP_BENCH != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: host-bench
           path: build/perf/host-bench.json
           retention-days: 14
+
+      - name: Publish to GitHub Pages
+        if: env.SKIP_BENCH != 'true'
+        run: |
+          set -euo pipefail
+          report="build/perf/host-bench.json"
+          timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          # Clone gh-pages branch (or create it)
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
+            git worktree add gh-pages-dir origin/gh-pages
+          else
+            git worktree add --detach gh-pages-dir
+            cd gh-pages-dir
+            git checkout --orphan gh-pages
+            git rm -rf . 2>/dev/null || true
+            cd ..
+          fi
+
+          mkdir -p gh-pages-dir/data
+
+          # Append this run to the history file
+          history="gh-pages-dir/data/benchmark-history.json"
+          entry=$(python3 -c "
+          import json, sys
+          with open('$report') as f:
+              report = json.load(f)
+          report['timestamp'] = '$timestamp'
+          json.dump(report, sys.stdout)
+          ")
+
+          if [ -f "$history" ]; then
+            python3 -c "
+          import json, sys
+          with open('$history') as f:
+              runs = json.load(f)
+          entry = json.loads(sys.argv[1])
+          runs.append(entry)
+          # Keep the last 90 runs
+          runs = runs[-90:]
+          with open('$history', 'w') as f:
+              json.dump(runs, f, indent=2)
+          " "$entry"
+          else
+            python3 -c "
+          import json, sys
+          entry = json.loads(sys.argv[1])
+          with open('$history', 'w') as f:
+              json.dump([entry], f, indent=2)
+          " "$entry"
+          fi
+
+          # Copy the dashboard page
+          cp .github/pages/benchmark.html gh-pages-dir/index.html
+
+          cd gh-pages-dir
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to publish"
+          else
+            git commit -m "Update benchmark results ($timestamp)"
+            git push origin gh-pages
+          fi
