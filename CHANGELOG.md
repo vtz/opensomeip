@@ -20,6 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- **CI**: Ubuntu 26.04's CMake no longer accepts ThreadX 6.4.1's
+  `cmake_minimum_required(VERSION 3.0)` unless
+  `CMAKE_POLICY_VERSION_MINIMUM` is 3.5. Coverage jobs ignore gcovr 7.2's
+  `no_working_dir_found` error for third-party `.gcda` files. native_sim
+  UDP tests enable Zephyr's loopback driver instead of a TAP device
+  the CI container cannot create. The native_sim job also relaxes
+  Docker's seccomp filter: 29.4.2 on Ubuntu 26.04 returns ENOSYS for
+  the socket calls that image still makes
+  ([#410](https://github.com/vtz/opensomeip/issues/410)).
+
 ## [0.2.2] - 2026-11-14
 
 ### Changed

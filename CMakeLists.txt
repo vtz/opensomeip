@@ -162,6 +162,13 @@ if(SOMEIP_USE_THREADX)
         set(THREADX_TOOLCHAIN "gnu" CACHE STRING "ThreadX toolchain")
     endif()
 
+    # ThreadX v6.4.1 still calls cmake_minimum_required(VERSION 3.0). CMake 4,
+    # shipped on Ubuntu 26.04, rejects that unless this floor is set. Presets
+    # already pass it; direct configures such as the coverage job do not.
+    if(NOT CMAKE_POLICY_VERSION_MINIMUM)
+        set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+    endif()
+
     FetchContent_Declare(threadx
         GIT_REPOSITORY https://github.com/eclipse-threadx/threadx.git
         GIT_TAG        v6.4.1_rel

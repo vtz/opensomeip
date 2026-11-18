@@ -9,7 +9,7 @@
  *
  * Creates a UDP socket, sends a SOME/IP message to localhost,
  * receives the echo, and validates the round-trip.
- * Designed for native_sim with TAP networking.
+ * native_sim uses Zephyr's loopback driver (see boards/native_sim.conf).
  */
 
 #include <cstdio>
@@ -17,11 +17,16 @@
 #include <chrono>
 #include <atomic>
 
+#if defined(CONFIG_ARCH_POSIX)
+extern "C" void posix_exit(int exit_code);
+#endif
+
 #include "someip/message.h"
 #include "someip/types.h"
 #include "common/result.h"
 #include "transport/endpoint.h"
 #include "transport/udp_transport.h"
+#include "platform/net.h"
 #include "platform/thread.h"
 
 using namespace someip;
@@ -52,8 +57,15 @@ static void test_udp_loopback() {
 
     UdpTransport server(server_ep, config);
     auto result = server.start();
-    CHECK(result == Result::SUCCESS, "server_start");
-    if (result != Result::SUCCESS) return;
+    if (result == Result::SUCCESS) {
+        printf("  [PASS] server_start\n");
+        tests_passed++;
+    } else {
+        printf("  [FAIL] server_start result=%u errno=%d\n",
+               static_cast<unsigned>(result), someip_socket_errno());
+        tests_failed++;
+        return;
+    }
 
     auto bound_ep = server.get_local_endpoint();
     Endpoint server_target("127.0.0.1", bound_ep.get_port());
@@ -99,5 +111,12 @@ int main() {
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);
 
-    return tests_failed > 0 ? 1 : 0;
+    const int rc = tests_failed > 0 ? 1 : 0;
+#if defined(CONFIG_ARCH_POSIX)
+    // native_sim keeps running after main returns. Exit so CI sees the
+    // status instead of waiting out the host timeout.
+    fflush(stdout);
+    posix_exit(rc);
+#endif
+    return rc;
 }

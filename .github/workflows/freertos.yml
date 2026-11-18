@@ -191,6 +191,7 @@ jobs:
             --filter 'include/' \
             --exclude '.*test.*' \
             --exclude '.*example.*' \
+            --gcov-ignore-errors=no_working_dir_found \
             --xml coverage-freertos.xml \
             --print-summary
 
