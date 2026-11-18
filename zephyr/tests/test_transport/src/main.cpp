@@ -46,6 +46,38 @@ static int tests_failed = 0;
         }                                                   \
     } while (0)
 
+static void explain_socket_failure() {
+    printf("  errno=%d ENOSYS=%d EADDRNOTAVAIL=%d ENOPROTOOPT=%d EPERM=%d\n",
+           someip_socket_errno(), ENOSYS, EADDRNOTAVAIL, ENOPROTOOPT, EPERM);
+
+    const someip_socket_t fd = someip_socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd == SOMEIP_INVALID_SOCKET) {
+        printf("  direct socket errno=%d\n", someip_socket_errno());
+        return;
+    }
+    int reuse = 1;
+    if (someip_setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
+        printf("  direct SO_REUSEADDR errno=%d\n", someip_socket_errno());
+        someip_close_socket(fd);
+        return;
+    }
+    if (someip_set_nonblocking(fd) < 0) {
+        printf("  direct nonblock errno=%d\n", someip_socket_errno());
+        someip_close_socket(fd);
+        return;
+    }
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(0);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (someip_bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+        printf("  direct bind errno=%d\n", someip_socket_errno());
+    } else {
+        printf("  direct socket setup succeeded\n");
+    }
+    someip_close_socket(fd);
+}
+
 static void test_udp_loopback() {
     printf("\n--- UDP Loopback Test ---\n");
 
@@ -63,6 +95,7 @@ static void test_udp_loopback() {
     } else {
         printf("  [FAIL] server_start result=%u errno=%d\n",
                static_cast<unsigned>(result), someip_socket_errno());
+        explain_socket_failure();
         tests_failed++;
         return;
     }
