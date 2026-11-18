@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cmake_minimum_required(VERSION 3.0)` unless
   `CMAKE_POLICY_VERSION_MINIMUM` is 3.5. Coverage jobs ignore gcovr 7.2's
   `no_working_dir_found` error for third-party `.gcda` files. native_sim
-  UDP tests use Zephyr's loopback interface instead of a host TAP device
+  UDP tests offload sockets to the host stack instead of a TAP device
   the CI container cannot create
   ([#410](https://github.com/vtz/opensomeip/issues/410)).
 

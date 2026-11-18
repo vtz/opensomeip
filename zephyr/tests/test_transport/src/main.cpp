@@ -9,7 +9,7 @@
  *
  * Creates a UDP socket, sends a SOME/IP message to localhost,
  * receives the echo, and validates the round-trip.
- * native_sim uses Zephyr's loopback interface (see boards/native_sim.conf).
+ * native_sim offloads sockets to the host stack (see boards/native_sim.conf).
  */
 
 #include <cerrno>
