@@ -9,10 +9,9 @@
  *
  * Creates a UDP socket, sends a SOME/IP message to localhost,
  * receives the echo, and validates the round-trip.
- * native_sim offloads sockets to the host stack (see boards/native_sim.conf).
+ * native_sim uses Zephyr's loopback driver (see boards/native_sim.conf).
  */
 
-#include <cerrno>
 #include <cstdio>
 #include <cstring>
 #include <chrono>
@@ -27,6 +26,7 @@ extern "C" void posix_exit(int exit_code);
 #include "common/result.h"
 #include "transport/endpoint.h"
 #include "transport/udp_transport.h"
+#include "platform/net.h"
 #include "platform/thread.h"
 
 using namespace someip;
@@ -62,7 +62,7 @@ static void test_udp_loopback() {
         tests_passed++;
     } else {
         printf("  [FAIL] server_start result=%u errno=%d\n",
-               static_cast<unsigned>(result), errno);
+               static_cast<unsigned>(result), someip_socket_errno());
         tests_failed++;
         return;
     }
