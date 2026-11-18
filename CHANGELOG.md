@@ -22,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Docs**: Pin `drawsvg` to 2.4.2 for the specification build. 2.5.0
+  raises `NameError` on import because `Drawing` references
+  `SyncedAnimationConfig` without defining it, so publishing the site
+  from main fails before Sphinx starts.
+
 - **CI**: Ubuntu 26.04's CMake no longer accepts ThreadX 6.4.1's
   `cmake_minimum_required(VERSION 3.0)` unless
   `CMAKE_POLICY_VERSION_MINIMUM` is 3.5. Coverage jobs ignore gcovr 7.2's

@@ -36,7 +36,10 @@ jobs:
           pip install \
             "mkdocs-material>=9.5,<10" \
             "sphinx>=7.0" "sphinx-needs>=5.0.0" sphinxcontrib-plantuml
-          pip install -r open-someip-spec/requirements.txt
+          # drawsvg 2.5.0 fails to import: Drawing() annotates
+          # SyncedAnimationConfig without defining it. The spec requirements
+          # leave drawsvg unpinned, so hold the last release that imports.
+          pip install -r open-someip-spec/requirements.txt "drawsvg==2.4.2"
 
       - name: Build open-someip-spec
         working-directory: open-someip-spec
