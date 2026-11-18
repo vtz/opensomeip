@@ -14,6 +14,10 @@
 
 #include <cstdio>
 #include <cstring>
+
+#if defined(CONFIG_ARCH_POSIX)
+extern "C" void posix_exit(int exit_code);
+#endif
 #include "someip/message.h"
 #include "someip/types.h"
 #include "common/result.h"
@@ -52,5 +56,10 @@ int main() {
     printf("\n=== Results: %d passed, %d failed ===\n",
            tests_passed, tests_failed);
 
-    return tests_failed > 0 ? 1 : 0;
+    const int rc = tests_failed > 0 ? 1 : 0;
+#if defined(CONFIG_ARCH_POSIX)
+    fflush(stdout);
+    posix_exit(rc);
+#endif
+    return rc;
 }

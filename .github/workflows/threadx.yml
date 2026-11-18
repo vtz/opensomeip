@@ -168,6 +168,7 @@ jobs:
       - name: Build with coverage
         run: |
           cmake -B build_threadx_cov \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DSOMEIP_THREADX_LINUX_TESTS=ON \
             -DBUILD_TESTS=OFF \
             -DBUILD_EXAMPLES=OFF \
@@ -191,6 +192,7 @@ jobs:
             --filter 'include/' \
             --exclude '.*test.*' \
             --exclude '.*example.*' \
+            --gcov-ignore-errors=no_working_dir_found \
             --xml coverage-threadx.xml \
             --print-summary
 

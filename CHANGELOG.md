@@ -20,6 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixed
+
+- **CI**: Ubuntu 26.04's CMake no longer accepts ThreadX 6.4.1's
+  `cmake_minimum_required(VERSION 3.0)` unless
+  `CMAKE_POLICY_VERSION_MINIMUM` is 3.5. Coverage jobs ignore gcovr 7.2's
+  `no_working_dir_found` error for third-party `.gcda` files. native_sim
+  UDP tests use Zephyr's loopback interface instead of a host TAP device
+  the CI container cannot create
+  ([#410](https://github.com/vtz/opensomeip/issues/410)).
+
 ## [0.2.2] - 2026-11-14
 
 ### Changed
