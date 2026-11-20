@@ -58,6 +58,7 @@ endif()
 option(SAFETY_LEVEL "Safety level (ASIL_A, ASIL_B, ASIL_C, ASIL_D)" "ASIL_B")
 option(BUILD_TESTS "Build test executables" ${_someip_default_build_tests})
 option(BUILD_EXAMPLES "Build example programs" ${_someip_default_build_examples})
+option(BUILD_BENCHMARKS "Build performance benchmarks" OFF)
 option(BUILD_TOOLS "Build development tools (reserved for future use)" OFF)
 option(SOMEIP_DEV_TOOLS "Enable development tools (static analysis, formatting, traceability targets)" ON)
 option(BUILD_CAPI "Build C API wrapper (extern C FFI boundary)" ${PROJECT_IS_TOP_LEVEL})
@@ -450,6 +451,10 @@ if(BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
+if(BUILD_BENCHMARKS)
+    add_subdirectory(benchmarks)
+endif()
+
 # Note: Tools are scripts/utilities and don't require CMake building
 # BUILD_TOOLS option is kept for future CMake-based tools
 
@@ -723,6 +728,7 @@ else()
 endif()
 message(STATUS "  Build tests ............. ${BUILD_TESTS}")
 message(STATUS "  Build examples .......... ${BUILD_EXAMPLES}")
+message(STATUS "  Build benchmarks ........ ${BUILD_BENCHMARKS}")
 message(STATUS "  C API (FFI) ............. ${BUILD_CAPI}")
 message(STATUS "  Dev tools ............... ${SOMEIP_DEV_TOOLS}")
 if(SOMEIP_FREERTOS_RENODE_TESTS OR SOMEIP_THREADX_RENODE_TESTS)

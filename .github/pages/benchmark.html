@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenSOME/IP — Host Benchmark</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --surface-2:      #f5f5f3;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #8a8884;
+    --border:         #e0dfdb;
+    --series-1:       #2a78d6;
+    --series-2:       #eb6834;
+    --series-3:       #1baf7a;
+    --series-4:       #eda100;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --surface-2:      #242423;
+      --text-primary:   #f0efec;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #7a7970;
+      --border:         #3a3a38;
+      --series-1:       #3987e5;
+      --series-2:       #d95926;
+      --series-3:       #199e70;
+      --series-4:       #c98500;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --surface-2:      #242423;
+    --text-primary:   #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #7a7970;
+    --border:         #3a3a38;
+    --series-1:       #3987e5;
+    --series-2:       #d95926;
+    --series-3:       #199e70;
+    --series-4:       #c98500;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  .viz-root {
+    background: var(--surface-1);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 2rem; }
+  .meta { color: var(--text-muted); font-size: 0.75rem; margin-bottom: 2rem; }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .stat-tile {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+  }
+  .stat-tile .label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat-tile .value { font-size: 1.75rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat-tile .unit  { font-size: 0.75rem; color: var(--text-secondary); }
+
+  .chart-section { margin-bottom: 2.5rem; }
+  .chart-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .chart-desc  { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+  .chart-container {
+    position: relative;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  canvas { width: 100% !important; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+  .legend-swatch {
+    width: 12px;
+    height: 3px;
+    border-radius: 1.5px;
+    flex-shrink: 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+  }
+  th { text-align: left; font-weight: 600; color: var(--text-secondary); padding: 0.5rem 0.75rem; border-bottom: 2px solid var(--border); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+  td.num { text-align: right; }
+  tr:last-child td { border-bottom: none; }
+
+  .table-container {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  .tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    z-index: 10;
+    display: none;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+  }
+  .empty-state h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary); }
+
+  .theme-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="viz-root" id="root">
+  <button class="theme-toggle" onclick="toggleTheme()">Toggle theme</button>
+  <h1>Host Benchmark</h1>
+  <p class="subtitle">OpenSOME/IP — UDP performance on the host build</p>
+  <div id="meta" class="meta"></div>
+
+  <div id="kpi-row" class="kpi-row"></div>
+
+  <div class="chart-section">
+    <div class="chart-title">Throughput over time</div>
+    <div class="chart-desc">ops/sec per case — higher is better</div>
+    <div class="chart-container">
+      <canvas id="chart-ops" height="280"></canvas>
+      <div class="tooltip" id="tooltip-ops"></div>
+    </div>
+    <div class="legend" id="legend-ops"></div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-title">Latency (p99) over time</div>
+    <div class="chart-desc">p99 latency in microseconds — lower is better</div>
+    <div class="chart-container">
+      <canvas id="chart-lat" height="280"></canvas>
+      <div class="tooltip" id="tooltip-lat"></div>
+    </div>
+    <div class="legend" id="legend-lat"></div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-title">Latest run — full results</div>
+    <div class="chart-desc" id="table-desc"></div>
+    <div class="table-container">
+      <table id="results-table">
+        <thead>
+          <tr>
+            <th>Case</th>
+            <th>Payload</th>
+            <th style="text-align:right">Samples</th>
+            <th style="text-align:right">ops/sec</th>
+            <th style="text-align:right">bytes/sec</th>
+            <th style="text-align:right">p50 (&mu;s)</th>
+            <th style="text-align:right">p99 (&mu;s)</th>
+            <th style="text-align:right">max (&mu;s)</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="empty-state" id="empty" style="display:none">
+    <h2>No benchmark data yet</h2>
+    <p>Trigger the Performance Benchmark workflow to generate the first run.</p>
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  const root = document.documentElement;
+  const current = root.getAttribute('data-theme');
+  root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+}
+
+const SERIES_COLORS_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100'];
+const SERIES_COLORS_DARK  = ['#3987e5', '#d95926', '#199e70', '#c98500'];
+
+function getSeriesColors() {
+  const style = getComputedStyle(document.getElementById('root'));
+  return [
+    style.getPropertyValue('--series-1').trim(),
+    style.getPropertyValue('--series-2').trim(),
+    style.getPropertyValue('--series-3').trim(),
+    style.getPropertyValue('--series-4').trim(),
+  ];
+}
+
+function getTextColor(role) {
+  return getComputedStyle(document.getElementById('root')).getPropertyValue('--text-' + role).trim();
+}
+
+function getSurface() {
+  return getComputedStyle(document.getElementById('root')).getPropertyValue('--surface-2').trim();
+}
+
+function getBorder() {
+  return getComputedStyle(document.getElementById('root')).getPropertyValue('--border').trim();
+}
+
+function fmt(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return n.toFixed(0);
+}
+
+function fmtUs(ns) { return (ns / 1000).toFixed(1); }
+
+const CASE_GROUPS = [
+  { key: 'serialize/64',     label: 'serialize 64B',    color: 0 },
+  { key: 'udp_rpc/64',       label: 'udp_rpc 64B',     color: 1 },
+  { key: 'udp_notify/64',    label: 'udp_notify 64B',  color: 2 },
+  { key: 'udp_rpc_demux/64', label: 'udp_rpc_demux 64B', color: 3 },
+];
+
+function caseKey(c) { return c.name + '/' + c.payload_bytes; }
+
+async function main() {
+  let runs;
+  try {
+    const resp = await fetch('data/benchmark-history.json');
+    if (!resp.ok) throw new Error(resp.status);
+    runs = await resp.json();
+  } catch {
+    document.getElementById('empty').style.display = '';
+    document.querySelectorAll('.chart-section, .kpi-row').forEach(el => el.style.display = 'none');
+    return;
+  }
+
+  if (!runs.length) {
+    document.getElementById('empty').style.display = '';
+    return;
+  }
+
+  document.getElementById('empty').style.display = 'none';
+  document.querySelectorAll('.chart-section, .kpi-row').forEach(el => el.style.display = '');
+
+  const latest = runs[runs.length - 1];
+
+  // Meta
+  const metaEl = document.getElementById('meta');
+  const date = latest.timestamp ? new Date(latest.timestamp).toLocaleString() : '—';
+  metaEl.textContent = `Latest: ${date} · ${latest.compiler || '—'} · ${latest.os || '—'} · ${latest.cpu || '—'} · ${latest.git_sha?.substring(0, 10) || '—'}`;
+
+  // KPI tiles
+  const kpiRow = document.getElementById('kpi-row');
+  kpiRow.innerHTML = '';
+  const kpiCases = [
+    { name: 'serialize', payload: 64, label: 'Serialize 64B', unit: 'ops/sec' },
+    { name: 'udp_rpc', payload: 64, label: 'UDP RPC 64B', unit: 'ops/sec' },
+    { name: 'udp_notify', payload: 64, label: 'UDP Notify 64B', unit: 'ops/sec' },
+    { name: 'udp_rpc_demux', payload: 64, label: 'RPC Demux 64B', unit: 'ops/sec' },
+  ];
+  for (const kpi of kpiCases) {
+    const c = latest.cases.find(c => c.name === kpi.name && c.payload_bytes === kpi.payload);
+    if (!c) continue;
+    const tile = document.createElement('div');
+    tile.className = 'stat-tile';
+    tile.innerHTML = `<div class="label">${kpi.label}</div><div class="value">${fmt(c.ops_per_sec)}</div><div class="unit">${kpi.unit}</div>`;
+    kpiRow.appendChild(tile);
+  }
+
+  // Table
+  const tbody = document.getElementById('results-body');
+  tbody.innerHTML = '';
+  document.getElementById('table-desc').textContent = `Run ${date} · git ${latest.git_sha?.substring(0, 10) || '—'}`;
+  for (const c of latest.cases) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.name}</td><td class="num">${c.payload_bytes}</td><td class="num">${c.samples.toLocaleString()}</td><td class="num">${fmt(c.ops_per_sec)}</td><td class="num">${fmt(c.bytes_per_sec)}</td><td class="num">${fmtUs(c.latency_ns.p50)}</td><td class="num">${fmtUs(c.latency_ns.p99)}</td><td class="num">${fmtUs(c.latency_ns.max)}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  // Charts — only if >1 run
+  if (runs.length < 2) {
+    document.querySelectorAll('.chart-section').forEach((el, i) => { if (i < 2) el.querySelector('.chart-desc').textContent += ' (need 2+ runs for a trend)'; });
+  }
+
+  drawLineChart('chart-ops', 'tooltip-ops', 'legend-ops', runs, CASE_GROUPS, (run, key) => {
+    const c = run.cases.find(c => caseKey(c) === key);
+    return c ? c.ops_per_sec : null;
+  }, v => fmt(v), 'ops/sec');
+
+  drawLineChart('chart-lat', 'tooltip-lat', 'legend-lat', runs, CASE_GROUPS, (run, key) => {
+    const c = run.cases.find(c => caseKey(c) === key);
+    return c ? c.latency_ns.p99 / 1000 : null;
+  }, v => v.toFixed(1) + ' μs', 'p99 (μs)');
+}
+
+function drawLineChart(canvasId, tooltipId, legendId, runs, groups, valueFn, fmtVal, yLabel) {
+  const canvas = document.getElementById(canvasId);
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width - 32;
+  const H = 280;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.scale(dpr, dpr);
+
+  const colors = getSeriesColors();
+  const textPrimary = getTextColor('primary');
+  const textMuted = getTextColor('muted');
+  const border = getBorder();
+
+  const pad = { top: 20, right: 80, bottom: 40, left: 70 };
+  const plotW = W - pad.left - pad.right;
+  const plotH = H - pad.top - pad.bottom;
+
+  // Data
+  const seriesData = groups.map(g => ({
+    label: g.label,
+    color: colors[g.color],
+    colorIdx: g.color,
+    points: runs.map((run, i) => ({ x: i, y: valueFn(run, g.key) })).filter(p => p.y !== null),
+  }));
+
+  const allY = seriesData.flatMap(s => s.points.map(p => p.y));
+  if (!allY.length) return;
+  const yMin = 0;
+  const yMax = Math.max(...allY) * 1.1;
+  const xMax = runs.length - 1;
+
+  function toCanvasX(i) { return pad.left + (xMax > 0 ? (i / xMax) * plotW : plotW / 2); }
+  function toCanvasY(v) { return pad.top + plotH - ((v - yMin) / (yMax - yMin)) * plotH; }
+
+  // Grid
+  ctx.strokeStyle = border;
+  ctx.lineWidth = 1;
+  const yTicks = 5;
+  for (let i = 0; i <= yTicks; i++) {
+    const v = yMin + (yMax - yMin) * (i / yTicks);
+    const y = Math.round(toCanvasY(v)) + 0.5;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    ctx.fillStyle = textMuted;
+    ctx.font = '11px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(fmt(v), pad.left - 8, y);
+  }
+
+  // Y-axis label
+  ctx.save();
+  ctx.translate(14, pad.top + plotH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = textMuted;
+  ctx.font = '11px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+
+  // X-axis labels
+  const maxXLabels = Math.min(runs.length, 10);
+  const step = Math.max(1, Math.floor(runs.length / maxXLabels));
+  ctx.fillStyle = textMuted;
+  ctx.font = '10px -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (let i = 0; i < runs.length; i += step) {
+    const label = runs[i].timestamp ? new Date(runs[i].timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '#' + (i + 1);
+    ctx.fillText(label, toCanvasX(i), pad.top + plotH + 8);
+  }
+
+  // Lines + markers
+  for (const series of seriesData) {
+    if (series.points.length === 0) continue;
+    ctx.strokeStyle = series.color;
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    series.points.forEach((p, i) => {
+      const cx = toCanvasX(p.x), cy = toCanvasY(p.y);
+      if (i === 0) ctx.moveTo(cx, cy);
+      else ctx.lineTo(cx, cy);
+    });
+    ctx.stroke();
+
+    // Markers
+    ctx.fillStyle = series.color;
+    for (const p of series.points) {
+      const cx = toCanvasX(p.x), cy = toCanvasY(p.y);
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Direct label on the last point
+    const last = series.points[series.points.length - 1];
+    if (last) {
+      ctx.fillStyle = series.color;
+      ctx.font = 'bold 11px -apple-system, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(fmtVal(last.y), toCanvasX(last.x) + 8, toCanvasY(last.y));
+    }
+  }
+
+  // Legend
+  const legendEl = document.getElementById(legendId);
+  legendEl.innerHTML = '';
+  for (const series of seriesData) {
+    const item = document.createElement('span');
+    item.className = 'legend-item';
+    item.innerHTML = `<span class="legend-swatch" style="background:${series.color}"></span>${series.label}`;
+    legendEl.appendChild(item);
+  }
+
+  // Tooltip
+  const tooltip = document.getElementById(tooltipId);
+  canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    let best = null, bestDist = 20;
+    for (const series of seriesData) {
+      for (const p of series.points) {
+        const cx = toCanvasX(p.x), cy = toCanvasY(p.y);
+        const d = Math.hypot(mx - cx, my - cy);
+        if (d < bestDist) { bestDist = d; best = { series, point: p, cx, cy }; }
+      }
+    }
+
+    if (best) {
+      const run = runs[best.point.x];
+      const dateStr = run.timestamp ? new Date(run.timestamp).toLocaleDateString() : '#' + (best.point.x + 1);
+      tooltip.style.display = 'block';
+      tooltip.innerHTML = `<strong>${best.series.label}</strong><br>${dateStr}: ${fmtVal(best.point.y)}`;
+      let tx = best.cx + 12, ty = best.cy - 30;
+      if (tx + 160 > W) tx = best.cx - 160;
+      if (ty < 0) ty = best.cy + 12;
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top = ty + 'px';
+    } else {
+      tooltip.style.display = 'none';
+    }
+  });
+  canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+}
+
+main();
+
+// Redraw on theme change
+const observer = new MutationObserver(() => {
+  document.querySelectorAll('canvas').forEach(c => { c.getContext('2d').clearRect(0, 0, c.width, c.height); });
+  main();
+});
+observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>
+</body>
+</html>
