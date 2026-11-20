@@ -86,6 +86,7 @@ struct BenchResult {
     double ops_per_sec{0};
     double bytes_per_sec{0};
     Latencies latency;
+    bool timed_out{false};
 };
 
 static Latencies compute_latencies(std::vector<int64_t>& lat_ns) {
@@ -319,6 +320,7 @@ static BenchResult bench_udp_notify(int payload_bytes, uint16_t pub_port, uint16
     res.ops_per_sec = dur_ns > 0 ? static_cast<double>(samples) * 1e9 / static_cast<double>(dur_ns) : 0;
     res.bytes_per_sec = dur_ns > 0 ? static_cast<double>(samples) * static_cast<double>(payload_bytes) * 1e9 / static_cast<double>(dur_ns) : 0;
     res.latency = compute_latencies(lat_ns);
+    res.timed_out = timed_out;
     return res;
 }
 
@@ -475,6 +477,14 @@ static std::string get_git_sha() {
 #endif
 }
 
+static std::string get_build_type() {
+#ifdef HOST_BENCH_BUILD_TYPE
+    return HOST_BENCH_BUILD_TYPE;
+#else
+    return "unknown";
+#endif
+}
+
 static int64_t get_static_footprint() {
 #ifdef HOST_BENCH_STATIC_FOOTPRINT
     return HOST_BENCH_STATIC_FOOTPRINT;
@@ -514,7 +524,7 @@ static bool write_json(const std::string& path,
     f << "{\n";
     f << R"(  "schema": 1,)" << "\n";
     f << R"(  "git_sha": ")" << escape_json(git_sha) << "\",\n";
-    f << R"(  "build_type": "Release",)" << "\n";
+    f << R"(  "build_type": ")" << escape_json(get_build_type()) << "\",\n";
     f << R"(  "static_alloc": false,)" << "\n";
     f << R"(  "compiler": ")" << escape_json(compiler) << "\",\n";
     f << R"(  "os": ")" << escape_json(os) << "\",\n";
@@ -586,7 +596,10 @@ int main(int argc, char* argv[]) {
     auto run_case = [&](const char* label, auto fn) {
         std::fprintf(stderr, "  running %s ...\n", label);
         auto r = fn();
-        if (r.samples < MIN_OPS) {
+        if (r.timed_out) {
+            std::fprintf(stderr, "  FAIL: %s timed out waiting for a notification\n", label);
+            ++failures;
+        } else if (r.samples < MIN_OPS) {
             std::fprintf(stderr, "  FAIL: %s completed only %lld ops (need %d)\n",
                 label, static_cast<long long>(r.samples), MIN_OPS);
             ++failures;

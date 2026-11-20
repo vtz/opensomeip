@@ -9,6 +9,10 @@ permissions:
   contents: write
   pages: write
 
+concurrency:
+  group: performance-gh-pages
+  cancel-in-progress: false
+
 jobs:
   host-bench:
     runs-on: ubuntu-latest
@@ -125,5 +129,5 @@ jobs:
             echo "No changes to publish"
           else
             git commit -m "Update benchmark results ($timestamp)"
-            git push origin gh-pages
+            git push origin HEAD:refs/heads/gh-pages
           fi

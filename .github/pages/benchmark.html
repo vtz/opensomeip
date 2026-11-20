@@ -289,6 +289,9 @@ async function main() {
     return;
   }
 
+  document.getElementById('empty').style.display = 'none';
+  document.querySelectorAll('.chart-section, .kpi-row').forEach(el => el.style.display = '');
+
   const latest = runs[runs.length - 1];
 
   // Meta
@@ -298,6 +301,7 @@ async function main() {
 
   // KPI tiles
   const kpiRow = document.getElementById('kpi-row');
+  kpiRow.innerHTML = '';
   const kpiCases = [
     { name: 'serialize', payload: 64, label: 'Serialize 64B', unit: 'ops/sec' },
     { name: 'udp_rpc', payload: 64, label: 'UDP RPC 64B', unit: 'ops/sec' },
@@ -315,6 +319,7 @@ async function main() {
 
   // Table
   const tbody = document.getElementById('results-body');
+  tbody.innerHTML = '';
   document.getElementById('table-desc').textContent = `Run ${date} · git ${latest.git_sha?.substring(0, 10) || '—'}`;
   for (const c of latest.cases) {
     const tr = document.createElement('tr');
@@ -477,7 +482,7 @@ function drawLineChart(canvasId, tooltipId, legendId, runs, groups, valueFn, fmt
     if (best) {
       const run = runs[best.point.x];
       const dateStr = run.timestamp ? new Date(run.timestamp).toLocaleDateString() : '#' + (best.point.x + 1);
-      tooltip.style.display = '';
+      tooltip.style.display = 'block';
       tooltip.innerHTML = `<strong>${best.series.label}</strong><br>${dateStr}: ${fmtVal(best.point.y)}`;
       let tx = best.cx + 12, ty = best.cy - 30;
       if (tx + 160 > W) tx = best.cx - 160;

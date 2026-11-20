@@ -7,6 +7,16 @@
 add_executable(host_bench host_bench.cpp)
 target_link_libraries(host_bench PRIVATE opensomeip)
 
+if(WIN32)
+    target_compile_definitions(host_bench PRIVATE NOMINMAX)
+endif()
+
+string(TOUPPER "${CMAKE_BUILD_TYPE}" _build_type_upper)
+if(NOT _build_type_upper)
+    set(_build_type_upper "UNKNOWN")
+endif()
+target_compile_definitions(host_bench PRIVATE "HOST_BENCH_BUILD_TYPE=\"${_build_type_upper}\"")
+
 # Pass git SHA at compile time
 execute_process(
     COMMAND git rev-parse HEAD
