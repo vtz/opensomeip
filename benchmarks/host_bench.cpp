@@ -68,6 +68,7 @@ using Clock = std::chrono::steady_clock;
 
 static constexpr auto WARMUP     = std::chrono::milliseconds(200);
 static constexpr auto MEASURE    = std::chrono::seconds(1);
+static constexpr auto RECV_TIMEOUT = std::chrono::milliseconds(500);
 static constexpr int  MIN_OPS    = 100;
 static constexpr uint16_t BASE_PORT = 40000;
 
@@ -255,7 +256,14 @@ static BenchResult bench_udp_notify(int payload_bytes, uint16_t pub_port, uint16
     subscriber.set_default_endpoint("127.0.0.1", pub_port);
 
     std::atomic<int64_t> recv_count{0};
-    subscriber.initialize();
+    if (!subscriber.initialize()) {
+        subscriber.shutdown();
+        publisher.shutdown();
+        BenchResult res;
+        res.name = "udp_notify";
+        res.payload_bytes = payload_bytes;
+        return res;
+    }
     subscriber.subscribe_eventgroup(service_id, instance_id, eventgroup_id,
         [&recv_count](const EventNotification&) {
             recv_count.fetch_add(1, std::memory_order_release);
@@ -263,13 +271,22 @@ static BenchResult bench_udp_notify(int payload_bytes, uint16_t pub_port, uint16
 
     auto payload = make_payload(static_cast<size_t>(payload_bytes));
 
+    auto wait_recv = [&](int64_t expected) -> bool {
+        auto limit = Clock::now() + RECV_TIMEOUT;
+        while (recv_count.load(std::memory_order_acquire) < expected) {
+            if (Clock::now() >= limit) return false;
+        }
+        return true;
+    };
+
     // warmup
     int64_t send_count = 0;
+    bool timed_out = false;
     auto warmup_end = Clock::now() + WARMUP;
     while (Clock::now() < warmup_end) {
         publisher.publish_event(event_id, payload);
         ++send_count;
-        while (recv_count.load(std::memory_order_acquire) < send_count) {}
+        if (!wait_recv(send_count)) { timed_out = true; break; }
     }
 
     std::vector<int64_t> lat_ns;
@@ -278,11 +295,11 @@ static BenchResult bench_udp_notify(int payload_bytes, uint16_t pub_port, uint16
 
     auto t0 = Clock::now();
     auto deadline = t0 + MEASURE;
-    while (Clock::now() < deadline) {
+    while (!timed_out && Clock::now() < deadline) {
         auto op_start = Clock::now();
         publisher.publish_event(event_id, payload);
         ++send_count;
-        while (recv_count.load(std::memory_order_acquire) < send_count) {}
+        if (!wait_recv(send_count)) { timed_out = true; break; }
         auto op_end = Clock::now();
 
         lat_ns.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(op_end - op_start).count());
@@ -481,7 +498,7 @@ static std::string escape_json(const std::string& s) {
     return out;
 }
 
-static void write_json(const std::string& path,
+static bool write_json(const std::string& path,
                        const std::vector<BenchResult>& results) {
     auto git_sha = get_git_sha();
     auto compiler = get_compiler_info();
@@ -490,6 +507,10 @@ static void write_json(const std::string& path,
     auto footprint = get_static_footprint();
 
     std::ofstream f(path);
+    if (!f) {
+        std::fprintf(stderr, "ERROR: cannot open %s for writing\n", path.c_str());
+        return false;
+    }
     f << "{\n";
     f << R"(  "schema": 1,)" << "\n";
     f << R"(  "git_sha": ")" << escape_json(git_sha) << "\",\n";
@@ -526,6 +547,12 @@ static void write_json(const std::string& path,
     f << R"(    "total_bytes": )" << footprint << "\n";
     f << "  }\n";
     f << "}\n";
+    f.close();
+    if (!f) {
+        std::fprintf(stderr, "ERROR: failed writing %s\n", path.c_str());
+        return false;
+    }
+    return true;
 }
 
 static void print_table(const std::vector<BenchResult>& results) {
@@ -548,7 +575,10 @@ static void print_table(const std::vector<BenchResult>& results) {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    std::string report_path = "build/perf/host-bench.json";
+    if (argc > 1) report_path = argv[1];
+
     std::vector<BenchResult> results;
     uint16_t port = BASE_PORT;
     int failures = 0;
@@ -589,13 +619,15 @@ int main() {
 
     print_table(results);
 
-    write_json("build/perf/host-bench.json", results);
+    if (!write_json(report_path, results)) {
+        return 1;
+    }
 
     if (failures > 0) {
         std::fprintf(stderr, "\n%d case(s) failed minimum-ops threshold\n", failures);
         return 1;
     }
 
-    std::printf("\nWrote build/perf/host-bench.json (%zu cases)\n", results.size());
+    std::printf("\nWrote %s (%zu cases)\n", report_path.c_str(), results.size());
     return 0;
 }

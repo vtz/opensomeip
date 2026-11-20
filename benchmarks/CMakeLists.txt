@@ -31,11 +31,17 @@ if(Python3_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/scripts/static_memory_budget.py
         RESULT_VARIABLE _budget_rc
     )
     if(_budget_rc EQUAL 0)
-        string(REGEX MATCH "\"total_bytes\": *([0-9]+)" _match "${_budget_json}")
-        if(CMAKE_MATCH_1)
-            target_compile_definitions(host_bench PRIVATE "HOST_BENCH_STATIC_FOOTPRINT=${CMAKE_MATCH_1}")
+        string(JSON _footprint GET "${_budget_json}" "total_bytes")
+        if(_footprint)
+            target_compile_definitions(host_bench PRIVATE "HOST_BENCH_STATIC_FOOTPRINT=${_footprint}")
+        else()
+            message(WARNING "static_memory_budget.py JSON missing total_bytes; footprint will be 0")
         endif()
+    else()
+        message(WARNING "static_memory_budget.py failed (rc=${_budget_rc}); footprint will be 0")
     endif()
+else()
+    message(WARNING "Python3 or static_memory_budget.py not found; static footprint will be 0")
 endif()
 
 # Ensure the output directory exists at build time

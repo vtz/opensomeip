@@ -18,6 +18,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 BUILD_DIR="$PROJECT_DIR/build"
 
+REPORT="$BUILD_DIR/perf/host-bench.json"
+
 echo "=== Configuring Release build with BUILD_BENCHMARKS=ON ==="
 cmake -B "$BUILD_DIR" \
     -DCMAKE_BUILD_TYPE=Release \
@@ -25,6 +27,7 @@ cmake -B "$BUILD_DIR" \
     -DBUILD_TESTS=OFF \
     -DBUILD_EXAMPLES=OFF \
     -DSOMEIP_DEV_TOOLS=OFF \
+    -DSOMEIP_USE_STATIC_ALLOC=OFF \
     -S "$PROJECT_DIR"
 
 echo ""
@@ -33,12 +36,13 @@ cmake --build "$BUILD_DIR" --target host_bench --config Release
 
 echo ""
 echo "=== Running host_bench ==="
-"$BUILD_DIR/bin/host_bench"
+cd "$PROJECT_DIR"
+"$BUILD_DIR/bin/host_bench" "$REPORT"
 
 echo ""
-if [ -f "$BUILD_DIR/perf/host-bench.json" ]; then
-    echo "=== Report written to build/perf/host-bench.json ==="
+if [ -f "$REPORT" ]; then
+    echo "=== Report written to $REPORT ==="
 else
-    echo "ERROR: build/perf/host-bench.json not found"
+    echo "ERROR: $REPORT not found"
     exit 1
 fi
