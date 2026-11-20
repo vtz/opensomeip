@@ -11,11 +11,8 @@ if(WIN32)
     target_compile_definitions(host_bench PRIVATE NOMINMAX)
 endif()
 
-string(TOUPPER "${CMAKE_BUILD_TYPE}" _build_type_upper)
-if(NOT _build_type_upper)
-    set(_build_type_upper "UNKNOWN")
-endif()
-target_compile_definitions(host_bench PRIVATE "HOST_BENCH_BUILD_TYPE=\"${_build_type_upper}\"")
+target_compile_definitions(host_bench PRIVATE "HOST_BENCH_BUILD_TYPE=\"$<UPPER_CASE:$<CONFIG>>\"")
+
 
 # Pass git SHA at compile time
 execute_process(
